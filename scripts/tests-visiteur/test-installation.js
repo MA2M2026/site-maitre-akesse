@@ -17,7 +17,17 @@ const BASE = 'http://127.0.0.1:' + PORT;
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const UA = {
   android: 'Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
-  iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
+  iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  // nouveau Safari (iOS 26 : la version du système reste figée à 18_6 dans l'agent)
+  iphone26: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
+  instagramIOS: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0 (iPhone14,5; iOS 17_5; fr_FR)',
+  // navigateurs Android autres que Chrome : ils doivent renvoyer vers Chrome
+  samsung: 'Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0.0.0 Mobile Safari/537.36',
+  opera: 'Mozilla/5.0 (Linux; Android 13; SM-A135F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 OPR/84.0.0.0',
+  xiaomi: 'Mozilla/5.0 (Linux; U; Android 13; fr-fr; 2201117TG Build/TKQ1.221114.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/112.0.5615.136 Mobile Safari/537.36 XiaoMi/MiuiBrowser/18.4.30',
+  firefox: 'Mozilla/5.0 (Android 14; Mobile; rv:131.0) Gecko/131.0 Firefox/131.0',
+  whatsapp: 'Mozilla/5.0 (Linux; Android 13; SM-A135F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36',
+  facebook: 'Mozilla/5.0 (Linux; Android 14; SM-A546B Build/UP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/480.0.0.0;]'
 };
 // proposition d'installation du navigateur, simulée (celle de Chrome ne vient pas dans un essai)
 const proposer = (p) => p.evaluate(() => {
@@ -85,10 +95,12 @@ const proposer = (p) => p.evaluate(() => {
     const guide = await p.$('#ma2m-guide') ? await p.textContent('#ma2m-guide') : '';
     ok(chemin.startsWith('/en/') ? /Share[\s\S]*Add to Home Screen[\s\S]*Add/.test(guide) : /Partager[\s\S]*Sur l’écran d’accueil[\s\S]*Ajouter/.test(guide),
       nom + ', iPhone : un appui montre le guide (Partager › « Sur l’écran d’accueil » › « Ajouter »)');
-    ok(await p.$('#ma2m-guide.ma2m-guide--bas .ma2m-guide-fleche') && await p.$('#ma2m-guide svg'), nom + ', iPhone : flèche animée vers le bas de l’écran et pictogramme du bouton Partager');
+    ok(!(await p.$('.ma2m-guide-fleche')) && await p.$('#ma2m-guide svg'), nom + ', iPhone : plus de flèche qui pointe dans le vide, pictogramme du bouton Partager');
+    ok(!(await p.isVisible('#ma2m-installer')), nom + ', iPhone : la barre rouge est cachée pendant l’aide (elle ne gêne plus la lecture)');
+    ok(chemin.startsWith('/en/') ? /⋯[\s\S]*More/.test(guide) : /⋯[\s\S]*« Plus »/.test(guide), nom + ', iPhone : nouveau Safari expliqué (⋯ puis Partager, « Plus » si besoin)');
     if (chemin === '/app/' && process.env.CAPTURES) await p.waitForTimeout(600), await p.screenshot({ path: require('path').join(process.env.CAPTURES, 'guide-iphone.png') });
     await p.click('.ma2m-guide-fermer');
-    ok(!(await p.$('#ma2m-guide')) && await bande(p), nom + ', iPhone : le guide se ferme, la bande reste');
+    ok(!(await p.$('#ma2m-guide')) && await p.isVisible('#ma2m-installer'), nom + ', iPhone : le guide se ferme, la barre rouge réapparaît');
     // ✕ : fermée pour cette visite
     await p.click('.ma2m-installer-fermer'); await p.reload(); await p.waitForTimeout(1500);
     ok(!(await bande(p)), nom + ', iPhone : ✕ ferme la bande pour la visite');
@@ -118,13 +130,65 @@ const proposer = (p) => p.evaluate(() => {
   ok(!demandesIntent && await p.$('#ma2m-guide.ma2m-guide--haut'), 'Android, « Installer » refusé : l’appui suivant montre le guide ⋮, sans recharger la page');
   await ctx.close();
 
-  // iPhone avec Chrome : le bouton Partager est en haut
-  {
-    const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA.iphone.replace('Version/18.0', 'CriOS/130.0.0.0') });
+  // iPhone : Chrome, Instagram… ne savent pas installer → « Ouvrir dans Safari » d'abord ;
+  // nouveau Safari (iOS 26) → le guide Safari (⋯ › Partager › « Sur l'écran d'accueil »)
+  for (const [ua, nom, attendu] of [
+    [UA.iphone.replace('Version/18.0', 'CriOS/130.0.0.0'), 'iPhone avec Chrome', /Ouvrez d’abord Safari[\s\S]*Ouvrir dans Safari/],
+    [UA.instagramIOS, 'iPhone, lien ouvert dans Instagram', /Ouvrez d’abord Safari[\s\S]*Ouvrir dans Safari/],
+    [UA.iphone26, 'iPhone récent (nouveau Safari, iOS 26)', /⋯[\s\S]*Partager[\s\S]*Sur l’écran d’accueil[\s\S]*« Plus »[\s\S]*Ajouter/]]) {
+    const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: ua });
     const q = await c.newPage(); await brancher(q, { tables, rpc }, []);
     await q.goto(BASE + '/app/'); await q.waitForSelector('#ma2m-installer', { timeout: 6000 }).catch(() => {});
     await q.click('.ma2m-installer-ouvrir'); await q.waitForSelector('#ma2m-guide', { timeout: 3000 }).catch(() => {});
-    ok(await q.$('#ma2m-guide.ma2m-guide--haut') && /en haut, dans la barre d’adresse[\s\S]*Safari/.test(await q.textContent('#ma2m-guide')), 'iPhone avec Chrome : « Partager » en haut, dans la barre d’adresse (sinon : ouvrir dans Safari)');
+    ok(attendu.test(await q.textContent('#ma2m-guide').catch(() => '')), nom + ' : la bonne marche à suivre s’affiche');
+    await c.close();
+  }
+
+  // Android, autres navigateurs que Chrome (Samsung Internet, Opera, Xiaomi, Firefox, WhatsApp,
+  // Facebook) : même si le navigateur propose d'installer (Samsung), on ne s'en sert PAS (Play
+  // Protect bloque l'appli qu'il fabrique) : un appui rouvre la page dans Chrome.
+  for (const nom of ['samsung', 'opera', 'xiaomi', 'firefox', 'whatsapp', 'facebook']) {
+    const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA[nom] });
+    const q = await c.newPage(); const intents = [];
+    q.on('request', (r) => { if (r.url().startsWith('intent:')) intents.push(r.url()); });
+    await brancher(q, { tables, rpc }, []);
+    await q.goto(BASE + '/app/'); await q.waitForSelector('#ma2m-installer', { timeout: 6000 }).catch(() => {});
+    await proposer(q);
+    await q.click('.ma2m-installer-ouvrir'); await q.waitForTimeout(600);
+    // (la demande enregistrée s'arrête avant « #Intent;…package=com.android.chrome », comme plus haut)
+    ok(!(await q.evaluate(() => window.__installationDemandee === true)) && intents.some((u) => /^intent:\/\/127\.0\.0\.1:\d+\/app\/\?installer=1$/.test(u)),
+      'Android, ' + nom + ' : pas d’installation par ce navigateur, un appui rouvre la page dans Chrome');
+    await c.close();
+  }
+
+  // Samsung Internet rouvert sans Chrome (le lien revient avec le repère) : aide « Ouvrez avec Google Chrome »
+  {
+    const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA.samsung });
+    const q = await c.newPage(); await brancher(q, { tables, rpc }, []);
+    await q.goto(BASE + '/app/?installer=1'); await q.waitForSelector('#ma2m-installer', { timeout: 6000 }).catch(() => {});
+    await q.click('.ma2m-installer-ouvrir'); await q.waitForSelector('#ma2m-guide', { timeout: 3000 }).catch(() => {});
+    const t = await q.textContent('#ma2m-guide').catch(() => '');
+    ok(/Google Chrome/.test(t) && await q.$('#ma2m-guide a[href*="com.android.chrome"]'), 'Android sans Chrome : l’aide propose d’ouvrir avec Google Chrome (lien pour l’installer)');
+    await c.close();
+  }
+
+  // Connexion coupée : plus de « Chargement… » sans fin. Scripts bloqués → au bout de 15 s,
+  // « Connexion lente ou coupée » et « Réessayer » s'affichent (par le seul CSS).
+  {
+    const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA.iphone26 });
+    const q = await c.newPage();
+    await q.route(/\/js\//, (r) => r.abort());
+    await q.goto(BASE + '/app/');
+    const avant = await q.isVisible('.ap-lent');
+    await q.waitForTimeout(15800);
+    ok(!avant && await q.isVisible('.ap-lent') && /Connexion lente[\s\S]*Réessayer/.test(await q.textContent('.ap-lent')), 'connexion coupée : après 15 s, « Connexion lente ou coupée » + « Réessayer » au lieu de « Chargement… » sans fin');
+    await c.close();
+  }
+  // délai maximum partagé (js/app.js) : une attente qui ne répond jamais échoue avec le code « delai »
+  {
+    const c = await b.newContext(); const q = await c.newPage(); await brancher(q, { tables, rpc }, []);
+    await q.goto(BASE + '/qui-sommes-nous.html'); await q.waitForTimeout(800);
+    ok(await q.evaluate(() => avecDelai(new Promise(() => {}), 50).then(() => 'non', (e) => e.code)) === 'delai', 'délai maximum : une attente sans réponse s’arrête (code « delai »)');
     await c.close();
   }
 

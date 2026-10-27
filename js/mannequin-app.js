@@ -378,16 +378,20 @@
 
   // ---------- démarrage ----------
   // (session illisible, ex. stockage du navigateur bloqué : l'écran de connexion)
-  function demarrer() { ouvrir().catch(() => ecranConnexion()); }
+  // (mauvaise connexion : plus d'attente sans fin sur « Chargement… », captures réelles du 27/10/2026)
+  function connexionLente() {
+    racine.innerHTML = '<main class="ap-connexion"><div class="ap-carte">Connexion lente ou coupée : votre espace n’a pas pu être chargé. <button type="button" class="ap-btn rouge" id="ap-reessayer">Réessayer</button></div></main>';
+    document.getElementById('ap-reessayer').addEventListener('click', () => demarrer());
+  }
+  function demarrer() { ouvrir().catch((e) => (e && e.code === 'delai' ? connexionLente() : ecranConnexion())); }
   async function ouvrir() {
-    const { data } = await sb.auth.getSession();
+    const { data } = await avecDelai(sb.auth.getSession(), 12000);
     if (!data || !data.session) { ecranConnexion(); return; }
     racine.innerHTML = '<div class="ap-chargement"><img src="/icons/mannequin-192.png" alt="" width="96" height="96"><span>Chargement de votre espace…</span></div>';
     try {
-      etat = await charger(data.session.user.id);
+      etat = await avecDelai(charger(data.session.user.id), 20000);
     } catch (e) {
-      racine.innerHTML = '<main class="ap-connexion"><div class="ap-carte">Votre espace n’a pas pu être chargé : vérifiez votre connexion. <button type="button" class="ap-btn rouge" id="ap-reessayer">Réessayer</button></div></main>';
-      document.getElementById('ap-reessayer').addEventListener('click', () => demarrer());
+      connexionLente();
       return;
     }
     if (!etat.profil) {

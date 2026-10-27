@@ -43,10 +43,7 @@ body.ma2m-installer-visible::after { content: ""; display: block; height: 96px; 
   position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border: 0; border-radius: 12px; cursor: pointer;
   background: var(--rouge-ma2m, #C8102E); color: #fff; -webkit-text-fill-color: #fff; font-size: 16px;
 }
-.ma2m-guide-fleche {
-  position: fixed; font-size: 44px; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .5); animation: ma2m-installer-saut 1s ease-in-out infinite; pointer-events: none;
-}
-.ma2m-guide--bas .ma2m-guide-fleche { left: 50%; margin-left: -22px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
-.ma2m-guide--haut .ma2m-guide-fleche { right: 14px; top: 18px; }
-@media (prefers-reduced-motion: reduce) { .ma2m-installer, .ma2m-installer-fleche, .ma2m-guide-fleche, .ma2m-guide-carte { animation: none; } }
+/* pendant l'aide, la barre rouge « Télécharger l'application » est cachée (elle gênait la lecture) */
+body.ma2m-guide-ouvert .ma2m-installer { display: none; }
+@media (prefers-reduced-motion: reduce) { .ma2m-installer, .ma2m-installer-fleche, .ma2m-guide-carte { animation: none; } }
 @media print { .ma2m-installer, .ma2m-guide { display: none !important; } }

@@ -13,6 +13,11 @@ html { -webkit-text-size-adjust: 100%; }
 .ap { min-height: 100dvh; max-width: 560px; margin: 0 auto; }
 .ap-chargement { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--ap-gris); }
 .ap-chargement img { border-radius: 22px; box-shadow: 0 6px 16px rgba(0, 0, 0, .2); }
+/* message de secours visible par le seul CSS : si les scripts n'arrivent pas (réseau coupé), il
+   apparaît au bout de 15 s au lieu de laisser « Chargement… » sans fin ; « Réessayer » recharge */
+.ap-lent { margin: 0; text-align: center; line-height: 1.6; visibility: hidden; opacity: 0; animation: ap-lent-apparait .3s 15s forwards; }
+.ap-lent .ap-btn { display: inline-block; margin-top: 10px; text-decoration: none; }
+@keyframes ap-lent-apparait { to { visibility: visible; opacity: 1; } }
 
 /* en-tête et écran */
 .ap-tete { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px;
