@@ -84,3 +84,9 @@ Demandes de la propriétaire pour la prochaine version :
   visible n'est ni rouge (#7C2128, #5A141B et leurs transparences), ni blanc/gris très clair (#FFFFFF,
   #F2F2F2), hors photos, vidéos, pastilles d'état (vert/orange) et boutons rouges du site. Elle craint
   qu'une mauvaise manipulation (humaine ou IA) mélange les couleurs : ce test doit l'empêcher.
+- 27/10 (nuit) : **CHANTIER 1 EN LIGNE** (main 99cd051 puis c76a622) : Administration + application
+  des mannequins en rouge et blanc. Batterie complète : 70 parcours, 3 405 vérifications, 0 échec.
+  Vérifié en ligne (fond #7C2128, aucune erreur). SonarCloud : outils/ exclu (.sonarcloud.properties),
+  notes revenues au maximum (0 bug, 0 faille). La vidéo peut maintenant être envoyée aux mannequins.
+  **PROCHAIN CHANTIER : le site public** (voir plus haut : ménage des couleurs À LA SOURCE d'abord,
+  test gardien des couleurs autorisées, captures à la propriétaire, son accord, puis mise en ligne).
