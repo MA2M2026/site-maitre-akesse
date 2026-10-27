@@ -19,6 +19,14 @@
   --sur-rouge: #FFFFFF;         /* texte posé sur le rouge */
   --focus: 0 0 0 3px rgba(200, 16, 46, 0.35);
 
+  /* Charte rouge et blanc (27/10/2026, choix de la propriétaire) : DEUX couleurs de fond seulement.
+     Le beige et le noir d'avant sont remplacés ici, à la source (plus de couche par-dessus). */
+  --rouge-mat: #7C2128;         /* fond principal (rouge très mat) du site et des deux applications */
+  --rouge-profond: #5A141B;     /* ce qui doit ressortir : carte importante, bouton choisi, messages */
+  --blanc: #FFFFFF;             /* blocs blancs */
+  --gris-clair: #F2F2F2;        /* creux et survols (gris très clair) */
+  --gris-lignes: #E4E4E4;       /* bordures et séparateurs sur le blanc */
+
   /* zones sombres (menu latéral du portail, en-tête et pied de page du site) */
   --sombre: #1E1D1C;
   --sombre-survol: #2A2927;
@@ -566,22 +574,22 @@
    voir PLAN-REFONTE-MAGAZINE.md) — papier beige, encre presque noire, rouge MA2M, titres Big
    Shoulders Display en capitales, texte Work Sans. Utilisé par css/magazine.css (site public). */
 :root {
-  --mag-scene: #CFC6BB;          /* fond derrière les pages (la « table ») */
-  --mag-papier: #F1ECE5;         /* papier des pages */
-  --mag-encre: #1B1817;          /* texte */
+  --mag-scene: var(--rouge-mat);  /* fond derrière les pages (la « table ») : rouge très mat */
+  --mag-papier: var(--blanc);     /* papier des pages : blanc */
+  --mag-encre: #1B1817;          /* texte (reste foncé pour la lisibilité dans les blocs blancs) */
   --mag-gris: #655D56;           /* légendes, folios */
   --mag-rouge: var(--rouge-ma2m);
   --mag-sur-photo: #FFFFFF;      /* texte posé sur une photo */
   --mag-voile-fort: rgba(0, 0, 0, 0.72);
   --mag-voile-texte: rgba(0, 0, 0, 0.58);
   --mag-voile-plein: rgba(0, 0, 0, 0.85);
-  --mag-voile-papier: rgba(241, 236, 229, 0.9);   /* papier presque opaque posé sur une photo, sous du texte foncé */
+  --mag-voile-papier: rgba(255, 255, 255, 0.9);   /* papier blanc presque opaque posé sur une photo, sous du texte foncé */
   --mag-voile-nul: rgba(0, 0, 0, 0);
   --mag-ombre-tirage: 0 18px 40px -14px rgba(27, 24, 23, 0.45), 0 2px 6px rgba(27, 24, 23, 0.12);   /* tirage photo posé sur la page */
-  --mag-attente: #B9AFA4;        /* cadre photo en cours de chargement */
-  --mag-carte: #F8F5F1;          /* cartes, formulaires, en-tête et pied de page sur le papier */
-  --mag-papier-fonce: #E6DFD6;   /* zones grisées, survol */
-  --mag-lignes: #D3C9BD;         /* bordures et séparateurs sur le papier */
+  --mag-attente: var(--gris-clair);  /* cadre photo en cours de chargement : gris très clair */
+  --mag-carte: var(--blanc);      /* cartes, formulaires, en-tête et pied de page : blanc */
+  --mag-papier-fonce: var(--gris-clair);   /* zones grisées, survol : gris très clair */
+  --mag-lignes: var(--gris-lignes);   /* bordures et séparateurs sur le blanc */
   --mag-titre: 'Big Shoulders Display', 'Arial Narrow', system-ui, sans-serif;
   --mag-texte: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
@@ -597,7 +605,7 @@
   --encre: var(--mag-encre);
   --encre-douce: var(--mag-gris);
   --lignes: var(--mag-lignes);
-  --sombre: var(--mag-encre);
+  --sombre: var(--rouge-mat);   /* en-tête, pied de page et menus « sombres » : rouge très mat (plus de noir) */
   --police: var(--mag-texte);
   --police-titre: var(--mag-titre);
 }
