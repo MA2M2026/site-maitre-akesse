@@ -72,3 +72,9 @@ Demandes de la propriétaire pour la prochaine version :
 - Pour le SITE public (chantier 3, plus tard) : même règle rouge très mat #7C2128 + blanc, rouge profond
   #5A141B pour ce qui ressort ; s'inspirer de css/applis-rouge-mat.css (variables) et vérifier avec
   scripts/tests-visiteur/test-visuel.js (contraste de 34 pages) ; captures à la propriétaire AVANT toute mise en ligne.
+- **IMPORTANT, demande de la propriétaire (27/10)** : PAS de superposition de couleurs à long terme.
+  `css/applis-rouge-mat.css` est une couche posée par-dessus les anciennes couleurs (beige/noir) : au
+  chantier du site, PREMIÈRE ÉTAPE = changer les couleurs À LA SOURCE (css/jetons.css, partagé site +
+  applis ; puis css/admin-vivante.css et css/mannequin-app.css), supprimer les anciennes valeurs beige/noir
+  et SUPPRIMER `css/applis-rouge-mat.css` (et ses <link> dans admin/index.html et app/*.html, ses entrées
+  dans admin/sw.js et app/sw.js). Une seule définition des couleurs pour tout. Garder les tests de lisibilité.
