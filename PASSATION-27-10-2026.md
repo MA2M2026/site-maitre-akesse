@@ -3,6 +3,12 @@
 Lire d'abord CLAUDE.md (français, une chose à la fois, tests visiteur, relecture, pas de mise en
 ligne sans accord). Ce fichier est sur la branche `chantier-rouge-mat` (PAS sur main, rien n'est en ligne).
 
+## ORDRE DÉCIDÉ PAR LA PROPRIÉTAIRE (27/10/2026, feu vert donné)
+1. **D'abord la vidéo d'installation** (chantier 2 ci-dessous), jusqu'à ce qu'elle la valide.
+2. **Ensuite les couleurs des deux applications** (chantier 1), captures → son accord → mise en ligne.
+3. **Puis le site public** avec les mêmes couleurs (rouge très mat + blocs blancs), après son accord.
+Tenir CE fichier à jour à chaque étape (la session peut s'arrêter à tout moment) et le pousser sur la branche.
+
 ## Chantier 1 — Couleurs des deux applications (EN COURS, pas en ligne)
 Choix validé par la propriétaire : **fond rouge très mat #7C2128, blocs blancs, écriture noire dans
 les blocs, blanche sur le rouge, SANS effet brillant** (elle a refusé l'essai brillant). D'abord
@@ -48,3 +54,6 @@ Demandes de la propriétaire pour la prochaine version :
 
 ## Rappels déjà programmés
 - 16/11 : retirer les renvois temporaires des anciennes pages mannequin (vercel.json, test-app-mannequin.js, README).
+
+## Journal de la reprise (à compléter au fur et à mesure)
+- 27/10 : passation écrite, branche poussée. Début de la vidéo v3 (fond rouge mat, départ WhatsApp).
