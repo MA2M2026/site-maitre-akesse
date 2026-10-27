@@ -1,3 +1,54 @@
+# 🚨 PRIORITÉ N° 1 (AVANT LE SITE) — l'installation de l'application des mannequins bloque de vraies filles
+
+Signalé par la propriétaire le 27/10 au soir, captures réelles dans `outils/video-installation/reel-*.{jpg,png}` :
+1. **Android + Samsung Internet** (`reel-samsung-notification.jpg`, `reel-play-protect.jpg`) : « Impossible
+   d'installer l'application Web » puis Google Play Protect « Appli non sécurisée bloquée — conçue pour une
+   version plus ancienne d'Android ». Cause probable : Samsung Internet fabrique lui-même la WebAPK (ancienne
+   cible Android) → Play Protect la bloque ; avec Chrome (WebAPK fabriquée par Google) ça marche (téléphone de
+   la propriétaire). Aujourd'hui `js/app.js` (bandeInstallation, `installer()`) utilise la proposition
+   `beforeinstallprompt` de N'IMPORTE QUEL navigateur Chromium (dejaProposee) → Samsung installe et se fait bloquer.
+2. **iPhone, nouveau Safari (iOS 26)** (`reel-iphone-nouveau-safari.png`) : plus de bouton Partager en bas.
+   Vrai chemin (décrit par une mannequin) : **⋯ (barre d'adresse en bas) → Partager → descendre → « Plus »
+   (elle dit « En savoir plus ») → « Sur l'écran d'accueil » → Ajouter**. Notre aide `guideIOS()` (js/app.js)
+   montre l'ancien chemin, et sa **flèche blanche** (⬇ au milieu en bas) pointe vers rien et tombe SUR notre
+   barre rouge « Télécharger l'application », qui reste visible sous l'aide.
+3. **Chrome bloqué sur « Chargement… »** (`reel-chrome-chargement.jpg`, fond BEIGE = ancienne copie de secours
+   du service worker, donc réseau qui n'arrivait pas au site) : l'app tourne sans fin. `js/mannequin-app.js`
+   `ouvrir()` attend `sb.auth.getSession()` sans limite de temps ; si les scripts ne chargent pas, rien ne dit
+   rien.
+
+Ce qu'elle veut (ses mots) : « revoir tout pour que ce soit vraiment plus facile », tenir compte de TOUS les
+navigateurs et des anciens Android (pas seulement Chrome), et **tester en situation réelle comme des humains**
+(elle a raison : nos robots = Chromium simulé, ils ne voient ni Safari iOS 26, ni Samsung Internet, ni Play
+Protect, ni la vraie 4G).
+
+Plan validé dans son principe (une étape à la fois, lui écrire en français) :
+A. **Installation selon le navigateur** (js/app.js, bandeInstallation ; partagé site/Administration/app) :
+   - Android : n'utiliser la fenêtre « Installer » QUE dans Chrome (UA Chrome sans SamsungBrowser/OPR/
+     MiuiBrowser/Firefox/EdgA/wv…). Samsung Internet, Opera, Mi Browser, Firefox, WebView (WhatsApp/
+     Facebook) → rouvrir dans Chrome (`lienChrome()`, intent:// avec repli) ; si Chrome absent, aide propre
+     au navigateur (menu → « Ajouter à l'écran d'accueil » / « Ajouter un raccourci »).
+   - iPhone : aide en 2 versions — iOS récent (⋯ → Partager → Plus → Sur l'écran d'accueil → Ajouter) et
+     ancien (Partager en bas → Sur l'écran d'accueil → Ajouter) ; Chrome/Firefox iOS et applis (WhatsApp,
+     Instagram…) → « Ouvrir dans Safari » d'abord. Retirer la flèche trompeuse (ou la pointer vers ⋯ en bas à
+     droite) ; cacher la barre rouge tant que l'aide est ouverte.
+   - Mettre à jour `scripts/tests-visiteur/test-installation.js` (cas par agent utilisateur : iOS 26 Safari,
+     iOS 17 Safari, Chrome iOS, Samsung Internet, Opera, Mi Browser, Firefox Android, WebView WhatsApp, Chrome).
+B. **Chargement sans fin** : limite de temps (≈ 12 s) sur `getSession()` et le premier chargement → message
+   « Connexion lente ou coupée » + bouton « Réessayer » ; et un message visible par CSS seul (animation avec
+   délai sur `.ap-chargement`) si les scripts ne se chargent pas du tout.
+C. **Essais RÉELS avant mise en ligne** : pousser sur une branche → Vercel crée une adresse d'aperçu (ne touche
+   pas le site en ligne ; si l'aperçu est protégé, demander à la propriétaire de l'ouvrir). Lui donner une
+   liste de cases à cocher très simple ; elle + 2-3 mannequins essaient sur : Android Chrome, Samsung
+   Internet, ancien Android, iPhone récent (iOS 26), iPhone plus ancien, lien ouvert depuis WhatsApp.
+   Captures → corrections → mise en ligne seulement quand TOUT marche.
+D. **Vidéo** (`outils/video-installation/film3.html`) à refaire APRÈS C, d'après les captures réelles :
+   nouveau chemin iPhone ; Android selon le navigateur. Fond rouge mat, même style (validé « top »).
+
+Ensuite seulement : le chantier du site (section suivante).
+
+---
+
 # ➜ MISSION DE LA PROCHAINE CONVERSATION (à lire en premier) — chantier 3 : le site public
 
 État au 27/10/2026 (nuit) : la vidéo est validée (chantier 2 fini) ; l'Administration et l'application
