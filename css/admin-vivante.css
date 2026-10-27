@@ -56,7 +56,7 @@ img { max-width: 100%; }
 }
 
 /* ---------- La maison : en-tête, menu, contenu, barre du bas ---------- */
-.coque { min-height: 100vh; display: grid; grid-template-columns: 270px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); background: var(--av-papier); }
+.coque { min-height: 100vh; display: grid; grid-template-columns: 300px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); background: var(--av-papier); }
 .coque.sans-menu { grid-template-columns: minmax(0, 1fr); }
 .haut {
   grid-column: 1 / -1; position: sticky; top: 0; z-index: 30;
@@ -84,17 +84,19 @@ img { max-width: 100%; }
 .titre-menu { padding: 16px 12px 6px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--av-gris); font-weight: 500; }
 /* Menu en compartiments (24/10/2026) : chaque groupe dans son cadre, bien séparé des autres ;
    le compartiment de la page ouverte est souligné */
-.compartiment { margin: 10px 0; padding: 4px 6px 6px; border: 1px solid var(--av-creux); border-radius: var(--av-rayon); background: var(--av-papier); }
+/* blocs bien visibles (27/10/2026, demande de la propriétaire : « tout paraît confondu ») : carte
+   claire sur le papier du menu, bordure nette, ombre légère, titre séparé de ses lignes par un trait */
+.compartiment { margin: 0 0 16px; padding: 4px 6px 8px; border: 1px solid var(--av-lignes); border-radius: var(--av-rayon); background: var(--av-carte); box-shadow: var(--av-ombre); }
 /* titres des parties en rouge (25/10/2026, demande de la propriétaire) : on les distingue tout de
    suite des lignes en dessous (contraste 4,9 sur le papier du menu) */
-.compartiment .sous-titre-menu { padding: 10px 8px 6px; color: var(--av-rouge); font-weight: 700; }
-.compartiment:has(.nav.actif) { border-color: var(--av-rouge); }
+.compartiment .sous-titre-menu { padding: 12px 8px 10px; margin: 0 2px 6px; border-bottom: 1px solid var(--av-lignes); color: var(--av-rouge); font-weight: 700; font-size: 13px; letter-spacing: .12em; }
+.compartiment:has(.nav.actif) { border-color: var(--av-rouge); border-width: 2px; }
 .nav {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 12px; min-height: 36px;
-  border-radius: 10px; text-decoration: none; color: var(--av-encre); font-size: 14px; position: relative;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 12px; min-height: 44px;
+  border-radius: 10px; text-decoration: none; color: var(--av-encre); font-size: 17px; position: relative;
 }
 .nav:hover { background: var(--av-creux); }
-.nav.actif { background: var(--av-carte); box-shadow: var(--av-ombre); font-weight: 600; }
+.nav.actif { background: var(--av-creux); font-weight: 600; }  /* (le bloc est déjà une carte claire) */
 .nav.actif::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--av-rouge); }
 .compteur { background: var(--av-rouge); color: #fff; border-radius: 99px; font-size: 11px; font-weight: 600; padding: 1px 8px; }
 .lateral-pied { margin-top: auto; padding: 18px 8px 0; display: flex; flex-direction: column; gap: 8px; }
@@ -348,6 +350,8 @@ details summary { cursor: pointer; font-weight: 600; }
   .menu-ouvert .voile-menu { display: block; position: fixed; inset: 0; background: rgba(27, 24, 23, .4); z-index: 44; }
   .menu-ouvert body { overflow: hidden; }
   .lateral .blocs { display: none; }
+  .nav { font-size: 18px; min-height: 48px; }  /* téléphone et tablette : plus grand encore (27/10/2026) */
+  .compartiment .sous-titre-menu { font-size: 14px; }
   .contenu { padding: 22px 16px calc(var(--av-bas) + 40px); }
   body:has(.onglets-bas) { --ma2m-installer-bas: calc(var(--av-bas) + 10px); }  /* bande « Télécharger l'application » au-dessus des onglets */
   .onglets-bas {

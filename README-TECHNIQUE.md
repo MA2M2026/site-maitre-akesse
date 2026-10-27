@@ -3715,3 +3715,8 @@ après le clic, c'est voulu) ; « délai dépassé » des fiches le 21/10 (conne
 second essai automatique déjà en place) ; envoi de photo coupé (3 essais automatiques dans
 `uploaderVersR2`, message clair sinon) ; alerte CSP « style en ligne » sur l'accueil (extension du
 navigateur du visiteur, la page n'a aucun style en ligne).
+
+## Menu de l'Administration plus lisible (27/10/2026, demande de la propriétaire)
+Mots du menu agrandis (17 px sur ordinateur, 18 px sur téléphone et tablette ; menu latéral élargi à
+300 px) et blocs (compartiments) bien détachés : carte claire, contour net, ombre légère, titre rouge
+séparé de ses lignes par un trait (`css/admin-vivante.css`, `.compartiment` et `.nav`).
