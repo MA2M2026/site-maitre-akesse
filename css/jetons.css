@@ -13,9 +13,9 @@
   --encre: #1E1D1C;             /* texte principal, en-têtes de tableaux, menu latéral */
   --encre-douce: #5E5B57;       /* aides, légendes, libellés */
   --lignes: #DDDAD5;            /* bordures et séparateurs */
-  --rouge-ma2m: #C8102E;        /* boutons principaux, tuiles, barre active */
-  --rouge-ma2m-texte: #B00E28;  /* texte rouge sur fond clair (contraste) */
-  --rouge-ma2m-survol: #A50D26;
+  --rouge-ma2m: #5A141B;        /* accents, boutons, tuiles, barre active : rouge mat profond (plus de rouge vif) */
+  --rouge-ma2m-texte: #7C2128;  /* texte rouge sur fond clair : rouge mat (contraste AA sur blanc) */
+  --rouge-ma2m-survol: #451016;
   --sur-rouge: #FFFFFF;         /* texte posé sur le rouge */
   --focus: 0 0 0 3px rgba(200, 16, 46, 0.35);
 
