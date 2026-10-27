@@ -1,3 +1,9 @@
+> **MISE À JOUR 27/10 (dernière décision de la propriétaire)** : Google Play ET le QR code sont ABANDONNÉS
+> pour l'instant (ignorer le point E « Google Play » et « QR code »). Objectif unique : approfondir et SIMPLIFIER
+> l'installation depuis le lien sur TOUS les appareils (iPhone récents/anciens, Android récents/anciens, Mac,
+> Windows) et TOUS les navigateurs (Safari, Chrome, Samsung Internet, Firefox, Opera, Edge, Mi Browser,
+> navigateurs intégrés de WhatsApp/Instagram/Facebook), iPhone d'abord, avec essais sur de vrais appareils.
+
 # 🚨 PRIORITÉ N° 1 (AVANT LE SITE) — l'installation de l'application des mannequins bloque de vraies filles
 
 Signalé par la propriétaire le 27/10 au soir, captures réelles dans `outils/video-installation/reel-*.{jpg,png}` :
