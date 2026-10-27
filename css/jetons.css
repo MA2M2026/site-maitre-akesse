@@ -26,6 +26,8 @@
   --blanc: #FFFFFF;             /* blocs blancs */
   --gris-clair: #F2F2F2;        /* creux et survols (gris très clair) */
   --gris-lignes: #E4E4E4;       /* bordures et séparateurs sur le blanc */
+  --voile: rgba(90, 20, 27, 0.5);     /* voile léger posé sur le site (menus, fonds de modale) */
+  --voile-fort: rgba(90, 20, 27, 0.96); /* voile épais : visionneuse photo, fenêtres superposées */
 
   /* zones sombres (menu latéral du portail, en-tête et pied de page du site) */
   --sombre: #1E1D1C;

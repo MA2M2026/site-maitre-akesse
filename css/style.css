@@ -311,7 +311,7 @@ section { padding: 5rem 0; }
     radial-gradient(ellipse 130% 55% at 50% 100%, var(--c-rgba-0-0-0-0_92) 0%, var(--c-rgba-0-0-0-0_62) 38%, var(--c-rgba-0-0-0-0_18) 68%, var(--c-rgba-0-0-0-0) 85%),
     linear-gradient(to top, var(--c-rgba-0-0-0-0_55) 0%, var(--c-rgba-0-0-0-0) 45%);
 }
-.profil-hero-fullbleed { background: var(--c-000); }
+.profil-hero-fullbleed { background: var(--rouge-mat); }
 .profil-hero-contenu { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
 .profil-hero-contenu h1 {
   color: var(--titre-clair); margin-top: 0.6rem;
@@ -1253,7 +1253,7 @@ section { padding: 5rem 0; }
 
 .lightbox-global {
   position: fixed; inset: 0; z-index: 2000;
-  background: var(--c-000);
+  background: var(--voile-fort);
   display: flex; align-items: center; justify-content: center;
   opacity: 0; visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -1709,7 +1709,7 @@ html.porte-verrouillee { overflow: hidden; height: 100%; }
 @media (max-width: 639px) { #partenaires-grille .news-img { width: 132px; aspect-ratio: 4 / 3; } }
 
 .news-modal {
-  position: fixed; inset: 0; z-index: 900; background: var(--c-rgba-3-2-2-0_94);
+  position: fixed; inset: 0; z-index: 900; background: var(--voile-fort);
   display: flex; align-items: center; justify-content: center; padding: 2rem;
   opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
 }
@@ -1813,7 +1813,7 @@ body:has(.whatsapp-flottant) { --ma2m-installer-bas: calc(1.4rem + 56px - 4px); 
    spacieuse avec aperçu du rendu public en direct, à la place de l'ancien petit
    encart coincé en bas de la page publique (difficile à lire pour rédiger). ---------- */
 .redaction-overlay {
-  position: fixed; inset: 0; z-index: 950; background: var(--c-rgba-3-2-2-0_97);
+  position: fixed; inset: 0; z-index: 950; background: var(--voile-fort);
   display: flex; align-items: flex-start; justify-content: center;
   opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
   padding: 2rem 1.2rem;
