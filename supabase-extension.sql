@@ -5036,17 +5036,14 @@ NOTIFY pgrst, 'reload schema';
 -- d'abonnés), la 11e candidate de la minute recevait « Erreur lors de
 -- l'envoi ». Le site retente désormais tout seul (insererAvecPatience dans
 -- js/app.js) ; cette extension relève en plus les plafonds :
---   - candidatures : 60 par minute pour tout le site, 6 par connexion ;
 --   - demandes de sélection (recruteurs) et messages de contact : 30 par
 --     minute pour tout le site, 3 par connexion.
 -- Les robots restent freinés (un robot seul ne peut plus bloquer tout le
--- monde plus d'une minute, et pas au-delà de 6 envois).
+-- monde plus d'une minute).
+-- Remarque : la politique des candidatures est définie plus bas (capacité
+-- « gros casting » : 150/minute au total, 30 par connexion) — voir la
+-- politique « Tout le monde peut candidater » près de casting_ouvert().
 -- ===================================================================
-drop policy if exists "Tout le monde peut candidater" on casting_applications;
-create policy "Tout le monde peut candidater"
-  on casting_applications for insert
-  with check (limiter_soumissions_publiques_ip('candidature', 60, 6) and status = 'nouvelle');
-
 drop policy if exists "Tout le monde peut envoyer une demande de casting" on recruiter_requests;
 create policy "Tout le monde peut envoyer une demande de casting"
   on recruiter_requests for insert
@@ -5182,10 +5179,14 @@ revoke all on function casting_ouvert() from public;
 grant execute on function casting_ouvert() to anon, authenticated;
 
 drop policy if exists "Tout le monde peut candidater" on casting_applications;
+-- Capacité « gros casting » : on accepte jusqu'à 150 candidatures/minute au total
+-- (pour que ~100 personnes puissent s'inscrire en même temps) tout en gardant un
+-- garde-fou anti-spam de 30/minute par adresse (un même cybercafé / une même
+-- connexion partagée peut inscrire plusieurs personnes sans être bloqué à 3).
 create policy "Tout le monde peut candidater"
   on casting_applications for insert
   with check (
-    limiter_soumissions_publiques('candidature')
+    limiter_soumissions_publiques_ip('candidature', 150, 30)
     and status = 'nouvelle'
     and (type_candidature <> 'projet' or casting_ouvert())
   );

@@ -2558,8 +2558,15 @@ fiches) et formulaires remplis jusqu'au bout — **sans aucune écriture** : tou
   formulaires candidature / contact / sélection passent par `insererAvecPatience()`
   (`js/app.js`) : un envoi refusé pour cette seule raison est retenté 3 fois (15, 25,
   35 s) avec un compte à rebours, au lieu d'afficher « Erreur lors de l'envoi ».
-  **Extension 102** (à lancer dans Supabase) relève les plafonds : candidatures 60/min
-  pour le site et 6/min par connexion ; contact et recruteurs 30/min et 3/min.
+  Les plafonds (à lancer dans Supabase) : contact et recruteurs 30/min pour le site
+  et 3/min par connexion. **Capacité « gros casting »** : les candidatures sont montées
+  à 150/min pour le site et 30/min par connexion
+  (`limiter_soumissions_publiques_ip('candidature', 150, 30)`, politique « Tout le monde
+  peut candidater »), pour que ~100 personnes puissent s'inscrire en même temps après une
+  annonce, tout en gardant un garde-fou anti-spam par adresse (utile aussi quand beaucoup
+  de candidats partagent une même connexion : cybercafé, Wi-Fi d'un casting, opérateur
+  mobile). Vérifié sur la base d'essai : 100 inscriptions simultanées = 100 acceptées ;
+  40 depuis une même adresse = 30 acceptées ; le contact reste à ~10.
 - **Charge (lecture seule, site réel)** : une visite de 6 pages = 24 petites lectures
   (≈ 50 Ko). Jusqu'à 50 visiteurs arrivant à la même seconde : tout fonctionne (réponses
   de la base 1 à 4 s). Au-delà, la machine de test elle-même saturait (test témoin sur un
