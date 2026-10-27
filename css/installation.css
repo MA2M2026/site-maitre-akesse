@@ -26,10 +26,12 @@ body.ma2m-installer-visible::after { content: ""; display: block; height: 96px; 
 
 /* guide en images (iPhone : flèche vers le bas ; Chrome Android : flèche vers le menu ⋮ en haut à droite) */
 .ma2m-guide { position: fixed; inset: 0; z-index: 1000; background: rgba(20, 17, 16, .62); display: flex; justify-content: center; padding: 16px; }
-.ma2m-guide--bas { align-items: flex-end; padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
-.ma2m-guide--haut { align-items: flex-start; padding-top: 88px; }
+.ma2m-guide--bas { align-items: flex-end; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.ma2m-guide--haut { align-items: flex-start; padding-top: min(88px, 10vh); }
+/* jamais plus haute que l'écran (petit iPhone SE : le haut et le ✕ étaient coupés) : elle défile */
 .ma2m-guide-carte {
-  position: relative; width: 100%; max-width: 420px; background: #FBF8F4; color: #1B1817; border-radius: 22px; padding: 22px 20px 20px;
+  position: relative; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
+  background: #FBF8F4; color: #1B1817; border-radius: 22px; padding: 22px 20px 20px;
   font: 400 15px/1.45 'Work Sans', system-ui, sans-serif; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, .35); animation: ma2m-installer-arrivee .35s ease;
 }
 .ma2m-guide-carte img { border-radius: 14px; }

@@ -144,6 +144,21 @@ const proposer = (p) => p.evaluate(() => {
     await c.close();
   }
 
+  // Petit iPhone (SE, 320 × 568) : l'aide tient dans l'écran, le ✕ reste visible et touchable
+  {
+    const c = await b.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA.iphone.replace('18_0', '15_8').replace('Version/18.0', 'Version/15.6') });
+    const q = await c.newPage(); await brancher(q, { tables, rpc }, []);
+    await q.goto(BASE + '/app/'); await q.waitForSelector('#ma2m-installer', { timeout: 6000 }).catch(() => {});
+    await q.click('.ma2m-installer-ouvrir'); await q.waitForSelector('#ma2m-guide', { timeout: 3000 }).catch(() => {});
+    await q.waitForTimeout(600);  // (fin de l'animation d'arrivée : la carte glisse de quelques pixels)
+    const carte = await q.$eval('.ma2m-guide-carte', (x) => { const r = x.getBoundingClientRect(); return { haut: r.top, bas: r.bottom }; }).catch(() => null);
+    const croix = await q.$eval('.ma2m-guide-fermer', (x) => { const r = x.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }).catch(() => false);
+    ok(carte && carte.haut >= 0 && carte.bas <= 568 && croix, 'petit iPhone (SE) : l’aide tient dans l’écran, le ✕ reste visible ' + JSON.stringify(carte));
+    await q.click('.ma2m-guide-fermer').catch(() => {});
+    ok(!(await q.$('#ma2m-guide')), 'petit iPhone (SE) : le ✕ ferme l’aide');
+    await c.close();
+  }
+
   // Android, autres navigateurs que Chrome (Samsung Internet, Opera, Xiaomi, Firefox, WhatsApp,
   // Facebook) : même si le navigateur propose d'installer (Samsung), on ne s'en sert PAS (Play
   // Protect bloque l'appli qu'il fabrique) : un appui rouvre la page dans Chrome.
@@ -172,7 +187,7 @@ const proposer = (p) => p.evaluate(() => {
     await c.close();
   }
 
-  // Connexion coupée : plus de « Chargement… » sans fin. Scripts bloqués → au bout de 15 s,
+  // Connexion coupée : plus de « Chargement… » sans fin. Scripts bloqués → au bout de 25 s,
   // « Connexion lente ou coupée » et « Réessayer » s'affichent (par le seul CSS).
   {
     const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA.iphone26 });
@@ -180,8 +195,8 @@ const proposer = (p) => p.evaluate(() => {
     await q.route(/\/js\//, (r) => r.abort());
     await q.goto(BASE + '/app/');
     const avant = await q.isVisible('.ap-lent');
-    await q.waitForTimeout(15800);
-    ok(!avant && await q.isVisible('.ap-lent') && /Connexion lente[\s\S]*Réessayer/.test(await q.textContent('.ap-lent')), 'connexion coupée : après 15 s, « Connexion lente ou coupée » + « Réessayer » au lieu de « Chargement… » sans fin');
+    await q.waitForTimeout(25800);
+    ok(!avant && await q.isVisible('.ap-lent') && /connexion est lente[\s\S]*Réessayer/.test(await q.textContent('.ap-lent')), 'connexion coupée : après 25 s, « La connexion est lente » + « Réessayer » au lieu de « Chargement… » sans fin');
     await c.close();
   }
   // délai maximum partagé (js/app.js) : une attente qui ne répond jamais échoue avec le code « delai »
