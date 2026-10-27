@@ -23,7 +23,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(await p.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(124, 33, 40)'), n + 'fond rouge très mat (#7C2128)');
     // toutes les pages des menus des trois espaces
     const pages = ['#/'];
-    for (const esp of ['site', 'paiements', 'compta']) {
+    for (const esp of ['site', 'paiements', 'compta', 'securite']) {
       await p.goto(BASE + '#/' + esp); await p.waitForSelector('.lateral .nav', { state: 'attached', timeout: 10000 });
       for (const h of await p.$$eval('.lateral a.nav', (l) => l.map((a) => a.getAttribute('href')))) if (h && !pages.includes(h)) pages.push(h);
     }

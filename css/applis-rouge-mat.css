@@ -65,3 +65,6 @@ h1 em { color: #FFD9DE; }
 .ap-message { background: var(--rouge-profond) !important; color: #FFFFFF !important; }
 .connexion .g::after { background: linear-gradient(180deg, rgba(124, 33, 40, .55), rgba(124, 33, 40, .85) 60%, rgba(124, 33, 40, .96)) !important; }
 .connexion .doux-sombre, .connexion .petit-texte .btn.clair { color: #F3E3E5 !important; border-color: rgba(255, 255, 255, .45) !important; background: transparent !important; }
+/* menus sans blocs (espace Sécurité) : la ligne choisie est blanche à écriture foncée, le survol reste sur le rouge */
+.lateral .nav.actif { color: #1B1817; --av-encre: #1B1817; --av-gris: #655D56; }
+.lateral > .nav:hover { background: rgba(255, 255, 255, .12); }
