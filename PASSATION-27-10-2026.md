@@ -78,3 +78,9 @@ Demandes de la propriétaire pour la prochaine version :
   applis ; puis css/admin-vivante.css et css/mannequin-app.css), supprimer les anciennes valeurs beige/noir
   et SUPPRIMER `css/applis-rouge-mat.css` (et ses <link> dans admin/index.html et app/*.html, ses entrées
   dans admin/sw.js et app/sw.js). Une seule définition des couleurs pour tout. Garder les tests de lisibilité.
+- **Gardien promis à la propriétaire (27/10)** : lors du ménage à la source, écrire un test
+  `scripts/tests-visiteur/test-couleurs-autorisees.js` (dans lancer.sh et lancer-complet.sh) qui parcourt
+  toutes les pages des deux applications (et du site après son passage en rouge) et ÉCHOUE si un fond
+  visible n'est ni rouge (#7C2128, #5A141B et leurs transparences), ni blanc/gris très clair (#FFFFFF,
+  #F2F2F2), hors photos, vidéos, pastilles d'état (vert/orange) et boutons rouges du site. Elle craint
+  qu'une mauvaise manipulation (humaine ou IA) mélange les couleurs : ce test doit l'empêcher.
