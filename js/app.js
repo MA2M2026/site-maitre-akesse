@@ -3106,10 +3106,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const b = document.createElement('div');
     b.id = 'ma2m-installer'; b.className = 'ma2m-installer';
-    b.innerHTML = '<button type="button" class="ma2m-installer-ouvrir"><img src="' + appli.icone + '" alt="" width="44" height="44">' +
+    b.innerHTML = '<button type="button" data-bouton-libre class="ma2m-installer-ouvrir"><img src="' + appli.icone + '" alt="" width="44" height="44">' +
       '<span class="ma2m-installer-texte"><b>' + T('Télécharger l’application', 'Download the app') + '</b><small>' + echapperHtml(appli.nom) + ' · ' + T('gratuit', 'free') + '</small></span>' +
       '<span class="ma2m-installer-fleche" aria-hidden="true">⬇</span></button>' +
-      '<button type="button" class="ma2m-installer-fermer" aria-label="' + T('Fermer', 'Close') + '">✕</button>';
+      '<button type="button" data-bouton-libre class="ma2m-installer-fermer" aria-label="' + T('Fermer', 'Close') + '">✕</button>';
     b.querySelector('.ma2m-installer-ouvrir').addEventListener('click', installer);
     b.querySelector('.ma2m-installer-fermer').addEventListener('click', () => {
       try { sessionStorage.setItem(CLE_FERMEE, '1'); } catch (e) { /* stockage indisponible : fermée pour cette page */ }

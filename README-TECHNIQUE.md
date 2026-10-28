@@ -3761,3 +3761,21 @@ définition des couleurs**, dans `css/jetons.css` (plus de couche posée par-des
   l'Administration, de l'application et sur l'écran d'entrée.
 Sources de la vidéo d'installation : `outils/video-installation/` (non publiées ; version 5 du
 28/10/2026 validée par la propriétaire : rouge, noir et blanc, repère de toucher, voix Kokoro).
+
+## Retours des essais réels du 28/10/2026 (après-midi)
+
+- **Fiche d'un mannequin plus rapide** (`js/fiche-mannequin.js`) : photos, expériences, mesures et
+  adresse sont demandées en même temps que le profil (avant : cinq attentes l'une après l'autre).
+  Une demande Supabase part à chaque `then` : elles sont enveloppées dans `Promise.resolve` pour ne
+  partir qu'une fois. Essai : `test-fiche-rapide.js` (profil volontairement lent).
+- **The Book en planche contact** (`css/style.css`, `#grille`) : 5 photos par ligne sur ordinateur,
+  4 sur tablette (≤ 1100 px), 3 sur téléphone (≤ 640 px, nom seul sur la photo).
+- **Application des mannequins sur toute la largeur** (`css/mannequin-app.css`, `--ap-largeur`,
+  1100 px sur ordinateur). `test-app-mannequin.js` passe aussi sur tablette.
+- **Bande « Télécharger l'application » rouge foncé partout**, comme dans la vidéo : ses deux
+  boutons portent `data-bouton-libre` (sinon la règle des boutons blancs du site la rendait blanche).
+  Vérifié dans `test-installation.js`.
+- **Page grise à l'ouverture de l'application installée** : ancienne couleur d'ouverture (#F1ECE5)
+  gardée par Android ; le manifeste dit #7C2128 depuis le 28/10 ; Android la met à jour seul (ou
+  désinstaller / réinstaller).
+- **SonarCloud** : `document.fonts.ready.then(couperEdito, couperEdito)` (`js/accueil.js`).

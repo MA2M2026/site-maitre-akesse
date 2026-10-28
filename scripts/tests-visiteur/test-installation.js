@@ -74,6 +74,9 @@ const proposer = (p) => p.evaluate(() => {
     const wa = await p.$('.whatsapp-flottant');
     if (wa) { const r = await wa.boundingBox(); ok(boite.bas <= r.y || boite.gauche >= r.x + r.width, nom + ' : la bande ne cache pas le bouton WhatsApp'); }
     ok(await p.$eval('.ma2m-installer-texte b', (x) => x.scrollWidth <= x.clientWidth + 1), nom + ' : « Télécharger l’application » écrit en entier');
+    // la « barre rouge » de la vidéo d'installation, partout (sur le site, la règle des boutons blancs la rendait blanche, 28/10/2026)
+    const fondBande = await p.$eval('.ma2m-installer-ouvrir', (x) => getComputedStyle(x).backgroundColor);
+    ok(/^rgb\(90, 20, 27\)$/.test(fondBande), nom + ' : bande rouge foncé, comme dans la vidéo (' + fondBande + ')');
     if (process.env.CAPTURES) await p.screenshot({ path: require('path').join(process.env.CAPTURES, 'bande-' + chemin.replace(/\W+/g, '_') + '.png') });
     const pales = (await lirePageEntiere(p)).filter((x) => /ma2m-installer/.test(x.element)).map((x) => x.texte);
     ok(!pales.length, nom + ' : bande lisible ' + pales.join(' | '));

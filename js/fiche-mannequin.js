@@ -85,6 +85,23 @@ async function chargerProfilInterne() {
 
   if (!id) { contenu.textContent = T('Profil introuvable.', 'Profile not found.'); return; }
 
+  // Tout est demandé EN MÊME TEMPS (28/10/2026 : la fiche attendait cinq réponses l'une après
+  // l'autre avant d'afficher la photo, long sur téléphone) ; on n'attend ensuite que le profil.
+  // (Promise.resolve : une demande Supabase part à chaque « then » ; ainsi elle ne part qu'une fois)
+  const demandePhotos = Promise.resolve(sb
+    .from('model_photos')
+    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at')
+    .eq('model_id', id)
+    .order('principale', { ascending: false })
+    .order('created_at', { ascending: true }));
+  const demandeProjets = Promise.all([
+    sb.from('model_projects').select('*').eq('model_id', id).order('created_at', { ascending: false }),
+    ma2mExperiencesAgence(id)
+  ]);
+  const demandeMesures = Promise.all([window.ma2mMesuresSupp(id), window.ma2mAdresseFiche(id, EN)]);
+  // une demande abandonnée (profil non publié) ne doit pas laisser d'erreur non gérée
+  [demandePhotos, demandeProjets, demandeMesures].forEach((d) => { d.catch(() => {}); });
+
   const { data: profil, error } = await sb
     .from('model_profiles')
     .select('id, full_name, city, category, niveau_mannequin, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
@@ -94,7 +111,7 @@ async function chargerProfilInterne() {
 
   if (error || !profil) { contenu.textContent = T('Ce profil n\'est pas disponible.', 'This profile is not available.'); return; }
   // épaules, bras, cou, tête (js/tailles.js) lus en même temps que le nom d'adresse
-  const [mesuresSupp, slug] = await Promise.all([window.ma2mMesuresSupp(id), window.ma2mAdresseFiche(id, EN)]);
+  const [mesuresSupp, slug] = await demandeMesures;
   Object.assign(profil, mesuresSupp);
   if (lienLangue && slug) lienLangue.href = (EN ? '../book/' : 'en/book/') + slug;
 
@@ -113,17 +130,8 @@ async function chargerProfilInterne() {
   if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = 'description'; document.head.appendChild(metaDesc); }
   metaDesc.content = descriptionPage;
 
-  const { data: photos } = await sb
-    .from('model_photos')
-    .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at')
-    .eq('model_id', id)
-    .order('principale', { ascending: false })
-    .order('created_at', { ascending: true });
-
-  const [{ data: projetsSaisis }, projetsAgence] = await Promise.all([
-    sb.from('model_projects').select('*').eq('model_id', id).order('created_at', { ascending: false }),
-    ma2mExperiencesAgence(id)
-  ]);
+  const { data: photos } = await demandePhotos;
+  const [{ data: projetsSaisis }, projetsAgence] = await demandeProjets;
   // projets réalisés avec l'agence (agenda) inclus automatiquement (js/app.js)
   const projets = fusionnerExperiences(projetsAgence, projetsSaisis);
   // page anglaise : présentation et types d'expérience en anglais (js/app.js)
