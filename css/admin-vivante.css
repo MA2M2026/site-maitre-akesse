@@ -856,7 +856,7 @@ details.aide summary { font-weight: 600; color: var(--av-rouge-texte); font-size
 details.aide > p { margin: 8px 0 0; }
 /* toute suppression se voit : texte et contour rouges, un peu à l'écart des autres boutons */
 .btn[data-action$="supprimer"], button[data-supprimer], .btn-supprimer, [data-action="publication-supprimer"], [data-action="partenaire-supprimer"], [data-action="mannequin-supprimer"], [data-action="dossier-supprimer"] {
-  color: var(--av-rouge-texte) !important; border-color: var(--rouge-mat-a45) !important; background: var(--av-carte) !important; margin-left: 6px;
+  color: var(--rouge-mat) !important; border-color: var(--rouge-mat-a45) !important; background: var(--blanc-pur) !important; margin-left: 6px;   /* fond blanc, écriture rouge mat, partout */
 }
 /* champs « fichier » : le bouton du navigateur prend l'allure des boutons de la maison */
 input[type="file"] { font: inherit; font-size: 14px; color: var(--av-gris); max-width: 100%; }

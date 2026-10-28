@@ -254,6 +254,28 @@
   // --- Édito : le mot de Maître Akesse quand il est rempli dans l'Administration ---
   // (déjà écrit dans la page par le serveur quand il le peut : middleware.js, 24/10/2026 — la page
   // ne saute plus ; textes de la variante dans la page : data-mot, data-sommaire-mot)
+  // Texte de l'édito : coupé net au dernier mot qui tient, suivi de « … » (28/10/2026 : l'ancien fondu
+  // sur les dernières lignes rendait la fin « difficile à lire » sur le rouge, selon la propriétaire)
+  function couperEdito() {
+    const p = document.getElementById('edito-texte');
+    if (!p) return;
+    if (p.dataset.complet === undefined) p.dataset.complet = p.textContent;
+    const complet = p.dataset.complet;
+    p.textContent = complet;
+    if (!p.clientHeight || p.scrollHeight <= p.clientHeight + 1) return;
+    const mots = complet.split(' ');
+    let bas = 1, haut = mots.length;   // recherche du plus grand nombre de mots qui tient, suivi de « … »
+    while (bas < haut) {
+      const milieu = Math.ceil((bas + haut) / 2);
+      p.textContent = mots.slice(0, milieu).join(' ') + ' …';
+      if (p.scrollHeight <= p.clientHeight + 1) bas = milieu; else haut = milieu - 1;
+    }
+    p.textContent = mots.slice(0, bas).join(' ').replace(/[,;:.]$/, '') + ' …';
+  }
+  let attenteCoupe;
+  window.addEventListener('resize', () => { clearTimeout(attenteCoupe); attenteCoupe = setTimeout(couperEdito, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(couperEdito); else couperEdito();
+
   async function chargerMotResponsable() {
     const page = donneesDeLaPage();
     let data = page && page.mot !== undefined ? page.mot : undefined;
@@ -265,7 +287,8 @@
     await versAnglais(data, ['titre', 'message']);  // (page anglaise, js/app.js)
     const rubrique = document.getElementById('edito-rubrique'), edito = document.getElementById('edito');
     rubrique.textContent = rubrique.dataset.mot;
-    document.getElementById('edito-texte').textContent = data.message;
+    const editoTexte = document.getElementById('edito-texte');
+    editoTexte.textContent = data.message; delete editoTexte.dataset.complet;
     document.getElementById('edito-nom').textContent = data.nom || 'Maître Akesse';
     document.getElementById('edito-fonction').textContent = data.titre || '';
     document.getElementById('edito-signature').classList.remove('u-hidden');
@@ -276,6 +299,7 @@
       photo(img, data.photo_url, data.nom || 'Maître Akesse');
     }
     numeroter();
+    couperEdito();
   }
 
   // --- Dos de couverture : « Casting ouvert » seulement s'il y en a un (castings actifs de

@@ -159,7 +159,7 @@
   .p-edito .mag-texte { flex: 1; min-height: 0; }
   .p-edito .mag-titre { font-size: max(24px, 7cqmin); }
 }
-.p-edito .mag-texte { overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 3em), transparent); mask-image: linear-gradient(to bottom, black calc(100% - 3em), transparent); }
+.p-edito .mag-texte { overflow: hidden; }   /* coupé net au dernier mot qui tient, suivi de « … » (js/accueil.js, couperEdito) : plus de fondu */
 .p-edito .mag-texte::first-letter {
   font-family: var(--mag-titre); font-weight: 800; float: left;
   font-size: 3.4em; line-height: 0.8; padding: 0.08em 0.12em 0 0; color: var(--mag-rouge);
