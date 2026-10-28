@@ -68,6 +68,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .site-footer .footer-grille a { margin-bottom: 0.35rem; font-size: 0.86rem; }
 .site-footer .footer-grille p { font-size: 0.92rem; margin-bottom: 0; }
 .site-footer .footer-reseaux { margin-top: 0.5rem; }
+/* logos des réseaux (28/10/2026, « illisibles » pour la propriétaire : blancs sur leurs carrés blancs) :
+   chaque logo dans sa couleur de marque, sur le carré blanc */
+:is(.site-footer .footer-reseaux, .reseaux) a { color: var(--rouge-mat); }
+:is(.site-footer .footer-reseaux, .reseaux) a.u-ic-facebook { color: var(--c-1877f2); }
+:is(.site-footer .footer-reseaux, .reseaux) a.u-ic-youtube { color: var(--rouge-logo); }
+:is(.site-footer .footer-reseaux, .reseaux) a.u-ic-whatsapp { color: var(--c-25d366); }
 .site-footer .footer-bas { padding-top: 1rem; }
 @media (max-width: 720px) {
   .site-footer { padding: 1.6rem 0 5rem; } /* bas dégagé : boutons WhatsApp et « haut de page » flottants */
