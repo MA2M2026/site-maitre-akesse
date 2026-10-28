@@ -1480,7 +1480,10 @@ section { padding: 5rem 0; }
    contact, portraits en niveaux de gris révélés en couleur au survol, légende
    en incrustation sur la photo plutôt qu'en dessous. N'affecte jamais l'aperçu
    "Nos visages" de l'accueil (médaillons ronds), qui garde son propre style. */
-#grille.medaillon-grille { gap: 3px; }
+/* planche contact (choix de la propriétaire, 28/10/2026) : 5 photos par ligne sur ordinateur,
+   4 sur tablette, 3 sur téléphone (le nom seul sur la photo ; ville et taille sur la fiche) */
+#grille.medaillon-grille { gap: 3px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1100px) { #grille.medaillon-grille { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 #grille .medaillon-photo {
   position: relative; border-radius: 0; box-shadow: none; animation: none;
   background: var(--noir);
@@ -1511,8 +1514,10 @@ section { padding: 5rem 0; }
 #grille .medaillon-carte .btn-selection:hover { background: var(--bordeaux); border-color: var(--bordeaux); color: var(--c-fff); }
 
 @media (max-width: 640px) {
-  #grille.medaillon-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
-  .book-carte-legende { padding: 1.4rem 0.6rem 0.6rem; }
+  #grille.medaillon-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+  .book-carte-legende { padding: 1.2rem 0.4rem 0.4rem; }
+  #grille .medaillon-nom { font-size: 0.7rem; line-height: 1.15; }
+  #grille .medaillon-info { display: none; }
 }
 
 @media (max-width: 400px) {
