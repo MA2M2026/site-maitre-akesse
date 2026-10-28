@@ -13,6 +13,7 @@
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { verifierLisibilite, lirePageEntiere } = require('./lisibilite');
 const { verifierBoutons } = require('./boutons');
+const { fondsInterdits } = require('./couleurs-autorisees');
 const fs = require('fs'); const path = require('path');
 const PORT = String(8600 + Math.floor(Math.random() * 100));
 const RACINE = path.resolve(__dirname, '../..');
@@ -63,6 +64,8 @@ async function unePage(b, page, ecran) {
     if (!appui) problemes.push(etiquette + ' : appuyer sur un bouton ne se voit pas');
     if (await p.evaluate(() => { const f = document.querySelector('footer[data-gabarit="pied"]'); return f && !f.innerText.trim(); })) problemes.push(etiquette + ' : pied de page vide');
     for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
+    // gardien des couleurs (28/10/2026) : seulement des fonds rouges ou blancs
+    for (const x of await p.evaluate(fondsInterdits)) problemes.push(etiquette + ' : fond ni rouge ni blanc ' + x.couleur + ' (' + x.element + ')');
     await capturer(p, nomFichier(page, ecran), true);
     // Menu plein écran ouvert
     const bouton = await p.$('#menuBtn');

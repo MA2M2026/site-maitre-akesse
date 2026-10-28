@@ -83,7 +83,7 @@
 }
 .p-couv > *:not(.mag-cadre) { position: absolute; z-index: 2; }
 .p-couv .tete { top: 3cqmin; left: 5cqmin; right: 5cqmin; text-align: center; }
-.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--mag-rouge); }
+.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--rouge-logo); }   /* rouge vif d'origine (choix de la propriétaire, 28/10/2026) */
 .p-couv .numero {
   display: flex; justify-content: space-between; margin-top: 1.6cqmin;
   font-size: max(12px, 2.4cqmin); letter-spacing: 0.08em;

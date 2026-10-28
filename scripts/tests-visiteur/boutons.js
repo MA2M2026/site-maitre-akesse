@@ -1,16 +1,21 @@
 // Contrôle « un seul bouton pour tout le site » (décision de la propriétaire, 18/10/2026) : chaque
-// bouton visible de la page doit être rouge MA2M, texte blanc, coins arrondis (css/bouton-ma2m.css ; presque carrés sur le site « Magazine » depuis le 20/10/2026 : 2 px au moins).
-// Compte aussi comme bouton un lien habillé en bouton (fond ou cadre, marge intérieure) : il doit
-// être rouge lui aussi. Ne sont pas concernés : les liens dans le texte, les photos cliquables
+// bouton visible de la page suit le modèle (css/bouton-ma2m.css, 28/10/2026) : sur le rouge, BLANC à
+// écriture rouge mat ; dans un bloc blanc, rouge mat à écriture blanche ; coins arrondis (2 px au moins).
+// Compte aussi comme bouton un lien habillé en bouton (fond ou cadre, marge intérieure) : il suit
+// le même modèle. Ne sont pas concernés : les liens dans le texte, les photos cliquables
 // (.cliquable), le bouton WhatsApp flottant et les logos de réseaux (couleurs de marque).
 // Utilisé par test-visuel.js (pages publiques) et les essais de l'Administration (/admin/) ;
 // dans la nouvelle Administration, règle du 22/10/2026 (voir plus bas).
 
 // Exécutée DANS la page : renvoie la liste des boutons qui ne suivent pas le modèle.
 function verifierBoutons() {
-  // rouge MA2M (#C8102E), sa teinte de survol (#A50D26) et tout l'entre-deux (bouton saisi en
-  // pleine transition de couleur)
-  const rouge = (c) => { const m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(c); return !!m && +m[1] >= 160 && +m[1] <= 205 && +m[2] <= 20 && +m[3] >= 35 && +m[3] <= 50; };
+  // fond d'un bouton : blanc (ou gris très clair au survol) sur le rouge ; rouge mat #7C2128 (ou
+  // rouge profond #5A141B au survol) dans un bloc blanc ; et tout l'entre-deux (transition)
+  const rvb0 = (c) => { const m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(c); return m ? [+m[1], +m[2], +m[3]] : null; };
+  const blanc = (c) => { const v = rvb0(c); return !!v && v.every((x) => x >= 240); };
+  const rougeMat = (c) => { const v = rvb0(c); return !!v && v[0] >= 85 && v[0] <= 128 && v[1] >= 18 && v[1] <= 36 && v[2] >= 25 && v[2] <= 42; };
+  const rouge = (c) => blanc(c) || rougeMat(c);
+  const auModele = (s) => (blanc(s.backgroundColor) && rougeMat(s.color)) || (rougeMat(s.backgroundColor) && s.color === 'rgb(255, 255, 255)');
   // .nav : entrées du menu latéral du portail (un menu, comme le menu du site, pas des boutons)
   const exclu = (e) => e.closest('.nav, .cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
   const visible = (e) => {
@@ -63,7 +68,7 @@ function verifierBoutons() {
     // Nouvelle Administration (choix de la propriétaire, 22/10/2026) : rouge pour les actions
     // importantes, boutons clairs ou noirs pour les autres — chaque bouton doit seulement rester
     // bien lisible (contraste du texte sur son fond d'au moins 4,5).
-    const modele = adminVivante ? (rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)') || contraste(e) >= 4.5 : rouge(s.backgroundColor) && s.color === 'rgb(255, 255, 255)';
+    const modele = adminVivante ? auModele(s) || contraste(e) >= 4.5 : auModele(s);
     const ok = modele && rayon >= 2 && !deborde;
     if (!ok) {
       const nom = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + [...e.classList].map((c) => '.' + c).join('');

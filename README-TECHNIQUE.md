@@ -3721,15 +3721,37 @@ Mots du menu agrandis (17 px sur ordinateur, 18 px sur téléphone et tablette ;
 300 px) et blocs (compartiments) bien détachés : carte claire, contour net, ombre légère, titre rouge
 séparé de ses lignes par un trait (`css/admin-vivante.css`, `.compartiment` et `.nav`).
 
-## Couleurs des applications : rouge très mat (27/10/2026, choix de la propriétaire)
-L'Administration et l'application des mannequins passent sur un fond **rouge très mat #7C2128** avec
-des **blocs blancs** (écriture noire dedans, blanche sur le rouge). Tout est dans un seul fichier,
-`css/applis-rouge-mat.css`, chargé en dernier par admin/index.html et app/*.html (et gardé hors
-connexion : admin/sw.js administration-v17, app/sw.js mannequin-app-v6). Principe : sur le rouge, les
-variables d'écriture (encre, gris, rouge) deviennent claires ; la liste des blocs blancs (`:where(...)`,
-sans priorité, pour que chaque bouton rouge ou noir garde sa couleur) les remet foncées. **Tout nouveau
-bloc à fond blanc doit être ajouté à cette liste**, sinon son texte devient blanc sur blanc : le test
-`scripts/tests-visiteur/test-contraste-applis.js` (67 pages, ordinateur + téléphone + menu) et le
-contrôle de lisibilité de chaque écran de `test-app-mannequin.js` le signalent. Le site public garde
-ses couleurs pour l'instant (prochaine étape, avec l'accord de la propriétaire). Sources de la vidéo
-d'installation : `outils/video-installation/` (non publiées).
+## Couleurs : rouge mat et blanc partout (27-28/10/2026, choix de la propriétaire)
+Le site public, l'écran d'entrée, l'Administration et l'application des mannequins ont **une seule
+définition des couleurs**, dans `css/jetons.css` (plus de couche posée par-dessus : l'ancien
+`css/applis-rouge-mat.css` a été supprimé le 28/10/2026, ses règles reportées à la source).
+- **Fond** : rouge très mat `--rouge-mat` #7C2128 ; ce qui doit ressortir (anciennes zones noires,
+  étiquettes sur les photos, pied de page, carte du prochain rendez-vous) : rouge profond
+  `--rouge-profond` #5A141B. **Blocs, menus, cartes, formulaires** : blancs.
+- **Boutons** (`css/bouton-ma2m.css`, `.btn` de l'Administration, `.ap-btn` de l'application) :
+  blancs à écriture rouge mat sur le rouge ; rouge mat à écriture blanche dans un bloc blanc
+  (variables `--bouton-fond`, `--bouton-texte`, `--bouton-survol`). Exception voulue : la « grande
+  barre rouge » Télécharger l'application (`css/installation.css`) reste rouge (rouge profond cerné
+  de blanc), parce que la vidéo d'installation la montre ainsi.
+- **Exception** : le grand titre « MA2M » de la couverture garde son rouge vif d'origine
+  (`--rouge-logo` #C8102E, demande de la propriétaire du 28/10/2026).
+- **Deux contextes** : par défaut on est « sur le rouge » (écriture blanche) ; dans un bloc blanc
+  (liste « BLOCS BLANCS » de `css/jetons.css`), les mêmes variables valent « écriture foncée » ; dans
+  ce qui ressort (liste « CE QUI RESSORT »), « écriture blanche sur rouge profond ». Les noms dérivés
+  (`--texte-corps`, `--mag-…`, `--av-…`, `--ap-…`, anciens noms de l'espace mannequin) sont déclarés
+  sur `*, ::before, ::after` : ils se recalculent dans chaque élément et suivent donc le contexte.
+  **Tout nouveau bloc à fond blanc doit être ajouté à la liste BLOCS BLANCS**, sinon son texte
+  devient blanc sur blanc (les tests de lisibilité le signalent).
+- **Transparences** (voiles sur les photos, ombres, survols) : jetons `--rouge-profond-aNN`,
+  `--rouge-mat-aNN`, `--blanc-aNN`, `--ombre-aNN` (NN = opacité en %). Les anciens noirs, beiges et
+  rouges vifs de toutes les feuilles ont été convertis le 28/10/2026 ; la palette `--c-…` ne garde que
+  les couleurs encore utilisées.
+- **Gardien des couleurs** (`scripts/tests-visiteur/couleurs-autorisees.js`, promis à la propriétaire) :
+  appelé par `test-visuel.js` (34 pages du site), `test-contraste-applis.js` (toutes les pages de
+  l'Administration, avec un contrôle du contrôle : un fond noir posé exprès doit être vu) et
+  `test-app-mannequin.js` (chaque écran de l'application). Il échoue si un fond visible n'est ni rouge
+  ni blanc (photos, vidéos, couleurs d'état vert/orange/bleu, logos des réseaux et graphiques exceptés).
+- Le logo est passé en blanc par un filtre (`brightness(0) invert(1)`) dans l'en-tête du site, de
+  l'Administration, de l'application et sur l'écran d'entrée.
+Sources de la vidéo d'installation : `outils/video-installation/` (non publiées ; version 5 du
+28/10/2026 validée par la propriétaire : rouge, noir et blanc, repère de toucher, voix Kokoro).

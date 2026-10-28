@@ -11,13 +11,13 @@
 .jauge-pc { font-weight: 600; color: var(--c-fff); font-variant-numeric: tabular-nums; }
 .jauge-barre {
   height: 12px; border-radius: 999px; overflow: hidden;
-  background: var(--c-1a1a1c); border: 1px solid var(--c-rgba-255-255-255-0_16);
-  box-shadow: 0 1px 3px var(--c-rgba-0-0-0-0_6) inset;
+  background: var(--rouge-profond); border: 1px solid var(--c-rgba-255-255-255-0_16);
+  box-shadow: 0 1px 3px var(--rouge-profond-a60) inset;
 }
 .jauge-remplie {
   display: block; height: 100%; width: 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--c-6d1222) 0%, var(--c-a3243a) 60%, var(--c-d4455f) 100%);
+  background: linear-gradient(90deg, var(--c-6d1222) 0%, var(--rouge-mat) 60%, var(--c-d4455f) 100%);
   transition: width 0.35s ease;
 }
 .jauge.terminee .jauge-remplie { background: linear-gradient(90deg, var(--c-1f6b3a) 0%, var(--c-2f9a55) 100%); }
@@ -36,7 +36,7 @@
 }
 .video-apercu img {
   width: 96px; height: 96px; object-fit: cover; border-radius: 8px; display: block;
-  border: 1px solid var(--c-rgba-255-255-255-0_2); background: var(--c-111);
+  border: 1px solid var(--c-rgba-255-255-255-0_2); background: var(--rouge-profond);
 }
 .video-apercu-texte { font-size: 0.8rem; color: var(--c-e8d9d2); line-height: 1.4; }
 
@@ -46,6 +46,6 @@
 .visionneuse {
   position: fixed; inset: 0; z-index: 100000;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
-  padding: 1rem; background: var(--c-rgba-0-0-0-0_92);
+  padding: 1rem; background: var(--rouge-profond-a92);
 }
 .visionneuse img { max-width: 100%; max-height: calc(100vh - 6rem); object-fit: contain; border-radius: 6px; }

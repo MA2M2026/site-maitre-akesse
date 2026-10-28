@@ -15,7 +15,7 @@
   background: linear-gradient(120deg, var(--c-rgba-255-255-255-0_04), transparent 55%);
   transition: border-color 0.4s ease, transform 0.5s var(--transition-douce), box-shadow 0.5s ease;
 }
-.agenda-carte:hover { border-color: var(--c-rgba-255-255-255-0_4); transform: translateY(-3px); box-shadow: 0 24px 50px -30px var(--c-rgba-0-0-0-0_9); }
+.agenda-carte:hover { border-color: var(--c-rgba-255-255-255-0_4); transform: translateY(-3px); box-shadow: 0 24px 50px -30px var(--rouge-profond-a90); }
 
 .agenda-jour {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

@@ -13,7 +13,7 @@
   align-items: flex-end;
   padding: 0 0 clamp(4rem, 10vh, 7rem);
   overflow: hidden;
-  background: radial-gradient(ellipse at 30% 20%, var(--noir-doux) 0%, var(--noir) 70%);
+  background: radial-gradient(ellipse at 30% 20%, var(--rouge-mat) 0%, var(--sombre) 70%);
 }
 .qsn-diaporama { position: absolute; inset: 0; }
 .qsn-diaporama img {
@@ -33,9 +33,9 @@
 .qsn-voile {
   position: absolute; inset: 0;
   background:
-    /* voile clair (charte claire, 18/10/2026) : texte foncé lisible sur la photo */
-    linear-gradient(180deg, var(--c-rgba-246-245-243-0_55) 0%, var(--c-rgba-246-245-243-0_2) 35%, var(--c-rgba-246-245-243-0_88) 80%, var(--fond) 100%),
-    linear-gradient(90deg, var(--c-rgba-246-245-243-0_85) 0%, var(--c-rgba-246-245-243-0) 65%);
+    /* voile rouge mat (28/10/2026) : texte blanc lisible sur la photo */
+    linear-gradient(180deg, var(--rouge-mat-a55) 0%, var(--rouge-mat-a20) 35%, var(--rouge-mat-a88) 80%, var(--fond) 100%),
+    linear-gradient(90deg, var(--rouge-mat-a85) 0%, var(--rouge-mat-a00) 65%);
 }
 .qsn-ouverture-texte { position: relative; z-index: 1; }
 .qsn-ouverture h1 {
@@ -145,7 +145,7 @@
   position: relative; z-index: 1; width: 2.8rem; height: 2.8rem; border-radius: 50%;
   display: grid; place-items: center;
   font-family: var(--display); font-size: 1.4rem; color: var(--encre);
-  background: var(--surface); border: 1px solid var(--rouge-ma2m);
+  background: var(--sombre); border: 1px solid var(--rouge-ma2m);
   transition: background 0.6s ease;
 }
 .qsn-etape.visible .qsn-etape-num { background: var(--rouge-ma2m); color: var(--sur-rouge); }
@@ -306,7 +306,7 @@
 .qsn-mouvement .qsn-portrait.qsn-vu::before { transform: none; opacity: 1; }
 /* le cadre décoratif dépasse : le rideau ne doit pas le couper */
 .qsn-mouvement .qsn-portrait.qsn-rideau.qsn-vu { clip-path: inset(-2rem -2rem -2rem -2rem); }
-.qsn-evenement:hover .qsn-evenement-photo { box-shadow: 0 30px 60px -30px var(--c-rgba-0-0-0-0_9); }
+.qsn-evenement:hover .qsn-evenement-photo { box-shadow: 0 30px 60px -30px var(--rouge-profond-a90); }
 
 /* Pôles : arrivée en bascule, inclinaison 3D sous la souris */
 .qsn-mouvement .qsn-poles-grille { perspective: 1000px; background: transparent; border: 0; gap: 1rem; }
@@ -314,7 +314,7 @@
 .qsn-mouvement .qsn-pole.reveal { transform: translateY(80px) rotateX(-35deg); transform-origin: 50% 100%; transition: opacity 0.9s ease, transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), background 0.5s ease, box-shadow 0.5s ease; }
 .qsn-mouvement .qsn-pole.reveal.visible { transform: rotateX(var(--qsn-rx, 0deg)) rotateY(var(--qsn-ry, 0deg)); }
 .qsn-mouvement .qsn-pole.qsn-incline { transition: opacity 0.9s ease, transform 0.25s ease-out, background 0.5s ease, box-shadow 0.5s ease; }
-.qsn-mouvement .qsn-pole:hover { box-shadow: 0 30px 60px -25px var(--c-rgba-0-0-0-0_9); }
+.qsn-mouvement .qsn-pole:hover { box-shadow: 0 30px 60px -25px var(--rouge-profond-a90); }
 .qsn-mouvement .qsn-pole-num { transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.4s ease; }
 .qsn-mouvement .qsn-pole:hover .qsn-pole-num { transform: translateX(0.4rem) scale(1.15); color: var(--titre-clair); }
 .qsn-mouvement .qsn-pole.reveal-delay-1.visible { transition-delay: 0.12s; }

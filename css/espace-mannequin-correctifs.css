@@ -76,12 +76,12 @@ body { min-height: 100vh; }
 html { background: var(--fond); }
 
 /* Numéro fixe de chaque photo du Book (06/10/2026) : l'agence s'y réfère dans ses messages. */
-.book-thumb .book-num { position: absolute; left: 8px; top: 8px; z-index: 5; background: var(--c-rgba-8-7-7-_82); color: var(--c-f5efe7); border: 1px solid var(--c-rgba-255-255-255-_25); border-radius: 5px; padding: 3px 7px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; }
+.book-thumb .book-num { position: absolute; left: 8px; top: 8px; z-index: 5; background: var(--rouge-profond-a82); color: var(--blanc-pur); border: 1px solid var(--c-rgba-255-255-255-_25); border-radius: 5px; padding: 3px 7px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; }
 .book-thumb .book-num + .book-slot-tag { top: 36px; }
 
 /* Encadré « Vos tailles (calculées) » de l'étape physique (06/10/2026) :
    tailles déduites des mensurations (js/tailles.js), non modifiables à la main. */
-.tailles-calculees { margin: 1.2rem 0 0.4rem; padding: 0.9rem 1rem; border: 1px solid var(--c-rgba-213-84-104-0_45); border-radius: 12px; background: var(--c-rgba-200-16-46-0_05); }
+.tailles-calculees { margin: 1.2rem 0 0.4rem; padding: 0.9rem 1rem; border: 1px solid var(--c-rgba-213-84-104-0_45); border-radius: 12px; background: var(--rouge-mat-a05); }
 .tailles-calculees .tc-titre { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--or-clair); margin-bottom: 0.6rem; }
 .tailles-calculees .tc-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.6rem; }
 .tailles-calculees .tc-grille span { display: block; font-size: 0.75rem; color: var(--texte-clair); }
@@ -102,13 +102,13 @@ html { background: var(--fond); }
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px;
   background: var(--rouge-ma2m); color: var(--sur-rouge); font-size: 12px; font-weight: 700; line-height: 1;
-  letter-spacing: 0; vertical-align: middle; box-shadow: 0 0 0 2px var(--c-rgba-200-16-46-0_25);
+  letter-spacing: 0; vertical-align: middle; box-shadow: 0 0 0 2px var(--rouge-mat-a25);
 }
 .block-card { position: relative; }
 .block-card > .pastille-rouge { position: absolute; top: 10px; right: 10px; margin: 0; min-width: 24px; height: 24px; font-size: 13px; }
 .champ-a-remplir input, .champ-a-remplir select, .champ-a-remplir textarea,
 .principal-photo-card.champ-a-remplir, .book-multi-upload.champ-a-remplir, #addExp.champ-a-remplir {
-  border-color: var(--rouge-ma2m) !important; box-shadow: 0 0 0 2px var(--c-rgba-200-16-46-0_3) !important;
+  border-color: var(--rouge-ma2m) !important; box-shadow: 0 0 0 2px var(--rouge-mat-a30) !important;
 }
 .champ-a-remplir > label { color: var(--rouge-ma2m-texte) !important; }
 .champ-a-remplir .check-row { outline: 2px solid var(--rouge-ma2m); outline-offset: 4px; border-radius: 4px; }
@@ -119,7 +119,7 @@ html { background: var(--fond); }
 }
 
 /* Projets réalisés avec l'agence (agenda), ajoutés automatiquement aux expériences (12/10/2026) */
-.exp-agence { margin: 0 0 16px; padding: 12px 14px; border-left: 3px solid var(--rouge-ma2m-texte); background: var(--c-rgba-200-16-46-0_05); }
+.exp-agence { margin: 0 0 16px; padding: 12px 14px; border-left: 3px solid var(--rouge-ma2m-texte); background: var(--rouge-mat-a05); }
 .exp-agence-titre { margin: 0 0 6px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--rouge-ma2m-texte); }
 .exp-agence ul { margin: 0; padding: 0 0 0 1.1rem; font-size: .9rem; line-height: 1.55; }
 .exp-doublon { margin: 0 0 8px; font-size: .8rem; color: var(--rouge-ma2m-texte); }

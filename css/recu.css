@@ -2,26 +2,26 @@
    lisible sur téléphone et propre à l'impression (« Enregistrer en PDF »). */
 .page-recu { min-height: 100vh; background: var(--noir); margin: 0; }
 .recu { max-width: 640px; margin: 0 auto; padding: 2rem var(--marge) 3rem; box-sizing: border-box; width: 100%; }
-.recu-feuille { background: #FBF9F6; color: #1B1817; border-radius: 18px; padding: 2rem 1.6rem; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .6); }
-.recu-tete { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-bottom: 2px solid var(--rouge-ma2m, #C8102E); padding-bottom: 1rem; }
+.recu-feuille { background: #FBF9F6; color: var(--rouge-profond); border-radius: 18px; padding: 2rem 1.6rem; box-shadow: 0 18px 40px -16px var(--rouge-profond-a60); }
+.recu-tete { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-bottom: 2px solid var(--rouge-ma2m, var(--rouge-mat)); padding-bottom: 1rem; }
 .recu-tete img { width: min(200px, 50vw); height: auto; display: block; }
 .recu-numero { text-align: right; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: #5E5752; }
-.recu-numero b { display: block; font-size: 1rem; letter-spacing: .04em; color: #1B1817; }
-.recu h1 { font-family: var(--display); font-weight: 500; font-size: clamp(1.9rem, 6vw, 2.5rem); margin: 1.4rem 0 .4rem; color: #1B1817; }
+.recu-numero b { display: block; font-size: 1rem; letter-spacing: .04em; color: var(--rouge-profond); }
+.recu h1 { font-family: var(--display); font-weight: 500; font-size: clamp(1.9rem, 6vw, 2.5rem); margin: 1.4rem 0 .4rem; color: var(--rouge-profond); }
 .recu-etat { color: #5E5752; margin: 0 0 1rem; }
 .recu-lignes { margin: 0; }
-.recu-lignes div { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid #E6DED4; }
+.recu-lignes div { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--gris-tres-clair); }
 .recu-lignes dt { color: #5E5752; }
 .recu-lignes dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
-.recu-montant { margin: 1.4rem 0 .6rem; padding: 1.1rem 1.2rem; border-radius: 14px; background: #F1ECE5; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.recu-montant { margin: 1.4rem 0 .6rem; padding: 1.1rem 1.2rem; border-radius: 14px; background: var(--blanc-pur); display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .recu-montant span { color: #5E5752; }
-.recu-montant strong { font-family: var(--display); font-weight: 600; font-size: clamp(1.8rem, 7vw, 2.4rem); color: #1B1817; }
+.recu-montant strong { font-family: var(--display); font-weight: 600; font-size: clamp(1.8rem, 7vw, 2.4rem); color: var(--rouge-profond); }
 .recu-merci { color: #5E5752; font-style: italic; margin: 1rem 0 0; }
-.recu-pied { margin-top: 1.6rem; padding-top: 1rem; border-top: 1px solid #E6DED4; font-size: .8rem; color: #5E5752; text-align: center; }
+.recu-pied { margin-top: 1.6rem; padding-top: 1rem; border-top: 1px solid var(--gris-tres-clair); font-size: .8rem; color: #5E5752; text-align: center; }
 .recu-actions { display: flex; justify-content: center; margin-top: 1.4rem; }
 .recu [hidden] { display: none !important; }
 @media print {
-  .page-recu { background: #fff; }
+  .page-recu { background: var(--blanc-pur); }
   .recu { padding: 0; max-width: none; }
   .recu-feuille { box-shadow: none; border-radius: 0; }
   .recu-actions { display: none !important; }

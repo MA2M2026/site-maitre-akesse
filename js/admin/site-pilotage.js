@@ -133,7 +133,7 @@
     const total = f + h + e, pc = (n) => (total ? Math.round(100 * n / total) : 0);
     const pf = pc(f), ph = pc(h), pe = total ? 100 - pf - ph : 0;
     return P.entete('Répartition des profils', '<span class="doux">' + P.pluriel(c.length, 'candidature', 'candidatures') + ' + ' + P.pluriel((i || []).length, 'inscription', 'inscriptions') + '</span>') +
-      '<section class="carte repartition"><div class="donut" style="background:conic-gradient(var(--av-rouge) 0 ' + pf + '%, #8D7C7F ' + pf + '% ' + (pf + ph) + '%, #E8A83D ' + (pf + ph) + '% 100%)" role="img" aria-label="Femmes ' + pf + ' %, hommes ' + ph + ' %, enfants ' + pe + ' %"><span>' + total + '</span></div>' +
+      '<section class="carte repartition"><div class="donut" style="background:conic-gradient(var(--av-rouge) 0 ' + pf + '%, var(--graphique-2) ' + pf + '% ' + (pf + ph) + '%, var(--graphique-3) ' + (pf + ph) + '% 100%)" role="img" aria-label="Femmes ' + pf + ' %, hommes ' + ph + ' %, enfants ' + pe + ' %"><span>' + total + '</span></div>' +
       '<ul class="legende-donut"><li><i class="f"></i>Femmes <b>' + pf + ' %</b> <span class="doux">(' + f + ')</span></li><li><i class="h"></i>Hommes <b>' + ph + ' %</b> <span class="doux">(' + h + ')</span></li>' +
       '<li><i class="e"></i>Enfants (moins de 18 ans) <b>' + pe + ' %</b> <span class="doux">(' + e + ')</span></li></ul></section>' +
       '<p class="doux petit-texte">Compte les candidatures et les inscriptions reçues, pas seulement les mannequins publiées.</p>';
