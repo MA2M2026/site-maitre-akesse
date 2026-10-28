@@ -66,7 +66,8 @@ async function ouvrir(b, page, vp, opts = {}) {
       const bouton = (await p.$$('.ee-bouton'))[1];
       const zone = await bouton.boundingBox();
       await p.mouse.move(zone.x + zone.width / 2, zone.y + zone.height / 2); await p.mouse.down(); await p.waitForTimeout(200);
-      const vert = await p.evaluate(() => { const a = document.querySelectorAll('.ee-bouton')[1]; return a.classList.contains('ee-appui') && /31, 163, 91/.test(getComputedStyle(a.querySelector('.ee-point'), '::before').backgroundColor); });
+      // le rond passe au vert en 0,15 s (fondu) : attendu jusqu'à 1,5 s, une machine chargée le finit plus tard
+      const vert = await p.waitForFunction(() => { const a = document.querySelectorAll('.ee-bouton')[1]; return a.classList.contains('ee-appui') && /31, 163, 91/.test(getComputedStyle(a.querySelector('.ee-point'), '::before').backgroundColor); }, null, { timeout: 1500 }).then(() => true, () => false);
       ok(vert, n + 'à l’appui, le bouton s’enfonce et son rond devient vert');
       const [requete] = await Promise.all([p.waitForRequest(r => r.isNavigationRequest() && r.url().endsWith(liens[1]), { timeout: 3000 }).catch(() => null), p.mouse.up()]);
       ok(!!requete, n + '« ' + libelles[1] + ' » ouvre ' + liens[1]);
