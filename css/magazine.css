@@ -100,7 +100,7 @@
 }
 .p-couv .lignes .ligne::before {
   content: ""; position: absolute; left: 0; top: 0.65em;
-  width: 4cqmin; height: 2px; background: var(--mag-rouge);
+  width: 4cqmin; height: 2px; background: var(--rouge-logo);   /* traits rouge vif d'origine sur la photo de couverture */
 }
 .p-couv .modele { right: 5cqmin; bottom: 7cqmin; max-width: 32cqmin; text-align: right; font-size: max(12px, 2.5cqmin); text-decoration: none; }
 @media (max-width: 700px) {

@@ -103,11 +103,11 @@ async function unePage(b, page, ecran) {
     await p.click('#menuBtn'); await p.waitForTimeout(300); await finAnimations(p);
     const duMenu = (l) => l.filter(x => x.element.includes('menuOverlay'));
     const avant = duMenu(await p.evaluate(verifierLisibilite)).length;
-    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#e9e7e3', 'important'); }));
+    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { /* rouge à peine plus clair que le menu rouge : illisible exprès */ a.style.setProperty('color', '#8a2a32', 'important'); }));
     await p.waitForTimeout(100); await finAnimations(p); // les liens changent de couleur en fondu
     const apres = duMenu(await p.evaluate(verifierLisibilite)).length;
-    console.log(apres > 0 ? '✅ erreur faite exprès (texte pâle sur le menu clair) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
-    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte pâle sur menu clair non détecté'));
+    console.log(apres > 0 ? '✅ erreur faite exprès (texte presque de la couleur du menu rouge) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
+    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte illisible sur le menu non détecté'));
     await ctx.close();
   }
 

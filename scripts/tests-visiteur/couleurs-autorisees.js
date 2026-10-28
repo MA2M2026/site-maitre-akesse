@@ -4,7 +4,8 @@
 // Exécutée DANS la page : renvoie la liste des fonds interdits visibles.
 // Ne comptent pas : photos et vidéos (et ce qui est posé dessus pour attendre leur chargement), couleurs
 // d'état (vert, orange, bleu des pastilles « payé », « en attente »…), bouton WhatsApp et logos des
-// réseaux (couleurs de marque), parts des graphiques.
+// réseaux (couleurs de marque), parts des graphiques, et ce qui est posé SUR les photos (voiles sombres et rouge vif
+// d'origine gardés à la demande de la propriétaire, 28/10/2026).
 function fondsInterdits() {
   const rvba = (c) => { const m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/.exec(c); return m ? [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]] : null; };
   const toutes = (txt) => (txt.match(/rgba?\([^)]+\)/g) || []).map(rvba);
@@ -18,7 +19,7 @@ function fondsInterdits() {
     if (r >= 230 && g >= 200 && b >= 205 && r - g >= 10 && r - g <= 40 && Math.abs(g - b) <= 12) return true; // rose pâle (pastilles, sélection)
     return false;
   };
-  const exclu = (e) => e.closest('img, video, picture, canvas, svg, iframe, .whatsapp-flottant, .reseaux, .footer-reseaux, .site-footer-reseaux, [class*="pastille"], [class*="statut"], [class*="etat"], .donut, .legende-donut, .ql-editor, [data-couleur-libre]');
+  const exclu = (e) => e.closest('img, video, picture, canvas, svg, iframe, .whatsapp-flottant, .reseaux, .footer-reseaux, .site-footer-reseaux, [class*="pastille"], [class*="statut"], [class*="etat"], [class*="scrim"], .news-une, .profil-hero-fullbleed, .book-carte-legende, .p-une, .p-couv, .donut, .legende-donut, .ql-editor, [data-couleur-libre]');
   const etat = ([r, g, b]) => (g > r + 15 && g > b) || (r > 200 && g > 150 && r - b > 30) || (b > r + 12 && b > g);   // vert, orange/jaune d'état, bleu d'information
   const visible = (e) => { const q = e.getBoundingClientRect(); const s = getComputedStyle(e); return q.width > 6 && q.height > 6 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0.05; };
   const mauvais = [];

@@ -113,9 +113,9 @@ html body .menu-overlay .nav-links li.menu-rejoindre a {
   font-family: var(--texte) !important; font-size: 0.95rem !important; font-weight: 500 !important;
   letter-spacing: 0.16em !important; font-style: normal !important;
 }
-html body .menu-overlay .nav-links li.menu-rejoindre a { background: var(--bordeaux, var(--c-7a1220)) !important; color: var(--c-fff) !important; }
+html body .menu-overlay .nav-links li.menu-rejoindre a { background: var(--bouton-fond) !important; color: var(--bouton-texte) !important; }
 @media (hover: hover) {
-  html body .menu-overlay .nav-links li.menu-rejoindre a:hover { background: var(--bordeaux-vif, var(--c-9c1c2c)) !important; color: var(--c-fff) !important; }
+  html body .menu-overlay .nav-links li.menu-rejoindre a:hover { background: var(--bouton-survol) !important; color: var(--bouton-texte) !important; }
 }
 
 /* contact et réseaux en bas */

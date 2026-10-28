@@ -93,32 +93,32 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* (19/10/2026, demande de la propriétaire sur tablette : « c'est trop flou, impossible de voir les
    photos ») — plus de voile blanc sur « Mannequin à la une » et « Mot de Maître Akesse » : la photo
    reste nette, le texte est en BLANC sur une ombre foncée limitée au bas de l'image. */
-.vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--rouge-profond-a78) 0%, var(--rouge-profond-a55) 30%, var(--rouge-profond-a18) 55%, var(--rouge-profond-a00) 72%) !important; }
-.vedette-contenu h2, .mot-responsable-overlay h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--rouge-profond-a70) !important; }
-.vedette-contenu p, .mot-resp-titre { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--rouge-profond-a80) !important; }
-.mot-responsable-photo-wrap .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--rouge-profond-a80); }
+.vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--voile-photo-a78) 0%, var(--voile-photo-a55) 30%, var(--voile-photo-a18) 55%, var(--voile-photo-a00) 72%) !important; }
+.vedette-contenu h2, .mot-responsable-overlay h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--voile-photo-a70) !important; }
+.vedette-contenu p, .mot-resp-titre { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--voile-photo-a80) !important; }
+.mot-responsable-photo-wrap .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--voile-photo-a80); }
 /* (20/10/2026, demande de la propriétaire : « les noms des mannequins sont illisibles sur les photos
    de couverture ») — couverture du book (mannequin.html) : nom, catégorie et ville en BLANC sur
    l'ombre du bas de la photo, comme « Mannequin à la une » (ils étaient en encre foncée). */
-.profil-hero-contenu h1 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--rouge-profond-a70) !important; }
-.profil-hero-contenu p { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--rouge-profond-a80) !important; }
-.profil-hero-contenu .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--rouge-profond-a80); }
+.profil-hero-contenu h1 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--voile-photo-a70) !important; }
+.profil-hero-contenu p { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--voile-photo-a80) !important; }
+.profil-hero-contenu .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--voile-photo-a80); }
 .profil-hero-contenu .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
 /* (20/10/2026, signalé par la propriétaire : « Actualités, Événements : illisible ») — article « à la
    une » des pages Actualités et Événements : titre et catégorie en BLANC sur l'ombre de la photo (le
    titre était resté en encre foncée depuis le passage du site en clair). */
-.news-une .news-une-corps h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--rouge-profond-a70) !important; }
+.news-une .news-une-corps h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--voile-photo-a70) !important; }
 .news-une .news-une-corps .news-categorie { color: var(--c-fff); }
 /* téléphone : le texte occupe une plus grande part de l'image, l'ombre monte plus haut */
-@media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--rouge-profond-a80) 0%, var(--rouge-profond-a60) 45%, var(--rouge-profond-a25) 70%, var(--rouge-profond-a00) 88%) !important; } }
+@media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--voile-photo-a80) 0%, var(--voile-photo-a60) 45%, var(--voile-photo-a25) 70%, var(--voile-photo-a00) 88%) !important; } }
 /* vidéo de l'agence : image animée foncée, l'étiquette « Le film » reste en blanc sur une ombre */
 .video-accueil .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--rouge-profond-a75); }
 .video-accueil .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
-.vedette-cta { color: var(--c-fff); text-shadow: 0 1px 10px var(--rouge-profond-a80); border-bottom-color: var(--rouge-ma2m); }
+.vedette-cta { color: var(--c-fff); text-shadow: 0 1px 10px var(--voile-photo-a80); border-bottom-color: var(--rouge-logo); }
 .vedette-fullbleed:hover .vedette-cta { border-color: var(--c-fff); }
 .eyebrow--clair { color: var(--rouge-ma2m-texte); text-shadow: none; }
 html body .menu-overlay { background: var(--fond) !important; }
-.menu-overlay::before { background-image: url("../assets/logo-header-clair.png") !important; }
+.menu-overlay::before { background-image: url("../assets/logo-header-clair.png") !important;  filter: brightness(0) invert(1); }   /* menu sur le rouge (28/10/2026) : logo blanc */
 
 /* Bandeau cookies : carte blanche */
 .bandeau-cookies {
