@@ -282,3 +282,10 @@ h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
 /* Page « Confirmer ma présence » (confirmer.html) : les boutons restent cachés tant que le lien n'est pas vérifié */
 .confirmer [hidden] { display: none !important; }
 .confirmer .btn.actif { box-shadow: inset 0 0 0 3px #1FA35B !important; }
+
+/* Mur de photos derrière le titre des pages (28/10/2026, js/app.js murDeTitre) : huit visages très
+   atténués sous un voile rouge mat qui s'épaissit vers le bas, comme la connexion de l'Administration */
+.avec-mur-titre { position: relative; isolation: isolate; overflow: hidden; padding-top: 4.5rem; padding-bottom: 2.6rem; min-height: 240px; }
+.mur-titre { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 3px; pointer-events: none; }
+.mur-titre img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; opacity: .42; }
+.mur-titre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--rouge-mat-a55), var(--rouge-mat-a85) 60%, var(--rouge-mat)); }
