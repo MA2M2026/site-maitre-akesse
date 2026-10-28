@@ -97,3 +97,4 @@ Demandes de la propriétaire pour la prochaine version :
   test-app-mannequin. Détails : README-TECHNIQUE.md, « Couleurs : rouge mat et blanc partout ».
   Reste : son accord sur l'adresse d'essai, puis batterie complète, /code-review, UNE mise en ligne
   (installation + couleurs ensemble), SonarCloud.
+- 28/10 : anciennes versions de la vidéo (v3, v4) supprimées de outils/video-installation/ ; seule la v5 validée reste (fabrique-v5.js, film5.html, captures-v4.js pour ses images).

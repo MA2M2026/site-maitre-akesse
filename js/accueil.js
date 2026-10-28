@@ -257,23 +257,29 @@
   // Texte de l'édito : coupé net au dernier mot qui tient, suivi de « … » (28/10/2026 : l'ancien fondu
   // sur les dernières lignes rendait la fin « difficile à lire » sur le rouge, selon la propriétaire)
   function couperEdito() {
+    // (la lecture vocale lit toujours le texte complet, posé à part ; la version coupée lui est cachée)
     const p = document.getElementById('edito-texte');
     if (!p) return;
     if (p.dataset.complet === undefined) p.dataset.complet = p.textContent;
     const complet = p.dataset.complet;
     p.textContent = complet;
     if (!p.clientHeight || p.scrollHeight <= p.clientHeight + 1) return;
+    const vu = document.createElement('span'), lu = document.createElement('span');
+    vu.setAttribute('aria-hidden', 'true'); lu.className = 'u-lecteur-ecran'; lu.textContent = complet;
+    p.replaceChildren(vu, lu);
     const mots = complet.split(' ');
     let bas = 1, haut = mots.length;   // recherche du plus grand nombre de mots qui tient, suivi de « … »
     while (bas < haut) {
       const milieu = Math.ceil((bas + haut) / 2);
-      p.textContent = mots.slice(0, milieu).join(' ') + ' …';
+      vu.textContent = mots.slice(0, milieu).join(' ') + ' …';
       if (p.scrollHeight <= p.clientHeight + 1) bas = milieu; else haut = milieu - 1;
     }
-    p.textContent = mots.slice(0, bas).join(' ').replace(/[,;:.]$/, '') + ' …';
+    vu.textContent = mots.slice(0, bas).join(' ').replace(/[,;:.]$/, '') + ' …';
   }
-  let attenteCoupe;
-  window.addEventListener('resize', () => { clearTimeout(attenteCoupe); attenteCoupe = setTimeout(couperEdito, 200); });
+  // seulement quand la largeur change (sur téléphone, la barre d'adresse qui se montre ou se cache
+  // au défilement change la hauteur : le texte ne doit pas être recoupé pendant la lecture)
+  let attenteCoupe, largeurCoupe = innerWidth;
+  window.addEventListener('resize', () => { if (innerWidth === largeurCoupe) return; largeurCoupe = innerWidth; clearTimeout(attenteCoupe); attenteCoupe = setTimeout(couperEdito, 200); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(couperEdito); else couperEdito();
 
   async function chargerMotResponsable() {

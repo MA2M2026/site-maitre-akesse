@@ -11,7 +11,8 @@
    Deux « contextes » : sur le rouge (valeurs de :root ci-dessous, écriture claire) et dans un bloc
    blanc (liste « BLOCS BLANCS » plus bas, écriture foncée). Les autres feuilles n'écrivent jamais
    de couleur : elles utilisent ces variables, qui changent toutes seules selon le contexte.
-   Un test le vérifie : scripts/tests-visiteur/test-couleurs-autorisees.js. */
+   Un test le vérifie : scripts/tests-visiteur/couleurs-autorisees.js (appelé par test-visuel.js,
+   test-contraste-applis.js et test-app-mannequin.js). */
 
 :root {
   /* les couleurs de la maison */
@@ -206,6 +207,7 @@
   /* site public */
   .contexte-clair, .carte, .card, .bandeau-cookies, input, select, textarea, .ql-editor, .ql-toolbar,
   .contact-bloc, .fiche-contact-bas, .fiche-contact-tuile, .valeur-item, .cal-panneau, .p-sommaire .vignette,
+  .cv-sheet, .compcard-sheet, .recu-feuille,
   /* Administration (css/admin-vivante.css) */
   .compartiment, .tableau, .qr, .tuile, .donut, .voile .boite, .bloc-accueil, .taches, .dossier-carte, .agenda-form, .convoc-voir-bloc, .convoc-panneau,
   .mg-grille, .mg-liste, .mg-apercu, .projet-carte, .tri-grille, #rapport-profils-liste, #fiches-evenement-liste, .carte-pilotage, .chiffre,

@@ -146,7 +146,7 @@
 .p-edito { display: flex; flex-direction: column; }
 .p-edito .mag-cadre { flex: 0 0 46%; }
 .p-edito .mag-cadre img { object-position: 50% 20%; }
-.p-edito .texte { flex: 1; min-height: 0; padding: 5cqmin 6cqmin 10cqmin; display: grid; grid-template-columns: 1fr 1.15fr; gap: 5cqmin; overflow: hidden; }
+.p-edito .texte { flex: 1; min-height: 0; padding: 5cqmin 6cqmin 10cqmin; display: grid; grid-template-columns: 1fr 1.15fr; grid-template-rows: minmax(0, 1fr); gap: 5cqmin; overflow: hidden; }   /* (rangée bornée : le texte sait qu'il déborde et se coupe net) */
 .p-edito .mag-titre { font-size: max(26px, 6.6cqmin); margin-top: 1.4cqmin; }
 .p-edito .signature { margin-top: 3cqmin; font-size: max(13px, 2.7cqmin); color: var(--mag-gris); }
 .p-edito .signature strong { display: block; color: var(--mag-encre); font-weight: 600; }

@@ -115,6 +115,25 @@
   }
   input[type="file"]::file-selector-button:hover { background: var(--bouton-survol) !important; }
 
+  /* Filtres (The Book, actualités, boutique…) : fines pilules raffinées (28/10/2026, la propriétaire : les gros
+     blocs blancs à coche faisaient « brut ») — « button, a » : assez précis pour passer devant la règle commune — simple contour et écriture de la couleur du bouton, fond
+     transparent ; le filtre choisi se remplit (fond du bouton, écriture du bouton), sans coche. */
+  :is(button, a):is(.filtre-btn, .filtre-pill):not(.cliquable, [data-bouton-libre]) {
+    background: transparent !important; border: 1px solid var(--bouton-fond) !important; color: var(--bouton-fond) !important;
+    -webkit-text-fill-color: var(--bouton-fond) !important; border-radius: 999px !important; box-shadow: none !important;
+    font-weight: 500 !important; letter-spacing: 0.04em !important;
+  }
+  @media (hover: hover) {
+    :is(button, a):is(.filtre-btn, .filtre-pill):not(.cliquable, [data-bouton-libre], :disabled):hover {
+      background: var(--blanc-a14) !important; border-color: var(--bouton-fond) !important; box-shadow: none !important; transform: none;
+    }
+  }
+  :is(button, a):is(.filtre-btn, .filtre-pill):is(.actif, .active, [aria-pressed="true"]):not(.cliquable, [data-bouton-libre]) {
+    background: var(--bouton-fond) !important; color: var(--bouton-texte) !important; -webkit-text-fill-color: var(--bouton-texte) !important;
+    box-shadow: none !important; font-weight: 600 !important;
+  }
+  :is(.filtre-btn, .filtre-pill):is(.actif, [aria-pressed="true"]):not([data-bouton-libre])::after { content: none !important; }
+
   /* Boutons ronds à icône seule : même rouge, forme ronde */
   :is(.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son) {
     display: inline-flex; align-items: center; justify-content: center;

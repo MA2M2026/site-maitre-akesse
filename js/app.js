@@ -3196,7 +3196,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     // Android hors Chrome (Samsung Internet…) : on n'utilise PAS sa proposition, l'appli qu'il
     // fabrique est bloquée par Play Protect ; notre bouton renverra vers Chrome.
-    if (estAndroid && !estChromeAndroid) return;
+    // (sauf les téléphones Huawei / Honor : souvent sans Chrome ni Play Store, leur navigateur installe lui-même)
+    if (estAndroid && !estChromeAndroid && !/HuaweiBrowser|HONOR|HarmonyOS/i.test(ua)) return;
     invitation = e; dejaProposee = true;
     const g = document.getElementById('ma2m-guide');
     if (g) { g.remove(); document.body.classList.remove('ma2m-guide-ouvert'); }
