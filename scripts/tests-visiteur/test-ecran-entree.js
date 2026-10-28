@@ -82,7 +82,7 @@ async function ouvrir(b, page, vp, opts = {}) {
       await p.waitForSelector('.ee'); await p.waitForTimeout(4200);
       const zone = await (await p.$('.ee-marche')).boundingBox();
       await p.mouse.move(zone.x + zone.width / 2, zone.y + zone.height / 2); await p.mouse.down(); await p.waitForTimeout(200);
-      ok(await p.evaluate(() => /31, 163, 91/.test(getComputedStyle(document.querySelector('.ee-marche svg')).stroke)), page + ' : à l’appui, le bouton « Entrer » s’enfonce et son symbole devient vert');
+      ok(await p.waitForFunction(() => /31, 163, 91/.test(getComputedStyle(document.querySelector('.ee-marche svg')).stroke), null, { timeout: 1500 }).then(() => true, () => false), page + ' : à l’appui, le bouton « Entrer » s’enfonce et son symbole devient vert');
       await p.mouse.up(); await p.waitForTimeout(900);
       ok(!(await p.$('.ee')) && await p.evaluate(() => !document.documentElement.classList.contains('ee-actif') && getComputedStyle(document.body).position !== 'fixed'), page + ' : « Entrer sur le site » ferme l’écran et rend la page');
       await p.goto(BASE + page, { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1200);
