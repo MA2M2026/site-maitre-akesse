@@ -98,7 +98,7 @@ async function chargerProfilInterne() {
     sb.from('model_projects').select('*').eq('model_id', id).order('created_at', { ascending: false }),
     ma2mExperiencesAgence(id)
   ]);
-  const demandeMesures = Promise.all([window.ma2mMesuresSupp(id), window.ma2mAdresseFiche(id, EN)]);
+  const demandeMesures = window.ma2mMesuresSupp(id);
   // une demande abandonnée (profil non publié) ne doit pas laisser d'erreur non gérée
   [demandePhotos, demandeProjets, demandeMesures].forEach((d) => { d.catch(() => {}); });
 
@@ -111,7 +111,8 @@ async function chargerProfilInterne() {
 
   if (error || !profil) { contenu.textContent = T('Ce profil n\'est pas disponible.', 'This profile is not available.'); return; }
   // épaules, bras, cou, tête (js/tailles.js) lus en même temps que le nom d'adresse
-  const [mesuresSupp, slug] = await demandeMesures;
+  // l'adresse /book/… (qui change la barre d'adresse) seulement pour un profil publié
+  const [mesuresSupp, slug] = await Promise.all([demandeMesures, window.ma2mAdresseFiche(id, EN)]);
   Object.assign(profil, mesuresSupp);
   if (lienLangue && slug) lienLangue.href = (EN ? '../book/' : 'en/book/') + slug;
 

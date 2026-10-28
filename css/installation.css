@@ -13,6 +13,7 @@
   background: var(--rouge-profond); border: 2px solid var(--blanc-a55); border-radius: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent;
   box-shadow: 0 12px 28px -10px var(--rouge-profond-a60), 0 2px 6px var(--rouge-profond-a18);
 }
+.ma2m-installer button:active { transform: scale(.97); background: var(--rouge-mat); }  /* appui visible (hors règle commune des boutons) */
 .ma2m-installer-ouvrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 9px 14px 9px 9px; text-align: left; }
 .ma2m-installer-ouvrir img { width: 44px; height: 44px; border-radius: 11px; flex: none; background: var(--blanc-pur); }
 .ma2m-installer-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

@@ -135,7 +135,7 @@ html { -webkit-text-size-adjust: 100%; }
 .ap-alerte-ic.rose { background: var(--blanc-pur); } .ap-alerte-ic.orange { background: var(--blanc-pur); } .ap-alerte-ic.vert { background: #DFF0E3; } .ap-alerte-ic.bleu { background: #E6EEF6; }
 
 /* menu du bas */
-.ap-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: grid; grid-template-columns: repeat(5, 1fr); max-width: var(--ap-largeur); margin: 0 auto;
+.ap-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: grid; grid-template-columns: repeat(5, 1fr); max-width: 720px; margin: 0 auto;
   height: calc(var(--ap-nav) + env(safe-area-inset-bottom)); padding: 8px 4px env(safe-area-inset-bottom); background: var(--ap-carte); border-top: 1px solid var(--ap-creux); }
 .ap-nav a { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--ap-gris); text-decoration: none; }
 .ap-nav i { font-style: normal; font-size: 22px; filter: grayscale(1); opacity: .65; }
@@ -226,7 +226,7 @@ body.ap-page-paiements .btn:disabled { opacity: .5; }
 /* Inscription après casting (app/inscription-mannequin.html, 25/10/2026) : la page du site, aux couleurs de l'application */
 body.ap-page-inscription { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 body.ap-page-inscription .ap-retour { color: var(--ap-rouge-texte); font-weight: 600; text-decoration: none; padding: 8px 0; }
-body.ap-page-inscription .ap-intro { margin: 0; padding: 0 18px; max-width: var(--ap-largeur); color: var(--ap-gris); font-size: 15px; }
+body.ap-page-inscription .ap-intro { margin: 0 auto; padding: 0 18px; max-width: var(--ap-largeur); color: var(--ap-gris); font-size: 15px; }
 body.ap-page-inscription .inn { padding: 14px 0 0; }
 body.ap-page-inscription .inn-colonne { padding: 0 18px; }
 body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); }

@@ -280,7 +280,7 @@
   // au défilement change la hauteur : le texte ne doit pas être recoupé pendant la lecture)
   let attenteCoupe, largeurCoupe = innerWidth;
   window.addEventListener('resize', () => { if (innerWidth === largeurCoupe) return; largeurCoupe = innerWidth; clearTimeout(attenteCoupe); attenteCoupe = setTimeout(couperEdito, 200); });
-  if (document.fonts) document.fonts.ready.then(couperEdito, couperEdito); else couperEdito();   // coupé aussi si les polices échouent
+  if (document.fonts && 'ready' in document.fonts) document.fonts.ready.then(couperEdito, couperEdito); else couperEdito();   // coupé aussi si les polices échouent
 
   async function chargerMotResponsable() {
     const page = donneesDeLaPage();

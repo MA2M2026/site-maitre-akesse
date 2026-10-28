@@ -67,7 +67,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
   const b = await chromium.launch();
   for (const [nom, ecran] of [['téléphone', { width: 390, height: 844 }], ['tablette', { width: 800, height: 1200 }], ['ordinateur', { width: 1280, height: 860 }]]) {
     const tel = ecran.width < 700, n = nom + ' : ';
-    const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
+    const ctx = await b.newContext({ viewport: ecran, isMobile: ecran.width < 1000, hasTouch: ecran.width < 1000, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
     // téléphone : il sait recevoir des notifications (simulées : un vrai abonnement demande les
