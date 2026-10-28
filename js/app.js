@@ -3674,32 +3674,3 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
     champNumeroEl.value = texte;
   }
 }
-
-// ---- Mur de photos en haut des pages (28/10/2026, choix de la propriétaire, sur le modèle de la
-// connexion de l'Administration) : derrière le titre de chaque page publique, huit visages des
-// mannequins publiés, très atténués sous un voile rouge mat. Petites versions des photos, lues une
-// seule fois par visite (sessionStorage), jamais derrière les textes longs. Pas sur l'accueil,
-// « Qui sommes-nous » et la fiche d'un mannequin, qui ont déjà leur grande photo.
-(function murDeTitre() {
-  if (!document.querySelector('.site-header-v2') || typeof sb === 'undefined' || !sb || typeof lirePhotosCouverture !== 'function') return;
-  const h1 = document.querySelector('main > section > .container > h1');
-  if (!h1 || document.getElementById('couverture') || document.querySelector('.qsn-ouverture, .profil-hero-fullbleed')) return;
-  const section = h1.parentElement.parentElement;
-  const CLE = 'ma2m_mur_titre';
-  async function adresses() {
-    try { const deja = JSON.parse(sessionStorage.getItem(CLE) || 'null'); if (Array.isArray(deja) && deja.length) return deja; } catch (e) { /* mémoire du navigateur indisponible */ }
-    const { data: profils } = await sb.from('model_profiles').select('id').eq('published', true).order('created_at', { ascending: false }).limit(24);
-    const lignes = await lirePhotosCouverture(sb, (profils || []).map((p) => p.id));
-    const liste = lignes.filter((l) => l.url).map((l) => urlLegere(urlGrille(l, true)));
-    try { sessionStorage.setItem(CLE, JSON.stringify(liste)); } catch (e) { /* idem */ }
-    return liste;
-  }
-  adresses().then((liste) => {
-    if (liste.length < 4) return;   // trop peu de visages : le haut de page reste uni
-    const melange = liste.slice().sort(() => Math.random() - 0.5).slice(0, 8);
-    const mur = document.createElement('div');
-    mur.className = 'mur-titre'; mur.setAttribute('aria-hidden', 'true');
-    melange.forEach((u) => { const img = document.createElement('img'); img.alt = ''; img.decoding = 'async'; img.src = u; mur.appendChild(img); });
-    section.classList.add('avec-mur-titre'); section.prepend(mur);
-  }).catch(() => { /* base injoignable : le haut de page reste uni */ });
-})();
