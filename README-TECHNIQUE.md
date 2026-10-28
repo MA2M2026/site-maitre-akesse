@@ -3751,6 +3751,12 @@ définition des couleurs**, dans `css/jetons.css` (plus de couche posée par-des
   l'Administration, avec un contrôle du contrôle : un fond noir posé exprès doit être vu) et
   `test-app-mannequin.js` (chaque écran de l'application). Il échoue si un fond visible n'est ni rouge
   ni blanc (photos, vidéos, couleurs d'état vert/orange/bleu, logos des réseaux et graphiques exceptés).
+- **Mur de photos derrière le titre des pages** (28/10/2026, choix de la propriétaire) : `murDeTitre` dans
+  `js/app.js` pose huit visages des mannequins publiés (petites versions, lues une fois par visite dans
+  `sessionStorage`), très atténués sous un voile rouge mat (`.mur-titre`, `css/charte-ma2m.css`), derrière la
+  première section titrée des pages publiques ; pas sur l'accueil, « Qui sommes-nous » ni la fiche d'un mannequin.
+  Test : `scripts/tests-visiteur/test-mur-titre.js`. (Un essai « verre dépoli » sur tout le site a été refusé :
+  trop lourd pour les téléphones.)
 - Le logo est passé en blanc par un filtre (`brightness(0) invert(1)`) dans l'en-tête du site, de
   l'Administration, de l'application et sur l'écran d'entrée.
 Sources de la vidéo d'installation : `outils/video-installation/` (non publiées ; version 5 du
