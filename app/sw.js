@@ -14,8 +14,8 @@ if (SUR_WWW) {
     .then(() => self.registration.unregister())));
 } else {
 importScripts('/service-worker.js', '/js/sw-interface.js');
-const VERSION = 'mannequin-app-v6';
-const INTERFACE = ['/app/', '/app/manifest.webmanifest', '/css/polices.css', '/css/jetons.css', '/css/installation.css', '/css/mannequin-app.css', '/css/applis-rouge-mat.css', '/js/surveillance.js',
+const VERSION = 'mannequin-app-v7';
+const INTERFACE = ['/app/', '/app/manifest.webmanifest', '/css/polices.css', '/css/jetons.css', '/css/installation.css', '/css/mannequin-app.css', '/js/surveillance.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/supabase-config.js', '/js/photos.js', '/js/app.js', '/js/tailles.js',
   '/js/analyse-profil.js', '/js/session-requise.js', '/js/app-coque.js', '/js/mannequin-app.js', '/icons/mannequin-192.png', '/assets/logo-header-clair.png',
   // pages du site ouvertes dans l'application (profil, paiements) : elles s'affichent même sans réseau

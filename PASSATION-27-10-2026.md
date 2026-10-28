@@ -84,3 +84,17 @@ Demandes de la propriétaire pour la prochaine version :
   visible n'est ni rouge (#7C2128, #5A141B et leurs transparences), ni blanc/gris très clair (#FFFFFF,
   #F2F2F2), hors photos, vidéos, pastilles d'état (vert/orange) et boutons rouges du site. Elle craint
   qu'une mauvaise manipulation (humaine ou IA) mélange les couleurs : ce test doit l'empêcher.
+- 28/10 : **vidéo v5 VALIDÉE** (« C'est parfait ») : `outils/video-installation/Installer-application-MA2M-v5.mp4`
+  (rouge, noir et blanc, repère de toucher à la place de la main, voix Kokoro ff_siwis vitesse 1,15 ;
+  fabrication : `VOIX=… IMAGES=… node outils/video-installation/fabrique-v5.js`, script de voix
+  scratchpad `kokoro-v5.py`). Branche `chantier-installation` : essais réels des mannequins attendus sur
+  https://site-maitre-akesse-kiw2-git-chantier-installation-ma-2-m.vercel.app/app/
+- 28/10 : **chantier 2 (couleurs) repris** sur la branche `chantier-couleurs-site` (partie de
+  `chantier-installation`). Demandes : tout le fond du site en rouge mat (ouverture comprise), blanc pour
+  menus et blocs, TOUS les boutons blancs ; le grand « MA2M » de la couverture garde son rouge vif.
+  Fait à la source (css/jetons.css), `css/applis-rouge-mat.css` SUPPRIMÉ, gardien
+  `scripts/tests-visiteur/couleurs-autorisees.js` branché dans test-visuel / test-contraste-applis /
+  test-app-mannequin. Détails : README-TECHNIQUE.md, « Couleurs : rouge mat et blanc partout ».
+  Reste : son accord sur l'adresse d'essai, puis batterie complète, /code-review, UNE mise en ligne
+  (installation + couleurs ensemble), SonarCloud.
+- 28/10 : anciennes versions de la vidéo (v3, v4) supprimées de outils/video-installation/ ; seule la v5 validée reste (fabrique-v5.js, film5.html, captures-v4.js pour ses images).

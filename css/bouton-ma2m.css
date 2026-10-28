@@ -1,8 +1,8 @@
 /* ===== UN SEUL BOUTON POUR TOUT LE SITE (décision de la propriétaire, 18/10/2026) =====
    « Tous les boutons cliquables du site doivent être comme ça, sans exception » : site public,
    Book, espace mannequin, Mes paiements, inscription, boutique, ancien tableau de bord et portail
-   /admin. Modèle : rouge #C8102E (var(--rouge-ma2m)), texte blanc Montserrat 600, coins arrondis
-   10 px, ombre rouge douce.
+   /admin. Modèle (28/10/2026) : sur le rouge, bouton BLANC à écriture rouge mat ; dans un bloc
+   blanc, bouton rouge mat à écriture blanche (variables --bouton-… de css/jetons.css).
 
    Chargé sur TOUTES les pages, après leurs propres styles. Les règles sont rangées dans une
    « couche » (@layer) : une règle !important placée dans une couche passe devant toutes les règles
@@ -23,12 +23,12 @@
       .mp-panier-btn, .mpg-bouton-danger, .lang-switch, .header-marketplace-lien,
       .menu-trigger, .splash-passer, .close-menu, .entrer-fleche, .retour-haut, .video-accueil-son,
       .tdb-menu-bloc > summary, .tdb-menu-sousbloc > summary, .dc-whatsapp, .tuile, .btn-pill, .cc-upload-btn, .book-multi-upload, .lien-evitement, .em-vers-candidature > span):not(.cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre]) {
-    background: var(--rouge-ma2m) !important;
-    border: 1px solid var(--rouge-ma2m) !important;
-    color: var(--c-fff) !important;
-    -webkit-text-fill-color: var(--c-fff) !important;
+    background: var(--bouton-fond) !important;
+    border: 1px solid var(--bouton-fond) !important;
+    color: var(--bouton-texte) !important;
+    -webkit-text-fill-color: var(--bouton-texte) !important;
     border-radius: var(--bouton-rayon, 10px) !important;
-    box-shadow: 0 10px 22px -10px var(--c-rgba-200-16-46-0_55) !important;
+    box-shadow: var(--bouton-ombre) !important;
     font-family: var(--police) !important;
     font-weight: 600 !important;
     text-transform: none !important;
@@ -66,18 +66,18 @@
     :is(button, input[type="submit"], input[type="button"], .btn, .bouton, .btn-mini-admin, .filtre-btn,
         .filtre-pill, .lang-switch, .header-marketplace-lien, .menu-trigger, .tuile,
         .tdb-menu-bloc > summary, .tdb-menu-sousbloc > summary):not(.cliquable, [data-bouton-libre], :disabled):hover {
-      background: var(--rouge-ma2m-survol) !important;
-      border-color: var(--rouge-ma2m-survol) !important;
-      box-shadow: 0 14px 26px -10px var(--c-rgba-200-16-46-0_65) !important;
+      background: var(--bouton-survol) !important;
+      border-color: var(--bouton-survol) !important;
+      box-shadow: var(--bouton-ombre) !important;
       transform: translateY(-1px);
     }
   }
   /* Appui : le bouton s'enfonce et s'entoure d'un liseré blanc — on voit lequel on a touché
      (js/bouton-appui.js garde l'effet un court instant après le doigt) */
   :is(button, .btn, .bouton, .btn-mini-admin, .filtre-btn, .filtre-pill, .tuile, .menu-trigger, .lang-switch):not(.cliquable, [data-bouton-libre], :disabled):active, .touche-appuyee {
-    background: var(--rouge-ma2m-survol) !important;
+    background: var(--bouton-survol) !important;
     transform: translateY(2px) scale(0.98) !important;
-    box-shadow: inset 0 0 0 3px var(--c-fff), 0 0 0 3px var(--rouge-ma2m) !important;
+    box-shadow: inset 0 0 0 3px var(--bouton-texte), 0 0 0 3px var(--bouton-fond) !important;
   }
   /* Formulaire envoyé : le bouton montre que la demande est partie (points qui défilent) */
   .en-cours { cursor: progress !important; }
@@ -90,9 +90,9 @@
   /* Bouton « choisi » (filtre actif, onglet ouvert, page en cours, jour sélectionné) : même rouge,
      entouré d'un liseré pour qu'on voie lequel est choisi. */
   :is(button, .btn, .filtre-btn, .filtre-pill, .tuile, [role="button"]):is(.actif, .active, .choisi, [aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="true"]):not(.cliquable, [data-bouton-libre]) {
-    background: var(--rouge-ma2m-survol) !important;
+    background: var(--bouton-survol) !important;
     /* liseré AUTOUR du bouton (19/10/2026 : à l'intérieur, il mordait sur le texte) */
-    box-shadow: 0 0 0 3px var(--fond, var(--c-fff)), 0 0 0 5px var(--rouge-ma2m) !important;
+    box-shadow: 0 0 0 3px var(--fond), 0 0 0 5px var(--bouton-fond) !important;
   }
   /* Filtre choisi : une coche en plus du liseré (20/10/2026 : « le bouton choisi est à peine
      plus foncé que les autres ») */
@@ -100,8 +100,8 @@
   :is(.filtre-btn, .filtre-pill):is(.actif, [aria-pressed="true"]):not([data-bouton-libre]) { position: relative; overflow: visible; }
   :is(.filtre-btn, .filtre-pill):is(.actif, [aria-pressed="true"]):not([data-bouton-libre])::after {
     content: "✓"; position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; display: grid; place-items: center;
-    border-radius: 50%; background: var(--fond, var(--c-fff)); color: var(--rouge-ma2m); -webkit-text-fill-color: var(--rouge-ma2m);
-    border: 2px solid var(--rouge-ma2m); font-size: 11px; font-weight: 800; line-height: 1;
+    border-radius: 50%; background: var(--bouton-texte); color: var(--bouton-fond); -webkit-text-fill-color: var(--bouton-fond);
+    border: 2px solid var(--bouton-fond); font-size: 11px; font-weight: 800; line-height: 1;
   }
   /* Étape pas encore ouverte : plus pâle mais toujours rouge (les jours passés du calendrier
      restent rouge plein : un rouge pâli rendrait le chiffre blanc illisible) */
@@ -109,11 +109,30 @@
 
   /* Bouton « Choisir un fichier » du navigateur */
   input[type="file"]::file-selector-button {
-    background: var(--rouge-ma2m) !important; color: var(--c-fff) !important; border: 0 !important;
+    background: var(--bouton-fond) !important; color: var(--bouton-texte) !important; border: 0 !important;
     border-radius: var(--bouton-rayon, 10px) !important; padding: 0.6rem 1.1rem; margin-right: 0.8rem;
     font-family: var(--police); font-weight: 600; cursor: pointer;
   }
-  input[type="file"]::file-selector-button:hover { background: var(--rouge-ma2m-survol) !important; }
+  input[type="file"]::file-selector-button:hover { background: var(--bouton-survol) !important; }
+
+  /* Filtres (The Book, actualités, boutique…) : fines pilules raffinées (28/10/2026, la propriétaire : les gros
+     blocs blancs à coche faisaient « brut ») — « button, a » : assez précis pour passer devant la règle commune — simple contour et écriture de la couleur du bouton, fond
+     transparent ; le filtre choisi se remplit (fond du bouton, écriture du bouton), sans coche. */
+  :is(button, a):is(.filtre-btn, .filtre-pill):not(.cliquable, [data-bouton-libre]) {
+    background: transparent !important; border: 1px solid var(--bouton-fond) !important; color: var(--bouton-fond) !important;
+    -webkit-text-fill-color: var(--bouton-fond) !important; border-radius: 999px !important; box-shadow: none !important;
+    font-weight: 500 !important; letter-spacing: 0.04em !important;
+  }
+  @media (hover: hover) {
+    :is(button, a):is(.filtre-btn, .filtre-pill):not(.cliquable, [data-bouton-libre], :disabled):hover {
+      background: var(--blanc-a14) !important; border-color: var(--bouton-fond) !important; box-shadow: none !important; transform: none;
+    }
+  }
+  :is(button, a):is(.filtre-btn, .filtre-pill):is(.actif, .active, [aria-pressed="true"]):not(.cliquable, [data-bouton-libre]) {
+    background: var(--bouton-fond) !important; color: var(--bouton-texte) !important; -webkit-text-fill-color: var(--bouton-texte) !important;
+    box-shadow: none !important; font-weight: 600 !important;
+  }
+  :is(.filtre-btn, .filtre-pill):is(.actif, [aria-pressed="true"]):not([data-bouton-libre])::after { content: none !important; }
 
   /* Boutons ronds à icône seule : même rouge, forme ronde */
   :is(.close-menu, .entrer-fleche, .retour-haut, .video-accueil-son) {

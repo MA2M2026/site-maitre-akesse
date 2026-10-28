@@ -109,6 +109,7 @@ function verifierLisibilite(options) {
     const s = getComputedStyle(el);
     if (s.visibility !== 'visible' || s.display === 'none') continue;
     if (el.closest('button:disabled, button[aria-disabled="true"], [role="button"][aria-disabled="true"]')) continue; // bouton grisé : volontairement atténué (exempté par la norme)
+    if (el.closest('.mag-logo')) continue; // logotype « MA2M » de la couverture (rouge vif d'origine, choix de la propriétaire du 28/10/2026) : un logo est exempté par la norme (WCAG 1.4.3)
     if (el.closest('[aria-hidden="true"]') && !/\p{L}|\d/u.test(texte)) continue; // icône décorative cachée aux lecteurs d'écran (ex. menu de l'application) : pas un texte à lire
     const plage = document.createRange(); plage.selectNodeContents(t);
     const r = [...plage.getClientRects()].find((x) => x.width > 2 && x.height > 2);

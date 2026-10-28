@@ -1,11 +1,12 @@
 // Couleurs des deux applications (27/10/2026, choix de la propriétaire : fond rouge très mat,
-// blocs blancs, css/applis-rouge-mat.css) : chaque texte de CHAQUE page du menu de l'Administration
+// blocs blancs, css/jetons.css) : chaque texte de CHAQUE page du menu de l’Administration
 // (les trois espaces), sur ordinateur et sur téléphone (menu ouvert compris), doit rester lisible
 // (norme WCAG AA, lisibilite.js) ; et le rouge mat est bien le fond. Base SIMULÉE : rien n'est écrit.
 // (L'application des mannequins : même contrôle dans test-app-mannequin.js, écran par écran.)
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admin');
 const { lirePageEntiere } = require('./lisibilite');
+const { fondsInterdits } = require('./couleurs-autorisees');
 const chemin = require('path');
 const PORT = String(9600 + Math.floor(Math.random() * 90)), BASE = 'http://127.0.0.1:' + PORT + '/admin/';
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -27,10 +28,11 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       await p.goto(BASE + '#/' + esp); await p.waitForSelector('.lateral .nav', { state: 'attached', timeout: 10000 });
       for (const h of await p.$$eval('.lateral a.nav', (l) => l.map((a) => a.getAttribute('href')))) if (h && !pages.includes(h)) pages.push(h);
     }
-    const pales = [];
+    const pales = [], interdits = [];
     for (const h of pages) {
       await p.goto(BASE + h); await p.waitForTimeout(900);
       for (const x of await lirePageEntiere(p)) pales.push(h + ' ' + x.element + ' « ' + x.texte + ' » ' + x.contraste);
+      for (const x of await p.evaluate(fondsInterdits)) interdits.push(h + ' ' + x.element + ' ' + x.couleur);
     }
     if (tel) {  // le menu du téléphone (feuille qui monte du bas), ouvert
       await p.goto(BASE + '#/site'); await p.waitForTimeout(900);
@@ -38,6 +40,10 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       for (const x of await lirePageEntiere(p)) pales.push('menu ' + x.element + ' « ' + x.texte + ' » ' + x.contraste);
     }
     ok(pages.length > 40 && !pales.length, n + pages.length + ' pages : tous les textes lisibles' + (pales.length ? ' — trop pâles : ' + pales.slice(0, 12).join(' | ') : ''));
+    ok(!interdits.length, n + 'seulement des fonds rouges ou blancs (gardien des couleurs)' + (interdits.length ? ' — interdits : ' + interdits.slice(0, 12).join(' | ') : ''));
+    // contrôle du contrôle : un bloc noir posé exprès DOIT être signalé
+    await p.evaluate(() => { const d = document.createElement('div'); d.id = 'bloc-noir-expres'; d.style.cssText = 'position:fixed;left:0;top:0;width:50px;height:50px;background:#111;z-index:99'; document.body.appendChild(d); });
+    ok((await p.evaluate(fondsInterdits)).some((x) => x.element === 'div#bloc-noir-expres'), n + 'le gardien voit bien un fond noir posé exprès');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }

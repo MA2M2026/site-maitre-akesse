@@ -10,8 +10,8 @@
 /* Frise des mois : défile de gauche à droite, le mois choisi au centre */
 .parcours-mois {
   position: relative; display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.4rem 0 1rem;
-  scroll-behavior: smooth; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, var(--c-000) 8%, var(--c-000) 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, var(--c-000) 8%, var(--c-000) 92%, transparent);
+  scroll-behavior: smooth; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, var(--rouge-profond) 8%, var(--rouge-profond) 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, var(--rouge-profond) 8%, var(--rouge-profond) 92%, transparent);
 }
 .parcours-mois::-webkit-scrollbar { display: none; }
 .parcours-mois-btn {
@@ -55,7 +55,7 @@
 .parcours-visage-badge {
   position: absolute; top: 0; right: 0; min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem;
   display: grid; place-items: center; border-radius: 999px; background: var(--bordeaux); color: var(--blanc);
-  font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px var(--c-rgba-0-0-0-0_8);
+  font-size: 0.78rem; font-weight: 600; box-shadow: 0 6px 16px -6px var(--rouge-profond-a80);
 }
 .parcours-plus { margin-top: 1.2rem; }
 .parcours-plus[hidden], .parcours-detail[hidden] { display: none !important; }

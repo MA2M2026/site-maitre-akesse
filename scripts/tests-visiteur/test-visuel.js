@@ -13,6 +13,7 @@
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { verifierLisibilite, lirePageEntiere } = require('./lisibilite');
 const { verifierBoutons } = require('./boutons');
+const { fondsInterdits } = require('./couleurs-autorisees');
 const fs = require('fs'); const path = require('path');
 const PORT = String(8600 + Math.floor(Math.random() * 100));
 const RACINE = path.resolve(__dirname, '../..');
@@ -63,6 +64,8 @@ async function unePage(b, page, ecran) {
     if (!appui) problemes.push(etiquette + ' : appuyer sur un bouton ne se voit pas');
     if (await p.evaluate(() => { const f = document.querySelector('footer[data-gabarit="pied"]'); return f && !f.innerText.trim(); })) problemes.push(etiquette + ' : pied de page vide');
     for (const x of await p.evaluate(verifierBoutons)) problemes.push(etiquette + ' : bouton « ' + x.texte + ' » (' + x.element + ') pas au modèle rouge (fond ' + x.fond + ', texte ' + x.couleur + ', coins ' + x.rayon + ')');
+    // gardien des couleurs (28/10/2026) : seulement des fonds rouges ou blancs
+    for (const x of await p.evaluate(fondsInterdits)) problemes.push(etiquette + ' : fond ni rouge ni blanc ' + x.couleur + ' (' + x.element + ')');
     await capturer(p, nomFichier(page, ecran), true);
     // Menu plein écran ouvert
     const bouton = await p.$('#menuBtn');
@@ -100,11 +103,11 @@ async function unePage(b, page, ecran) {
     await p.click('#menuBtn'); await p.waitForTimeout(300); await finAnimations(p);
     const duMenu = (l) => l.filter(x => x.element.includes('menuOverlay'));
     const avant = duMenu(await p.evaluate(verifierLisibilite)).length;
-    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { a.style.setProperty('color', '#e9e7e3', 'important'); }));
+    await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { /* rouge à peine plus clair que le menu rouge : illisible exprès */ a.style.setProperty('color', '#8a2a32', 'important'); }));
     await p.waitForTimeout(100); await finAnimations(p); // les liens changent de couleur en fondu
     const apres = duMenu(await p.evaluate(verifierLisibilite)).length;
-    console.log(apres > 0 ? '✅ erreur faite exprès (texte pâle sur le menu clair) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
-    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte pâle sur menu clair non détecté'));
+    console.log(apres > 0 ? '✅ erreur faite exprès (texte presque de la couleur du menu rouge) bien détectée (' + apres + ' textes)' : '❌ erreur faite exprès NON détectée : le contrôle de lisibilité est cassé');
+    if (!apres || avant) problemes.push('contrôle du contrôle : ' + (apres ? avant + ' problème(s) déjà présents sur le menu' : 'texte illisible sur le menu non détecté'));
     await ctx.close();
   }
 

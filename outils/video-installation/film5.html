@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<!-- Vidéo « Installer l'appli MA2M Mannequin » v5 (28/10/2026) : motion design haut de gamme, uniquement
+     rouge, noir et blanc (demande de la propriétaire : « au standing, comme pour un partenaire à Paris »).
+     Pas de main : un repère de toucher (cercle blanc translucide qui glisse, se resserre à l'appui, onde fine),
+     écran assombri autour du bouton. iPhone (nouveau Safari) puis Android (Chrome ; Samsung Internet → Chrome).
+     Temps : timing-v5.js (fabrique-v5.js, d'après la voix). window.rendre(t) dessine l'image au temps t. -->
+<style>
+@font-face { font-family: 'Cormorant'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 400; src: url('../../assets/polices/work-sans-latin-400-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 600; src: url('../../assets/polices/work-sans-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work'; font-weight: 700; src: url('../../assets/polices/work-sans-latin-700-normal.woff2'); }
+:root { --rouge: #7C2128; --rouge-vif: #D7263D; --noir: #0E0C0C; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--noir); }
+body { font-family: 'Work', sans-serif; color: #fff; position: relative; }
+.abs { position: absolute; }
+/* fond noir, lueur rouge qui respire, grain fin */
+#fond { inset: 0; background: var(--noir); }
+#lueur { position: absolute; left: -300px; right: -300px; top: 900px; height: 1400px; background: radial-gradient(50% 50% at 50% 50%, rgba(124,33,40,.75) 0%, rgba(124,33,40,0) 70%); }
+#grain { position: absolute; inset: 0; opacity: .10; mix-blend-mode: screen; }
+/* en-tête : numéro d'étape en grand, titre sobre */
+#voile-haut { left: 0; right: 0; top: 0; height: 640px; z-index: 29; background: linear-gradient(var(--noir) 0%, rgba(14,12,12,.96) 60%, rgba(14,12,12,0) 100%); }
+#tete { left: 70px; right: 70px; top: 96px; height: 440px; z-index: 30; }
+#numero { left: 0; top: -30px; font: 500 190px/1 'Cormorant', serif; color: #fff; letter-spacing: -2px; }
+#filet { left: 6px; top: 196px; width: 120px; height: 3px; background: var(--rouge-vif); transform-origin: 0 50%; }
+#titre { left: 250px; right: 0; top: 18px; font-weight: 600; font-size: 66px; line-height: 1.1; letter-spacing: -.5px; }
+#titre.plein { left: 0; text-align: center; top: 40px; }
+#titre .mot { display: inline-block; margin-right: .24em; }
+#titre .em { color: var(--rouge-vif); }
+/* progression */
+#progres { left: 0; right: 0; bottom: 64px; z-index: 31; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+#progres .compte { font: 600 26px/1 'Work', sans-serif; letter-spacing: 6px; color: rgba(255,255,255,.75); }
+#progres .barres { display: flex; gap: 10px; }
+#progres .barres i { width: 74px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.22); display: block; overflow: hidden; position: relative; }
+#progres .barres i b { position: absolute; left: 0; top: 0; bottom: 0; background: #fff; display: block; }
+#progres .barres i.ici b { background: var(--rouge-vif); }
+/* cartons plein cadre (rouge) */
+.carton { inset: 0; z-index: 40; visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--rouge); overflow: hidden; }
+.carton .sur-titre { font: 600 30px/1 'Work', sans-serif; letter-spacing: 12px; text-transform: uppercase; color: rgba(255,255,255,.8); }
+.carton .grand { font: 500 170px/1 'Cormorant', serif; letter-spacing: -2px; margin-top: 34px; }
+.carton .moyen { font: 400 46px/1.35 'Work', sans-serif; margin-top: 30px; color: rgba(255,255,255,.92); }
+.carton .ligne { width: 140px; height: 3px; background: #fff; margin-top: 50px; transform-origin: 50% 50%; }
+.icone-app { width: 260px; height: 260px; border-radius: 58px; background: url('../../icons/mannequin-apple-180.png') 0 0 / 100% 100%; box-shadow: 0 40px 90px rgba(0,0,0,.5); }
+.pilule { font-weight: 600; background: #fff; color: var(--rouge); border-radius: 999px; padding: 24px 40px; white-space: nowrap; font-size: 30px; margin-top: 70px; }
+.coche { width: 220px; height: 220px; }
+.coche circle, .coche path { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+#volet { inset: 0; z-index: 45; }
+#volet i { position: absolute; top: -10%; bottom: -10%; width: 70%; display: block; }
+/* téléphones */
+#scene { left: 0; top: 0; width: 1080px; height: 1920px; perspective: 2600px; z-index: 10; }
+#camera { left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; }
+.tel { position: absolute; left: 235px; top: 590px; width: 610px; height: 1279px; border-radius: 92px; background: #050505; box-shadow: 0 0 0 3px #2a2626, 0 0 0 5px #111, 0 60px 160px rgba(0,0,0,.75); display: none; }
+.tel.android { border-radius: 60px; }
+.ecran, .surcouche { position: absolute; left: 22px; top: 22px; width: 390px; height: 852px; transform-origin: 0 0; transform: scale(1.4513); }
+.ecran { border-radius: 50px; overflow: hidden; background: #fff; font-family: -apple-system, 'Inter', 'Work', sans-serif; color: #000; }
+.android .ecran { border-radius: 30px; font-family: 'Roboto', 'Work', sans-serif; }
+.surcouche { pointer-events: none; }
+.ilot { position: absolute; left: 50%; top: 11px; width: 120px; height: 34px; margin-left: -60px; border-radius: 20px; background: #000; z-index: 50; }
+.etat { position: absolute; left: 0; right: 0; top: 0; height: 50px; z-index: 40; display: flex; justify-content: space-between; align-items: center; padding: 0 34px 0 40px; font-weight: 600; font-size: 16px; }
+.couche { position: absolute; inset: 0; }
+/* WhatsApp */
+.wa { background: #EFE7DE; }
+.wa-haut { position: absolute; left: 0; right: 0; top: 0; height: 104px; background: #F6F6F6; border-bottom: 1px solid #ddd; display: flex; align-items: flex-end; gap: 10px; padding: 0 14px 10px; }
+.wa-haut .retour { color: #0a7aff; font-size: 30px; line-height: 1; }
+.wa-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--rouge); color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.wa-haut b { font-size: 16px; display: block; } .wa-haut small { font-size: 12px; color: #888; }
+.bulle-wa { position: absolute; left: 12px; width: 318px; top: 130px; background: #fff; border-radius: 0 14px 14px 14px; padding: 10px 12px 22px; font-size: 15px; line-height: 1.4; box-shadow: 0 1px 1px rgba(0,0,0,.12); }
+.bulle-wa .heure { position: absolute; right: 10px; bottom: 5px; font-size: 11px; color: #999; }
+.bulle-wa a { color: #027EB5; text-decoration: underline; word-break: break-all; }
+.wa-saisie { position: absolute; left: 0; right: 0; bottom: 0; height: 82px; background: #F6F6F6; border-top: 1px solid #ddd; }
+.wa-saisie i { position: absolute; left: 50px; right: 60px; top: 12px; height: 36px; border-radius: 18px; background: #fff; border: 1px solid #ddd; }
+/* iPhone : nouveau Safari */
+.page-ios { position: absolute; left: 0; top: 50px; width: 390px; height: 690px; background: url('v4-iphone-page.png') 0 0 / 390px 690px; }
+.guide-ios { position: absolute; left: 0; top: 50px; width: 390px; height: 690px; background: url('v4-iphone-guide.png') 0 0 / 390px 690px; }
+.bas-ios { position: absolute; left: 0; right: 0; bottom: 0; height: 112px; background: linear-gradient(rgba(124,33,40,0), rgba(90,20,27,.55)); }
+.bouton-rond { position: absolute; top: 34px; width: 54px; height: 54px; border-radius: 50%; background: rgba(245,245,247,.92); box-shadow: 0 4px 14px rgba(0,0,0,.18); display: flex; align-items: center; justify-content: center; color: #111; }
+.bouton-rond svg { width: 24px; height: 24px; }
+.pilule-adresse { position: absolute; left: 84px; right: 84px; top: 34px; height: 54px; border-radius: 27px; background: rgba(245,245,247,.92); box-shadow: 0 4px 14px rgba(0,0,0,.18); display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 14px; color: #111; white-space: nowrap; overflow: hidden; }
+.pilule-adresse .menu-page { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex: none; }
+.pilule-adresse .menu-page svg { width: 22px; height: 22px; }
+.pilule-adresse span { flex: 1; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.menu-ios { position: absolute; left: 60px; width: 270px; top: 470px; background: rgba(245,245,247,.97); border-radius: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.35); overflow: hidden; transform-origin: 46px 300px; }
+.menu-ios div { display: flex; justify-content: space-between; align-items: center; height: 52px; padding: 0 18px; font-size: 17px; border-bottom: 1px solid #ddd; }
+.menu-ios svg { width: 22px; height: 22px; color: #0a7aff; }
+.voile { position: absolute; inset: 0; background: #000; opacity: 0; }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; height: 520px; background: #f2f2f7; border-radius: 16px 16px 0 0; overflow: hidden; }
+.feuille .tete-f { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid #ddd; background: #f2f2f7; position: relative; z-index: 2; }
+.feuille .tete-f img, .ajout img { width: 44px; height: 44px; border-radius: 10px; }
+.feuille .tete-f b { font-size: 15px; display: block; } small.url { font-size: 12px; color: #888; display: block; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defile { position: absolute; left: 0; right: 0; top: 74px; }
+.applis { display: flex; gap: 16px; padding: 16px 18px; }
+.applis span { width: 62px; height: 62px; border-radius: 16px; background: #d1d1d6; display: block; }
+.liste { margin: 6px 16px; background: #fff; border-radius: 12px; overflow: hidden; }
+.liste div { display: flex; justify-content: space-between; align-items: center; height: 50px; padding: 0 16px; font-size: 17px; border-bottom: 1px solid #e5e5ea; }
+.liste svg { width: 24px; height: 24px; }
+.allume { background: rgba(200,16,46,.14) !important; }
+.ajout { position: absolute; left: 0; right: 0; bottom: 0; top: 60px; background: #f2f2f7; border-radius: 14px 14px 0 0; }
+.ajout .haut { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 56px; padding: 0 12px 0 16px; font-size: 16px; border-bottom: 1px solid #ddd; }
+.ajout .haut b { font-size: 14px; } .bleu { color: #0a7aff; }
+.ajout .haut .ajouter { font-weight: 700; padding: 6px 10px; border-radius: 8px; }
+.ajout .carte { margin: 26px 16px; background: #fff; border-radius: 12px; display: flex; gap: 14px; padding: 14px; align-items: center; }
+.ajout .carte img { width: 64px; height: 64px; border-radius: 14px; }
+.ajout .nom { font-size: 17px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px; margin-bottom: 8px; }
+/* écrans d'accueil (fonds sombres rouge et noir) */
+.fond-ios { background: linear-gradient(165deg, #1a0d0f 0%, #5a141b 55%, #0e0c0c 100%); }
+.fond-android { background: linear-gradient(175deg, #0e0c0c 0%, #3d1015 60%, #7C2128 100%); }
+.grille { position: absolute; left: 26px; right: 26px; top: 80px; display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; row-gap: 30px; }
+.android .grille { top: 70px; grid-template-columns: repeat(4, 58px); }
+.ic { width: 64px; height: 64px; border-radius: 15px; background: rgba(255,255,255,.16); position: relative; }
+.android .ic { width: 58px; height: 58px; border-radius: 50%; }
+.ic i { position: absolute; left: -10px; right: -10px; top: 70px; text-align: center; font-style: normal; font-size: 11px; color: #fff; white-space: nowrap; }
+.android .ic i { top: 64px; }
+.ic.ma2m { background: url('../../icons/mannequin-apple-180.png') 0 0 / 100% 100%; box-shadow: 0 6px 16px rgba(0,0,0,.45); }
+.dock { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 92px; border-radius: 32px; background: rgba(255,255,255,.12); display: flex; justify-content: space-around; align-items: center; }
+.android .dock { background: none; bottom: 40px; }
+.appli { position: absolute; inset: 0; background: url('ecran-appli.png') 0 0 / 390px 844px; }
+/* Android : Chrome / Samsung Internet */
+.etat-and { position: absolute; left: 0; right: 0; top: 0; height: 32px; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; font-size: 13px; font-weight: 600; background: #fff; color: #111; z-index: 3; }
+.barre-and { position: absolute; left: 0; right: 0; top: 32px; height: 56px; background: #fff; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-bottom: 1px solid #e3e3e3; z-index: 3; color: #444; }
+.barre-and .adr { flex: 1; height: 38px; border-radius: 19px; background: #F1F3F4; display: flex; align-items: center; padding: 0 14px; font-size: 14px; color: #222; overflow: hidden; white-space: nowrap; }
+.barre-and .logo-nav { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+.barre-and .pts { font-size: 22px; font-weight: 700; width: 20px; text-align: center; }
+.page-and { position: absolute; left: 0; top: 88px; width: 390px; height: 764px; background: url('v4-android-page.png') 0 0 / 390px 764px; }
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); opacity: 0; z-index: 5; }
+.dialogue { position: absolute; left: 22px; right: 22px; top: 300px; background: #FDF6F7; border-radius: 28px; padding: 24px 24px 14px; z-index: 6; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+.dialogue h3 { margin: 0 0 18px; font: 400 23px/1.2 'Roboto', 'Work', sans-serif; color: #1d1b1b; }
+.dialogue .ligne { display: flex; gap: 14px; align-items: center; }
+.dialogue .ligne img { width: 44px; height: 44px; border-radius: 50%; }
+.dialogue .ligne b { display: block; font-size: 19px; font-weight: 500; color: #1d1b1b; } .dialogue .ligne small { color: #9C4150; font-size: 13px; }
+.dialogue .actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 18px; }
+.dialogue .actions span { color: #9C4150; font-size: 16px; font-weight: 600; padding: 10px 14px; border-radius: 20px; }
+/* pictogrammes navigateurs, en rouge, noir et blanc */
+.logo-chrome { background: conic-gradient(from -30deg, #C8102E 0 120deg, #1a1a1a 0 240deg, #7C2128 0 360deg); position: relative; }
+.logo-chrome::after { content: ""; position: absolute; inset: 28%; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px #fff; }
+.logo-samsung { background: #fff; position: relative; overflow: hidden; box-shadow: inset 0 0 0 2px #1a1a1a; }
+.logo-samsung::before { content: ""; position: absolute; left: 28%; top: 28%; width: 44%; height: 44%; border-radius: 50%; background: #1a1a1a; }
+.logo-samsung::after { content: ""; position: absolute; left: 6%; top: 42%; width: 88%; height: 16%; border-radius: 50%; border: 2px solid #C8102E; transform: rotate(-24deg); box-sizing: border-box; }
+.passage { position: absolute; inset: 0; z-index: 8; background: #0E0C0C; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; opacity: 0; }
+.passage .rangee { display: flex; align-items: center; gap: 26px; }
+.passage .rond { width: 104px; height: 104px; border-radius: 50%; }
+.passage .vers { width: 70px; height: 2px; background: #fff; position: relative; }
+.passage .vers::after { content: ""; position: absolute; right: -2px; top: -6px; width: 12px; height: 12px; border-top: 2px solid #fff; border-right: 2px solid #fff; transform: rotate(45deg); }
+.passage .legende { font: 600 17px/1.3 'Work', sans-serif; color: #fff; letter-spacing: 1px; }
+.passage .legende span { color: #fff; opacity: .6; display: block; font-weight: 400; font-size: 14px; margin-top: 4px; }
+/* repère de toucher (pas de main) */
+.cadre { position: absolute; border: 2px solid #fff; border-radius: 16px; z-index: 67; box-shadow: 0 0 0 9999px rgba(0,0,0,.42), 0 0 22px rgba(255,255,255,.45); }
+.doigt { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; z-index: 70; background: rgba(255,255,255,.38); border: 2px solid rgba(255,255,255,.95); box-shadow: 0 8px 22px rgba(0,0,0,.4); }
+.onde { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; border: 2px solid #fff; z-index: 69; }
+.trace { position: absolute; width: 4px; margin-left: -2px; border-radius: 2px; background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,.8)); z-index: 69; }
+.etiquette { position: absolute; z-index: 71; background: #0E0C0C; color: #fff; font: 600 17px/1 'Work', sans-serif; padding: 11px 14px 11px 12px; border-radius: 6px; border-left: 3px solid #D7263D; white-space: nowrap; box-shadow: 0 10px 24px rgba(0,0,0,.45); letter-spacing: .2px; }
+</style>
+<script src="timing-v5.js"></script>
+</head>
+<body>
+<div id="fond" class="abs"><div id="lueur"></div><svg id="grain" width="1080" height="1920"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg></div>
+
+<div id="scene" class="abs"><div id="camera" class="abs">
+  <div class="tel" id="tel-ios"><div class="ecran" id="ecran-ios">
+    <div class="ilot"></div>
+    <div class="etat" id="etat-ios"><span>18:05</span><span>▂▄▆ ▮▮▮</span></div>
+    <div class="couche wa" id="ios-wa">
+      <div class="wa-haut"><span class="retour">‹</span><span class="wa-avatar">MA2M</span><span><b>Agence MA2M</b><small>en ligne</small></span></div>
+      <div class="bulle-wa"><b>Installe l’appli MA2M Mannequin</b><br><br>Touche ce lien :<br><a id="wa-lien-ios">https://mannequin.maitreakessemodelmanagement.com</a><span class="heure">18:05</span></div>
+      <div class="wa-saisie"><i></i></div>
+    </div>
+    <div class="couche fond-ios" id="ios-accueil"><div class="grille" id="grille-ios"></div><div class="dock"><div class="ic"></div><div class="ic"></div><div class="ic"></div><div class="ic"></div></div></div>
+    <div class="couche" id="ios-safari" style="background:#7C2128">
+      <div class="page-ios"></div>
+      <div class="guide-ios" id="ios-guide"></div>
+      <div class="bas-ios">
+        <div class="bouton-rond" style="left:18px"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="pilule-adresse"><span class="menu-page" id="ios-menu-btn"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span>maitreakessemodelmanagement.com</span><span style="flex:none">↻</span></div>
+        <div class="bouton-rond" style="right:18px"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 4h9a3 3 0 0 1 3 3v9" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+      </div>
+      <div class="voile" id="ios-voile"></div>
+      <div class="menu-ios" id="ios-menu">
+        <div>Ajouter aux favoris <svg viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.2 7 19l1.2-5.6L4 9.6 9.6 9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <div>Rechercher dans la page <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div>Paramètres du site <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div id="ios-partager"><b>Partager</b> <svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11H5v10h14V11h-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="feuille" id="ios-feuille">
+        <div class="tete-f"><img src="../../icons/mannequin-apple-180.png" alt=""><span><b>MA2M Mannequin</b><small class="url">mannequin.maitreakessemodelmanagement.com</small></span></div>
+        <div class="defile" id="ios-defile">
+          <div class="applis"><span></span><span></span><span></span><span></span></div>
+          <div class="liste">
+            <div>Copier</div><div>Ajouter à la liste de lecture</div><div>Ajouter un signet</div><div>Ajouter aux favoris</div><div>Rechercher dans la page</div>
+            <div id="ios-cible"><b>Sur l’écran d’accueil</b> <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <div>Annoter</div><div class="bleu">Plus…</div>
+          </div>
+        </div>
+      </div>
+      <div class="ajout" id="ios-ajout">
+        <div class="haut"><span class="bleu">Annuler</span><b>Ajouter à l’écran d’accueil</b><span class="bleu ajouter" id="ios-btn-ajouter">Ajouter</span></div>
+        <div class="carte"><img src="../../icons/mannequin-apple-180.png" alt=""><div style="flex:1"><div class="nom">MA2M Mannequin</div><small class="url">mannequin.maitreakessemodelmanagement.com</small></div></div>
+      </div>
+    </div>
+    <div class="couche appli" id="ios-appli"></div>
+  </div><div class="surcouche" id="sur-ios"></div></div>
+
+  <div class="tel android" id="tel-and"><div class="ecran">
+    <div class="couche fond-android" id="and-accueil"><div class="etat-and" style="background:none;color:#fff"><span>18:06</span><span>4G ▮▮▮</span></div><div class="grille" id="grille-and"></div><div class="dock"><div class="ic"></div><div class="ic"></div><div class="ic"></div><div class="ic"></div></div></div>
+    <div class="couche" id="and-nav" style="background:#7C2128">
+      <div class="etat-and"><span>18:06</span><span>4G ▮▮▮</span></div>
+      <div class="barre-and"><span class="logo-nav logo-chrome" id="and-logo"></span><span class="adr">mannequin.maitreakessemodelmanagement.com</span><span style="font-size:15px;border:2px solid #555;border-radius:5px;padding:0 5px">2</span><span class="pts">⋮</span></div>
+      <div class="page-and"></div>
+      <div class="scrim" id="and-scrim"></div>
+      <div class="dialogue" id="and-dialogue">
+        <h3>Installer l’application</h3>
+        <div class="ligne"><img src="../../icons/mannequin-apple-180.png" alt=""><span><b>MA2M Mannequin</b><small>mannequin.maitreakessemodelmanagement.com</small></span></div>
+        <div class="actions"><span>Annuler</span><span id="and-btn-installer">Installer</span></div>
+      </div>
+      <div class="passage" id="and-passage">
+        <div class="rangee"><span class="rond logo-samsung" id="pass-samsung"></span><span class="vers" id="pass-fleche"></span><span class="rond logo-chrome" id="pass-chrome"></span></div>
+        <div class="legende" id="pass-legende">Chrome s’ouvre tout seul<span>continue simplement dans Chrome</span></div>
+      </div>
+    </div>
+  </div><div class="surcouche" id="sur-and"></div></div>
+</div></div>
+
+<div id="voile-haut" class="abs"></div>
+<div id="tete" class="abs"><div id="numero" class="abs"></div><div id="filet" class="abs"></div><div id="titre" class="abs"></div></div>
+<div id="progres" class="abs"><div class="compte" id="compte"></div><div class="barres" id="barres"></div></div>
+
+<div id="intro" class="abs carton">
+  <div class="icone-app" id="intro-icone"></div>
+  <div class="sur-titre" id="intro-st" style="margin-top:80px">Maître Akesse Model Management</div>
+  <div class="grand" id="intro-t1" style="font-size:150px">MA2M Mannequin</div>
+  <div class="ligne" id="intro-l"></div>
+  <div class="moyen" id="intro-t2">Installer l’application</div>
+</div>
+<div id="sec-ios" class="abs carton"><div class="sur-titre" id="sec-ios-st">Partie 1</div><div class="grand" id="sec-ios-t" style="font-size:230px">iPhone</div><div class="ligne" id="sec-ios-l"></div></div>
+<div id="sec-and" class="abs carton"><div class="sur-titre" id="sec-and-st">Partie 2</div><div class="grand" id="sec-and-t" style="font-size:230px">Android</div><div class="ligne" id="sec-and-l"></div></div>
+<div id="fait" class="abs carton">
+  <svg class="coche" viewBox="0 0 220 220"><circle id="coche-c" cx="110" cy="110" r="100"/><path id="coche-p" d="M66 114 L98 144 L156 82"/></svg>
+  <div class="grand" id="fait-t" style="font-size:130px;margin-top:50px"></div><div class="moyen" id="fait-s"></div>
+</div>
+<div id="fin" class="abs carton">
+  <div class="icone-app" id="fin-icone" style="width:220px;height:220px;border-radius:50px"></div>
+  <div class="grand" id="fin-t" style="margin-top:70px;font-size:150px">Pas de panique.</div>
+  <div class="moyen" id="fin-s">Suis les étapes, et ça marche.</div>
+  <div class="pilule" id="fin-p">mannequin.maitreakessemodelmanagement.com</div>
+</div>
+<div id="volet" class="abs"><i id="volet-a"></i><i id="volet-b"></i></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lisse = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+const sortie = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const douce = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };   // entrée-sortie
+const dans = (t, a, b) => t >= a && t < b;
+const fen = (t, a, b, f = 0.3) => Math.min(sortie((t - a) / f), clamp((b - t) / f));
+const G = (k) => SEG[k];
+const A = (k, f) => SEG[k][2] + (SEG[k][3] - SEG[k][2]) * f;
+window.DUREE = DUREE;
+
+for (const s of ['sur-ios', 'sur-and']) $(s).innerHTML = '<div class="cadre"></div><div class="trace"></div><div class="onde"></div><div class="onde"></div><div class="doigt"></div><div class="etiquette"></div>';
+$('grille-ios').innerHTML = ['Messages', 'Photos', 'Appareil', 'Météo', 'Horloge', 'Plans', 'Notes', 'Réglages', 'Musique', 'Calendrier', 'App Store'].map((n) => '<div class="ic"><i>' + n + '</i></div>').join('') + '<div class="ic ma2m" id="ios-ma2m"><i>MA2M Mannequin</i></div>';
+$('grille-and').innerHTML = ['Téléphone', 'Messages', 'Photos', 'Agenda', 'Horloge', 'Maps', 'Play Store', 'Paramètres', 'Musique', 'Notes', 'Météo'].map((n) => '<div class="ic"><i>' + n + '</i></div>').join('') + '<div class="ic ma2m" id="and-ma2m" style="border-radius:50%"><i>MA2M Mannequin</i></div>';
+function mesure(ecran, lien) { const r0 = $(ecran).getBoundingClientRect(), rl = $(lien).getBoundingClientRect(), K = 390 / r0.width; return { x: (rl.left - r0.left) * K, y: (rl.top - r0.top) * K, l: rl.width * K, h: rl.height * K }; }
+$('tel-ios').style.display = 'block'; const LI = mesure('ecran-ios', 'wa-lien-ios');
+// positions réelles des boutons (menus ouverts, liste défilée) pour placer le repère juste dessus
+$('ios-feuille').style.transform = 'none'; $('ios-defile').style.transform = 'translateY(-170px)'; $('ios-ajout').style.transform = 'none';
+const PA = mesure('ecran-ios', 'ios-partager'), CI = mesure('ecran-ios', 'ios-cible'), AJ = mesure('ecran-ios', 'ios-btn-ajouter');
+$('tel-ios').style.display = 'none'; $('tel-and').style.display = 'block';
+const IN = (() => { const r0 = $('tel-and').querySelector('.ecran').getBoundingClientRect(), rl = $('and-btn-installer').getBoundingClientRect(), K = 390 / r0.width; return { x: (rl.left - r0.left) * K, y: (rl.top - r0.top) * K, l: rl.width * K, h: rl.height * K }; })();
+$('tel-and').style.display = 'none';
+const centre = (r) => [r.x + r.l / 2, r.y + r.h / 2];
+const autour = (r, a, b, m = 4, rr = 10) => ({ a, b, x: r.x - m, y: r.y - m, l: r.l + 2 * m, h: r.h + 2 * m, r: rr });
+
+// en-tête : numéro qui monte, filet qui s'étire, mots qui apparaissent l'un après l'autre (fondu + glissé)
+let titreCourant = '';
+function entete(t, a, b, numero, titre) {
+  if (!dans(t, a, b)) return false;
+  const cle = numero + titre;
+  if (cle !== titreCourant) {
+    titreCourant = cle;
+    $('numero').textContent = numero; $('numero').style.display = numero ? 'block' : 'none'; $('filet').style.display = numero ? 'block' : 'none';
+    $('titre').className = 'abs' + (numero ? '' : ' plein');
+    const mots = []; titre.replace(/\[([^\]]+)\]|([^\s\[]+)/g, (x, em, mot) => { if (em) em.split(' ').forEach((w) => mots.push('<span class="mot em">' + w + '</span>')); else mots.push('<span class="mot">' + mot + '</span>'); return x; });
+    $('titre').innerHTML = mots.join('');
+  }
+  const k = t - a;
+  $('numero').style.opacity = sortie(k / 0.5); $('numero').style.transform = 'translateY(' + (40 * (1 - sortie(k / 0.6))) + 'px)';
+  $('filet').style.transform = 'scaleX(' + sortie((k - 0.15) / 0.5) + ')';
+  [...$('titre').children].forEach((m, i) => { const x = clamp((k - 0.15 - i * 0.06) / 0.4); m.style.opacity = sortie(x); m.style.transform = 'translateY(' + (26 * (1 - sortie(x))) + 'px)'; });
+  $('tete').style.opacity = clamp((b - t) / 0.25);
+  return true;
+}
+// caméra : [t, zoom, point visé x, y (écran), position sur la vidéo x, y] ; mouvements doux
+const S = 1.4513, BX = 257, BY = 612;
+const REPOS = (t) => [t, 1, 195, 426, 540, BY + 426 * S];
+const ZOOM = (t, z, fx, fy, cx, cy) => [t, z, fx, fy, cx, cy];
+let APPUIS = [];
+function camera(t, cles) {
+  cles = cles.slice().sort((x, y) => x[0] - y[0]);
+  let c = cles[0];
+  for (let i = 0; i < cles.length - 1; i++) {
+    const [a] = cles[i], [b] = cles[i + 1];
+    if (t >= b) c = cles[i + 1];
+    else if (t >= a) { const k = douce((t - a) / (b - a)); c = cles[i].map((v, j) => v + (cles[i + 1][j] - v) * k); break; }
+  }
+  let [, z, fx, fy, cx, cy] = c;
+  const ap = APPUIS.find((x) => t >= x && t < x + 0.5); if (ap !== undefined) z *= 1 + 0.025 * Math.sin(Math.PI * (t - ap) / 0.5);
+  const px = BX + fx * S, py = BY + fy * S;
+  $('camera').style.transform = 'translate(' + (cx - z * px) + 'px,' + (cy - z * py) + 'px) scale(' + z + ')';
+}
+function entreeTel(id, t, a) { const k = douce((t - a) / 0.9); $(id).style.transform = 'translateY(' + (520 * (1 - k)) + 'px) rotateX(' + (14 * (1 - k)) + 'deg) scale(' + (0.94 + 0.06 * k) + ')'; $(id).style.opacity = clamp((t - a) / 0.4); }
+// repère de toucher : cercle blanc qui glisse jusqu'au bouton, se resserre à l'appui, onde fine
+function toucher(sur, t, gestes, cadre, etiquette) {
+  const [cad, trace, onde1, onde2, doigt, eti] = $(sur).children;
+  const g = gestes.find((x) => t >= x.a && t < x.b);
+  trace.style.opacity = 0;
+  if (g) {
+    const arrivee = g.appui !== undefined ? g.appui - 0.2 : g.b;
+    const k = g.glisse ? douce((t - g.a) / (g.b - g.a)) : douce((t - g.a) / Math.max(0.3, arrivee - g.a));
+    const x = g.de[0] + (g.vers[0] - g.de[0]) * k, y = g.de[1] + (g.vers[1] - g.de[1]) * k;
+    let appui = 0;
+    if (g.appui !== undefined) { const d = t - g.appui; if (d > -0.1 && d < 0.3) appui = Math.sin(Math.PI * clamp((d + 0.1) / 0.4)); }
+    if (g.glisse) appui = 0.7;
+    doigt.style.left = x + 'px'; doigt.style.top = y + 'px';
+    doigt.style.opacity = Math.min(clamp((t - g.a) / 0.25), clamp((g.b - t) / 0.25));
+    doigt.style.transform = 'scale(' + ((0.85 + 0.15 * sortie((t - g.a) / 0.3)) * (1 - 0.22 * appui)) + ')';
+    doigt.style.background = 'rgba(255,255,255,' + (0.38 + 0.5 * appui) + ')';
+    if (g.glisse) { trace.style.left = g.de[0] + 'px'; trace.style.top = y + 'px'; trace.style.height = Math.max(0, g.de[1] - y) + 'px'; trace.style.opacity = 0.7 * doigt.style.opacity; }
+    for (const [o, dt] of [[onde1, 0], [onde2, 0.16]]) {
+      if (g.appui !== undefined && t >= g.appui + dt && t < g.appui + dt + 0.75) { const q = (t - g.appui - dt) / 0.75; o.style.left = g.vers[0] + 'px'; o.style.top = g.vers[1] + 'px'; o.style.opacity = 0.9 * (1 - sortie(q)); o.style.transform = 'scale(' + (1 + 2.4 * sortie(q)) + ')'; }
+      else o.style.opacity = 0;
+    }
+  } else { doigt.style.opacity = 0; onde1.style.opacity = 0; onde2.style.opacity = 0; }
+  if (cadre) { Object.assign(cad.style, { left: cadre.x + 'px', top: cadre.y + 'px', width: cadre.l + 'px', height: cadre.h + 'px', borderRadius: (cadre.r || 14) + 'px' }); cad.style.opacity = fen(t, cadre.a, cadre.b, 0.35); cad.style.transform = 'scale(' + (1.06 - 0.06 * sortie((t - cadre.a) / 0.45)) + ')'; } else cad.style.opacity = 0;
+  if (etiquette) { eti.textContent = etiquette.texte; eti.style.left = etiquette.x + 'px'; eti.style.top = etiquette.y + 'px'; eti.style.opacity = fen(t, etiquette.a, etiquette.b, 0.35); eti.style.transform = 'translateY(' + (10 * (1 - sortie((t - etiquette.a) / 0.4))) + 'px)'; } else eti.style.opacity = 0;
+}
+const trouve = (liste, t) => liste.find((f) => dans(t, f.a, f.b));
+// carton plein cadre : glisse depuis le bas en fondu
+function carton(id, t, a, b) { const v = dans(t, a - 0.01, b + 0.01) ? fen(t, a, b, 0.35) : 0; $(id).style.opacity = v; $(id).style.visibility = v > 0 ? 'visible' : 'hidden'; return t - a; }
+const monte = (el, k, d = 0, dist = 50) => { const x = clamp((k - d) / 0.6); el.style.opacity = sortie(x); el.style.transform = 'translateY(' + (dist * (1 - sortie(x))) + 'px)'; };
+function progres(t, n, i, a, b) {
+  if (!dans(t, a, b)) return false;
+  if ($('barres').children.length !== n) $('barres').innerHTML = '<i><b></b></i>'.repeat(n);
+  $('compte').textContent = String(i + 1).padStart(2, '0') + ' / ' + String(n).padStart(2, '0');
+  [...$('barres').children].forEach((p, j) => { p.className = j === i ? 'ici' : ''; p.firstChild.style.width = (j < i ? 100 : j === i ? 100 * sortie((t - progres.debut[i]) / 0.6) : 0) + '%'; });
+  $('progres').style.opacity = fen(t, a, b, 0.35); return true;
+}
+progres.debut = [];
+
+// ---------- repères (secondes, d'après la voix) ----------
+const fi = G('iosfin'), fa = G('andfin');
+const T = {
+  lienIos: A('whatsapp', 0.85), barreIos: A('ios1', 0.97), croix: A('ios2', 0.92), menuBtn: A('ios3', 1.0) + 0.1, partager: A('ios4', 1.0) + 0.25,
+  descend: A('ios5', 0.18), cible: A('ios5', 0.55), ajouter: A('ios6', 1.0) + 0.1,
+  barreAnd: A('and1', 0.97), installer: A('and2', 1.0) + 0.1, barreSam: A('samsung', 0.42), iconeIos: A('ensuite', 0.25)
+};
+APPUIS = [T.lienIos, T.barreIos, T.croix, T.menuBtn, T.partager, T.cible, T.ajouter, T.barreAnd, T.installer, T.barreSam, T.iconeIos];
+
+window.rendre = function (t) {
+  $('lueur').style.opacity = 0.75 + 0.25 * Math.sin(t * 0.9); $('lueur').style.transform = 'translateY(' + (30 * Math.sin(t * 0.4)) + 'px)';
+  $('grain').style.transform = 'translate(' + ((Math.floor(t * 12) * 37) % 50) + 'px,' + ((Math.floor(t * 12) * 53) % 50) + 'px)';
+
+  // ---------- cartons ----------
+  let k = carton('intro', t, G('intro')[0], G('intro')[1]);
+  $('intro-icone').style.opacity = sortie(k / 0.7); $('intro-icone').style.transform = 'scale(' + (0.86 + 0.14 * sortie(k / 0.9)) + ')';
+  monte($('intro-st'), k, 0.4, 30); monte($('intro-t1'), k, 0.6, 60); $('intro-l').style.transform = 'scaleX(' + sortie((k - 1.0) / 0.6) + ')'; monte($('intro-t2'), k, 1.2, 30);
+  k = carton('sec-ios', t, G('ios')[0], G('ios')[1]); monte($('sec-ios-st'), k, 0.1, 30); monte($('sec-ios-t'), k, 0.25, 80); $('sec-ios-l').style.transform = 'scaleX(' + sortie((k - 0.6) / 0.6) + ')';
+  k = carton('sec-and', t, G('and')[0], G('and')[1]); monte($('sec-and-st'), k, 0.1, 30); monte($('sec-and-t'), k, 0.25, 80); $('sec-and-l').style.transform = 'scaleX(' + sortie((k - 0.6) / 0.6) + ')';
+  if (dans(t, fi[0] + 1.6, fi[1])) { $('fait-t').textContent = 'Bravo.'; $('fait-s').textContent = 'L’icône MA2M est sur ton écran'; k = carton('fait', t, fi[0] + 1.6, fi[1]); }
+  else if (dans(t, fa[0] + 1.4, fa[1])) { $('fait-t').textContent = 'C’est fait.'; $('fait-s').textContent = 'L’application est sur ton téléphone'; k = carton('fait', t, fa[0] + 1.4, fa[1]); }
+  else { carton('fait', t, -9, -8); k = 0; }
+  const lc = 2 * Math.PI * 100; $('coche-c').style.strokeDasharray = lc; $('coche-c').style.strokeDashoffset = lc * (1 - sortie(k / 0.7));
+  $('coche-p').style.strokeDasharray = 140; $('coche-p').style.strokeDashoffset = 140 * (1 - sortie((k - 0.5) / 0.4));
+  monte($('fait-t'), k, 0.7, 40); monte($('fait-s'), k, 0.9, 30);
+  k = carton('fin', t, G('fin')[0], G('fin')[1] + 0.6); $('fin-icone').style.opacity = sortie(k / 0.6); $('fin-icone').style.transform = 'scale(' + (0.88 + 0.12 * sortie(k / 0.8)) + ')';
+  monte($('fin-t'), k, 0.3, 60); monte($('fin-s'), k, 0.6, 30); monte($('fin-p'), k, 0.9, 30);
+  // volets : deux panneaux (rouge puis noir) qui balaient l'écran en biais
+  const v = [G('whatsapp')[0], G('ios')[0], G('ios1')[0], fi[0] + 1.6, G('and')[0], G('and1')[0], fa[0] + 1.4, G('samsung')[0], G('ensuite')[0], G('fin')[0]].find((a) => dans(t, a - 0.35, a + 0.35));
+  if (v !== undefined) {
+    const q = (t - v + 0.35) / 0.7;
+    $('volet-a').style.background = '#7C2128'; $('volet-b').style.background = '#0E0C0C';
+    $('volet-a').style.transform = 'translateX(' + (-120 + 300 * douce(q)) + '%) skewX(-14deg)'; $('volet-b').style.transform = 'translateX(' + (-160 + 300 * douce(q - 0.08)) + '%) skewX(-14deg)';
+    $('volet').style.opacity = 1;
+  } else $('volet').style.opacity = 0;
+
+  // ---------- quel téléphone ----------
+  const seqIos = dans(t, G('whatsapp')[0], G('ios')[0]) || dans(t, G('ios1')[0], fi[0] + 1.6) || dans(t, G('ensuite')[0], G('ensuite')[1]);
+  const seqAnd = dans(t, G('and1')[0], fa[0] + 1.4) || dans(t, G('samsung')[0], G('samsung')[1]);
+  $('tel-ios').style.display = seqIos ? 'block' : 'none'; $('tel-and').style.display = seqAnd ? 'block' : 'none';
+  const blocs = [[G('whatsapp')[0], G('ios')[0]], [G('ios1')[0], fi[0] + 1.6], [G('ensuite')[0], G('ensuite')[1]], [G('and1')[0], fa[0] + 1.4], [G('samsung')[0], G('samsung')[1]]];
+  const bloc = blocs.find(([a, b]) => dans(t, a, b)) || [0, 0];
+  $('camera').style.opacity = clamp((bloc[1] - t) / 0.35);
+  if (seqIos) entreeTel('tel-ios', t, bloc[0]); if (seqAnd) entreeTel('tel-and', t, bloc[0]);
+  let tete = false; $('progres').style.opacity = 0;
+
+  // ---------- iPhone ----------
+  if (seqIos && t < G('ensuite')[0]) {
+    const wa = t < G('ios')[0], accueil = t >= T.ajouter + 0.5;
+    $('ios-wa').style.opacity = wa ? 1 : 0; $('ios-accueil').style.opacity = accueil ? 1 : 0;
+    $('ios-safari').style.opacity = !wa && !accueil ? 1 : 0; $('ios-appli').style.opacity = 0;
+    $('ios-safari').style.transform = dans(t, G('ios1')[0], G('ios1')[0] + 0.9) ? 'translateY(' + (852 * (1 - douce((t - G('ios1')[0]) / 0.8))) + 'px)' : 'none';
+    $('ios-ma2m').style.opacity = clamp((t - T.ajouter - 0.9) / 0.5); $('ios-ma2m').style.transform = 'scale(' + (0.6 + 0.4 * sortie((t - T.ajouter - 0.9) / 0.6)) + ')';
+    const gd = dans(t, T.barreIos + 0.15, T.croix + 0.2) ? fen(t, T.barreIos + 0.15, T.croix + 0.2, 0.35) : 0;
+    $('ios-guide').style.opacity = gd; $('ios-guide').style.transform = 'scale(' + (0.96 + 0.04 * gd) + ')';
+    const mn = dans(t, T.menuBtn + 0.1, T.partager + 0.2) ? fen(t, T.menuBtn + 0.1, T.partager + 0.2, 0.3) : 0;
+    $('ios-menu').style.opacity = mn; $('ios-menu').style.transform = 'scale(' + (0.9 + 0.1 * mn) + ')';
+    $('ios-partager').classList.toggle('allume', dans(t, T.partager - 0.3, T.partager + 0.2));
+    const fm = douce((t - T.partager - 0.2) / 0.55) * (t < T.cible + 0.5 ? 1 : 0);
+    $('ios-feuille').style.transform = 'translateY(' + (540 * (1 - fm)) + 'px)';
+    $('ios-defile').style.transform = 'translateY(' + (-170 * douce((t - T.descend) / 1.3)) + 'px)';
+    $('ios-cible').classList.toggle('allume', dans(t, T.cible - 0.3, T.cible + 0.5));
+    const am = douce((t - T.cible - 0.5) / 0.55) * (t < T.ajouter + 0.5 ? 1 : 0);
+    $('ios-ajout').style.transform = 'translateY(' + (820 * (1 - am)) + 'px)';
+    $('ios-btn-ajouter').classList.toggle('allume', dans(t, T.ajouter - 0.3, T.ajouter + 0.5));
+    $('ios-voile').style.opacity = Math.max(fm, am, mn) * 0.35;
+    $('etat-ios').style.color = accueil ? '#fff' : (wa ? '#000' : '#fff');
+    const w0 = G('whatsapp')[0], c1 = G('ios1')[0];
+    camera(t, [REPOS(w0), REPOS(w0 + 1.4), ZOOM(T.lienIos - 1.3, 1.5, LI.x + 150, LI.y + 10, 540, 1200), ZOOM(T.lienIos + 0.6, 1.5, LI.x + 150, LI.y + 10, 540, 1200),
+      REPOS(c1), REPOS(c1 + 1.2), ZOOM(T.barreIos - 1.5, 1.6, 170, 697, 540, 1400), ZOOM(T.barreIos + 0.2, 1.6, 170, 697, 540, 1400),
+      ZOOM(T.barreIos + 0.9, 1.12, 195, 430, 540, 1180), ZOOM(T.croix - 1.2, 1.12, 195, 430, 540, 1180), ZOOM(T.croix - 0.5, 1.5, 344, 267, 700, 1100), ZOOM(T.croix + 0.3, 1.5, 344, 267, 700, 1100),
+      REPOS(T.croix + 1.0), ZOOM(T.menuBtn - 1.6, 1.85, 160, 795, 540, 1420), ZOOM(T.menuBtn + 0.3, 1.85, 160, 795, 540, 1420),
+      ZOOM(T.menuBtn + 1.0, 1.45, 195, PA.y, 540, 1300), ZOOM(T.partager + 0.3, 1.45, 195, PA.y, 540, 1300),
+      REPOS(T.partager + 0.9), ZOOM(T.descend + 0.5, 1.3, 195, CI.y, 540, 1250), ZOOM(T.cible + 0.4, 1.3, 195, CI.y, 540, 1250),
+      ZOOM(T.cible + 1.2, 1.85, AJ.x, AJ.y, 740, 1020), ZOOM(T.ajouter + 0.3, 1.85, AJ.x, AJ.y, 740, 1020), REPOS(T.ajouter + 1.0), ZOOM(T.ajouter + 1.7, 1.5, 332, 300, 540, 1250), ZOOM(fi[0] + 1.6, 1.5, 332, 300, 540, 1250)]);
+    toucher('sur-ios', t, [
+      { a: T.lienIos - 1.3, b: T.lienIos + 0.7, de: [260, 420], vers: [LI.x + 70, LI.y + 12], appui: T.lienIos },
+      { a: T.barreIos - 1.4, b: T.barreIos + 0.7, de: [250, 560], vers: [170, 697], appui: T.barreIos },
+      { a: T.croix - 1.2, b: T.croix + 0.7, de: [250, 420], vers: [344, 267], appui: T.croix },
+      { a: T.menuBtn - 1.5, b: T.menuBtn + 0.7, de: [230, 680], vers: [117, 795], appui: T.menuBtn },
+      { a: T.partager - 1.1, b: T.partager + 0.7, de: [230, 520], vers: [PA.x + 70, PA.y + PA.h / 2], appui: T.partager },
+      { a: T.descend, b: T.descend + 1.3, de: [205, 780], vers: [205, 600], glisse: true },
+      { a: T.cible - 1.0, b: T.cible + 0.7, de: [260, 520], vers: [CI.x + 110, CI.y + CI.h / 2], appui: T.cible },
+      { a: T.ajouter - 1.2, b: T.ajouter + 0.7, de: [250, 300], vers: centre(AJ), appui: T.ajouter }],
+      trouve([{ a: T.lienIos - 1.4, b: T.lienIos + 0.6, x: LI.x - 6, y: LI.y - 4, l: LI.l + 12, h: LI.h + 8, r: 8 }, { a: T.barreIos - 1.6, b: T.barreIos + 0.4, x: 10, y: 664, l: 322, h: 66 },
+        { a: T.croix - 1.3, b: T.croix + 0.4, x: 318, y: 241, l: 52, h: 52 }, { a: T.menuBtn - 1.8, b: T.menuBtn + 0.4, x: 96, y: 772, l: 44, h: 46, r: 12 },
+        autour(PA, T.partager - 1.2, T.partager + 0.3, 0, 8), autour(CI, T.cible - 1.0, T.cible + 0.5, 0, 8),
+        autour(AJ, T.ajouter - 1.3, T.ajouter + 0.4, 4, 10), { a: T.ajouter + 1.7, b: fi[0] + 1.6, x: 296, y: 264, l: 72, h: 72, r: 18 }], t),
+      trouve([{ a: T.lienIos - 1.2, b: T.lienIos + 0.6, x: 40, y: LI.y + 50, texte: 'Le lien bleu' }, { a: T.barreIos - 1.4, b: T.barreIos + 0.3, x: 70, y: 612, texte: 'La barre rouge' },
+        { a: T.croix - 1.2, b: T.croix + 0.3, x: 190, y: 302, texte: 'Fermer' }, { a: T.menuBtn - 1.6, b: T.menuBtn + 0.3, x: 60, y: 716, texte: 'Le bouton ≡' },
+        { a: T.descend, b: T.descend + 1.2, x: 230, y: 560, texte: 'Faire glisser' }, { a: T.ajouter + 1.8, b: fi[0] + 1.6, x: 200, y: 350, texte: 'Ton icône MA2M' }], t));
+    tete = entete(t, w0 + 0.2, G('ios')[0], '', 'Le lien arrive sur [WhatsApp]') ||
+      entete(t, c1 + 0.2, T.barreIos + 0.5, '01', 'Touche la [barre rouge]') ||
+      entete(t, T.barreIos + 0.5, T.croix + 0.6, '02', 'Ferme avec la [croix]') ||
+      entete(t, T.croix + 0.6, T.menuBtn + 0.5, '03', 'Touche le bouton [≡]') ||
+      entete(t, T.menuBtn + 0.5, T.partager + 0.5, '04', 'Touche [Partager]') ||
+      entete(t, T.partager + 0.5, T.cible + 0.6, '05', '[Sur l’écran d’accueil]') ||
+      entete(t, T.cible + 0.6, T.ajouter + 0.6, '06', 'Touche [Ajouter]') ||
+      entete(t, T.ajouter + 0.6, fi[0] + 1.6, '', 'Ton icône est [installée]');
+    progres.debut = [c1 + 0.2, T.barreIos + 0.5, T.croix + 0.6, T.menuBtn + 0.5, T.partager + 0.5, T.cible + 0.6];
+    progres(t, 6, t < T.barreIos + 0.5 ? 0 : t < T.croix + 0.6 ? 1 : t < T.menuBtn + 0.5 ? 2 : t < T.partager + 0.5 ? 3 : t < T.cible + 0.6 ? 4 : 5, c1 + 0.2, T.ajouter + 0.6);
+  }
+  // ---------- iPhone : ensuite ----------
+  if (seqIos && t >= G('ensuite')[0]) {
+    const e = G('ensuite');
+    $('ios-wa').style.opacity = 0; $('ios-safari').style.opacity = 0; $('ios-accueil').style.opacity = t < T.iconeIos + 0.35 ? 1 : 0;
+    $('ios-ma2m').style.opacity = 1; $('ios-ma2m').style.transform = 'none'; $('etat-ios').style.color = '#fff';
+    const o = douce((t - T.iconeIos - 0.05) / 0.6);
+    $('ios-appli').style.opacity = clamp((t - T.iconeIos) / 0.25); $('ios-appli').style.transform = 'scale(' + (0.2 + 0.8 * o) + ')'; $('ios-appli').style.transformOrigin = '332px 300px';
+    camera(t, [REPOS(e[0]), ZOOM(e[0] + 0.9, 1.45, 332, 300, 540, 1300), ZOOM(T.iconeIos + 0.1, 1.45, 332, 300, 540, 1300), REPOS(T.iconeIos + 0.8), REPOS(e[1])]);
+    toucher('sur-ios', t, [{ a: e[0] + 0.5, b: T.iconeIos + 0.7, de: [240, 460], vers: [332, 300], appui: T.iconeIos }],
+      dans(t, A('ensuite', 0.45), e[1]) ? { a: A('ensuite', 0.45), b: e[1], x: 22, y: 360, l: 346, h: 200 } : null,
+      dans(t, A('ensuite', 0.45), e[1]) ? { a: A('ensuite', 0.45), b: e[1], x: 40, y: 312, texte: 'Ton e-mail et ton mot de passe' } : null);
+    tete = entete(t, e[0] + 0.2, A('ensuite', 0.45), '', 'Ouvre l’application [MA2M]') || entete(t, A('ensuite', 0.45), e[1], '', 'Puis [connecte-toi]');
+  }
+  // ---------- Android ----------
+  if (seqAnd) {
+    const sam = t >= G('samsung')[0];
+    const c1 = G('and1')[0];
+    const accueil = !sam && t >= T.installer + 0.5;
+    $('and-accueil').style.opacity = accueil ? 1 : 0; $('and-nav').style.opacity = accueil ? 0 : 1;
+    const entreeNav = !sam ? c1 : G('samsung')[0];
+    $('and-nav').style.transform = dans(t, entreeNav, entreeNav + 0.9) ? 'translateY(' + (852 * (1 - douce((t - entreeNav) / 0.8))) + 'px)' : 'none';
+    $('and-ma2m').style.opacity = clamp((t - T.installer - 0.9) / 0.5); $('and-ma2m').style.transform = 'scale(' + (0.6 + 0.4 * sortie((t - T.installer - 0.9) / 0.6)) + ')';
+    const passage = sam ? fen(t, T.barreSam + 0.25, G('samsung')[1] - 0.5, 0.4) : 0;
+    $('and-logo').className = 'logo-nav ' + (sam && t < T.barreSam + 2.6 ? 'logo-samsung' : 'logo-chrome');
+    $('and-passage').style.opacity = passage;
+    const kp = t - T.barreSam - 0.25;
+    $('pass-samsung').style.opacity = 1 - 0.55 * sortie((kp - 0.9) / 0.5); $('pass-samsung').style.transform = 'scale(' + (0.9 + 0.1 * sortie(kp / 0.5)) + ')';
+    $('pass-fleche').style.transform = 'scaleX(' + sortie((kp - 0.4) / 0.5) + ')'; $('pass-fleche').style.transformOrigin = '0 50%';
+    $('pass-chrome').style.opacity = sortie((kp - 0.8) / 0.5); $('pass-chrome').style.transform = 'scale(' + (0.8 + 0.3 * sortie((kp - 0.8) / 0.6)) + ')';
+    monte($('pass-legende'), kp, 1.2, 16);
+    const dm = !sam && dans(t, T.barreAnd + 0.15, T.installer + 0.5) ? fen(t, T.barreAnd + 0.15, T.installer + 0.5, 0.35) : 0;
+    $('and-dialogue').style.opacity = dm; $('and-dialogue').style.transform = 'scale(' + (0.94 + 0.06 * dm) + ')';
+    $('and-scrim').style.opacity = dm;
+    $('and-btn-installer').classList.toggle('allume', dans(t, T.installer - 0.3, T.installer + 0.4));
+    if (!sam) {
+      camera(t, [REPOS(c1), REPOS(c1 + 1.2), ZOOM(T.barreAnd - 1.5, 1.6, 170, 809, 540, 1420), ZOOM(T.barreAnd + 0.2, 1.6, 170, 809, 540, 1420), ZOOM(T.barreAnd + 0.9, 1.45, 250, IN.y - 20, 600, 1250), ZOOM(T.installer + 0.3, 1.45, 250, IN.y - 20, 600, 1250), REPOS(T.installer + 1.0), ZOOM(T.installer + 1.7, 1.5, 335, 275, 540, 1250), ZOOM(fa[0] + 1.4, 1.5, 335, 275, 540, 1250)]);
+      toucher('sur-and', t, [{ a: T.barreAnd - 1.4, b: T.barreAnd + 0.7, de: [250, 640], vers: [170, 809], appui: T.barreAnd }, { a: T.installer - 1.2, b: T.installer + 0.7, de: [220, 560], vers: centre(IN), appui: T.installer }],
+        trouve([{ a: T.barreAnd - 1.6, b: T.barreAnd + 0.4, x: 10, y: 776, l: 322, h: 66 }, autour(IN, T.installer - 1.3, T.installer + 0.4, 4, 22), { a: T.installer + 1.7, b: fa[0] + 1.4, x: 301, y: 241, l: 68, h: 68, r: 34 }], t),
+        trouve([{ a: T.barreAnd - 1.4, b: T.barreAnd + 0.3, x: 70, y: 724, texte: 'La barre rouge' }, { a: T.installer - 1.2, b: T.installer + 0.3, x: IN.x - 40, y: IN.y + IN.h + 22, texte: 'Installer' }, { a: T.installer + 1.8, b: fa[0] + 1.4, x: 190, y: 330, texte: 'Ton icône MA2M' }], t));
+      tete = entete(t, c1 + 0.2, T.barreAnd + 0.5, '01', 'Touche la [barre rouge]') || entete(t, T.barreAnd + 0.5, T.installer + 0.6, '02', 'Touche [Installer]') ||
+        entete(t, T.installer + 0.6, fa[0] + 1.4, '', 'Ton icône est [installée]');
+      progres.debut = [c1 + 0.2, T.barreAnd + 0.5];
+      progres(t, 2, t < T.barreAnd + 0.5 ? 0 : 1, c1 + 0.2, T.installer + 0.6);
+    } else {
+      const s0 = G('samsung')[0];
+      camera(t, [REPOS(s0), REPOS(s0 + 1.0), ZOOM(T.barreSam - 1.3, 1.6, 170, 809, 540, 1420), ZOOM(T.barreSam + 0.2, 1.6, 170, 809, 540, 1420), REPOS(T.barreSam + 0.9), REPOS(G('samsung')[1])]);
+      toucher('sur-and', t, [{ a: T.barreSam - 1.3, b: T.barreSam + 0.7, de: [250, 640], vers: [170, 809], appui: T.barreSam }],
+        trouve([{ a: s0 + 0.5, b: T.barreSam - 1.4, x: 6, y: 38, l: 36, h: 44, r: 22 }, { a: T.barreSam - 1.4, b: T.barreSam + 0.4, x: 10, y: 776, l: 322, h: 66 }], t),
+        trouve([{ a: s0 + 0.6, b: T.barreSam - 1.4, x: 46, y: 98, texte: 'Samsung Internet' }], t));
+      tete = entete(t, s0 + 0.2, T.barreSam + 0.5, '', 'Avec [Samsung Internet] ?') || entete(t, T.barreSam + 0.5, G('samsung')[1], '', 'Continue dans [Chrome]');
+    }
+  }
+  if (!tete) $('tete').style.opacity = 0;
+  $('voile-haut').style.opacity = $('tete').style.opacity;
+};
+window.rendre(0);
+</script>
+</body></html>

@@ -2793,6 +2793,14 @@ const CLE_SCRIPT_PHOTOS_DRIVE = 'b56772fb9c5075517dc36a6b20db10734701e262274f3be
 // pendant l'envoi faisait perdre les photos pour de bon, sans aucun moyen
 // de rattraper le coup. Un second essai automatique, après une courte
 // pause, résout la grande majorité des échecs purement transitoires.
+// Délai maximum pour une attente réseau : si la promesse ne répond pas à temps, elle échoue avec
+// une erreur dont le code est « delai » (mauvaise connexion : on prévient au lieu d'attendre sans fin).
+function avecDelai(promesse, ms) {
+  let minuteur;
+  const delai = new Promise((_, echec) => { minuteur = setTimeout(() => echec(Object.assign(new Error('Délai dépassé'), { code: 'delai' })), ms); });
+  return Promise.race([promesse, delai]).finally(() => clearTimeout(minuteur));
+}
+
 // Envoi d'un formulaire public (candidature, contact, demande de sélection) avec patience.
 // La base limite le nombre d'envois par minute (protection contre les robots). Lors d'un
 // vrai afflux (annonce de casting, jour de casting où tout le monde est sur le même
@@ -3061,6 +3069,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ua = navigator.userAgent;
   const estIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const estAndroid = /android/i.test(ua);
+  // Le vrai Chrome d'Android (pas Samsung Internet, Opera, Edge, Xiaomi, Firefox… ni le navigateur
+  // intégré de WhatsApp/Facebook/Instagram). Seul Chrome fait installer l'application par Google :
+  // Samsung Internet la fabrique lui-même et Google Play Protect la bloque (« Appli non sécurisée
+  // bloquée », captures réelles du 27/10/2026).
+  const estChromeAndroid = estAndroid && /Chrome\/\d/.test(ua) &&
+    !/SamsungBrowser|OPR\/|OPT\/|EdgA\/|MiuiBrowser|XiaoMi|YaBrowser|UCBrowser|HuaweiBrowser|HeyTapBrowser|VivoBrowser|DuckDuckGo|Firefox|; wv\)|FBAN|FBAV|FB_IAB|Instagram/i.test(ua);
   const PARAM = 'installer', CLE_FERMEE = 'ma2m_installation_fermee';
   const appli = pageAdministration() ? { nom: 'Administration MA2M', icone: '/icons/admin-192.png' }
     : pageApplicationMannequin() ? { nom: 'MA2M Mannequin', icone: '/icons/mannequin-192.png' }
@@ -3070,8 +3084,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const rouverteDansChrome = new URLSearchParams(location.search).has(PARAM);
   // (le repère est retiré de l'adresse : recopiée et renvoyée par WhatsApp, elle ne doit pas le garder)
   if (rouverteDansChrome) { try { const u = new URL(location.href); u.searchParams.delete(PARAM); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* adresse laissée telle quelle */ } }
-  let invitation = null;  // proposition d'installation du navigateur (Chrome, Edge, Samsung Internet)
-  let dejaProposee = false;  // le navigateur a su proposer l'installation : on est déjà dans le bon navigateur
+  let invitation = null;  // proposition d'installation du navigateur (Chrome d'Android, Chrome/Edge d'ordinateur)
+  let dejaProposee = false;  // Chrome a su proposer l'installation : on est déjà dans le bon navigateur
 
   function lienChrome() {
     const u = new URL(location.href);
@@ -3104,19 +3118,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.appendChild(b);
     document.body.classList.add('ma2m-installer-visible');
   }
-  // fenêtre d'aide en images, avec une flèche animée vers le bouton à toucher (en bas sur iPhone,
-  // en haut à droite pour le menu ⋮ de Chrome)
+  // fenêtre d'aide en images. Pas de flèche : sur le nouveau Safari le bouton Partager n'est plus
+  // toujours au même endroit, une flèche fixe pointait dans le vide. La barre rouge est cachée
+  // pendant que l'aide est ouverte (elle gênait la lecture, surtout sur iPhone).
   function guide(ou, titre, etapes) {
     const ancien = document.getElementById('ma2m-guide');
     if (ancien) ancien.remove();
+    document.body.classList.add('ma2m-guide-ouvert');
     const g = document.createElement('div');
     g.id = 'ma2m-guide'; g.className = 'ma2m-guide ma2m-guide--' + ou;
     g.innerHTML = '<div class="ma2m-guide-carte" role="dialog" aria-modal="true" aria-labelledby="ma2m-guide-titre">' +
       '<button type="button" class="ma2m-guide-fermer" aria-label="' + T('Fermer', 'Close') + '">✕</button>' +
       '<img src="' + appli.icone + '" alt="" width="56" height="56"><h2 id="ma2m-guide-titre">' + titre + '</h2>' +
-      '<ol>' + etapes.map((x, i) => '<li><b>' + (i + 1) + '</b><span>' + x + '</span></li>').join('') + '</ol></div>' +
-      '<span class="ma2m-guide-fleche" aria-hidden="true">' + (ou === 'haut' ? '⬆' : '⬇') + '</span>';
-    g.addEventListener('click', (e) => { if (e.target === g || e.target.closest('.ma2m-guide-fermer')) g.remove(); });
+      '<ol>' + etapes.map((x, i) => '<li><b>' + (i + 1) + '</b><span>' + x + '</span></li>').join('') + '</ol></div>';
+    const fermer = () => { g.remove(); document.body.classList.remove('ma2m-guide-ouvert'); };
+    g.addEventListener('click', (e) => { if (e.target === g || e.target.closest('.ma2m-guide-fermer')) fermer(); });
     document.body.appendChild(g);
     g.querySelector('.ma2m-guide-fermer').focus();
   }
@@ -3126,14 +3142,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const autreAppli = /Instagram|FBAN|FBAV|FB_IAB|Line\//i.test(ua);
     // Chrome, Firefox, Edge de l'iPhone : le bouton Partager est en haut, dans la barre d'adresse
     const enHaut = /CriOS|FxiOS|EdgiOS/.test(ua);
-    const pasTrouve = T('<small>Pas de bouton Partager ? Ouvrez ce lien dans <strong>Safari</strong>.</small>', '<small>No Share button? Open this link in <strong>Safari</strong>.</small>');
-    guide(enHaut ? 'haut' : 'bas', T('Installer en 3 touches', 'Install in 3 taps'), (autreAppli ? [T('Touchez <strong>⋯</strong> puis <strong>« Ouvrir dans Safari »</strong>', 'Tap <strong>⋯</strong> then <strong>“Open in Safari”</strong>')] : []).concat([
-      (enHaut ? T('Touchez <strong>Partager</strong> ' + ICONE_PARTAGE + ' en haut, dans la barre d’adresse', 'Tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the top, in the address bar')
-        : T('Touchez <strong>Partager</strong> ' + ICONE_PARTAGE + ' en bas de l’écran <small>(iPhone récent : touchez d’abord <strong>⋯</strong>)</small>', 'Tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the bottom of the screen <small>(recent iPhone: tap <strong>⋯</strong> first)</small>')) + pasTrouve,
-      T('Choisissez <strong>« Sur l’écran d’accueil »</strong> ' + ICONE_AJOUTER, 'Choose <strong>“Add to Home Screen”</strong> ' + ICONE_AJOUTER),
-      T('Touchez <strong>« Ajouter »</strong> : l’icône apparaît sur votre écran', 'Tap <strong>“Add”</strong>: the icon appears on your screen')]));
+    // Applis (Instagram, Facebook…) et Chrome/Firefox/Edge de l'iPhone : on ne peut installer que
+    // depuis Safari → d'abord rouvrir dans Safari.
+    if (autreAppli || enHaut) {
+      guide('bas', T('Ouvrez d’abord Safari', 'Open Safari first'), [
+        T('Touchez <strong>⋯</strong> (ou <strong>⤴</strong>) puis <strong>« Ouvrir dans Safari »</strong>', 'Tap <strong>⋯</strong> (or <strong>⤴</strong>) then <strong>“Open in Safari”</strong>'),
+        T('Dans Safari, touchez de nouveau <strong>« Télécharger l’application »</strong>', 'In Safari, tap <strong>“Download the app”</strong> again')]);
+      return;
+    }
+    // Safari : nouveau Safari (iOS 26, barre d'adresse en bas avec ⋯) et ancien (Partager en bas)
+    guide('bas', T('Installer sur iPhone', 'Install on iPhone'), [
+      T('En bas, dans la barre d’adresse, touchez <strong>⋯</strong> (ou <strong>≡</strong>), puis <strong>Partager</strong> ' + ICONE_PARTAGE + '<small>Ancien iPhone : touchez directement <strong>Partager</strong> ' + ICONE_PARTAGE + ' en bas.</small>',
+        'At the bottom, in the address bar, tap <strong>⋯</strong> (or <strong>≡</strong>), then <strong>Share</strong> ' + ICONE_PARTAGE + '<small>Older iPhone: tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the bottom.</small>'),
+      T('Faites glisser vers le bas et touchez <strong>« Sur l’écran d’accueil »</strong> ' + ICONE_AJOUTER + '<small>Pas dans la liste ? Touchez <strong>« Plus »</strong>.</small>',
+        'Scroll down and tap <strong>“Add to Home Screen”</strong> ' + ICONE_AJOUTER + '<small>Not in the list? Tap <strong>“More”</strong>.</small>'),
+      T('Touchez <strong>« Ajouter »</strong> : l’icône apparaît sur votre écran', 'Tap <strong>“Add”</strong>: the icon appears on your screen')]);
   }
   function guideAndroid() {
+    if (!estChromeAndroid) {  // Chrome absent, ou Administration ouverte dans un autre navigateur
+      guide('haut', T('Ouvrez avec Google Chrome', 'Open with Google Chrome'), [
+        T('Ce navigateur ne peut pas installer l’application. Ouvrez ce lien avec <strong>Google Chrome</strong>.', 'This browser cannot install the app. Open this link with <strong>Google Chrome</strong>.'),
+        T('Pas de Chrome ? <a href="https://play.google.com/store/apps/details?id=com.android.chrome" target="_blank" rel="noopener"><strong>Installez Chrome</strong></a> (gratuit), puis rouvrez le lien.', 'No Chrome? <a href="https://play.google.com/store/apps/details?id=com.android.chrome" target="_blank" rel="noopener"><strong>Install Chrome</strong></a> (free), then reopen the link.')]);
+      return;
+    }
     guide('haut', T('Installer en 2 touches', 'Install in 2 taps'), [
       T('Touchez le menu <strong>⋮</strong> en haut à droite de Chrome', 'Tap the <strong>⋮</strong> menu at the top right of Chrome'),
       T('Choisissez <strong>« Installer l’application »</strong> (ou <strong>« Ajouter à l’écran d’accueil »</strong>), puis <strong>« Installer »</strong>', 'Choose <strong>“Install app”</strong> (or <strong>“Add to Home screen”</strong>), then <strong>“Install”</strong>')]);
@@ -3151,8 +3182,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (choix && choix.outcome === 'accepted') retirer();
       return;
     }
-    // Android : rouvrir dans Chrome seulement si l'on n'y est sûrement pas déjà (pas pour
-    // l'Administration, où l'on perdrait la fiche ouverte)
+    // Android : rouvrir dans le vrai Chrome si Chrome n'a pas proposé l'installation (autre
+    // navigateur, ou onglet Chrome intégré à WhatsApp qui ne sait pas installer). Une seule fois :
+    // si Chrome est absent, le lien revient ici avec le repère et l'aide s'affiche. Pas pour
+    // l'Administration, où l'on perdrait la fiche ouverte.
     if (estIOS) guideIOS();
     else if (!estAndroid) guideOrdinateur();
     else if (!rouverteDansChrome && !dejaProposee && !pageAdministration()) location.href = lienChrome();
@@ -3160,9 +3193,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); invitation = e; dejaProposee = true;
+    e.preventDefault();
+    // Android hors Chrome (Samsung Internet…) : on n'utilise PAS sa proposition, l'appli qu'il
+    // fabrique est bloquée par Play Protect ; notre bouton renverra vers Chrome.
+    // (sauf les téléphones Huawei / Honor : souvent sans Chrome ni Play Store, leur navigateur installe lui-même)
+    if (estAndroid && !estChromeAndroid && !/HuaweiBrowser|HONOR|HarmonyOS/i.test(ua)) return;
+    invitation = e; dejaProposee = true;
     const g = document.getElementById('ma2m-guide');
-    if (g) g.remove();
+    if (g) { g.remove(); document.body.classList.remove('ma2m-guide-ouvert'); }
     afficher();
   });
   window.addEventListener('appinstalled', retirer);
@@ -3636,3 +3674,32 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
     champNumeroEl.value = texte;
   }
 }
+
+// ---- Mur de photos en haut des pages (28/10/2026, choix de la propriétaire, sur le modèle de la
+// connexion de l'Administration) : derrière le titre de chaque page publique, huit visages des
+// mannequins publiés, très atténués sous un voile rouge mat. Petites versions des photos, lues une
+// seule fois par visite (sessionStorage), jamais derrière les textes longs. Pas sur l'accueil,
+// « Qui sommes-nous » et la fiche d'un mannequin, qui ont déjà leur grande photo.
+(function murDeTitre() {
+  if (!document.querySelector('.site-header-v2') || typeof sb === 'undefined' || !sb || typeof lirePhotosCouverture !== 'function') return;
+  const h1 = document.querySelector('main > section > .container > h1');
+  if (!h1 || document.getElementById('couverture') || document.querySelector('.qsn-ouverture, .profil-hero-fullbleed')) return;
+  const section = h1.parentElement.parentElement;
+  const CLE = 'ma2m_mur_titre';
+  async function adresses() {
+    try { const deja = JSON.parse(sessionStorage.getItem(CLE) || 'null'); if (Array.isArray(deja) && deja.length) return deja; } catch (e) { /* mémoire du navigateur indisponible */ }
+    const { data: profils } = await sb.from('model_profiles').select('id').eq('published', true).order('created_at', { ascending: false }).limit(24);
+    const lignes = await lirePhotosCouverture(sb, (profils || []).map((p) => p.id));
+    const liste = lignes.filter((l) => l.url).map((l) => urlLegere(urlGrille(l, true)));
+    try { sessionStorage.setItem(CLE, JSON.stringify(liste)); } catch (e) { /* idem */ }
+    return liste;
+  }
+  adresses().then((liste) => {
+    if (liste.length < 4) return;   // trop peu de visages : le haut de page reste uni
+    const melange = liste.slice().sort(() => Math.random() - 0.5).slice(0, 8);
+    const mur = document.createElement('div');
+    mur.className = 'mur-titre'; mur.setAttribute('aria-hidden', 'true');
+    melange.forEach((u) => { const img = document.createElement('img'); img.alt = ''; img.decoding = 'async'; img.src = u; mur.appendChild(img); });
+    section.classList.add('avec-mur-titre'); section.prepend(mur);
+  }).catch(() => { /* base injoignable : le haut de page reste uni */ });
+})();

@@ -10,6 +10,7 @@ const path = require('path');
 // règle de sécurité stricte, posée par le serveur comme en ligne (vercel.json : aucun programme écrit dans la page)
 const { REGLE_ADMIN } = require('./donnees-nouvelle-admin');
 const { lirePageEntiere } = require('./lisibilite');
+const { fondsInterdits } = require('./couleurs-autorisees');
 const PORT = String(9600 + Math.floor(Math.random() * 90));
 const BASE = 'http://127.0.0.1:' + PORT;
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -88,6 +89,8 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     const capture = async (nomCapture) => {
       const pales = await lirePageEntiere(p);
       ok(!pales.length, n + nomCapture + ' : textes lisibles' + (pales.length ? ' — trop pâles : ' + pales.slice(0, 6).map((x) => x.element + ' « ' + x.texte + ' » ' + x.contraste).join(' | ') : ''));
+      const interdits = await p.evaluate(fondsInterdits);   // gardien des couleurs (28/10/2026)
+      ok(!interdits.length, n + nomCapture + ' : seulement des fonds rouges ou blancs' + (interdits.length ? ' — interdits : ' + interdits.slice(0, 6).map((x) => x.element + ' ' + x.couleur).join(' | ') : ''));
       if (process.env.CAPTURES && tel) await p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') });
     };
     const deborde = () => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);

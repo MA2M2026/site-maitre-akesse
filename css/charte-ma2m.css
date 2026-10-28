@@ -5,11 +5,12 @@
    Les couleurs elles-mêmes vivent dans css/jetons.css (chargé juste avant) : ne jamais les
    recopier ici ni dans une autre feuille. */
 
-:root {
-  /* Anciennes variables rebranchées sur la nouvelle charte */
+/* Anciennes variables rebranchées sur les jetons. Recalculées dans chaque élément (« * ») : dans un
+   bloc blanc elles prennent d'elles-mêmes l'écriture foncée, sur le rouge l'écriture claire. */
+*, ::before, ::after {
   --noir: var(--fond);
   --noir-doux: var(--surface);
-  --anthracite: var(--surface);
+  --anthracite: var(--sombre);    /* sections qui ressortent : rouge profond (28/10/2026) */
   --noir-brillant: var(--surface);
   --texte-corps: var(--encre);
   --texte-doux: var(--encre-douce);
@@ -22,8 +23,9 @@
   --gris: var(--encre-douce);
   --gris-clair: var(--lignes);
   --or: var(--rouge-ma2m);
-  --glow-bordeaux: 0 6px 18px var(--c-rgba-200-16-46-0_22);
-
+  --glow-bordeaux: var(--bouton-ombre);
+}
+:root {
   --display: var(--police);
   --texte: var(--police);
 }
@@ -48,12 +50,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* Cartes */
 .carte, .card { background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px; }
 
-/* En-tête, bande défilante, bandeau cookies, pied de page : tout en clair (demande de la
-   propriétaire, 18/10/2026 : « plus de noir », de l'ouverture du site jusqu'au pied de page) */
-.site-header-v2 { background: var(--surface) !important; border-bottom: 1px solid var(--lignes); color: var(--encre); }
+/* En-tête, bande défilante, pied de page : sur le rouge (28/10/2026) ; couleurs de fond : bloc
+   « Édition Magazine » plus bas */
+.site-header-v2 { color: var(--encre); }
 .site-header-v2 a:not(.lang-switch):not(.header-marketplace-lien) { color: var(--encre); }
-#marqueeBande { background: var(--rouge-ma2m) !important; color: var(--c-fff); }
-.site-footer { background: var(--surface); color: var(--encre); border-top: 1px solid var(--lignes); }
+#marqueeBande { background: var(--sombre) !important; color: var(--sombre-encre); }
+.site-footer { color: var(--encre); }
 .site-footer a { color: var(--encre); }
 .site-footer .footer-bas { color: var(--encre-douce); }
 /* Pied de page resserré (demande de la propriétaire, 18/10/2026 : « trop large ») : liens de
@@ -66,6 +68,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .site-footer .footer-grille a { margin-bottom: 0.35rem; font-size: 0.86rem; }
 .site-footer .footer-grille p { font-size: 0.92rem; margin-bottom: 0; }
 .site-footer .footer-reseaux { margin-top: 0.5rem; }
+/* logos des réseaux (28/10/2026, « illisibles » pour la propriétaire : blancs sur leurs carrés blancs) :
+   chaque logo dans sa couleur de marque, sur le carré blanc */
+:is(.site-footer .footer-reseaux, .reseaux) a { color: var(--rouge-mat); }
+:is(.site-footer .footer-reseaux, .reseaux) a.u-ic-facebook { color: var(--c-1877f2); }
+:is(.site-footer .footer-reseaux, .reseaux) a.u-ic-youtube { color: var(--rouge-logo); }
+:is(.site-footer .footer-reseaux, .reseaux) a.u-ic-whatsapp { color: var(--c-25d366); }
 .site-footer .footer-bas { padding-top: 1rem; }
 @media (max-width: 720px) {
   .site-footer { padding: 1.6rem 0 5rem; } /* bas dégagé : boutons WhatsApp et « haut de page » flottants */
@@ -76,74 +84,52 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .site-footer .footer-bas { flex-direction: column; gap: 0.3rem; }
 }
 
-/* ===== Zones sombres (chantier B du cahier « Architecture ») =====
-   Depuis le 18/10/2026 TOUT le site est clair, y compris l'écran d'introduction, l'en-tête,
-   le menu plein écran, la grande image d'accueil et le pied de page. Restent sombres seulement
-   les petites étiquettes posées directement sur une photo (billets, boutons sur les vignettes,
-   cartes photo de l'espace mannequin). Une zone sombre déclare la classe « contexte-sombre » ;
-   à l'intérieur, les mêmes variables valent « texte clair ». */
-.contexte-sombre, .mp-billet, .mpg-photo-actions, .principal-photo-card, .compcard-slot {
-  --fond: var(--sombre);
-  --surface: var(--sombre-survol);
-  --surface-douce: var(--sombre-actif);
-  --encre: var(--sombre-encre);
-  --encre-douce: var(--sombre-encre-douce);
-  --lignes: var(--sombre-lignes);
-  --rouge-ma2m-texte: var(--sombre-rouge-texte);
-  /* anciennes variables (elles valent « clair » ailleurs : on les remet ici en sombre) */
-  --noir: var(--c-060606);
-  --noir-doux: var(--c-141312);
-  --anthracite: var(--sombre);
-  --noir-brillant: var(--sombre-survol);
-  --texte-corps: var(--sombre-encre);
-  --texte-doux: var(--sombre-encre-douce);
-  --titre-clair: var(--c-ffffff);
-  --bordeaux-clair: var(--sombre-rouge-texte);
-  --rouge: var(--sombre-rouge-texte);
-  --gris-clair: var(--c-rgba-255-255-255-0_22);
-  color: var(--sombre-encre);
-}
-/* ===== Ouverture claire : intro, grande image d'accueil, mannequin à la une, menu =====
-   Sur les photos, un voile clair (couleur du fond) monte du bas : le texte foncé reste lisible. */
+/* ===== Zones « qui ressortent » (rouge profond, 28/10/2026 ; autrefois noires) =====
+   Petites étiquettes posées sur une photo (billets, boutons sur les vignettes, cartes photo de
+   l'espace mannequin). Une telle zone déclare la classe « contexte-sombre » ; à l'intérieur, les
+   mêmes variables valent « texte clair sur rouge profond ». */
+/* (variables de ces zones : css/jetons.css, bloc « CE QUI RESSORT ») */
+/* ===== Ouverture : intro, grande image d'accueil, mannequin à la une, menu =====
+   Sur les photos, un voile rouge mat (couleur du fond) monte du bas : le texte blanc reste lisible. */
 .splash, .splash.intro-anime { background: var(--fond) !important; }
 .hero-v2 { background-color: var(--fond); }
-.hero-v2::before { background: linear-gradient(to top, var(--c-rgba-246-245-243-0_96) 0%, var(--c-rgba-246-245-243-0_75) 38%, var(--c-rgba-246-245-243-0_15) 75%, var(--c-rgba-246-245-243-0) 100%) !important; }
+.hero-v2::before { background: linear-gradient(to top, var(--rouge-mat-a96) 0%, var(--rouge-mat-a75) 38%, var(--rouge-mat-a15) 75%, var(--rouge-mat-a00) 100%) !important; }
 .hero-v2-bg { filter: grayscale(60%) contrast(1.05) brightness(1.02) !important; }
 .hero-v2 :is(h1, h2, h3, p, .hero-v2-title, .hero-slide-titre, .ma2m-grand) { color: var(--encre); text-shadow: none !important; }
 /* (19/10/2026, demande de la propriétaire sur tablette : « c'est trop flou, impossible de voir les
    photos ») — plus de voile blanc sur « Mannequin à la une » et « Mot de Maître Akesse » : la photo
    reste nette, le texte est en BLANC sur une ombre foncée limitée au bas de l'image. */
-.vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--c-rgba-0-0-0-0_78) 0%, var(--c-rgba-0-0-0-0_55) 30%, var(--c-rgba-0-0-0-0_18) 55%, var(--c-rgba-0-0-0-0) 72%) !important; }
-.vedette-contenu h2, .mot-responsable-overlay h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
-.vedette-contenu p, .mot-resp-titre { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8) !important; }
-.mot-responsable-photo-wrap .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); }
+.vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--voile-photo-a78) 0%, var(--voile-photo-a55) 30%, var(--voile-photo-a18) 55%, var(--voile-photo-a00) 72%) !important; }
+.vedette-contenu h2, .mot-responsable-overlay h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--voile-photo-a70) !important; }
+.vedette-contenu p, .mot-resp-titre { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--voile-photo-a80) !important; }
+.mot-responsable-photo-wrap .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--voile-photo-a80); }
 /* (20/10/2026, demande de la propriétaire : « les noms des mannequins sont illisibles sur les photos
    de couverture ») — couverture du book (mannequin.html) : nom, catégorie et ville en BLANC sur
    l'ombre du bas de la photo, comme « Mannequin à la une » (ils étaient en encre foncée). */
-.profil-hero-contenu h1 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
-.profil-hero-contenu p { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8) !important; }
-.profil-hero-contenu .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); }
+.profil-hero-contenu h1 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--voile-photo-a70) !important; }
+.profil-hero-contenu p { color: var(--c-fff) !important; font-weight: 600; text-shadow: 0 1px 10px var(--voile-photo-a80) !important; }
+.profil-hero-contenu .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--voile-photo-a80); }
 .profil-hero-contenu .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
 /* (20/10/2026, signalé par la propriétaire : « Actualités, Événements : illisible ») — article « à la
    une » des pages Actualités et Événements : titre et catégorie en BLANC sur l'ombre de la photo (le
    titre était resté en encre foncée depuis le passage du site en clair). */
-.news-une .news-une-corps h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--c-rgba-0-0-0-0_7) !important; }
+.news-une .news-une-corps h2 { color: var(--c-fff) !important; text-shadow: 0 2px 18px var(--voile-photo-a70) !important; }
 .news-une .news-une-corps .news-categorie { color: var(--c-fff); }
 /* téléphone : le texte occupe une plus grande part de l'image, l'ombre monte plus haut */
-@media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--c-rgba-0-0-0-0_8) 0%, var(--c-rgba-0-0-0-0_6) 45%, var(--c-rgba-0-0-0-0_25) 70%, var(--c-rgba-0-0-0-0) 88%) !important; } }
+@media (max-width: 700px) { .vedette-scrim, .mot-responsable-scrim { background: linear-gradient(to top, var(--voile-photo-a80) 0%, var(--voile-photo-a60) 45%, var(--voile-photo-a25) 70%, var(--voile-photo-a00) 88%) !important; } }
 /* vidéo de l'agence : image animée foncée, l'étiquette « Le film » reste en blanc sur une ombre */
-.video-accueil .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_75); }
+.video-accueil .eyebrow--clair { color: var(--c-fff); text-shadow: 0 1px 10px var(--rouge-profond-a75); }
 .video-accueil .eyebrow--clair::before { background: var(--c-fff); box-shadow: none; }
-.vedette-cta { color: var(--c-fff); text-shadow: 0 1px 10px var(--c-rgba-0-0-0-0_8); border-bottom-color: var(--rouge-ma2m); }
+.vedette-cta { color: var(--c-fff); text-shadow: 0 1px 10px var(--voile-photo-a80); border-bottom-color: var(--rouge-logo); }
 .vedette-fullbleed:hover .vedette-cta { border-color: var(--c-fff); }
 .eyebrow--clair { color: var(--rouge-ma2m-texte); text-shadow: none; }
 html body .menu-overlay { background: var(--fond) !important; }
-.menu-overlay::before { background-image: url("../assets/logo-header-clair.png") !important; }
+.menu-overlay::before { background-image: url("../assets/logo-header-clair.png") !important;  filter: brightness(0) invert(1); }   /* menu sur le rouge (28/10/2026) : logo blanc */
 
 /* Bandeau cookies : carte blanche */
 .bandeau-cookies {
   background: var(--surface); border: 1px solid var(--lignes); border-radius: 14px;
-  box-shadow: 0 12px 32px -12px var(--c-rgba-30-29-28-0_35);
+  box-shadow: 0 12px 32px -12px var(--ombre-a45);
 }
 .bandeau-cookies p { color: var(--encre); }
 .bandeau-cookies a { color: var(--rouge-ma2m-texte); }
@@ -176,10 +162,10 @@ html body .menu-overlay { background: var(--fond) !important; }
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  background: radial-gradient(circle at 35% 30%, #FFFFFF 0%, #F4F1EC 55%, #E4DFD8 100%) !important;
-  box-shadow: inset 0 2px 0 #fff, inset 0 -3px 6px rgba(120,110,100,0.18), 0 2px 4px rgba(60,50,40,0.14) !important;
-  color: #5E5852 !important;
-  -webkit-text-fill-color: #5E5852 !important;
+  background: radial-gradient(circle at 35% 30%, var(--blanc-pur) 0%, var(--blanc-pur) 55%, #F2F2F2 100%) !important;
+  box-shadow: inset 0 2px 0 var(--blanc-pur), inset 0 -3px 6px var(--rouge-mat-a18), 0 2px 4px var(--ombre-a30) !important;
+  color: var(--rouge-mat) !important;
+  -webkit-text-fill-color: var(--rouge-mat) !important;
   font-family: var(--police) !important;
   font-weight: 600 !important;
   font-size: 13px !important;
@@ -200,15 +186,15 @@ html body .menu-overlay { background: var(--fond) !important; }
   transform-origin: 50% 0 !important;
   transform: rotate(45deg) !important;
   pointer-events: none !important;
-  background: linear-gradient(to bottom, rgba(70,60,50,0.2), rgba(70,60,50,0)) !important;
+  background: linear-gradient(to bottom, var(--ombre-a30), var(--ombre-a00)) !important;
   border-radius: 23px 23px 0 0 !important;
 }
 .site-header-v2 .menu-trigger > span:first-child { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
-.site-header-v2 .menu-trigger .dots span { width: 5px !important; height: 5px !important; background: #5E5852 !important; transition: background 0.15s ease !important; }
-.site-header-v2 .lang-switch:focus-visible, .site-header-v2 .menu-trigger:focus-visible { outline: 2px solid var(--rouge-ma2m) !important; outline-offset: 3px !important; }
+.site-header-v2 .menu-trigger .dots span { width: 5px !important; height: 5px !important; background: var(--rouge-mat) !important; transition: background 0.15s ease !important; }
+.site-header-v2 .lang-switch:focus-visible, .site-header-v2 .menu-trigger:focus-visible { outline: 2px solid var(--blanc-pur) !important; outline-offset: 3px !important; }
 .site-header-v2 .lang-switch:active, .site-header-v2 .menu-trigger:active, .site-header-v2 .rond-appuye {
   transform: translateY(2px) scale(0.96) !important;
-  box-shadow: inset 0 3px 8px rgba(60,50,40,0.28), inset 0 -1px 0 rgba(255,255,255,0.9) !important;
+  box-shadow: inset 0 3px 8px var(--ombre-a35), inset 0 -1px 0 var(--blanc-a90) !important;
   color: #1FA35B !important;
   -webkit-text-fill-color: #1FA35B !important;
 }
@@ -220,11 +206,11 @@ html body .menu-overlay { background: var(--fond) !important; }
 .lien-marche { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; color: var(--encre); font-weight: 600; -webkit-tap-highlight-color: transparent; }
 .lien-marche > span:last-child { text-decoration: underline; text-decoration-color: var(--rouge-ma2m); text-decoration-thickness: 2px; text-underline-offset: 4px; }
 .lien-marche-rond { flex: none; }
-.lien-marche-rond svg { width: 22px; height: 22px; fill: none; stroke: #5E5852; stroke-width: 3.2; stroke-linecap: round; transition: stroke 0.15s ease; }
+.lien-marche-rond svg { width: 22px; height: 22px; fill: none; stroke: var(--rouge-mat); stroke-width: 3.2; stroke-linecap: round; transition: stroke 0.15s ease; }
 .lien-marche:focus-visible { outline: 2px solid var(--rouge-ma2m); outline-offset: 4px; border-radius: 999px; }
 .lien-marche:active .lien-marche-rond, .lien-marche.rond-appuye .lien-marche-rond {
   transform: translateY(2px) scale(0.96) !important;
-  box-shadow: inset 0 3px 8px rgba(60,50,40,0.28), inset 0 -1px 0 rgba(255,255,255,0.9) !important;
+  box-shadow: inset 0 3px 8px var(--ombre-a35), inset 0 -1px 0 var(--blanc-a90) !important;
 }
 .lien-marche:active .lien-marche-rond svg, .lien-marche.rond-appuye .lien-marche-rond svg { stroke: #1FA35B; }
 
@@ -280,9 +266,10 @@ h1 { text-transform: uppercase; line-height: 0.98; }
 h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
 .eyebrow { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0.12em; color: var(--rouge-ma2m-texte); }
 .carte, .card { border-radius: var(--rayon-carte); }
-/* en-tête et pied de page : sur le papier, filet d'encre comme une couverture de magazine */
-.site-header-v2 { background: var(--mag-papier) !important; border-bottom: 2px solid var(--mag-encre); }
-.site-footer { background: var(--mag-papier); border-top: 2px solid var(--mag-encre); }
+/* en-tête sur le rouge (comme les applications), pied de page en rouge profond (28/10/2026) */
+.site-header-v2 { background: var(--rouge-mat-a96) !important; border-bottom: 1px solid var(--lignes); }
+.site-header-v2 .logo-img-header { filter: brightness(0) invert(1); }   /* logo blanc sur le rouge (posé sur le lien : l'animation d'apparition du logo remet le filtre de l'image à zéro) */
+.site-footer { background: var(--sombre); border-top: 0; }
 .site-footer .footer-grille h3 { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; font-size: 1.15rem; letter-spacing: 0.02em; }
 .menu-overlay .nav-links a { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em; }
 
@@ -295,3 +282,10 @@ h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
 /* Page « Confirmer ma présence » (confirmer.html) : les boutons restent cachés tant que le lien n'est pas vérifié */
 .confirmer [hidden] { display: none !important; }
 .confirmer .btn.actif { box-shadow: inset 0 0 0 3px #1FA35B !important; }
+
+/* Mur de photos derrière le titre des pages (28/10/2026, js/app.js murDeTitre) : huit visages très
+   atténués sous un voile rouge mat qui s'épaissit vers le bas, comme la connexion de l'Administration */
+.avec-mur-titre { position: relative; isolation: isolate; overflow: hidden; padding-top: 4.5rem; padding-bottom: 2.6rem; min-height: 240px; }
+.mur-titre { position: absolute; inset: 0; z-index: -1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 3px; pointer-events: none; }
+.mur-titre img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; opacity: .42; }
+.mur-titre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--rouge-mat-a55), var(--rouge-mat-a85) 60%, var(--rouge-mat)); }
