@@ -3152,8 +3152,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     // Safari : nouveau Safari (iOS 26, barre d'adresse en bas avec ⋯) et ancien (Partager en bas)
     guide('bas', T('Installer sur iPhone', 'Install on iPhone'), [
-      T('En bas, touchez <strong>⋯</strong> à côté de l’adresse, puis <strong>Partager</strong> ' + ICONE_PARTAGE + '<small>Ancien iPhone : touchez directement <strong>Partager</strong> ' + ICONE_PARTAGE + ' en bas.</small>',
-        'At the bottom, tap <strong>⋯</strong> next to the address, then <strong>Share</strong> ' + ICONE_PARTAGE + '<small>Older iPhone: tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the bottom.</small>'),
+      T('En bas, dans la barre d’adresse, touchez <strong>⋯</strong> (ou <strong>≡</strong>), puis <strong>Partager</strong> ' + ICONE_PARTAGE + '<small>Ancien iPhone : touchez directement <strong>Partager</strong> ' + ICONE_PARTAGE + ' en bas.</small>',
+        'At the bottom, in the address bar, tap <strong>⋯</strong> (or <strong>≡</strong>), then <strong>Share</strong> ' + ICONE_PARTAGE + '<small>Older iPhone: tap <strong>Share</strong> ' + ICONE_PARTAGE + ' at the bottom.</small>'),
       T('Faites glisser vers le bas et touchez <strong>« Sur l’écran d’accueil »</strong> ' + ICONE_AJOUTER + '<small>Pas dans la liste ? Touchez <strong>« Plus »</strong>.</small>',
         'Scroll down and tap <strong>“Add to Home Screen”</strong> ' + ICONE_AJOUTER + '<small>Not in the list? Tap <strong>“More”</strong>.</small>'),
       T('Touchez <strong>« Ajouter »</strong> : l’icône apparaît sur votre écran', 'Tap <strong>“Add”</strong>: the icon appears on your screen')]);
