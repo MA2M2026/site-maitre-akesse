@@ -65,7 +65,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
 (async () => {
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: path.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();
-  for (const [nom, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 860 }]]) {
+  for (const [nom, ecran] of [['téléphone', { width: 390, height: 844 }], ['tablette', { width: 800, height: 1200 }], ['ordinateur', { width: 1280, height: 860 }]]) {
     const tel = ecran.width < 700, n = nom + ' : ';
     const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [];
@@ -91,7 +91,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       ok(!pales.length, n + nomCapture + ' : textes lisibles' + (pales.length ? ' — trop pâles : ' + pales.slice(0, 6).map((x) => x.element + ' « ' + x.texte + ' » ' + x.contraste).join(' | ') : ''));
       const interdits = await p.evaluate(fondsInterdits);   // gardien des couleurs (28/10/2026)
       ok(!interdits.length, n + nomCapture + ' : seulement des fonds rouges ou blancs' + (interdits.length ? ' — interdits : ' + interdits.slice(0, 6).map((x) => x.element + ' ' + x.couleur).join(' | ') : ''));
-      if (process.env.CAPTURES && tel) await p.screenshot({ path: path.join(process.env.CAPTURES, nomCapture + '.png') });
+      if (process.env.CAPTURES) await p.screenshot({ path: path.join(process.env.CAPTURES, nom + '-' + nomCapture + '.png') });
     };
     const deborde = () => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 
