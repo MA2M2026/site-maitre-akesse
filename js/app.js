@@ -3675,17 +3675,14 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
   }
 }
 
-// ---- Mur de photos en haut des pages (28/10/2026, choix de la propriétaire, sur le modèle de la
-// connexion de l'Administration) : derrière le titre de chaque page publique, huit visages des
-// mannequins publiés, très atténués sous un voile rouge mat. Petites versions des photos, lues une
-// seule fois par visite (sessionStorage), jamais derrière les textes longs. Pas sur l'accueil,
-// « Qui sommes-nous » et la fiche d'un mannequin, qui ont déjà leur grande photo.
-(function murDeTitre() {
+// ---- ESSAI (28/10/2026, demande de la propriétaire) : « verre dépoli » sur tout le site public —
+// derrière toutes les pages, les visages des mannequins publiés, très floutés, sous un rouge mat
+// brillant qui les laisse deviner. Petites versions des photos, lues une fois par visite
+// (sessionStorage). Les zones peintes en rouge mat uni deviennent transparentes pour laisser
+// voir le verre ; les blocs blancs, les photos et le rouge profond ne changent pas.
+(function murDuSite() {
   if (!document.querySelector('.site-header-v2') || typeof sb === 'undefined' || !sb || typeof lirePhotosCouverture !== 'function') return;
-  const h1 = document.querySelector('main > section > .container > h1');
-  if (!h1 || document.getElementById('couverture') || document.querySelector('.qsn-ouverture, .profil-hero-fullbleed')) return;
-  const section = h1.parentElement.parentElement;
-  const CLE = 'ma2m_mur_titre';
+  const CLE = 'ma2m_mur_site';
   async function adresses() {
     try { const deja = JSON.parse(sessionStorage.getItem(CLE) || 'null'); if (Array.isArray(deja) && deja.length) return deja; } catch (e) { /* mémoire du navigateur indisponible */ }
     const { data: profils } = await sb.from('model_profiles').select('id').eq('published', true).order('created_at', { ascending: false }).limit(24);
@@ -3694,12 +3691,24 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
     try { sessionStorage.setItem(CLE, JSON.stringify(liste)); } catch (e) { /* idem */ }
     return liste;
   }
+  const ROUGE_UNI = 'rgb(124, 33, 40)';
+  function vitrer() {
+    for (const e of document.querySelectorAll('body, main, main *, .mag, .mag *')) {
+      const st = getComputedStyle(e);
+      // (seulement les grandes zones de la page : un petit élément rouge mat est un bouton, une étiquette ou une case)
+      if (st.backgroundColor === ROUGE_UNI && st.backgroundImage === 'none' && e.getBoundingClientRect().width >= innerWidth * 0.9) e.style.backgroundColor = 'transparent';
+    }
+  }
   adresses().then((liste) => {
-    if (liste.length < 4) return;   // trop peu de visages : le haut de page reste uni
-    const melange = liste.slice().sort(() => Math.random() - 0.5).slice(0, 8);
+    if (liste.length < 4) return;   // trop peu de visages : le fond reste uni
+    const melange = liste.slice().sort(() => Math.random() - 0.5);
+    while (melange.length < 12) melange.push(...melange.slice(0, 12 - melange.length));
     const mur = document.createElement('div');
-    mur.className = 'mur-titre'; mur.setAttribute('aria-hidden', 'true');
-    melange.forEach((u) => { const img = document.createElement('img'); img.alt = ''; img.decoding = 'async'; img.src = u; mur.appendChild(img); });
-    section.classList.add('avec-mur-titre'); section.prepend(mur);
-  }).catch(() => { /* base injoignable : le haut de page reste uni */ });
+    mur.className = 'mur-site'; mur.setAttribute('aria-hidden', 'true');
+    melange.slice(0, 12).forEach((u) => { const img = document.createElement('img'); img.alt = ''; img.decoding = 'async'; img.src = u; mur.appendChild(img); });
+    const voile = document.createElement('div'); voile.className = 'mur-site-verre'; voile.setAttribute('aria-hidden', 'true');
+    document.body.prepend(mur, voile);
+    document.documentElement.classList.add('avec-mur-site');
+    vitrer(); setTimeout(vitrer, 1500);   // (une seconde fois : les blocs remplis après coup par la page)
+  }).catch(() => { /* base injoignable : le fond reste uni */ });
 })();
