@@ -63,7 +63,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     const coches = await p.$$eval('.df-choix-carte input:checked', (l) => l.map((x) => x.value));
     ok((await p.inputValue('#if-lieu')) === 'Parc des Expositions, La Tribe' && (await p.inputValue('#if-ville')) === 'Abidjan' && (await p.inputValue('#if-date_fin')) === lendemain && coches.sort().join() === 'm:m0,m:m1,m:m2,m:m3' && /4 mannequins choisies/.test(await p.textContent('#if-compte')),
       n + 'projet de l’agenda sur deux jours : toutes les dates et tous les lieux, les 4 mannequins convoquées cochées');
-    ok(/Merci pour votre participation à \*ABIDJAN BORDER FORUM\*, du \S+ \d+ (\S+ )?au \S+ \d+ \S+ \d{4}, au Parc des Expositions et à la Tribe, à Abidjan\./.test(await p.inputValue('#if-message')),
+    // (« 1er » quand le projet tombe sur le premier du mois, 31/10/2026)
+    ok(/Merci pour votre participation à \*ABIDJAN BORDER FORUM\*, du \S+ \d+(er)? (\S+ )?au \S+ \d+(er)? \S+ \d{4}, au Parc des Expositions et à la Tribe, à Abidjan\./.test(await p.inputValue('#if-message')),
       n + 'remerciement : « du … au …, au Parc des Expositions et à la Tribe, à Abidjan » en une phrase');
     // retouche à la main : gardée même si on change un champ
     await p.fill('#if-message', (await p.inputValue('#if-message')) + '\nÀ très vite !'); await p.fill('#if-client', 'Border Forum'); await p.waitForTimeout(200);
