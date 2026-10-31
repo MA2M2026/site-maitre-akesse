@@ -8,7 +8,9 @@ const quillEditPDescription = editeurRicheDiffere('edit-p-description-editeur', 
 async function chargerPartenaires() {
   const grille = document.getElementById('partenaires-grille');
   const vide = document.getElementById('partenaires-vide');
-  if (!sb) {
+  const d = donneesServeur('partenaires-donnees');  // préparés par le serveur (middleware.js ; js/app.js)
+  const serveur = d && Array.isArray(d.liste) ? d : null;
+  if (!serveur && !sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — message clair plutôt
     // que de laisser croire qu'il n'y a simplement aucun partenaire.
@@ -16,7 +18,7 @@ async function chargerPartenaires() {
     vide.style.display = 'block';
     return;
   }
-  const { data, error } = await sb.from('partenaires').select('*').order('created_at', { ascending: false });
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('partenaires').select('*').order('created_at', { ascending: false });
 
   if (error || !data || !data.length) {
     grille.innerHTML = '';

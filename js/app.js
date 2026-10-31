@@ -3701,6 +3701,15 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
   }
 }
 
+// Données posées dans la page par le serveur (middleware.js, pageRemplie ; 01/11/2026, site dynamique) :
+// l'objet du bloc <script type="application/json" id="…">, ou null (la page lit alors la base elle-même).
+function donneesServeur(id) {
+  try {
+    const bloc = document.getElementById(id);
+    return bloc ? JSON.parse(bloc.textContent) : null;
+  } catch (e) { return null; }
+}
+
 // ---- Mur de photos en haut des pages (28/10/2026, choix de la propriétaire, sur le modèle de la
 // connexion de l'Administration) : derrière le titre de chaque page publique, huit visages des
 // mannequins publiés, très atténués sous un voile rouge mat. Petites versions des photos, lues une
@@ -3715,11 +3724,8 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
   async function adresses() {
     try { const deja = JSON.parse(sessionStorage.getItem(CLE) || 'null'); if (Array.isArray(deja) && deja.length) return deja; } catch (e) { /* mémoire du navigateur indisponible */ }
     // The Book préparé par le serveur (middleware.js, 01/11/2026) : les visages sont déjà dans la page
-    try {
-      const bloc = document.getElementById('book-donnees');
-      const d = bloc ? JSON.parse(bloc.textContent) : null;
-      if (d && Array.isArray(d.photos) && d.photos.length) return d.photos.filter((l) => l.url).slice(0, 24).map((l) => urlLegere(urlGrille(l, true)));
-    } catch (e) { /* bloc illisible : on lit la base comme avant */ }
+    const d = donneesServeur('book-donnees');
+    if (d && Array.isArray(d.photos) && d.photos.length) return d.photos.filter((l) => l.url).slice(0, 24).map((l) => urlLegere(urlGrille(l, true)));
     const { data: profils } = await sb.from('model_profiles').select('id').eq('published', true).order('created_at', { ascending: false }).limit(24);
     const lignes = await lirePhotosCouverture(sb, (profils || []).map((p) => p.id));
     const liste = lignes.filter((l) => l.url).map((l) => urlLegere(urlGrille(l, true)));

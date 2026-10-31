@@ -27,8 +27,10 @@ export const config = {
     '/partenaires', '/partenaires.html', '/en/partenaires', '/en/partenaires.html',
     '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
     '/book/:slug', '/en/book/:slug',
-    // The Book servi déjà rempli (01/11/2026, site dynamique, étape 2)
+    // pages servies déjà remplies (01/11/2026, site dynamique : Book, partenaires, agenda, parcours, qui sommes-nous)
     '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html',
+    '/agenda', '/agenda.html', '/en/agenda', '/en/agenda.html', '/parcours', '/parcours.html', '/en/parcours', '/en/parcours.html',
+    '/qui-sommes-nous', '/qui-sommes-nous.html', '/en/qui-sommes-nous', '/en/qui-sommes-nous.html',
     // page d'accueil servie déjà remplie (23/10/2026)
     '/', '/index.html', '/en', '/en/', '/en/index.html',
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
@@ -492,6 +494,15 @@ async function publicationsRemplies(requete, url) {
     (html, d) => photoAnnoncee(html, d.liste[0] && d.liste[0].image_url ? photoLegere(d.liste[0].image_url) : ''))) || undefined;
 }
 
+// ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
+// La liste des partenaires (même lecture que js/partenaires.js) posée dans la page (bloc « partenaires-donnees »).
+async function partenairesRemplis(requete, url) {
+  if (requete.method !== 'GET') return;
+  const anglais = /^\/en\//.test(url.pathname);
+  const lecture = lireSupabase('partenaires?select=*&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null));
+  return (await pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture)) || undefined;
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -539,6 +550,9 @@ export default async function middleware(requete) {
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?partenaires(\.html)?$/.test(url.pathname)) {
+      try { return await partenairesRemplis(requete, url); } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent) && PUBLICATIONS_PAGES.test(url.pathname)) {
       try { return await publicationsRemplies(requete, url); } catch (e) { return; }

@@ -31,11 +31,8 @@ function listeComplete() {
 
 // The Book préparé par le serveur (middleware.js, 01/11/2026) : liste et photos déjà dans la page
 function bookServeur() {
-  try {
-    const bloc = document.getElementById('book-donnees');
-    const d = bloc ? JSON.parse(bloc.textContent) : null;
-    return d && Array.isArray(d.profils) && Array.isArray(d.photos) ? d : null;
-  } catch (e) { return null; }
+  const d = donneesServeur('book-donnees');  // (js/app.js)
+  return d && Array.isArray(d.profils) && Array.isArray(d.photos) ? d : null;
 }
 async function lireBook(vide) {
   const serveur = bookServeur();

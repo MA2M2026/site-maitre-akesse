@@ -1,0 +1,91 @@
+// Site dynamique, étape 2 (01/11/2026, PLAN-SERVEUR.md) : les autres pages publiques qui affichent des données
+// partent DÉJÀ REMPLIES par le serveur (middleware.js, pageRemplie). Base SIMULÉE, rien n'est écrit.
+// Pour chaque page : les données sont dans la page, rien d'injectable, base lente ou en panne → comme avant ;
+// dans le navigateur (téléphone et ordinateur, français et anglais) : la page s'affiche sans redemander ces
+// données à la base, et sans erreur.
+const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
+const path = require('path'), fs = require('fs'), os = require('os'), { pathToFileURL } = require('url');
+const RACINE = path.resolve(__dirname, '../..');
+const PORT = String(9000 + Math.floor(Math.random() * 90));
+let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
+const { tables: t0, rpc } = require('./pages-publiques');
+const tables = JSON.parse(JSON.stringify(t0));
+tables.partenaires = [{ ...tables.partenaires[0], description: '<p>Partenaire fidèle.</p>', created_at: '2026-10-01T10:00:00Z' },
+  { id: 'pb', nom: 'Maison <img src=x onerror=alert(1)>', logo_url: 'https://x/m.png', created_at: '2026-09-01T10:00:00Z' }];
+let basePanne = false, baseLente = 0;
+const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
+
+// Les pages : [adresse, bloc, vérifier(données), sélecteur visible quand la page est remplie, lectures du navigateur à NE PAS voir]
+const PAGES = [
+  ['partenaires', 'partenaires-donnees', (d) => d.liste.length === 2, '#partenaires-grille .news-carte', /\/rest\/v1\/partenaires\?select=/]
+];
+
+async function middleware() {
+  const copie = path.join(os.tmpdir(), 'mw-pages-' + process.pid + '.mjs');
+  fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
+  globalThis.fetch = async (u, o = {}) => {
+    u = String(u);
+    if (u.includes('supabase.co')) {
+      if (basePanne) throw new Error('base en panne');
+      if (baseLente) await new Promise((r, x) => { const m = setTimeout(r, baseLente); if (o.signal) o.signal.addEventListener('abort', () => { clearTimeout(m); x(new Error('abandon')); }); });
+      const nom = new URL(u).pathname.split('/').pop();
+      if (rpc[nom] !== undefined) return json(typeof rpc[nom] === 'function' ? rpc[nom](JSON.parse(o.body || '{}')) : rpc[nom]);
+      return json(tables[nom] || []);
+    }
+    const p = new URL(u).pathname;
+    return new Response(fs.readFileSync(path.join(RACINE, p.replace(/^\//, '') + '.html'), 'utf8'), { headers: { 'content-type': 'text/html; charset=utf-8' } });
+  };
+  return (await import(pathToFileURL(copie).href)).default;
+}
+const donneesDe = (html, bloc) => JSON.parse((html.match(new RegExp('<script type="application/json" id="' + bloc + '">(.*?)</script>')) || [])[1] || 'null');
+
+(async () => {
+  let srv; process.on('exit', () => srv && srv.kill());
+  srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
+  const mw = await middleware();
+  const demander = (chemin, init) => mw(new Request('https://www.maitreakessemodelmanagement.com/' + chemin, init));
+  const b = await chromium.launch();
+
+  for (const [page, bloc, verifier, selecteur, lectureInterdite] of PAGES) {
+    // 1. Le serveur seul
+    const pages = {};
+    for (const chemin of [page, 'en/' + page]) {
+      const r = await demander(chemin);
+      const html = r ? await r.text() : '';
+      pages[chemin] = html;
+      const d = html && donneesDe(html, bloc);
+      ok(!!d && verifier(d), chemin + ' : les données sont dans la page');
+      ok(!/<img src=x onerror/.test(html), chemin + ' : rien d’injectable');
+      ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache');
+    }
+    ok(await demander(page, { headers: { 'x-ma2m-remplie': '1' } }) === undefined, page + ' : sa propre demande de la page passe sans boucle');
+    ok(await demander(page, { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, page + ' : robot d’aperçu → la page habituelle');
+    baseLente = 1500; const t = Date.now();
+    ok(await demander(page) === undefined && Date.now() - t < 2500, page + ' : base lente → comme avant, sans attendre (' + (Date.now() - t) + ' ms)');
+    baseLente = 0; basePanne = true;
+    ok(await demander(page) === undefined, page + ' : base en panne → comme avant');
+    basePanne = false;
+
+    // 2. Dans le navigateur
+    for (const chemin of [page, 'en/' + page]) {
+      for (const vp of [{ width: 390, height: 844, mobile: true }, { width: 1280, height: 860 }]) {
+        const n = chemin + ' ' + vp.width + 'px : ';
+        const p = await (await b.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: !!vp.mobile, hasTouch: !!vp.mobile })).newPage(); const errs = [];
+        p.on('pageerror', (e) => errs.push(e.message)); p.on('dialog', (dl) => { errs.push('fenêtre : ' + dl.message()); dl.dismiss(); });
+        await brancher(p, { tables, rpc }, []);
+        let lectures = 0;
+        p.on('request', (r) => { if (lectureInterdite.test(r.url())) lectures++; });
+        await p.route(new RegExp('/' + chemin.replace(/\//g, '\\/') + '$'), (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: pages[chemin] }));
+        await p.goto('http://127.0.0.1:' + PORT + '/' + chemin, { waitUntil: 'domcontentloaded' });
+        await p.waitForSelector(selecteur, { timeout: 15000 });
+        await p.waitForTimeout(800);
+        ok(!lectures, n + 's’affiche sans redemander ces données à la base (' + lectures + ')');
+        ok(!(await p.$('img[src="x"]')), n + 'rien d’injecté');
+        ok(!errs.length, n + 'aucune erreur' + (errs.length ? ' — ' + errs[0] : ''));
+        await p.context().close();
+      }
+    }
+  }
+  await b.close();
+  console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.'); process.exit(ko ? 1 : 0);
+})();

@@ -28,8 +28,7 @@
   // demande suivante (2e essai de la fiche) repart à neuf.
   var dejaLu = null, adresseLue = {};
   // Fiche préparée par le serveur (middleware.js, 01/11/2026) : identifiant et nom d'adresse déjà dans la page
-  var serveur = null;
-  try { var bloc = document.getElementById('fiche-donnees'); serveur = bloc ? JSON.parse(bloc.textContent) : null; } catch (e) { serveur = null; }
+  var serveur = typeof donneesServeur === 'function' ? donneesServeur('fiche-donnees') : null;  // (js/app.js)
   window.ma2mFicheServeur = serveur && serveur.id && serveur.profil ? serveur : null;
   if (window.ma2mFicheServeur) adresseLue[serveur.id] = serveur.slug;
   window.ma2mIdFiche = function () {
