@@ -51,3 +51,21 @@ fichiers SQL passent. Contenu : chantiers 2, 7, 8, 9 (avec « Remplacer »), 10,
 
 Batterie complète : 73 parcours, 3 590 vérifications, 0 échec (après correction d'un essai qui ne
 lisait pas « 1er novembre »). Base d'essai : tous les fichiers SQL passent. 58 fichiers changés.
+
+## Chantier 14 : décisions de la propriétaire (31/10/2026)
+
+- Liste de présence : dimanches du mois générés automatiquement ; vert = présent (coché) ; rouge automatique
+  le lundi pour un dimanche passé non coché ; orange = absence excusée ; « séance annulée » (ne compte pour
+  personne) ; dimanches avant l'entrée de la mannequin non comptés.
+- Mentions du mois : toutes = « Apprenant assidu, bravo ! » ; 3/4, 4/5 = Bien ; 2/4, 3/5 = Passable ;
+  1/4, 1-2/5 = Insuffisant ; aucune = Absent tout le mois (« À améliorer » côté mannequin).
+- Visible dans l'application de la mannequin, sans pouvoir modifier (contrôlé par la base).
+- Synthèse sur une période (3, 4 mois, année, formation complète), imprimable.
+- Qui coche : la propriétaire ou une personne de l'équipe ayant accès à l'Administration.
+- Statut « Formation terminée » : plus de mensualité, plus sur la liste, reste mannequin de l'agence ;
+  attestation de fin de formation.
+- Formation : 9 mois de cours par an, 3 mois de vacances (durée totale à confirmer : 18 mois ?).
+  Mannequins ayant déjà fini : façon de faire à décider.
+- Idées gardées (toutes) : bulletin trimestriel ; mensurations suivies ; documents qui expirent ;
+  anniversaires (message AUTOMATIQUE par e-mail et WhatsApp) ; mannequin du mois (choisi selon
+  l'assiduité et le bulletin) ; signe « mensualité non payée » sur la liste de présence.
