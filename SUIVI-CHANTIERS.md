@@ -66,6 +66,10 @@ lisait pas « 1er novembre »). Base d'essai : tous les fichiers SQL passent. 58
   attestation de fin de formation.
 - Formation (confirmé le 01/11/2026) : 2 ans = 2 fois 9 mois de cours (18 mois de cours) ; chaque année 3 mois de congé :
   décembre, janvier, février (pas de cours : ces dimanches ne sont jamais des absences).
+- Mensualités (décision du 01/11/2026) : seulement les mois de cours, 9 × 2 = **18 mensualités** ; rien en
+  décembre, janvier, février. ⚠ Le système en ligne compte aujourd'hui 24 mois (supabase-administration.sql :
+  mes_mensualites, mensualite_etat ; supabase-paiement-avance.sql ; js/mannequin-app.js, js/mes-paiements.js) :
+  à corriger avec la partie 2 (« Formation terminée »), essai réel avec un compte de test.
   Mannequins ayant déjà fini : façon de faire à décider.
 - Idées gardées (toutes) : bulletin trimestriel ; mensurations suivies ; documents qui expirent ;
   anniversaires (message AUTOMATIQUE par e-mail et WhatsApp) ; mannequin du mois (choisi selon
