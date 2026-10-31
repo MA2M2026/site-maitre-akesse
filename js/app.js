@@ -1031,8 +1031,9 @@ async function lireParcours(debut, fin, idMannequin) {
   // l'agence) n'y figure que s'il montre au moins un nom — une de nos mannequins publiées
   // cochée, ou une mannequin de l'agence écrite à la main (Extension 137). Pour une seule
   // mannequin (idMannequin), ses projets comptent même si son profil n'est pas public.
-  return idMannequin ? (data || []) : (data || []).filter(p => (p.mannequins || []).length);
+  return idMannequin ? (data || []) : projetsAvecNoms(data);
 }
+function projetsAvecNoms(data) { return (data || []).filter(p => (p.mannequins || []).length); }
 
 // Expériences d'une mannequin synchronisées avec l'agenda (demande de la propriétaire,
 // 12/10/2026) : chaque projet réalisé avec l'agence apparaît tout seul dans ses expériences

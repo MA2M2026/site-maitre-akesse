@@ -15,12 +15,18 @@ tables.partenaires = [{ ...tables.partenaires[0], description: '<p>Partenaire fi
 // agenda : un projet à venir (titre piégé) et un événement de la page Événements
 rpc.agenda_public = [{ id: 'g1', type: 'evenement', titre: 'Forum <img src=x onerror=alert(1)>', date_debut: '2030-10-21', date_fin: '2030-10-22', ville: 'Abidjan', lieu: 'Sofitel', description: '', intervenants: [], seances: [], partenaires: [], mannequins: [] }];
 tables.evenements = [{ ...tables.evenements[0], date_evenement: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10), lieu: 'Plateau' }];
+// parcours : un projet réalisé ce mois-ci, avec une mannequin (nom piégé) ; un projet sans mannequin (à ne pas montrer)
+const ceMois = new Date().toISOString().slice(0, 8) + '01';
+rpc.parcours_public = [{ id: 'pp1', type: 'evenement', titre: 'Gala <img src=x onerror=alert(1)>', date_debut: ceMois, date_fin: null, lieu: 'Sofitel', ville: 'Abidjan', pays: "Côte d'Ivoire", mannequins: [{ id: 'a1', nom: 'Awa <img src=x onerror=alert(1)>', slug: 'awa-kone' }] },
+  { id: 'pp2', type: 'casting', titre: 'Casting ouvert', date_debut: ceMois, date_fin: null, mannequins: [] }];
+rpc.photos_couverture_petites = [{ model_id: 'a1', url: 'https://x/1.jpg', url_petite: null }];
 let basePanne = false, baseLente = 0;
 const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
 
 // Les pages : [adresse, bloc, vérifier(données), sélecteur visible quand la page est remplie, lectures du navigateur à NE PAS voir]
 const PAGES = [
   ['partenaires', 'partenaires-donnees', (d) => d.liste.length === 2, '#partenaires-grille .news-carte', /\/rest\/v1\/partenaires\?select=/],
+  ['parcours', 'parcours-donnees', (d) => d.projets.length === 2 && d.photos.length === 1 && /^\d{4}-\d\d-01$/.test(d.debut), '.parcours-projet', /\/rest\/v1\/rpc\/parcours_public/],
   ['agenda', 'agenda-donnees', (d) => d.agenda.length === 1 && d.evenements.length === 1, '#agenda-avenir .agenda-carte, #agenda-avenir article', /\/rest\/v1\/(rpc\/agenda_public|evenements\?select=id%2Ctitre|evenements\?select=id,titre)/]
 ];
 

@@ -517,6 +517,26 @@ async function agendaRempli(requete, url) {
   return (await pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture)) || undefined;
 }
 
+// ================== Parcours préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
+// Mêmes lectures que js/parcours.js : les projets des 24 derniers mois (parcours_public, du 1er du mois il y
+// a 23 mois à aujourd'hui), puis les visages des mannequins (photos de couverture). La page vérifie que la
+// période est la même que la sienne (sinon elle relit la base). Bloc « parcours-donnees ».
+async function parcoursRempli(requete, url) {
+  if (requete.method !== 'GET') return;
+  const anglais = /^\/en\//.test(url.pathname);
+  const jour = new Date(), debutMois = new Date(Date.UTC(jour.getUTCFullYear(), jour.getUTCMonth() - 23, 1));
+  const debut = debutMois.toISOString().slice(0, 10), fin = jour.toISOString().slice(0, 10);
+  const limite = Date.now() + ATTENTE_FICHE, reste = () => Math.max(limite - Date.now(), 1);
+  const lecture = (async () => {
+    const projets = await lireSupabase('rpc/parcours_public', { p_debut: debut, p_fin: fin, p_model: null }, reste());
+    if (!Array.isArray(projets)) return null;
+    const ids = [...new Set(projets.flatMap((p) => (p.mannequins || []).map((m) => m.id).filter(Boolean)))];
+    const photos = ids.length ? ((await lireSupabase('rpc/photos_couverture_petites', { ids }, reste())) || (await lireSupabase('rpc/photos_couverture_mannequins', { ids }, reste()))) : [];
+    return Array.isArray(photos) ? { debut, fin, projets, photos } : null;
+  })();
+  return (await pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture)) || undefined;
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -564,6 +584,9 @@ export default async function middleware(requete) {
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?parcours(\.html)?$/.test(url.pathname)) {
+      try { return await parcoursRempli(requete, url); } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?agenda(\.html)?$/.test(url.pathname)) {
       try { return await agendaRempli(requete, url); } catch (e) { return; }
