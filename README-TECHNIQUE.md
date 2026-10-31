@@ -3877,3 +3877,21 @@ sinon, remplissage comme avant. Les 4 petites cases ne changent pas. Essai : `te
 - Book : les photos ajoutées pendant un envoi restent choisies.
 - Ordre des photos par `created_at` (pas de colonne d'ordre) : choix assumé pour ne pas toucher la base ;
   une colonne `ordre` serait plus propre (fichier SQL à prévoir avec la propriétaire).
+
+## Site dynamique, étape 1 : fiche d'un mannequin préparée par le serveur (01/11/2026)
+
+Décision de la propriétaire (31/10/2026, `PLAN-SERVEUR.md`, chemin A). `middleware.js` (`ficheRemplie`) :
+pour `/book/nom` et `/en/book/nom`, un visiteur reçoit la page `mannequin` déjà complétée :
+- bloc `<script type="application/json" id="fiche-donnees">` : `{ id, slug, profil, photos, age }`, mêmes
+  colonnes que celles lues par `js/fiche-mannequin.js` (jamais la date de naissance ni les coordonnées) ;
+  posé juste après `<body>` (la page n'a pas de `<main>`) ; texte passé par `jsonSur` (rien d'injectable) ;
+- `<title>`, `meta description` et `link rel="canonical"` de la mannequin (lus sans programme) ;
+- `link rel="preload"` de la grande photo (même choix que `photosAffichees`, `couvertureFiche`) ;
+- `Cache-Control: no-cache` : rien n'est gardé en mémoire, une fiche modifiée se voit tout de suite.
+La base est lue en même temps que la page, 1,2 s au plus (`ATTENTE_FICHE`) ; base lente ou en panne,
+profil non publié, requête autre que GET : la fiche part comme avant (réécriture vers `/mannequin?id=…`,
+la page se remplit elle-même). Sa propre demande de la page porte l'en-tête `x-ma2m-fiche` (pas de boucle).
+Côté navigateur : `js/adresse-fiche.js` lit le bloc (`window.ma2mFicheServeur`, identifiant et nom
+d'adresse sans demande), `js/fiche-mannequin.js` y prend profil, photos et âge (expériences et mesures
+supplémentaires restent demandées par la page). Aucune nouvelle fonction serveur.
+Essai : `scripts/tests-visiteur/test-fiche-serveur.js`.

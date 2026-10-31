@@ -88,7 +88,9 @@ async function chargerProfilInterne() {
   // Tout est demandé EN MÊME TEMPS (28/10/2026 : la fiche attendait cinq réponses l'une après
   // l'autre avant d'afficher la photo, long sur téléphone) ; on n'attend ensuite que le profil.
   // (Promise.resolve : une demande Supabase part à chaque « then » ; ainsi elle ne part qu'une fois)
-  const demandePhotos = Promise.resolve(sb
+  // fiche préparée par le serveur (middleware.js, 01/11/2026) : profil, photos et âge déjà dans la page
+  const serveur = window.ma2mFicheServeur && window.ma2mFicheServeur.id === id ? window.ma2mFicheServeur : null;
+  const demandePhotos = serveur ? Promise.resolve({ data: serveur.photos }) : Promise.resolve(sb
     .from('model_photos')
     .select('id, url, url_miniature, url_moyenne, compcard_ordre, principale, photo_couverture, couverture_position, tri_statut, created_at')
     .eq('model_id', id)
@@ -100,12 +102,12 @@ async function chargerProfilInterne() {
   ]);
   const demandeMesures = window.ma2mMesuresSupp(id);
   // l'âge aussi, en même temps (31/10/2026 : il était demandé après tout le reste)
-  const demandeAge = Promise.resolve(sb.rpc('ages_mannequins', { ids: [id] }));
+  const demandeAge = serveur ? Promise.resolve({ data: [{ age: serveur.age }] }) : Promise.resolve(sb.rpc('ages_mannequins', { ids: [id] }));
   // une demande abandonnée (profil non publié) ne doit pas laisser d'erreur non gérée
   [demandePhotos, demandeProjets, demandeMesures, demandeAge].forEach((d) => { d.catch(() => {}); });
   // La grande photo part dès que la liste des photos arrive, sans attendre le reste (31/10/2026 :
   // elle ne commençait qu'au bout de ≈ 5 s sur téléphone) ; le navigateur la garde pour l'affichage.
-  demandePhotos.then(({ data }) => {
+  if (!serveur) demandePhotos.then(({ data }) => {  // (préparée par le serveur : déjà annoncée dans la page)
     const v = photosAffichees(data);
     if (!v.couverture) return;
     const img = new Image();
@@ -113,7 +115,7 @@ async function chargerProfilInterne() {
     img.src = urlLegere(v.couverture.url_moyenne || v.couverture.url);
   }).catch(() => {});
 
-  const { data: profil, error } = await sb
+  const { data: profil, error } = serveur ? { data: { ...serveur.profil }, error: null } : await sb
     .from('model_profiles')
     .select('id, full_name, city, category, niveau_mannequin, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
     .eq('id', id)

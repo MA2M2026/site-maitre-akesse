@@ -377,6 +377,63 @@ async function accueilRempli(requete, url) {
   return new Response(html, { status: 200, headers: entetes });
 }
 
+// ================== Fiche d'un mannequin préparée par le serveur (01/11/2026, site dynamique, étape 1) ==================
+// Décision de la propriétaire (31/10/2026, PLAN-SERVEUR.md, chemin A). Avant, la page /book/nom partait
+// vide : le téléphone chargeait ses programmes, PUIS demandait à la base le profil, les photos et l'âge,
+// et seulement alors la grande photo (≈ 3,5 à 4 s). Désormais, le serveur lit ces trois réponses en même
+// temps que la page et les pose dedans (bloc <script type="application/json" id="fiche-donnees">, lu par
+// js/fiche-mannequin.js et js/adresse-fiche.js), avec la grande photo annoncée tout en haut (le téléphone
+// la télécharge dès la première seconde) et le vrai titre et la vraie description de la mannequin (lus par
+// Google et les autres moteurs sans exécuter de programme). Seulement ce que la fiche publique montre déjà
+// (jamais de coordonnées, ni la date de naissance : l'âge seul). La base répond trop lentement (plus de
+// 1,2 s) ou pas du tout : la fiche part comme avant et se remplit elle-même. Rien n'est gardé en mémoire
+// (une fiche modifiée dans l'Administration se voit tout de suite).
+const COLONNES_PROFIL_FICHE = 'id,full_name,city,category,niveau_mannequin,height_cm,weight_kg,chest_cm,waist_cm,hips_cm,inseam_cm,shoe_size,carnation,clothing_size,eye_color,hair_color,bio,years_experience,model_types,languages,availability,video_url';
+const COLONNES_PHOTOS_FICHE = 'id,url,url_miniature,url_moyenne,compcard_ordre,principale,photo_couverture,couverture_position,tri_statut,created_at';
+const ATTENTE_FICHE = 1200;
+// même choix de grande photo que photosAffichees (js/app.js) : vérifié par test-fiche-serveur.js
+function couvertureFiche(photos) {
+  const date = (p) => { const t = Date.parse(p.created_at); return Number.isNaN(t) ? Infinity : t; };
+  const triees = photos.filter((p) => p.tri_statut !== 'ecartee').sort((x, y) => {
+    if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
+    if (date(x) !== date(y)) return date(x) - date(y);
+    return String(x.id) < String(y.id) ? -1 : 1;
+  });
+  const choisie = triees.find((p) => p.photo_couverture) || triees[0];
+  return choisie ? photoLegere(choisie.url_moyenne || choisie.url) : '';
+}
+async function ficheRemplie(requete, url, id, slug, anglais) {
+  if (requete.method !== 'GET') return null;
+  const donnees = Promise.all([
+    lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=' + COLONNES_PROFIL_FICHE, null, ATTENTE_FICHE),
+    lireSupabase('model_photos?model_id=eq.' + id + '&select=' + COLONNES_PHOTOS_FICHE + '&order=principale.desc,created_at.asc', null, ATTENTE_FICHE),
+    lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE)
+  ]);
+  const demandePage = fetch(new URL((anglais ? '/en' : '') + '/mannequin', url).toString(), { headers: { 'x-ma2m-fiche': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const [[profils, photos, ages], page] = await Promise.all([donnees, demandePage]);
+  const profil = Array.isArray(profils) && profils[0];
+  if (!profil || !Array.isArray(photos) || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
+  let html = await page.text();
+  if (html.indexOf('</head>') === -1 || html.indexOf('<body>') === -1) return null;
+  const age = Array.isArray(ages) && ages[0] && ages[0].age != null ? ages[0].age : null;
+  const nom = profil.full_name || (anglais ? 'Model' : 'Mannequin');
+  const titre = nom + ' · Maître Akesse Model Management';
+  const description = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
+    (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
+  const lien = SITE + (anglais ? '/en' : '') + '/book/' + slug;
+  const grande = couvertureFiche(photos);
+  html = html
+    .replace(/<title>[^<]*<\/title>/, '<title>' + echapper(titre) + '</title>')
+    .replace(/<meta name="description" content="[^"]*">/, '<meta name="description" content="' + echapper(description) + '">')
+    .replace('</head>', '<link rel="canonical" href="' + echapper(lien) + '">\n' +
+      (grande ? '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(grande) + '">\n' : '') + '</head>')
+    .replace('<body>', '<body>\n<script type="application/json" id="fiche-donnees">' + jsonSur({ id, slug, profil, photos, age }) + '</script>');
+  const entetes = new Headers(page.headers);
+  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
+  entetes.set('Cache-Control', 'no-cache, must-revalidate');
+  return new Response(html, { status: 200, headers: entetes });
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -398,6 +455,7 @@ export default async function middleware(requete) {
       try { return await accueilRempli(requete, url); } catch (e) { return; }
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
+    if (requete.headers.get('x-ma2m-fiche')) return;  // (la page de la fiche, demandée par ficheRemplie)
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
     // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche
@@ -416,6 +474,9 @@ export default async function middleware(requete) {
         const apercu = await apercuMannequin(url, anglais, id);
         if (apercu) return apercu;
       }
+      // visiteur : la fiche part déjà remplie ; au moindre souci, comme avant (la page se remplit elle-même)
+      const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
+      if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
     }
     if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change

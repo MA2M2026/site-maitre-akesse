@@ -27,7 +27,13 @@
   // Seule une réponse réussie est gardée : après un échec ou 15 s sans réponse (réseau faible), la
   // demande suivante (2e essai de la fiche) repart à neuf.
   var dejaLu = null, adresseLue = {};
+  // Fiche préparée par le serveur (middleware.js, 01/11/2026) : identifiant et nom d'adresse déjà dans la page
+  var serveur = null;
+  try { var bloc = document.getElementById('fiche-donnees'); serveur = bloc ? JSON.parse(bloc.textContent) : null; } catch (e) { serveur = null; }
+  window.ma2mFicheServeur = serveur && serveur.id && serveur.profil ? serveur : null;
+  if (window.ma2mFicheServeur) adresseLue[serveur.id] = serveur.slug;
   window.ma2mIdFiche = function () {
+    if (window.ma2mFicheServeur) return Promise.resolve(window.ma2mFicheServeur.id);
     if (dejaLu) return dejaLu;
     var demande = dejaLu = (async function () {
       var id = new URLSearchParams(location.search).get('id');
