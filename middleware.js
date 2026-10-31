@@ -503,6 +503,20 @@ async function partenairesRemplis(requete, url) {
   return (await pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture)) || undefined;
 }
 
+// ================== Agenda préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
+// Mêmes lectures que js/agenda.js (page Agenda, pas l'encart de l'accueil) : agenda_public, et les événements
+// des 12 derniers mois (bloc « agenda-donnees »). Plus de 1000 événements : la page les lit elle-même.
+async function agendaRempli(requete, url) {
+  if (requete.method !== 'GET') return;
+  const anglais = /^\/en\//.test(url.pathname);
+  const depuis = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+  const lecture = Promise.all([
+    lireSupabase('rpc/agenda_public', {}, ATTENTE_FICHE),
+    lireSupabase('evenements?select=id,titre,date_evenement,lieu&date_evenement=gte.' + depuis + '&order=date_evenement.asc,id.asc&limit=1000', null, ATTENTE_FICHE)
+  ]).then(([agenda, evenements]) => (Array.isArray(agenda) && Array.isArray(evenements) && evenements.length < 1000 ? { agenda, evenements } : null));
+  return (await pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture)) || undefined;
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -550,6 +564,9 @@ export default async function middleware(requete) {
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?agenda(\.html)?$/.test(url.pathname)) {
+      try { return await agendaRempli(requete, url); } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?partenaires(\.html)?$/.test(url.pathname)) {
       try { return await partenairesRemplis(requete, url); } catch (e) { return; }

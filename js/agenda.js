@@ -478,10 +478,13 @@
     const passesBoite = document.getElementById('agenda-passes');
     const accueil = document.getElementById('agenda-accueil');
     if (!avenirBoite && !passesBoite && !accueil) return;
-    if (typeof sb === 'undefined' || !sb) return;
     // L'accueil ne demande que les 3 prochains projets (moins de données sur mobile).
     const seulAccueil = !avenirBoite && !passesBoite;
-    const [{ data, error }, lectureEvenements] = await Promise.all([
+    // page Agenda préparée par le serveur (middleware.js, 01/11/2026) : les deux lectures déjà dans la page
+    const d = seulAccueil ? null : donneesServeur('agenda-donnees');  // (js/app.js)
+    const serveur = d && Array.isArray(d.agenda) && Array.isArray(d.evenements) ? d : null;
+    if (!serveur && (typeof sb === 'undefined' || !sb)) return;
+    const [{ data, error }, lectureEvenements] = serveur ? [{ data: serveur.agenda, error: null }, { data: serveur.evenements, error: null }] : await Promise.all([
       sb.rpc('agenda_public', seulAccueil ? { seulement_a_venir: true, limite: 3 } : {}),
       seulAccueil ? Promise.resolve(null) : lireEvenementsDuSite().catch(() => null)
     ]);

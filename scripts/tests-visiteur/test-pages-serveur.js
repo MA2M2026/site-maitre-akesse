@@ -12,12 +12,16 @@ const { tables: t0, rpc } = require('./pages-publiques');
 const tables = JSON.parse(JSON.stringify(t0));
 tables.partenaires = [{ ...tables.partenaires[0], description: '<p>Partenaire fidèle.</p>', created_at: '2026-10-01T10:00:00Z' },
   { id: 'pb', nom: 'Maison <img src=x onerror=alert(1)>', logo_url: 'https://x/m.png', created_at: '2026-09-01T10:00:00Z' }];
+// agenda : un projet à venir (titre piégé) et un événement de la page Événements
+rpc.agenda_public = [{ id: 'g1', type: 'evenement', titre: 'Forum <img src=x onerror=alert(1)>', date_debut: '2030-10-21', date_fin: '2030-10-22', ville: 'Abidjan', lieu: 'Sofitel', description: '', intervenants: [], seances: [], partenaires: [], mannequins: [] }];
+tables.evenements = [{ ...tables.evenements[0], date_evenement: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10), lieu: 'Plateau' }];
 let basePanne = false, baseLente = 0;
 const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
 
 // Les pages : [adresse, bloc, vérifier(données), sélecteur visible quand la page est remplie, lectures du navigateur à NE PAS voir]
 const PAGES = [
-  ['partenaires', 'partenaires-donnees', (d) => d.liste.length === 2, '#partenaires-grille .news-carte', /\/rest\/v1\/partenaires\?select=/]
+  ['partenaires', 'partenaires-donnees', (d) => d.liste.length === 2, '#partenaires-grille .news-carte', /\/rest\/v1\/partenaires\?select=/],
+  ['agenda', 'agenda-donnees', (d) => d.agenda.length === 1 && d.evenements.length === 1, '#agenda-avenir .agenda-carte, #agenda-avenir article', /\/rest\/v1\/(rpc\/agenda_public|evenements\?select=id%2Ctitre|evenements\?select=id,titre)/]
 ];
 
 async function middleware() {
