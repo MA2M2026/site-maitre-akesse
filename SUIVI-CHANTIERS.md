@@ -69,3 +69,13 @@ lisait pas « 1er novembre »). Base d'essai : tous les fichiers SQL passent. 58
 - Idées gardées (toutes) : bulletin trimestriel ; mensurations suivies ; documents qui expirent ;
   anniversaires (message AUTOMATIQUE par e-mail et WhatsApp) ; mannequin du mois (choisi selon
   l'assiduité et le bulletin) ; signe « mensualité non payée » sur la liste de présence.
+
+## Plan de mise en ligne décidé par la propriétaire (01/11/2026)
+
+Pas de mise en ligne unique (trop risquée), mais 4 lots, chacun avec batterie complète et accord :
+1. **Lot 1** : site dynamique (pages préparées par le serveur, branche `site-dynamique`).
+2. **Lot 2** : liste de présence complète (parties 1, 2, 3), noir et beige retirés à la source avec garde-fou,
+   petites remarques SonarCloud.
+3. **Lot 3** : protections serveur (étapes 3 à 5 de `PLAN-SERVEUR.md`).
+4. **Lot 4** : appareil de confiance (chantier 6), SEUL, essai réel avec la propriétaire.
+Plus tard (décision de la propriétaire) : facture / note de cachet conforme.
