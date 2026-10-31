@@ -60,6 +60,7 @@
     // photos déjà en ligne, dans l'ordre du site (created_at) : modifiables (chantier 9, 31/10/2026)
     const photos = existante ? await P.bd(sb.from(c.t.tablePhotos).select('id, url, chemin, created_at').eq(c.t.colonne, existante.id).order('created_at', { ascending: true })).catch(() => []) : [];
     await outilsRedaction();
+    if (redaction) redaction.enLigne.forEach((p) => { if (p.apercu) URL.revokeObjectURL(p.apercu); });  // (mémoire)
     const enLigne = photos.map((p) => Object.assign({}, p, { retiree: false }));
     const couverture = existante ? existante.image_url || null : null;
     redaction = { type, id: existante ? existante.id : null, existante, editeur: null, enLigne, couverture,
@@ -104,9 +105,22 @@
     form.addEventListener('change', apercu);
     montrerEnLigne();
     apercu();
+    // état de départ, une fois l'éditeur posé (il retouche le texte chargé juste après) : tant que rien ne
+    // change par rapport à lui, aucun brouillon n'est écrit (ouvrir un article pour le lire n'en crée pas)
+    const r = redaction;
+    setTimeout(() => { if (redaction === r) { r.depart = etatTexte(); r.pret = true; } }, 300);
     return reprendreBrouillon();
   }
   function message(classe, texte) { const m = document.getElementById('pub-msg'); if (m) { m.className = 'form-msg large ' + classe; m.textContent = texte; } }
+  // champs et texte du formulaire, pour savoir si quelque chose a changé
+  function etatTexte() {
+    const form = document.querySelector('[data-form="publication-enregistrer"]');
+    const champs = {};
+    if (form) ['titre', 'categorie', 'video', 'date', 'lieu'].forEach((n) => { if (form.elements[n]) champs[n] = form.elements[n].value; });
+    return { champs, texte: lireContenuEditeur(redaction.editeur), cle: JSON.stringify([champs, lireContenuEditeur(redaction.editeur)]) };
+  }
+  // la publication telle qu'en base : un brouillon fait sur une autre version n'est pas repris en silence
+  const versionBase = (e) => (e ? JSON.stringify([e.titre, e.categorie, e.video_url, e.date_evenement, e.lieu, e.commentaire, e.description]) : '');
 
   // Photos choisies (pas encore envoyées) : mécanisme partagé js/admin/photos-choisies.js
   function montrerNouvelles() {
@@ -121,18 +135,12 @@
   const gardees = () => redaction.enLigne.filter((p) => !p.retiree);
   // une photo remplacée montre déjà sa remplaçante (pas encore envoyée)
   const apercuDe = (p) => (p.remplacement ? (p.apercu = p.apercu || URL.createObjectURL(p.remplacement)) : urlLegere(p.url));
-  const designe = (p) => p.url === redaction.couverture || p.ancienneUrl === redaction.couverture;
-  const ancienneCouverture = () => redaction.couverture && !redaction.enLigne.some(designe);
-  // couverture : celle choisie si elle reste (ou ancienne image hors liste), sinon la 1re photo restante,
-  // sinon la 1re photo choisie — même règle qu'à l'enregistrement
-  function photoCouverture() {
-    const g = gardees();
-    return g.find(designe) || (ancienneCouverture() ? null : g[0] || null);
-  }
+  // couverture : même règle qu'à l'enregistrement (choisirCouverture, js/publications.js), sinon la 1re photo choisie
+  const photoCouverture = () => choisirCouverture(redaction.enLigne, redaction.couverture).photo || null;
   function couvertureEffective() {
-    const p = photoCouverture();
-    if (p) return apercuDe(p);
-    if (ancienneCouverture()) return urlLegere(redaction.couverture);
+    const c = choisirCouverture(redaction.enLigne, redaction.couverture);
+    if (c.photo) return apercuDe(c.photo);
+    if (c.horsListe) return urlLegere(c.horsListe);
     return redaction.panier.apercus[0] || '';
   }
   function montrerVitrine() {
@@ -156,12 +164,14 @@
       '<input type="file" accept="image/*,.heic,.heif" id="pub-remplacement" data-change="publication-photo-remplacement" hidden>' +
       '<p class="doux petit-texte">' + (g.length ? P.pluriel(g.length, 'photo en ligne', 'photos en ligne') + ' : les flèches pour l’ordre, l’étoile pour la couverture, la croix pour retirer, « Remplacer » pour mettre une autre photo à la même place.' : 'Aucune photo gardée.') +
       ' Rien ne change sur le site avant « Enregistrer ».' +
-      (retirees || remplacees ? ' <b>' + [retirees ? P.pluriel(retirees, 'photo retirée', 'photos retirées') : '', remplacees ? P.pluriel(remplacees, 'photo remplacée', 'photos remplacées') : ''].filter(Boolean).join(', ') + '</b> (les anciennes sont effacées à l’enregistrement). <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>' : '') + '</p>';
+      (photosChangees() ? ' <b>' + ([retirees ? P.pluriel(retirees, 'photo retirée', 'photos retirées') : '', remplacees ? P.pluriel(remplacees, 'photo remplacée', 'photos remplacées') : ''].filter(Boolean).join(', ') || 'Ordre ou couverture changés') + '</b>' +
+        (retirees || remplacees ? ' (les anciennes sont effacées à l’enregistrement)' : '') + '. <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>' : '') + '</p>';
     montrerVitrine();
   }
   function photosChangees() {
     if (!redaction || !redaction.enLigne.length) return false;
-    return redaction.enLigne.some((p) => p.retiree || (p.remplacement && !p.retiree)) || gardees().map((p) => p.id).join(',') !== redaction.origine.ordre || redaction.couverture !== redaction.origine.couverture;
+    // (aEffacer : un essai précédent a remplacé une photo sans finir : il faut terminer)
+    return redaction.enLigne.some((p) => p.retiree || p.remplacement || (p.aEffacer && p.aEffacer.length)) || gardees().map((p) => p.id).join(',') !== redaction.origine.ordre || redaction.couverture !== redaction.origine.couverture;
   }
   function apresChangementEnLigne() { montrerEnLigne(); garderBrouillon(); }
   const trouver = (el) => redaction && redaction.enLigne.find((p) => String(p.id) === el.dataset.id);
@@ -181,7 +191,15 @@
     if (p.apercu) URL.revokeObjectURL(p.apercu);
     p.apercu = null; p.remplacement = fichier || null;
   }
-  P.actions['publication-photos-annuler'] = () => { if (!redaction) return; redaction.enLigne.forEach((p) => { p.retiree = false; remplacerPar(p, null); }); apresChangementEnLigne(); };
+  // « Annuler » : tout comme sur le site (photos retirées et remplacées, ordre, couverture)
+  P.actions['publication-photos-annuler'] = () => {
+    if (!redaction) return;
+    const rang = redaction.origine.ordre.split(',');
+    redaction.enLigne.forEach((p) => { p.retiree = false; remplacerPar(p, null); });
+    redaction.enLigne.sort((a, b) => rang.indexOf(String(a.id)) - rang.indexOf(String(b.id)));
+    redaction.couverture = redaction.origine.couverture;
+    apresChangementEnLigne();
+  };
   let aRemplacer = null;
   P.actions['publication-photo-remplacer'] = (el) => { aRemplacer = trouver(el) || null; const champ = document.getElementById('pub-remplacement'); if (aRemplacer && champ) champ.click(); };
   P.changements['publication-photo-remplacement'] = (el) => {
@@ -198,20 +216,41 @@
     const r = redaction;
     minuteurBrouillon = setTimeout(() => {
       const form = document.querySelector('[data-form="publication-enregistrer"]');
-      if (!form || redaction !== r) return;
-      const champs = {};
-      ['titre', 'categorie', 'video', 'date', 'lieu'].forEach((n) => { if (form.elements[n]) champs[n] = form.elements[n].value; });
+      if (!form || redaction !== r || !r.pret) return;
+      const { champs, texte, cle } = etatTexte();
+      // rien de changé (ou tout remis comme avant) : pas de brouillon
+      if (cle === r.depart.cle && !r.panier.fichiers.length && !photosChangees()) { P.brouillon.effacer(cleBrouillon()); return; }
       // photos déjà en ligne : ordre, retirées et couverture (seulement des numéros, pas les fichiers)
       const enLigne = r.enLigne.length ? { ordre: r.enLigne.map((p) => p.id), retirees: r.enLigne.filter((p) => p.retiree).map((p) => p.id), couverture: r.couverture,
         remplacements: Object.fromEntries(r.enLigne.filter((p) => p.remplacement).map((p) => [String(p.id), p.remplacement])) } : null;
-      P.brouillon.ecrire(cleBrouillon(), { champs, texte: lireContenuEditeur(r.editeur), fichiers: r.panier.fichiers, enLigne });
+      P.brouillon.ecrire(cleBrouillon(), { champs, texte, fichiers: r.panier.fichiers, enLigne, base: versionBase(r.existante) });
     }, 400);
   }
+  // Brouillon retrouvé : repris tout seul, sauf si la publication a changé depuis (modifiée ailleurs) :
+  // alors on demande. Dans les deux cas, on peut l'ignorer (il est effacé).
   async function reprendreBrouillon() {
     if (!redaction || !P.brouillon) return;
     const r = redaction, b = await P.brouillon.lire(cleBrouillon());
+    if (!b || !document.querySelector('[data-form="publication-enregistrer"]') || redaction !== r) return;
+    if (r.pret && etatTexte().cle !== r.depart.cle) return;  // déjà en train d'écrire : on ne remplace rien
+    const quand = new Date(b.quand).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    if (r.existante && b.base && b.base !== versionBase(r.existante)) {
+      r.brouillonEnAttente = b;
+      messageBrouillon('Vous avez un brouillon du ' + quand + ', mais cette publication a été modifiée depuis.',
+        '<button type="button" class="btn-mini-admin" data-action="publication-brouillon-reprendre">Reprendre mon brouillon</button> <button type="button" class="btn-mini-admin" data-action="publication-brouillon-ignorer">L’ignorer</button>');
+      return;
+    }
+    appliquerBrouillon(r, b);
+    const dit = 'Brouillon retrouvé (' + quand + ') : texte et photos choisies sont revenus.';
+    messageBrouillon(dit, '<button type="button" class="btn-mini-admin" data-action="publication-brouillon-ignorer">Ignorer ce brouillon</button>');
+    P.message(dit);  // aussi en haut de l'écran
+  }
+  function messageBrouillon(texte, boutons) {
+    const m = document.getElementById('pub-msg');
+    if (m) { m.className = 'form-msg large ok'; m.innerHTML = P.esc(texte) + ' ' + boutons; }
+  }
+  function appliquerBrouillon(r, b) {
     const form = document.querySelector('[data-form="publication-enregistrer"]');
-    if (!b || !form || redaction !== r) return;
     Object.entries(b.champs || {}).forEach(([n, v]) => { if (form.elements[n] && v) form.elements[n].value = v; });
     if (b.texte) chargerContenuDansEditeur(r.editeur, b.texte);
     r.panier.remplacer(b.fichiers);
@@ -227,10 +266,22 @@
     }
     montrerNouvelles();
     apercu();
-    const dit = 'Brouillon retrouvé (' + new Date(b.quand).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + ') : texte et photos choisies sont revenus.';
-    message('ok', dit);
-    P.message(dit);  // aussi en haut de l'écran
   }
+  P.actions['publication-brouillon-reprendre'] = () => {
+    const r = redaction;
+    if (!r || !r.brouillonEnAttente) return;
+    appliquerBrouillon(r, r.brouillonEnAttente);
+    r.brouillonEnAttente = null;
+    message('ok', 'Brouillon repris : vérifiez le texte avant d’enregistrer.');
+    garderBrouillon();
+  };
+  P.actions['publication-brouillon-ignorer'] = async () => {
+    if (!redaction || !P.brouillon) return;
+    clearTimeout(minuteurBrouillon);
+    await P.brouillon.effacer(cleBrouillon());
+    P.message('Brouillon effacé.');
+    return P.afficher();  // la page repart de la version en ligne
+  };
   P.formulaires['publication-enregistrer'] = async (f) => {
     if (!redaction) return;
     const type = redaction.type, c = TYPES[type], titre = String(f.get('titre') || '').trim();

@@ -24,21 +24,28 @@
   // Identifiant du mannequin à afficher : ?id=… ou nom d'adresse /book/….
   // Une seule demande par page (31/10/2026 : la fiche et le compteur de visites la posaient chacun
   // de leur côté) ; le nom d'adresse lu en même temps sert ensuite à ma2mAdresseFiche.
+  // Seule une réponse réussie est gardée : après un échec ou 15 s sans réponse (réseau faible), la
+  // demande suivante (2e essai de la fiche) repart à neuf.
   var dejaLu = null, adresseLue = {};
   window.ma2mIdFiche = function () {
-    if (!dejaLu) dejaLu = (async function () {
+    if (dejaLu) return dejaLu;
+    var demande = dejaLu = (async function () {
       var id = new URLSearchParams(location.search).get('id');
       if (id) return id;
       var m = location.pathname.match(CHEMIN_JOLI);
       if (!m || typeof sb === 'undefined' || !sb) return null;
       try {
-        var r = await sb.from('model_profiles').select('id, slug').eq('slug', m[1]).eq('published', true).maybeSingle();
+        var r = await Promise.race([
+          sb.from('model_profiles').select('id, slug').eq('slug', m[1]).eq('published', true).maybeSingle(),
+          new Promise(function (ok) { setTimeout(function () { ok(null); }, 15000); })
+        ]);
         if (!r || !r.data) return null;
         adresseLue[r.data.id] = r.data.slug;
         return r.data.id;
       } catch (err) { return null; }
     })();
-    return dejaLu;
+    demande.then(function (id) { if (!id && dejaLu === demande) dejaLu = null; });
+    return demande;
   };
 
   // Nom d'adresse du mannequin (null si la base ne le connaît pas encore) ; met la

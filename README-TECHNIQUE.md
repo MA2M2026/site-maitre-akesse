@@ -3861,3 +3861,19 @@ coupant le reste ; une photo en pied perdait la tête et les pieds. `dessinerEnt
 couperait plus de 6 % de la photo, elle est posée entière et centrée, et les bandes qui restent montrent la
 même photo floutée (réduite à 24 px puis agrandie, ce qui marche sur tous les navigateurs) et assombrie ;
 sinon, remplissage comme avant. Les 4 petites cases ne changent pas. Essai : `test-compcard-entiere.js`.
+
+### Suites de la relecture du 31/10/2026 (lot C)
+- Brouillon : aucun brouillon n'est écrit tant que rien n'a changé par rapport à la page ouverte (état de
+  départ pris 300 ms après le chargement de l'éditeur, qui retouche le texte chargé) ; revenir à l'identique
+  efface le brouillon. Le brouillon garde la version de la publication sur laquelle il a été fait (`base`) :
+  si elle a changé depuis (modifiée ailleurs), on demande « Reprendre mon brouillon » / « L'ignorer » au
+  lieu d'écraser en silence ; « Ignorer ce brouillon » est toujours proposé.
+- Photos d'un article : règle de couverture partagée `choisirCouverture` (`js/publications.js`), utilisée par
+  l'aperçu et par l'enregistrement ; un enregistrement interrompu en cours de route garde ce qui est fait
+  (`ancienneUrl`, `aEffacer`) pour qu'un nouvel essai termine ; mises à jour de l'ordre envoyées ensemble ;
+  « Annuler » remet tout (ordre et couverture compris).
+- `ma2mIdFiche` (`js/adresse-fiche.js`) ne garde qu'une réponse réussie (après un échec ou 15 s sans
+  réponse, le 2e essai de la fiche refait une demande).
+- Book : les photos ajoutées pendant un envoi restent choisies.
+- Ordre des photos par `created_at` (pas de colonne d'ordre) : choix assumé pour ne pas toucher la base ;
+  une colonne `ordre` serait plus propre (fichier SQL à prévoir avec la propriétaire).

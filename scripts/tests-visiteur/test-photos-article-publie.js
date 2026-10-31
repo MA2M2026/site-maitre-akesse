@@ -31,6 +31,7 @@ const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-
     p.on('dialog', (dl) => dl.accept());
     await brancher(p, donnees('principal'), journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
+    const rouvrir = async () => { await p.goto(URL_ADMIN + '#/site/actualites'); await p.waitForTimeout(600); await ouvrir(); };  // (même adresse : il faut repasser par la liste)
     const ouvrir = async () => { await p.goto(URL_ADMIN + '#/site/actualites/a1'); await p.waitForSelector('#pub-en-ligne .pub-photo-en-ligne'); await p.waitForSelector('#pub-editeur .ql-editor', { timeout: 8000 }); await p.waitForTimeout(800); };
 
     await ouvrir();
@@ -41,15 +42,36 @@ const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-
     ok(await p.$$eval('#pub-en-ligne .pub-photo-boutons button', (l) => l.every((x) => { const s = x.querySelector('svg'); return s && s.getBoundingClientRect().width >= 14; })), n + 'chaque bouton montre bien son dessin (flèche, étoile, croix)');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne déborde de l’écran');
 
+    // ouvrir un article pour le lire (sans rien changer) ne crée pas de brouillon (relecture du 31/10/2026)
+    const brouillonA1 = () => p.evaluate(() => window.Portail.brouillon.lire('publication:actualites:a1'));
+    await p.waitForTimeout(1200);
+    ok(!(await brouillonA1()), n + 'article ouvert sans rien changer : aucun brouillon écrit');
+    // brouillon fait sur une version plus ancienne : on demande (reprendre ou ignorer), rien n'est écrasé en silence
+    const brouillonAncien = () => p.evaluate(() => window.Portail.brouillon.ecrire('publication:actualites:a1', { champs: { titre: 'Ancien titre' }, texte: '<p>Ancien texte</p>', fichiers: [], enLigne: null, base: 'une autre version' }));
+    await brouillonAncien(); await rouvrir(); await p.waitForTimeout(600);
+    ok(/modifiée depuis/.test(await p.textContent('#pub-msg')) && (await p.inputValue('#pub-titre')) === 'Casting national 2026', n + 'brouillon d’une ancienne version : la question est posée, le texte en ligne reste');
+    await p.click('[data-action="publication-brouillon-ignorer"]'); await p.waitForSelector('#pub-en-ligne .pub-photo-en-ligne'); await p.waitForTimeout(1200);
+    ok(!(await brouillonA1()) && !/brouillon/i.test(await p.textContent('#pub-msg')), n + '« L’ignorer » : brouillon effacé');
+    await brouillonAncien(); await rouvrir(); await p.waitForTimeout(600);
+    await p.click('[data-action="publication-brouillon-reprendre"]'); await p.waitForTimeout(400);
+    ok((await p.inputValue('#pub-titre')) === 'Ancien titre' && /Ancien texte/.test(await p.textContent('#pub-editeur .ql-editor')), n + '« Reprendre mon brouillon » : le brouillon revient');
+    await p.click('[data-action="publication-brouillon-ignorer"]').catch(() => {});
+    await p.evaluate(() => window.Portail.brouillon.effacer('publication:actualites:a1'));
+    await rouvrir();
+
     // ordre, couverture, retirer, annuler
     await bouton(p, 1, 'apres'); await p.waitForTimeout(200);
     ok(await ordre(p) === 'm5,m4', n + '▶ : la 1re photo passe après');
     await bouton(p, 1, 'couverture'); await p.waitForTimeout(200);
     ok(await couverture(p) === 0 && /m5/.test(await p.$eval('#apercu-image img', (i) => i.src)), n + '★ : nouvelle couverture, l’aperçu suit');
+    await p.click('[data-action="publication-photos-annuler"]'); await p.waitForTimeout(200);
+    ok(await ordre(p) === 'm4,m5' && await couverture(p) === 0 && /m4/.test(await p.$eval('#apercu-image img', (i) => i.src)), n + '« Annuler » remet aussi l’ordre et la couverture');
+    await bouton(p, 1, 'apres'); await p.waitForTimeout(200); await bouton(p, 1, 'couverture'); await p.waitForTimeout(200);
     await bouton(p, 2, 'enlever'); await p.waitForTimeout(200);
     ok(await ordre(p) === 'm5' && /1 photo retirée/.test(await p.textContent('#pub-en-ligne')), n + '✕ : photo retirée, et c’est dit');
     await p.click('[data-action="publication-photos-annuler"]'); await p.waitForTimeout(200);
-    ok(await ordre(p) === 'm5,m4', n + '« Annuler » : la photo revient');
+    ok(await ordre(p) === 'm4,m5' && await couverture(p) === 0, n + '« Annuler » : la photo revient (et tout redevient comme en ligne)');
+    await bouton(p, 1, 'apres'); await p.waitForTimeout(200); await bouton(p, 1, 'couverture'); await p.waitForTimeout(200);
     await bouton(p, 2, 'enlever'); await p.waitForTimeout(200);
     ok(!ecritures(journal, 'actualite_photos').length && !ecritures(journal, 'actualites').length && !journal.some((j) => j[0] === 'API' && /suppression/.test(j[2] || '')), n + 'rien n’est écrit ni effacé avant « Enregistrer »');
 
@@ -58,6 +80,7 @@ const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-
     await p.click('form[data-form="publication-enregistrer"] [type=submit]'); await p.waitForTimeout(800);
     ok(/Gardez au moins une photo/.test(await p.textContent('#pub-msg')) && !ecritures(journal, 'actualites').length, n + 'toutes retirées sans vidéo : refusé, rien d’écrit');
     await p.click('[data-action="publication-photos-annuler"]'); await p.waitForTimeout(200);
+    await bouton(p, 1, 'apres'); await p.waitForTimeout(200); await bouton(p, 1, 'couverture'); await p.waitForTimeout(200);
     await bouton(p, 2, 'enlever'); await p.waitForTimeout(1000);  // le brouillon s'écrit juste après
 
     // quitter puis revenir : les choix sont gardés

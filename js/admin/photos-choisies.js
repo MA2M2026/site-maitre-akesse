@@ -14,6 +14,7 @@
   const empreinte = (f) => f.name + '|' + f.size + '|' + f.lastModified;
   P.photosChoisies = function (cle, options) {
     const o = Object.assign({ max: 30, quandChange: () => {} }, options);
+    if (paniers[cle]) paniers[cle].apercus.forEach((u) => URL.revokeObjectURL(u));  // l'ancien panier (page quittée) libère la mémoire
     const panier = paniers[cle] = {
       fichiers: [], apercus: [], zone: null, max: o.max,
       champ(libelle, classe) {

@@ -144,7 +144,8 @@
         if (!r || !r.length) throw new Error('photo non rattachée');
       } catch (e) { console.error('Envoi photo échoué :', e); ratees.push(fichiers[i]); }
     }
-    panier.remplacer(ratees);  // celles qui n'ont pas pu partir restent choisies, pour réessayer
+    // celles qui n'ont pas pu partir restent choisies (pour réessayer), avec celles ajoutées pendant l'envoi
+    panier.remplacer(ratees.concat(panier.fichiers.filter((f) => !fichiers.includes(f))));
     const reussies = fichiers.length - ratees.length;
     if (ouverte && ouverte.id === modelId) await rafraichirPhotos(reussies + '/' + fichiers.length + (fichiers.length > 1 ? ' photos envoyées.' : ' photo envoyée.') + (ratees.length ? ' Celles qui restent ci-dessous n’ont pas pu partir : réessayez.' : ''));
   };
