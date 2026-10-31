@@ -4,17 +4,18 @@ Règle : « terminé » seulement si tout le chantier est fait, essayé, vu fonc
 Sinon « en cours » (avec ce qui reste) ou « pas commencé ». Aucun secret dans ce fichier (dépôt public).
 
 Branche de travail : `chantier-couleurs-site` (à jour avec `main` le 31/10/2026).
-Version en ligne : `main` 1cbf1e4 (28/10/2026, 13 h 13 UTC, déploiement Vercel réussi).
+Version en ligne : `main` 0a0f4e4 (lot A, 31/10/2026, 17 h 32 UTC, déploiement Vercel réussi).
+Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 
 | Chantier | État | Ce qui reste |
 |---|---|---|
 | Étape 1 : vérifier avant de coder | terminé (31/10) | — |
 | 0. Installation de l'application sur tous les téléphones | en cours | corrections en ligne depuis le 28/10, jamais essayées sur de vrais téléphones ; essais réels (iPhone d'abord), corrections, puis vidéo |
-| 1. Grille du Book 3 / 4 / 5 | en cours | fait sur la branche ; batterie complète à relancer ; mise en ligne (lot A) ; vérification en ligne |
-| 2. Fiche mannequin plus rapide | en cours | demandes en parallèle faites sur la branche ; reste : mesurer et accélérer la grande photo, temps avant/après sur téléphone ; mise en ligne |
-| 3. Application mannequin pleine largeur | en cours | fait sur la branche ; batterie, mise en ligne (lot A), vérification |
-| 4. Bande « Télécharger l'application » rouge foncé | en cours | fait sur la branche ; batterie, mise en ligne (lot A), vérification |
-| 5. Édito (SonarCloud) + documentation | en cours | correction faite sur la branche ; README à compléter ; mise en ligne (lot A), SonarCloud |
+| 1. Grille du Book 3 / 4 / 5 | terminé (31/10) | — (vérifié en ligne : 3 / 4 / 5 colonnes, rien ne déborde) |
+| 2. Fiche mannequin plus rapide | en cours | demandes en parallèle EN LIGNE (31/10) ; reste : accélérer la grande photo (encore ≈ 2,3 à 3 s mesurées depuis l'espace de travail) et mesurer sur un vrai téléphone |
+| 3. Application mannequin pleine largeur | en cours | en ligne (31/10) ; reste : vérification en ligne sur téléphone/tablette (adresse de l'application bloquée depuis l'espace de travail) |
+| 4. Bande « Télécharger l'application » rouge foncé | terminé (31/10) | — (vérifié en ligne : rouge profond #5A141B, contour blanc) |
+| 5. Édito (SonarCloud) + documentation | terminé (31/10) | — (SonarCloud après mise en ligne : 0 bug, 0 faille, notes au maximum ; README à jour) |
 | 6. Appareil de confiance (Administration) | pas commencé | lot à part, essai réel avec compte de test et accord de la propriétaire |
 | 7. Brouillon des actualités et événements | pas commencé | — |
 | 8. Photos ajoutées en plusieurs fois | pas commencé | — |
@@ -34,3 +35,8 @@ Version en ligne : `main` 1cbf1e4 (28/10/2026, 13 h 13 UTC, déploiement Vercel 
 - La branche `chantier-couleurs-site` a 10 envois de plus que `main` (56 fichiers), non encore en ligne.
 - Chaque envoi sur une branche crée une adresse d'essai Vercel (compte dans la limite d'envois par jour).
 - L'accès aux réglages Vercel depuis Claude demande une autorisation de la propriétaire (lien Vercel).
+
+## Lot A mis en ligne le 31/10/2026
+
+Batterie complète : 73 parcours, 3 590 vérifications, 0 échec (après correction d'un essai qui ne
+lisait pas « 1er novembre »). Base d'essai : tous les fichiers SQL passent. 58 fichiers changés.
