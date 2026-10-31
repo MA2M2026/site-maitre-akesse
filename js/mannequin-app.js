@@ -76,7 +76,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -85,7 +85,8 @@
       sb.rpc('mes_cachets'),
       sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3),
       lireMessages(uid),
-      sb.rpc('mes_presences')  // cours du dimanche (chantier 14, supabase-presences.sql) ; absente : rien ne s'affiche
+      sb.rpc('mes_presences'),  // cours du dimanche (chantier 14, supabase-presences.sql) ; absente : rien ne s'affiche
+      sb.rpc('mannequin_du_mois_actuelle')  // (supabase-mannequin-du-mois.sql)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -96,7 +97,7 @@
       analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
-      messages: donnees(messages) || [], presences: donnees(presences) || null
+      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -226,6 +227,7 @@
     const nouveaux = nonLus();
     return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       (nouveaux.length ? '<a class="ap-carte ap-rappel ap-nouveau-message" href="#alertes">✉️ <span><b>' + (nouveaux.length > 1 ? nouveaux.length + ' nouveaux messages' : 'Nouveau message') + '</b> de l’agence : ' + esc(nouveaux[0].titre) + '</span> ›</a>' : '') +
+      (etat.mannequinDuMois && etat.mannequinDuMois.compte === etat.uid ? '<div class="ap-carte pr-app-mdm">🏆 <span><b>Vous êtes la mannequin du mois !</b><br>Félicitations : le site et l’application vous mettent à l’honneur tout le mois.</span></div>' : '') +
       cartePresencesAccueil() +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +

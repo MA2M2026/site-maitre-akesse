@@ -45,6 +45,7 @@ function donnees() {
       mes_mensualites: { inscrit: true, nom: 'AYA KOUASSI', mensualite: 10000, statut: 'actif', mineur: false,
         mois: Array.from({ length: 24 }, (_, i) => ({ mois: moisDe(i - 8), etat: i < 8 ? 'paye' : i === 8 ? 'a_payer' : 'a_venir' })) },
       app_messages_lus: null, app_push_abonner: null,
+      mannequin_du_mois_actuelle: { mois: '2026-11-01', nom: 'AYA KOUASSI', compte: 'admin-1', slug: 'aya-kouassi', mot: null },
       // cours du dimanche (chantier 14) : le mois dernier, présente à tous sauf le premier (rouge)
       mes_presences: { date_entree: '2025-09-01', annulees: [], presences: P.dimanchesDuMois(P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1)).slice(1).map((d) => ({ dimanche: d, etat: 'present' })) },
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
@@ -161,6 +162,8 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     await p.click('[data-periode="avenir"]');
     await p.click('article.ap-carte:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
     ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('article.ap-carte:has-text("SHOOTING CACAO")')), n + '« Je ne pourrai pas venir » (après confirmation) : l’agence est prévenue');
+    await p.click('.ap-nav a[href="#accueil"]'); await p.waitForTimeout(400);
+    ok(/Vous êtes la mannequin du mois/.test(await p.textContent('#ap-ecran')), n + 'Accueil : « 🏆 Vous êtes la mannequin du mois ! »');
     // 6. Profil
     await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait');
     const profil = await p.textContent('#ap-ecran');

@@ -3972,3 +3972,15 @@ seulement le 3 et le 5) ; `api/portail.js` souhaite les anniversaires chaque jou
 jamais les relances des mensualités du 3 et du 5) : noté d'abord, puis l'e-mail (à la mannequin, au parent
 pour une mineure), puis un récapitulatif à l'agence avec les messages WhatsApp déjà écrits (pas d'envoi
 WhatsApp automatique). **Textes** : `js/messages-anniversaire.js` (partagé). Essai : `test-anniversaires.js`.
+
+## Mannequin du mois (01/11/2026, chantier 14, partie 3)
+
+**Base** : `supabase-mannequin-du-mois.sql` (Extension 144 ; essais `essais-mannequin-du-mois.sql`) : table
+`mannequin_du_mois` (un mois → une mannequin active, un petit mot), fermée ; `mannequin_du_mois_choisir`
+(équipe, mois en cours ou à venir ; dépose le message de félicitations dans l'application, une fois),
+`mannequins_du_mois_historique` (équipe, 12 mois), `mannequin_du_mois_actuelle` (public : seulement si sa
+fiche est publiée au Book — sinon son nom n'est jamais montré). **Administration** : carte en haut de la
+« Liste de présence » du mois en cours (proposées : les assidues de tous les cours du mois précédent ; ou
+une autre au choix). **Site** : bandeau en haut du Book (`js/mannequins.js`, vers sa fiche). **Application** :
+carte « Vous êtes la mannequin du mois ! » sur l'Accueil. Essais : `test-presences-admin.js`,
+`test-book-serveur.js`, `test-app-mannequin.js`. (Le bulletin trimestriel, à venir, servira aussi à départager.)

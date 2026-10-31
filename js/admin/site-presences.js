@@ -55,18 +55,49 @@
         }).join('') +
         '<td class="pr-mention">' + (ment ? '<span class="pr-badge ' + ment.ton + '">' + P.esc(ment.agence) + '</span>' + (r.bilan.provisoire ? '<small class="doux"> (en cours)</small>' : '') : '<span class="doux">—</span>') + '</td></tr>';
     }).join('');
+    const carteMdm = etat.mois === moisDe(auj) ? await carteMannequinDuMois(d, visages) : '';
     const dimancheDuJour = jours.includes(auj) ? auj : null;
     const presentes = dimancheDuJour ? d.mannequins.filter((m) => (presences.get(m.id) || {})[auj] === 'present').length : null;
     return P.entete('Liste de présence', '<a class="btn" href="#/site/' + PAGE + '/synthese">Synthèse</a>') +
       '<div class="carte pr-barre"><button type="button" class="btn petit" data-action="presences-mois" data-pas="-1" aria-label="Mois précédent">‹</button>' +
       '<h2><span class="pr-mois">' + P.esc(NOMS_MOIS(etat.mois)) + '</span> <span class="doux pr-nb">' + jours.length + ' dimanches</span></h2>' +
       '<button type="button" class="btn petit" data-action="presences-mois" data-pas="1" aria-label="Mois suivant">›</button></div>' +
+      carteMdm +
       '<div class="chiffres">' + P.chiffre('Mannequins', String(d.mannequins.length)) + (presentes !== null ? P.chiffre('Présentes aujourd’hui', String(presentes), 'vert') : '') + '</div>' +
       '<p class="doux petit-texte">Touchez une case : <span class="pr-legende e-present">✓</span> présente, puis <span class="pr-legende e-excuse">E</span> absence excusée, puis vide. Un dimanche passé sans croix devient <span class="pr-legende e-absent">✕</span> rouge tout seul. Chaque toucher est enregistré tout de suite ; la mannequin le voit dans son application.</p>' +
       '<label class="fl pr-recherche" for="pr-recherche">Chercher un nom<input id="pr-recherche" type="search" data-change="presences-filtre" data-direct value="' + P.esc(etat.filtre) + '" placeholder="ex. : Awa"></label>' +
       (d.mannequins.length ? '<div class="pr-tableau"><table class="pr-grille"><thead>' + tete + '</thead><tbody>' + lignes + '</tbody></table></div>'
         : '<div class="carte vide">Aucune mannequin active au registre.</div>');
   }
+
+  // ---------- Mannequin du mois (supabase-mannequin-du-mois.sql, Extension 144) ----------
+  // Proposées : celles qui ont suivi tous les cours du mois précédent ; l'agence peut en choisir une autre.
+  async function carteMannequinDuMois(d, visages) {
+    const ceMois = moisDe(aujourdhui()), avant = C.moisVoisin(ceMois, -1);
+    let historique, precedent;
+    try {
+      [historique, precedent] = await Promise.all([P.rpc('mannequins_du_mois_historique'), P.rpc('presences_mois', { p_mois: avant + '-01' })]);
+    } catch (e) { return ''; }  // (pas encore activée : la carte n'apparaît pas)
+    const actuelle = (historique || []).find((h) => String(h.mois).slice(0, 7) === ceMois);
+    const pres = parMannequin(precedent), annulees = (precedent.annulees || []).map((a) => a.dimanche);
+    const assidues = d.mannequins.filter((m) => C.moisMannequin(avant, pres.get(m.id), annulees, m.date_entree, aujourdhui()).bilan.mention === 'assidu');
+    const bouton = (m) => '<button type="button" class="btn petit" data-action="mdm-choisir" data-mannequin="' + P.esc(m.id) + '" data-nom="' + P.esc(m.nom) + '">Choisir</button>';
+    return '<section class="carte pr-mdm"><h2>🏆 Mannequin du mois <span class="doux">· ' + P.esc(NOMS_MOIS(ceMois)) + '</span></h2>' +
+      (actuelle ? '<p><b>' + P.esc(actuelle.nom) + '</b>' + (actuelle.mot ? ' — « ' + P.esc(actuelle.mot) + ' »' : '') + '</p><p class="doux petit-texte">Elle a reçu son message de félicitations ; le site et l’application la mettent à l’honneur tout le mois (si sa fiche est publiée au Book).</p>'
+        : '<p class="doux petit-texte">Pas encore choisie. ' + (assidues.length ? 'Assidues à tous les cours de ' + P.esc(NOMS_MOIS(avant)) + ' :' : 'Personne n’a suivi tous les cours de ' + P.esc(NOMS_MOIS(avant)) + ' : choisissez librement ci-dessous.') + '</p>') +
+      (assidues.length && !actuelle ? '<ul class="pr-mdm-liste">' + assidues.map((m) => '<li>' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<span>' + P.esc(m.nom) + '</span>' + bouton(m) + '</li>').join('') + '</ul>' : '') +
+      '<label class="fl" for="mdm-autre">' + (actuelle ? 'Changer pour' : 'Ou une autre mannequin') + '<select id="mdm-autre" data-change="mdm-autre"><option value="">Choisir…</option>' +
+      d.mannequins.filter((m) => m.statut === 'actif').map((m) => '<option value="' + P.esc(m.id) + '">' + P.esc(m.nom) + '</option>').join('') + '</select></label></section>';
+  }
+  async function choisirMdm(id, nom) {
+    const mot = prompt('Choisir « ' + nom + ' » comme mannequin du mois ? Elle recevra un message de félicitations dans son application.\n\nUn petit mot pour elle (facultatif) :', '');
+    if (mot === null) return;
+    try { await P.rpc('mannequin_du_mois_choisir', { p_mois: aujourdhui(), p_mannequin: id, p_mot: mot }); } catch (e) { P.message('Non enregistré : ' + P.erreurTexte(e)); return; }
+    P.message('« ' + nom + ' » est la mannequin du mois.');
+    return P.afficher();
+  }
+  P.actions['mdm-choisir'] = (el) => choisirMdm(el.dataset.mannequin, el.dataset.nom);
+  P.changements['mdm-autre'] = (el) => { if (el.value) return choisirMdm(el.value, el.options[el.selectedIndex].textContent); };
 
   function appliquerFiltre() {
     const f = etat.filtre.trim().toLowerCase();

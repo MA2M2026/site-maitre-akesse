@@ -41,6 +41,7 @@ function moisSimule(corps) {
     d.rpc.presences_mois = moisSimule;
     d.rpc.presences_periode = () => ({ mannequins: M, annulees: [], presences: jours.map((x) => ({ mannequin: 'r1', dimanche: x, etat: 'present' })) });
     d.rpc.presence_marquer = () => null; d.rpc.presences_seance_annuler = () => null;
+    d.rpc.mannequins_du_mois_historique = []; d.rpc.mannequin_du_mois_choisir = () => null;
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
     const appels = (nomRpc) => journal.filter((j) => j[0] === 'rpc' && j[1] === nomRpc).map((j) => JSON.parse(j[2] || '{}'));
@@ -48,6 +49,11 @@ function moisSimule(corps) {
     await p.goto(URL_ADMIN + '#/site/b2-presences'); await p.waitForSelector('.pr-grille'); await p.waitForTimeout(600);
     ok(/Liste de présence/.test(await p.textContent('.lateral, nav, body')), n + 'la rubrique est dans le menu « Mannequins »');
     ok((await p.$$('.pr-grille thead .pr-jour')).length === C.dimanchesDuMois(ceMois).length && (await p.$$('.pr-grille tbody tr')).length === 3, n + 'ce mois-ci : ses ' + C.dimanchesDuMois(ceMois).length + ' dimanches et les 3 mannequins');
+    // mannequin du mois : proposée parmi les assidues du mois précédent (Awa), choisie avec un petit mot
+    ok(/Mannequin du mois/.test(await p.textContent('.pr-mdm')) && (await p.$$('.pr-mdm-liste li')).length === 1 && /AWA KONÉ/.test(await p.textContent('.pr-mdm-liste')), n + 'mannequin du mois : seule l’assidue du mois précédent est proposée');
+    await p.click('.pr-mdm-liste [data-action="mdm-choisir"]'); await p.waitForTimeout(800);
+    ok(appels('mannequin_du_mois_choisir').some((a) => a.p_mannequin === 'r1' && a.p_mot), n + 'mannequin du mois : choisie, avec son petit mot');
+    await p.waitForSelector('.pr-grille');
     await p.click('[data-action="presences-mois"][data-pas="-1"]'); await p.waitForSelector('.pr-grille'); await p.waitForTimeout(500);
     ok((await p.$$('.pr-grille thead .pr-jour')).length === jours.length, n + 'mois précédent : ' + jours.length + ' dimanches trouvés tout seuls');
     const ligne = (i) => '.pr-grille tbody tr:nth-child(' + i + ')';

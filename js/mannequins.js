@@ -7,7 +7,23 @@ let niveauActif = 'tous'; // New Face / Professionnel (affiché « Main Board »
 async function chargerMannequins() {
   const vide = document.getElementById('vide');
   const grille = document.getElementById('grille');
+  mannequinDuMois(grille).catch(() => { /* pas encore activée ou base injoignable : pas de bandeau */ });
   try { await afficherMannequins(vide); } finally { libererPlaceListe(grille, listeComplete()); }
+}
+// Bandeau « Mannequin du mois » (chantier 14, 01/11/2026 ; supabase-mannequin-du-mois.sql) : seulement si
+// sa fiche est publiée au Book (la base ne renvoie rien sinon)
+async function mannequinDuMois(grille) {
+  if (typeof sb === 'undefined' || !sb || !grille) return;
+  const { data } = await sb.rpc('mannequin_du_mois_actuelle');
+  if (!data || !data.slug || !/^[a-z0-9-]{1,80}$/.test(data.slug)) return;
+  const bandeau = document.createElement('a');
+  bandeau.className = 'mannequin-du-mois';
+  bandeau.href = (EN ? '/en' : '') + '/book/' + data.slug;
+  const titre = document.createElement('span'); titre.className = 'mdm-titre'; titre.textContent = '🏆 ' + (EN ? 'Model of the month' : 'Mannequin du mois');
+  const nom = document.createElement('b'); nom.textContent = data.nom || '';
+  const lien = document.createElement('span'); lien.className = 'mdm-lien'; lien.textContent = EN ? 'See her book →' : 'Voir sa fiche →';
+  bandeau.append(titre, nom, lien);
+  grille.before(bandeau);
 }
 // Champs de recherche (14/10/2026, demande de la propriétaire) : chacun s'utilise SEUL ; un
 // champ vide ne filtre rien. Un critère rempli écarte les fiches où cette mesure manque.

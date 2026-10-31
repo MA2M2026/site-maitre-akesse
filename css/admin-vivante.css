@@ -1092,3 +1092,9 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
   .lateral, .onglets-bas, .haut, .pr-periode .ligne, .entete .btn, .entete .retour { display: none !important; }
   .pr-synthese { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
 }
+
+/* Mannequin du mois (chantier 14, 01/11/2026) */
+.pr-mdm h2 { margin: 0 0 8px; font-size: 20px; }
+.pr-mdm-liste { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 8px; }
+.pr-mdm-liste li { display: flex; align-items: center; gap: 10px; }
+.pr-mdm-liste li span:not(.vis) { flex: 1; font-weight: 600; }

@@ -17,7 +17,8 @@ const base = tables.model_profiles[0];
 const profils = [base, { ...base, id: 'a2', full_name: 'Grâce <img src=x onerror=alert(1)>', slug: 'grace' }, { ...base, id: 'a3', full_name: 'Mariam Bamba', city: 'Bouaké', slug: 'mariam' }];
 tables.model_profiles = profils;
 const couvertures = profils.map((p, i) => ({ model_id: p.id, url: 'https://x/' + (i + 1) + '.jpg', url_petite: null }));
-const rpcs = { ...rpc, photos_couverture_mannequins: couvertures, photos_couverture_petites: couvertures };
+const rpcs = { ...rpc, photos_couverture_mannequins: couvertures, photos_couverture_petites: couvertures,
+  mannequin_du_mois_actuelle: { mois: '2026-11-01', nom: 'Mariam Bamba', compte: 'a3', slug: 'mariam', mot: null } };  // (chantier 14)
 let basePanne = false, baseLente = 0;
 const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
 
@@ -84,6 +85,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(/Mariam Bamba/.test(await p.textContent('#grille')) && !(await p.$('#grille img[src="x"]')), n + 'les 3 mannequins sont là, rien d’injecté');
     await p.evaluate(() => { const c = document.getElementById('f-recherche'); c.value = 'Mariam'; c.dispatchEvent(new Event('input', { bubbles: true })); });  // (replié sur téléphone) await p.waitForTimeout(600);
     ok(await p.$$eval('#grille .medaillon-carte', (l) => l.filter((c) => c.offsetParent !== null).length) === 1, n + 'la recherche marche toujours');
+    ok((await p.getAttribute('.mannequin-du-mois', 'href')) === (chemin.startsWith('en/') ? '/en' : '') + '/book/mariam' && /Mariam Bamba/.test(await p.textContent('.mannequin-du-mois')), n + 'bandeau « Mannequin du mois » en haut du Book, vers sa fiche');
     ok(!errs.length, n + 'aucune erreur' + (errs.length ? ' — ' + errs[0] : ''));
   }
   await b.close();

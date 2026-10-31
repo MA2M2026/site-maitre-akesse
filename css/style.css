@@ -3100,3 +3100,9 @@ body.zone-admin > .site-footer { margin-top: auto; }
 
 /* Candidatures « À revoir » et « En attente » rangées à part dans les filtres (cahier v2.4, 3.2) */
 .filtres-a-part { align-self: center; margin-left: 0.8rem; padding-left: 0.8rem; border-left: 1px solid var(--gris-clair, var(--c-ccc)); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texte-doux, var(--c-5e5b57)); }
+
+/* Bandeau « Mannequin du mois » en haut du Book (chantier 14, 01/11/2026) — rouge profond, texte blanc */
+.mannequin-du-mois { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 18px; padding: 14px 18px; border-radius: 14px; background: #5A141B; color: #FFFFFF; text-decoration: none; }
+.mannequin-du-mois .mdm-titre { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.mannequin-du-mois b { font-size: 20px; }
+.mannequin-du-mois .mdm-lien { margin-left: auto; text-decoration: underline; }
