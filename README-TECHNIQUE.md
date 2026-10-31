@@ -3851,3 +3851,11 @@ blanc avec le thème rouge et blanc) ; d'autres règles de `css/admin-vivante.cs
 `--av-rouge` comme fond : à revoir avec le nettoyage des couleurs à la source.
 Essais : `test-brouillon-photos.js`, `test-photos-article-publie.js`, `test-nouvelle-admin-contenu.js`,
 `test-nouvelle-admin-mannequins.js`.
+
+## Compcard : grande photo en entier (31/10/2026, demande de la propriétaire)
+
+`construireCanvasCompcard` (`js/app.js`) : la grande photo (case 92 × 130 mm) remplissait la case en
+coupant le reste ; une photo en pied perdait la tête et les pieds. `dessinerEntiere` : si remplir la case
+couperait plus de 6 % de la photo, elle est posée entière et centrée, et les bandes qui restent montrent la
+même photo floutée (réduite à 24 px puis agrandie, ce qui marche sur tous les navigateurs) et assombrie ;
+sinon, remplissage comme avant. Les 4 petites cases ne changent pas. Essai : `test-compcard-entiere.js`.

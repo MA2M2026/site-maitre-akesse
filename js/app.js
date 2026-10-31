@@ -782,9 +782,35 @@ async function construireCanvasCompcard(ficheData, langue) {
   ctx.font = `bold ${fpx(30)}px Arial, sans-serif`;
   ctx.fillText('COMPCARD', px(195), px(20));
 
+  // Grande photo EN ENTIER (31/10/2026, demande de la propriétaire : une photo en pied avait la tête
+  // ou les pieds coupés) : si la remplir couperait plus de 6 % de la photo, elle est posée entière,
+  // et les bandes qui restent montrent la même photo floutée et assombrie (pas de vide).
+  function dessinerEntiere(image, xMm, yMm, lMm, hMm) {
+    if (!image) return;
+    const ratioImage = image.largeur / image.hauteur, ratioCadre = lMm / hMm;
+    const perte = 1 - Math.min(ratioImage / ratioCadre, ratioCadre / ratioImage);
+    if (perte < 0.06) { dessinerCouvrant(image, xMm, yMm, lMm, hMm, 'haut'); return; }
+    // fond : la photo réduite à quelques dizaines de pixels puis agrandie (flou qui marche partout)
+    const petit = document.createElement('canvas');
+    petit.width = 24; petit.height = Math.max(1, Math.round(24 * hMm / lMm));
+    const pctx = petit.getContext('2d');
+    const sLf = ratioImage > ratioCadre ? image.hauteur * ratioCadre : image.largeur;
+    const sHf = ratioImage > ratioCadre ? image.hauteur : image.largeur / ratioCadre;
+    pctx.drawImage(image.canvas, (image.largeur - sLf) / 2, (image.hauteur - sHf) / 2, sLf, sHf, 0, 0, petit.width, petit.height);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(petit, 0, 0, petit.width, petit.height, px(xMm), px(yMm), px(lMm), px(hMm));
+    ctx.fillStyle = 'rgba(6,5,4,0.55)';
+    ctx.fillRect(px(xMm), px(yMm), px(lMm), px(hMm));
+    ctx.restore();
+    // la photo entière, centrée
+    const l = ratioImage > ratioCadre ? lMm : hMm * ratioImage, h = ratioImage > ratioCadre ? lMm / ratioImage : hMm;
+    ctx.drawImage(image.canvas, 0, 0, image.largeur, image.hauteur, px(xMm + (lMm - l) / 2), px(yMm + (hMm - h) / 2), px(l), px(h));
+  }
+
   // --- Photos : 1 grande + grille de 4 ---
   const yPhotos = hEntete + 4, hPhotos = 130;
-  dessinerCouvrant(imagesPhotos[0], 15, yPhotos, 92, hPhotos, 'haut');
+  dessinerEntiere(imagesPhotos[0], 15, yPhotos, 92, hPhotos);
 
   const cellulesX = [112, 155.5];
   const cellulesY = [yPhotos, yPhotos + 67];
