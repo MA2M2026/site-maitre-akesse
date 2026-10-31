@@ -54,9 +54,12 @@
 
 
   const cleTitre = t => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  // préparé par le serveur (middleware.js, 01/11/2026) : événements, photos, portrait, une photo par mannequin
+  const qsn = donneesServeur('qsn-donnees');  // (js/app.js)
+  const serveur = qsn && Array.isArray(qsn.evenements) && Array.isArray(qsn.photos) && Array.isArray(qsn.visages) ? qsn : null;
 
   async function lirePhotosEvenements() {
-    const [ev, ph] = await Promise.all([
+    const [ev, ph] = serveur ? [{ data: serveur.evenements, error: null }, { data: serveur.photos, error: null }] : await Promise.all([
       sb.from('evenements').select('id, titre, lieu, image_url').order('date_evenement', { ascending: false }),
       lireToutesLignes(() => sb.from('evenement_photos').select('id, evenement_id, url').order('id', { ascending: true }))
     ]);
@@ -122,7 +125,7 @@
   }
 
   async function chargerPortrait() {
-    const { data, error } = await sb.from('mot_responsable').select('nom, photo_url').eq('id', 'principal').maybeSingle();
+    const { data, error } = serveur ? { data: serveur.portrait, error: null } : await sb.from('mot_responsable').select('nom, photo_url').eq('id', 'principal').maybeSingle();
     if (error) throw error;
     if (!data || !data.photo_url) return;
     const img = document.getElementById('qsn-portrait-img');
@@ -138,7 +141,7 @@
     const bloc = piste && piste.closest('.qsn-visages');
     if (!piste || !bloc) return;
     // Toutes les photos (par paquets) pour que chaque mannequin publié ait sa chance.
-    const { data, error } = await lireToutesLignes(() => sb
+    const { data, error } = serveur ? { data: serveur.visages, error: null } : await lireToutesLignes(() => sb
       .from('model_photos')
       .select('id, url, url_moyenne, model_id, model_profiles!inner(published)')
       .eq('model_profiles.published', true)
@@ -334,7 +337,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     mettreEnMouvement();
     suivreDefilement();
-    if (typeof sb === 'undefined' || !sb) return;
+    if (!serveur && (typeof sb === 'undefined' || !sb)) return;
     [chargerEvenements, chargerPortrait, chargerVisages].forEach(f => {
       f().catch(e => console.warn('Qui sommes-nous : photos non chargées', e));
     });

@@ -3917,3 +3917,23 @@ identifiants des photos pour leur nombre) et la photo « À la une » annoncée 
 `publicationsServeur()` (`js/publications.js`, partagé par les deux pages). 1,2 s au plus ; sinon (base
 lente ou en panne, robot d'aperçu — qui garde son aperçu d'article —, autre que GET) comme avant.
 Outil commun `pageRemplie`. Essai : `test-publications-serveur.js`.
+
+## Site dynamique, étape 2 (fin) : partenaires, agenda, parcours, qui sommes-nous (01/11/2026)
+
+Toutes les pages publiques qui affichent des données de la base partent déjà remplies par le serveur
+(`middleware.js`, outil commun `pageRemplie` / `reponseHtml`), lues côté page par `donneesServeur(id)`
+(`js/app.js`) ; sans bloc (base lente plus de 1,2 s, en panne, robot d'aperçu, autre que GET), chaque page lit
+la base elle-même comme avant :
+| Page | Fonction serveur | Bloc | Lu par |
+|---|---|---|---|
+| Accueil | `accueilRempli` (5 min en mémoire) | `accueil-donnees` | `js/accueil.js` |
+| Fiche `/book/nom` | `ficheRemplie` | `fiche-donnees` | `js/adresse-fiche.js`, `js/fiche-mannequin.js` |
+| The Book | `bookRempli` | `book-donnees` | `js/mannequins.js`, mur de photos (`js/app.js`) |
+| Actualités, événements | `publicationsRemplies` | `publications-donnees` | `publicationsServeur` (`js/publications.js`) |
+| Partenaires | `partenairesRemplis` | `partenaires-donnees` | `js/partenaires.js` |
+| Agenda | `agendaRempli` | `agenda-donnees` | `js/agenda.js` (pas l'encart de l'accueil) |
+| Parcours | `parcoursRempli` (période vérifiée par la page) | `parcours-donnees` | `js/parcours.js` (`projetsAvecNoms`, `js/app.js`) |
+| Qui sommes-nous | `quiSommesNousRempli` (une photo au hasard par mannequin) | `qsn-donnees` | `js/qui-sommes-nous.js` |
+Pages au texte fixe (services, mentions légales, confidentialité, 404, réinitialisation) : servies telles
+quelles. Formulaires : étape 3 de `PLAN-SERVEUR.md`. Essais : `test-fiche-serveur.js`, `test-book-serveur.js`,
+`test-publications-serveur.js`, `test-pages-serveur.js` (partenaires, parcours, qui sommes-nous, agenda).

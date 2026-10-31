@@ -537,6 +537,39 @@ async function parcoursRempli(requete, url) {
   return (await pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture)) || undefined;
 }
 
+// ================== « Qui sommes-nous » préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
+// Mêmes lectures que js/qui-sommes-nous.js : événements et leurs photos, portrait du fondateur, photos des
+// mannequins publiées — réduites ici à UNE photo au hasard par mannequin (la page en tire ensuite 16 au
+// hasard, comme avant ; 435 photos le 01/11/2026, trop lourd à poser dans la page). Bloc « qsn-donnees ».
+// Lecture par paquets de 1000 (comme lireToutesLignes, js/app.js), dans le même délai de 1,2 s.
+async function lireToutesSupabase(chemin, reste) {
+  const toutes = [];
+  for (let depart = 0; depart < 20000; depart += 1000) {
+    const paquet = await lireSupabase(chemin + '&limit=1000&offset=' + depart, null, reste());
+    if (!Array.isArray(paquet)) return null;
+    toutes.push(...paquet);
+    if (paquet.length < 1000) return toutes;
+  }
+  return null;
+}
+async function quiSommesNousRempli(requete, url) {
+  if (requete.method !== 'GET') return;
+  const anglais = /^\/en\//.test(url.pathname);
+  const limite = Date.now() + ATTENTE_FICHE, reste = () => Math.max(limite - Date.now(), 1);
+  const lecture = Promise.all([
+    lireSupabase('evenements?select=id,titre,lieu,image_url&order=date_evenement.desc', null, reste()),
+    lireToutesSupabase('evenement_photos?select=id,evenement_id,url&order=id.asc', reste),
+    lireSupabase('mot_responsable?id=eq.principal&select=nom,photo_url', null, reste()),
+    lireToutesSupabase('model_photos?select=id,url,url_moyenne,model_id,model_profiles!inner(published)&model_profiles.published=eq.true&order=id.asc', reste)
+  ]).then(([evenements, photos, mots, photosMannequins]) => {
+    if (![evenements, photos, mots, photosMannequins].every(Array.isArray)) return null;
+    const parMannequin = new Map();
+    photosMannequins.slice().sort(() => Math.random() - 0.5).forEach(({ model_profiles: _p, ...ph }) => { if (!parMannequin.has(ph.model_id)) parMannequin.set(ph.model_id, ph); });
+    return { evenements, photos, portrait: mots[0] || null, visages: [...parMannequin.values()] };
+  });
+  return (await pageRemplie(url, (anglais ? '/en' : '') + '/qui-sommes-nous', 'qsn-donnees', lecture)) || undefined;
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -584,6 +617,9 @@ export default async function middleware(requete) {
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?qui-sommes-nous(\.html)?$/.test(url.pathname)) {
+      try { return await quiSommesNousRempli(requete, url); } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?parcours(\.html)?$/.test(url.pathname)) {
       try { return await parcoursRempli(requete, url); } catch (e) { return; }
