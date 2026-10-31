@@ -121,8 +121,8 @@ html { -webkit-text-size-adjust: 100%; }
 .ap-liste span { color: var(--ap-gris); font-weight: 400; font-size: 14px; text-align: right; }
 
 /* paiements */
-.ap-chiffre { font: 600 42px/1 'Cormorant Garamond', Georgia, serif; }
-.ap-chiffre small { font-size: 22px; color: var(--ap-gris); }
+.ap-chiffre, .pr-app-total { font: 600 42px/1 'Cormorant Garamond', Georgia, serif; }
+.ap-chiffre small, .pr-app-total small { font-size: 22px; color: var(--ap-gris); }
 .ap-echeance { margin-top: 14px; }
 .ap-cachets { padding: 6px 16px; }
 .ap-cachet { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--ap-creux); font-size: 14px; }
@@ -241,3 +241,20 @@ body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; bo
 .ap-message-image { display: block; width: 100%; height: auto; border-radius: 12px; margin: 0 0 12px; }
 .ap-message-agence .ap-btns { padding-bottom: 14px; }
 .ap-notif { display: flex; flex-direction: column; gap: 8px; }
+
+/* Cours du dimanche (chantier 14, 01/11/2026) : vert présente, orange excusée, rouge absente, gris pas de cours */
+.pr-app-mois { text-transform: capitalize; }
+.pr-app-jours { display: grid; grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 8px; margin: 12px 0 6px; }
+.pr-app-jour { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; border: 2px solid #E6E6E6; background: #FFFFFF; color: #1B1817; }
+.pr-app-jour b { font-size: 18px; } .pr-app-jour small { font-size: 11px; }
+.pr-app-jour.pr-etat-present { background: #1E7A45; border-color: #1E7A45; color: #FFFFFF; }
+.pr-app-jour.pr-etat-excuse { background: #9A5800; border-color: #9A5800; color: #FFFFFF; }
+.pr-app-jour.pr-etat-absent { background: #7C2128; border-color: #7C2128; color: #FFFFFF; }
+.pr-app-jour.pr-etat-annulee, .pr-app-jour.pr-etat-avant_entree { background: #EFEFEF; border-color: #EFEFEF; color: #5C5C5C; }
+.ap-pastille.pr-etat-vert { background: #1E7A45; color: #FFFFFF; }
+.ap-pastille.pr-etat-orange { background: #9A5800; color: #FFFFFF; }
+.ap-pastille.pr-etat-rouge { background: #7C2128; color: #FFFFFF; }
+.pr-bravo { margin: 8px 0 0; font-weight: 600; color: #1E7A45; }
+.pr-app-historique { list-style: none; margin: 12px 0 0; padding: 0; }
+.pr-app-historique li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #EEE; }
+.pr-app-historique li span:first-child { flex: 1; text-transform: capitalize; }

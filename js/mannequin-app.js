@@ -76,7 +76,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -84,7 +84,8 @@
       sb.rpc('mes_mensualites'),
       sb.rpc('mes_cachets'),
       sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3),
-      lireMessages(uid)
+      lireMessages(uid),
+      sb.rpc('mes_presences')  // cours du dimanche (chantier 14, supabase-presences.sql) ; absente : rien ne s'affiche
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -95,7 +96,7 @@
       analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
-      messages: donnees(messages) || []
+      messages: donnees(messages) || [], presences: donnees(presences) || null
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -183,6 +184,41 @@
     return html + '</div>';
   }
 
+  // ---------- cours du dimanche (chantier 14, 01/11/2026) : en lecture seule, cochés par l'agence ----------
+  // calcul partagé avec l'Administration : js/presences-calcul.js
+  function presencesCalculees() {
+    const d = etat.presences, C = window.Presences;
+    if (!d || !C) return null;
+    const auj = C.jourIso(new Date()), mois = auj.slice(0, 7);
+    const coches = {}; (d.presences || []).forEach((p) => { coches[p.dimanche] = p.etat; });
+    const annulees = (d.annulees || []).map((a) => a.dimanche);
+    const premiers = [d.date_entree, ((d.presences || [])[0] || {}).dimanche].filter(Boolean).sort();
+    const debut = premiers.length ? premiers[0].slice(0, 7) : mois;
+    return { C, mois, ceMois: C.moisMannequin(mois, coches, annulees, d.date_entree, auj), tout: C.synthese(C.moisEntre(debut < mois ? debut : mois, mois), coches, annulees, d.date_entree, auj) };
+  }
+  const NOMS_JOURS = { present: 'présente', excuse: 'excusée', absent: 'absente', annulee: 'pas de cours', avant_entree: '—', a_venir: 'à venir' };
+  const mentionHtml = (C, b) => (b.mention ? '<span class="ap-pastille pr-etat-' + C.MENTIONS[b.mention].ton + '">' + esc(C.MENTIONS[b.mention].mannequin) + '</span>' : '');
+  function blocPresences() {
+    const r = presencesCalculees();
+    if (!r) return '';
+    const { C, ceMois, tout } = r;
+    const nomMois = (m) => MOIS[Number(m.slice(5, 7)) - 1] + ' ' + m.slice(0, 4);
+    const parfait = !ceMois.bilan.provisoire && ceMois.bilan.mention === 'assidu';
+    const passes = tout.parMois.filter((m) => m.mois !== r.mois).reverse().slice(0, 12);
+    return '<h2 class="ap-titre-sec" id="mes-presences">Mes cours du dimanche</h2>' +
+      '<div class="ap-carte pr-app"><div class="ap-ligne entre"><b class="pr-app-mois">' + esc(nomMois(r.mois)) + '</b>' + mentionHtml(C, ceMois.bilan) + '</div>' +
+      '<div class="pr-app-jours">' + ceMois.jours.map((j) => '<span class="pr-app-jour pr-etat-' + j.etat + '"><b>' + Number(j.dimanche.slice(8)) + '</b><small>' + NOMS_JOURS[j.etat] + '</small></span>').join('') + '</div>' +
+      (parfait ? '<p class="pr-bravo">🎉 Bravo ! Vous avez suivi tous les cours du mois. Continuez comme ça !</p>' : '') +
+      '<p class="doux ap-petit">C’est l’agence qui note votre présence chaque dimanche.</p></div>' +
+      (tout.bilan.comptees ? '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="pr-app-total">' + tout.bilan.presents + ' <small>/ ' + tout.bilan.comptees + '</small></div><div class="doux">cours suivis depuis votre arrivée</div></div>' + mentionHtml(C, tout.bilan) + '</div>' +
+        (passes.length ? '<ul class="pr-app-historique">' + passes.map((m) => '<li><span>' + esc(nomMois(m.mois)) + '</span><span class="doux">' + m.bilan.presents + ' / ' + m.bilan.comptees + '</span>' + mentionHtml(C, m.bilan) + '</li>').join('') + '</ul>' : '') + '</div>' : '');
+  }
+  function cartePresencesAccueil() {
+    const r = presencesCalculees();
+    if (!r || !r.ceMois.bilan.comptees) return '';
+    return '<a class="ap-carte ap-rappel" href="#profil">📋 <span>Cours du dimanche : <b>' + r.ceMois.bilan.presents + ' / ' + r.ceMois.bilan.comptees + '</b> ce mois-ci</span> ›</a>';
+  }
+
   // ---------- les cinq onglets ----------
   function ecranAccueil() {
     const prochain = aVenir()[0];
@@ -190,6 +226,7 @@
     const nouveaux = nonLus();
     return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       (nouveaux.length ? '<a class="ap-carte ap-rappel ap-nouveau-message" href="#alertes">✉️ <span><b>' + (nouveaux.length > 1 ? nouveaux.length + ' nouveaux messages' : 'Nouveau message') + '</b> de l’agence : ' + esc(nouveaux[0].titre) + '</span> ›</a>' : '') +
+      cartePresencesAccueil() +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
       '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/app/espace-mannequin.html"><span>🗂️</span>Ma compcard</a><a href="/app/espace-mannequin.html"><span>📄</span>Mon CV</a></nav>' +
@@ -225,6 +262,7 @@
       '<a href="/app/espace-mannequin.html">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
       '<a href="/app/espace-mannequin.html">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
       '<a href="/app/espace-mannequin.html">Formation et compétences <span>›</span></a></div>' +
+      blocPresences() +
       '<div class="ap-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">✏️ Modifier mon profil</a><a class="ap-btn" href="/app/espace-mannequin.html">🗂️ Compcard et CV</a></div>' +
       '<button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button>';
   }

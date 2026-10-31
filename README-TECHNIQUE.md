@@ -3937,3 +3937,25 @@ la base elle-même comme avant :
 Pages au texte fixe (services, mentions légales, confidentialité, 404, réinitialisation) : servies telles
 quelles. Formulaires : étape 3 de `PLAN-SERVEUR.md`. Essais : `test-fiche-serveur.js`, `test-book-serveur.js`,
 `test-publications-serveur.js`, `test-pages-serveur.js` (partenaires, parcours, qui sommes-nous, agenda).
+
+## Liste de présence des cours du dimanche (01/11/2026, chantier 14, partie 1)
+
+Décisions de la propriétaire (31/10/2026, `SUIVI-CHANTIERS.md`). **Base** : `supabase-presences.sql`
+(Extension 142, rejouable ; essais `scripts/base-essai/essais-presences.sql`) : tables `presences`
+(mannequin du registre, dimanche, `present` ou `excuse`) et `presences_seances_annulees` ; RLS sans aucune
+lecture ni écriture directe : tout passe par les fonctions `presences_mois`, `presences_periode`,
+`presence_marquer`, `presences_seance_annuler` (équipe connectée à l'Administration : `portail_role()`) et
+`mes_presences` (la mannequin connectée, SES présences, lecture seule). Refusé : un autre jour qu'un
+dimanche, un dimanche à venir, une séance annulée (l'annuler efface ses cases).
+**Calcul partagé** `js/presences-calcul.js` (`window.Presences`) : dimanches du mois, état d'un dimanche
+(présente, excusée, absente = dimanche passé non coché, annulée, avant l'entrée, à venir), bilan et mention
+(toutes = assidu ; ≥ 75 % bien ; ≥ 50 % passable ; moins = insuffisant, « À améliorer » côté mannequin ;
+aucune = absent ; les excusées et annulées ne comptent pas), synthèse sur une période. Essai
+`test-presences-calcul.js`.
+**Administration** `js/admin/site-presences.js` (rubrique « Liste de présence », groupe Mannequins) :
+tableau du mois (toucher : vide → vert → orange → vide, enregistré aussitôt, mention recalculée sans
+recharger), annuler / rétablir une séance, recherche, mois précédent / suivant, « Synthèse » (période,
+détail par mois, impression). Essai `test-presences-admin.js`. **Application** (`js/mannequin-app.js`) :
+onglet Profil, « Mes cours du dimanche » (le mois en couleurs, mention, « Bravo » pour un mois parfait,
+historique) ; carte sur l'Accueil ; `js/presences-calcul.js` dans le cache hors ligne (`app/sw.js`, v8).
+Essai : `test-app-mannequin.js`. Couleurs d'état vert #1E7A45 / orange #9A5800 / rouge mat (contraste ≥ 5).

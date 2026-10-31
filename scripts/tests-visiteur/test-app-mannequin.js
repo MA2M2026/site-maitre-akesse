@@ -11,6 +11,7 @@ const path = require('path');
 const { REGLE_ADMIN } = require('./donnees-nouvelle-admin');
 const { lirePageEntiere } = require('./lisibilite');
 const { fondsInterdits } = require('./couleurs-autorisees');
+require(path.join(__dirname, '../../js/presences-calcul.js')); const P = globalThis.Presences;
 const PORT = String(9600 + Math.floor(Math.random() * 90));
 const BASE = 'http://127.0.0.1:' + PORT;
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -44,6 +45,8 @@ function donnees() {
       mes_mensualites: { inscrit: true, nom: 'AYA KOUASSI', mensualite: 10000, statut: 'actif', mineur: false,
         mois: Array.from({ length: 24 }, (_, i) => ({ mois: moisDe(i - 8), etat: i < 8 ? 'paye' : i === 8 ? 'a_payer' : 'a_venir' })) },
       app_messages_lus: null, app_push_abonner: null,
+      // cours du dimanche (chantier 14) : le mois dernier, présente à tous sauf le premier (rouge)
+      mes_presences: { date_entree: '2025-09-01', annulees: [], presences: P.dimanchesDuMois(P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1)).slice(1).map((d) => ({ dimanche: d, etat: 'present' })) },
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
     }
   };
@@ -163,6 +166,13 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     const profil = await p.textContent('#ap-ecran');
     ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Publié/.test(profil) && /Profil complet à \d+ %/.test(profil) && /1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-galerie img')).length === 3,
       n + 'Mon profil : niveau, en ligne, profil complet en %, mensurations, photos du Book');
+    // cours du dimanche (chantier 14) : en lecture seule, cochés par l'agence
+    const moisAvant = P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1), nbAvant = P.dimanchesDuMois(moisAvant).length;
+    ok(/Mes cours du dimanche/.test(profil) && (await p.$$('.pr-app-jour')).length === P.dimanchesDuMois(P.jourIso(new Date()).slice(0, 7)).length,
+      n + 'Mon profil : « Mes cours du dimanche », les dimanches du mois en cours');
+    ok(new RegExp((nbAvant - 1) + ' / ' + nbAvant).test(await p.textContent('.pr-app-historique')) && /Bien|Passable/.test(await p.textContent('.pr-app-historique')),
+      n + 'Mon profil : le mois dernier, ' + (nbAvant - 1) + ' cours sur ' + nbAvant + ', avec sa mention');
+    ok(!(await p.$('.pr-app-jour button, .pr-app button')) && !rpc('presence_marquer').length, n + 'Mon profil : présences en lecture seule (aucun bouton pour se cocher)');
     await capture('3-profil');
     ok((await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/espace-mannequin.html', n + '« Modifier mon profil » reste dans l’application');
     // l'éditeur du profil DANS l'application : même éditeur que le site, menu de l'application en bas
