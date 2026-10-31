@@ -61,7 +61,7 @@
     const photos = existante ? await P.bd(sb.from(c.t.tablePhotos).select('id, url, chemin, created_at').eq(c.t.colonne, existante.id).order('created_at', { ascending: true })).catch(() => []) : [];
     await outilsRedaction();
     if (redaction) redaction.enLigne.forEach((p) => { if (p.apercu) URL.revokeObjectURL(p.apercu); });  // (mémoire)
-    const enLigne = photos.map((p) => Object.assign({}, p, { retiree: false }));
+    const enLigne = photos.map((p) => ({ ...p, retiree: false }));
     const couverture = existante ? existante.image_url || null : null;
     redaction = { type, id: existante ? existante.id : null, existante, editeur: null, enLigne, couverture,
       panier: P.photosChoisies('publication', { max: MAX_PHOTOS, quandChange: () => { montrerNouvelles(); garderBrouillon(); } }),
@@ -134,7 +134,11 @@
   // « Enregistrer » (js/publications.js, appliquerPhotosEnLigne).
   const gardees = () => redaction.enLigne.filter((p) => !p.retiree);
   // une photo remplacée montre déjà sa remplaçante (pas encore envoyée)
-  const apercuDe = (p) => (p.remplacement ? (p.apercu = p.apercu || URL.createObjectURL(p.remplacement)) : urlLegere(p.url));
+  function apercuDe(p) {
+    if (!p.remplacement) return urlLegere(p.url);
+    if (!p.apercu) p.apercu = URL.createObjectURL(p.remplacement);
+    return p.apercu;
+  }
   // couverture : même règle qu'à l'enregistrement (choisirCouverture, js/publications.js), sinon la 1re photo choisie
   const photoCouverture = () => choisirCouverture(redaction.enLigne, redaction.couverture).photo || null;
   function couvertureEffective() {
@@ -164,9 +168,13 @@
       '<input type="file" accept="image/*,.heic,.heif" id="pub-remplacement" data-change="publication-photo-remplacement" hidden>' +
       '<p class="doux petit-texte">' + (g.length ? P.pluriel(g.length, 'photo en ligne', 'photos en ligne') + ' : les flèches pour l’ordre, l’étoile pour la couverture, la croix pour retirer, « Remplacer » pour mettre une autre photo à la même place.' : 'Aucune photo gardée.') +
       ' Rien ne change sur le site avant « Enregistrer ».' +
-      (photosChangees() ? ' <b>' + ([retirees ? P.pluriel(retirees, 'photo retirée', 'photos retirées') : '', remplacees ? P.pluriel(remplacees, 'photo remplacée', 'photos remplacées') : ''].filter(Boolean).join(', ') || 'Ordre ou couverture changés') + '</b>' +
-        (retirees || remplacees ? ' (les anciennes sont effacées à l’enregistrement)' : '') + '. <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>' : '') + '</p>';
+      (photosChangees() ? resumeChangements(retirees, remplacees) : '') + '</p>';
     montrerVitrine();
+  }
+  function resumeChangements(retirees, remplacees) {
+    const quoi = [retirees ? P.pluriel(retirees, 'photo retirée', 'photos retirées') : '', remplacees ? P.pluriel(remplacees, 'photo remplacée', 'photos remplacées') : ''].filter(Boolean).join(', ');
+    const effaces = retirees || remplacees ? ' (les anciennes sont effacées à l’enregistrement)' : '';
+    return ' <b>' + (quoi || 'Ordre ou couverture changés') + '</b>' + effaces + '. <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>';
   }
   function photosChangees() {
     if (!redaction || !redaction.enLigne.length) return false;
@@ -185,8 +193,18 @@
   }
   P.actions['publication-photo-avant'] = (el) => deplacer(el, -1);
   P.actions['publication-photo-apres'] = (el) => deplacer(el, 1);
-  P.actions['publication-photo-couverture'] = (el) => { const p = trouver(el); if (!p) return; redaction.couverture = p.url; apresChangementEnLigne(); };
-  P.actions['publication-photo-enlever'] = (el) => { const p = trouver(el); if (!p) return; p.retiree = true; apresChangementEnLigne(); };
+  P.actions['publication-photo-couverture'] = (el) => {
+    const p = trouver(el);
+    if (!p) return;
+    redaction.couverture = p.url;
+    apresChangementEnLigne();
+  };
+  P.actions['publication-photo-enlever'] = (el) => {
+    const p = trouver(el);
+    if (!p) return;
+    p.retiree = true;
+    apresChangementEnLigne();
+  };
   function remplacerPar(p, fichier) {
     if (p.apercu) URL.revokeObjectURL(p.apercu);
     p.apercu = null; p.remplacement = fichier || null;

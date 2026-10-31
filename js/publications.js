@@ -246,26 +246,31 @@ function choisirCouverture(liste, couverture) {
 // échoue : false, et ce qui est déjà fait reste noté sur les photos (ancienneUrl, aEffacer) pour qu'un
 // nouvel essai termine le travail. L'ordre suit created_at (pages publiques, pas de colonne d'ordre) :
 // les photos gardées sont renumérotées à partir de la plus ancienne, avant les photos ajoutées maintenant.
-async function appliquerPhotosEnLigne(t, id, liste, couverture) {
-  const retirees = liste.filter((p) => p.retiree), gardees = liste.filter((p) => !p.retiree);
+// Remplacements : nouvelle photo envoyée, la même ligne pointe vers elle ; si la base refuse, le nouveau fichier est effacé
+async function remplacerPhotosEnLigne(t, id, gardees) {
   for (const p of gardees.filter((x) => x.remplacement)) {
     const [nouvelle] = await envoyerPhotosPublication(t, id, [p.remplacement]);
     if (!nouvelle) return false;
     const { data, error } = await sbAdmin.from(t.tablePhotos).update({ url: nouvelle.url, chemin: nouvelle.chemin }).eq('id', p.id).select('id');
-    if (error || !data || !data.length) { await supprimerCheminsImagesSite(t.dossier, t.seau, [nouvelle.chemin]); return false; }
+    if (error || !data?.length) { await supprimerCheminsImagesSite(t.dossier, t.seau, [nouvelle.chemin]); return false; }
     Object.assign(p, { ancienneUrl: p.ancienneUrl || p.url, aEffacer: (p.aEffacer || []).concat(p.chemin || []), url: nouvelle.url, chemin: nouvelle.chemin, remplacement: null });
   }
-  if (retirees.length) {
-    const ids = retirees.map((p) => p.id);
-    const { data, error } = await sbAdmin.from(t.tablePhotos).delete().in('id', ids).select('id');
-    if (error || !data) return false;
-    // moins de lignes effacées que prévu : refus de la base, ou déjà effacées (nouvel essai) ? on vérifie
-    if (data.length !== ids.length) {
-      const { data: restantes, error: e2 } = await sbAdmin.from(t.tablePhotos).select('id').in('id', ids);
-      if (e2 || !restantes || restantes.length) return false;
-    }
-  }
-  const depart = Math.min(...liste.map((p) => Date.parse(p.created_at)).filter((x) => !isNaN(x)), Date.now() - 86400000);
+  return true;
+}
+// Lignes retirées ; moins de lignes effacées que prévu : refus de la base, ou déjà effacées (nouvel essai) ? on vérifie
+async function retirerPhotosEnLigne(t, retirees) {
+  if (!retirees.length) return true;
+  const ids = retirees.map((p) => p.id);
+  const { data, error } = await sbAdmin.from(t.tablePhotos).delete().in('id', ids).select('id');
+  if (error || !data) return false;
+  if (data.length === ids.length) return true;
+  const { data: restantes, error: e2 } = await sbAdmin.from(t.tablePhotos).select('id').in('id', ids);
+  return !e2 && !!restantes && !restantes.length;
+}
+async function appliquerPhotosEnLigne(t, id, liste, couverture) {
+  const retirees = liste.filter((p) => p.retiree), gardees = liste.filter((p) => !p.retiree);
+  if (!(await remplacerPhotosEnLigne(t, id, gardees)) || !(await retirerPhotosEnLigne(t, retirees))) return false;
+  const depart = Math.min(...liste.map((p) => Date.parse(p.created_at)).filter((x) => !Number.isNaN(x)), Date.now() - 86400000);
   const ordres = gardees.map((p, i) => [p, new Date(depart + i * 1000).toISOString()]).filter(([p, quand]) => Date.parse(p.created_at) !== Date.parse(quand));
   const reponses = await Promise.all(ordres.map(([p, quand]) => sbAdmin.from(t.tablePhotos).update({ created_at: quand }).eq('id', p.id)));
   if (reponses.some((r) => r.error)) return false;
@@ -274,7 +279,7 @@ async function appliquerPhotosEnLigne(t, id, liste, couverture) {
   let image = choix.photo ? choix.photo.url : choix.horsListe || null;
   if (!image) {
     const { data: premiere } = await sbAdmin.from(t.tablePhotos).select('url').eq(t.colonne, id).order('created_at', { ascending: true }).limit(1);
-    image = premiere && premiere[0] ? premiere[0].url : null;
+    image = premiere?.[0]?.url || null;
   }
   const { error } = await sbAdmin.from(t.table).update({ image_url: image }).eq('id', id);
   if (error) return false;

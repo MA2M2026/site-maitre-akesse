@@ -44,7 +44,7 @@
         return r.data.id;
       } catch (err) { return null; }
     })();
-    demande.then(function (id) { if (!id && dejaLu === demande) dejaLu = null; });
+    demande.then(function (id) { if (!id && dejaLu === demande) dejaLu = null; }, function () { if (dejaLu === demande) dejaLu = null; });
     return demande;
   };
 
