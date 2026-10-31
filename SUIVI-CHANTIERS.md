@@ -24,7 +24,8 @@ Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 | 11. Candidatures : plus d'ajout de photos par l'agence | en cours | étape faite (31/10, branche) : plus de « Ajouter une photo » ni de « Remplacer » ; voir, agrandir et supprimer restent ; essai test-nouvelle-admin-castings.js ; reste : batterie, mise en ligne, vérification |
 | 12. Évaluation globale (6 visiteurs, contrôles externes) | pas commencé | — |
 | 13. Audit des secrets et protection du dépôt | pas commencé | décision de la propriétaire (31/10) : à faire À LA FIN |
-| Après : audit de la sécurité côté serveur (`PLAN-SERVEUR.md`) | pas commencé | — |
+| Après : site dynamique (`PLAN-SERVEUR.md`, chemin A choisi le 31/10) | pas commencé | plan écrit ; 1re étape : fiche mannequin préparée par le serveur ; offre Vercel Pro à la commercialisation |
+| 14. Liste de présence des cours du dimanche (demande du 31/10, APRÈS le site dynamique) | pas commencé | propositions faites à la propriétaire (dimanches du mois générés, vert / rouge, mention du mois, synthèse sur une période, visible dans l'application de la mannequin sans pouvoir la modifier, statut « formation terminée ») ; décisions à recevoir |
 
 ## Constats de l'étape 1 (31/10/2026)
 
@@ -35,6 +36,12 @@ Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 - La branche `chantier-couleurs-site` a 10 envois de plus que `main` (56 fichiers), non encore en ligne.
 - Chaque envoi sur une branche crée une adresse d'essai Vercel (compte dans la limite d'envois par jour).
 - L'accès aux réglages Vercel depuis Claude demande une autorisation de la propriétaire (lien Vercel).
+
+## Lot C : batterie du 31/10/2026 (soir)
+
+Après relecture et corrections : 76 parcours, 3 706 vérifications, 0 échec ; base d'essai : tous les
+fichiers SQL passent. Contenu : chantiers 2, 7, 8, 9 (avec « Remplacer »), 10, 11 et la compcard
+(grande photo entière).
 
 ## Lot A mis en ligne le 31/10/2026
 

@@ -12,7 +12,8 @@ scripts/
 skills-lock.json
 # Refonte « magazine » : maquettes et plan de travail (internes, jamais publiés)
 maquettes/
-PLAN-REFONTE-MAGAZINE.md
+PLAN-*.md
+SUIVI-CHANTIERS.md
 # Passation entre conversations et sources des vidéos (internes, jamais publiés)
 PASSATION-*.md
 outils/
