@@ -66,7 +66,7 @@ const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-
     ok(await ordre(p) === 'm5' && /1 photo retirée/.test(await p.textContent('#pub-en-ligne')) && await couverture(p) === 0, n + 'retour sur la page : ordre, couverture et photo retirée retrouvés');
 
     // + une photo ajoutée, puis Enregistrer
-    await p.setInputFiles('input[data-change="publication-photos"]', [photo(1)]); await p.waitForTimeout(300);
+    await p.setInputFiles('input[data-change="photos-choisies-ajouter"]', [photo(1)]); await p.waitForTimeout(300);
     const avant = journal.length;
     await p.click('form[data-form="publication-enregistrer"] [type=submit]'); await p.waitForTimeout(3500);
     const apres = journal.slice(avant);

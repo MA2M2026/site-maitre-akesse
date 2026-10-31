@@ -99,7 +99,7 @@
       champ('heure', 'Heure', 'text', ' maxlength="20" placeholder="ex : 15 h 00"') +
       champ('lieu', 'Lieu (plusieurs : séparés par une virgule)', 'text', ' maxlength="200"') + champ('ville', 'Ville', 'text', ' maxlength="80" placeholder="ex : Abidjan"') + champ('client', 'Client ou partenaire', 'text', ' maxlength="160"') +
       '<label class="fl large" for="if-precisions">Précisions (facultatif)<textarea id="if-precisions" name="precisions" rows="3" maxlength="1200" data-change="infos-champ" data-direct>' + P.esc(b.precisions) + '</textarea></label>' +
-      '<label class="fl" for="if-photo">Photo (affiche, visuel…)<input id="if-photo" type="file" accept="image/*" data-change="infos-fichier" data-quoi="image"></label>' +
+      '<label class="fl" for="if-photo">Photo (affiche, visuel…)<input id="if-photo" type="file" accept="image/*,.heic,.heif" data-change="infos-fichier" data-quoi="image"></label>' +
       '<label class="fl" for="if-fiche">Fiche jointe (PDF ou image)<input id="if-fiche" type="file" accept="application/pdf,image/*" data-change="infos-fichier" data-quoi="fiche"></label>' +
       '<p class="doux large" id="if-pieces">' + [b.image ? '🖼️ Photo jointe' : '', b.fiche ? '📄 Fiche jointe' : ''].filter(Boolean).join(' · ') + '</p>' +
       '<label class="fl large" for="if-message">Le message (rédigé pour vous, à retoucher si besoin)<textarea id="if-message" name="message" rows="12" maxlength="4000" data-change="infos-message" data-direct>' + P.esc(b.message) + '</textarea></label>' +

@@ -3829,3 +3829,25 @@ de photo (envoi vers Google Drive retiré) : seule la candidate envoie ses photo
 (`js/formulaire-candidature.js`, qui garde `envoyerPhotosVersDrive` de `js/app.js`). L'agence voit toujours
 les photos, les agrandit et peut en supprimer une (confirmation, base d'abord puis fichier). Les mannequins
 déjà inscrites ne sont pas concernées. Essai : `test-nouvelle-admin-castings.js` (étape 4).
+
+## Un seul mécanisme pour choisir des photos dans l'Administration (31/10/2026, chantier 10)
+
+Inventaire des envois d'images de l'Administration :
+| Endroit | Fichier | Avant | Maintenant |
+|---|---|---|---|
+| Actualités, événements | `js/admin/site-contenu.js` | plusieurs photos, en plusieurs fois (chantier 8) | mécanisme partagé |
+| Photos du Book d'une mannequin | `js/admin/site-mannequins.js` | envoyées dès le choix, sans aperçu | mécanisme partagé : aperçu, « ✕ », bouton « Envoyer les N photos choisies » ; une photo qui n'a pas pu partir reste choisie |
+| Remplacer une photo du Book, logo partenaire, photo du fondateur, photo des informations agence | `site-mannequins.js`, `site-contenu.js`, `site-vitrine.js`, `site-infos.js` | une seule image | inchangé (une image), photos d'iPhone (HEIC) acceptées partout |
+| Candidatures | `js/admin/site-dossiers.js` | ajout et remplacement par l'agence | retirés (chantier 11) |
+| Vidéo d'accueil, justificatifs de comptabilité | `site-video.js`, `js/portail/espace-compta*.js` | vidéo, PDF | hors périmètre (pas des photos de galerie) |
+
+Mécanisme partagé : `js/admin/photos-choisies.js` (`P.photosChoisies(cle, { max, quandChange })`, chargé dans
+`PIECES` de `js/admin/site.js`) : les choix s'ajoutent, un même fichier une seule fois, « ✕ » pour retirer,
+au plus `max` (30), rien n'est envoyé avant le bouton de la page. Actions génériques
+`photos-choisies-ajouter` / `photos-choisies-retirer` (attribut `data-panier`). Aucune suppression de photo
+de mannequin sans le clic de l'agence (seule la croix d'une photo déjà en ligne supprime, avec confirmation).
+Au passage : l'étiquette « Compcard » des photos du Book était blanc sur blanc (`--av-rouge` est devenu
+blanc avec le thème rouge et blanc) ; d'autres règles de `css/admin-vivante.css` utilisent encore
+`--av-rouge` comme fond : à revoir avec le nettoyage des couleurs à la source.
+Essais : `test-brouillon-photos.js`, `test-photos-article-publie.js`, `test-nouvelle-admin-contenu.js`,
+`test-nouvelle-admin-mannequins.js`.

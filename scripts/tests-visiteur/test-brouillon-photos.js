@@ -33,11 +33,11 @@ const vignettes = (p) => p.$$eval('#pub-nouvelles .pub-photo-choisie', (l) => l.
     await ouvrir('#/site/evenements/nouvelle');
     await p.fill('#pub-titre', 'Défilé de la Saint-Sylvestre'); await p.fill('#pub-lieu', 'Sofitel Ivoire');
     await p.click('#pub-editeur .ql-editor'); await p.keyboard.type('Grand défilé de fin d’année.');
-    await p.setInputFiles('input[data-change="publication-photos"]', [photo(1), photo(2)]); await p.waitForTimeout(300);
+    await p.setInputFiles('input[data-change="photos-choisies-ajouter"]', [photo(1), photo(2)]); await p.waitForTimeout(300);
     ok(await vignettes(p) === 2, n + '2 photos choisies');
-    await p.setInputFiles('input[data-change="publication-photos"]', [photo(3), photo(1)]); await p.waitForTimeout(300);
+    await p.setInputFiles('input[data-change="photos-choisies-ajouter"]', [photo(3), photo(1)]); await p.waitForTimeout(300);
     ok(await vignettes(p) === 3, n + 'un 2e choix s’AJOUTE au premier (la photo déjà choisie n’entre pas deux fois)');
-    await p.click('#pub-nouvelles .pub-photo-choisie:nth-child(2) [data-action="publication-photo-retirer"]'); await p.waitForTimeout(300);
+    await p.click('#pub-nouvelles .pub-photo-choisie:nth-child(2) [data-action="photos-choisies-retirer"]'); await p.waitForTimeout(300);
     ok(await vignettes(p) === 2 && /2 photos choisies/.test(await p.textContent('#pub-nouvelles')), n + '« ✕ » retire une photo');
     await p.waitForTimeout(900);  // le brouillon s'écrit juste après
 
@@ -61,7 +61,7 @@ const vignettes = (p) => p.$$eval('#pub-nouvelles .pub-photo-choisie', (l) => l.
     // 5. Au plus 30 photos à la fois
     const image = fs.readFileSync(photo(1));
     await ouvrir('#/site/actualites/nouvelle');
-    await p.setInputFiles('input[data-change="publication-photos"]', Array.from({ length: 32 }, (_, i) => ({ name: 'photo-' + i + '.jpg', mimeType: 'image/jpeg', buffer: image })));
+    await p.setInputFiles('input[data-change="photos-choisies-ajouter"]', Array.from({ length: 32 }, (_, i) => ({ name: 'photo-' + i + '.jpg', mimeType: 'image/jpeg', buffer: image })));
     await p.waitForTimeout(800);
     ok(await vignettes(p) === 30, n + 'au plus 30 photos à la fois (' + await vignettes(p) + ')');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));

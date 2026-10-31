@@ -67,14 +67,18 @@
   P.actions['mannequins-convoquer'] = () => { if (P.etat.choixMannequins && P.etat.choixMannequins.size) P.convoquerSelection([...P.etat.choixMannequins], { client: '' }); };
 
   // ---------- Fiche d'une mannequin ----------
-  let ouverte = null; // { id, profil, photos }
+  let ouverte = null; // { id, profil, photos, panier }
   const COLONNES_PHOTOS = '*';  // (toutes les versions : supprimerFichiersPhoto, js/app.js)
   async function lirePhotos(id) { return P.bd(sb.from('model_photos').select(COLONNES_PHOTOS).eq('model_id', id).order('created_at', { ascending: true })); }
   function blocPhotos() {
     const ph = ouverte.photos;
     const optionsCc = (n) => '<option value="">Pas sur une compcard</option>' + [1, 2, 3, 4, 5].map((c) => '<option value="' + c + '"' + (n === c ? ' selected' : '') + '>Compcard ' + c + (c === 1 ? ' (grande)' : '') + '</option>').join('');
     return '<section class="carte" id="mq-photos"><div class="section-titre"><h2>Photos du Book <span class="doux">(' + ph.length + ')</span></h2>' +
-      '<label class="btn rouge"><input type="file" accept="image/*" multiple data-change="mannequin-photos-ajouter" hidden>＋ Photos</label></div>' +
+      ouverte.panier.champ('＋ Photos', 'btn rouge') + '</div>' +
+      // photos choisies, envoyées seulement au clic (mécanisme partagé js/admin/photos-choisies.js, chantier 10)
+      '<div class="pub-photos" id="mq-nouvelles"></div>' +
+      '<div class="ligne" id="mq-envoyer"' + (ouverte.panier.fichiers.length ? '' : ' hidden') + '><button type="button" class="btn rouge" data-action="mannequin-photos-envoyer">' +
+        texteEnvoyer(ouverte.panier.fichiers.length) + '</button></div>' +
       '<p class="doux petit-texte">Sous chaque photo : sa case sur la compcard (1 à 5, la case 1 est la grande photo).</p>' +
       '<p class="doux" id="mq-photo-msg" role="status"></p>' +
       (ph.length ? '<div class="photos-mannequin">' + ph.map((p, i) => '<figure class="photo-mannequin apparait" style="--i:' + Math.min(i, 12) + '">' +
@@ -84,12 +88,12 @@
         '<figcaption><button type="button" class="btn petit" data-action="mannequin-photo-remplacer" data-photo="' + P.esc(p.id) + '">Remplacer</button>' +
         '<button type="button" class="btn petit" data-action="mannequin-photo-supprimer" data-photo="' + P.esc(p.id) + '" aria-label="Supprimer la photo ' + (i + 1) + '">✕</button></figcaption></figure>').join('') + '</div>' :
         '<p class="doux">Aucune photo pour cette mannequin.</p>') +
-      '<input type="file" accept="image/*" id="mq-remplacement" data-change="mannequin-photo-remplacement" hidden></section>';
+      '<input type="file" accept="image/*,.heic,.heif" id="mq-remplacement" data-change="mannequin-photo-remplacement" hidden></section>';
   }
   async function fiche(id) {
     const profil = await P.bd(sb.from('model_profiles').select('id, full_name, city, category, niveau_mannequin, desactive, published, featured').eq('id', id).maybeSingle());
     if (!profil) return P.entete('Mannequins') + '<div class="carte"><h2>Mannequin introuvable</h2><a class="btn" href="#/site/' + PAGE + '">← Retour</a></div>';
-    ouverte = { id, profil, photos: await lirePhotos(id) };
+    ouverte = { id, profil, photos: await lirePhotos(id), panier: P.photosChoisies('book', { quandChange: montrerChoisies }) };
     const principale = ouverte.photos.find((p) => p.principale) || ouverte.photos[0];
     return '<a class="retour-liste" href="#/site/' + PAGE + '">← Mannequins</a>' +
       '<header class="mannequin-tete">' + P.visage(principale && (principale.url_moyenne || principale.url_miniature || principale.url), profil.full_name, 'mannequin-portrait') +
@@ -107,7 +111,17 @@
     ouverte.photos = await lirePhotos(ouverte.id);
     const zone = document.getElementById('mq-photos');
     if (zone) zone.outerHTML = blocPhotos();
+    montrerChoisies();
     if (message) document.getElementById('mq-photo-msg').textContent = message;
+  }
+  const texteEnvoyer = (n) => (n > 1 ? 'Envoyer les ' + n + ' photos choisies' : 'Envoyer la photo choisie');
+  function montrerChoisies() {
+    if (!ouverte) return;
+    ouverte.panier.montrer('mq-nouvelles');
+    const n = ouverte.panier.fichiers.length, ligne = document.getElementById('mq-envoyer');
+    if (!ligne) return;
+    ligne.hidden = !n;
+    ligne.querySelector('button').textContent = texteEnvoyer(n);
   }
   P.actions['mannequin-photo-voir'] = (el) => { if (typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(ouverte.photos.map((p) => p.url_moyenne || p.url), Number(el.dataset.index)); };
   P.changements['mannequin-compcard'] = async (el) => {
@@ -115,22 +129,24 @@
     const erreur = await affecterCaseCompcard(ouverte.id, el.dataset.photo, el.value ? Number(el.value) : null);
     await rafraichirPhotos(erreur ? 'Compcard non enregistrée : ' + erreur.message : 'Compcard enregistrée.');
   };
-  P.changements['mannequin-photos-ajouter'] = async (el) => {
-    const fichiers = Array.from(el.files || []); el.value = '';
+  P.actions['mannequin-photos-envoyer'] = async (el) => {
+    const panier = ouverte && ouverte.panier, fichiers = panier ? panier.fichiers.slice() : [];
     const modelId = ouverte && ouverte.id;  // gardé : on peut changer de page pendant l'envoi
     if (!fichiers.length || !modelId) return;
+    el.disabled = true;
     const msg = () => document.getElementById('mq-photo-msg') || { textContent: '' };
-    let reussies = 0;
+    const ratees = [];
     for (let i = 0; i < fichiers.length; i++) {
       msg().textContent = 'Envoi ' + (i + 1) + '/' + fichiers.length + '…';
       try {
         const n = await envoyerPhotoBook(modelId, fichiers[i]);
         const r = await P.bd(sb.from('model_photos').insert(Object.assign({ model_id: modelId, originale_optimisee: true }, n)).select('id'));
         if (!r || !r.length) throw new Error('photo non rattachée');
-        reussies++;
-      } catch (e) { console.error('Envoi photo échoué :', e); }
+      } catch (e) { console.error('Envoi photo échoué :', e); ratees.push(fichiers[i]); }
     }
-    if (ouverte && ouverte.id === modelId) await rafraichirPhotos(reussies + '/' + fichiers.length + (fichiers.length > 1 ? ' photos envoyées.' : ' photo envoyée.'));
+    panier.remplacer(ratees);  // celles qui n'ont pas pu partir restent choisies, pour réessayer
+    const reussies = fichiers.length - ratees.length;
+    if (ouverte && ouverte.id === modelId) await rafraichirPhotos(reussies + '/' + fichiers.length + (fichiers.length > 1 ? ' photos envoyées.' : ' photo envoyée.') + (ratees.length ? ' Celles qui restent ci-dessous n’ont pas pu partir : réessayez.' : ''));
   };
   let aRemplacer = null;
   P.actions['mannequin-photo-remplacer'] = (el) => { aRemplacer = ouverte.photos.find((p) => String(p.id) === el.dataset.photo) || null; document.getElementById('mq-remplacement').click(); };

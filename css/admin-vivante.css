@@ -589,7 +589,7 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
 .photo-mannequin select { min-height: 38px; padding: 6px 10px; font-size: 14px; }
 .photo-mannequin figcaption { display: flex; gap: 6px; }
 .etiquette-photo { position: absolute; left: 8px; top: 8px; z-index: 1; background: var(--rouge-profond-a78); color: var(--blanc-pur); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
-.etiquette-photo.cc { top: auto; bottom: 8px; background: var(--av-rouge); }
+.etiquette-photo.cc { top: auto; bottom: 8px; background: var(--rouge-mat); }   /* (31/10/2026 : --av-rouge est devenu blanc → blanc sur blanc) */
 .validation { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
 .validation-photos { display: flex; flex-wrap: wrap; gap: 8px; max-width: 520px; }
 .validation-photos .vis { width: 124px; aspect-ratio: 3 / 4; border-radius: 12px; }

@@ -58,8 +58,19 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(ecrits(journal, 'PATCH', 'model_photos').some((j) => /"compcard_ordre":2/.test(j[3])), n + 'compcard : photo placée en case 2');
     // plus de classement Book / Lifestyle (24/10/2026) : toutes les photos sont dans le Book
     ok(!(await p.$('select[data-change="mannequin-categorie"]')) && !/Lifestyle/.test(await p.textContent('#mq-photos')), n + 'plus de classement Book / Lifestyle : toutes les photos dans le Book');
-    await p.setInputFiles('input[data-change="mannequin-photos-ajouter"]', [require('path').join(__dirname, 'medias', 'photo1.jpg'), require('path').join(__dirname, 'medias', 'photo2.jpg')]); await p.waitForTimeout(6000);
-    ok(ecrits(journal, 'POST', 'model_photos').length === 2 && /2\/2 photos envoyées/.test(await p.textContent('#mq-photo-msg')), n + 'deux photos ajoutées d’un coup');
+    // étiquette « Compcard » lisible (31/10/2026 : elle était blanc sur blanc)
+    ok(await p.$eval('.etiquette-photo.cc', (e) => { const c = getComputedStyle(e); return c.color !== c.backgroundColor && c.backgroundColor !== 'rgb(255, 255, 255)'; }), n + 'étiquette « Compcard » lisible (pas blanc sur blanc)');
+    // photos choisies en deux fois, vues, une retirée, puis envoyées au clic (chantier 10, mécanisme partagé)
+    const ph = (k) => require('path').join(__dirname, 'medias', 'photo' + k + '.jpg');
+    await p.setInputFiles('#mq-photos input[data-change="photos-choisies-ajouter"]', [ph(1), ph(2)]); await p.waitForTimeout(300);
+    await p.setInputFiles('#mq-photos input[data-change="photos-choisies-ajouter"]', [ph(3), ph(1)]); await p.waitForTimeout(300);
+    ok((await p.$$('#mq-nouvelles .pub-photo-choisie')).length === 3 && !ecrits(journal, 'POST', 'model_photos').length && await p.isVisible('[data-action="mannequin-photos-envoyer"]'),
+      n + 'photos choisies en deux fois : 3 vignettes, rien d’envoyé avant le clic');
+    await p.click('#mq-nouvelles .pub-photo-choisie:nth-child(3) [data-action="photos-choisies-retirer"]'); await p.waitForTimeout(300);
+    ok((await p.$$('#mq-nouvelles .pub-photo-choisie')).length === 2 && /Envoyer les 2 photos choisies/.test(await p.textContent('[data-action="mannequin-photos-envoyer"]')), n + '« ✕ » retire une photo choisie');
+    await p.click('[data-action="mannequin-photos-envoyer"]'); await p.waitForTimeout(2500);
+    ok(ecrits(journal, 'POST', 'model_photos').length === 2 && /2\/2 photos envoyées/.test(await p.textContent('#mq-photo-msg')) && !(await p.$$('#mq-nouvelles .pub-photo-choisie')).length && !(await p.isVisible('[data-action="mannequin-photos-envoyer"]')),
+      n + 'deux photos envoyées d’un coup, la sélection se vide');
     const r2Avant = journal.filter((j) => j[0] === 'API' && j[1] === '/api/r2-supprimer').length;
     await p.click('.photo-mannequin [data-action="mannequin-photo-supprimer"]'); await p.waitForTimeout(1500);
     ok(ecrits(journal, 'DELETE', 'model_photos').length === 1, n + 'photo supprimée (la base d’abord)');
