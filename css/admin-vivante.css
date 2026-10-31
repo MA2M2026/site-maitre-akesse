@@ -716,7 +716,10 @@ svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
 .redaction-grille { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 @media (max-width: 900px) { .redaction-grille { grid-template-columns: 1fr; } }
 .pub-photos { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.pub-photo-choisie { position: relative; display: block; }   /* photo choisie, pas encore envoyée (31/10/2026) */
+.pub-photo-choisie .btn-mini-admin { position: absolute; top: 4px; right: 4px; min-width: 32px; min-height: 32px; padding: 0; border-radius: 50%; }
 .pub-photos:empty { display: none; }
+.pub-photos > p { flex-basis: 100%; margin: 0; }
 .pub-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; background: var(--av-creux); }
 .editeur-riche { background: var(--blanc-pur); border-radius: var(--av-rayon-petit); min-height: 200px; margin-top: 6px; }
 .editeur-riche .ql-editor { min-height: 180px; font-family: var(--av-texte); font-size: 15px; }

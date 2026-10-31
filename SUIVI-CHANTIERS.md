@@ -17,8 +17,8 @@ Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 | 4. Bande « Télécharger l'application » rouge foncé | terminé (31/10) | — (vérifié en ligne : rouge profond #5A141B, contour blanc) |
 | 5. Édito (SonarCloud) + documentation | terminé (31/10) | — (SonarCloud après mise en ligne : 0 bug, 0 faille, notes au maximum ; README à jour) |
 | 6. Appareil de confiance (Administration) | pas commencé | lot à part, essai réel avec compte de test et accord de la propriétaire |
-| 7. Brouillon des actualités et événements | pas commencé | — |
-| 8. Photos ajoutées en plusieurs fois | pas commencé | — |
+| 7. Brouillon des actualités et événements | en cours | étape faite (31/10, branche) : brouillon gardé dans le navigateur, retrouvé en revenant ou après rechargement, effacé à la publication ; essai test-brouillon-photos.js ; reste : batterie, mise en ligne, essai réel par la propriétaire |
+| 8. Photos ajoutées en plusieurs fois | en cours | étape faite (31/10, branche) : les choix s'ajoutent, « ✕ » pour retirer, au plus 30 ; reste : batterie, mise en ligne, essai réel par la propriétaire |
 | 9. Modifier les photos d'un article publié | pas commencé | — |
 | 10. Même mécanisme pour tous les envois d'images | pas commencé | — |
 | 11. Candidatures : plus d'ajout de photos par l'agence | pas commencé | — |

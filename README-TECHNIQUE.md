@@ -3789,3 +3789,13 @@ la liste des photos arrive, et demande l'âge (`ages_mannequins`) en même temps
 `js/adresse-fiche.js` ne pose la demande d'identité qu'une fois par page (id et nom d'adresse lus
 ensemble). Essai : `test-fiche-rapide.js` (âge et photo avant la réponse du profil, une seule demande
 d'identité par l'adresse /book/…) — il échoue sur l'ancienne version.
+
+## Actualités et événements : brouillon et photos ajoutées en plusieurs fois (31/10/2026)
+- **Photos en plusieurs fois** (`js/admin/site-contenu.js`) : un nouveau choix s'ajoute aux photos déjà
+  choisies (un même fichier une seule fois), chacune a son « ✕ », au plus 30 à la fois (`MAX_PHOTOS`).
+- **Brouillon** (`js/admin/brouillons.js`, partagé : `P.brouillon.lire/ecrire/effacer`) : titre, champs,
+  texte et photos choisies (pas encore envoyées) sont gardés dans CE navigateur (IndexedDB), clé
+  `publication:<type>:<id ou nouvelle>`, retrouvés en revenant sur la page (même après l'avoir fermée),
+  effacés à la publication, à la suppression ou au bout de 30 jours. Rien n'est envoyé tant qu'on
+  n'a pas appuyé sur « Publier ».
+- Essai : `scripts/tests-visiteur/test-brouillon-photos.js`.

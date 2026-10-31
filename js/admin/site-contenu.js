@@ -21,6 +21,9 @@
   // vignette d'une vidéo YouTube (actualité sans photo) ; null pour Vimeo
   const vignetteVideo = (url) => { const m = /youtube\.com\/embed\/([\w-]{6,20})/.exec(urlVideoIntegree(url) || ''); return m ? 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg' : null; };
   let redaction = null;  // { type, id, existante, fichiers, editeur }
+  // photos choisies avant l'envoi : ajoutées en plusieurs fois, jusqu'à cette limite (31/10/2026)
+  const MAX_PHOTOS = 30;
+  const cleBrouillon = () => 'publication:' + redaction.type + ':' + (redaction.id || 'nouvelle');
 
   // L'éditeur de texte (Quill) et le nettoyeur (DOMPurify) ne sont chargés qu'à la rédaction
   async function outilsRedaction() {
@@ -68,7 +71,7 @@
         (existante ? '<a class="btn" href="' + c.lien + encodeURIComponent(existante.id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' : '')) +
       '<div class="redaction-grille"><form class="carte f" data-form="publication-enregistrer">' +
       '<label class="fl large" for="pub-titre">Titre' + (type === 'evenements' ? ' (obligatoire)' : '') + '<input id="pub-titre" name="titre" maxlength="200" value="' + v('titre') + '"' + (type === 'evenements' ? ' required' : '') + '></label>' + propres +
-      '<div class="large"><span class="fl">Photos</span>' + enLigne + '<label class="btn"><input type="file" accept="image/*,.heic,.heif" multiple data-change="publication-photos" hidden>📷 ' + (existante ? 'Ajouter des photos' : 'Choisir les photos') + '</label>' +
+      '<div class="large"><span class="fl">Photos</span>' + enLigne + '<label class="btn"><input type="file" accept="image/*,.heic,.heif" multiple data-change="publication-photos" hidden>📷 <span id="pub-choisir">' + (existante ? 'Ajouter des photos' : 'Choisir les photos') + '</span></label>' +
       '<div class="pub-photos" id="pub-nouvelles"></div></div>' +
       '<div class="large"><span class="fl">Texte</span><div id="pub-editeur" class="editeur-riche"></div></div>' +
       '<p class="form-msg large" id="pub-msg" role="status"></p>' +
@@ -91,21 +94,71 @@
     if (!redaction || !document.getElementById('pub-editeur')) return;
     redaction.editeur = creerEditeurRiche('pub-editeur', redaction.type === 'evenements' ? 'Racontez cet événement ici… (facultatif)' : 'Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)');
     if (redaction.existante) chargerContenuDansEditeur(redaction.editeur, redaction.existante[TYPES[redaction.type].texte]);
-    if (redaction.editeur && typeof redaction.editeur.on === 'function') redaction.editeur.on('text-change', apercu);
+    if (redaction.editeur && typeof redaction.editeur.on === 'function') redaction.editeur.on('text-change', () => { apercu(); garderBrouillon(); });
     const form = document.querySelector('[data-form="publication-enregistrer"]');
-    form.addEventListener('input', apercu);
+    form.addEventListener('input', () => { apercu(); garderBrouillon(); });
     form.addEventListener('change', apercu);
     apercu();
+    return reprendreBrouillon();
   }
   function message(classe, texte) { const m = document.getElementById('pub-msg'); if (m) { m.className = 'form-msg large ' + classe; m.textContent = texte; } }
 
-  P.changements['publication-photos'] = (el) => {
-    if (!redaction) return;
-    redaction.fichiers = Array.from(el.files || []);
+  // Photos choisies (pas encore envoyées) : chacune avec « ✕ » pour la retirer
+  function montrerNouvelles() {
     (redaction.apercus || []).forEach((u) => URL.revokeObjectURL(u));  // les aperçus précédents libèrent la mémoire
     const urls = redaction.apercus = redaction.fichiers.map((f) => URL.createObjectURL(f));
-    document.getElementById('pub-nouvelles').innerHTML = urls.map((u) => '<img src="' + u + '" alt="">').join('');
-    if (urls.length && !(redaction.existante && redaction.existante.image_url)) document.getElementById('apercu-image').innerHTML = '<img src="' + urls[0] + '" alt="">';
+    document.getElementById('pub-nouvelles').innerHTML = urls.map((u, i) => '<span class="pub-photo-choisie"><img src="' + u + '" alt="">' +
+      '<button type="button" class="btn-mini-admin" data-action="publication-photo-retirer" data-i="' + i + '" aria-label="Retirer cette photo">✕</button></span>').join('') +
+      (urls.length ? '<p class="doux petit-texte">' + P.pluriel(urls.length, 'photo choisie', 'photos choisies') + ' (au plus ' + MAX_PHOTOS + ') : vous pouvez en ajouter d’autres.</p>' : '');
+    if (urls.length || redaction.existante) document.getElementById('pub-choisir').textContent = 'Ajouter des photos';
+    const vitrine = document.getElementById('apercu-image');
+    if (!(redaction.existante && redaction.existante.image_url)) vitrine.innerHTML = urls.length ? '<img src="' + urls[0] + '" alt="">' : '';
+  }
+  // Brouillon gardé dans ce navigateur (js/admin/brouillons.js) : champs, texte et photos choisies
+  let minuteurBrouillon = null;
+  function garderBrouillon() {
+    if (!redaction || !P.brouillon) return;
+    clearTimeout(minuteurBrouillon);
+    const r = redaction;
+    minuteurBrouillon = setTimeout(() => {
+      const form = document.querySelector('[data-form="publication-enregistrer"]');
+      if (!form || redaction !== r) return;
+      const champs = {};
+      ['titre', 'categorie', 'video', 'date', 'lieu'].forEach((n) => { if (form.elements[n]) champs[n] = form.elements[n].value; });
+      P.brouillon.ecrire(cleBrouillon(), { champs, texte: lireContenuEditeur(r.editeur), fichiers: r.fichiers });
+    }, 400);
+  }
+  async function reprendreBrouillon() {
+    if (!redaction || !P.brouillon) return;
+    const r = redaction, b = await P.brouillon.lire(cleBrouillon());
+    const form = document.querySelector('[data-form="publication-enregistrer"]');
+    if (!b || !form || redaction !== r) return;
+    Object.entries(b.champs || {}).forEach(([n, v]) => { if (form.elements[n] && v) form.elements[n].value = v; });
+    if (b.texte) chargerContenuDansEditeur(r.editeur, b.texte);
+    r.fichiers = Array.isArray(b.fichiers) ? b.fichiers.slice(0, MAX_PHOTOS) : [];
+    montrerNouvelles();
+    apercu();
+    const dit = 'Brouillon retrouvé (' + new Date(b.quand).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + ') : texte et photos choisies sont revenus.';
+    message('ok', dit);
+    P.message(dit);  // aussi en haut de l'écran
+  }
+  P.changements['publication-photos'] = (el) => {
+    if (!redaction) return;
+    // ajoutées aux précédentes (avant, un nouveau choix effaçait le premier) ; un même fichier n'entre qu'une fois
+    const deja = new Set(redaction.fichiers.map((f) => f.name + '|' + f.size + '|' + f.lastModified));
+    const nouveaux = Array.from(el.files || []).filter((f) => !deja.has(f.name + '|' + f.size + '|' + f.lastModified));
+    const place = MAX_PHOTOS - redaction.fichiers.length;
+    if (nouveaux.length > place) P.message('Au plus ' + MAX_PHOTOS + ' photos à la fois : ' + P.pluriel(Math.max(place, 0), 'photo ajoutée', 'photos ajoutées') + '.');
+    redaction.fichiers = redaction.fichiers.concat(nouveaux.slice(0, Math.max(place, 0)));
+    el.value = '';  // le même choix peut être refait
+    montrerNouvelles();
+    garderBrouillon();
+  };
+  P.actions['publication-photo-retirer'] = (el) => {
+    if (!redaction) return;
+    redaction.fichiers.splice(Number(el.dataset.i), 1);
+    montrerNouvelles();
+    garderBrouillon();
   };
   P.formulaires['publication-enregistrer'] = async (f) => {
     if (!redaction) return;
@@ -128,6 +181,8 @@
     if (!r.ok) { message('err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
     if (r.photos < n) P.message(P.pluriel(n - r.photos, 'photo n’a pas pu être envoyée', 'photos n’ont pas pu être envoyées') + ' : réessayez de les ajouter.');
     else P.message(redaction.id ? 'Modifications enregistrées.' : 'Publié sur le site' + (r.photos ? ' avec ' + P.pluriel(r.photos, 'photo', 'photos') : '') + '.');
+    clearTimeout(minuteurBrouillon);
+    if (P.brouillon) await P.brouillon.effacer(cleBrouillon());
     redaction = null;
     location.hash = '#/site/' + type;
   };
@@ -136,6 +191,8 @@
     const type = redaction.type;
     if (!confirm('Supprimer définitivement cette publication et toutes ses photos ?')) return;
     if (!(await effacerPublication(TYPES[type].t, redaction.id))) { message('err', 'La suppression a échoué : reconnectez-vous puis réessayez.'); return; }
+    clearTimeout(minuteurBrouillon);
+    if (P.brouillon) await P.brouillon.effacer(cleBrouillon());
     redaction = null;
     P.message('Publication supprimée.');
     location.hash = '#/site/' + type;
