@@ -58,7 +58,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(!/<img src=x onerror/.test(html) && /\\u003cimg src=x onerror/.test(html), chemin + ' : un nom avec des signes spéciaux ne peut rien injecter');
     ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardé en cache (une mannequin publiée ou retirée se voit tout de suite)');
   }
-  ok(await demander('mannequins', { headers: { 'x-ma2m-book': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
+  ok(await demander('mannequins', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
   ok(await demander('mannequins', { method: 'HEAD' }) === undefined, 'seulement les visites (GET)');
   ok(await demander('mannequins', { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, 'robot d’aperçu (WhatsApp…) : la page habituelle');
   baseLente = 1500; const t = Date.now();

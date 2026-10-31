@@ -3890,7 +3890,7 @@ pour `/book/nom` et `/en/book/nom`, un visiteur reçoit la page `mannequin` déj
 - `Cache-Control: no-cache` : rien n'est gardé en mémoire, une fiche modifiée se voit tout de suite.
 La base est lue en même temps que la page, 1,2 s au plus (`ATTENTE_FICHE`) ; base lente ou en panne,
 profil non publié, requête autre que GET : la fiche part comme avant (réécriture vers `/mannequin?id=…`,
-la page se remplit elle-même). Sa propre demande de la page porte l'en-tête `x-ma2m-fiche` (pas de boucle).
+la page se remplit elle-même). Outil commun `pageRemplie` (sa propre demande de la page porte l'en-tête `x-ma2m-remplie` : pas de boucle).
 Côté navigateur : `js/adresse-fiche.js` lit le bloc (`window.ma2mFicheServeur`, identifiant et nom
 d'adresse sans demande), `js/fiche-mannequin.js` y prend profil, photos et âge (expériences et mesures
 supplémentaires restent demandées par la page). Aucune nouvelle fonction serveur.
@@ -3903,7 +3903,7 @@ reçoit la page avec le bloc `<script type="application/json" id="book-donnees">
 (mêmes colonnes et mêmes fonctions que `js/mannequins.js` : liste publiée, puis
 `photos_couverture_petites` ou l'ancienne `photos_couverture_mannequins`), 1,2 s au plus pour les deux
 lectures ; sinon (base lente ou en panne, robot d'aperçu, requête autre que GET) la page part comme avant.
-`Cache-Control: no-cache`. En-tête `x-ma2m-book` sur sa propre demande de la page (pas de boucle).
+`Cache-Control: no-cache`. Outil commun `pageRemplie`.
 `js/mannequins.js` (`lireBook`) et le mur de photos du haut de page (`murDeTitre`, `js/app.js`) utilisent
 le bloc s'il est là. Essai : `test-book-serveur.js` ; `test-middleware-apercus.mjs` vérifie qu'un robot
 reçoit toujours la page habituelle du Book.
@@ -3916,4 +3916,4 @@ avec ou sans `?actu=` / `?evenement=`) : bloc `<script type="application/json" i
 identifiants des photos pour leur nombre) et la photo « À la une » annoncée en tête (`preload`). Lu par
 `publicationsServeur()` (`js/publications.js`, partagé par les deux pages). 1,2 s au plus ; sinon (base
 lente ou en panne, robot d'aperçu — qui garde son aperçu d'article —, autre que GET) comme avant.
-En-tête `x-ma2m-publications` sur sa propre demande de la page. Essai : `test-publications-serveur.js`.
+Outil commun `pageRemplie`. Essai : `test-publications-serveur.js`.

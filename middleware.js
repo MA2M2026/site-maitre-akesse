@@ -372,12 +372,34 @@ async function accueilRempli(requete, url) {
   html = completerAccueil(html, donnees, /^\/en(\/|$)/.test(url.pathname));
   html = html.replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
+  return reponseHtml(html, page);
+}
+// page complétée : mêmes en-têtes que la page d'origine, sauf taille et compression (le texte a été
+// décompressé pour être complété ; Vercel le recompresse), et jamais gardée en cache
+function reponseHtml(html, page) {
   const entetes = new Headers(page.headers);
-  // (le texte a été décompressé pour être complété ; Vercel le recompresse)
   ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
   entetes.set('Cache-Control', 'no-cache, must-revalidate');
   return new Response(html, { status: 200, headers: entetes });
 }
+
+// ================== Pages préparées par le serveur : outil commun (01/11/2026, site dynamique) ==================
+// Demande la page elle-même (en-tête « x-ma2m-remplie » : elle repasse ici sans être retouchée) EN MÊME
+// TEMPS que la lecture de ses données, puis pose les données dans la page (bloc <script type="application/json"
+// id="…">, juste après <body>, texte passé par jsonSur : rien d'injectable) ; retoucher(html, données) peut
+// compléter l'en-tête (titre, photo annoncée…). Données absentes (base lente ou en panne) ou page
+// inattendue : null, et la page part comme avant. Jamais gardée en cache.
+const ATTENTE_FICHE = 1200;  // la base a 1,2 s au plus pour répondre
+async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
+  const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: { 'x-ma2m-remplie': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
+  if (!donnees || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
+  let html = await page.text();
+  if (html.indexOf('<body>') === -1 || html.indexOf('</head>') === -1) return null;
+  if (retoucher) html = retoucher(html, donnees);
+  return reponseHtml(html.replace('<body>', '<body>\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
+}
+const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
 
 // ================== Fiche d'un mannequin préparée par le serveur (01/11/2026, site dynamique, étape 1) ==================
 // Décision de la propriétaire (31/10/2026, PLAN-SERVEUR.md, chemin A). Avant, la page /book/nom partait
@@ -392,7 +414,6 @@ async function accueilRempli(requete, url) {
 // (une fiche modifiée dans l'Administration se voit tout de suite).
 const COLONNES_PROFIL_FICHE = 'id,full_name,city,category,niveau_mannequin,height_cm,weight_kg,chest_cm,waist_cm,hips_cm,inseam_cm,shoe_size,carnation,clothing_size,eye_color,hair_color,bio,years_experience,model_types,languages,availability,video_url';
 const COLONNES_PHOTOS_FICHE = 'id,url,url_miniature,url_moyenne,compcard_ordre,principale,photo_couverture,couverture_position,tri_statut,created_at';
-const ATTENTE_FICHE = 1200;
 // même choix de grande photo que photosAffichees (js/app.js) : vérifié par test-fiche-serveur.js
 function couvertureFiche(photos) {
   const date = (p) => { const t = Date.parse(p.created_at); return Number.isNaN(t) ? Infinity : t; };
@@ -406,34 +427,25 @@ function couvertureFiche(photos) {
 }
 async function ficheRemplie(requete, url, id, slug, anglais) {
   if (requete.method !== 'GET') return null;
-  const donnees = Promise.all([
+  const lecture = Promise.all([
     lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=' + COLONNES_PROFIL_FICHE, null, ATTENTE_FICHE),
     lireSupabase('model_photos?model_id=eq.' + id + '&select=' + COLONNES_PHOTOS_FICHE + '&order=principale.desc,created_at.asc', null, ATTENTE_FICHE),
     lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE)
-  ]);
-  const demandePage = fetch(new URL((anglais ? '/en' : '') + '/mannequin', url).toString(), { headers: { 'x-ma2m-fiche': '1', 'accept': 'text/html' }, redirect: 'manual' });
-  const [[profils, photos, ages], page] = await Promise.all([donnees, demandePage]);
-  const profil = Array.isArray(profils) && profils[0];
-  if (!profil || !Array.isArray(photos) || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
-  let html = await page.text();
-  if (html.indexOf('</head>') === -1 || html.indexOf('<body>') === -1) return null;
-  const age = Array.isArray(ages) && ages[0] && ages[0].age != null ? ages[0].age : null;
-  const nom = profil.full_name || (anglais ? 'Model' : 'Mannequin');
-  const titre = nom + ' · Maître Akesse Model Management';
-  const description = [profil.full_name, profil.city, profil.height_cm ? profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
-    (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
-  const lien = SITE + (anglais ? '/en' : '') + '/book/' + slug;
-  const grande = couvertureFiche(photos);
-  html = html
-    .replace(/<title>[^<]*<\/title>/, '<title>' + echapper(titre) + '</title>')
-    .replace(/<meta name="description" content="[^"]*">/, '<meta name="description" content="' + echapper(description) + '">')
-    .replace('</head>', '<link rel="canonical" href="' + echapper(lien) + '">\n' +
-      (grande ? '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(grande) + '">\n' : '') + '</head>')
-    .replace('<body>', '<body>\n<script type="application/json" id="fiche-donnees">' + jsonSur({ id, slug, profil, photos, age }) + '</script>');
-  const entetes = new Headers(page.headers);
-  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
-  entetes.set('Cache-Control', 'no-cache, must-revalidate');
-  return new Response(html, { status: 200, headers: entetes });
+  ]).then(([profils, photos, ages]) => {
+    const profil = Array.isArray(profils) && profils[0];
+    if (!profil || !Array.isArray(photos)) return null;
+    return { id, slug, profil, photos, age: Array.isArray(ages) && ages[0] && ages[0].age != null ? ages[0].age : null };
+  });
+  return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, (html, d) => {
+    const nom = d.profil.full_name || (anglais ? 'Model' : 'Mannequin');
+    const description = [d.profil.full_name, d.profil.city, d.profil.height_cm ? d.profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
+      (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
+    const lien = SITE + (anglais ? '/en' : '') + '/book/' + slug;
+    return photoAnnoncee(html
+      .replace(/<title>[^<]*<\/title>/, '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
+      .replace(/<meta name="description" content="[^"]*">/, '<meta name="description" content="' + echapper(description) + '">')
+      .replace('</head>', '<link rel="canonical" href="' + echapper(lien) + '">\n</head>'), couvertureFiche(d.photos));
+  });
 }
 
 // ================== The Book préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
@@ -450,23 +462,14 @@ async function bookRempli(requete, url) {
   const anglais = /^\/en\//.test(url.pathname);
   const fin = Date.now() + ATTENTE_FICHE;
   const reste = () => Math.max(fin - Date.now(), 1);
-  const donnees = (async () => {
+  const lecture = (async () => {
     const profils = await lireSupabase('model_profiles?published=eq.true&select=' + COLONNES_BOOK + '&order=created_at.desc&limit=300', null, reste());
     if (!Array.isArray(profils) || !profils.length) return null;
     const ids = profils.map((p) => p.id);
     const photos = (await lireSupabase('rpc/photos_couverture_petites', { ids }, reste())) || (await lireSupabase('rpc/photos_couverture_mannequins', { ids }, reste()));
     return Array.isArray(photos) ? { profils, photos } : null;
   })();
-  const demandePage = fetch(new URL((anglais ? '/en' : '') + '/mannequins', url).toString(), { headers: { 'x-ma2m-book': '1', 'accept': 'text/html' }, redirect: 'manual' });
-  const [d, page] = await Promise.all([donnees.catch(() => null), demandePage]);
-  if (!d || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
-  let html = await page.text();
-  if (html.indexOf('<body>') === -1) return;
-  html = html.replace('<body>', '<body>\n<script type="application/json" id="book-donnees">' + jsonSur(d) + '</script>');
-  const entetes = new Headers(page.headers);
-  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
-  entetes.set('Cache-Control', 'no-cache, must-revalidate');
-  return new Response(html, { status: 200, headers: entetes });
+  return (await pageRemplie(url, (anglais ? '/en' : '') + '/mannequins', 'book-donnees', lecture)) || undefined;
 }
 
 // ================== Actualités et événements préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
@@ -483,18 +486,10 @@ async function publicationsRemplies(requete, url) {
   const m = url.pathname.match(PUBLICATIONS_PAGES);
   const anglais = !!m[1], quoi = m[2];
   const [liste, photos] = LECTURES_PUBLICATIONS[quoi];
-  const demandePage = fetch(new URL((anglais ? '/en/' : '/') + quoi + url.search, url).toString(), { headers: { 'x-ma2m-publications': '1', 'accept': 'text/html' }, redirect: 'manual' });
-  const [l, p, page] = await Promise.all([lireSupabase(liste, null, ATTENTE_FICHE).catch(() => null), lireSupabase(photos, null, ATTENTE_FICHE).catch(() => null), demandePage]);
-  if (!Array.isArray(l) || !Array.isArray(p) || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
-  let html = await page.text();
-  if (html.indexOf('<body>') === -1 || html.indexOf('</head>') === -1) return;
-  const une = l[0] && l[0].image_url ? photoLegere(l[0].image_url) : '';
-  if (une) html = html.replace('</head>', '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(une) + '">\n</head>');
-  html = html.replace('<body>', '<body>\n<script type="application/json" id="publications-donnees">' + jsonSur({ liste: l, photos: p }) + '</script>');
-  const entetes = new Headers(page.headers);
-  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
-  entetes.set('Cache-Control', 'no-cache, must-revalidate');
-  return new Response(html, { status: 200, headers: entetes });
+  const lecture = Promise.all([lireSupabase(liste, null, ATTENTE_FICHE), lireSupabase(photos, null, ATTENTE_FICHE)])
+    .then(([l, p]) => (Array.isArray(l) && Array.isArray(p) ? { liste: l, photos: p } : null));
+  return (await pageRemplie(url, (anglais ? '/en/' : '/') + quoi + url.search, 'publications-donnees', lecture,
+    (html, d) => photoAnnoncee(html, d.liste[0] && d.liste[0].image_url ? photoLegere(d.liste[0].image_url) : ''))) || undefined;
 }
 
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
@@ -518,7 +513,7 @@ export default async function middleware(requete) {
       try { return await accueilRempli(requete, url); } catch (e) { return; }
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
-    if (requete.headers.get('x-ma2m-fiche') || requete.headers.get('x-ma2m-book') || requete.headers.get('x-ma2m-publications')) return;  // (pages demandées par le serveur lui-même)
+    if (requete.headers.get('x-ma2m-remplie')) return;  // (page demandée par pageRemplie elle-même)
     if (BOOK.test(url.pathname) && !ROBOTS_APERCU.test(requete.headers.get('user-agent') || '')) {
       try { return await bookRempli(requete, url); } catch (e) { return; }
     }

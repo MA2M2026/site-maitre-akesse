@@ -66,7 +66,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
   const piege = await (await demander('book/awa-kone')).text();
   ok(!/<script>alert/.test(piege) && /\\u003cscript\\u003ealert/.test(piege) && /<title>Awa &lt;script&gt;/.test(piege), 'un nom avec des signes spéciaux ne peut rien injecter (bloc de données, titre)');
   nomPiege = false;
-  ok(await demander('mannequin', { headers: { 'x-ma2m-fiche': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
+  ok(await demander('mannequin', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
   ok(reecrite(await demander('book/awa-kone', { method: 'HEAD' })), 'seulement les visites (GET) : sinon comme avant');
   baseLente = 1500; let t = Date.now();
   const lente = await demander('book/awa-kone');
