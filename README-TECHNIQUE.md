@@ -3895,3 +3895,15 @@ Côté navigateur : `js/adresse-fiche.js` lit le bloc (`window.ma2mFicheServeur`
 d'adresse sans demande), `js/fiche-mannequin.js` y prend profil, photos et âge (expériences et mesures
 supplémentaires restent demandées par la page). Aucune nouvelle fonction serveur.
 Essai : `scripts/tests-visiteur/test-fiche-serveur.js`.
+
+## Site dynamique, étape 2 : The Book préparé par le serveur (01/11/2026)
+
+`middleware.js` (`bookRempli`) : pour `/mannequins` et `/en/mannequins` (avec ou sans `.html`), un visiteur
+reçoit la page avec le bloc `<script type="application/json" id="book-donnees">` : `{ profils, photos }`
+(mêmes colonnes et mêmes fonctions que `js/mannequins.js` : liste publiée, puis
+`photos_couverture_petites` ou l'ancienne `photos_couverture_mannequins`), 1,2 s au plus pour les deux
+lectures ; sinon (base lente ou en panne, robot d'aperçu, requête autre que GET) la page part comme avant.
+`Cache-Control: no-cache`. En-tête `x-ma2m-book` sur sa propre demande de la page (pas de boucle).
+`js/mannequins.js` (`lireBook`) et le mur de photos du haut de page (`murDeTitre`, `js/app.js`) utilisent
+le bloc s'il est là. Essai : `test-book-serveur.js` ; `test-middleware-apercus.mjs` vérifie qu'un robot
+reçoit toujours la page habituelle du Book.

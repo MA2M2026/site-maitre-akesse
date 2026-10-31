@@ -27,6 +27,8 @@ export const config = {
     '/partenaires', '/partenaires.html', '/en/partenaires', '/en/partenaires.html',
     '/mannequin', '/mannequin.html', '/en/mannequin', '/en/mannequin.html',
     '/book/:slug', '/en/book/:slug',
+    // The Book servi déjà rempli (01/11/2026, site dynamique, étape 2)
+    '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html',
     // page d'accueil servie déjà remplie (23/10/2026)
     '/', '/index.html', '/en', '/en/', '/en/index.html',
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
@@ -434,6 +436,39 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
   return new Response(html, { status: 200, headers: entetes });
 }
 
+// ================== The Book préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
+// Avant : la page partait vide, chargeait ses programmes, PUIS demandait la liste des mannequins, PUIS
+// leurs photos de couverture (deux allers-retours l'un après l'autre). Désormais le serveur pose les
+// deux réponses dans la page (bloc « book-donnees », lu par js/mannequins.js) : mêmes questions, mêmes
+// colonnes que la page (seulement ce que le Book montre ou filtre déjà). Base lente (plus de 1,2 s au
+// total) ou en panne : la page part comme avant. Rien n'est gardé en mémoire (une mannequin publiée ou
+// retirée se voit tout de suite).
+const BOOK = /^\/(en\/)?mannequins(\.html)?$/;
+const COLONNES_BOOK = 'id,full_name,city,category,height_cm,chest_cm,waist_cm,hips_cm,shoe_size,eye_color,hair_color,languages,carnation,clothing_size,availability,niveau_mannequin,years_experience';
+async function bookRempli(requete, url) {
+  if (requete.method !== 'GET') return;
+  const anglais = /^\/en\//.test(url.pathname);
+  const fin = Date.now() + ATTENTE_FICHE;
+  const reste = () => Math.max(fin - Date.now(), 1);
+  const donnees = (async () => {
+    const profils = await lireSupabase('model_profiles?published=eq.true&select=' + COLONNES_BOOK + '&order=created_at.desc&limit=300', null, reste());
+    if (!Array.isArray(profils) || !profils.length) return null;
+    const ids = profils.map((p) => p.id);
+    const photos = (await lireSupabase('rpc/photos_couverture_petites', { ids }, reste())) || (await lireSupabase('rpc/photos_couverture_mannequins', { ids }, reste()));
+    return Array.isArray(photos) ? { profils, photos } : null;
+  })();
+  const demandePage = fetch(new URL((anglais ? '/en' : '') + '/mannequins', url).toString(), { headers: { 'x-ma2m-book': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const [d, page] = await Promise.all([donnees.catch(() => null), demandePage]);
+  if (!d || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
+  let html = await page.text();
+  if (html.indexOf('<body>') === -1) return;
+  html = html.replace('<body>', '<body>\n<script type="application/json" id="book-donnees">' + jsonSur(d) + '</script>');
+  const entetes = new Headers(page.headers);
+  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
+  entetes.set('Cache-Control', 'no-cache, must-revalidate');
+  return new Response(html, { status: 200, headers: entetes });
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -455,7 +490,10 @@ export default async function middleware(requete) {
       try { return await accueilRempli(requete, url); } catch (e) { return; }
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
-    if (requete.headers.get('x-ma2m-fiche')) return;  // (la page de la fiche, demandée par ficheRemplie)
+    if (requete.headers.get('x-ma2m-fiche') || requete.headers.get('x-ma2m-book')) return;  // (pages demandées par ficheRemplie / bookRempli)
+    if (BOOK.test(url.pathname) && !ROBOTS_APERCU.test(requete.headers.get('user-agent') || '')) {
+      try { return await bookRempli(requete, url); } catch (e) { return; }
+    }
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
     // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche

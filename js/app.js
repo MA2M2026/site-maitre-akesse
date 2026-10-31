@@ -3714,6 +3714,12 @@ function preRemplirTelephone(valeur, selectEl, champNumeroEl) {
   const CLE = 'ma2m_mur_titre';
   async function adresses() {
     try { const deja = JSON.parse(sessionStorage.getItem(CLE) || 'null'); if (Array.isArray(deja) && deja.length) return deja; } catch (e) { /* mémoire du navigateur indisponible */ }
+    // The Book préparé par le serveur (middleware.js, 01/11/2026) : les visages sont déjà dans la page
+    try {
+      const bloc = document.getElementById('book-donnees');
+      const d = bloc ? JSON.parse(bloc.textContent) : null;
+      if (d && Array.isArray(d.photos) && d.photos.length) return d.photos.filter((l) => l.url).slice(0, 24).map((l) => urlLegere(urlGrille(l, true)));
+    } catch (e) { /* bloc illisible : on lit la base comme avant */ }
     const { data: profils } = await sb.from('model_profiles').select('id').eq('published', true).order('created_at', { ascending: false }).limit(24);
     const lignes = await lirePhotosCouverture(sb, (profils || []).map((p) => p.id));
     const liste = lignes.filter((l) => l.url).map((l) => urlLegere(urlGrille(l, true)));

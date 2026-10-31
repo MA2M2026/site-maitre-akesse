@@ -29,37 +29,50 @@ function listeComplete() {
   return categorieActive === 'tous' && niveauActif === 'tous' && Object.keys(c).every(k => !c[k]);
 }
 
-async function afficherMannequins(vide) {
+// The Book préparé par le serveur (middleware.js, 01/11/2026) : liste et photos déjà dans la page
+function bookServeur() {
+  try {
+    const bloc = document.getElementById('book-donnees');
+    const d = bloc ? JSON.parse(bloc.textContent) : null;
+    return d && Array.isArray(d.profils) && Array.isArray(d.photos) ? d : null;
+  } catch (e) { return null; }
+}
+async function lireBook(vide) {
+  const serveur = bookServeur();
+  if (serveur) return serveur;
   if (!sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — message clair plutôt
     // que de laisser croire qu'aucun profil ne correspond aux critères.
     vide.textContent = EN ? 'Failed to load the Book (unstable connection?). Please reload the page.' : 'Le chargement du Book a échoué (connexion instable ?). Rechargez la page.';
     vide.style.display = 'block';
-    return;
+    return null;
   }
-
   const { data: profils, error } = await sb
     .from('model_profiles')
     .select('id, full_name, city, category, height_cm, chest_cm, waist_cm, hips_cm, shoe_size, eye_color, hair_color, languages, carnation, clothing_size, availability, niveau_mannequin, years_experience')
     .eq('published', true)
     .order('created_at', { ascending: false })
     .limit(300);
-
-  if (error || !profils || profils.length === 0) {
-    vide.style.display = 'block';
-    return;
-  }
-
+  if (error || !profils || profils.length === 0) return { profils: [], photos: [] };
   // Une seule requête pour toutes les photos de couverture (au lieu d'une
   // requête par mannequin, l'une après l'autre) — c'est ce qui ralentissait
   // fortement le chargement de la page. On passe par une fonction dédiée qui
   // ne renvoie qu'UNE photo par mannequin : le volume ne grossit jamais avec
   // le nombre de photos de chacun, seulement avec le nombre de mannequins —
   // ça tient donc même à 100+ mannequins.
-  const ids = profils.map(p => p.id);
   // (petite version de 480 px sur téléphone quand elle existe : js/photos.js)
-  const photos = await lirePhotosCouverture(sb, ids);
+  return { profils, photos: await lirePhotosCouverture(sb, profils.map(p => p.id)) };
+}
+
+async function afficherMannequins(vide) {
+  const lu = await lireBook(vide);
+  if (!lu) return;
+  const { profils, photos } = lu;
+  if (!profils.length) {
+    vide.style.display = 'block';
+    return;
+  }
 
   const photoParMannequin = {};
   photos.forEach(p => {

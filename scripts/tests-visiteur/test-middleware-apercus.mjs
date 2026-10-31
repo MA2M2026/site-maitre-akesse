@@ -1,6 +1,6 @@
 // Aperçus servis par middleware.js aux robots (WhatsApp…), 14/10/2026 : fiche d'un mannequin,
 // actualité, événement, partenaire (20/10/2026). Sans photo, l'image d'aperçu de la page (assets/apercus/) remplace le
-// logo ; The Book (liste) ne passe plus par le middleware (image de la page). Base simulée :
+// logo ; The Book (liste) : page habituelle pour les robots (image de la page). Base simulée :
 // aucune requête réelle (fetch remplacé).
 import { fileURLToPath } from 'url'; import path from 'path';
 const racine = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -22,7 +22,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 const robot = (chemin) => middleware(new Request('https://www.maitreakessemodelmanagement.com' + chemin, { headers: { 'user-agent': 'WhatsApp/2.23.20.0 A' } }));
 const image = async (rep) => rep ? ((await rep.text()).match(/property="og:image" content="([^"]*)"/) || [])[1] : '';
 
-ok(!config.matcher.some(m => /mannequins/.test(m)), 'The Book (liste) ne passe plus par le middleware : aperçu = image de la page');
+// (01/11/2026 : The Book passe par le middleware pour les visiteurs, déjà rempli ; un robot reçoit la page habituelle)
+ok(await robot('/mannequins') === undefined && await robot('/en/mannequins') === undefined, 'The Book (liste) : un robot d’aperçu reçoit la page habituelle (image de la page)');
 ok((await image(await robot('/book/awa-kone'))).endsWith('/assets/apercus/fr-mannequin.jpg?v=2'), 'fiche sans photo → image « Profil mannequin » (plus le logo seul)');
 ok((await image(await robot('/en/book/awa-kone'))).endsWith('/assets/apercus/en-mannequin.jpg?v=2'), 'fiche anglaise sans photo → image « Model profile »');
 photo = 'https://photos.maitreakessemodelmanagement.com/' + ID + '/a.jpg';
