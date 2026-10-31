@@ -260,3 +260,8 @@ body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; bo
 .pr-app-historique li span:first-child { flex: 1; text-transform: capitalize; }
 .pr-app-mdm { display: flex; gap: 12px; align-items: center; background: #5A141B; color: #FFFFFF; font-size: 15px; }
 .pr-app-mdm b { font-size: 17px; }
+/* Bulletins trimestriels (chantier 14, 01/11/2026) */
+.pr-app-notes { list-style: none; margin: 10px 0 0; padding: 0; }
+.pr-app-notes li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid #EEE; }
+.pr-app-etoiles { color: #7C2128; letter-spacing: 2px; white-space: nowrap; }
+.pr-app-appreciation { margin: 10px 0 0; font-style: italic; }

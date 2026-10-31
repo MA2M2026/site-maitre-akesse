@@ -31,7 +31,7 @@ par mot de passe donne une session `aal1` : impossible d'obtenir `aal2` sans ref
 **sur un appareil de confiance, on garde la session `aal2` (jeton de rafraîchissement) au lieu de la
 fermer**, et on la protège par des verrous contrôlés par la base.
 
-1. **SQL** `supabase-appareil-confiance.sql` (Extension 145, rejouable ; jamais `supabase-setup.sql`) :
+1. **SQL** `supabase-appareil-confiance.sql` (Extension 146, rejouable ; jamais `supabase-setup.sql`) :
    - `staff_devices` : `confiance_jusqua timestamptz` (posé à 30 jours après une connexion complète avec
      TOTP sur cet appareil), `mdp_verifie_le timestamptz` ;
    - `portail_appareil_ok()` et `portail_code_appareil_verifier()` : la limite « dernier code < 8 h »

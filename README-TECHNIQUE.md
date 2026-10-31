@@ -3988,3 +3988,17 @@ carte « Vous êtes la mannequin du mois ! » sur l'Accueil. Essais : `test-pres
   renvoie `mensualite` (état du mois affiché, `mensualite_etat`) seulement à qui a accès aux Paiements ;
   rien avant l'entrée de la mannequin ni pour un mois à venir. **Le fichier `supabase-presences.sql` est à
   recoller** (rejouable) pour l'activer.
+
+## Bulletins trimestriels (01/11/2026, chantier 14, partie 3)
+
+**Base** : `supabase-bulletins.sql` (Extension 145 ; essais `essais-bulletins.sql`) : table `bulletins`
+(mannequin, trimestre = 1er jour du trimestre, `notes` jsonb : marche, posture, photo, expression, attitude,
+chacune de 1 à 5 — `bulletin_notes_valides`, appréciation, `publie`), fermée ; `bulletins_trimestre` et
+`bulletin_enregistrer` (équipe ; jamais un trimestre à venir ; publier dépose UN message dans l'application),
+`mes_bulletins` (la mannequin : ses bulletins publiés, lecture seule). **Calcul partagé** :
+`Presences.COMPETENCES`, `trimestre`, `trimestreVoisin`, `moyenne` (`js/presences-calcul.js`).
+**Administration** `js/admin/site-bulletins.js` (rubrique « Bulletins trimestriels », groupe Mannequins) :
+une fiche par mannequin (présences du trimestre d'après la liste de présence, 5 notes, appréciation,
+« Enregistrer », « Enregistrer et publier » après confirmation, « Imprimer » ce seul bulletin pour le
+parent). **Application** : « Mes bulletins » dans l'onglet Profil (moyenne, étoiles, appréciation).
+Essais : `test-bulletins-admin.js`, `test-app-mannequin.js`.

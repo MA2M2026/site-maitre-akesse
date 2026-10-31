@@ -1099,3 +1099,17 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .pr-mdm-liste li { display: flex; align-items: center; gap: 10px; }
 .pr-mdm-liste li span:not(.vis) { flex: 1; font-weight: 600; }
 .pr-a-payer { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px; background: var(--rouge-mat); color: #FFFFFF; font-size: 10px; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+
+/* Bulletins trimestriels (chantier 14, 01/11/2026) */
+.bul-tete { display: flex; align-items: center; gap: 12px; grid-column: 1 / -1; }
+.bul-tete h2 { margin: 0; font-size: 20px; }
+.bul-tete > div { flex: 1; }
+.bul-etat { padding: 3px 10px; border-radius: 999px; background: #EFEFEF; color: #3F3F3F; font-size: 12px; font-weight: 600; }
+.bul-etat.publie { background: #1E7A45; color: #FFFFFF; }
+.bul-presences, .bul-moyenne { grid-column: 1 / -1; margin: 0; }
+.bul-notes { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+@media print {
+  html.impression-bulletin .bul-carte:not(.a-imprimer), html.impression-bulletin .pr-barre, html.impression-bulletin .entete,
+  html.impression-bulletin .petit-texte, html.impression-bulletin .bul-boutons { display: none !important; }
+  html.impression-bulletin .bul-carte.a-imprimer { box-shadow: none; border: 1px solid #ccc; }
+}

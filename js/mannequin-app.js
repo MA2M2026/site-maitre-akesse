@@ -76,7 +76,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -86,7 +86,8 @@
       sb.from('casting_projets').select('nom, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true, nullsFirst: false }).limit(3),
       lireMessages(uid),
       sb.rpc('mes_presences'),  // cours du dimanche (chantier 14, supabase-presences.sql) ; absente : rien ne s'affiche
-      sb.rpc('mannequin_du_mois_actuelle')  // (supabase-mannequin-du-mois.sql)
+      sb.rpc('mannequin_du_mois_actuelle'),  // (supabase-mannequin-du-mois.sql)
+      sb.rpc('mes_bulletins')  // bulletins trimestriels publiés (supabase-bulletins.sql)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -97,7 +98,7 @@
       analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
-      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null
+      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || []
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -214,6 +215,19 @@
       (tout.bilan.comptees ? '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="pr-app-total">' + tout.bilan.presents + ' <small>/ ' + tout.bilan.comptees + '</small></div><div class="doux">cours suivis depuis votre arrivée</div></div>' + mentionHtml(C, tout.bilan) + '</div>' +
         (passes.length ? '<ul class="pr-app-historique">' + passes.map((m) => '<li><span>' + esc(nomMois(m.mois)) + '</span><span class="doux">' + m.bilan.presents + ' / ' + m.bilan.comptees + '</span>' + mentionHtml(C, m.bilan) + '</li>').join('') + '</ul>' : '') + '</div>' : '');
   }
+  // bulletins trimestriels publiés par l'agence (lecture seule)
+  function blocBulletins() {
+    const C = window.Presences;
+    if (!C || !etat.bulletins.length) return '';
+    return '<h2 class="ap-titre-sec">Mes bulletins</h2>' + etat.bulletins.map((b) => {
+      const t = C.trimestre(String(b.trimestre).slice(0, 10)), moy = C.moyenne(b.notes);
+      return '<div class="ap-carte pr-app-bulletin"><div class="ap-ligne entre"><b>' + esc(t.nom) + '</b>' +
+        (moy !== null ? '<span class="ap-pastille pr-etat-rouge">' + String(moy).replace('.', ',') + ' / 5</span>' : '') + '</div>' +
+        '<ul class="pr-app-notes">' + C.COMPETENCES.filter(([k]) => typeof (b.notes || {})[k] === 'number').map(([k, nom]) =>
+          '<li><span>' + esc(nom) + '</span><span class="pr-app-etoiles" aria-label="' + b.notes[k] + ' sur 5">' + '★'.repeat(b.notes[k]) + '☆'.repeat(5 - b.notes[k]) + '</span></li>').join('') + '</ul>' +
+        (b.appreciation ? '<p class="pr-app-appreciation">« ' + esc(b.appreciation) + ' »</p>' : '') + '</div>';
+    }).join('');
+  }
   function cartePresencesAccueil() {
     const r = presencesCalculees();
     if (!r || !r.ceMois.bilan.comptees) return '';
@@ -264,7 +278,7 @@
       '<a href="/app/espace-mannequin.html">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
       '<a href="/app/espace-mannequin.html">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
       '<a href="/app/espace-mannequin.html">Formation et compétences <span>›</span></a></div>' +
-      blocPresences() +
+      blocPresences() + blocBulletins() +
       '<div class="ap-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">✏️ Modifier mon profil</a><a class="ap-btn" href="/app/espace-mannequin.html">🗂️ Compcard et CV</a></div>' +
       '<button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button>';
   }

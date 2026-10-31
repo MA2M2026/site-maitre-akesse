@@ -46,6 +46,7 @@ function donnees() {
         mois: Array.from({ length: 24 }, (_, i) => ({ mois: moisDe(i - 8), etat: i < 8 ? 'paye' : i === 8 ? 'a_payer' : 'a_venir' })) },
       app_messages_lus: null, app_push_abonner: null,
       mannequin_du_mois_actuelle: { mois: '2026-11-01', nom: 'AYA KOUASSI', compte: 'admin-1', slug: 'aya-kouassi', mot: null },
+      mes_bulletins: [{ trimestre: '2026-07-01', notes: { marche: 4, posture: 5, photo: 3 }, appreciation: 'Très bon trimestre' }],
       // cours du dimanche (chantier 14) : le mois dernier, présente à tous sauf le premier (rouge)
       mes_presences: { date_entree: '2025-09-01', annulees: [], presences: P.dimanchesDuMois(P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1)).slice(1).map((d) => ({ dimanche: d, etat: 'present' })) },
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
@@ -176,6 +177,8 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(new RegExp((nbAvant - 1) + ' / ' + nbAvant).test(await p.textContent('.pr-app-historique')) && /Bien|Passable/.test(await p.textContent('.pr-app-historique')),
       n + 'Mon profil : le mois dernier, ' + (nbAvant - 1) + ' cours sur ' + nbAvant + ', avec sa mention');
     ok(!(await p.$('.pr-app-jour button, .pr-app button')) && !rpc('presence_marquer').length, n + 'Mon profil : présences en lecture seule (aucun bouton pour se cocher)');
+    ok(/Mes bulletins/.test(profil) && /3e trimestre 2026/.test(profil) && /4 \/ 5/.test(profil) && /Très bon trimestre/.test(profil) && (await p.$$('.pr-app-notes li')).length === 3,
+      n + 'Mon profil : « Mes bulletins » (trimestre, moyenne 4 / 5, notes, appréciation)');
     await capture('3-profil');
     ok((await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/espace-mannequin.html', n + '« Modifier mon profil » reste dans l’application');
     // l'éditeur du profil DANS l'application : même éditeur que le site, menu de l'application en bas

@@ -75,5 +75,19 @@
     for (let m = debut; m <= fin && liste.length < 60; m = moisVoisin(m, 1)) liste.push(m);
     return liste;
   }
-  racine.Presences = { jourIso, dimanchesDuMois, moisVoisin, etatJour, bilan, moisMannequin, synthese, moisEntre, MENTIONS };
+  // Bulletins trimestriels (supabase-bulletins.sql) : les cinq compétences notées sur 5, et le trimestre
+  const COMPETENCES = [['marche', 'Marche'], ['posture', 'Posture'], ['photo', 'Photo (poses)'], ['expression', 'Expression'], ['attitude', 'Attitude et discipline']];
+  // « 2026-10-01 » → { debut: '2026-10', fin: '2026-12', nom: '4e trimestre 2026' }
+  function trimestre(jour) {
+    const [a, m] = String(jour).split('-').map(Number), premier = Math.floor((m - 1) / 3) * 3 + 1, n = (premier - 1) / 3 + 1;
+    const debut = a + '-' + String(premier).padStart(2, '0');
+    return { debut, fin: moisVoisin(debut, 2), cle: debut + '-01', nom: (n === 1 ? '1er' : n + 'e') + ' trimestre ' + a };
+  }
+  const trimestreVoisin = (t, pas) => trimestre(moisVoisin(t.debut, 3 * pas) + '-01');
+  // moyenne des notes remplies (sur 5), ou null
+  function moyenne(notes) {
+    const v = COMPETENCES.map(([k]) => (notes || {})[k]).filter((x) => typeof x === 'number');
+    return v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null;
+  }
+  racine.Presences = { jourIso, dimanchesDuMois, moisVoisin, etatJour, bilan, moisMannequin, synthese, moisEntre, MENTIONS, COMPETENCES, trimestre, trimestreVoisin, moyenne };
 })(typeof window !== 'undefined' ? window : globalThis);
