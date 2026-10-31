@@ -3937,3 +3937,17 @@ la base elle-même comme avant :
 Pages au texte fixe (services, mentions légales, confidentialité, 404, réinitialisation) : servies telles
 quelles. Formulaires : étape 3 de `PLAN-SERVEUR.md`. Essais : `test-fiche-serveur.js`, `test-book-serveur.js`,
 `test-publications-serveur.js`, `test-pages-serveur.js` (partenaires, parcours, qui sommes-nous, agenda).
+
+### Relecture du site dynamique (01/11/2026)
+- Tout texte venu de la base est posé dans la page par un remplacement **par fonction**
+  (`html.replace(x, () => …)`) : un « $' » ou « $& » dans un nom ou un article n'est jamais lu comme motif
+  de remplacement (le défaut touchait aussi l'accueil). Essai : `test-fiche-serveur.js`.
+- `pageRemplie` : données absentes → la page déjà demandée part telle quelle (plus de seconde demande).
+- Aiguillage par table `PAGES_REMPLIES` (adresse propre → fonction(url, anglais)) ; les adresses en `.html`
+  ne sont jamais préparées : elles gardent le renvoi vers l'adresse propre (`cleanUrls`).
+- Fiche : l'identifiant d'après le nom d'adresse est attendu 1,2 s au plus pour un visiteur (2,5 s pour un
+  robot d'aperçu). `lireCouvertures(ids, délai)` partagé (Book, parcours, accueil).
+- Deux règles existent des deux côtés (serveur en module, page en script classique, sans fichier commun
+  possible) : le choix de la grande photo (`couvertureFiche` = `photosAffichees`) et le titre / la
+  description de la fiche ; `test-fiche-serveur.js` vérifie qu'ils donnent le même résultat.
+- « Qui sommes-nous » : une photo au hasard par mannequin, chaque photo avec la même chance.

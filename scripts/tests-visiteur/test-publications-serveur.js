@@ -37,6 +37,9 @@ async function middleware() {
 }
 const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/json" id="publications-donnees">(.*?)<\/script>/) || [])[1] || 'null');
 
+// base lente ou en panne : la page habituelle, sans bloc de données (aucune page cassée)
+const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json" id="[a-z-]+-donnees"/.test(await r.text()));
+
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
@@ -60,9 +63,9 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
   ok(await demander('actualites', { method: 'HEAD' }) === undefined, 'seulement les visites (GET)');
   ok(await demander('actualites', { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, 'robot d’aperçu sur la liste : la page habituelle');
   baseLente = 1500; const t = Date.now();
-  ok(await demander('evenements') === undefined && Date.now() - t < 2500, 'base lente : la page part comme avant, sans attendre (' + (Date.now() - t) + ' ms)');
+  ok(await sansDonnees(await demander('evenements')) && Date.now() - t < 2500, 'base lente : la page part comme avant (sans données), sans attendre (' + (Date.now() - t) + ' ms)');
   baseLente = 0; basePanne = true;
-  ok(await demander('evenements') === undefined, 'base en panne : la page part comme avant');
+  ok(await sansDonnees(await demander('evenements')), 'base en panne : la page part comme avant');
   basePanne = false;
 
   // 2. Dans le navigateur
