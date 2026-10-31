@@ -1113,3 +1113,8 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
   html.impression-bulletin .petit-texte, html.impression-bulletin .bul-boutons { display: none !important; }
   html.impression-bulletin .bul-carte.a-imprimer { box-shadow: none; border: 1px solid #ccc; }
 }
+
+/* Mensurations dans le temps (chantier 14, 01/11/2026) */
+.mq-mens-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.mq-mens-table th, .mq-mens-table td { padding: 6px 8px; border-bottom: 1px solid var(--av-lignes); text-align: left; color: #1B1817; white-space: nowrap; text-transform: none; letter-spacing: normal; }
+.mq-mens-change { font-weight: 700; }

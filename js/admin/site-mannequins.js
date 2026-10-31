@@ -90,6 +90,24 @@
         '<p class="doux">Aucune photo pour cette mannequin.</p>') +
       '<input type="file" accept="image/*,.heic,.heif" id="mq-remplacement" data-change="mannequin-photo-remplacement" hidden></section>';
   }
+  // Mensurations suivies dans le temps (chantier 14, supabase-mensurations.sql, Extension 146) : un relevé
+  // daté à chaque changement ; « à revoir » si le dernier a plus de 3 mois (le Book et la compcard restent justes)
+  const COLONNES_MENSURATIONS = [['height_cm', 'Taille', ' cm'], ['weight_kg', 'Poids', ' kg'], ['chest_cm', 'Poitrine', ''], ['waist_cm', 'Tour de taille', ''],
+    ['hips_cm', 'Hanches', ''], ['inseam_cm', 'Entrejambe', ''], ['shoe_size', 'Pointure', '']];
+  function blocMensurations(releves) {
+    if (!Array.isArray(releves)) return '';  // (pas encore activé : rien)
+    const vieux = !releves.length || Date.now() - Date.parse(releves[0].releve_le) > 92 * 86400000;
+    return '<section class="carte mq-mensurations"><div class="section-titre"><h2>Mensurations dans le temps</h2>' +
+      (vieux ? '<span class="pr-badge rouge">À revoir : plus de 3 mois</span>' : '<span class="pr-badge vert">À jour</span>') + '</div>' +
+      (releves.length ? '<div class="pr-tableau"><table class="mq-mens-table"><thead><tr><th scope="col">Relevé</th>' + COLONNES_MENSURATIONS.map((c) => '<th scope="col">' + c[1] + '</th>').join('') + '</tr></thead><tbody>' +
+        releves.slice(0, 12).map((r, i) => {
+          const avant = releves[i + 1] ? releves[i + 1].valeurs : null;
+          return '<tr><th scope="row">' + P.esc(P.date(r.releve_le)) + (r.origine === 'installation' ? ' <small class="doux">(départ)</small>' : '') + '</th>' +
+            COLONNES_MENSURATIONS.map(([k, , u]) => { const v = r.valeurs[k], change = avant && avant[k] !== v;
+              return '<td' + (change ? ' class="mq-mens-change"' : '') + '>' + (v === null || v === undefined ? '—' : P.esc(String(v)) + u) + '</td>'; }).join('') + '</tr>';
+        }).join('') + '</tbody></table></div><p class="doux petit-texte">En gras : ce qui a changé depuis le relevé précédent. Un relevé est pris tout seul à chaque modification (par l’agence ou par la mannequin).</p>'
+        : '<p class="doux">Aucune mensuration enregistrée.</p>') + '</section>';
+  }
   async function fiche(id) {
     const profil = await P.bd(sb.from('model_profiles').select('id, full_name, city, category, niveau_mannequin, desactive, published, featured').eq('id', id).maybeSingle());
     if (!profil) return P.entete('Mannequins') + '<div class="carte"><h2>Mannequin introuvable</h2><a class="btn" href="#/site/' + PAGE + '">← Retour</a></div>';
@@ -103,7 +121,7 @@
       '<div class="ligne"><a class="btn" href="/mannequin.html?id=' + P.esc(id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' +
       '<a class="btn" href="#/site/' + PAGE + '/' + P.esc(id) + '/cv">📄 Voir le CV</a>' +
       '<button type="button" class="btn" data-action="mannequin-sourdine">' + (profil.desactive ? '🔊 Réactiver' : '🔇 Mettre en sourdine') + '</button></div></div></header>' +
-      blocPhotos() +
+      blocPhotos() + blocMensurations(await P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null)) +
       '<section class="carte zone-danger"><h2>Supprimer définitivement</h2><p class="doux petit-texte">Supprime le profil, le compte de connexion et toutes les photos. Irréversible. Pour la retirer seulement du site, préférez la sourdine.</p>' +
       '<button type="button" class="btn" data-action="mannequin-supprimer">🗑 Supprimer</button></section>';
   }

@@ -24,7 +24,12 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
     p.on('dialog', (dl) => dl.accept());
-    await brancher(p, donnees('principal'), journal); await photosLocales(p);
+    const d = donnees('principal');
+    // mensurations dans le temps (chantier 14) : le dernier relevé date de plus de 3 mois, la taille a changé
+    d.rpc.mensurations_historique_lire = [
+      { releve_le: '2026-06-01T10:00:00Z', origine: 'modification', valeurs: { height_cm: 178, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } },
+      { releve_le: '2026-01-15T10:00:00Z', origine: 'installation', valeurs: { height_cm: 176, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } }];
+    await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 
     // 1. Galerie
@@ -52,6 +57,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
 
     // 2. Fiche : photos, compcard, catégorie, ajout, suppression
     await p.click('.mannequin-carte[href$="/m0"]'); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(1000);
+    ok(/Mensurations dans le temps/.test(await p.textContent('.mq-mensurations')) && /À revoir/.test(await p.textContent('.mq-mensurations')) && (await p.$$('.mq-mens-table tbody tr')).length === 2 && /178/.test(await p.textContent('.mq-mens-change')),
+      n + 'fiche : mensurations dans le temps (2 relevés, la taille changée en gras, « À revoir » après 3 mois)');
     ok(/AYA KOUASSI/.test(await p.textContent('.mannequin-tete')) && (await p.$$('.photo-mannequin')).length === 2 && /Compcard 1/.test(await p.textContent('.photos-mannequin')), n + 'fiche : nom, 2 photos, compcard 1 signalée');
     await capture(p, 'fiche-mannequin' + suffixe);
     await p.selectOption('.photo-mannequin:nth-child(2) select[data-change="mannequin-compcard"]', '2'); await p.waitForTimeout(900);

@@ -4002,3 +4002,14 @@ une fiche par mannequin (présences du trimestre d'après la liste de présence,
 « Enregistrer », « Enregistrer et publier » après confirmation, « Imprimer » ce seul bulletin pour le
 parent). **Application** : « Mes bulletins » dans l'onglet Profil (moyenne, étoiles, appréciation).
 Essais : `test-bulletins-admin.js`, `test-app-mannequin.js`.
+
+## Mensurations suivies dans le temps (01/11/2026, chantier 14, partie 3)
+
+**Base** : `supabase-mensurations.sql` (Extension 146 ; essais `essais-mensurations.sql`) : table
+`mensurations_historique` (relevé daté des 7 mensurations, fermée) ; déclencheur `trg_mensurations_suivre`
+(après chaque modification de `model_profiles` qui change une mensuration, par l'agence ou par la mannequin ;
+**ne peut jamais bloquer** l'enregistrement de la fiche : toute erreur est seulement signalée) ; un relevé de
+départ pour chaque fiche existante ; `mensurations_historique_lire` (équipe). ⚠ Déclencheur sur les fiches :
+à essayer pour de vrai avec le compte de test (règle 3 de `CLAUDE.md`). **Administration** : fiche d'une
+mannequin, « Mensurations dans le temps » (12 derniers relevés, changements en gras, « À revoir » au-delà de
+3 mois). Essai : `test-nouvelle-admin-mannequins.js`.
