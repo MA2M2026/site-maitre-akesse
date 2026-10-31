@@ -3799,3 +3799,25 @@ d'identité par l'adresse /book/…) — il échoue sur l'ancienne version.
   effacés à la publication, à la suppression ou au bout de 30 jours. Rien n'est envoyé tant qu'on
   n'a pas appuyé sur « Publier ».
 - Essai : `scripts/tests-visiteur/test-brouillon-photos.js`.
+
+## Modifier les photos d'un article déjà publié (31/10/2026, chantier 9)
+
+Avant, en modifiant une actualité ou un événement, on ne pouvait qu'AJOUTER des photos. Désormais,
+sous chaque photo déjà en ligne (`#pub-en-ligne`, `js/admin/site-contenu.js`) : flèches (ordre),
+étoile (couverture), croix (retirer), et « Annuler » pour remettre les photos retirées.
+- Rien n'est écrit avant « Enregistrer » ; ces choix (numéros des photos, pas les fichiers) font partie
+  du brouillon (`js/admin/brouillons.js`).
+- Il faut garder au moins une photo (ou, pour une actualité, un lien vidéo), seulement si on a touché
+  aux photos (un ancien article sans photo reste modifiable).
+- Enregistrement : `sauverPublication` (texte, photos ajoutées) puis, seulement si les photos ont changé,
+  `appliquerPhotosEnLigne` (`js/publications.js`) : base d'abord (lignes retirées — avec vérification si
+  la base en efface moins que prévu —, ordre, couverture), PUIS les fichiers retirés sont effacés du
+  stockage (`supprimerCheminsImagesSite`). Les tables de photos n'ont pas de colonne d'ordre : l'ordre
+  des pages publiques suit `created_at`, donc les photos gardées sont renumérotées (1 seconde d'écart)
+  à partir de la plus ancienne, avant les photos ajoutées. Aucune modification de la base n'a été
+  nécessaire (droits RLS de l'Administration déjà en place pour modifier et supprimer).
+- Couverture : celle choisie si elle reste (ou une ancienne image hors de la liste), sinon la première
+  photo restante — même règle à l'écran (`couvertureEffective`) et à l'enregistrement.
+- Icônes dessinées (`P.icone`, `js/admin/coque.js`) : le nettoyage des émojis en tête des boutons
+  (`harmoniserEcransPartages`) effaçait ◀ ▶ ★.
+- Essai : `scripts/tests-visiteur/test-photos-article-publie.js` (dans `lancer.sh`).

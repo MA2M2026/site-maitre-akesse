@@ -225,6 +225,46 @@ async function enregistrerPhotosPublication(t, id, urls, modification) {
   }
 }
 
+// Photos déjà en ligne d'une publication modifiée (31/10/2026, demande de la propriétaire : avant,
+// seul le texte se modifiait) : liste = photos dans l'ordre voulu [{ id, url, chemin, created_at,
+// retiree }], couverture = adresse de la photo de couverture choisie. Base d'abord (lignes retirées,
+// ordre, couverture), puis les fichiers des photos retirées sont effacés du stockage (si la base
+// refuse, les fichiers restent). L'ordre suit created_at (pages publiques) : les photos gardées sont
+// renumérotées à partir de la plus ancienne, avant les photos ajoutées maintenant.
+async function appliquerPhotosEnLigne(t, id, liste, couverture) {
+  const retirees = liste.filter((p) => p.retiree), gardees = liste.filter((p) => !p.retiree);
+  if (retirees.length) {
+    const ids = retirees.map((p) => p.id);
+    const { data, error } = await sbAdmin.from(t.tablePhotos).delete().in('id', ids).select('id');
+    if (error || !data) return false;
+    // moins de lignes effacées que prévu : refus de la base, ou déjà effacées (nouvel essai) ? on vérifie
+    if (data.length !== ids.length) {
+      const { data: restantes, error: e2 } = await sbAdmin.from(t.tablePhotos).select('id').in('id', ids);
+      if (e2 || !restantes || restantes.length) return false;
+    }
+  }
+  const depart = Math.min(...liste.map((p) => Date.parse(p.created_at)).filter((x) => !isNaN(x)), Date.now() - 86400000);
+  for (let i = 0; i < gardees.length; i++) {
+    const quand = new Date(depart + i * 1000).toISOString();
+    if (Date.parse(gardees[i].created_at) === Date.parse(quand)) continue;
+    const { error } = await sbAdmin.from(t.tablePhotos).update({ created_at: quand }).eq('id', gardees[i].id);
+    if (error) return false;
+  }
+  // couverture : celle choisie si elle reste (ou si c'est une ancienne image hors de la liste),
+  // sinon la première photo restante (ajoutées comprises)
+  const garder = couverture && (gardees.some((p) => p.url === couverture) || !liste.some((p) => p.url === couverture));
+  let image = garder ? couverture : (gardees[0] ? gardees[0].url : null);
+  if (!image) {
+    const { data: premiere } = await sbAdmin.from(t.tablePhotos).select('url').eq(t.colonne, id).order('created_at', { ascending: true }).limit(1);
+    image = premiere && premiere[0] ? premiere[0].url : null;
+  }
+  const { error } = await sbAdmin.from(t.table).update({ image_url: image }).eq('id', id);
+  if (error) return false;
+  const chemins = retirees.map((p) => p.chemin).filter(Boolean);
+  if (chemins.length) await supprimerCheminsImagesSite(t.dossier, t.seau, chemins);
+  return true;
+}
+
 // Supprime une publication puis ses images. Base d'abord : si la suppression échoue, les
 // images restent intactes. t : comme ci-dessus + dossier et seau des images. fermer : la
 // fenêtre à refermer ensuite (rédaction par défaut, ou fenêtre de lecture).

@@ -332,9 +332,15 @@
     site: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 18v3"/>',
     paiements: '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20M6 15h4"/>',
     compta: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 10h8M8 14h8M8 18h5"/>',
-    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    // petits boutons (dessinés : le nettoyage des émojis en tête des boutons effaçait ◀ ▶ ★, 31/10/2026)
+    avant: '<path d="M15 5l-7 7 7 7"/>',
+    apres: '<path d="M9 5l7 7-7 7"/>',
+    etoile: '<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/>',
+    croix: '<path d="M6 6l12 12M18 6L6 18"/>'
   };
   const icone = (cle, taille) => '<svg width="' + (taille || 20) + '" height="' + (taille || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[cle] + '</svg>';
+  P.icone = icone;  // (aussi pour les autres pièces, ex. js/admin/site-contenu.js)
   const COURT = { site: 'Le site', paiements: 'Paiements', compta: 'Compta' };
   const premierePage = P.premierePage;  // js/portail/noyau.js
   const blocsPermis = () => ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]);

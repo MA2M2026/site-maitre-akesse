@@ -20,7 +20,7 @@
   const quand = (type, p) => (type === 'evenements' ? (p.date_evenement ? dateMidi(p.date_evenement) : 'Date à préciser') : P.date(p.created_at));
   // vignette d'une vidéo YouTube (actualité sans photo) ; null pour Vimeo
   const vignetteVideo = (url) => { const m = /youtube\.com\/embed\/([\w-]{6,20})/.exec(urlVideoIntegree(url) || ''); return m ? 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg' : null; };
-  let redaction = null;  // { type, id, existante, fichiers, editeur }
+  let redaction = null;  // { type, id, existante, fichiers, editeur, enLigne, couverture, origine }
   // photos choisies avant l'envoi : ajoutées en plusieurs fois, jusqu'à cette limite (31/10/2026)
   const MAX_PHOTOS = 30;
   const cleBrouillon = () => 'publication:' + redaction.type + ':' + (redaction.id || 'nouvelle');
@@ -57,21 +57,24 @@
     const c = TYPES[type];
     const existante = id === 'nouvelle' ? null : await P.bd(sb.from(c.t.table).select('*').eq('id', id).maybeSingle());
     if (id !== 'nouvelle' && !existante) return P.entete(c.titre) + '<div class="carte vide">Cette publication n’existe plus. <a href="#/site/' + type + '">Retour</a></div>';
-    const photos = existante ? await P.bd(sb.from(c.t.tablePhotos).select('url').eq(c.t.colonne, existante.id)).catch(() => []) : [];
+    // photos déjà en ligne, dans l'ordre du site (created_at) : modifiables (chantier 9, 31/10/2026)
+    const photos = existante ? await P.bd(sb.from(c.t.tablePhotos).select('id, url, chemin, created_at').eq(c.t.colonne, existante.id).order('created_at', { ascending: true })).catch(() => []) : [];
     await outilsRedaction();
-    redaction = { type, id: existante ? existante.id : null, existante, fichiers: [], editeur: null };
+    const enLigne = photos.map((p) => Object.assign({}, p, { retiree: false }));
+    const couverture = existante ? existante.image_url || null : null;
+    redaction = { type, id: existante ? existante.id : null, existante, fichiers: [], editeur: null, enLigne, couverture,
+      origine: { ordre: enLigne.map((p) => p.id).join(','), couverture } };
     const v = (k) => P.esc(existante && existante[k] ? existante[k] : '');
     const propres = type === 'actualites'
       ? '<label class="fl" for="pub-categorie">Catégorie<select id="pub-categorie" name="categorie"><option value="">Choisir</option>' + CATEGORIES_ACTUALITES.map((k) => '<option' + (existante && existante.categorie === k ? ' selected' : '') + '>' + P.esc(k) + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="pub-video">Lien vidéo YouTube ou Vimeo (facultatif)<input id="pub-video" name="video" type="url" inputmode="url" placeholder="https://youtu.be/…" value="' + v('video_url') + '"></label>'
       : '<label class="fl" for="pub-date">Date de l’événement<input id="pub-date" name="date" type="date" value="' + v('date_evenement') + '"></label>' +
         '<label class="fl" for="pub-lieu">Lieu<input id="pub-lieu" name="lieu" maxlength="200" value="' + v('lieu') + '"></label>';
-    const enLigne = photos.length ? '<div class="pub-photos">' + photos.map((p) => '<img src="' + P.esc(urlLegere(p.url)) + '" alt="" loading="lazy">').join('') + '</div><p class="doux petit-texte">' + photos.length + ' photo(s) déjà en ligne ; celles que vous ajoutez s’ajoutent.</p>' : '';
     return P.entete(existante ? 'Modifier' : 'Publier ' + c.un, '<a class="btn" href="#/site/' + type + '">← ' + c.titre + '</a>' +
         (existante ? '<a class="btn" href="' + c.lien + encodeURIComponent(existante.id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' : '')) +
       '<div class="redaction-grille"><form class="carte f" data-form="publication-enregistrer">' +
       '<label class="fl large" for="pub-titre">Titre' + (type === 'evenements' ? ' (obligatoire)' : '') + '<input id="pub-titre" name="titre" maxlength="200" value="' + v('titre') + '"' + (type === 'evenements' ? ' required' : '') + '></label>' + propres +
-      '<div class="large"><span class="fl">Photos</span>' + enLigne + '<label class="btn"><input type="file" accept="image/*,.heic,.heif" multiple data-change="publication-photos" hidden>📷 <span id="pub-choisir">' + (existante ? 'Ajouter des photos' : 'Choisir les photos') + '</span></label>' +
+      '<div class="large"><span class="fl">Photos</span>' + (enLigne.length ? '<div class="pub-photos" id="pub-en-ligne"></div>' : '') + '<label class="btn"><input type="file" accept="image/*,.heic,.heif" multiple data-change="publication-photos" hidden>📷 <span id="pub-choisir">' + (existante ? 'Ajouter des photos' : 'Choisir les photos') + '</span></label>' +
       '<div class="pub-photos" id="pub-nouvelles"></div></div>' +
       '<div class="large"><span class="fl">Texte</span><div id="pub-editeur" class="editeur-riche"></div></div>' +
       '<p class="form-msg large" id="pub-msg" role="status"></p>' +
@@ -98,6 +101,7 @@
     const form = document.querySelector('[data-form="publication-enregistrer"]');
     form.addEventListener('input', () => { apercu(); garderBrouillon(); });
     form.addEventListener('change', apercu);
+    montrerEnLigne();
     apercu();
     return reprendreBrouillon();
   }
@@ -111,9 +115,60 @@
       '<button type="button" class="btn-mini-admin" data-action="publication-photo-retirer" data-i="' + i + '" aria-label="Retirer cette photo">✕</button></span>').join('') +
       (urls.length ? '<p class="doux petit-texte">' + P.pluriel(urls.length, 'photo choisie', 'photos choisies') + ' (au plus ' + MAX_PHOTOS + ') : vous pouvez en ajouter d’autres.</p>' : '');
     if (urls.length || redaction.existante) document.getElementById('pub-choisir').textContent = 'Ajouter des photos';
-    const vitrine = document.getElementById('apercu-image');
-    if (!(redaction.existante && redaction.existante.image_url)) vitrine.innerHTML = urls.length ? '<img src="' + urls[0] + '" alt="">' : '';
+    montrerVitrine();
   }
+
+  // Photos déjà en ligne (modification, chantier 9) : ◀ ▶ pour l'ordre, ★ pour la couverture, ✕ pour
+  // retirer. Rien ne change sur le site avant « Enregistrer » (js/publications.js, appliquerPhotosEnLigne).
+  const gardees = () => redaction.enLigne.filter((p) => !p.retiree);
+  // couverture affichée : celle choisie si elle reste (ou ancienne image hors liste), sinon la 1re photo restante,
+  // sinon la 1re photo choisie — même règle qu'à l'enregistrement
+  function couvertureEffective() {
+    const c = redaction.couverture, g = gardees();
+    if (c && (g.some((p) => p.url === c) || !redaction.enLigne.some((p) => p.url === c))) return urlLegere(c);
+    if (g[0]) return urlLegere(g[0].url);
+    return (redaction.apercus && redaction.apercus[0]) || '';
+  }
+  function montrerVitrine() {
+    const u = couvertureEffective(), vitrine = document.getElementById('apercu-image');
+    if (vitrine) vitrine.innerHTML = u ? '<img src="' + P.esc(u) + '" alt="">' : '';
+  }
+  function montrerEnLigne() {
+    const zone = document.getElementById('pub-en-ligne');
+    if (!zone || !redaction) return;
+    const g = gardees(), retirees = redaction.enLigne.length - g.length, couv = couvertureEffective();
+    const bouton = (action, id, signe, nom, inactif) => '<button type="button" class="btn-mini-admin" data-action="' + action + '" data-id="' + P.esc(id) + '" aria-label="' + nom + '" title="' + nom + '"' + (inactif ? ' disabled' : '') + '>' + signe + '</button>';
+    zone.innerHTML = g.map((p, i) => {
+      const estCouv = urlLegere(p.url) === couv;
+      return '<span class="pub-photo-en-ligne' + (estCouv ? ' est-couverture' : '') + '"><img src="' + P.esc(urlLegere(p.url)) + '" alt="" loading="lazy">' +
+        (estCouv ? '<span class="pub-badge-couverture">Couverture</span>' : '') +
+        '<span class="pub-photo-boutons">' + bouton('publication-photo-avant', p.id, P.icone('avant', 18), 'Déplacer avant', i === 0) + bouton('publication-photo-apres', p.id, P.icone('apres', 18), 'Déplacer après', i === g.length - 1) +
+        bouton('publication-photo-couverture', p.id, P.icone('etoile', 18), 'Choisir comme photo de couverture', estCouv) + bouton('publication-photo-enlever', p.id, P.icone('croix', 18), 'Retirer cette photo du site', false) + '</span></span>';
+    }).join('') +
+      '<p class="doux petit-texte">' + (g.length ? P.pluriel(g.length, 'photo en ligne', 'photos en ligne') + ' : les flèches pour l’ordre, l’étoile pour la couverture, la croix pour retirer.' : 'Aucune photo gardée.') +
+      ' Rien ne change sur le site avant « Enregistrer ».' +
+      (retirees ? ' <b>' + P.pluriel(retirees, 'photo retirée', 'photos retirées') + '</b> (effacée' + (retirees > 1 ? 's' : '') + ' à l’enregistrement). <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>' : '') + '</p>';
+    montrerVitrine();
+  }
+  function photosChangees() {
+    if (!redaction || !redaction.enLigne.length) return false;
+    return redaction.enLigne.some((p) => p.retiree) || gardees().map((p) => p.id).join(',') !== redaction.origine.ordre || redaction.couverture !== redaction.origine.couverture;
+  }
+  function apresChangementEnLigne() { montrerEnLigne(); garderBrouillon(); }
+  const trouver = (el) => redaction && redaction.enLigne.find((p) => String(p.id) === el.dataset.id);
+  function deplacer(el, pas) {
+    const p = trouver(el); if (!p) return;
+    const g = gardees(), i = g.indexOf(p), j = i + pas;
+    if (j < 0 || j >= g.length) return;
+    [g[i], g[j]] = [g[j], g[i]];
+    redaction.enLigne = g.concat(redaction.enLigne.filter((x) => x.retiree));
+    apresChangementEnLigne();
+  }
+  P.actions['publication-photo-avant'] = (el) => deplacer(el, -1);
+  P.actions['publication-photo-apres'] = (el) => deplacer(el, 1);
+  P.actions['publication-photo-couverture'] = (el) => { const p = trouver(el); if (!p) return; redaction.couverture = p.url; apresChangementEnLigne(); };
+  P.actions['publication-photo-enlever'] = (el) => { const p = trouver(el); if (!p) return; p.retiree = true; apresChangementEnLigne(); };
+  P.actions['publication-photos-annuler'] = () => { if (!redaction) return; redaction.enLigne.forEach((p) => { p.retiree = false; }); apresChangementEnLigne(); };
   // Brouillon gardé dans ce navigateur (js/admin/brouillons.js) : champs, texte et photos choisies
   let minuteurBrouillon = null;
   function garderBrouillon() {
@@ -125,7 +180,9 @@
       if (!form || redaction !== r) return;
       const champs = {};
       ['titre', 'categorie', 'video', 'date', 'lieu'].forEach((n) => { if (form.elements[n]) champs[n] = form.elements[n].value; });
-      P.brouillon.ecrire(cleBrouillon(), { champs, texte: lireContenuEditeur(r.editeur), fichiers: r.fichiers });
+      // photos déjà en ligne : ordre, retirées et couverture (seulement des numéros, pas les fichiers)
+      const enLigne = r.enLigne.length ? { ordre: r.enLigne.map((p) => p.id), retirees: r.enLigne.filter((p) => p.retiree).map((p) => p.id), couverture: r.couverture } : null;
+      P.brouillon.ecrire(cleBrouillon(), { champs, texte: lireContenuEditeur(r.editeur), fichiers: r.fichiers, enLigne });
     }, 400);
   }
   async function reprendreBrouillon() {
@@ -136,6 +193,15 @@
     Object.entries(b.champs || {}).forEach(([n, v]) => { if (form.elements[n] && v) form.elements[n].value = v; });
     if (b.texte) chargerContenuDansEditeur(r.editeur, b.texte);
     r.fichiers = Array.isArray(b.fichiers) ? b.fichiers.slice(0, MAX_PHOTOS) : [];
+    if (b.enLigne && r.enLigne.length) {
+      // photos encore en ligne seulement (une photo disparue entre-temps est ignorée, une nouvelle va à la fin)
+      const rang = new Map((b.enLigne.ordre || []).map((id, i) => [String(id), i])), retirees = new Set((b.enLigne.retirees || []).map(String));
+      r.enLigne.sort((x, y) => (rang.has(String(x.id)) ? rang.get(String(x.id)) : 1e6) - (rang.has(String(y.id)) ? rang.get(String(y.id)) : 1e6));
+      r.enLigne.forEach((p) => { p.retiree = retirees.has(String(p.id)); });
+      r.enLigne = r.enLigne.filter((p) => !p.retiree).concat(r.enLigne.filter((p) => p.retiree));
+      if (b.enLigne.couverture === r.origine.couverture || r.enLigne.some((p) => p.url === b.enLigne.couverture)) r.couverture = b.enLigne.couverture;
+      montrerEnLigne();
+    }
     montrerNouvelles();
     apercu();
     const dit = 'Brouillon retrouvé (' + new Date(b.quand).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + ') : texte et photos choisies sont revenus.';
@@ -168,17 +234,21 @@
     if (type === 'actualites') {
       const video = String(f.get('video') || '').trim();
       if (video && !urlVideoIntegree(video)) { message('err', 'Ce lien vidéo n’est pas reconnu : collez un lien YouTube ou Vimeo.'); return; }
-      if (!redaction.id && !redaction.fichiers.length && !video) { message('err', 'Choisissez au moins une photo ou ajoutez un lien vidéo.'); return; }
+      if (!gardees().length && !redaction.fichiers.length && !video && (!redaction.id || photosChangees())) { message('err', redaction.id ? 'Gardez au moins une photo, ajoutez-en une, ou ajoutez un lien vidéo.' : 'Choisissez au moins une photo ou ajoutez un lien vidéo.'); return; }
       champs = { titre, categorie: f.get('categorie') || null, commentaire: texte, video_url: video };
     } else {
       if (!titre) { message('err', 'Le titre est obligatoire.'); return; }
-      if (!redaction.id && !redaction.fichiers.length) { message('err', 'Choisissez au moins une photo.'); return; }
+      if (!gardees().length && !redaction.fichiers.length && (!redaction.id || photosChangees())) { message('err', redaction.id ? 'Gardez au moins une photo ou ajoutez-en une.' : 'Choisissez au moins une photo.'); return; }
       champs = { titre, date_evenement: f.get('date') || null, lieu: String(f.get('lieu') || '').trim() || null, description: texte || null };
     }
     const n = redaction.fichiers.length;
     message('ok', n ? 'Envoi de ' + P.pluriel(n, 'photo', 'photos') + '… gardez la page ouverte.' : 'Enregistrement…');
     const r = await sauverPublication(c.t, redaction.id, champs, redaction.fichiers);
     if (!r.ok) { message('err', 'Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    if (redaction.id && photosChangees() && !(await appliquerPhotosEnLigne(c.t, redaction.id, redaction.enLigne, redaction.couverture))) {
+      redaction.fichiers = []; montrerNouvelles(); garderBrouillon();  // les photos ajoutées, elles, sont déjà en ligne
+      message('err', 'Le texte est enregistré, mais l’ordre, la couverture ou les photos retirées n’ont pas pu l’être : reconnectez-vous puis réessayez.'); return;
+    }
     if (r.photos < n) P.message(P.pluriel(n - r.photos, 'photo n’a pas pu être envoyée', 'photos n’ont pas pu être envoyées') + ' : réessayez de les ajouter.');
     else P.message(redaction.id ? 'Modifications enregistrées.' : 'Publié sur le site' + (r.photos ? ' avec ' + P.pluriel(r.photos, 'photo', 'photos') : '') + '.');
     clearTimeout(minuteurBrouillon);
