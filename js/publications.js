@@ -227,12 +227,24 @@ async function enregistrerPhotosPublication(t, id, urls, modification) {
 
 // Photos déjà en ligne d'une publication modifiée (31/10/2026, demande de la propriétaire : avant,
 // seul le texte se modifiait) : liste = photos dans l'ordre voulu [{ id, url, chemin, created_at,
-// retiree }], couverture = adresse de la photo de couverture choisie. Base d'abord (lignes retirées,
+// retiree, remplacement (fichier ou null) }], couverture = adresse de la photo de couverture choisie. Base d'abord (lignes retirées,
 // ordre, couverture), puis les fichiers des photos retirées sont effacés du stockage (si la base
 // refuse, les fichiers restent). L'ordre suit created_at (pages publiques) : les photos gardées sont
 // renumérotées à partir de la plus ancienne, avant les photos ajoutées maintenant.
 async function appliquerPhotosEnLigne(t, id, liste, couverture) {
   const retirees = liste.filter((p) => p.retiree), gardees = liste.filter((p) => !p.retiree);
+  // photos remplacées (même place) : la nouvelle est envoyée, la ligne pointe vers elle, l'ancien fichier
+  // sera effacé à la fin ; si la base refuse, le nouveau fichier est effacé et rien ne change
+  const anciens = [];
+  for (const p of gardees.filter((x) => x.remplacement)) {
+    const [nouvelle] = await envoyerPhotosPublication(t, id, [p.remplacement]);
+    if (!nouvelle) return false;
+    const { data, error } = await sbAdmin.from(t.tablePhotos).update({ url: nouvelle.url, chemin: nouvelle.chemin }).eq('id', p.id).select('id');
+    if (error || !data || !data.length) { await supprimerCheminsImagesSite(t.dossier, t.seau, [nouvelle.chemin]); return false; }
+    if (p.chemin) anciens.push(p.chemin);
+    // (ancienneUrl : la couverture choisie la désigne encore, y compris lors d'un nouvel essai)
+    Object.assign(p, { ancienneUrl: p.url, url: nouvelle.url, chemin: nouvelle.chemin, remplacement: null });
+  }
   if (retirees.length) {
     const ids = retirees.map((p) => p.id);
     const { data, error } = await sbAdmin.from(t.tablePhotos).delete().in('id', ids).select('id');
@@ -252,15 +264,16 @@ async function appliquerPhotosEnLigne(t, id, liste, couverture) {
   }
   // couverture : celle choisie si elle reste (ou si c'est une ancienne image hors de la liste),
   // sinon la première photo restante (ajoutées comprises)
-  const garder = couverture && (gardees.some((p) => p.url === couverture) || !liste.some((p) => p.url === couverture));
-  let image = garder ? couverture : (gardees[0] ? gardees[0].url : null);
+  const designe = (p) => p.url === couverture || p.ancienneUrl === couverture;
+  const visee = couverture && gardees.find(designe), horsListe = couverture && !liste.some(designe);
+  let image = visee ? visee.url : horsListe ? couverture : (gardees[0] ? gardees[0].url : null);
   if (!image) {
     const { data: premiere } = await sbAdmin.from(t.tablePhotos).select('url').eq(t.colonne, id).order('created_at', { ascending: true }).limit(1);
     image = premiere && premiere[0] ? premiere[0].url : null;
   }
   const { error } = await sbAdmin.from(t.table).update({ image_url: image }).eq('id', id);
   if (error) return false;
-  const chemins = retirees.map((p) => p.chemin).filter(Boolean);
+  const chemins = retirees.map((p) => p.chemin).filter(Boolean).concat(anciens);
   if (chemins.length) await supprimerCheminsImagesSite(t.dossier, t.seau, chemins);
   return true;
 }

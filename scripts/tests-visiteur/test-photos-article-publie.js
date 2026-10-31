@@ -1,6 +1,6 @@
 // Chantier 9 (31/10/2026, demande de la propriétaire) : modifier les photos d'un article DÉJÀ publié,
 // comme l'agence, sur téléphone et ordinateur, base SIMULÉE (rien n'est écrit ni effacé pour de vrai) :
-//  - sous chaque photo en ligne : ◀ ▶ (ordre), ★ (couverture), ✕ (retirer), « Annuler » ;
+//  - sous chaque photo en ligne : ◀ ▶ (ordre), ★ (couverture), ✕ (retirer), « Remplacer », « Annuler » ;
 //  - rien n'est écrit avant « Enregistrer » ; quitter la page puis revenir garde ces choix (brouillon) ;
 //  - garder au moins une photo (ou un lien vidéo) ;
 //  - à l'enregistrement : la base d'abord (ligne retirée, ordre, couverture), PUIS le fichier retiré est
@@ -16,7 +16,7 @@ const ecritures = (journal, table) => journal.filter((j) => j[1] === table && ['
 // ordre affiché : m4 = photo ap1 (couverture au départ), m5 = photo ap2
 const ordre = (p) => p.$$eval('#pub-en-ligne .pub-photo-en-ligne img', (l) => l.map((i) => (/\/(m\d+)\//.exec(i.src) || [])[1]).join(','));
 const couverture = (p) => p.$$eval('#pub-en-ligne .pub-photo-en-ligne', (l) => l.findIndex((x) => x.querySelector('.pub-badge-couverture')));
-const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-child(' + i + ') [data-action="publication-photo-' + action + '"]');
+const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-child(' + i + ') [data-action="publication-photo-' + action + '"]');  // (avant, apres, couverture, enlever, remplacer)
 
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
@@ -88,6 +88,33 @@ const bouton = (p, i, action) => p.click('#pub-en-ligne .pub-photo-en-ligne:nth-
     await p.fill('#pub-titre', 'Casting national 2026 — inscriptions');
     await p.click('form[data-form="publication-enregistrer"] [type=submit]'); await p.waitForTimeout(2500);
     ok(!ecritures(journal.slice(avant2), 'actualite_photos').length && journal.slice(avant2).some((j) => j[0] === 'PATCH' && j[1] === 'actualites'), n + 'titre seul modifié : les photos ne sont pas touchées');
+
+    // « Remplacer » : une autre photo à la même place ; la couverture la suit ; l'ancien fichier est effacé après la base
+    await ouvrir();
+    await p.waitForTimeout(400);
+    // la 1re photo (son numéro et son fichier : ap1 → a1/1.jpg, ap2 → a1/2.jpg)
+    const idR = await p.getAttribute('#pub-en-ligne .pub-photo-en-ligne:nth-child(1) [data-action="publication-photo-remplacer"]', 'data-id'), fichierR = 'a1/' + idR.slice(2) + '.jpg';
+    const [choix] = await Promise.all([p.waitForEvent('filechooser'), bouton(p, 1, 'remplacer')]);
+    await choix.setFiles(photo(2)); await p.waitForTimeout(400);
+    ok(/Nouvelle photo/.test(await p.textContent('#pub-en-ligne .pub-photo-en-ligne:nth-child(1)')) && await couverture(p) === 0 && /^blob:/.test(await p.$eval('#pub-en-ligne .pub-photo-en-ligne:nth-child(1) img', (i) => i.src)) && /1 photo remplacée/.test(await p.textContent('#pub-en-ligne')),
+      n + '« Remplacer » : la nouvelle photo prend la place (et reste la couverture)');
+    ok(/^blob:/.test(await p.$eval('#apercu-image img', (i) => i.src)), n + 'l’aperçu montre la nouvelle couverture');
+    const avant3 = journal.length;
+    ok(!journal.slice(avant3).length && !ecritures(journal.slice(avant2), 'actualite_photos').length, n + 'remplacement : rien d’envoyé avant « Enregistrer »');
+    await p.waitForTimeout(900);
+    await p.goto(URL_ADMIN + '#/site/b2-candidatures'); await p.waitForTimeout(1200);
+    await ouvrir(); await p.waitForTimeout(600);
+    ok(/Nouvelle photo/.test(await p.textContent('#pub-en-ligne .pub-photo-en-ligne:nth-child(1)')), n + 'retour sur la page : le remplacement est gardé dans le brouillon');
+    const avant4 = journal.length;
+    await p.click('form[data-form="publication-enregistrer"] [type=submit]'); await p.waitForTimeout(3500);
+    const j4 = journal.slice(avant4);
+    const iMaj = j4.findIndex((j) => j[0] === 'PATCH' && j[1] === 'actualite_photos' && j[2].includes('id=eq.' + idR) && /"url":"[^"]*site\/actualites\/a1\//.test(j[3] || ''));
+    const iEnvoi = j4.findIndex((j) => j[0] === 'API' && /site\/actualites\/a1\//.test(j[2] || '') && !/suppression/.test(j[2] || ''));
+    const iEfface = j4.findIndex((j) => j[0] === 'API' && /"action":"suppression"/.test(j[2] || '') && (j[2] || '').includes(fichierR));
+    ok(iEnvoi >= 0 && iMaj > iEnvoi, n + 'la nouvelle photo est envoyée, puis la même ligne pointe vers elle (même place)');
+    ok(iEfface > iMaj, n + 'l’ancien fichier est effacé du stockage APRÈS la base');
+    ok(j4.some((j) => j[0] === 'PATCH' && j[1] === 'actualites' && /"image_url":"[^"]*site\/actualites\/a1\//.test(j[3] || '')), n + 'la couverture suit la nouvelle photo');
+    ok(!j4.some((j) => (j[0] === 'DELETE' || j[0] === 'POST') && j[1] === 'actualite_photos'), n + 'aucune ligne supprimée ni ajoutée (remplacement sur place)');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }

@@ -3804,7 +3804,9 @@ d'identité par l'adresse /book/…) — il échoue sur l'ancienne version.
 
 Avant, en modifiant une actualité ou un événement, on ne pouvait qu'AJOUTER des photos. Désormais,
 sous chaque photo déjà en ligne (`#pub-en-ligne`, `js/admin/site-contenu.js`) : flèches (ordre),
-étoile (couverture), croix (retirer), et « Annuler » pour remettre les photos retirées.
+étoile (couverture), croix (retirer), « Remplacer » (une autre photo à la même place : la nouvelle est
+envoyée, la même ligne pointe vers elle, la couverture la suit, l'ancien fichier est effacé après la base ;
+si la base refuse, le nouveau fichier est effacé), et « Annuler » pour tout remettre.
 - Rien n'est écrit avant « Enregistrer » ; ces choix (numéros des photos, pas les fichiers) font partie
   du brouillon (`js/admin/brouillons.js`).
 - Il faut garder au moins une photo (ou, pour une actualité, un lien vidéo), seulement si on a touché

@@ -116,14 +116,23 @@
   }
 
   // Photos déjà en ligne (modification, chantier 9) : ◀ ▶ pour l'ordre, ★ pour la couverture, ✕ pour
-  // retirer. Rien ne change sur le site avant « Enregistrer » (js/publications.js, appliquerPhotosEnLigne).
+  // retirer, « Remplacer » (même place, même rôle de couverture). Rien ne change sur le site avant
+  // « Enregistrer » (js/publications.js, appliquerPhotosEnLigne).
   const gardees = () => redaction.enLigne.filter((p) => !p.retiree);
-  // couverture affichée : celle choisie si elle reste (ou ancienne image hors liste), sinon la 1re photo restante,
+  // une photo remplacée montre déjà sa remplaçante (pas encore envoyée)
+  const apercuDe = (p) => (p.remplacement ? (p.apercu = p.apercu || URL.createObjectURL(p.remplacement)) : urlLegere(p.url));
+  const designe = (p) => p.url === redaction.couverture || p.ancienneUrl === redaction.couverture;
+  const ancienneCouverture = () => redaction.couverture && !redaction.enLigne.some(designe);
+  // couverture : celle choisie si elle reste (ou ancienne image hors liste), sinon la 1re photo restante,
   // sinon la 1re photo choisie — même règle qu'à l'enregistrement
+  function photoCouverture() {
+    const g = gardees();
+    return g.find(designe) || (ancienneCouverture() ? null : g[0] || null);
+  }
   function couvertureEffective() {
-    const c = redaction.couverture, g = gardees();
-    if (c && (g.some((p) => p.url === c) || !redaction.enLigne.some((p) => p.url === c))) return urlLegere(c);
-    if (g[0]) return urlLegere(g[0].url);
+    const p = photoCouverture();
+    if (p) return apercuDe(p);
+    if (ancienneCouverture()) return urlLegere(redaction.couverture);
     return redaction.panier.apercus[0] || '';
   }
   function montrerVitrine() {
@@ -133,23 +142,26 @@
   function montrerEnLigne() {
     const zone = document.getElementById('pub-en-ligne');
     if (!zone || !redaction) return;
-    const g = gardees(), retirees = redaction.enLigne.length - g.length, couv = couvertureEffective();
+    const g = gardees(), retirees = redaction.enLigne.length - g.length, couv = photoCouverture();
+    const remplacees = g.filter((p) => p.remplacement).length;
     const bouton = (action, id, signe, nom, inactif) => '<button type="button" class="btn-mini-admin" data-action="' + action + '" data-id="' + P.esc(id) + '" aria-label="' + nom + '" title="' + nom + '"' + (inactif ? ' disabled' : '') + '>' + signe + '</button>';
     zone.innerHTML = g.map((p, i) => {
-      const estCouv = urlLegere(p.url) === couv;
-      return '<span class="pub-photo-en-ligne' + (estCouv ? ' est-couverture' : '') + '"><img src="' + P.esc(urlLegere(p.url)) + '" alt="" loading="lazy">' +
-        (estCouv ? '<span class="pub-badge-couverture">Couverture</span>' : '') +
+      const estCouv = p === couv;
+      return '<span class="pub-photo-en-ligne' + (estCouv ? ' est-couverture' : '') + '"><img src="' + P.esc(apercuDe(p)) + '" alt="" loading="lazy">' +
+        (estCouv ? '<span class="pub-badge-couverture">Couverture</span>' : '') + (p.remplacement ? '<span class="pub-badge-nouvelle">Nouvelle photo</span>' : '') +
         '<span class="pub-photo-boutons">' + bouton('publication-photo-avant', p.id, P.icone('avant', 18), 'Déplacer avant', i === 0) + bouton('publication-photo-apres', p.id, P.icone('apres', 18), 'Déplacer après', i === g.length - 1) +
-        bouton('publication-photo-couverture', p.id, P.icone('etoile', 18), 'Choisir comme photo de couverture', estCouv) + bouton('publication-photo-enlever', p.id, P.icone('croix', 18), 'Retirer cette photo du site', false) + '</span></span>';
+        bouton('publication-photo-couverture', p.id, P.icone('etoile', 18), 'Choisir comme photo de couverture', estCouv) + bouton('publication-photo-enlever', p.id, P.icone('croix', 18), 'Retirer cette photo du site', false) + '</span>' +
+        '<button type="button" class="btn-mini-admin pub-remplacer" data-action="publication-photo-remplacer" data-id="' + P.esc(p.id) + '">Remplacer</button></span>';
     }).join('') +
-      '<p class="doux petit-texte">' + (g.length ? P.pluriel(g.length, 'photo en ligne', 'photos en ligne') + ' : les flèches pour l’ordre, l’étoile pour la couverture, la croix pour retirer.' : 'Aucune photo gardée.') +
+      '<input type="file" accept="image/*,.heic,.heif" id="pub-remplacement" data-change="publication-photo-remplacement" hidden>' +
+      '<p class="doux petit-texte">' + (g.length ? P.pluriel(g.length, 'photo en ligne', 'photos en ligne') + ' : les flèches pour l’ordre, l’étoile pour la couverture, la croix pour retirer, « Remplacer » pour mettre une autre photo à la même place.' : 'Aucune photo gardée.') +
       ' Rien ne change sur le site avant « Enregistrer ».' +
-      (retirees ? ' <b>' + P.pluriel(retirees, 'photo retirée', 'photos retirées') + '</b> (effacée' + (retirees > 1 ? 's' : '') + ' à l’enregistrement). <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>' : '') + '</p>';
+      (retirees || remplacees ? ' <b>' + [retirees ? P.pluriel(retirees, 'photo retirée', 'photos retirées') : '', remplacees ? P.pluriel(remplacees, 'photo remplacée', 'photos remplacées') : ''].filter(Boolean).join(', ') + '</b> (les anciennes sont effacées à l’enregistrement). <button type="button" class="btn-mini-admin" data-action="publication-photos-annuler">Annuler</button>' : '') + '</p>';
     montrerVitrine();
   }
   function photosChangees() {
     if (!redaction || !redaction.enLigne.length) return false;
-    return redaction.enLigne.some((p) => p.retiree) || gardees().map((p) => p.id).join(',') !== redaction.origine.ordre || redaction.couverture !== redaction.origine.couverture;
+    return redaction.enLigne.some((p) => p.retiree || (p.remplacement && !p.retiree)) || gardees().map((p) => p.id).join(',') !== redaction.origine.ordre || redaction.couverture !== redaction.origine.couverture;
   }
   function apresChangementEnLigne() { montrerEnLigne(); garderBrouillon(); }
   const trouver = (el) => redaction && redaction.enLigne.find((p) => String(p.id) === el.dataset.id);
@@ -165,7 +177,19 @@
   P.actions['publication-photo-apres'] = (el) => deplacer(el, 1);
   P.actions['publication-photo-couverture'] = (el) => { const p = trouver(el); if (!p) return; redaction.couverture = p.url; apresChangementEnLigne(); };
   P.actions['publication-photo-enlever'] = (el) => { const p = trouver(el); if (!p) return; p.retiree = true; apresChangementEnLigne(); };
-  P.actions['publication-photos-annuler'] = () => { if (!redaction) return; redaction.enLigne.forEach((p) => { p.retiree = false; }); apresChangementEnLigne(); };
+  function remplacerPar(p, fichier) {
+    if (p.apercu) URL.revokeObjectURL(p.apercu);
+    p.apercu = null; p.remplacement = fichier || null;
+  }
+  P.actions['publication-photos-annuler'] = () => { if (!redaction) return; redaction.enLigne.forEach((p) => { p.retiree = false; remplacerPar(p, null); }); apresChangementEnLigne(); };
+  let aRemplacer = null;
+  P.actions['publication-photo-remplacer'] = (el) => { aRemplacer = trouver(el) || null; const champ = document.getElementById('pub-remplacement'); if (aRemplacer && champ) champ.click(); };
+  P.changements['publication-photo-remplacement'] = (el) => {
+    const f = el.files && el.files[0], p = aRemplacer; el.value = ''; aRemplacer = null;
+    if (!f || !p || !redaction || !redaction.enLigne.includes(p)) return;
+    remplacerPar(p, f);
+    apresChangementEnLigne();
+  };
   // Brouillon gardé dans ce navigateur (js/admin/brouillons.js) : champs, texte et photos choisies
   let minuteurBrouillon = null;
   function garderBrouillon() {
@@ -178,7 +202,8 @@
       const champs = {};
       ['titre', 'categorie', 'video', 'date', 'lieu'].forEach((n) => { if (form.elements[n]) champs[n] = form.elements[n].value; });
       // photos déjà en ligne : ordre, retirées et couverture (seulement des numéros, pas les fichiers)
-      const enLigne = r.enLigne.length ? { ordre: r.enLigne.map((p) => p.id), retirees: r.enLigne.filter((p) => p.retiree).map((p) => p.id), couverture: r.couverture } : null;
+      const enLigne = r.enLigne.length ? { ordre: r.enLigne.map((p) => p.id), retirees: r.enLigne.filter((p) => p.retiree).map((p) => p.id), couverture: r.couverture,
+        remplacements: Object.fromEntries(r.enLigne.filter((p) => p.remplacement).map((p) => [String(p.id), p.remplacement])) } : null;
       P.brouillon.ecrire(cleBrouillon(), { champs, texte: lireContenuEditeur(r.editeur), fichiers: r.panier.fichiers, enLigne });
     }, 400);
   }
@@ -194,7 +219,8 @@
       // photos encore en ligne seulement (une photo disparue entre-temps est ignorée, une nouvelle va à la fin)
       const rang = new Map((b.enLigne.ordre || []).map((id, i) => [String(id), i])), retirees = new Set((b.enLigne.retirees || []).map(String));
       r.enLigne.sort((x, y) => (rang.has(String(x.id)) ? rang.get(String(x.id)) : 1e6) - (rang.has(String(y.id)) ? rang.get(String(y.id)) : 1e6));
-      r.enLigne.forEach((p) => { p.retiree = retirees.has(String(p.id)); });
+      const remplacements = b.enLigne.remplacements || {};
+      r.enLigne.forEach((p) => { p.retiree = retirees.has(String(p.id)); if (remplacements[String(p.id)] instanceof Blob) remplacerPar(p, remplacements[String(p.id)]); });
       r.enLigne = r.enLigne.filter((p) => !p.retiree).concat(r.enLigne.filter((p) => p.retiree));
       if (b.enLigne.couverture === r.origine.couverture || r.enLigne.some((p) => p.url === b.enLigne.couverture)) r.couverture = b.enLigne.couverture;
       montrerEnLigne();

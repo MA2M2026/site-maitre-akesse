@@ -722,6 +722,8 @@ svg.courbe text.sem { font-size: 13px; font-weight: 400; fill: var(--av-gris); }
 .pub-photos .pub-photo-en-ligne img { width: 136px; height: 136px; }
 .pub-photo-en-ligne.est-couverture img { outline: 3px solid var(--rouge-mat); outline-offset: 1px; }
 .pub-badge-couverture { position: absolute; top: 6px; left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--rouge-mat); color: var(--blanc-pur); font-size: 11px; font-weight: 600; }
+.pub-badge-nouvelle { position: absolute; top: 34px; left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--blanc-pur); color: var(--rouge-mat); font-size: 11px; font-weight: 600; }
+.pub-photo-en-ligne .pub-remplacer { min-height: 32px; padding: 4px 8px; width: 100%; }
 .pub-photo-boutons { display: flex; justify-content: space-between; gap: 2px; }
 .pub-photo-boutons .btn-mini-admin { min-width: 32px; min-height: 32px; padding: 0; flex: 1; }
 .pub-photo-boutons .btn-mini-admin:disabled { opacity: .35; cursor: default; }
