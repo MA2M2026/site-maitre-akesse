@@ -1051,3 +1051,44 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .agenda-seance { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
 .agenda-seance-jour { min-width: 9em; font-weight: 600; }
 .agenda-seance-lieu { flex: 1 1 220px; min-width: 0; }
+
+/* Liste de présence des cours du dimanche (chantier 14, 01/11/2026) — rouge mat et blanc */
+.pr-barre { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pr-barre h2 { margin: 0; font-size: 20px; text-align: center; }
+.pr-mois { display: inline-block; text-transform: capitalize; }
+.pr-nb { display: block; font-size: 14px; text-transform: none; }
+.pr-recherche { max-width: 320px; }
+.pr-tableau { overflow-x: auto; background: var(--blanc-pur); border-radius: var(--av-rayon-petit); }
+.pr-grille { border-collapse: collapse; width: 100%; min-width: 100%; }
+.pr-grille th, .pr-grille td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--av-lignes); color: #1B1817; text-transform: none; letter-spacing: normal; }
+.pr-grille .pr-nom { position: sticky; left: 0; background: var(--blanc-pur); text-align: left; z-index: 1; width: 108px; max-width: 108px; font-family: var(--av-texte); }
+.pr-grille th.pr-nom { font-weight: 600; font-size: 12px; line-height: 1.2; }
+.pr-nom-c { display: flex; align-items: center; gap: 6px; }
+.pr-nom-c > span:last-child { min-width: 0; overflow-wrap: break-word; word-break: normal; white-space: normal; }
+@media (max-width: 699px) { .pr-nom-c .pr-vis { display: none; } }   /* téléphone : toute la largeur pour le nom */
+.pr-grille th.pr-nom span:last-child { overflow-wrap: anywhere; }
+.pr-vis { width: 28px; height: 28px; flex: none; font-size: 11px; }
+.pr-jour span { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; font-family: var(--av-texte); }
+.pr-jour.aujourdhui span { color: var(--rouge-mat); }
+.pr-annuler { border: 0; background: none; color: var(--rouge-mat); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 2px; min-height: 24px; }
+.pr-case { width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--av-lignes); background: var(--blanc-pur); font-weight: 700; font-size: 16px; cursor: pointer; color: #1B1817; }
+.pr-case.e-present { background: #1E7A45; border-color: #1E7A45; color: #FFFFFF; }
+.pr-case.e-excuse { background: #9A5800; border-color: #9A5800; color: #FFFFFF; }
+.pr-case.e-absent { background: var(--rouge-mat); border-color: var(--rouge-mat); color: #FFFFFF; }
+.pr-case.e-annulee, .pr-case.e-avant_entree { background: #EFEFEF; border-color: #EFEFEF; color: #6B6B6B; cursor: default; }
+.pr-case:disabled { cursor: default; }
+.pr-case.e-a_venir:disabled { opacity: .45; }
+.pr-mention { min-width: 96px; font-size: 12px; }
+.pr-badge { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 600; line-height: 1.3; color: #FFFFFF; }
+.pr-badge.vert { background: #1E7A45; } .pr-badge.orange { background: #9A5800; } .pr-badge.rouge { background: var(--rouge-mat); }
+.pr-legende { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 6px; color: #FFFFFF; font-weight: 700; text-align: center; border: 1.5px solid #FFFFFF; }   /* (contour : lisible sur le fond rouge de la page) */
+.pr-legende.e-present { background: #1E7A45; } .pr-legende.e-excuse { background: #9A5800; } .pr-legende.e-absent { background: var(--rouge-mat); }
+.pr-periode { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.pr-synthese summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; cursor: pointer; }
+.pr-s-nom { font-weight: 600; flex: 1 1 140px; }
+.pr-s-chiffres { font-size: 13px; color: #4A4544; }
+.pr-detail { margin: 10px 0 0; padding-left: 18px; line-height: 1.7; font-size: 14px; }
+@media print {
+  .lateral, .onglets-bas, .haut, .pr-periode .ligne, .entete .btn, .entete .retour { display: none !important; }
+  .pr-synthese { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+}
