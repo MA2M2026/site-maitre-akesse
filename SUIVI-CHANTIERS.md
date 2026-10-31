@@ -12,7 +12,7 @@ Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 | Étape 1 : vérifier avant de coder | terminé (31/10) | — |
 | 0. Installation de l'application sur tous les téléphones | en cours | corrections en ligne depuis le 28/10, jamais essayées sur de vrais téléphones ; essais réels (iPhone d'abord), corrections, puis vidéo |
 | 1. Grille du Book 3 / 4 / 5 | terminé (31/10) | — (vérifié en ligne : 3 / 4 / 5 colonnes, rien ne déborde) |
-| 2. Fiche mannequin plus rapide | en cours | demandes en parallèle EN LIGNE (31/10) ; reste : accélérer la grande photo (encore ≈ 2,3 à 3 s mesurées depuis l'espace de travail) et mesurer sur un vrai téléphone |
+| 2. Fiche mannequin plus rapide | en cours | étape faite (31/10, branche) : grande photo lancée dès la liste des photos, âge en parallèle, identité demandée une fois (avant : photo demandée à ≈ 5,3 s, affichée à ≈ 6,2 s en ligne) ; reste : batterie, mise en ligne (prochain lot), mesure en ligne et sur un vrai téléphone |
 | 3. Application mannequin pleine largeur | en cours | en ligne (31/10) ; reste : vérification en ligne sur téléphone/tablette (adresse de l'application bloquée depuis l'espace de travail) |
 | 4. Bande « Télécharger l'application » rouge foncé | terminé (31/10) | — (vérifié en ligne : rouge profond #5A141B, contour blanc) |
 | 5. Édito (SonarCloud) + documentation | terminé (31/10) | — (SonarCloud après mise en ligne : 0 bug, 0 faille, notes au maximum ; README à jour) |
@@ -23,7 +23,7 @@ Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 | 10. Même mécanisme pour tous les envois d'images | pas commencé | — |
 | 11. Candidatures : plus d'ajout de photos par l'agence | pas commencé | — |
 | 12. Évaluation globale (6 visiteurs, contrôles externes) | pas commencé | — |
-| 13. Audit des secrets et protection du dépôt | pas commencé | — |
+| 13. Audit des secrets et protection du dépôt | pas commencé | décision de la propriétaire (31/10) : à faire À LA FIN |
 | Après : audit de la sécurité côté serveur (`PLAN-SERVEUR.md`) | pas commencé | — |
 
 ## Constats de l'étape 1 (31/10/2026)

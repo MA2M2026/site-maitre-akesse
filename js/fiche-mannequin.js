@@ -99,8 +99,19 @@ async function chargerProfilInterne() {
     ma2mExperiencesAgence(id)
   ]);
   const demandeMesures = window.ma2mMesuresSupp(id);
+  // l'âge aussi, en même temps (31/10/2026 : il était demandé après tout le reste)
+  const demandeAge = Promise.resolve(sb.rpc('ages_mannequins', { ids: [id] }));
   // une demande abandonnée (profil non publié) ne doit pas laisser d'erreur non gérée
-  [demandePhotos, demandeProjets, demandeMesures].forEach((d) => { d.catch(() => {}); });
+  [demandePhotos, demandeProjets, demandeMesures, demandeAge].forEach((d) => { d.catch(() => {}); });
+  // La grande photo part dès que la liste des photos arrive, sans attendre le reste (31/10/2026 :
+  // elle ne commençait qu'au bout de ≈ 5 s sur téléphone) ; le navigateur la garde pour l'affichage.
+  demandePhotos.then(({ data }) => {
+    const v = photosAffichees(data);
+    if (!v.couverture) return;
+    const img = new Image();
+    img.fetchPriority = 'high';
+    img.src = urlLegere(v.couverture.url_moyenne || v.couverture.url);
+  }).catch(() => {});
 
   const { data: profil, error } = await sb
     .from('model_profiles')
@@ -168,7 +179,7 @@ async function chargerProfilInterne() {
   // lisible par les visiteurs (extension 114 installée le 06/10/2026).
   let age = '';
   try {
-    const { data: ages } = await sb.rpc('ages_mannequins', { ids: [id] });
+    const { data: ages } = await demandeAge;
     if (Array.isArray(ages) && ages[0] && ages[0].age != null) age = ages[0].age;
   } catch (e) {}
 
@@ -230,7 +241,7 @@ async function chargerProfilInterne() {
   contenu.innerHTML = `
     <div class="reveal">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
-        <img data-couv-img src="${echapperHtml(photoHero)}" alt="">
+        <img data-couv-img src="${echapperHtml(photoHero)}" alt="" fetchpriority="high">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
           <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? T('Homme', 'Man') : profil.category === 'femme' ? T('Femme', 'Woman') : 'New Face'}</div>

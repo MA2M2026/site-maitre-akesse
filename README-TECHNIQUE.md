@@ -3779,3 +3779,13 @@ Sources de la vidéo d'installation : `outils/video-installation/` (non publiée
   gardée par Android ; le manifeste dit #7C2128 depuis le 28/10 ; Android la met à jour seul (ou
   désinstaller / réinstaller).
 - **SonarCloud** : `document.fonts.ready.then(couperEdito, couperEdito)` (`js/accueil.js`).
+
+## Fiche mannequin : la grande photo part tout de suite (31/10/2026)
+Mesure en ligne avant correction (téléphone, ouverture directe de /book/…) : la grande photo
+(107 Ko) n'était demandée qu'au bout de ≈ 5,3 s, après deux demandes posées l'une après l'autre
+(nom d'adresse, âge) et une demande d'identité faite deux fois (fiche et compteur de visites).
+Corrections : `js/fiche-mannequin.js` lance la photo (`new Image()`, `fetchpriority="high"`) dès que
+la liste des photos arrive, et demande l'âge (`ages_mannequins`) en même temps que le reste ;
+`js/adresse-fiche.js` ne pose la demande d'identité qu'une fois par page (id et nom d'adresse lus
+ensemble). Essai : `test-fiche-rapide.js` (âge et photo avant la réponse du profil, une seule demande
+d'identité par l'adresse /book/…) — il échoue sur l'ancienne version.

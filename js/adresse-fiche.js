@@ -22,23 +22,34 @@
   });
 
   // Identifiant du mannequin à afficher : ?id=… ou nom d'adresse /book/….
-  window.ma2mIdFiche = async function () {
-    var id = new URLSearchParams(location.search).get('id');
-    if (id) return id;
-    var m = location.pathname.match(CHEMIN_JOLI);
-    if (!m || typeof sb === 'undefined' || !sb) return null;
-    try {
-      var r = await sb.from('model_profiles').select('id').eq('slug', m[1]).eq('published', true).maybeSingle();
-      return r && r.data ? r.data.id : null;
-    } catch (err) { return null; }
+  // Une seule demande par page (31/10/2026 : la fiche et le compteur de visites la posaient chacun
+  // de leur côté) ; le nom d'adresse lu en même temps sert ensuite à ma2mAdresseFiche.
+  var dejaLu = null, adresseLue = {};
+  window.ma2mIdFiche = function () {
+    if (!dejaLu) dejaLu = (async function () {
+      var id = new URLSearchParams(location.search).get('id');
+      if (id) return id;
+      var m = location.pathname.match(CHEMIN_JOLI);
+      if (!m || typeof sb === 'undefined' || !sb) return null;
+      try {
+        var r = await sb.from('model_profiles').select('id, slug').eq('slug', m[1]).eq('published', true).maybeSingle();
+        if (!r || !r.data) return null;
+        adresseLue[r.data.id] = r.data.slug;
+        return r.data.id;
+      } catch (err) { return null; }
+    })();
+    return dejaLu;
   };
 
   // Nom d'adresse du mannequin (null si la base ne le connaît pas encore) ; met la
   // jolie adresse dans la barre du navigateur.
   window.ma2mAdresseFiche = async function (id, anglais) {
     try {
-      var r = await sb.from('model_profiles').select('slug').eq('id', id).maybeSingle();
-      var slug = r && r.data ? r.data.slug : null;
+      var slug = adresseLue[id];
+      if (slug === undefined) {
+        var r = await sb.from('model_profiles').select('slug').eq('id', id).maybeSingle();
+        slug = r && r.data ? r.data.slug : null;
+      }
       if (!slug || !/^[a-z0-9-]{1,80}$/.test(slug)) return null;
       var chemin = (anglais ? '/en' : '') + '/book/' + slug;
       if (location.pathname !== chemin) history.replaceState(history.state, '', chemin + location.hash);
