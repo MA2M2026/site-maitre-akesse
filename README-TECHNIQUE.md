@@ -3907,3 +3907,13 @@ lectures ; sinon (base lente ou en panne, robot d'aperçu, requête autre que GE
 `js/mannequins.js` (`lireBook`) et le mur de photos du haut de page (`murDeTitre`, `js/app.js`) utilisent
 le bloc s'il est là. Essai : `test-book-serveur.js` ; `test-middleware-apercus.mjs` vérifie qu'un robot
 reçoit toujours la page habituelle du Book.
+
+## Site dynamique, étape 2 (suite) : actualités et événements préparés par le serveur (01/11/2026)
+
+`middleware.js` (`publicationsRemplies`) : `/actualites`, `/evenements` (et `/en/…`, avec ou sans `.html`,
+avec ou sans `?actu=` / `?evenement=`) : bloc `<script type="application/json" id="publications-donnees">`
+`{ liste, photos }` (mêmes lectures que `js/actualites.js` / `js/evenements.js` : liste triée, puis les
+identifiants des photos pour leur nombre) et la photo « À la une » annoncée en tête (`preload`). Lu par
+`publicationsServeur()` (`js/publications.js`, partagé par les deux pages). 1,2 s au plus ; sinon (base
+lente ou en panne, robot d'aperçu — qui garde son aperçu d'article —, autre que GET) comme avant.
+En-tête `x-ma2m-publications` sur sa propre demande de la page. Essai : `test-publications-serveur.js`.

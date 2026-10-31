@@ -469,6 +469,34 @@ async function bookRempli(requete, url) {
   return new Response(html, { status: 200, headers: entetes });
 }
 
+// ================== Actualités et événements préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
+// Même principe que The Book : la liste et les photos (pour leur nombre) sont posées dans la page (bloc
+// « publications-donnees », lu par publicationsServeur, js/publications.js), mêmes questions que la page ;
+// la photo « À la une » est annoncée en tête. Base lente (plus de 1,2 s) ou en panne : comme avant.
+const PUBLICATIONS_PAGES = /^\/(en\/)?(actualites|evenements)(\.html)?$/;
+const LECTURES_PUBLICATIONS = {
+  actualites: ['actualites?select=*&order=created_at.desc', 'actualite_photos?select=actualite_id'],
+  evenements: ['evenements?select=*&order=date_evenement.desc.nullslast,created_at.desc', 'evenement_photos?select=evenement_id']
+};
+async function publicationsRemplies(requete, url) {
+  if (requete.method !== 'GET') return;
+  const m = url.pathname.match(PUBLICATIONS_PAGES);
+  const anglais = !!m[1], quoi = m[2];
+  const [liste, photos] = LECTURES_PUBLICATIONS[quoi];
+  const demandePage = fetch(new URL((anglais ? '/en/' : '/') + quoi + url.search, url).toString(), { headers: { 'x-ma2m-publications': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const [l, p, page] = await Promise.all([lireSupabase(liste, null, ATTENTE_FICHE).catch(() => null), lireSupabase(photos, null, ATTENTE_FICHE).catch(() => null), demandePage]);
+  if (!Array.isArray(l) || !Array.isArray(p) || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
+  let html = await page.text();
+  if (html.indexOf('<body>') === -1 || html.indexOf('</head>') === -1) return;
+  const une = l[0] && l[0].image_url ? photoLegere(l[0].image_url) : '';
+  if (une) html = html.replace('</head>', '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(une) + '">\n</head>');
+  html = html.replace('<body>', '<body>\n<script type="application/json" id="publications-donnees">' + jsonSur({ liste: l, photos: p }) + '</script>');
+  const entetes = new Headers(page.headers);
+  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
+  entetes.set('Cache-Control', 'no-cache, must-revalidate');
+  return new Response(html, { status: 200, headers: entetes });
+}
+
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
 // (sinon l'accueil était servi sans www, et ses styles, redirigés vers www, bloqués par le CSP).
@@ -490,7 +518,7 @@ export default async function middleware(requete) {
       try { return await accueilRempli(requete, url); } catch (e) { return; }
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
-    if (requete.headers.get('x-ma2m-fiche') || requete.headers.get('x-ma2m-book')) return;  // (pages demandées par ficheRemplie / bookRempli)
+    if (requete.headers.get('x-ma2m-fiche') || requete.headers.get('x-ma2m-book') || requete.headers.get('x-ma2m-publications')) return;  // (pages demandées par le serveur lui-même)
     if (BOOK.test(url.pathname) && !ROBOTS_APERCU.test(requete.headers.get('user-agent') || '')) {
       try { return await bookRempli(requete, url); } catch (e) { return; }
     }
@@ -516,6 +544,9 @@ export default async function middleware(requete) {
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    if (!ROBOTS_APERCU.test(agent) && PUBLICATIONS_PAGES.test(url.pathname)) {
+      try { return await publicationsRemplies(requete, url); } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     if (/\/mannequin(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);

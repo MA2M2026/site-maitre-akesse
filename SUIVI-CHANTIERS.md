@@ -24,7 +24,7 @@ Retour en arrière possible : version précédente `main` 0a0f4e4 (lot A).
 | 11. Candidatures : plus d'ajout de photos par l'agence | en cours | EN LIGNE (lot C, 31/10) ; reste : vérification |
 | 12. Évaluation globale (6 visiteurs, contrôles externes) | pas commencé | — |
 | 13. Audit des secrets et protection du dépôt | pas commencé | décision de la propriétaire (31/10) : à faire À LA FIN |
-| Après : site dynamique (`PLAN-SERVEUR.md`, chemin A choisi le 31/10) | pas commencé | plan écrit ; 1re étape : fiche mannequin préparée par le serveur ; offre Vercel Pro à la commercialisation |
+| Après : site dynamique (`PLAN-SERVEUR.md`, chemin A choisi le 31/10) | en cours | branche `site-dynamique` (pas en ligne) : étape 1 faite (fiche d'un mannequin préparée par le serveur), étape 2 faite (The Book, actualités, événements) ; reste : batterie, mise en ligne avec accord, mesures avant / après ; puis étapes 3 à 5 (formulaires anti-robot, contenu des fichiers, surveillance) |
 | 14. Liste de présence des cours du dimanche (demande du 31/10, APRÈS le site dynamique) | pas commencé | propositions faites à la propriétaire (dimanches du mois générés, vert / rouge, mention du mois, synthèse sur une période, visible dans l'application de la mannequin sans pouvoir la modifier, statut « formation terminée ») ; décisions à recevoir |
 
 ## Constats de l'étape 1 (31/10/2026)

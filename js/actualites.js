@@ -39,7 +39,8 @@ async function chargerActualites() {
   const grille = document.getElementById('actus-grille');
   const uneZone = document.getElementById('actus-une');
   const vide = document.getElementById('actus-vide');
-  if (!sb) {
+  const serveur = publicationsServeur();  // (js/publications.js)
+  if (!serveur && !sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
     // plutôt que de laisser croire qu'il n'y a simplement aucune actualité.
@@ -47,12 +48,12 @@ async function chargerActualites() {
     vide.style.display = 'block';
     return;
   }
-  const { data, error } = await sb.from('actualites').select('*').order('created_at', { ascending: false });
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('actualites').select('*').order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
   await versAnglais(data, ['titre', 'commentaire'], true);  // (page anglaise, js/app.js)
   window.actualitesData = data;
 
-  const { data: toutesLesPhotos } = await sb.from('actualite_photos').select('actualite_id');
+  const { data: toutesLesPhotos } = serveur ? { data: serveur.photos } : await sb.from('actualite_photos').select('actualite_id');
   const compteurParActu = {};
   (toutesLesPhotos || []).forEach(p => { compteurParActu[p.actualite_id] = (compteurParActu[p.actualite_id] || 0) + 1; });
 

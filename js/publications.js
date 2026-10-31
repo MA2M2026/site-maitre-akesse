@@ -225,6 +225,16 @@ async function enregistrerPhotosPublication(t, id, urls, modification) {
   }
 }
 
+// Actualités / événements préparés par le serveur (middleware.js, 01/11/2026, site dynamique) : la liste
+// et les photos (pour le compte) déjà dans la page ; null sinon (la page lit la base comme avant).
+function publicationsServeur() {
+  try {
+    const bloc = document.getElementById('publications-donnees');
+    const d = bloc ? JSON.parse(bloc.textContent) : null;
+    return d && Array.isArray(d.liste) && Array.isArray(d.photos) ? d : null;
+  } catch (e) { return null; }
+}
+
 // Couverture d'une publication modifiée — UNE règle, pour l'aperçu de l'Administration
 // (js/admin/site-contenu.js) et pour l'enregistrement : la photo choisie si elle reste (ancienneUrl : une
 // photo remplacée est encore désignée par son ancienne adresse), sinon une ancienne image hors de la liste

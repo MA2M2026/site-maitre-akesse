@@ -21,7 +21,8 @@ async function chargerEvenements() {
   const grille = document.getElementById('evenements-grille');
   const uneZone = document.getElementById('evenements-une');
   const vide = document.getElementById('evenements-vide');
-  if (!sb) {
+  const serveur = publicationsServeur();  // (js/publications.js)
+  if (!serveur && !sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
     // plutôt que de laisser croire qu'il n'y a simplement aucun événement.
@@ -29,12 +30,12 @@ async function chargerEvenements() {
     vide.style.display = 'block';
     return;
   }
-  const { data, error } = await sb.from('evenements').select('*').order('date_evenement', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('evenements').select('*').order('date_evenement', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
   await versAnglais(data, ['titre', 'lieu', 'description'], true);  // (page anglaise, js/app.js)
   window.evenementsData = data;
 
-  const { data: toutesLesPhotos } = await sb.from('evenement_photos').select('evenement_id');
+  const { data: toutesLesPhotos } = serveur ? { data: serveur.photos } : await sb.from('evenement_photos').select('evenement_id');
   const compteurParEvenement = {};
   (toutesLesPhotos || []).forEach(p => { compteurParEvenement[p.evenement_id] = (compteurParEvenement[p.evenement_id] || 0) + 1; });
 
