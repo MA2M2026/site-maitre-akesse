@@ -64,7 +64,8 @@ lisait pas « 1er novembre »). Base d'essai : tous les fichiers SQL passent. 58
 - Qui coche : la propriétaire ou une personne de l'équipe ayant accès à l'Administration.
 - Statut « Formation terminée » : plus de mensualité, plus sur la liste, reste mannequin de l'agence ;
   attestation de fin de formation.
-- Formation : 9 mois de cours par an, 3 mois de vacances (durée totale à confirmer : 18 mois ?).
+- Formation (confirmé le 01/11/2026) : 2 ans = 2 fois 9 mois de cours (18 mois de cours) ; chaque année 3 mois de congé :
+  décembre, janvier, février (pas de cours : ces dimanches ne sont jamais des absences).
   Mannequins ayant déjà fini : façon de faire à décider.
 - Idées gardées (toutes) : bulletin trimestriel ; mensurations suivies ; documents qui expirent ;
   anniversaires (message AUTOMATIQUE par e-mail et WhatsApp) ; mannequin du mois (choisi selon

@@ -198,7 +198,7 @@
     const debut = premiers.length ? premiers[0].slice(0, 7) : mois;
     return { C, mois, ceMois: C.moisMannequin(mois, coches, annulees, d.date_entree, auj), tout: C.synthese(C.moisEntre(debut < mois ? debut : mois, mois), coches, annulees, d.date_entree, auj) };
   }
-  const NOMS_JOURS = { present: 'présente', excuse: 'excusée', absent: 'absente', annulee: 'pas de cours', avant_entree: '—', a_venir: 'à venir' };
+  const NOMS_JOURS = { present: 'présente', excuse: 'excusée', absent: 'absente', annulee: 'pas de cours', vacances: 'vacances', avant_entree: '—', a_venir: 'à venir' };
   const mentionHtml = (C, b) => (b.mention ? '<span class="ap-pastille pr-etat-' + C.MENTIONS[b.mention].ton + '">' + esc(C.MENTIONS[b.mention].mannequin) + '</span>' : '');
   function blocPresences() {
     const r = presencesCalculees();

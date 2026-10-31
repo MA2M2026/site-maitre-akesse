@@ -18,8 +18,8 @@
   const jourCourt = (d) => new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   const pasActivee = P.pasActivee('presences_mois');
   let etat = { mois: moisDe(aujourdhui()), donnees: null, filtre: '' };
-  const SIGNES = { present: '✓', excuse: 'E', absent: '✕', annulee: '—', avant_entree: '', a_venir: '' };
-  const NOMS_ETATS = { present: 'présente', excuse: 'absence excusée', absent: 'absente', annulee: 'séance annulée', avant_entree: 'pas encore à l’agence', a_venir: 'à venir' };
+  const SIGNES = { present: '✓', excuse: 'E', absent: '✕', annulee: '—', vacances: '', avant_entree: '', a_venir: '' };
+  const NOMS_ETATS = { present: 'présente', excuse: 'absence excusée', absent: 'absente', annulee: 'séance annulée', vacances: 'vacances (pas de cours)', avant_entree: 'pas encore à l’agence', a_venir: 'à venir' };
 
   // présences d'une mannequin, rangées par dimanche : { 'AAAA-MM-JJ': 'present' | 'excuse' }
   function parMannequin(d) {
@@ -63,7 +63,7 @@
     const presentes = dimancheDuJour ? d.mannequins.filter((m) => (presences.get(m.id) || {})[auj] === 'present').length : null;
     return P.entete('Liste de présence', '<a class="btn" href="#/site/' + PAGE + '/synthese">Synthèse</a>') +
       '<div class="carte pr-barre"><button type="button" class="btn petit" data-action="presences-mois" data-pas="-1" aria-label="Mois précédent">‹</button>' +
-      '<h2><span class="pr-mois">' + P.esc(NOMS_MOIS(etat.mois)) + '</span> <span class="doux pr-nb">' + jours.length + ' dimanches</span></h2>' +
+      '<h2><span class="pr-mois">' + P.esc(NOMS_MOIS(etat.mois)) + '</span> <span class="doux pr-nb">' + (C.enVacances(etat.mois + '-01') ? 'vacances : pas de cours' : jours.length + ' dimanches') + '</span></h2>' +
       '<button type="button" class="btn petit" data-action="presences-mois" data-pas="1" aria-label="Mois suivant">›</button></div>' +
       carteMdm +
       '<div class="chiffres">' + P.chiffre('Mannequins', String(d.mannequins.length)) + (presentes !== null ? P.chiffre('Présentes aujourd’hui', String(presentes), 'vert') : '') + '</div>' +
@@ -76,7 +76,10 @@
   // ---------- Mannequin du mois (supabase-mannequin-du-mois.sql, Extension 144) ----------
   // Proposées : celles qui ont suivi tous les cours du mois précédent ; l'agence peut en choisir une autre.
   async function carteMannequinDuMois(d, visages) {
-    const ceMois = moisDe(aujourdhui()), avant = C.moisVoisin(ceMois, -1);
+    // (le dernier mois de cours : en mars, on regarde novembre, février à décembre étant des vacances)
+    const ceMois = moisDe(aujourdhui());
+    let avant = C.moisVoisin(ceMois, -1);
+    while (C.enVacances(avant + '-01')) avant = C.moisVoisin(avant, -1);
     let historique, precedent;
     try {
       [historique, precedent] = await Promise.all([P.rpc('mannequins_du_mois_historique'), P.rpc('presences_mois', { p_mois: avant + '-01' })]);
@@ -115,7 +118,7 @@
     tr.querySelector('td.pr-mention').innerHTML = ment ? '<span class="pr-badge ' + ment.ton + '">' + P.esc(ment.agence) + '</span>' + (b.provisoire ? '<small class="doux"> (en cours)</small>' : '') : '<span class="doux">—</span>';
   }
   // un toucher : vide/rouge → présente → excusée → vide (enregistré aussitôt ; en cas de refus, la case revient)
-  const SUIVANT = { absent: 'present', a_venir: 'present', avant_entree: 'present', present: 'excuse', excuse: null };
+  const SUIVANT = { absent: 'present', a_venir: 'present', avant_entree: 'present', vacances: 'present', present: 'excuse', excuse: null };
   P.actions['presences-case'] = async (el) => {
     const avant = el.dataset.etat, voulu = SUIVANT[avant];
     const nouvel = voulu || C.etatJour(el.dataset.jour, null, false, null, aujourdhui());

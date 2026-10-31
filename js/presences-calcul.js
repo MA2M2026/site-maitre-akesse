@@ -25,10 +25,15 @@
     const d = new Date(a, m - 1 + pas, 1);
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   }
-  // état d'un dimanche pour une mannequin : present, excuse, absent, annulee, avant_entree, a_venir
+  // Congés de la formation (décision de la propriétaire, 01/11/2026 : 9 mois de cours par an ; décembre,
+  // janvier et février sans cours) : ces dimanches ne sont jamais des absences
+  const MOIS_VACANCES = [12, 1, 2];
+  const enVacances = (dimanche) => MOIS_VACANCES.includes(Number(String(dimanche).slice(5, 7)));
+  // état d'un dimanche pour une mannequin : present, excuse, absent, annulee, vacances, avant_entree, a_venir
   function etatJour(dimanche, coche, annulee, dateEntree, aujourdhui) {
     if (annulee) return 'annulee';
     if (coche === 'present' || coche === 'excuse') return coche;
+    if (enVacances(dimanche)) return 'vacances';
     if (dimanche >= aujourdhui) return 'a_venir';
     if (dateEntree && dimanche < dateEntree) return 'avant_entree';
     return 'absent';
@@ -66,7 +71,7 @@
   // Synthèse sur une période (liste de mois « AAAA-MM ») : le détail mois par mois et le bilan global
   function synthese(listeMois, presences, annulees, dateEntree, aujourdhui) {
     const parMois = listeMois.map((m) => moisMannequin(m, presences, annulees, dateEntree, aujourdhui))
-      .filter((m) => m.jours.some((j) => j.etat !== 'avant_entree' && j.etat !== 'a_venir'));
+      .filter((m) => m.jours.some((j) => j.etat !== 'avant_entree' && j.etat !== 'a_venir' && j.etat !== 'vacances'));
     return { parMois, bilan: bilan(parMois.flatMap((m) => m.jours.map((j) => j.etat))) };
   }
   // mois de « debut » à « fin » inclus (« AAAA-MM »)
@@ -89,5 +94,5 @@
     const v = COMPETENCES.map(([k]) => (notes || {})[k]).filter((x) => typeof x === 'number');
     return v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10 : null;
   }
-  racine.Presences = { jourIso, dimanchesDuMois, moisVoisin, etatJour, bilan, moisMannequin, synthese, moisEntre, MENTIONS, COMPETENCES, trimestre, trimestreVoisin, moyenne };
+  racine.Presences = { MOIS_VACANCES, enVacances, jourIso, dimanchesDuMois, moisVoisin, etatJour, bilan, moisMannequin, synthese, moisEntre, MENTIONS, COMPETENCES, trimestre, trimestreVoisin, moyenne };
 })(typeof window !== 'undefined' ? window : globalThis);

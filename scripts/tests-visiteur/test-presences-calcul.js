@@ -23,6 +23,11 @@ ok(P.etatJour('2026-11-22', undefined, false, null, '2026-11-22') === 'a_venir',
 ok(P.etatJour('2026-11-22', undefined, false, null, '2026-11-23') === 'absent', 'le lundi : rouge');
 ok(P.etatJour('2026-11-01', undefined, false, '2026-11-05', '2026-11-23') === 'avant_entree', 'avant son entrée à l’agence : ne compte pas');
 ok(P.etatJour('2026-11-01', 'present', false, '2026-11-05', '2026-11-23') === 'present', 'avant son entrée mais cochée : compte');
+// congés de la formation : décembre, janvier, février sans cours (décision du 01/11/2026)
+const dec = P.moisMannequin('2026-12', {}, [], '2025-01-01', '2027-01-15');
+ok(dec.jours.every((j) => j.etat === 'vacances') && dec.bilan.comptees === 0 && dec.bilan.mention === null, 'décembre (vacances) : aucun dimanche rouge, rien ne compte');
+ok(P.etatJour('2027-02-07', undefined, false, null, '2027-03-01') === 'vacances' && P.etatJour('2027-03-07', undefined, false, null, '2027-03-20') === 'absent', 'février : vacances ; mars : les cours reprennent');
+ok(P.etatJour('2026-12-06', 'present', false, null, '2026-12-20') === 'present', 'un cours exceptionnel pendant les vacances, coché : il compte');
 const s = P.synthese(P.moisEntre('2026-09', '2026-11'), { '2026-09-06': 'present', '2026-10-04': 'present' }, [], '2026-09-01', '2026-12-01');
 ok(s.parMois.length === 3 && s.bilan.presents === 2 && s.bilan.comptees === 13, 'synthèse sur 3 mois : détail par mois et total (2 présences sur 13 séances)');
 console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.'); process.exit(ko ? 1 : 0);

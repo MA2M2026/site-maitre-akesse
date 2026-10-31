@@ -250,7 +250,7 @@ body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; bo
 .pr-app-jour.pr-etat-present { background: #1E7A45; border-color: #1E7A45; color: #FFFFFF; }
 .pr-app-jour.pr-etat-excuse { background: #9A5800; border-color: #9A5800; color: #FFFFFF; }
 .pr-app-jour.pr-etat-absent { background: #7C2128; border-color: #7C2128; color: #FFFFFF; }
-.pr-app-jour.pr-etat-annulee, .pr-app-jour.pr-etat-avant_entree { background: #EFEFEF; border-color: #EFEFEF; color: #5C5C5C; }
+.pr-app-jour.pr-etat-annulee, .pr-app-jour.pr-etat-avant_entree, .pr-app-jour.pr-etat-vacances { background: #EFEFEF; border-color: #EFEFEF; color: #5C5C5C; }
 .ap-pastille.pr-etat-vert { background: #1E7A45; color: #FFFFFF; }
 .ap-pastille.pr-etat-orange { background: #9A5800; color: #FFFFFF; }
 .ap-pastille.pr-etat-rouge { background: #7C2128; color: #FFFFFF; }

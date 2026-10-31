@@ -1075,7 +1075,7 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .pr-case.e-present { background: #1E7A45; border-color: #1E7A45; color: #FFFFFF; }
 .pr-case.e-excuse { background: #9A5800; border-color: #9A5800; color: #FFFFFF; }
 .pr-case.e-absent { background: var(--rouge-mat); border-color: var(--rouge-mat); color: #FFFFFF; }
-.pr-case.e-annulee, .pr-case.e-avant_entree { background: #EFEFEF; border-color: #EFEFEF; color: #6B6B6B; cursor: default; }
+.pr-case.e-annulee, .pr-case.e-avant_entree, .pr-case.e-vacances { background: #EFEFEF; border-color: #EFEFEF; color: #6B6B6B; cursor: default; }
 .pr-case:disabled { cursor: default; }
 .pr-case.e-a_venir:disabled { opacity: .45; }
 .pr-mention { min-width: 96px; font-size: 12px; }
