@@ -51,8 +51,11 @@ declare
 begin
   if not presences_equipe() then raise exception 'Réservé à l''équipe de l''agence.'; end if;
   return json_build_object(
+    -- mensualite : état de la mensualité de ce mois (signe « à payer » à côté du nom, 01/11/2026) ;
+    -- mensualite_etat (supabase-administration.sql) ne le dit qu'à qui a accès aux Paiements (sinon null)
     'mannequins', coalesce((select json_agg(json_build_object('id', a.id, 'nom', a.full_name, 'genre', a.genre,
-        'date_entree', a.date_entree, 'compte', a.user_id, 'statut', a.statut) order by a.full_name)
+        'date_entree', a.date_entree, 'compte', a.user_id, 'statut', a.statut,
+        'mensualite', case when a.statut = 'actif' and debut >= date_trunc('month', a.date_entree) and debut <= current_date then mensualite_etat(a.id, debut) end) order by a.full_name)
       from agence_mannequins a
       where a.statut = 'actif' or exists (select 1 from presences p where p.mannequin_id = a.id and p.dimanche between debut and fin)), '[]'::json),
     'presences', coalesce((select json_agg(json_build_object('mannequin', p.mannequin_id, 'dimanche', p.dimanche, 'etat', p.etat))

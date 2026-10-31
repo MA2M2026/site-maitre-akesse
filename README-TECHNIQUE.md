@@ -3984,3 +3984,7 @@ fiche est publiée au Book — sinon son nom n'est jamais montré). **Administra
 une autre au choix). **Site** : bandeau en haut du Book (`js/mannequins.js`, vers sa fiche). **Application** :
 carte « Vous êtes la mannequin du mois ! » sur l'Accueil. Essais : `test-presences-admin.js`,
 `test-book-serveur.js`, `test-app-mannequin.js`. (Le bulletin trimestriel, à venir, servira aussi à départager.)
+- Signe « à payer » / « retard » à côté du nom dans la Liste de présence (01/11/2026) : `presences_mois`
+  renvoie `mensualite` (état du mois affiché, `mensualite_etat`) seulement à qui a accès aux Paiements ;
+  rien avant l'entrée de la mannequin ni pour un mois à venir. **Le fichier `supabase-presences.sql` est à
+  recoller** (rejouable) pour l'activer.

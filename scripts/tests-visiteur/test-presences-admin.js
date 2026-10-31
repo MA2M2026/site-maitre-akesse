@@ -19,7 +19,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 const ceMois = C.jourIso(new Date()).slice(0, 7), avant = C.moisVoisin(ceMois, -1), jours = C.dimanchesDuMois(avant);
 const M = [
   { id: 'r1', nom: 'AWA KONÉ', date_entree: '2025-01-01', compte: 'm1', statut: 'actif' },
-  { id: 'r2', nom: 'BINTOU TRAORÉ', date_entree: '2025-01-01', compte: null, statut: 'actif' },
+  { id: 'r2', nom: 'BINTOU TRAORÉ', date_entree: '2025-01-01', compte: null, statut: 'actif', mensualite: 'non_paye' },
   { id: 'r3', nom: 'CHLOÉ YAO', date_entree: '2025-01-01', compte: null, statut: 'actif' }];
 function moisSimule(corps) {
   const mois = String(corps.p_mois || '').slice(0, 7);
@@ -61,6 +61,7 @@ function moisSimule(corps) {
     ok((await etats(1)) === jours.map(() => 'present').join() && /Apprenant assidu, bravo/.test(await p.textContent(ligne(1) + ' .pr-mention')), n + 'toutes les séances : vert partout, « Apprenant assidu, bravo ! »');
     ok((await etats(2)) === jours.map(() => 'absent').join() && /Absent tout le mois/.test(await p.textContent(ligne(2) + ' .pr-mention')), n + 'aucune croix sur des dimanches passés : rouge partout, « Absent tout le mois »');
     ok((await etats(3)).startsWith('excuse,'), n + 'absence excusée : orange');
+    ok(/retard/.test(await p.textContent(ligne(2) + ' .pr-nom')) && !(await p.$(ligne(1) + ' .pr-a-payer')), n + 'mensualité du mois pas payée : petit signe « retard » à côté du nom (seulement elle)');
     // cocher Bintou au 1er dimanche : vert, enregistré, mention recalculée ; puis excusée ; puis décochée
     const caseB = ligne(2) + ' .pr-case[data-jour="' + jours[0] + '"]';
     await p.click(caseB); await p.waitForTimeout(500);

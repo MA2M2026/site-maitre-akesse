@@ -1098,3 +1098,4 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .pr-mdm-liste { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 8px; }
 .pr-mdm-liste li { display: flex; align-items: center; gap: 10px; }
 .pr-mdm-liste li span:not(.vis) { flex: 1; font-weight: 600; }
+.pr-a-payer { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px; background: var(--rouge-mat); color: #FFFFFF; font-size: 10px; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; }

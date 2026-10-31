@@ -39,6 +39,11 @@ select presences_seance_annuler((select avant from jours), false, null);
 select presence_marquer('00000000-0000-0000-0000-0000000000d1', (select avant from jours), 'present');
 select essai(json_array_length(presences_periode((select avant from jours), (select dernier from jours)) -> 'presences') = 2, 'séance rétablie : on recoche');
 
+-- Signe « mensualité à payer » : seulement pour qui a accès aux Paiements
+select essai(not exists (select 1 from json_array_elements(presences_mois(current_date) -> 'mannequins') m where m ->> 'mensualite' is not null), 'gestion du site (sans les Paiements) : aucune information de paiement');
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai(exists (select 1 from json_array_elements(presences_mois(current_date) -> 'mannequins') m where m ->> 'nom' = 'KONÉ AWA' and m ->> 'mensualite' in ('a_payer', 'non_paye', 'paye', 'attente')), 'principal : l''état de la mensualité du mois est là');
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
 -- Encaissements (rôle « caisse ») et principal : aussi de l'équipe
 select essai_qui('00000000-0000-0000-0000-0000000000a3');
 select essai(presences_mois(current_date) is not null, 'encaissements : voit la liste');

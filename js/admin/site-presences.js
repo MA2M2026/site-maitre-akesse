@@ -47,7 +47,10 @@
     const lignes = d.mannequins.map((m) => {
       const r = C.moisMannequin(etat.mois, presences.get(m.id), annulees, m.date_entree, auj);
       const ment = r.bilan.mention ? C.MENTIONS[r.bilan.mention] : null;
-      return '<tr data-nom="' + P.esc(String(m.nom || '').toLowerCase()) + '"><th scope="row" class="pr-nom"><div class="pr-nom-c">' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<span>' + P.esc(m.nom) + '</span></div></th>' +
+      // mensualité du mois pas payée (seulement pour qui a accès aux Paiements : la base ne le dit qu'à eux)
+      const aPayer = m.mensualite === 'non_paye' || m.mensualite === 'a_payer';
+      return '<tr data-nom="' + P.esc(String(m.nom || '').toLowerCase()) + '"><th scope="row" class="pr-nom"><div class="pr-nom-c">' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<span>' + P.esc(m.nom) +
+        (aPayer ? ' <small class="pr-a-payer" title="Mensualité de ' + P.esc(NOMS_MOIS(etat.mois)) + (m.mensualite === 'non_paye' ? ' en retard' : ' à payer') + '">' + (m.mensualite === 'non_paye' ? 'retard' : 'à payer') + '</small>' : '') + '</span></div></th>' +
         r.jours.map((j) => {
           const modifiable = j.etat !== 'annulee' && j.dimanche <= auj;
           return '<td><button type="button" class="pr-case e-' + j.etat + '" data-action="presences-case" data-mannequin="' + P.esc(m.id) + '" data-jour="' + j.dimanche + '" data-etat="' + j.etat + '"' +
