@@ -62,6 +62,7 @@ const ROLES = ['site', 'caisse', 'compta'];
 // la panne est notée au journal, la liste WhatsApp reste dans l'espace 2.
 const { messageMensualite } = require('../js/messages-mensualites.js');
 const { messageConvocation, EMAIL_AGENCE } = require('../js/messages-convocations.js');
+const { messageAnniversaire } = require('../js/messages-anniversaire.js');
 const EMAILJS = { service_id: 'service_771y6u7', template_id: 'template_q3qpg4p', user_id: 'iRmm0sDj_w3MBx3SK' };  // = js/emailjs-config.js
 // Un e-mail envoyé par EmailJS depuis le serveur (clé privée) ; vrai s'il est parti.
 async function envoyerEmailServeur(cle, email, nom, message) {
@@ -75,12 +76,38 @@ async function noterAuJournal(message, origine) {
   await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify({ message, page: '/api/portail', user_agent: 'serveur (' + origine + ')' }) }).catch(() => {});
 }
+// Anniversaires du jour (Extension 143, chantier 14, 01/11/2026) : noté d'abord (une seule fois par an ;
+// le message arrive dans l'application et sur le téléphone), puis l'e-mail (au parent pour une mineure) ;
+// l'agence reçoit le récapitulatif avec les messages WhatsApp déjà écrits (pas d'envoi WhatsApp automatique).
+async function anniversairesDuJour(cle) {
+  const liste = await rpcService('anniversaires_du_jour', {});
+  const faits = [];
+  for (const m of Array.isArray(liste) ? liste : []) {
+    const msg = messageAnniversaire(m);
+    const nouveau = await rpcService('anniversaire_noter', { p_mannequin: m.id, p_titre: msg.titre, p_texte: msg.application, p_email_ok: null }).catch(() => false);
+    if (nouveau !== true) continue;
+    const email = cle && msg.email.adresse ? (await envoyerEmailServeur(cle, msg.email.adresse, msg.email.nom, msg.email.texte)).ok : false;
+    faits.push({ msg, email });
+  }
+  if (faits.length && cle) {
+    const lignes = faits.map(({ msg, email }) => '• ' + msg.nom + (msg.age ? ' (' + msg.age + ' ans)' : '') + (msg.mineur ? ', message à son parent' : '') +
+      ' : e-mail ' + (email ? 'envoyé ✓' : msg.email.adresse ? 'NON parti' : 'impossible (pas d’adresse)') +
+      (msg.whatsapp.numero ? '\n  WhatsApp prêt : https://wa.me/' + msg.whatsapp.numero + '?text=' + encodeURIComponent(msg.whatsapp.texte) : '\n  (pas de numéro WhatsApp)'));
+    await envoyerEmailServeur(cle, EMAIL_AGENCE, 'Maître Akesse Model Management',
+      '🎂 Anniversaires du jour :\n\n' + lignes.join('\n\n') + '\n\nLe message est aussi arrivé dans leur application MA2M Mannequin.');
+  }
+  if (faits.some((f) => !f.email)) await noterAuJournal('[Anniversaires] ' + faits.filter((f) => !f.email).length + ' e-mail(s) non parti(s) sur ' + faits.length + (cle ? '' : ' (clé EmailJS absente)'), 'anniversaires');
+  return faits.length;
+}
+// Tâche quotidienne (vercel.json, 8 h à Abidjan) : anniversaires chaque jour, relances des mensualités le 3 et le 5
 async function relancesDuJour(req, res) {
   // seule la tâche planifiée de Vercel (variable CRON_SECRET, envoyée par Vercel) peut les lancer
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.authorization !== 'Bearer ' + secret) return res.status(401).json({ error: 'Non autorisé.' });
   const jour = new Date().getUTCDate();  // (Abidjan : heure UTC)
-  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, rien: 'pas un jour de relance' });
+  // (une panne des anniversaires n'empêche jamais les relances)
+  const anniversaires = await anniversairesDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Anniversaires] ' + ((e && e.message) || e), 'anniversaires'); return 0; });
+  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, rien: 'pas un jour de relance' });
   try {
     const liste = await rpcService('mensualites_relances', { p_jour: jour });
     const cle = process.env.EMAILJS_PRIVATE_KEY;
@@ -94,7 +121,7 @@ async function relancesDuJour(req, res) {
     if ((liste || []).length && envoyes < liste.length) {
       await noterAuJournal('[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), 'relances');
     }
-    return res.status(200).json({ ok: true, relances: (liste || []).length, envoyes });
+    return res.status(200).json({ ok: true, anniversaires, relances: (liste || []).length, envoyes });
   } catch (e) {
     return res.status(500).json({ error: 'Erreur serveur.' });
   }

@@ -3959,3 +3959,16 @@ détail par mois, impression). Essai `test-presences-admin.js`. **Application** 
 onglet Profil, « Mes cours du dimanche » (le mois en couleurs, mention, « Bravo » pour un mois parfait,
 historique) ; carte sur l'Accueil ; `js/presences-calcul.js` dans le cache hors ligne (`app/sw.js`, v8).
 Essai : `test-app-mannequin.js`. Couleurs d'état vert #1E7A45 / orange #9A5800 / rouge mat (contraste ≥ 5).
+
+## Anniversaires automatiques (01/11/2026, chantier 14, partie 3)
+
+Idée gardée par la propriétaire (31/10/2026). **Base** : `supabase-anniversaires.sql` (Extension 143 ;
+essais `scripts/base-essai/essais-anniversaires.sql`) : `anniversaires_du_jour()` (mannequins actives du
+registre nées ce jour-là ; un 29 février → le 28 les années non bissextiles ; pas encore souhaitées cette
+année) et `anniversaire_noter()` (une fois par an : table `anniversaires_envoyes`, puis le message dans
+l'application par `app_message_auto`, d'où la notification du téléphone). Clé serveur seulement.
+**Serveur** : la tâche planifiée de Vercel passe désormais **tous les jours à 8 h** (`vercel.json`, avant
+seulement le 3 et le 5) ; `api/portail.js` souhaite les anniversaires chaque jour (une panne n'empêche
+jamais les relances des mensualités du 3 et du 5) : noté d'abord, puis l'e-mail (à la mannequin, au parent
+pour une mineure), puis un récapitulatif à l'agence avec les messages WhatsApp déjà écrits (pas d'envoi
+WhatsApp automatique). **Textes** : `js/messages-anniversaire.js` (partagé). Essai : `test-anniversaires.js`.
