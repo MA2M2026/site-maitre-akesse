@@ -403,7 +403,6 @@ details summary { cursor: pointer; font-weight: 600; }
 .photo-ouvrir .vis { display: block; width: 100%; aspect-ratio: 3 / 4; border-radius: var(--av-rayon); font-size: 40px; }
 .photo-dossier figcaption { display: flex; gap: 6px; }
 .galerie-vide { padding: 20px 0; }
-.ajout-photo { flex: none; align-self: center; cursor: pointer; }
 #dos-photo-msg { flex: none; align-self: center; max-width: 220px; }
 .fiche-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; align-items: start; }
 .fiche-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }

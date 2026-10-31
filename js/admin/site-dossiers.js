@@ -6,12 +6,12 @@
 //  - changement de statut : premier message du catalogue (js/messages-candidats.js), e-mail parti
 //    tout seul s'il y a une adresse (celle du parent pour un mineur), modifiable, renvoyable, WhatsApp ;
 //  - « Écrire sur WhatsApp » : tous les messages du catalogue + rendez-vous (date, heure, lieu) ;
-//  - photos (casting_photos : stockage signé ou lien Google Drive) : ajouter, remplacer, supprimer ;
+//  - photos (casting_photos : stockage signé ou lien Google Drive) : voir, agrandir, supprimer (plus d'ajout ni de
+//    remplacement par l'agence depuis le 31/10/2026, chantier 11 : seule la candidate envoie ses photos) ;
 //  - code d'inscription d'une personne retenue (code_individuel_creer) ; suppression du dossier ;
 //  - recruteur : mannequins choisis (avec leurs visages), retirer un mannequin.
 // Outils partagés : js/messages-candidats.js, js/messages-convocations.js (sansMarquesWhatsApp),
-// js/emailjs-config.js (envoyerEmailCandidat), js/app.js (numeroWhatsApp, fichierEnBase64,
-// envoyerPhotosVersDrive, URL_SCRIPT_PHOTOS_CASTING, ouvrirGalerieLightbox).
+// js/emailjs-config.js (envoyerEmailCandidat), js/app.js (numeroWhatsApp, ouvrirGalerieLightbox).
 (function () {
   'use strict';
   const P = window.Portail;
@@ -198,11 +198,8 @@
     return '<section class="galerie-dossier" aria-label="Photos">' + (ph.length ? ph.map((p, i) =>
       '<figure class="photo-dossier apparait" style="--i:' + i + '"><button type="button" class="photo-ouvrir" data-action="dossier-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       visageDossier(p.affiche, fiche.d.full_name) + '</button>' +
-      '<figcaption><button type="button" class="btn petit" data-action="dossier-photo-remplacer" data-photo="' + P.esc(p.id) + '" aria-label="Remplacer la photo ' + (i + 1) + '">Remplacer</button>' +
-      '<button type="button" class="btn petit" data-action="dossier-photo-supprimer" data-photo="' + P.esc(p.id) + '" aria-label="Supprimer la photo ' + (i + 1) + '">✕</button></figcaption></figure>').join('') :
+      '<figcaption><button type="button" class="btn petit" data-action="dossier-photo-supprimer" data-photo="' + P.esc(p.id) + '" aria-label="Supprimer la photo ' + (i + 1) + '">✕</button></figcaption></figure>').join('') :
       '<p class="doux galerie-vide">Aucune photo jointe.</p>') +
-      '<label class="ajout-photo"><input type="file" accept="image/*" data-change="dossier-photo-ajouter" hidden><span class="btn">＋ Ajouter une photo</span></label>' +
-      '<input type="file" accept="image/*" id="dos-photo-remplacement" data-change="dossier-photo-remplacement" hidden>' +
       '<p class="doux petit-texte" id="dos-photo-msg" role="status"></p></section>';
   }
   function blocStatut(source) {
@@ -378,14 +375,8 @@
     navigator.clipboard.writeText(code).then(() => { el.textContent = 'Copié !'; setTimeout(() => { el.textContent = avant; }, 1500); },
       () => { el.textContent = 'Copie impossible : sélectionnez le code'; setTimeout(() => { el.textContent = avant; }, 2500); });
   };
-  // Photos : agrandir, ajouter (Google Drive), remplacer, supprimer
+  // Photos : agrandir, supprimer (seule la candidate envoie ses photos, chantier 11)
   P.actions['dossier-photo-voir'] = (el) => { if (typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(fiche.photos.map((p) => p.affiche), Number(el.dataset.index)); };
-  async function envoyerVersDrive(fichier) {
-    const d = fiche.d;
-    const r = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { nom: d.full_name, email: d.email || '', phone: d.phone || '', type: d.type_candidature || 'agence', projet: d.projet_nom || '', photos: [await fichierEnBase64(fichier)] });
-    if (r.echec || !r.liens || !r.liens.length) throw new Error('le script Google n’a renvoyé aucun lien');
-    return r.liens[0];
-  }
   async function rechargerPhotos(message) {
     const conf = SOURCES[fiche.source];
     fiche.photos = (await photosDe(conf, [fiche.d.id]))[fiche.d.id] || [];
@@ -393,35 +384,6 @@
     if (zone) zone.outerHTML = blocPhotos(fiche.source);
     if (message) document.getElementById('dos-photo-msg').textContent = message;
   }
-  P.changements['dossier-photo-ajouter'] = async (el) => {
-    const fichier = el.files[0]; el.value = '';
-    if (!fichier) return;
-    const msg = document.getElementById('dos-photo-msg'), conf = SOURCES[fiche.source];
-    msg.textContent = 'Envoi vers Google Drive…';
-    try {
-      const lien = await envoyerVersDrive(fichier);
-      const r = await P.bd(sb.from(conf.photos.table).insert({ [conf.photos.colonne]: fiche.d.id, url: lien, chemin: null }).select('id'));
-      if (!r || !r.length) throw new Error('la photo n’a pas été rattachée au dossier : reconnectez-vous puis réessayez');
-      await rechargerPhotos('Photo ajoutée.');
-    } catch (e) { msg.textContent = 'Échec de l’envoi : ' + P.erreurTexte(e); }
-  };
-  let aRemplacer = null;
-  P.actions['dossier-photo-remplacer'] = (el) => { aRemplacer = fiche.photos.find((p) => String(p.id) === el.dataset.photo) || null; document.getElementById('dos-photo-remplacement').click(); };
-  P.changements['dossier-photo-remplacement'] = async (el) => {
-    const fichier = el.files[0]; el.value = '';
-    const photo = aRemplacer; aRemplacer = null;
-    if (!fichier || !photo) return;
-    const msg = document.getElementById('dos-photo-msg'), conf = SOURCES[fiche.source];
-    msg.textContent = 'Envoi de la photo de remplacement…';
-    try {
-      const lien = await envoyerVersDrive(fichier);
-      // la base d'abord, l'ancien fichier ensuite (jamais de photo cassée si la base refuse)
-      const r = await P.bd(sb.from(conf.photos.table).update({ url: lien, chemin: null }).eq('id', photo.id).select('id'));
-      if (!r || !r.length) throw new Error('la photo n’a pas été remplacée : reconnectez-vous puis réessayez');
-      if (photo.chemin) await sb.storage.from(conf.photos.bucket).remove([photo.chemin]);
-      await rechargerPhotos('Photo remplacée.');
-    } catch (e) { msg.textContent = 'Échec du remplacement : ' + P.erreurTexte(e); }
-  };
   P.actions['dossier-photo-supprimer'] = async (el) => {
     if (!confirm('Supprimer définitivement cette photo ? Cette action est irréversible.')) return;
     const conf = SOURCES[fiche.source], photo = fiche.photos.find((p) => String(p.id) === el.dataset.photo);

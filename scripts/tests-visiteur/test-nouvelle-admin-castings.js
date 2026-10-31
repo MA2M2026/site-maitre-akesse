@@ -81,11 +81,16 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'code_individuel_creer') && /MA2M-ESSAI1/.test(await p.textContent('.code-zone')) && /wa\.me\/2250707070707/.test(await p.getAttribute('.code-zone a.btn', 'href')),
       n + 'code d’inscription créé, envoyable au parent par WhatsApp');
 
-    // 4. Photos : ajouter (vers Google Drive), supprimer
-    await p.setInputFiles('.ajout-photo input[type=file]', require('path').join(__dirname, 'medias', 'photo1.jpg')); await p.waitForTimeout(1500);
-    ok(journal.some((j) => j[0] === 'DRIVE') && ecrits(journal, 'POST', 'casting_photos').length === 1 && (await p.$$('.photo-dossier')).length === 3, n + 'photo ajoutée (Google Drive puis fiche) : 3 photos');
+    // 4. Photos (chantier 11, 31/10/2026) : seule la candidate envoie ses photos ; l'agence les voit,
+    //    les agrandit, peut en supprimer, mais ne peut plus en ajouter ni en remplacer
+    ok((await p.$$('.photo-dossier')).length === 2 && !(await p.$('.galerie-dossier input[type=file]')) && !(await p.$('[data-action="dossier-photo-remplacer"]')) && !/Ajouter une photo|Remplacer/.test(await p.textContent('.galerie-dossier')),
+      n + 'photos de la candidate visibles, plus d’ajout ni de remplacement par l’agence');
+    await p.click('.photo-dossier [data-action="dossier-photo-voir"]'); await p.waitForTimeout(600);
+    ok(await p.isVisible('#lightbox-global'), n + 'une photo s’agrandit toujours');
+    await p.click('#lbg-fermer'); await p.waitForTimeout(400);
+    ok(!journal.some((j) => j[0] === 'DRIVE') && !ecrits(journal, 'POST', 'casting_photos').length && !ecrits(journal, 'PATCH', 'casting_photos').length, n + 'aucune photo envoyée par l’agence');
     await p.click('.photo-dossier [data-action="dossier-photo-supprimer"]'); await p.waitForTimeout(1200);
-    ok(ecrits(journal, 'DELETE', 'casting_photos').length === 1 && (await p.$$('.photo-dossier')).length === 2, n + 'photo supprimée après confirmation');
+    ok(ecrits(journal, 'DELETE', 'casting_photos').length === 1 && (await p.$$('.photo-dossier')).length === 1, n + 'photo supprimée après confirmation');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'fiche : textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'fiche : rien ne dépasse de l’écran');

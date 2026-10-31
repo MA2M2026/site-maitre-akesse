@@ -3821,3 +3821,11 @@ sous chaque photo déjà en ligne (`#pub-en-ligne`, `js/admin/site-contenu.js`) 
 - Icônes dessinées (`P.icone`, `js/admin/coque.js`) : le nettoyage des émojis en tête des boutons
   (`harmoniserEcransPartages`) effaçait ◀ ▶ ★.
 - Essai : `scripts/tests-visiteur/test-photos-article-publie.js` (dans `lancer.sh`).
+
+## Candidatures : plus d'ajout de photos par l'agence (31/10/2026, chantier 11)
+
+Dans la fiche d'une candidature (`js/admin/site-dossiers.js`), l'agence ne peut plus ajouter ni remplacer
+de photo (envoi vers Google Drive retiré) : seule la candidate envoie ses photos, par le formulaire public
+(`js/formulaire-candidature.js`, qui garde `envoyerPhotosVersDrive` de `js/app.js`). L'agence voit toujours
+les photos, les agrandit et peut en supprimer une (confirmation, base d'abord puis fichier). Les mannequins
+déjà inscrites ne sont pas concernées. Essai : `test-nouvelle-admin-castings.js` (étape 4).

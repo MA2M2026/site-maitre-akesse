@@ -21,7 +21,7 @@ Retour en arrière possible : version précédente `main` 1cbf1e4 (28/10/2026).
 | 8. Photos ajoutées en plusieurs fois | en cours | étape faite (31/10, branche) : les choix s'ajoutent, « ✕ » pour retirer, au plus 30 ; reste : batterie, mise en ligne, essai réel par la propriétaire |
 | 9. Modifier les photos d'un article publié | en cours | étape faite (31/10, branche) : flèches (ordre), étoile (couverture), croix (retirer, fichier effacé du stockage après la base), « Annuler », gardé dans le brouillon ; essai test-photos-article-publie.js ; reste : batterie, mise en ligne, essai réel par la propriétaire |
 | 10. Même mécanisme pour tous les envois d'images | pas commencé | — |
-| 11. Candidatures : plus d'ajout de photos par l'agence | pas commencé | — |
+| 11. Candidatures : plus d'ajout de photos par l'agence | en cours | étape faite (31/10, branche) : plus de « Ajouter une photo » ni de « Remplacer » ; voir, agrandir et supprimer restent ; essai test-nouvelle-admin-castings.js ; reste : batterie, mise en ligne, vérification |
 | 12. Évaluation globale (6 visiteurs, contrôles externes) | pas commencé | — |
 | 13. Audit des secrets et protection du dépôt | pas commencé | décision de la propriétaire (31/10) : à faire À LA FIN |
 | Après : audit de la sécurité côté serveur (`PLAN-SERVEUR.md`) | pas commencé | — |
