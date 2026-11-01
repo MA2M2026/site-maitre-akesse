@@ -119,6 +119,8 @@
       const urls = [];
       evenements.filter(e => cleTitre(e.titre) === cle).forEach(e => e.urls.forEach(u => urls.push(u)));
       const titre = carte.querySelector('h3');
+      // carte écrite par le serveur (middleware.js, étape A du 01/11/2026) : titre et lieu mis en forme ici
+      if (carte.dataset.serveur) carte.querySelectorAll('h3, p').forEach((el) => { el.textContent = titreLisible(el.textContent); });
       if (!urls.length) { carte.querySelector('.qsn-evenement-photo').hidden = true; return; }
       diaporama(carte.querySelector('.qsn-evenement-photo'), melanger(urls).slice(0, 6), titre ? titre.textContent : '', 4500);
     });

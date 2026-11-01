@@ -663,7 +663,26 @@ async function quiSommesNousRempli(url, anglais) {
     const auHasard = (l) => l[Math.floor(Math.random() * l.length)];  // chaque photo a la même chance
     return { evenements, photos, portrait: mots[0] || null, visages: [...parMannequin.values()].map(auHasard) };
   }));
-  return pageRemplie(url, (anglais ? '/en' : '') + '/qui-sommes-nous', 'qsn-donnees', lecture);
+  return pageRemplie(url, (anglais ? '/en' : '') + '/qui-sommes-nous', 'qsn-donnees', lecture, async (html, d) => {
+    // étape A (01/11/2026) : les cartes des événements déjà réalisés écrites dans la page (titre, lieu), après les
+    // deux cartes du texte ; la page les reconnaît (même clé que cleTitre, js/qui-sommes-nous.js), y pose les
+    // photos et met les titres en forme. Un événement sans photo n'a pas de carte (comme dans la page).
+    const evenements = anglais ? await versAnglaisServeur(d.evenements, ['titre', 'lieu']) : d.evenements;
+    const cle = (t) => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const vus = new Set([...html.matchAll(/data-evenement="([^"]*)"/g)].map((m) => m[1]));
+    const avecPhoto = new Set(d.photos.map((p) => p.evenement_id));
+    const cartes = [];
+    evenements.forEach((e) => {
+      const t = cle(e.titre);
+      if (!t || vus.has(t) || !(avecPhoto.has(e.id) || e.image_url)) return;
+      vus.add(t);
+      cartes.push('<article class="qsn-evenement reveal" data-evenement="' + echapper(t) + '" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"></div>' +
+        '<h3>' + echapper(e.titre) + '</h3>' + (e.lieu ? '<p>' + echapper(e.lieu) + '</p>' : '') + '</article>');
+    });
+    const debut = html.indexOf('<div class="qsn-evenements" id="qsn-evenements">'), fin = debut < 0 ? -1 : html.indexOf('\n    </div>', debut);
+    if (cartes.length && fin > 0) html = html.slice(0, fin) + '\n      ' + cartes.join('\n      ') + html.slice(fin);
+    return d.portrait && d.portrait.nom ? texteElement(html, 'qsn-portrait-nom', d.portrait.nom) : html;
+  });
 }
 
 // Aiguillage des pages préparées par le serveur (adresse propre → fonction(url, anglais))

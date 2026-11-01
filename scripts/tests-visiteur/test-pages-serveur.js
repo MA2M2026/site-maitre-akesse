@@ -78,6 +78,12 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
       const d = html && donneesDe(html, bloc);
       ok(!!d && verifier(d), chemin + ' : les données sont dans la page');
       ok(!/<img src=x onerror/.test(html), chemin + ' : rien d’injectable');
+      // étape A (01/11/2026) : qui sommes-nous — les cartes des événements déjà réalisés sont dans le HTML
+      if (page === 'qui-sommes-nous') {
+        const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
+        ok(/<article class="qsn-evenement reveal" data-evenement="[^"]+" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"><\/div><h3>[^<]+<\/h3><p>Plateau<\/p><\/article>/.test(visible),
+          chemin + ' : la carte de l’événement (titre, lieu) est dans le HTML avant tout programme');
+      }
       // étape A (01/11/2026) : partenaires — les cartes (noms) sont dans le HTML, avant tout programme
       if (page === 'partenaires') {
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
@@ -109,6 +115,10 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
         await p.waitForTimeout(800);
         ok(!lectures, n + 's’affiche sans redemander ces données à la base (' + lectures + ')');
         ok(!(await p.$('img[src="x"]')), n + 'rien d’injecté');
+        if (page === 'qui-sommes-nous') {
+          const cles = await p.$$eval('.qsn-evenement[data-evenement]', (l) => l.map((c) => c.dataset.evenement));
+          ok(cles.length === new Set(cles).size && cles.length >= 3, n + 'les cartes d’événements écrites par le serveur ne sont pas ajoutées une 2e fois (' + cles.length + ')');
+        }
         ok(!errs.length, n + 'aucune erreur' + (errs.length ? ' — ' + errs[0] : ''));
         await p.context().close();
       }
