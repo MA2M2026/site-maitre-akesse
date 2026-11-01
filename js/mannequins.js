@@ -63,7 +63,7 @@ async function lireBook(vide) {
   }
   const { data: profils, error } = await sb
     .from('model_profiles')
-    .select('id, full_name, city, category, height_cm, chest_cm, waist_cm, hips_cm, shoe_size, eye_color, hair_color, languages, carnation, clothing_size, availability, niveau_mannequin, years_experience')
+    .select('id, slug, full_name, city, category, height_cm, chest_cm, waist_cm, hips_cm, shoe_size, eye_color, hair_color, languages, carnation, clothing_size, availability, niveau_mannequin, years_experience')
     .eq('published', true)
     .order('created_at', { ascending: false })
     .limit(300);

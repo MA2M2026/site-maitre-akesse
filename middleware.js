@@ -283,7 +283,7 @@ async function lireCouvertures(ids, delai) {
 }
 // les mannequins publiées avec leur photo de couverture (les mêmes questions que js/accueil.js)
 async function lireDonneesAccueil() {
-  const profils = await lireSupabase('model_profiles?published=eq.true&select=id,full_name,city,category,height_cm,featured&order=created_at.desc&limit=200', null, 3000);
+  const profils = await lireSupabase('model_profiles?published=eq.true&select=id,slug,full_name,city,category,height_cm,featured&order=created_at.desc&limit=200', null, 3000);
   if (!profils) throw new Error('base : mannequins');
   // (en même temps : le mot de Maître Akesse et les castings ouverts, écrits dans la page pour
   // qu'elle ne saute pas quand ils arrivent — 24/10/2026 ; s'ils manquent, le navigateur les lit)
@@ -418,7 +418,7 @@ async function accueilRempli(requete, url) {
   html = grille('grille-hommes', visages.hommes)(grille('grille-femmes', visages.femmes)(html));
   html = texteElement(html, 'une-nom', une.full_name || (anglais ? 'Model' : 'Mannequin'));
   html = texteElement(html, 'une-info', R.infoUne(une, anglais));
-  html = html.replace('<a href="mannequins.html" id="une-lien">', () => '<a href="mannequin.html?id=' + encodeURIComponent(une.id) + '" id="une-lien">')
+  html = html.replace('<a href="mannequins.html" id="une-lien">', () => '<a href="' + echapper(R.lienFiche(une, anglais)) + '" id="une-lien">')
     .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy">');
   if (donnees.nombre) html = texteElement(html, 'couv-nombre', R.nombreAccueil(donnees.nombre, anglais));
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
@@ -550,7 +550,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
 // colonnes que la page (seulement ce que le Book montre ou filtre déjà). Base lente (plus de 1,2 s au
 // total) ou en panne : la page part comme avant. Gardé 3 minutes en mémoire (enMemoire : une mannequin publiée ou
 // retirée se voit au plus 3 minutes après).
-const COLONNES_BOOK = 'id,full_name,city,category,height_cm,chest_cm,waist_cm,hips_cm,shoe_size,eye_color,hair_color,languages,carnation,clothing_size,availability,niveau_mannequin,years_experience';
+const COLONNES_BOOK = 'id,slug,full_name,city,category,height_cm,chest_cm,waist_cm,hips_cm,shoe_size,eye_color,hair_color,languages,carnation,clothing_size,availability,niveau_mannequin,years_experience';
 async function bookRempli(url, anglais, requete) {
   const lecture = enMemoire('book', async () => {
     const fin = Date.now() + ATTENTE_FICHE;

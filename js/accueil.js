@@ -103,9 +103,9 @@
     img.dataset.voulue = url;
     prechargerPhoto(urlLegere(url), ok => { if (img.dataset.voulue === url) img.src = ok; }, !!prioritaire);
   }
-  const fiche = id => 'mannequin.html?id=' + encodeURIComponent(id);
-  // (dessin partagé avec le serveur : js/rendu-book.js)
+  // (dessin et adresse des fiches partagés avec le serveur : js/rendu-book.js)
   const R = window.RenduBook;
+  const fiche = (m) => R.lienFiche(m, EN);
   const vignette = (m) => R.vignetteAccueil(m, { en: EN, photo: urlLegere(urlGrille({ url: m.photo, url_petite: m.petite })) });  // (petite sur téléphone)
 
   // --- Mannequins publiés : couverture, Femmes, Hommes, À la une, et les photos des autres pages ---
@@ -119,7 +119,7 @@
     const page = !depuisLaBase && donneesDeLaPage();
     if (page) return Object.assign({ deLaPage: true }, page);
     const { data: profils } = await sb.from('model_profiles')
-      .select('id, full_name, city, category, height_cm, featured')
+      .select('id, slug, full_name, city, category, height_cm, featured')
       .eq('published', true).order('created_at', { ascending: false }).limit(200);
     if (!profils || !profils.length) return { profils: [], nombre: 0 };
     // une seule demande pour toutes les photos de couverture (la même que le Book)
@@ -156,7 +156,7 @@
     // À la une : la mannequin choisie dans l'Administration, sinon la plus récente
     const une = avecPhoto.find(p => p.featured) || avecPhoto[0];
     const lienUne = document.getElementById('une-lien');
-    lienUne.href = fiche(une.id);
+    lienUne.href = fiche(une);
     photo(document.getElementById('une-img'), une.photo, une.full_name);
     document.getElementById('une-nom').textContent = une.full_name || T('Mannequin', 'Model');
     document.getElementById('une-info').textContent = R.infoUne(une, EN);
@@ -172,7 +172,7 @@
     else if (typeof armerGardeFouPhotos === 'function') armerGardeFouPhotos();  // (Cloudflare muet : bascule au relais, js/photos.js)
 
     const credit = document.getElementById('couv-modele');
-    credit.href = fiche(couv.id);
+    credit.href = fiche(couv);
     document.getElementById('couv-modele-nom').textContent = couv.full_name || '';
     credit.hidden = !couv.full_name;
 
@@ -234,7 +234,7 @@
         const cachee = images.find(i => !i.classList.contains('visible'));
         cachee.src = ok; cachee.alt = m.full_name || '';
         images.forEach(i => i.classList.toggle('visible', i === cachee));
-        credit.href = fiche(m.id);
+        credit.href = fiche(m);
         document.getElementById('couv-modele-nom').textContent = m.full_name || '';
         credit.hidden = !m.full_name;
       });

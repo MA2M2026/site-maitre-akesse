@@ -34,7 +34,7 @@ async function middleware() {
     if (u.includes('supabase.co')) {
       if (basePanne) throw new Error('base en panne');
       if (baseLente) await new Promise((r, x) => { const m = setTimeout(r, baseLente); if (o.signal) o.signal.addEventListener('abort', () => { clearTimeout(m); x(new Error('abandon')); }); });
-      if (u.includes('model_profiles')) return json(profils.map(({ slug: _s, published: _p, featured: _f, genre: _g, ...x }) => x));
+      if (u.includes('model_profiles')) return json(profils.map(({ published: _p, featured: _f, genre: _g, ...x }) => x));  // (le nom d'adresse « slug » est public : /book/nom)
       if (u.includes('photos_couverture')) return json(couvertures);
       return json([]);
     }
@@ -62,7 +62,7 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     pages[chemin] = html;
     const d = html && donneesDe(html);
     ok(d && d.profils.length === 3 && d.photos.length === 3, chemin + ' : la liste des mannequins et leurs photos sont dans la page');
-    ok(d && !/slug|published|phone|email|naissance/.test(JSON.stringify(d.profils)), chemin + ' : rien de plus que ce que le Book montre');
+    ok(d && !/published|phone|email|naissance/.test(JSON.stringify(d.profils)), chemin + ' : rien de plus que ce que le Book montre (et le nom d’adresse de la fiche)');
     ok(!/<img src=x onerror/.test(html) && /\\u003cimg src=x onerror/.test(html), chemin + ' : un nom avec des signes spéciaux ne peut rien injecter');
     ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardé par le navigateur (le serveur, lui, garde la liste 3 minutes au plus)');
   }
@@ -72,6 +72,20 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     const noms = [...visible.matchAll(/<div class="medaillon-nom">([^<]*)<\/div>/g)].map((m) => m[1]);
     ok(noms.length === 3 && noms[0] === 'Awa Koné' && noms[1] === 'Grâce &lt;img src=x onerror=alert(1)&gt;' && noms.includes('Mariam Bamba') && /data-serveur="1"/.test(visible), chemin + ' : les cartes (noms, photos) sont écrites dans le HTML avant tout programme ' + noms.join(' | '));
     ok(/<span id="f-compte">3 (profils correspondent|profiles)<\/span>/.test(visible) && /src="https:\/\/x\/1\.jpg"/.test(visible), chemin + ' : le nombre de profils et les photos aussi');
+    // (01/11/2026, demande de la propriétaire : la fiche ouverte depuis une carte arrivait vide ≈ 3,6 s) la carte va
+    // DIRECTEMENT à la fiche écrite par le serveur (/book/nom) ; sans nom d'adresse, l'ancienne adresse
+    const en = chemin.startsWith('en/') ? '/en' : '';
+    ok(visible.includes('href="' + en + '/book/mariam"') && visible.includes('href="' + en + '/book/grace"') && visible.includes('href="' + en + '/book/' + base.slug + '"')
+      && globalThis.RenduBook.lienFiche({ id: 'x1' }, false) === 'mannequin.html?id=x1' && globalThis.RenduBook.lienFiche({ id: 'x1', slug: 'a/b' }, true) === 'mannequin.html?id=x1',
+      chemin + ' : chaque carte va directement à la fiche préparée par le serveur (' + en + '/book/nom)');
+  }
+  {
+    const regles = JSON.parse(fs.readFileSync(path.join(RACINE, 'regles-fiches.json'), 'utf8'));
+    const vercel = JSON.parse(fs.readFileSync(path.join(RACINE, 'vercel.json'), 'utf8'));
+    const annonce = (src) => vercel.headers.some((h) => h.source === src && h.headers.some((x) => x.key === 'Speculation-Rules' && x.value === '"/regles-fiches.json"'));
+    const typeJson = vercel.headers.some((h) => h.source === '/regles-fiches.json' && h.headers.some((x) => x.key === 'Content-Type' && x.value === 'application/speculationrules+json'));
+    ok(regles.prerender[0].eagerness === 'moderate' && JSON.stringify(regles).includes('/book/*') && JSON.stringify(regles).includes('/en/book/*') && annonce('/') && annonce('/(en|mannequins|en/mannequins)') && typeJson,
+      'Chrome et Android : la fiche est préparée dès que le doigt touche une carte (règles annoncées sur l’accueil et le Book)');
   }
   {
     const filtre = await (await demander('mannequins?categorie=homme')).text();
@@ -120,6 +134,11 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     await p.evaluate(() => { const c = document.getElementById('f-recherche'); c.value = 'Mariam'; c.dispatchEvent(new Event('input', { bubbles: true })); });  // (replié sur téléphone) await p.waitForTimeout(600);
     ok(await p.$$eval('#grille .medaillon-carte', (l) => l.filter((c) => c.offsetParent !== null).length) === 1, n + 'la recherche marche toujours');
     ok((await p.getAttribute('.mannequin-du-mois', 'href')) === (chemin.startsWith('en/') ? '/en' : '') + '/book/mariam' && /Mariam Bamba/.test(await p.textContent('.mannequin-du-mois')), n + 'bandeau « Mannequin du mois » en haut du Book, vers sa fiche');
+    // le doigt touche une carte : la fiche est demandée pendant le geste (tous les navigateurs)
+    await p.evaluate(() => { const c = document.getElementById('f-recherche'); c.value = ''; c.dispatchEvent(new Event('input', { bubbles: true })); });
+    const lien = (chemin.startsWith('en/') ? '/en' : '') + '/book/mariam';
+    await p.dispatchEvent('#grille a[href="' + lien + '"]', 'pointerdown');
+    ok(await p.evaluate((l) => [...document.querySelectorAll('link[rel="prefetch"]')].some((x) => x.href === location.origin + l), lien), n + 'le doigt touche une carte : la fiche est demandée tout de suite (prête à l’ouverture)');
     ok(!errs.length, n + 'aucune erreur' + (errs.length ? ' — ' + errs[0] : ''));
   }
   await b.close();

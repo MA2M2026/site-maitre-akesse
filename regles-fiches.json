@@ -1,0 +1,1 @@
+{"prerender":[{"where":{"or":[{"href_matches":"/book/*"},{"href_matches":"/en/book/*"},{"href_matches":"/mannequin.html?id=*"},{"href_matches":"/en/mannequin.html?id=*"}]},"eagerness":"moderate"}]}
