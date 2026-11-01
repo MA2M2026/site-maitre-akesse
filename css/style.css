@@ -27,7 +27,7 @@
   --bordeaux-vif: var(--c-9c1c2c);   /* état de survol */
   --bordeaux-clair: var(--c-d55468); /* bordeaux lumineux — texte/labels sur fond noir (contraste AA vérifié : 5.1:1 sur --noir, WCAG demande 4.5:1 pour du texte normal) */
 
-  --or: var(--c-c9a24b);             /* touche discrète héritée du logo, usage mineur */
+  --or: #C7848B;                     /* touche discrète : rose (01/11/2026 : plus de doré, choix de la propriétaire) */
   --rouge: var(--bordeaux-clair); /* alias conservé pour compatibilité (.oeil, anciens usages) */
 
   --gris: var(--c-8a837d);

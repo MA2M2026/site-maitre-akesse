@@ -65,7 +65,7 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-titre { margin: 0; font-family: var(--texte); font-weight: 400; font-size: clamp(2rem, 5vw, 3.2rem); letter-spacing: 0; text-transform: none; color: var(--titre-clair); white-space: nowrap; }
 .cal-vues { justify-self: center; display: inline-flex; padding: 0.3rem; border-radius: 999px; background: var(--noir-doux); border: 1px solid var(--gris-clair); }
 .cal-vue { background: transparent; border: 0; color: var(--texte-doux); padding: 0.55rem 1.2rem; border-radius: 999px; font: inherit; font-size: 0.95rem; cursor: pointer; transition: background 0.3s ease, color 0.3s ease; }
-.cal-vue.actif { background: var(--titre-clair); color: var(--noir); font-weight: 500; }
+.cal-vue.actif { background: var(--rouge-mat); color: #FFFFFF; font-weight: 500; }
 .cal-vue:not(.actif):hover { color: var(--titre-clair); }
 .cal-actions { display: inline-flex; align-items: center; gap: 0.4rem; }
 .cal-nav, .cal-aujourdhui { background: transparent; color: var(--titre-clair); border: 1px solid var(--gris-clair); font-family: var(--texte); cursor: pointer; transition: border-color 0.3s ease, background 0.3s ease; }
@@ -109,17 +109,18 @@ a.agenda-puce:hover, a.agenda-puce:focus-visible { border-color: var(--titre-cla
 .cal-points { display: none; gap: 3px; justify-content: center; margin-top: auto; }
 .cal-points i, .cal-legende-item i, .cal-panneau-couleur { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: 0 0 auto; }
 
-/* Une couleur par type de projet */
-.cal .cal-evt-shooting { background: var(--c-6b2f8a); }
-.cal .cal-evt-defile { background: var(--bordeaux); }
-.cal .cal-evt-casting { background: var(--c-1f6b6b); }
-.cal .cal-evt-formation { background: var(--c-8a6a1f); }
-.cal .cal-evt-evenement { background: var(--c-2f4f8a); }
-.cal .cal-evt-show { background: var(--c-b35a00); }
-.cal .cal-evt-essayage { background: var(--c-5a6b2f); }
-.cal .cal-evt-masterclass { background: var(--c-8a3f6b); }
-.cal .cal-evt-rencontre { background: var(--c-2f6b4f); }
-.cal .cal-evt-autre { background: var(--c-555); }
+/* Une nuance de rouge par type de projet (01/11/2026, choix de la propriétaire : plus de violet, bleu, vert,
+   doré ni gris foncé ; le nom du type reste toujours écrit). Toutes assez foncées pour une écriture blanche. */
+.cal .cal-evt-shooting { background: var(--agenda-shooting); }
+.cal .cal-evt-defile { background: var(--agenda-defile); }
+.cal .cal-evt-casting { background: var(--agenda-casting); }
+.cal .cal-evt-formation { background: var(--agenda-formation); }
+.cal .cal-evt-evenement { background: var(--agenda-evenement); }
+.cal .cal-evt-show { background: var(--agenda-show); }
+.cal .cal-evt-essayage { background: var(--agenda-essayage); }
+.cal .cal-evt-masterclass { background: var(--agenda-masterclass); }
+.cal .cal-evt-rencontre { background: var(--agenda-rencontre); }
+.cal .cal-evt-autre { background: var(--agenda-autre); }
 
 /* Année */
 .cal-annee { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 1rem; }

@@ -235,7 +235,7 @@
     const fin = new Date(), debut = new Date(fin.getFullYear(), fin.getMonth() - MOIS_HISTOIRE + 1, 1);
     // préparé par le serveur (middleware.js, 01/11/2026) pour la même période : projets et visages déjà là
     const d = donneesServeur('parcours-donnees');  // (js/app.js)
-    const serveur = d && d.debut === dateLocaleIso(debut) && d.fin === dateLocaleIso(fin) && Array.isArray(d.projets) && Array.isArray(d.photos) ? d : null;
+    const serveur = d?.debut === dateLocaleIso(debut) && d.fin === dateLocaleIso(fin) && Array.isArray(d.projets) && Array.isArray(d.photos) ? d : null;
     projets = serveur ? projetsAvecNoms(serveur.projets) : await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
     const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id).filter(Boolean)))];
     if (serveur) serveur.photos.forEach(c => { photos[c.model_id] = urlLegere(urlGrille(c, true)); });

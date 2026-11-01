@@ -4059,3 +4059,17 @@ compte de test. Coller `supabase-formation.sql` AVANT la mise en ligne du code.
   possible) : le choix de la grande photo (`couvertureFiche` = `photosAffichees`) et le titre / la
   description de la fiche ; `test-fiche-serveur.js` vérifie qu'ils donnent le même résultat.
 - « Qui sommes-nous » : une photo au hasard par mannequin, chaque photo avec la même chance.
+
+## Couleurs à la source et garde-fou (01/11/2026, lot 2)
+
+Dernières couleurs hors charte retirées des feuilles de style : agenda (une nuance de rouge par type de projet,
+variables `--agenda-*` dans `css/jetons.css`, choix de la propriétaire ; le nom du type reste écrit), « or »
+de `css/style.css` (rose), dégradé brun du CV, jauge d'erreur grise, pastille orange brunâtre de l'application,
+barre « en attente » des convocations, bouton actif de l'agenda, bande photo du magazine.
+**Garde-fou** `scripts/tests-visiteur/test-couleurs-source.js` (sans navigateur) : lit TOUTES les règles
+`background` de `css/*.css`, avec TOUTES les valeurs possibles de chaque variable (sur le rouge ou dans un bloc
+blanc), et refuse tout fond noir, gris foncé, beige, ivoire, brun ou doré. Permis : rouges, roses, blanc et gris
+très clairs, couleurs d'état (liste `ETATS`), voiles posés sur les photos (`--voile-photo-*`, `--mag-voile-*`,
+`--rouge-logo`). Complète le gardien des pages affichées (`couleurs-autorisees.js`).
+SonarCloud : les 7 remarques du site dynamique corrigées (`middleware.js`, `js/parcours.js`).
+

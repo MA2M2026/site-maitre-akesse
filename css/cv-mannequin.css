@@ -63,7 +63,7 @@
 .mcv-skill-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bordeaux-2),var(--or));border-radius:3px}
 .mcv-portfolio{flex:1;min-width:180px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 .mcv-portfolio-photos{width:100%;max-width:280px;display:flex;flex-wrap:wrap;gap:3px}
-.mcv-portfolio-photos div,.mcv-portfolio-photos img{flex:0 0 calc(20% - 2.4px);aspect-ratio:3/4;background:linear-gradient(165deg,var(--c-5c4a3a),var(--rouge-profond));object-fit:cover;width:100%;border-radius:2px}
+.mcv-portfolio-photos div,.mcv-portfolio-photos img{flex:0 0 calc(20% - 2.4px);aspect-ratio:3/4;background:linear-gradient(165deg,var(--rouge-mat),var(--rouge-profond));object-fit:cover;width:100%;border-radius:2px}
 .mcv-qr{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .mcv-qr img{width:132px;height:132px;background:var(--c-fff);border:1px solid var(--gris-tres-clair);padding:6px}
 .mcv-qr span{font-size:.62rem;color:var(--c-6b6560);letter-spacing:.03em}

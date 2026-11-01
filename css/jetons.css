@@ -18,6 +18,17 @@
   /* les couleurs de la maison */
   --rouge-mat: #7C2128;
   --rouge-profond: #5A141B;
+  /* agenda : une nuance de rouge par type de projet (css/agenda.css, 01/11/2026) */
+  --agenda-shooting: #7C2128;
+  --agenda-defile: #5A141B;
+  --agenda-casting: #8C2424;
+  --agenda-formation: #6E1E34;
+  --agenda-evenement: #8A1F1F;
+  --agenda-show: #852B22;
+  --agenda-essayage: #4A1016;
+  --agenda-masterclass: #74202F;
+  --agenda-rencontre: #631A2C;
+  --agenda-autre: #3B0C12;
   --rouge-logo: #C8102E;          /* uniquement le grand titre « MA2M » de la couverture */
   --blanc-pur: #FFFFFF;
   --gris-tres-clair: #F2F2F2;

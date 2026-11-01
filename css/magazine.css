@@ -215,7 +215,7 @@
 .p-agenda .agenda-liste-publique { flex: 1; min-height: 0; overflow: hidden; display: grid; gap: 3cqmin; align-content: start; }
 
 /* Le film */
-.p-film { background: var(--mag-encre); color: var(--mag-sur-photo); }
+.p-film { background: var(--rouge-profond); color: var(--mag-sur-photo); }
 .p-film video, .p-film .video-accueil-flou { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .p-film.video-verticale video { object-fit: contain; }
 .p-film .video-accueil-flou { filter: blur(24px); transform: scale(1.2); }

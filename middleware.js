@@ -401,7 +401,7 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
   if (!donnees) return new Response(page.body, { status: page.status, headers: page.headers });
   let html = await page.text();
-  if (html.indexOf('<body>') === -1 || html.indexOf('</head>') === -1) return null;
+  if (!html.includes('<body>') || !html.includes('</head>')) return null;
   if (retoucher) html = retoucher(html, donnees);
   return reponseHtml(html.replace('<body>', () => '<body>\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
 }
@@ -440,7 +440,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
   ]).then(([profils, photos, ages]) => {
     const profil = Array.isArray(profils) && profils[0];
     if (!profil || !Array.isArray(photos)) return null;
-    return { id, slug, profil, photos, age: Array.isArray(ages) && ages[0] && ages[0].age != null ? ages[0].age : null };
+    return { id, slug, profil, photos, age: Array.isArray(ages) ? ages[0]?.age ?? null : null };
   });
   return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, (html, d) => {
     const nom = d.profil.full_name || (anglais ? 'Model' : 'Mannequin');
@@ -490,7 +490,7 @@ async function publicationsRemplies(url, anglais) {
   const lecture = Promise.all([lireSupabase(liste, null, ATTENTE_FICHE), lireSupabase(photos, null, ATTENTE_FICHE)])
     .then(([l, p]) => (Array.isArray(l) && Array.isArray(p) ? { liste: l, photos: p } : null));
   return pageRemplie(url, (anglais ? '/en/' : '/') + quoi + url.search, 'publications-donnees', lecture,
-    (html, d) => photoAnnoncee(html, d.liste[0] && d.liste[0].image_url ? photoLegere(d.liste[0].image_url) : ''));
+    (html, d) => photoAnnoncee(html, d.liste[0]?.image_url ? photoLegere(d.liste[0].image_url) : ''));
 }
 
 // ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
@@ -555,7 +555,11 @@ async function quiSommesNousRempli(url, anglais) {
   ]).then(([evenements, photos, mots, photosMannequins]) => {
     if (![evenements, photos, mots, photosMannequins].every(Array.isArray)) return null;
     const parMannequin = new Map();
-    photosMannequins.forEach(({ model_profiles: _p, ...ph }) => { if (!parMannequin.has(ph.model_id)) parMannequin.set(ph.model_id, []); parMannequin.get(ph.model_id).push(ph); });
+    photosMannequins.forEach(({ model_profiles: _p, ...ph }) => {
+      const liste = parMannequin.get(ph.model_id) || [];
+      liste.push(ph);
+      parMannequin.set(ph.model_id, liste);
+    });
     const auHasard = (l) => l[Math.floor(Math.random() * l.length)];  // chaque photo a la même chance
     return { evenements, photos, portrait: mots[0] || null, visages: [...parMannequin.values()].map(auHasard) };
   });
@@ -604,7 +608,7 @@ export default async function middleware(requete) {
       const ficheSansId = () => new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin', url).toString() } });
       let lignes = null;
       // (un visiteur n'attend pas plus de 1,2 s : sinon la fiche retrouve elle-même le mannequin)
-      try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id', null, ROBOTS_APERCU.test(agent) ? 2500 : ATTENTE_FICHE); } catch (x) { lignes = null; }
+      try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id', null, ROBOTS_APERCU.test(agent) ? 2500 : ATTENTE_FICHE); } catch (error_) { lignes = null; }  // (base trop lente : la fiche se remplit dans la page)
       // Base lente ou en panne : la fiche retrouve elle-même le mannequin (js/adresse-fiche.js).
       if (lignes === null) return ROBOTS_APERCU.test(agent) ? undefined : ficheSansId();
       const id = lignes[0] && lignes[0].id;

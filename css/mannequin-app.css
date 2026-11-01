@@ -55,7 +55,7 @@ html { -webkit-text-size-adjust: 100%; }
 .ap-pastille.or { background: var(--blanc-pur); color: var(--rouge-mat); }
 .sombre .ap-pastille.or { background: var(--blanc-a14); color: var(--sombre-rouge-texte); }
 .sombre .ap-pastille.vert { background: var(--rouge-profond); color: #9FE0B2; }
-.sombre .ap-pastille.orange { background: #5A3A12; color: #FFD39A; }
+.sombre .ap-pastille.orange { background: #FFFFFF; color: #9A5800; }
 
 /* boutons */
 .ap-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }

@@ -497,7 +497,7 @@ dl.champs a { color: var(--av-rouge-texte); font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) { .convoc-barre span { animation: av-barre 1s var(--av-courbe) both; } }
 .convoc-barre-confirme { background: #1F8A4C; }
 .convoc-barre-absent { background: var(--av-rouge); }
-.convoc-barre-attente { background: var(--encre-douce); }
+.convoc-barre-attente { background: #D6D6D6; }   /* gris clair (01/11/2026 : plus de gris foncé) */
 .convoc-groupe summary { margin: 6px 0; }
 .convoc-reponse { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--av-creux); font-size: 14px; }
 .convoc-reponse-confirme { color: var(--ok-texte); font-weight: 600; }

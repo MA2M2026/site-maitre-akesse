@@ -22,7 +22,7 @@
 }
 .jauge.terminee .jauge-remplie { background: linear-gradient(90deg, var(--c-1f6b3a) 0%, var(--c-2f9a55) 100%); }
 .jauge.terminee .jauge-pc { color: var(--c-7fd69a); }
-.jauge.en-erreur .jauge-remplie { background: var(--c-5a5a5f); }
+.jauge.en-erreur .jauge-remplie { background: var(--rouge-profond); }
 
 .envoi-jauges {
   margin-top: 1rem; padding: 1rem 1.1rem; border-radius: 14px;
