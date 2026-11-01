@@ -134,7 +134,8 @@ function brancher(page, donnees, journal) {
       const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 36000, email: 'admin@test.ci' }) + '.c2lnbmF0dXJl';
       const repPortail = portail && u.pathname === '/api/connexion-protegee' ? (() => { const x = sessionPortail(portail.aal || 'aal1'); return { access_token: x.access_token, refresh_token: x.refresh_token }; })() : null;
       let rep = (donnees.api && donnees.api[u.pathname]) || repPortail || (u.pathname === '/api/connexion-protegee' ? { access_token: jeton, refresh_token: 'faux' } : { ok: true });
-      if (typeof rep === 'function') rep = rep(JSON.parse(route.request().postData() || '{}'));
+      // (une fonction qui ne répond rien laisse la réponse habituelle : connexion simulée du portail)
+      if (typeof rep === 'function') rep = rep(JSON.parse(route.request().postData() || '{}')) || repPortail || (u.pathname === '/api/connexion-protegee' ? { access_token: jeton, refresh_token: 'faux' } : { ok: true });
       // « statut » : imiter un refus du serveur (ex. 403 « confirmez votre code »)
       const statut = (rep && rep.statut) || 200; if (rep && rep.statut) { rep = Object.assign({}, rep); delete rep.statut; }
       route.fulfill({ status: statut, contentType: 'application/json', body: JSON.stringify(rep) });

@@ -371,7 +371,7 @@
       '<div class="voile-menu" data-action="menu-fermer"></div>' +
       '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(P.ESPACES[module] || 'Sécurité') + '">' + blocs + nav +
       '<div class="lateral-pied"><a class="btn petit clair" href="' + secu[0] + '">' + P.esc(secu[1]) + '</a>' +
-      '<button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></nav>' +
+      '<button class="btn petit clair" data-action="se-deconnecter">Déconnexion</button></div></nav>' +
       '<main class="contenu" id="contenu">' + html + '</main>' + barreBas(module, true) + '</div>';
   };
 
@@ -490,7 +490,7 @@
       (site ? ruban(site) : '') +
       '<div class="pied-portail"><span class="ligne"><a class="btn petit" href="' + secu[0] + '">' + P.esc(secu[1]) + '</a>' +
       (P.installee() ? '' : '<button class="btn petit" data-action="installer">Installer l’application</button>') +
-      '<button class="btn petit" data-action="deconnexion">Déconnexion</button></span><a href="/" class="retour">Voir le site public →</a></div>' +
+      '<button class="btn petit" data-action="se-deconnecter">Déconnexion</button></span><a href="/" class="retour">Voir le site public →</a></div>' +
       '</main>' + barreBas('', false) + '</div>';
   };
   P.apresPortail = () => {

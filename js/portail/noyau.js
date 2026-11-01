@@ -148,10 +148,20 @@
         (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
         '<button class="btn rouge" type="submit">Déverrouiller</button>' +
         '<button class="retour" type="button" data-action="deconnexion">Code oublié ? Se reconnecter complètement</button></form>';
+    } else if (etape === 'verrou-fort') {
+      // appareil de confiance (Extension 149) : 24 heures sans activité ou « Déconnexion » → mot de passe + code à 4 chiffres
+      droite = '<form data-form="verrou-fort" class="grille" style="gap:14px"><div><div class="etape">Appareil de confiance</div><h2 style="font-size:22px">Bon retour</h2></div>' +
+        '<p class="doux">Pour revenir, votre mot de passe et le code à 4 chiffres de cet appareil suffisent (pas besoin de l’application d’authentification).</p>' +
+        '<label class="fl" for="cx-mail">Adresse e-mail<input id="cx-mail" name="email" type="email" autocomplete="username" readonly value="' + P.esc(P.etat.emailSession || '') + '"></label>' +
+        '<label class="fl" for="cx-mdp">Mot de passe<input id="cx-mdp" name="motdepasse" type="password" autocomplete="current-password" required></label>' +
+        '<label class="fl" for="cx-pin">Code à 4 chiffres<input id="cx-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label>' +
+        (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
+        '<button class="btn rouge" type="submit">Revenir</button>' +
+        '<button class="retour" type="button" data-action="oublier-appareil">Oublier cet appareil (tout refaire avec l’application)</button></form>';
     } else if (etape === 'choisir-pin') {
       droite = '<form data-form="choisir-pin" class="grille" style="gap:14px"><div><div class="etape">Cet appareil</div><h2 style="font-size:22px">Choisissez un code à 4 chiffres</h2></div>' +
         '<p class="doux">Après 15 minutes sans activité, l’écran se verrouille. Ce code suffira alors pour revenir, sans l’application d’authentification. ' +
-        'Toutes les 8 heures, ou après 5 codes faux, la connexion complète sera de nouveau demandée.</p>' +
+        'Cet appareil devient « de confiance » 30 jours : après 24 heures sans activité ou une déconnexion, votre mot de passe et ce code suffiront. Après 30 jours, ou 5 codes faux, la connexion complète sera de nouveau demandée.</p>' +
         '<label class="fl" for="cx-pin1">Code à 4 chiffres<input id="cx-pin1" name="pin1" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label>' +
         '<label class="fl" for="cx-pin2">Le même, une seconde fois<input id="cx-pin2" name="pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required></label>' +
         (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
@@ -242,9 +252,46 @@
     try {
       const r = await P.rpc('portail_code_appareil_verifier', { p_appareil: identifiantAppareilPortail(), p_code: String(f.get('pin')).trim() });
       if (r.ok) return demarrer();
+      if (r.mot_de_passe) return ecranConnexion('verrou-fort', 'Plus de 24 heures sans utilisation : votre mot de passe est demandé.');
       if (r.bloque) { await P.actions.deconnexion(); return ecranConnexion('motdepasse', 'Trop de codes faux : reconnectez-vous avec votre mot de passe et l’application d’authentification.'); }
       ecranConnexion('verrou', 'Code incorrect. Essais restants : ' + r.restants + '.');
     } catch (e) { ecranConnexion('verrou', P.erreurTexte(e)); }
+  };
+  // Verrou fort : mot de passe vérifié par le serveur (même compteur d'erreurs que la connexion), puis code à 4 chiffres
+  P.formulaires['verrou-fort'] = async (f) => {
+    const email = String(f.get('email') || '').trim().toLowerCase(), motdepasse = String(f.get('motdepasse')), pin = String(f.get('pin')).trim();
+    try {
+      const rep = await fetch('/api/connexion-protegee', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: motdepasse, espace: 'portail', appareil: identifiantAppareilPortail(), verrouFort: true })
+      });
+      const corps = await rep.json().catch(() => ({}));
+      if (rep.status === 429) return ecranConnexion('verrou-fort', 'Trop d’essais : accès bloqué pendant ' + (corps.minutesRestantes || 15) + ' minutes. Une alerte a été envoyée.');
+      if (rep.status === 409 || rep.status === 403) { await P.actions.deconnexion(); return ecranConnexion('motdepasse', corps.error || 'Reconnectez-vous complètement.'); }
+      if (!rep.ok) return ecranConnexion('verrou-fort', 'Mot de passe incorrect.' + (corps.essaisRestants != null ? ' Essais restants : ' + corps.essaisRestants + '.' : ''));
+      const r = await P.rpc('portail_code_appareil_verifier', { p_appareil: identifiantAppareilPortail(), p_code: pin });
+      if (r.ok) return demarrer();
+      if (r.bloque) { await P.actions.deconnexion(); return ecranConnexion('motdepasse', 'Trop de codes faux : reconnectez-vous avec votre mot de passe et l’application d’authentification.'); }
+      ecranConnexion('verrou-fort', r.mot_de_passe ? 'Mot de passe non reconnu pour cet appareil : réessayez.' : 'Code à 4 chiffres incorrect. Essais restants : ' + r.restants + '.');
+    } catch (e) { ecranConnexion('verrou-fort', P.erreurTexte(e)); }
+  };
+  // « Déconnexion » (menu) : sur un appareil de confiance, verrou fort (la confiance reste) ; sinon tout se ferme
+  P.actions['se-deconnecter'] = async () => {
+    const confiance = await P.rpc('portail_appareil_deconnecter', { p_appareil: identifiantAppareilPortail() }).catch(() => false);
+    if (confiance !== true) return P.actions.deconnexion();
+    window.arreterInactivitePortail();
+    fetch('/api/acces-tableau', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { /* hors ligne : elle expire seule */ });
+    P.moi = null;
+    P.fenetre('');
+    location.hash = '#/';
+    ecranConnexion('verrou-fort');
+  };
+  // « Oublier cet appareil » : plus de confiance, puis déconnexion complète
+  P.actions['oublier-appareil'] = async () => {
+    if (!confirm('Oublier cet appareil ? La prochaine fois, il faudra le mot de passe ET le code de l’application d’authentification.')) return;
+    await P.rpc('portail_appareil_oublier', { p_appareil: identifiantAppareilPortail() }).catch(() => { /* session déjà fermée : la déconnexion suffit */ });
+    await P.actions.deconnexion();
+    P.message('Cet appareil n’est plus de confiance.');
   };
   P.formulaires['choisir-pin'] = async (f) => {
     const a = String(f.get('pin1')).trim(), b = String(f.get('pin2')).trim();
@@ -341,11 +388,10 @@
     const { data } = await sb.auth.getSession();
     if (!data.session) return ecranConnexion('motdepasse');
     const dernierCode = dernierCodeApplication(data.session);
-    if (dernierCode && Date.now() - dernierCode > SESSION_MAX_MS) {
-      await P.actions.deconnexion();
-      return ecranConnexion('motdepasse', 'Session de 8 heures terminée : reconnectez-vous.');
-    }
+    // (plus de 8 heures : seul un appareil de confiance garde la session, voir plus bas — la base décide)
+    const plusDe8h = dernierCode && Date.now() - dernierCode > SESSION_MAX_MS;
     const u = data.session.user;
+    P.etat.emailSession = u.email || '';
     // lien d'invitation ou de réinitialisation : choisir son mot de passe d'abord
     if (/type=(invite|recovery)/.test(location.hash) || location.hash === '#/nouveau-mot-de-passe' ||
         (u.user_metadata && u.user_metadata.portail_invite && !u.user_metadata.portail_mdp_choisi)) {
@@ -359,8 +405,14 @@
     }
     // écran verrouillé (15 minutes sans activité) : code à 4 chiffres, ou connexion complète
     const pin = await P.rpc('portail_code_appareil_etat', { p_appareil: identifiantAppareilPortail() }).catch(() => null);
+    if (plusDe8h && !(pin && pin.session === true)) {
+      await P.actions.deconnexion();
+      return ecranConnexion('motdepasse', pin && pin.confiance === false && pin.defini ? 'Session de 8 heures terminée : reconnectez-vous.' : 'Session terminée : reconnectez-vous.');
+    }
     P.etat.pinDefini = !!(pin && pin.defini);
+    P.etat.confiance = pin && pin.confiance ? (pin.confiance_jusqua || true) : null;
     if (pin && pin.verrouille) {
+      if (pin.mot_de_passe) return ecranConnexion('verrou-fort');
       if (pin.defini) return ecranConnexion('verrou');
       await P.actions.deconnexion();
       return ecranConnexion('motdepasse', 'Trop de codes faux : reconnectez-vous avec votre mot de passe et l’application d’authentification.');
@@ -441,7 +493,7 @@
       '<nav class="lateral" id="menu-lateral" aria-label="' + P.esc(ESPACES[module]) + '"><div class="marque">' + P.logo('logo-menu') + '</div>' +
       '<div class="qui"><b>' + P.esc(P.moi.nom) + '</b>' + P.esc(ROLES[P.moi.role]) + '</div>' +
       '<div class="titre-menu">' + P.esc(ESPACES[module]) + '</div>' + nav +
-      '<div class="lateral-pied"><a class="btn petit clair" href="#/">Retour au portail</a><button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></nav>' +
+      '<div class="lateral-pied"><a class="btn petit clair" href="#/">Retour au portail</a><button class="btn petit clair" data-action="se-deconnecter">Déconnexion</button></div></nav>' +
       '<main class="contenu" id="contenu">' + html + '</main></div>';
   };
 
@@ -464,7 +516,7 @@
       P.pastille(ROLES[P.moi.role], 'neutre') +
       (P.moi.role === 'principal' ? '<a class="btn petit clair" href="#/securite/comptes">Sécurité et journal</a>' : '<a class="btn petit clair" href="#/securite/codes">Mes codes de secours</a>') +
       (P.installee() ? '' : '<button class="btn petit clair" data-action="installer">Installer l’application</button>') +
-      '<button class="btn petit clair" data-action="deconnexion">Déconnexion</button></div></div>' +
+      '<button class="btn petit clair" data-action="se-deconnecter">Déconnexion</button></div></div>' +
       '<div style="padding:30px 28px;display:flex;flex-direction:column;gap:22px"><div><h1>Bonjour, ' + P.esc(P.moi.nom) + '</h1><p class="doux" style="max-width:720px">' + P.esc(phrase) + '</p></div>' +
       '<div class="tuiles">' + tuiles.map((t) => '<a class="tuile" href="#/' + t[0] + '/' + premierePage(P.espaces[t[0]]) + '"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + t[2] + '</svg>' +
         '<div><div class="tt">' + P.esc(ESPACES[t[0]]) + '</div><div class="ts">' + P.esc(t[1]) + '</div></div></a>').join('') + '</div>' +

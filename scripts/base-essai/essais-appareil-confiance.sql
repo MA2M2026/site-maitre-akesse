@@ -1,5 +1,5 @@
 -- Essais de supabase-appareil-confiance.sql (Extension 149, 01/11/2026) : appareil de confiance 30 jours
--- après une connexion complète ; verrou fort (mot de passe + code à 4 chiffres) après 1 h 30 sans activité
+-- après une connexion complète ; verrou fort (mot de passe + code à 4 chiffres) après 24 heures sans activité
 -- ou « Se déconnecter » ; « Oublier », révocation, 30 jours : connexion complète ; rien ne se contourne.
 \set ON_ERROR_STOP 1
 set search_path = public, extensions;
@@ -28,13 +28,20 @@ select essai((portail_code_appareil_verifier('appareil-confiance-0001', '2580') 
 select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 30);
 select essai_refuse($$update staff_devices set confiance_jusqua = now() + interval '10 years' where appareil = 'appareil-confiance-0001'$$, 'principal : ne prolonge pas une confiance à la main');
 select essai_refuse($$select portail_mot_de_passe_verifie('00000000-0000-0000-0000-0000000000a2', 'appareil-confiance-0001')$$, 'navigateur : ne déclare pas un mot de passe vérifié (serveur seulement)');
--- 2 heures sans activité : mot de passe exigé, le code à 4 chiffres seul ne suffit pas
+-- 3 heures sans activité (moins de 24 heures) : le code à 4 chiffres suffit, sans mot de passe
 reset role;
-update staff_codes_appareil set derniere_activite = now() - interval '2 hours', verrouille = false, verrouille_le = null where appareil = 'appareil-confiance-0001';
+update staff_codes_appareil set derniere_activite = now() - interval '3 hours', verrouille = false, verrouille_le = null where appareil = 'appareil-confiance-0001';
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal2', 10 * 3600, 'appareil-confiance-0001');
-select essai(portail_role() is null, '2 heures sans activité : fermé');
-select essai((portail_code_appareil_etat('appareil-confiance-0001') ->> 'mot_de_passe')::boolean, '2 heures sans activité : l''écran demande le mot de passe');
+select essai(portail_role() is null and coalesce((portail_code_appareil_etat('appareil-confiance-0001') ->> 'mot_de_passe')::boolean, false) = false, '3 heures sans activité : verrouillé, mais SANS mot de passe');
+select essai(portail_code_appareil_verifier('appareil-confiance-0001', '2580') ->> 'ok' = 'true', '3 heures sans activité : le code à 4 chiffres suffit');
+-- 25 heures sans activité : mot de passe exigé, le code à 4 chiffres seul ne suffit pas
+reset role;
+update staff_codes_appareil set derniere_activite = now() - interval '25 hours', verrouille = false, verrouille_le = null where appareil = 'appareil-confiance-0001';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal2', 26 * 3600, 'appareil-confiance-0001');
+select essai(portail_role() is null, '25 heures sans activité : fermé');
+select essai((portail_code_appareil_etat('appareil-confiance-0001') ->> 'mot_de_passe')::boolean, '25 heures sans activité : l''écran demande le mot de passe');
 select essai((portail_code_appareil_verifier('appareil-confiance-0001', '2580') ->> 'mot_de_passe')::boolean, 'le code à 4 chiffres seul est refusé (mot de passe d''abord)');
 reset role;
 select essai((select essais from staff_codes_appareil where appareil = 'appareil-confiance-0001') = 0, 'ce refus ne compte pas comme un code faux');
@@ -43,7 +50,7 @@ select set_config('request.jwt.claims', json_build_object('role', 'service_role'
 select essai(portail_mot_de_passe_verifie('00000000-0000-0000-0000-0000000000a2', 'appareil-confiance-0001'), 'serveur : mot de passe juste, noté pour cet appareil');
 reset role;
 set role authenticated;
-select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal2', 10 * 3600, 'appareil-confiance-0001');
+select essai_qui('00000000-0000-0000-0000-0000000000a2', 'aal2', 26 * 3600, 'appareil-confiance-0001');
 select essai(portail_role() is null, 'mot de passe seul : encore fermé (le code à 4 chiffres manque)');
 select essai(portail_code_appareil_verifier('appareil-confiance-0001', '2580') ->> 'ok' = 'true', 'puis le code à 4 chiffres : déverrouillé');
 select essai(portail_role() = 'site', 'mot de passe + code à 4 chiffres : de nouveau ouvert, sans l''application d''authentification');

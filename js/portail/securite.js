@@ -81,8 +81,12 @@
 
   async function appareils() {
     const liste = await P.bd(sb.from('staff_devices').select('*, personne:staff_profiles(nom)').order('derniere_activite', { ascending: false }));
-    return P.entete('Appareils et sessions') + '<div class="note info">Chaque appareil où le portail est utilisé apparaît ici. Révoquer un appareil coupe son accès immédiatement, même si l’application reste installée. Les sessions se verrouillent après 15 minutes sans activité et durent 8 heures au plus.</div>' +
-      P.tableau(['Personne', 'Appareil', 'Première utilisation', 'Dernière activité', 'État', ''], liste.map((a) => '<tr><td><b>' + P.esc(a.personne ? a.personne.nom : '—') + '</b></td><td>' + P.esc(a.libelle || a.appareil.slice(0, 8)) + '</td><td>' + P.dateHeure(a.installe_le) + '</td><td>' + P.dateHeure(a.derniere_activite) + '</td>' +
+    const ici = identifiantAppareilPortail();
+    // (appareil de confiance, Extension 149 : 30 jours après une connexion complète, avec un code à 4 chiffres)
+    const confiance = (a) => !a.revoque && a.confiance_jusqua && new Date(a.confiance_jusqua) > new Date();
+    return P.entete('Appareils et sessions') + '<div class="note info">Chaque appareil où le portail est utilisé apparaît ici. Révoquer un appareil coupe son accès immédiatement, même si l’application reste installée. Les sessions se verrouillent après 15 minutes sans activité et durent 8 heures au plus ; sur un appareil « de confiance » (30 jours après une connexion complète, avec son code à 4 chiffres), le mot de passe et le code à 4 chiffres suffisent pour revenir.</div>' +
+      P.tableau(['Personne', 'Appareil', 'Première utilisation', 'Dernière activité', 'Confiance', 'État', ''], liste.map((a) => '<tr><td><b>' + P.esc(a.personne ? a.personne.nom : '—') + '</b></td><td>' + P.esc(a.libelle || a.appareil.slice(0, 8)) + (a.appareil === ici ? ' <span class="petit-texte doux">(cet appareil)</span>' : '') + '</td><td>' + P.dateHeure(a.installe_le) + '</td><td>' + P.dateHeure(a.derniere_activite) + '</td>' +
+        '<td>' + (confiance(a) ? 'jusqu’au ' + P.esc(P.date(a.confiance_jusqua)) + (a.appareil === ici ? ' <button class="btn petit" data-action="oublier-appareil">Oublier cet appareil</button>' : '') : '<span class="doux">—</span>') + '</td>' +
         '<td>' + P.pastille(a.revoque ? 'Révoqué' : 'Autorisé', a.revoque ? 'erreur' : 'ok') + '</td><td><button class="btn petit" data-action="securite-appareil" data-id="' + a.id + '" data-revoque="' + (a.revoque ? '1' : '0') + '">' + (a.revoque ? 'Rétablir' : 'Révoquer') + '</button></td></tr>'));
   }
   P.actions['securite-appareil'] = async (el) => {

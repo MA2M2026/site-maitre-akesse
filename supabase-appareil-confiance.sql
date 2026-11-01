@@ -6,7 +6,7 @@
 -- qui a son code à 4 chiffres, l'appareil est « de confiance » 30 jours : la session de l'Administration
 -- n'est plus coupée au bout de 8 heures. Verrous, tous contrôlés par la base (pas seulement par l'écran) :
 --   - 15 minutes sans activité : code à 4 chiffres (comme avant) ;
---   - 1 h 30 sans activité, ou « Se déconnecter » : mot de passe vérifié par le serveur APRÈS ce moment,
+--   - 24 heures sans activité, ou « Se déconnecter » : mot de passe vérifié par le serveur APRÈS ce moment,
 --     puis code à 4 chiffres (sans le code de l'application) ;
 --   - 30 jours, « Oublier cet appareil », appareil révoqué, accès coupé : connexion complète.
 -- Un appareil sans code à 4 chiffres n'est jamais de confiance (comportement d'avant : 8 heures).
@@ -51,12 +51,12 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 
 -- Verrou fort d'un appareil de confiance : depuis quand le mot de passe est exigé (null : pas exigé).
--- Moment = « Se déconnecter », ou 1 h 30 après le dernier signe de vie. Levé par un mot de passe vérifié
+-- Moment = « Se déconnecter », ou 24 heures après le dernier signe de vie. Levé par un mot de passe vérifié
 -- par le serveur APRÈS ce moment, ou par une connexion complète (code de l'application) après ce moment.
 create or replace function portail_verrou_fort(p_appareil text)
 returns timestamptz language sql stable security definer set search_path = public as $$
   select x.depuis from (
-    select greatest(d.deconnecte_le, case when c.derniere_activite + interval '90 minutes' <= now() then c.derniere_activite + interval '90 minutes' end) as depuis,
+    select greatest(d.deconnecte_le, case when c.derniere_activite + interval '24 hours' <= now() then c.derniere_activite + interval '24 hours' end) as depuis,
            d.mdp_verifie_le
     from staff_devices d join staff_codes_appareil c on c.user_id = d.user_id and c.appareil = d.appareil
     where d.user_id = auth.uid() and d.appareil = p_appareil and portail_appareil_de_confiance(d.user_id, d.appareil)) x
@@ -93,7 +93,7 @@ begin
   if not portail_session_valable(app) then
     return false;
   end if;
-  -- appareil de confiance resté 1 h 30 sans activité, ou « déconnecté » : mot de passe exigé
+  -- appareil de confiance resté 24 heures sans activité, ou « déconnecté » : mot de passe exigé
   if portail_verrou_fort(app) is not null then
     return false;
   end if;
