@@ -1081,6 +1081,8 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .pr-mention { min-width: 96px; font-size: 12px; }
 .pr-badge { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 600; line-height: 1.3; color: #FFFFFF; }
 .pr-badge.vert { background: #1E7A45; } .pr-badge.orange { background: #9A5800; } .pr-badge.rouge { background: var(--rouge-mat); }
+.pr-pause { margin: 4px 0 0 44px; padding: 2px 8px; border: 1px solid var(--rouge-mat); border-radius: 999px; background: var(--blanc-pur); color: var(--rouge-mat); font-size: 12px; font-weight: 600; cursor: pointer; }
+.pr-en-pause { display: inline-block; margin: 4px 0 0 44px; font-size: 12px; color: #9A5800; font-weight: 600; }
 .pr-legende { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 6px; color: #FFFFFF; font-weight: 700; text-align: center; border: 1.5px solid #FFFFFF; }   /* (contour : lisible sur le fond rouge de la page) */
 .pr-legende.e-present { background: #1E7A45; } .pr-legende.e-excuse { background: #9A5800; } .pr-legende.e-absent { background: var(--rouge-mat); }
 .pr-periode { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }

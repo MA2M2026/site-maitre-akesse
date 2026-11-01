@@ -50,7 +50,11 @@
       // mensualité du mois pas payée (seulement pour qui a accès aux Paiements : la base ne le dit qu'à eux)
       const aPayer = m.mensualite === 'non_paye' || m.mensualite === 'a_payer';
       return '<tr data-nom="' + P.esc(String(m.nom || '').toLowerCase()) + '" data-entree="' + P.esc(m.date_entree || '') + '"><th scope="row" class="pr-nom"><div class="pr-nom-c">' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<span>' + P.esc(m.nom) +
-        (aPayer ? ' <small class="pr-a-payer" title="Mensualité de ' + P.esc(NOMS_MOIS(etat.mois)) + (m.mensualite === 'non_paye' ? ' en retard' : ' à payer') + '">' + (m.mensualite === 'non_paye' ? 'retard' : 'à payer') + '</small>' : '') + '</span></div></th>' +
+        (aPayer ? ' <small class="pr-a-payer" title="Mensualité de ' + P.esc(NOMS_MOIS(etat.mois)) + (m.mensualite === 'non_paye' ? ' en retard' : ' à payer') + '">' + (m.mensualite === 'non_paye' ? 'retard' : 'à payer') + '</small>' : '') + '</span></div>' +
+        // (01/11/2026, choix A de la propriétaire) une mannequin qui ne vient plus : mise en pause d'un toucher par
+        // l'administratrice principale ; elle quitte la liste de présence et les paiements, rien n'est effacé
+        (P.moi && P.moi.role === 'principal' && m.statut === 'actif' ? '<button type="button" class="pr-pause" data-action="presences-pause" data-mannequin="' + P.esc(m.id) + '" data-nom="' + P.esc(m.nom) + '">Ne vient plus</button>' : '') +
+        (m.statut && m.statut !== 'actif' ? '<small class="pr-en-pause">' + (m.statut === 'sorti' ? 'sortie' : 'en pause') + '</small>' : '') + '</th>' +
         r.jours.map((j) => {
           const modifiable = j.etat !== 'annulee' && j.dimanche <= auj;
           return '<td><button type="button" class="pr-case e-' + j.etat + '" data-action="presences-case" data-mannequin="' + P.esc(m.id) + '" data-jour="' + j.dimanche + '" data-etat="' + j.etat + '"' +
@@ -145,6 +149,21 @@
     P.message(annulee ? 'Séance rétablie.' : 'Séance annulée.');
     return P.afficher();
   };
+  // « Ne vient plus » : même chemin que Paiements › Sorties et suspensions (proposition puis décision, base
+  // supabase-bloc2-complements.sql), fait d'un seul geste par l'administratrice principale (code récent demandé)
+  P.actions['presences-pause'] = async (el) => {
+    const nom = el.dataset.nom || 'cette mannequin';
+    const motif = (prompt('Mettre ' + nom + ' en pause : elle ne sera plus dans la liste de présence ni dans les paiements (rien n’est effacé ; réactivation dans Paiements › Sorties et suspensions).\n\nMotif :', 'Ne vient plus aux cours') || '').trim();
+    if (!motif) return;
+    try {
+      const enAttente = await P.bd(sb.from('sorties_mannequins').select('id').eq('mannequin_id', el.dataset.mannequin).eq('decision', 'en_attente'));
+      const id = enAttente && enAttente[0] ? enAttente[0].id : await P.rpc('sortie_proposer', { p_mannequin: el.dataset.mannequin, p_type: 'suspendu', p_motif: motif });
+      await P.sensible(() => P.rpc('sortie_decider', { p_id: id, p_accepter: true, p_motif: null }));
+      P.message(nom + ' est en pause : elle ne figure plus dans la liste de présence ni dans les paiements.');
+      await P.afficher();
+    } catch (e) { P.message('Non enregistré : ' + P.erreurTexte(e)); }
+  };
+
   P.actions['presences-mois'] = (el) => { etat.mois = C.moisVoisin(etat.mois, Number(el.dataset.pas)); return P.afficher(); };
   P.changements['presences-filtre'] = (el) => { etat.filtre = el.value; appliquerFiltre(); };
 

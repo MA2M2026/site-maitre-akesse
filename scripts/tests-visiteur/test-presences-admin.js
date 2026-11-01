@@ -42,6 +42,7 @@ function moisSimule(corps) {
     d.rpc.presences_periode = () => ({ mannequins: M, annulees: [], presences: jours.map((x) => ({ mannequin: 'r1', dimanche: x, etat: 'present' })) });
     d.rpc.presence_marquer = () => null; d.rpc.presences_seance_annuler = () => null;
     d.rpc.mannequins_du_mois_historique = []; d.rpc.mannequin_du_mois_choisir = () => null;
+    d.rpc.sortie_proposer = () => 'so-1'; d.rpc.sortie_decider = () => null; d.tables.sorties_mannequins = [];
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
     const appels = (nomRpc) => journal.filter((j) => j[0] === 'rpc' && j[1] === nomRpc).map((j) => JSON.parse(j[2] || '{}'));
@@ -54,6 +55,12 @@ function moisSimule(corps) {
     await p.mouse.move(0, 0);
     const contours = await p.$$eval('.pr-grille tbody .pr-case:not(.e-present):not(.e-excuse):not(.e-absent):not(.e-annulee):not(.e-vacances):not(.e-avant_entree)', (l) => l.map((b) => { const c = getComputedStyle(b); return [c.borderTopColor, c.borderTopStyle, c.opacity]; }));
     ok(contours.length > 0 && contours.every(([couleur, , opacite]) => /rgba?\(124, 33, 40/.test(couleur) && opacite === '1'), n + 'cases vides et à venir : contour rouge bien visible sans survol (' + contours.length + ' cases)');
+    // (01/11/2026, choix A de la propriétaire) « Ne vient plus » : mise en pause d'un toucher, motif demandé, décidée aussitôt
+    ok((await p.$$('.pr-grille tbody [data-action="presences-pause"]')).length === 3, n + 'chaque mannequin active a son bouton « Ne vient plus »');
+    await p.click('.pr-grille tbody [data-action="presences-pause"][data-mannequin="r3"]'); await p.waitForTimeout(900);
+    const prop = appels('sortie_proposer').pop() || {}, dec = appels('sortie_decider').pop() || {};
+    ok(prop.p_mannequin === 'r3' && prop.p_type === 'suspendu' && prop.p_motif === 'Fête de l’agence' && dec.p_id === 'so-1' && dec.p_accepter === true, n + '« Ne vient plus » : mise en pause avec son motif, décidée aussitôt (rien n’est effacé)');
+    await p.goto(URL_ADMIN + '#/site/b2-presences'); await p.waitForSelector('.pr-grille'); await p.waitForTimeout(600);
     // mannequin du mois : proposée parmi les assidues du mois précédent (Awa), choisie avec un petit mot
     ok(/Mannequin du mois/.test(await p.textContent('.pr-mdm')) && (await p.$$('.pr-mdm-liste li')).length === 1 && /AWA KONÉ/.test(await p.textContent('.pr-mdm-liste')), n + 'mannequin du mois : seule l’assidue du mois précédent est proposée');
     await p.click('.pr-mdm-liste [data-action="mdm-choisir"]'); await p.waitForTimeout(800);
