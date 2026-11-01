@@ -4,3 +4,9 @@ node_modules/
 .claude/
 skills-lock.json
 /mw-*.mjs
+
+# Fichiers de secrets locaux : jamais dans le dépôt public (contrôle des clés secrètes, 01/11/2026)
+.env
+.env.*
+*.pem
+*.key
