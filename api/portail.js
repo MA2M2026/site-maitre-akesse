@@ -129,8 +129,8 @@ async function relancesDuJour(req, res) {
   if (!secret || req.headers.authorization !== 'Bearer ' + secret) return res.status(401).json({ error: 'Non autorisé.' });
   const jour = new Date().getUTCDate();  // (Abidjan : heure UTC)
   // (une panne des anniversaires n'empêche jamais les relances)
-  const anniversaires = await anniversairesDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Anniversaires] ' + ((e && e.message) || e), 'anniversaires'); return 0; });
-  const documents = await documentsDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Documents] ' + ((e && e.message) || e), 'documents'); return 0; });
+  const anniversaires = await anniversairesDuJour(process.env.EMAILJS_PRIVATE_KEY).catch(async (e) => { await noterAuJournal('[Anniversaires] ' + ((e && e.message) || e), 'anniversaires'); return 0; });
+  const documents = await documentsDuJour(process.env.EMAILJS_PRIVATE_KEY).catch(async (e) => { await noterAuJournal('[Documents] ' + ((e && e.message) || e), 'documents'); return 0; });
   if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, documents, rien: 'pas un jour de relance' });
   try {
     const liste = await rpcService('mensualites_relances', { p_jour: jour });

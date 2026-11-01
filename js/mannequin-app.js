@@ -194,7 +194,7 @@
     const auj = C.jourIso(new Date()), mois = auj.slice(0, 7);
     const coches = {}; (d.presences || []).forEach((p) => { coches[p.dimanche] = p.etat; });
     const annulees = (d.annulees || []).map((a) => a.dimanche);
-    const premiers = [d.date_entree, ((d.presences || [])[0] || {}).dimanche].filter(Boolean).sort();
+    const premiers = [d.date_entree, ((d.presences || [])[0] || {}).dimanche].filter(Boolean).sort((a, b) => a.localeCompare(b));
     const debut = premiers.length ? premiers[0].slice(0, 7) : mois;
     return { C, mois, ceMois: C.moisMannequin(mois, coches, annulees, d.date_entree, auj), tout: C.synthese(C.moisEntre(debut < mois ? debut : mois, mois), coches, annulees, d.date_entree, auj) };
   }

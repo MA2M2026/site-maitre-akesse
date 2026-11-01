@@ -83,6 +83,8 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
         ok(/<div id="agenda-avenir" class="agenda-liste-publique"><article class="agenda-carte"><h3>Forum &lt;img src=x onerror=alert\(1\)&gt;<\/h3><p>21 (octobre|October) 2030 – 22 (octobre|October) 2030 · Sofitel, Abidjan<\/p><\/article>/.test(visible),
           chemin + ' : les projets à venir (titre, dates, lieu) sont dans le HTML avant tout programme');
+        ok(/<div id="agenda-passes" class="agenda-liste-publique"><p class="agenda-vide">(Nos projets réalisés seront affichés ici\.|Our completed projects will appear here\.)<\/p><\/div>/.test(visible),
+          chemin + ' : la liste des projets réalisés aussi (ici : le message « rien encore »)');
       }
       // étape A (01/11/2026) : parcours — le mois et ses projets (titre, lieu, mannequins) sont dans le HTML
       if (page === 'parcours') {

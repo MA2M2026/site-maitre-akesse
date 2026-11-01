@@ -629,17 +629,21 @@ async function agendaRempli(url, anglais) {
     lireSupabase('evenements?select=id,titre,date_evenement,lieu&date_evenement=gte.' + depuis + '&order=date_evenement.asc,id.asc&limit=1000', null, ATTENTE_FICHE)
   ]).then(([agenda, evenements]) => (Array.isArray(agenda) && Array.isArray(evenements) && evenements.length < 1000 ? { agenda, evenements } : null)));
   return pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture, async (html, d) => {
-    // étape A (01/11/2026) : les projets à venir (titre, dates, lieu) écrits dans la page, à la place de
-    // « Chargement de l'agenda… » ; la page dessine ensuite son calendrier et ses cartes complètes par-dessus.
-    const aujourdhui = new Date().toISOString().slice(0, 10);
-    const avenir = d.agenda.filter((p) => String(p.date_fin || p.date_debut || '') >= aujourdhui)
-      .sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut))).slice(0, 30);
-    if (!avenir.length) return html;
-    const liste = anglais ? await versAnglaisServeur(avenir, ['titre', 'lieu']) : avenir;
+    // étape A (01/11/2026) : les projets à venir ET les projets réalisés (titre, dates, lieu) écrits dans la
+    // page, à la place de « Chargement de l'agenda… » ; rien à venir : le message de la page (js/agenda.js).
+    // La page dessine ensuite son calendrier et ses cartes complètes par-dessus.
+    const aujourdhui = new Date().toISOString().slice(0, 10), fin = (p) => String(p.date_fin || p.date_debut || '');
+    const avenirFr = d.agenda.filter((p) => fin(p) >= aujourdhui).sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut))).slice(0, 30);
+    const passesFr = d.agenda.filter((p) => fin(p) < aujourdhui).sort((a, b) => fin(b).localeCompare(fin(a))).slice(0, 12);
+    const [avenir, passes] = anglais ? await Promise.all([versAnglaisServeur(avenirFr, ['titre', 'lieu']), versAnglaisServeur(passesFr, ['titre', 'lieu'])]) : [avenirFr, passesFr];
     const jour = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-    const cartes = liste.map((p) => '<article class="agenda-carte"><h3>' + echapper(p.titre) + '</h3><p>' +
-      echapper([jour(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' – ' + jour(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p></article>').join('');
-    return html.replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' + cartes + '</div>');
+    const cartes = (liste, vide) => (liste.length ? liste.map((p) => '<article class="agenda-carte"><h3>' + echapper(p.titre) + '</h3><p>' +
+      echapper([jour(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' – ' + jour(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p></article>').join('')
+      : '<p class="agenda-vide">' + vide + '</p>');
+    return html.replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' +
+      cartes(avenir, anglais ? 'Our upcoming projects will appear here very soon.' : 'Nos prochains projets seront affichés ici très bientôt.') + '</div>')
+      .replace('<div id="agenda-passes" class="agenda-liste-publique"></div>', () => '<div id="agenda-passes" class="agenda-liste-publique">' +
+        cartes(passes, anglais ? 'Our completed projects will appear here.' : 'Nos projets réalisés seront affichés ici.') + '</div>');
   });
 }
 
