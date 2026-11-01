@@ -1927,46 +1927,73 @@ async function verifierEnvoiR2(adresse, jeton, corps) {
   e.refuse = rep.status === 422;
   throw e;
 }
-// Barre de progression des envois de photos (01/11/2026, demande de la propriétaire) : en haut de l'écran,
-// pour tous les envois en cours (plusieurs photos à la fois : une seule barre, le total), sur toutes les pages
-// qui envoient des photos (application des mannequins, Administration, site).
+// Jauge des envois de photos (01/11/2026, demande de la propriétaire) : EN BAS de l'écran (au-dessus du menu de
+// l'application), comme celle du formulaire « Intégrer l'agence » : « Photos : 3 / 10 » et le pourcentage des
+// octets envoyés ; verte une fois tout envoyé. Une seule jauge pour tous les envois en cours, sur toutes les
+// pages qui envoient des photos. suiviPhotos.debut(n) / photoFinie() / fin() : le nombre de photos d'un lot.
 const envoisEnCours = new Map();
+const suiviPhotos = { total: 0, finies: 0, octetsFinis: 0, octetsTotal: 0,
+  debut(n) { Object.assign(this, { total: n, finies: 0, octetsFinis: 0, octetsTotal: 0 }); majBarreEnvoi(); },
+  photoFinie() { this.finies++; majBarreEnvoi(); },
+  fin() { this.total = 0; majBarreEnvoi(); } };
 let barreEnvoi = null, finBarreEnvoi = null;
+function creerBarreEnvoi() {
+  const b = document.createElement('div');
+  b.className = 'barre-envoi'; b.setAttribute('role', 'progressbar'); b.setAttribute('aria-valuemin', '0'); b.setAttribute('aria-valuemax', '100');
+  // (styles posés par le programme et non écrits dans le HTML : permis par la règle de sécurité de toutes les pages)
+  const nav = document.querySelector('.ap-nav');
+  const basNav = nav ? Math.round(window.innerHeight - nav.getBoundingClientRect().top) + 8 : 12;
+  Object.assign(b.style, { position: 'fixed', left: '12px', right: '12px', bottom: 'calc(' + basNav + 'px + env(safe-area-inset-bottom, 0px) * ' + (nav ? 0 : 1) + ')', zIndex: '100000',
+    maxWidth: '520px', margin: '0 auto', background: '#FFFFFF', color: '#1B1817', borderRadius: '14px', padding: '12px 14px',
+    boxShadow: '0 6px 24px rgba(0,0,0,.28)', font: '600 14px/1.2 "Work Sans", system-ui, sans-serif' });
+  const haut = document.createElement('div'), titre = document.createElement('span'), pc = document.createElement('span');
+  Object.assign(haut.style, { display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '8px' });
+  titre.className = 'barre-envoi-texte'; pc.className = 'barre-envoi-pc'; pc.style.fontVariantNumeric = 'tabular-nums';
+  haut.append(titre, pc);
+  const piste = document.createElement('div'), plein = document.createElement('div');
+  Object.assign(piste.style, { height: '12px', borderRadius: '999px', background: 'rgba(124,33,40,.15)', overflow: 'hidden' });
+  Object.assign(plein.style, { height: '100%', width: '0', borderRadius: '999px', background: '#7C2128', transition: 'width .35s ease' });
+  plein.className = 'barre-envoi-plein';
+  piste.appendChild(plein); b.append(haut, piste);
+  return b;
+}
 function majBarreEnvoi() {
   if (!document.body) return;
-  if (!barreEnvoi) {
-    barreEnvoi = document.createElement('div');
-    barreEnvoi.className = 'barre-envoi';
-    barreEnvoi.setAttribute('role', 'progressbar');
-    barreEnvoi.setAttribute('aria-valuemin', '0'); barreEnvoi.setAttribute('aria-valuemax', '100');
-    Object.assign(barreEnvoi.style, { position: 'fixed', left: '0', right: '0', top: '0', zIndex: '100000', background: '#FFFFFF', color: '#7C2128',
-      font: '600 13px/1.2 "Work Sans", system-ui, sans-serif', padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 14px 8px', boxShadow: '0 2px 10px rgba(0,0,0,.18)' });
-    // (styles posés par le programme, pas dans le HTML : permis par la règle de sécurité CSP de toutes les pages)
-    const texte = document.createElement('div'), piste = document.createElement('div'), plein = document.createElement('div');
-    texte.className = 'barre-envoi-texte'; plein.className = 'barre-envoi-plein';
-    Object.assign(piste.style, { height: '6px', marginTop: '6px', borderRadius: '3px', background: 'rgba(124,33,40,.15)', overflow: 'hidden' });
-    Object.assign(plein.style, { height: '100%', width: '0', background: '#7C2128', transition: 'width .2s' });
-    piste.appendChild(plein); barreEnvoi.append(texte, piste);
-  }
   const liste = [...envoisEnCours.values()];
-  if (!liste.length) {
+  const lot = suiviPhotos.total > 0;
+  if (!liste.length && !lot) {
     clearTimeout(finBarreEnvoi);
-    finBarreEnvoi = setTimeout(() => { if (!envoisEnCours.size && barreEnvoi) barreEnvoi.remove(); }, 700);
+    finBarreEnvoi = setTimeout(() => { if (!envoisEnCours.size && !suiviPhotos.total && barreEnvoi) { barreEnvoi.remove(); barreEnvoi = null; } }, 1500);
+    if (barreEnvoi) {  // (tout est envoyé : la jauge passe au vert un instant)
+      barreEnvoi.querySelector('.barre-envoi-plein').style.width = '100%';
+      barreEnvoi.querySelector('.barre-envoi-plein').style.background = '#1E7A45';
+      barreEnvoi.querySelector('.barre-envoi-pc').textContent = '100 %';
+    }
     return;
   }
   clearTimeout(finBarreEnvoi);
+  if (!barreEnvoi) barreEnvoi = creerBarreEnvoi();
   if (!barreEnvoi.isConnected) document.body.appendChild(barreEnvoi);
   const total = liste.reduce((t, e) => t + e.total, 0), charge = liste.reduce((t, e) => t + Math.min(e.charge, e.total), 0);
-  const pct = total ? Math.round(charge / total * 100) : 0;
-  barreEnvoi.setAttribute('aria-valuenow', String(pct));
-  barreEnvoi.querySelector('.barre-envoi-plein').style.width = pct + '%';
-  barreEnvoi.querySelector('.barre-envoi-texte').textContent = (liste.length > 1 ? 'Envoi de ' + liste.length + ' photos' : 'Envoi de la photo') + ' : ' + pct + ' %';
+  // (un lot de photos : la part des photos déjà finies, plus l'avancée de celles en cours)
+  // (lot : photos finies + avancée des photos en cours, 2 à la fois au plus)
+  const enCours = Math.min(2, suiviPhotos.total - suiviPhotos.finies);
+  const pct = lot ? Math.round(100 * (suiviPhotos.finies + (total ? charge / total : 0) * enCours) / suiviPhotos.total)
+    : (total ? Math.round(charge / total * 100) : 0);
+  const p = Math.max(0, Math.min(lot && suiviPhotos.finies < suiviPhotos.total ? 99 : 100, pct));
+  barreEnvoi.setAttribute('aria-valuenow', String(p));
+  const plein = barreEnvoi.querySelector('.barre-envoi-plein');
+  plein.style.width = p + '%'; plein.style.background = '#7C2128';
+  barreEnvoi.querySelector('.barre-envoi-pc').textContent = p + ' %';
+  barreEnvoi.querySelector('.barre-envoi-texte').textContent = lot ? 'Photos envoyées : ' + suiviPhotos.finies + ' / ' + suiviPhotos.total : 'Envoi de la photo…';
 }
 // Envoi vers Cloudflare R2 par une adresse signée temporaire, délivrée par
 // api/r2-presigner.js (au propriétaire de la photo ou à un admin) : les clés R2 ne
 // sont jamais dans le navigateur. Sur une connexion mobile instable, ce trajet échoue
 // parfois une fois puis réussit : 3 essais avant de faire remonter l'échec.
-async function uploaderVersR2(modelId, chemin, blob, contentType) {
+// (verifier : false pour les copies réduites fabriquées par le téléphone lui-même ; seule la photo choisie
+// par la personne est relue par le serveur : un aller-retour de moins par copie, 01/11/2026)
+async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = true) {
   const jeton = await jetonSessionCourante();
   if (!jeton) throw new Error('Session expirée, reconnectez-vous.');
   let derniereErreur;
@@ -1981,7 +2008,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType) {
       if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
       const envoi = await envoyerAvecProgression(resultat.uploadUrl, blob, null, contentType || 'image/jpeg');
       if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
-      await verifierEnvoiR2('/api/r2-presigner', jeton, { modelId, chemin, contentType: contentType || 'image/jpeg' });
+      if (verifier) await verifierEnvoiR2('/api/r2-presigner', jeton, { modelId, chemin, contentType: contentType || 'image/jpeg' });
       return resultat.publicUrl;
     } catch (e) {
       derniereErreur = e;
@@ -2050,18 +2077,28 @@ async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite)
   }, 'image/jpeg', qualite));
   if (!blobs) return null;
   const base = modelId + '/' + dossier + '/' + Date.now() + '-' + suffixeAleatoire() + fin;
-  let avecWebp = false;
-  if (blobs.webp) {
-    try { await uploaderVersR2(modelId, base + '-w.webp', blobs.webp, 'image/webp'); avecWebp = true; }
-    catch (e) { console.warn('Copie WebP non envoyée :', e); }
+  // (01/11/2026, vitesse) la copie WebP et le JPEG partent EN MÊME TEMPS ; le JPEG porte le nom « -w » (qui
+  // annonce sa copie WebP) seulement si celle-ci est bien arrivée
+  if (!blobs.webp) {  // (iPhone ancien : pas de WebP, un seul envoi, sans « -w »)
+    const chemin = base + '.jpg';
+    return { url: await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg', false), chemin };
   }
-  const chemin = base + (avecWebp ? '-w' : '') + '.jpg';
+  const [webp, jpg] = await Promise.allSettled([
+    uploaderVersR2(modelId, base + '-w.webp', blobs.webp, 'image/webp', false),
+    uploaderVersR2(modelId, base + '-w.jpg', blobs.jpg, 'image/jpeg', false)
+  ]);
+  if (jpg.status === 'rejected') {
+    if (webp.status === 'fulfilled') await supprimerDeR2(modelId, base + '-w.webp');  // pas de copie WebP orpheline
+    throw jpg.reason;
+  }
+  if (webp.status === 'fulfilled') return { url: jpg.value, chemin: base + '-w.jpg' };
+  // (copie WebP perdue en route, rare : le JPEG est renvoyé sans « -w », comme avant)
+  const chemin = base + '.jpg';
   try {
-    return { url: await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg'), chemin };
-  } catch (e) {
-    if (avecWebp) await supprimerDeR2(modelId, base + '-w.webp');  // pas de copie WebP orpheline
-    throw e;
-  }
+    const url = await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg', false);
+    await supprimerDeR2(modelId, base + '-w.jpg');
+    return { url, chemin };
+  } catch (e) { console.warn('Copie JPEG renommée non envoyée :', e); return { url: jpg.value, chemin: base + '-w.jpg' }; }
 }
 // Book / Lifestyle (07 au 24/10/2026) : le tri automatique se trompait (photos de studio
 // rangées en Lifestyle) ; décision de la propriétaire, toutes les photos vont dans le Book.
@@ -2077,15 +2114,18 @@ async function envoyerPhotoBook(modelId, fichierOriginal) {
   const fichierConverti = await convertirSiHeic(fichierOriginal);
   const fichier = await compresserPhotoOrigine(fichierConverti);
   const chemin = modelId + '/' + Date.now() + '-' + suffixeAleatoire() + '-' + nomFichierSur(fichier.name);
-  const url = await uploaderVersR2(modelId, chemin, fichier, fichier.type || 'image/jpeg');
-  const colonnes = { url, chemin, categorie: 'book' };
-  for (const [cle, dossier, fin, cote, qualite] of VERSIONS_PHOTO_BOOK) {
-    colonnes['url_' + cle] = null; colonnes['chemin_' + cle] = null;
-    try {
-      const v = await envoyerVersionPhoto(modelId, fichier, dossier, fin, cote, qualite);
-      if (v) { colonnes['url_' + cle] = v.url; colonnes['chemin_' + cle] = v.chemin; }
-    } catch (e) { console.warn('Version ' + cle + ' non envoyée :', e); }
+  // (01/11/2026, vitesse) l'originale et ses versions réduites partent EN MÊME TEMPS (avant : 7 fichiers l'un après
+  // l'autre, avec chacun 3 allers-retours ; très lent en 3G/4G)
+  const [origine, ...versions] = await Promise.allSettled([uploaderVersR2(modelId, chemin, fichier, fichier.type || 'image/jpeg')]
+    .concat(VERSIONS_PHOTO_BOOK.map(([cle, dossier, fin, cote, qualite]) => envoyerVersionPhoto(modelId, fichier, dossier, fin, cote, qualite)
+      .catch((e) => { console.warn('Version ' + cle + ' non envoyée :', e); return null; }))));
+  const faites = versions.map((v) => v.value);
+  if (origine.status === 'rejected') {  // (l'originale n'est pas passée : ses copies ne restent pas seules dans le stockage)
+    await Promise.all(faites.filter(Boolean).map((v) => supprimerDeR2(modelId, v.chemin)));
+    throw origine.reason;
   }
+  const url = origine.value, colonnes = { url, chemin, categorie: 'book' };
+  VERSIONS_PHOTO_BOOK.forEach(([cle], k) => { const v = faites[k]; colonnes['url_' + cle] = v ? v.url : null; colonnes['chemin_' + cle] = v ? v.chemin : null; });
   return colonnes;
 }
 // Tous les fichiers d'une photo du Book (originale et versions réduites, d'après les colonnes de

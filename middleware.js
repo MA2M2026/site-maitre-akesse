@@ -496,14 +496,17 @@ const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () =
 const COLONNES_PROFIL_FICHE = 'id,full_name,city,category,niveau_mannequin,height_cm,weight_kg,chest_cm,waist_cm,hips_cm,inseam_cm,shoe_size,carnation,clothing_size,eye_color,hair_color,bio,years_experience,model_types,languages,availability,video_url';
 const COLONNES_PHOTOS_FICHE = 'id,url,url_miniature,url_moyenne,url_petite,compcard_ordre,principale,photo_couverture,couverture_position,tri_statut,created_at';
 // même choix de grande photo que photosAffichees (js/app.js) : vérifié par test-fiche-serveur.js
-function couvertureFiche(photos) {
+function choixCouverture(photos) {
   const date = (p) => { const t = Date.parse(p.created_at); return Number.isNaN(t) ? Infinity : t; };
   const triees = photos.filter((p) => p.tri_statut !== 'ecartee').sort((x, y) => {
     if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
     if (date(x) !== date(y)) return date(x) - date(y);
     return String(x.id) < String(y.id) ? -1 : 1;
   });
-  const choisie = triees.find((p) => p.photo_couverture) || triees[0];
+  return triees.find((p) => p.photo_couverture) || triees[0] || null;
+}
+function couvertureFiche(photos) {
+  const choisie = choixCouverture(photos);
   return choisie ? photoLegere(choisie.url_moyenne || choisie.url) : '';
 }
 // Étape A (01/11/2026) : le contenu principal de la fiche écrit dans la page par le serveur (nom, catégorie,
@@ -513,9 +516,12 @@ function couvertureFiche(photos) {
 // (01/11/2026, « ça doit être instantané ») la photo que la carte du Book montrait déjà (même règle que
 // photos_couverture_petites : principale d'abord, puis la plus ancienne ; petite version sur téléphone) : déjà
 // dans le téléphone, elle s'affiche AUSSITÔT sous la grande photo, qui la recouvre dès qu'elle arrive
+// (01/11/2026, remarque de la propriétaire) seulement si c'est LA MÊME photo que la grande : jamais une première
+// photo différente qui serait remplacée par une autre
 function photoDeLaCarte(photos, telephone) {
   const p = photos[0];  // (photos lues triées principale d'abord, puis par date)
-  if (!p) return '';
+  const grande = choixCouverture(photos);
+  if (!p || !grande || grande.id !== p.id) return '';
   return photoLegere(p.url_miniature && p.url_petite && telephone ? p.url_petite : (p.url_miniature || p.url));
 }
 function contenuFiche(d, anglais, photo, apercu) {

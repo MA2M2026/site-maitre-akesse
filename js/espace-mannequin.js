@@ -1374,12 +1374,21 @@ function bindPhotoHandlers(){
     if (files.length > place) toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos : seules '+place+' photo(s) sur '+files.length+' seront envoyées.', true);
     // Progression visible photo par photo : sans elle, un envoi de plusieurs photos sur
     // une connexion lente donnait l'impression que rien ne se passait.
-    let nbOk = 0;
-    for (let i = 0; i < aEnvoyer.length; i++) {
-      if (aEnvoyer.length > 1) toast('Envoi de la photo '+(i+1)+' sur '+aEnvoyer.length+'…');
-      const item = await Store.uploadPhoto(aEnvoyer[i]);
-      if (item) { s.photos.book.push(item); nbOk++; }
-    }
+    // (01/11/2026, demande de la propriétaire) jauge en bas de l'écran « Photos envoyées : 3 / 10 » (suiviPhotos,
+    // js/app.js) et 2 photos envoyées à la fois (plus rapide, sans saturer une connexion 3G)
+    let nbOk = 0, suivante = 0;
+    const resultats = new Array(aEnvoyer.length).fill(null);
+    if (typeof suiviPhotos !== 'undefined') suiviPhotos.debut(aEnvoyer.length);
+    const ouvrier = async function(){
+      while (suivante < aEnvoyer.length) {
+        const k = suivante++;
+        resultats[k] = await Store.uploadPhoto(aEnvoyer[k]);
+        if (typeof suiviPhotos !== 'undefined') suiviPhotos.photoFinie();
+      }
+    };
+    try { await Promise.all([ouvrier(), ouvrier()]); }
+    finally { if (typeof suiviPhotos !== 'undefined') suiviPhotos.fin(); }
+    resultats.forEach(function(item){ if (item) { s.photos.book.push(item); nbOk++; } });  // (dans l'ordre choisi)
     if (aEnvoyer.length > 1) toast(nbOk === aEnvoyer.length ? 'Les '+nbOk+' photos ont bien été ajoutées.' : nbOk+' photo(s) ajoutée(s) sur '+aEnvoyer.length+'.', nbOk !== aEnvoyer.length);
     else if (nbOk === 1) toast('Photo ajoutée.');
     fBook.value=''; render(); reopenDashboardBlock('photos');

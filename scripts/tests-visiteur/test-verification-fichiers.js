@@ -72,7 +72,7 @@ ok(familleDuContenu(HTML) === null && familleDuContenu(SVG) === null && familleD
         appels.push('PUT');
         setTimeout(() => {
           if (this.upload.onprogress) this.upload.onprogress({ lengthComputable: true, loaded: 50, total: 100 });
-          const t = document.querySelector('.barre-envoi-texte'); window.__barre.push(t ? t.textContent : '');
+          const t = document.querySelector('.barre-envoi'); window.__barre.push(t ? t.textContent + '|' + (t.getBoundingClientRect().top > innerHeight / 2 ? 'bas' : 'haut') : '');
           this.status = 200; this.onload();
         }, 30);
       }
@@ -83,9 +83,9 @@ ok(familleDuContenu(HTML) === null && familleDuContenu(SVG) === null && familleD
   ok(/pas une vraie photo/.test(refuse.erreur || '') && refuse.appels.join() === 'signer,PUT,verifier', 'navigateur : fichier refusé → message clair, un seul essai (' + refuse.appels.join() + ')');
   const accepte = await essai(200);
   ok(accepte.u === 'https://r2.test/m1/p.jpg' && accepte.appels.join() === 'signer,PUT,verifier', 'navigateur : vraie photo → envoyée puis vérifiée');
-  ok((await p.evaluate(() => window.__barre)).includes('Envoi de la photo : 50 %'), 'navigateur : pendant l’envoi, une barre de progression en haut de l’écran (« Envoi de la photo : 50 % »)');
-  await p.waitForTimeout(900);
-  ok(!(await p.$('.barre-envoi')), 'navigateur : la barre disparaît une fois l’envoi terminé');
+  ok((await p.evaluate(() => window.__barre)).includes('Envoi de la photo…50 %|bas'), 'navigateur : pendant l’envoi, une jauge EN BAS de l’écran (« Envoi de la photo… 50 % ») ' + JSON.stringify(await p.evaluate(() => window.__barre)));
+  await p.waitForTimeout(2000);
+  ok(!(await p.$('.barre-envoi')), 'navigateur : la jauge disparaît une fois l’envoi terminé');
   for (const statut of [404, 500, 403]) {
     const r = await essai(statut);
     ok(r.u === 'https://r2.test/m1/p.jpg' && r.appels.join() === 'signer,PUT,verifier', 'navigateur : vérification impossible (' + statut + ') → la photo est quand même ajoutée, un seul envoi (' + r.appels.join() + ')');
