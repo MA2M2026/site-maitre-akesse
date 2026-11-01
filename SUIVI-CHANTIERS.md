@@ -69,3 +69,8 @@ lisait pas « 1er novembre »). Base d'essai : tous les fichiers SQL passent. 58
 - Idées gardées (toutes) : bulletin trimestriel ; mensurations suivies ; documents qui expirent ;
   anniversaires (message AUTOMATIQUE par e-mail et WhatsApp) ; mannequin du mois (choisi selon
   l'assiduité et le bulletin) ; signe « mensualité non payée » sur la liste de présence.
+
+## Lot 1 (site dynamique) : batterie du 01/11/2026
+
+Après relecture et corrections : 80 parcours, 3 901 vérifications, 0 échec ; base d'essai : tous les fichiers
+SQL passent. Mis en ligne avec l'accord de la propriétaire. Retour en arrière possible : `main` 59cc077.
