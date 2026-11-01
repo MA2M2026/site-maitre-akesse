@@ -84,9 +84,12 @@ async function anniversairesDuJour(cle) {
   const faits = [];
   for (const m of Array.isArray(liste) ? liste : []) {
     const msg = messageAnniversaire(m);
-    const nouveau = await rpcService('anniversaire_noter', { p_mannequin: m.id, p_titre: msg.titre, p_texte: msg.application, p_email_ok: null }).catch(() => false);
+    const noter = (ok) => rpcService('anniversaire_noter', { p_mannequin: m.id, p_titre: msg.titre, p_texte: msg.application, p_email_ok: ok });
+    // (noté AVANT l'e-mail : jamais deux fois ; une panne ici est notée au journal, l'anniversaire n'est pas perdu sans trace)
+    const nouveau = await noter(null).catch(async (e) => { await noterAuJournal('[Anniversaires] ' + msg.nom + ' : non noté (' + ((e && e.message) || e) + ')', 'anniversaires'); return false; });
     if (nouveau !== true) continue;
     const email = cle && msg.email.adresse ? (await envoyerEmailServeur(cle, msg.email.adresse, msg.email.nom, msg.email.texte)).ok : false;
+    await noter(email).catch(() => {});  // (e-mail parti ou non, gardé dans la base)
     faits.push({ msg, email });
   }
   if (faits.length && cle) {
@@ -103,10 +106,9 @@ async function anniversairesDuJour(cle) {
 // alertes du jour (30 jours avant la fin, puis le jour de la fin ; une seule fois chacune) ; l'agence reçoit un
 // seul e-mail récapitulatif. Si l'e-mail ne part pas, la panne est notée au journal (la liste « Documents des
 // mannequins » de l'Administration montre toujours les urgences en rouge et orange).
-const SORTES_DOCUMENTS = { autorisation_parentale: 'Autorisation parentale', piece_identite: 'Pièce d’identité', contrat: 'Contrat', autre: 'Document' };
-function dateFr(iso) { const [a, m, j] = String(iso || '').split('-'); return j && m && a ? j + '/' + m + '/' + a : String(iso || ''); }
+const { nomSorte, dateFr } = require('../js/documents-communs.js');
 function messageDocuments(liste) {
-  const ligne = (d) => '• ' + d.nom + ' : ' + (SORTES_DOCUMENTS[d.sorte] || 'Document') + (d.libelle ? ' (' + d.libelle + ')' : '') + ', fin le ' + dateFr(d.expire_le);
+  const ligne = (d) => '• ' + d.nom + ' : ' + nomSorte(d.sorte) + (d.libelle ? ' (' + d.libelle + ')' : '') + ', fin le ' + dateFr(d.expire_le);
   const expires = liste.filter((d) => d.quoi === 'expire'), bientot = liste.filter((d) => d.quoi !== 'expire');
   return '📄 Documents des mannequins à renouveler :\n' +
     (expires.length ? '\nEXPIRÉS :\n' + expires.map(ligne).join('\n') + '\n' : '') +

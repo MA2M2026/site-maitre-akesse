@@ -47,6 +47,13 @@ const M = [{ id: 'r1', nom: 'AWA KONÉ', compte: 'm1', date_entree: '2025-01-01'
     await p.waitForSelector('.bul-carte');
     await p.click('.bul-carte:nth-of-type(1) [data-action="bulletin-publier"]'); await p.waitForTimeout(800);
     ok((appels().pop() || {}).p_publier === true, n + '« Enregistrer et publier » : publié (après confirmation)');
+    // « Enregistrer et publier » qui échoue, puis « Enregistrer » : jamais publié par erreur (relecture du 01/11/2026)
+    await p.waitForSelector('.bul-carte');
+    d.rpc.bulletin_enregistrer = { erreur: 'réseau coupé' };
+    await p.click('.bul-carte:nth-of-type(1) [data-action="bulletin-publier"]'); await p.waitForTimeout(800);
+    d.rpc.bulletin_enregistrer = () => null;
+    await p.click('.bul-carte:nth-of-type(1) button[type="submit"]'); await p.waitForTimeout(800);
+    ok((appels().pop() || {}).p_publier === false, n + 'après un échec de « publier », « Enregistrer » ne publie pas');
     await p.waitForSelector('.bul-carte');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne déborde de l’écran');
     const pales = await lirePageEntiere(p);

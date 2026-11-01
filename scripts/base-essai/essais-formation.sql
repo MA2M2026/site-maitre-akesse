@@ -35,7 +35,8 @@ select essai(mensualite_etat('00000000-0000-0000-0000-000000000fa3', '2025-03-01
 select essai(json_array_length(mensualites_etats('2024-11-01', '2025-04-01') -> 'conges') = 3, 'Administration : les 3 mois de congé de la période');
 select essai((select (x -> 'etats' ->> '2025-03-01') from json_array_elements(mensualites_etats('2024-11-01', '2025-04-01') -> 'mannequins') x where x ->> 'id' = '00000000-0000-0000-0000-000000000fa2') = 'paye'
   and (select (x ->> 'fin') from json_array_elements(mensualites_etats('2024-11-01', '2025-04-01') -> 'mannequins') x where x ->> 'id' = '00000000-0000-0000-0000-000000000fa1') = '2025-11-01', 'Administration : les états et la fin de formation de chaque mannequin');
-select essai_refuse($$select mensualites_etats('2024-01-01', '2025-06-01')$$, 'plus de 12 mois d''un coup : refusé');
+select essai_refuse($$select mensualites_etats('2022-01-01', '2025-06-01')$$, 'plus de 36 mois d''un coup : refusé');
+select essai(json_array_length(mensualites_etats('2023-01-01', '2025-12-01') -> 'conges') = 9, 'Administration : 36 mois d''un coup (récapitulatif des impayés)');
 select essai_refuse($$select mensualites_appeler('2026-12-01', array['00000000-0000-0000-0000-000000000fa2'::uuid])$$, 'pas d''appel pendant les congés');
 select essai(json_array_length(mensualites_appeler('2026-03-01', array['00000000-0000-0000-0000-000000000fa1'::uuid])) = 0, 'pas d''appel à une mannequin dont la formation est terminée');
 reset role;

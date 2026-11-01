@@ -7,14 +7,13 @@
 (function () {
   'use strict';
   const P = window.Portail;
-  if (!P || !P.espaces.site) return;
+  if (!P || !P.espaces.site || !window.DocumentsMa2m || !window.Presences) return;
   const PAGE = 'b2-documents';
-  const SORTES = [['autorisation_parentale', 'Autorisation parentale'], ['piece_identite', 'Pièce d’identité'], ['contrat', 'Contrat'], ['autre', 'Autre document']];
-  const nomSorte = (s) => (SORTES.find((x) => x[0] === s) || [s, 'Document'])[1];
+  const { SORTES, nomSorte, dateFr } = window.DocumentsMa2m;  // (js/documents-communs.js, partagé avec le serveur)
+  const { jourIso } = window.Presences;                      // (js/presences-calcul.js)
   const pasActivee = P.pasActivee('documents_liste');
   let edite = null;  // id du document en cours de correction
 
-  function jourIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   // jours restants avant la fin (négatif : expiré depuis)
   function joursRestants(fin, aujourdhui) { return Math.round((Date.parse(fin + 'T00:00:00Z') - Date.parse(aujourdhui + 'T00:00:00Z')) / 86400000); }
   function etat(fin, aujourdhui) {
@@ -23,7 +22,6 @@
     if (j <= 30) return { ton: 'orange', texte: 'Expire dans ' + j + ' jour' + (j > 1 ? 's' : '') };
     return { ton: 'vert', texte: 'Valable' };
   }
-  const dateFr = (iso) => { const [a, m, j] = String(iso || '').split('-'); return j + '/' + m + '/' + a; };
 
   function formulaire(d, mannequins) {
     const doc = d || {};

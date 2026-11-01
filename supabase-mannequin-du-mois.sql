@@ -31,6 +31,8 @@ begin
   if m < date_trunc('month', current_date)::date then raise exception 'On ne change pas un mois passé.'; end if;
   insert into mannequin_du_mois (mois, mannequin_id, mot, choisi_par) values (m, p_mannequin, nullif(trim(coalesce(p_mot, '')), ''), auth.uid())
   on conflict (mois) do update set mannequin_id = excluded.mannequin_id, mot = excluded.mot, choisi_par = excluded.choisi_par, choisi_le = now();
+  -- (changement d'avis : le message de félicitations de la mannequin choisie avant est retiré de son application)
+  delete from app_messages where cle like 'mannequin-du-mois-' || m || '-%' and cle <> 'mannequin-du-mois-' || m || '-' || p_mannequin;
   select user_id into compte from agence_mannequins where id = p_mannequin;
   if compte is not null then
     perform app_message_auto(compte, 'mannequin-du-mois-' || m || '-' || p_mannequin, 'info', '🏆 Vous êtes la mannequin du mois !',

@@ -41,3 +41,11 @@ reset role;
 set role anon;
 select essai_refuse($$select documents_liste()$$, 'visiteur : refusé');
 reset role;
+-- encaissements et comptable : pas l'espace « Administration du site », donc pas les documents (relecture du 01/11/2026)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a3');
+select essai_refuse($$select documents_liste()$$, 'encaissements : pas d''accès aux documents des mannequins');
+select essai_refuse($$select document_supprimer(gen_random_uuid())$$, 'encaissements : ne peut rien supprimer');
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+select essai_refuse($$select documents_liste()$$, 'comptable : pas d''accès aux documents des mannequins');
+reset role;

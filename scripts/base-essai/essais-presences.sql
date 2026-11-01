@@ -44,9 +44,9 @@ select essai(not exists (select 1 from json_array_elements(presences_mois(curren
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai(exists (select 1 from json_array_elements(presences_mois(current_date) -> 'mannequins') m where m ->> 'nom' = 'KONÉ AWA' and m ->> 'mensualite' in ('a_payer', 'non_paye', 'paye', 'attente')), 'principal : l''état de la mensualité du mois est là');
 select essai_qui('00000000-0000-0000-0000-0000000000a2');
--- Encaissements (rôle « caisse ») et principal : aussi de l'équipe
+-- Encaissements (rôle « caisse ») : pas l'espace « site », donc rien (relecture du 01/11/2026)
 select essai_qui('00000000-0000-0000-0000-0000000000a3');
-select essai(presences_mois(current_date) is not null, 'encaissements : voit la liste');
+select essai_refuse($$select presences_mois(current_date)$$, 'encaissements : pas d''accès à la liste de présence');
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai(presences_mois(current_date) is not null, 'principal : voit la liste');
 -- Sans double authentification, ou compte sans rôle : rien

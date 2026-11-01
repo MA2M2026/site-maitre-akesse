@@ -64,22 +64,35 @@ begin
 end;
 $$;
 
--- État d'un mois : paye (vert), attente (orange), conge (gris : pas de mensualité), termine (après le 18e mois
--- de cours), non_paye (rouge, après le 5), a_payer (mois en cours avant le 6), a_venir
-create or replace function mensualite_etat(p_mannequin uuid, p_mois date)
+-- La mannequin a-t-elle un mois de congé payé (validé) ? (sinon, pas de report à chercher)
+create or replace function mensualite_a_conge_paye(p_mannequin uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'mensualite' and statut = 'valide' and mois_conge(mois));
+$$;
+
+-- La règle d'un mois (LA seule, pour tous les écrans) : paye (vert), attente (orange), conge (gris : pas de
+-- mensualité), termine (après le 18e mois de cours), non_paye (rouge, après le 5), a_payer (mois en cours avant
+-- le 6), a_venir. p_fin et p_conge_paye : calculés une fois par mannequin par qui appelle.
+create or replace function mensualite_etat_regle(p_mannequin uuid, p_mois date, p_fin date, p_conge_paye boolean)
 returns text language sql stable security definer set search_path = public as $$
   select case
-    -- (seulement l'agence, le serveur, ou le mannequin pour lui-même)
-    when not (est_ecriture_serveur() or portail_peut('paiements')
-              or exists (select 1 from agence_mannequins where id = p_mannequin and user_id = auth.uid())) then null
     when exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'mensualite' and mois = p_mois and statut = 'valide') then 'paye'
     when exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'mensualite' and mois = p_mois and statut = 'declare') then 'attente'
     when mois_conge(p_mois) then 'conge'
-    when p_mois > formation_fin(p_mannequin) then 'termine'
-    when mensualite_credit(p_mannequin, p_mois) then 'paye'
+    when p_mois > p_fin then 'termine'
+    when p_conge_paye and mensualite_credit(p_mannequin, p_mois) then 'paye'
     when p_mois > date_trunc('month', now())::date then 'a_venir'
     when p_mois < date_trunc('month', now())::date or extract(day from now()) > 5 then 'non_paye'
     else 'a_payer' end;
+$$;
+
+-- État d'un mois (seulement l'agence, le serveur, ou la mannequin pour elle-même)
+create or replace function mensualite_etat(p_mannequin uuid, p_mois date)
+returns text language sql stable security definer set search_path = public as $$
+  select case
+    when not (est_ecriture_serveur() or portail_peut('paiements')
+              or exists (select 1 from agence_mannequins where id = p_mannequin and user_id = auth.uid())) then null
+    else mensualite_etat_regle(p_mannequin, p_mois, formation_fin(p_mannequin), mensualite_a_conge_paye(p_mannequin)) end;
 $$;
 
 -- Côté mannequin : ses mois, du départ au 18e mois de cours ; les congés y figurent en gris (« conge »)
@@ -169,8 +182,9 @@ begin
 end;
 $$;
 
--- Pour l'Administration (Paiements) : les états des mois de p_debut à p_fin (12 mois au plus) pour chaque
--- mannequin du registre, avec le départ et le dernier mois de sa formation, et les mois de congé de la période
+-- Pour l'Administration (Paiements) : les états des mois de p_debut à p_fin (36 mois au plus : récapitulatif des
+-- impayés) pour chaque mannequin du registre qui n'est pas sortie, avec le départ et le dernier mois de sa
+-- formation (calculés UNE fois par mannequin), et les mois de congé de la période
 create or replace function mensualites_etats(p_debut date, p_fin date)
 returns json language plpgsql stable security definer set search_path = public as $$
 declare
@@ -178,16 +192,18 @@ declare
   f date := date_trunc('month', p_fin)::date;
 begin
   if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
-  if f < d or f > d + interval '11 months' then raise exception 'Période de 1 à 12 mois.'; end if;
+  if f < d or f > d + interval '35 months' then raise exception 'Période de 1 à 36 mois.'; end if;
   return json_build_object(
     'conges', coalesce((select json_agg(g::date order by g) from generate_series(d, f, interval '1 month') g where mois_conge(g::date)), '[]'::json),
-    'mannequins', coalesce((select json_agg(json_build_object('id', a.id, 'debut', formation_debut(a.id), 'fin', formation_fin(a.id),
-        'etats', (select json_object_agg(to_char(g, 'YYYY-MM-DD'), mensualite_etat(a.id, g::date)) from generate_series(d, f, interval '1 month') g)))
-      from agence_mannequins a), '[]'::json));
+    'mannequins', coalesce((select json_agg(json_build_object('id', a.id, 'debut', x.debut, 'fin', x.fin,
+        'etats', (select json_object_agg(to_char(g, 'YYYY-MM-DD'), mensualite_etat_regle(a.id, g::date, x.fin, x.conge_paye)) from generate_series(d, f, interval '1 month') g)))
+      from agence_mannequins a
+      cross join lateral (select formation_debut(a.id) as debut, formation_fin(a.id) as fin, mensualite_a_conge_paye(a.id) as conge_paye) x
+      where a.statut <> 'sorti'), '[]'::json));
 end;
 $$;
 
-revoke execute on function formation_debut(uuid), formation_fin(uuid), mensualite_credit(uuid, date) from public, anon, authenticated;
+revoke execute on function formation_debut(uuid), formation_fin(uuid), mensualite_credit(uuid, date), mensualite_a_conge_paye(uuid), mensualite_etat_regle(uuid, date, date, boolean) from public, anon, authenticated;
 revoke execute on function mensualite_etat(uuid, date), mes_mensualites(), mensualite_declarer(date), mensualites_payer_avance(int, text),
   mensualites_appeler(date, uuid[]), mensualites_etats(date, date) from public, anon;
 grant execute on function mensualite_etat(uuid, date), mes_mensualites(), mensualite_declarer(date), mensualites_payer_avance(int, text),

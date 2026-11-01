@@ -32,11 +32,13 @@ alter table presences_seances_annulees enable row level security;
 alter table presences enable row level security;
 revoke all on presences_seances_annulees, presences from anon, authenticated;
 
--- Qui coche : toute personne de l'équipe connectée à l'Administration (double authentification,
--- appareil non révoqué : portail_role, supabase-administration.sql)
+-- Qui coche : la propriétaire ou une personne de l'équipe qui a l'espace « Administration du site »
+-- (double authentification, appareil non révoqué : portail_peut, supabase-administration.sql). Le comptable
+-- et l'encaissement n'y ont pas accès (relecture du 01/11/2026 : la base suit les rubriques de l'écran).
+-- Sert aussi aux documents, bulletins, mensurations et à la mannequin du mois.
 create or replace function presences_equipe()
 returns boolean language sql stable security definer set search_path = public as $$
-  select portail_role() is not null;
+  select portail_peut('site');
 $$;
 revoke execute on function presences_equipe() from public, anon;
 

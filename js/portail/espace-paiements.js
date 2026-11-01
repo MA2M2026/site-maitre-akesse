@@ -657,17 +657,17 @@
     const [actifs, paiements, E] = await Promise.all([
       mannequinsSuivis(false),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse')),
-      // (les 12 derniers mois selon la base : congés, formation terminée, mois réglé par un mois de congé payé)
-      P.etatsMensualites(isoMois(t - 11), isoMois(t))
+      // (les 36 derniers mois selon la base : congés, formation terminée, mois réglé par un mois de congé payé)
+      P.etatsMensualites(isoMois(t - 35), isoMois(t))
     ]);
     const ici = new Date(), courant = ici.getFullYear() * 12 + ici.getMonth();
-    // selon la base : « conge » (sauté, ne coupe pas la suite d'impayés), « regle » (formation terminée ou mois
-    // réglé par un mois de congé payé), sinon rien ; avant les 12 mois connus, la suite d'impayés s'arrête
+    // selon la base : « saute » (congés, ou après la fin de la formation : rien n'est dû, la suite d'impayés
+    // n'est pas coupée), « regle » (mois réglé par un mois de congé payé), sinon rien (avant les 36 mois connus :
+    // calcul d'avant, d'après les seuls paiements)
     const selonBase = (id, i) => {
-      if (!E) return null;
-      if (i < t - 11) return 'regle';
+      if (!E || i < t - 35) return null;
       const b = E.etat(id, isoMois(i));
-      return b === 'conge' ? 'conge' : b === 'termine' || b === 'paye' ? 'regle' : null;
+      return b === 'conge' || b === 'termine' ? 'saute' : b === 'paye' ? 'regle' : null;
     };
     // dernier mois dont le délai (le 5) est passé, vu depuis le mois affiché
     const dernierEchu = t < courant || (t === courant && ici.getDate() > 5) ? t : t - 1;
@@ -681,14 +681,14 @@
       // mois impayés d'affilée (les congés sont sautés sans couper la suite)
       let affilee = 0, i = depart, premierImpaye = depart + 1;
       while (i >= entree && affilee < 240 && !statutDe(m.id, i) && selonBase(m.id, i) !== 'regle') {
-        if (selonBase(m.id, i) !== 'conge') { affilee++; premierImpaye = i; }
+        if (selonBase(m.id, i) !== 'saute') { affilee++; premierImpaye = i; }
         i--;
       }
       const retard = affilee ? Math.max(0, Math.floor((ici - new Date(Math.floor(premierImpaye / 12), premierImpaye % 12, 5)) / 864e5)) : 0;
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
       // montant dû coupé en deux (décision de la propriétaire, 22/10/2026) : le mois affiché, et les mois d'avant
       const duMois = affilee && depart === t && !baseT ? (m.mensualite || 0) : 0;
-      return { m, ok: st === 'valide' || baseT === 'regle' && !st, attente: st === 'declare', rien: !st && baseT === 'conge', affilee, retard, du: affilee * (m.mensualite || 0), duMois, duAvant: affilee * (m.mensualite || 0) - duMois,
+      return { m, ok: st === 'valide' || (baseT === 'regle' && !st), attente: st === 'declare', rien: !st && baseT === 'saute', affilee, retard, du: affilee * (m.mensualite || 0), duMois, duAvant: affilee * (m.mensualite || 0) - duMois,
         destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name, entreeApres: entree > t };
     }).filter((x) => !x.entreeApres);
     // trois groupes : payé / preuve reçue, à valider / non payé (une preuve en attente n'est pas un

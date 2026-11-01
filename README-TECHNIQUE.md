@@ -4073,3 +4073,18 @@ très clairs, couleurs d'état (liste `ETATS`), voiles posés sur les photos (`-
 `--rouge-logo`). Complète le gardien des pages affichées (`couleurs-autorisees.js`).
 SonarCloud : les 7 remarques du site dynamique corrigées (`middleware.js`, `js/parcours.js`).
 
+### Relecture du lot 2 (01/11/2026)
+- Droits : `presences_equipe()` = `portail_peut('site')` (la propriétaire et l'espace « Administration du site ») :
+  le comptable et l'encaissement n'ont plus accès, même directement par la base, aux présences, documents,
+  bulletins, mensurations ni à la mannequin du mois (la base suit les rubriques de l'écran).
+- Récapitulatif : une mannequin en fin de formation garde ses impayés d'avant la fin ; les impayés sont lus
+  sur 36 mois (`mensualites_etats` : 36 mois au plus, mannequins sorties exclues, fin de formation et congés
+  payés calculés une fois par mannequin ; règle unique `mensualite_etat_regle`).
+- Bulletin : un « publier » qui échoue ne fait jamais publier le « Enregistrer » suivant.
+- Liste de présence : une case décochée avant l'arrivée de la mannequin reste neutre.
+- Mannequin du mois : en cas de changement, le message de félicitations de la précédente est retiré.
+- Anniversaires : panne au moment de noter → journal ; l'e-mail parti ou non est noté (`email_ok`).
+- Code partagé `js/documents-communs.js` (noms des documents, date en français) : serveur et Administration.
+- Reste volontairement : les écrans de paiement gardent leur calcul d'avant quand la base n'est pas encore à
+  jour (repli), et le corrigent par la règle de la base quand elle l'est.
+

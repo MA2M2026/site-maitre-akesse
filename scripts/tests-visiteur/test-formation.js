@@ -101,6 +101,11 @@ async function administration(b) {
     await p.goto(BASE + '/admin/#/paiements/sorties'); await p.waitForTimeout(1500);
     const ts = await p.textContent('.contenu');
     ok(/Formation terminée \(18 mois de cours\)/.test(ts) && (await p.$$('[data-action="sortie-formation-terminee"]')).length === 1, n + 'sorties : la mannequin dont les 18 mois de cours sont finis est proposée à la sortie');
+    // récapitulatif : une mannequin dont la formation est finie garde ses mois impayés d'avant la fin
+    await p.goto(BASE + '/admin/#/paiements/recapitulatif'); await p.waitForTimeout(1800);
+    const nomR0 = d.tables.agence_mannequins[0].full_name;
+    const nonPaye = await p.evaluate(() => [...document.querySelectorAll('.contenu .carte')].filter((c) => /Non payé/.test((c.querySelector('h2') || {}).textContent || '')).map((c) => c.innerText).join(' '));
+    ok(nonPaye.includes(nomR0), n + 'récapitulatif : formation terminée, mais ses mois impayés d’avant restent dus (« Non payé »)');
     // scénario 2 : le mois en cours est un mois de congé
     scenario = 'conges';
     await p.goto(BASE + '/admin/#/paiements/tableau'); await p.waitForTimeout(300);

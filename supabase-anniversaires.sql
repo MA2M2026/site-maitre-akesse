@@ -4,9 +4,9 @@
 -- =====================================================================================
 -- Chaque matin, le serveur du site (api/portail.js, tâche quotidienne de Vercel) demande la liste des
 -- mannequins actives du registre qui fêtent leur anniversaire aujourd'hui (née un 29 février : le 28 les
--- années non bissextiles), leur envoie un e-mail (au parent pour une mineure) puis le note ici : le
--- message arrive alors dans l'application de la mannequin (et la notification sur son téléphone). Une
--- seule fois par an et par mannequin. Seul le serveur (clé serveur) appelle ces fonctions.
+-- années non bissextiles), le note ici (le message arrive alors dans l'application de la mannequin, et la
+-- notification sur son téléphone), puis leur envoie un e-mail (au parent pour une mineure) et note s'il est
+-- parti. Une seule fois par an et par mannequin. Seul le serveur (clé serveur) appelle ces fonctions.
 -- À coller en entier dans Supabase › SQL Editor › Run. Aucune donnée existante touchée ; rejouable.
 
 create table if not exists anniversaires_envoyes (
@@ -34,8 +34,9 @@ returns json language sql stable security definer set search_path = public as $$
     and not exists (select 1 from anniversaires_envoyes e where e.mannequin_id = a.id and e.annee = extract(year from current_date)::int);
 $$;
 
--- Noter l'anniversaire souhaité (une fois par an) et déposer le message dans l'application ; vrai si
--- c'était la première fois cette année.
+-- Noter l'anniversaire souhaité (une fois par an, AVANT l'e-mail : jamais deux messages le même jour) et
+-- déposer le message dans l'application ; vrai si c'était la première fois cette année. Rappelée après
+-- l'e-mail avec p_email_ok (vrai / faux) : note seulement si l'e-mail est parti, et renvoie faux.
 create or replace function anniversaire_noter(p_mannequin uuid, p_titre text, p_texte text, p_email_ok boolean)
 returns boolean language plpgsql security definer set search_path = public as $$
 declare
@@ -44,7 +45,12 @@ declare
 begin
   insert into anniversaires_envoyes (mannequin_id, annee, email_ok) values (p_mannequin, an, p_email_ok)
   on conflict (mannequin_id, annee) do nothing;
-  if not found then return false; end if;
+  if not found then
+    if p_email_ok is not null then
+      update anniversaires_envoyes set email_ok = p_email_ok where mannequin_id = p_mannequin and annee = an;
+    end if;
+    return false;
+  end if;
   select user_id into compte from agence_mannequins where id = p_mannequin;
   -- (app_message_auto, supabase-app-messages.sql : jamais d'erreur qui bloquerait l'envoi)
   if compte is not null then

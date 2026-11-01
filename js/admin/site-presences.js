@@ -49,7 +49,7 @@
       const ment = r.bilan.mention ? C.MENTIONS[r.bilan.mention] : null;
       // mensualité du mois pas payée (seulement pour qui a accès aux Paiements : la base ne le dit qu'à eux)
       const aPayer = m.mensualite === 'non_paye' || m.mensualite === 'a_payer';
-      return '<tr data-nom="' + P.esc(String(m.nom || '').toLowerCase()) + '"><th scope="row" class="pr-nom"><div class="pr-nom-c">' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<span>' + P.esc(m.nom) +
+      return '<tr data-nom="' + P.esc(String(m.nom || '').toLowerCase()) + '" data-entree="' + P.esc(m.date_entree || '') + '"><th scope="row" class="pr-nom"><div class="pr-nom-c">' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<span>' + P.esc(m.nom) +
         (aPayer ? ' <small class="pr-a-payer" title="Mensualité de ' + P.esc(NOMS_MOIS(etat.mois)) + (m.mensualite === 'non_paye' ? ' en retard' : ' à payer') + '">' + (m.mensualite === 'non_paye' ? 'retard' : 'à payer') + '</small>' : '') + '</span></div></th>' +
         r.jours.map((j) => {
           const modifiable = j.etat !== 'annulee' && j.dimanche <= auj;
@@ -121,7 +121,8 @@
   const SUIVANT = { absent: 'present', a_venir: 'present', avant_entree: 'present', vacances: 'present', present: 'excuse', excuse: null };
   P.actions['presences-case'] = async (el) => {
     const avant = el.dataset.etat, voulu = SUIVANT[avant];
-    const nouvel = voulu || C.etatJour(el.dataset.jour, null, false, null, aujourdhui());
+    // (case vidée : son état d'après le jour et l'entrée de la mannequin — jamais « absente » avant son arrivée)
+    const nouvel = voulu || C.etatJour(el.dataset.jour, null, false, el.closest('tr').dataset.entree || null, aujourdhui());
     const montrer = (e) => { el.className = 'pr-case e-' + e; el.dataset.etat = e; el.textContent = SIGNES[e]; };
     montrer(nouvel); el.disabled = true;
     try {

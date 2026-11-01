@@ -31,3 +31,15 @@ select essai_qui('00000000-0000-0000-0000-0000000000b1', 'aal1');
 select essai_refuse($$select mannequin_du_mois_choisir(current_date, (select id from roxane), null)$$, 'une mannequin ne se choisit pas elle-même');
 select essai_refuse($$select mannequins_du_mois_historique()$$, 'une mannequin ne lit pas l''historique de l''agence');
 reset role;
+-- changement d'avis (relecture du 01/11/2026) : la première choisie ne garde pas son message de félicitations
+update agence_mannequins set statut = 'actif' where id = '00000000-0000-0000-0000-0000000000d1';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select mannequin_du_mois_choisir(current_date, '00000000-0000-0000-0000-0000000000d1', null);
+reset role;
+select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and titre like '🏆%') = 0, 'changement d''avis : le message de la mannequin choisie avant est retiré');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select mannequin_du_mois_choisir(current_date, (select id from roxane), 'Toujours à l''heure');
+reset role;
+select essai((select count(*) from app_messages where user_id = '00000000-0000-0000-0000-0000000000b1' and titre like '🏆%') = 1, 'choisie de nouveau : son message revient (une seule fois)');

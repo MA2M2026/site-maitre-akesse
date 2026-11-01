@@ -45,7 +45,9 @@ ok(/^Joyeux anniversaire, Yao Chloé ! 🎂/.test(mineure.application), 'mineure
   process.env.EMAILJS_PRIVATE_KEY = 'cle-privee-essai';
   let r = await appeler(14);
   ok(r.statut === 200 && r.corps.anniversaires === 2, 'un jour sans relance (le 14) : les anniversaires partent quand même');
-  ok(notes.length === 2 && notes[0].p_titre === '🎂 Joyeux anniversaire, Koné Awa !', 'chaque anniversaire est noté (message dans l’application)');
+  const premiers = notes.filter((n) => n.p_email_ok === null);
+  ok(premiers.length === 2 && premiers[0].p_titre === '🎂 Joyeux anniversaire, Koné Awa !', 'chaque anniversaire est noté AVANT l’e-mail (message dans l’application)');
+  ok(notes.filter((n) => n.p_email_ok === true).length === 2, 'puis l’e-mail parti est noté dans la base');
   const destinataires = envois.map((e) => e.template_params.to_email);
   ok(destinataires.includes('awa@test.ci') && destinataires.includes('maman@test.ci') && !destinataires.includes('chloe@test.ci'), 'e-mails : à la majeure, au parent de la mineure (pas à la mineure)');
   const recap = envois.find((e) => e.template_params.to_email === EMAIL_AGENCE);
@@ -60,5 +62,13 @@ ok(/^Joyeux anniversaire, Yao Chloé ! 🎂/.test(mineure.application), 'mineure
   r = await appeler(14);
   ok(r.corps.anniversaires === 1 && envois.length === avant && journal.some((j) => /Anniversaires/.test(j.message) && /clé EmailJS absente/.test(j.message)), 'sans clé EmailJS : message dans l’application seulement, panne notée au journal');
   ok(!fs.readFileSync(path.join(__dirname, '../../vercel.json'), 'utf8').includes('"0 8 3,5 * *"') && /"schedule": "0 8 \* \* \*"/.test(fs.readFileSync(path.join(__dirname, '../../vercel.json'), 'utf8')), 'la tâche du matin passe tous les jours à 8 h (avant : seulement le 3 et le 5)');
+  // panne de la base au moment de noter : rien n'est envoyé, mais la panne est notée au journal
+  liste = [{ id: 'm9', nom: 'DIALLO SARA', email: 'sara@test.ci', date_naissance: il_y_a(20) }];
+  process.env.EMAILJS_PRIVATE_KEY = 'cle-privee-essai';
+  const vraiFetch = global.fetch, avantPanne = envois.length;
+  global.fetch = async (url, o) => (/rpc\/anniversaire_noter/.test(url) ? { ok: false, status: 500, json: async () => ({ message: 'panne' }), text: async () => 'panne' } : vraiFetch(url, o));
+  r = await appeler(14);
+  global.fetch = vraiFetch;
+  ok(r.corps.anniversaires === 0 && envois.length === avantPanne && journal.some((j) => /\[Anniversaires\] Diallo Sara : non noté/.test(j.message)), 'panne au moment de noter : rien n’est envoyé, la panne est notée au journal');
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.'); process.exit(ko ? 1 : 0);
 })();

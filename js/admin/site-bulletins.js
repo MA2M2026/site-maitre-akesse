@@ -32,7 +32,7 @@
       const ment = s.mention ? C.MENTIONS[s.mention] : null, moy = C.moyenne(b.notes);
       const choix = (k) => '<select name="' + k + '" aria-label="' + P.esc(C.COMPETENCES.find((x) => x[0] === k)[1]) + ' (sur 5)"><option value="">—</option>' +
         [1, 2, 3, 4, 5].map((n) => '<option' + ((b.notes || {})[k] === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select>';
-      return '<form class="carte f bul-carte" data-form="bulletin-enregistrer" data-mannequin="' + P.esc(m.id) + '">' +
+      return '<form class="carte f bul-carte" data-form="bulletin-enregistrer" data-mannequin="' + P.esc(m.id) + '" data-publie="' + (b.publie ? '1' : '') + '">' +
         '<div class="bul-tete">' + P.visage(visages[m.compte], m.nom, 'pr-vis') + '<div><h2>' + P.esc(m.nom) + '</h2>' +
         '<p class="doux">' + P.esc(choisi.nom) + (m.mineur && m.parent_nom ? ' · parent : ' + P.esc(m.parent_nom) : '') + '</p></div>' +
         '<span class="bul-etat ' + (b.publie ? 'publie' : '') + '">' + (b.publie ? 'Publié' : parId.has(m.id) ? 'Brouillon' : 'À remplir') + '</span></div>' +
@@ -67,7 +67,11 @@
     C.COMPETENCES.forEach(([k]) => { const v = f.get(k); if (v) notes[k] = Number(v); });
     try {
       await P.rpc('bulletin_enregistrer', { p_mannequin: form.dataset.mannequin, p_trimestre: choisi.cle, p_notes: notes, p_appreciation: String(f.get('appreciation') || ''), p_publier: publier });
-    } catch (e) { P.message('Non enregistré : ' + P.erreurTexte(e)); return; }
+    } catch (e) {
+      // (échec : « publier » revient à l'état du bulletin, pour qu'un simple « Enregistrer » ne publie jamais)
+      form.elements.publier.value = form.dataset.publie || '';
+      P.message('Non enregistré : ' + P.erreurTexte(e)); return;
+    }
     P.message(publier ? 'Bulletin enregistré et publié : la mannequin le voit dans son application.' : 'Bulletin enregistré (pas encore publié).');
     return P.afficher();
   };

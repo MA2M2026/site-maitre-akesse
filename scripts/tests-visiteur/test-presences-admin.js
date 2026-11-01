@@ -71,6 +71,10 @@ function moisSimule(corps) {
     ok((await p.getAttribute(caseB, 'data-etat')) === 'excuse' && appels('presence_marquer').some((a) => a.p_etat === 'excuse'), n + 'deuxième toucher : absence excusée (orange)');
     await p.click(caseB); await p.waitForTimeout(500);
     ok((await p.getAttribute(caseB, 'data-etat')) === 'absent' && appels('presence_marquer').some((a) => a.p_etat === null), n + 'troisième toucher : décochée (redevient rouge, dimanche passé)');
+    // un dimanche d'avant son arrivée, coché puis décoché : neutre, jamais « absente » (relecture du 01/11/2026)
+    await p.evaluate(([sel, j]) => { document.querySelector(sel).closest('tr').dataset.entree = j; }, [caseB, jours[1]]);
+    for (let k = 0; k < 3; k++) { await p.click(caseB); await p.waitForTimeout(400); }
+    ok((await p.getAttribute(caseB, 'data-etat')) === 'avant_entree', n + 'dimanche d’avant son arrivée, décoché : neutre (pas une absence)');
     // annuler une séance (avec motif)
     await p.click('.pr-jour:nth-child(3) [data-action="presences-annuler"]'); await p.waitForTimeout(800);
     ok(appels('presences_seance_annuler').some((a) => a.p_annulee === true && a.p_dimanche === jours[1] && /Fête/.test(a.p_motif)), n + 'annuler une séance : enregistré avec son motif');
