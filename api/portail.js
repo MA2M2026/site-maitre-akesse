@@ -99,7 +99,28 @@ async function anniversairesDuJour(cle) {
   if (faits.some((f) => !f.email)) await noterAuJournal('[Anniversaires] ' + faits.filter((f) => !f.email).length + ' e-mail(s) non parti(s) sur ' + faits.length + (cle ? '' : ' (clé EmailJS absente)'), 'anniversaires');
   return faits.length;
 }
-// Tâche quotidienne (vercel.json, 8 h à Abidjan) : anniversaires chaque jour, relances des mensualités le 3 et le 5
+// Documents des mannequins qui expirent (Extension 147, chantier 14, 01/11/2026) : la base choisit et note les
+// alertes du jour (30 jours avant la fin, puis le jour de la fin ; une seule fois chacune) ; l'agence reçoit un
+// seul e-mail récapitulatif. Si l'e-mail ne part pas, la panne est notée au journal (la liste « Documents des
+// mannequins » de l'Administration montre toujours les urgences en rouge et orange).
+const SORTES_DOCUMENTS = { autorisation_parentale: 'Autorisation parentale', piece_identite: 'Pièce d’identité', contrat: 'Contrat', autre: 'Document' };
+function dateFr(iso) { const [a, m, j] = String(iso || '').split('-'); return j && m && a ? j + '/' + m + '/' + a : String(iso || ''); }
+function messageDocuments(liste) {
+  const ligne = (d) => '• ' + d.nom + ' : ' + (SORTES_DOCUMENTS[d.sorte] || 'Document') + (d.libelle ? ' (' + d.libelle + ')' : '') + ', fin le ' + dateFr(d.expire_le);
+  const expires = liste.filter((d) => d.quoi === 'expire'), bientot = liste.filter((d) => d.quoi !== 'expire');
+  return '📄 Documents des mannequins à renouveler :\n' +
+    (expires.length ? '\nEXPIRÉS :\n' + expires.map(ligne).join('\n') + '\n' : '') +
+    (bientot.length ? '\nExpirent dans moins de 30 jours :\n' + bientot.map(ligne).join('\n') + '\n' : '') +
+    '\nOuvrez l’Administration (https://admin.maitreakessemodelmanagement.com/admin/), espace « Administration du site », rubrique « Documents des mannequins », pour noter la nouvelle date une fois le document renouvelé.';
+}
+async function documentsDuJour(cle) {
+  const liste = await rpcService('documents_alertes_du_jour', {});
+  if (!Array.isArray(liste) || !liste.length) return 0;
+  const ok = cle ? (await envoyerEmailServeur(cle, EMAIL_AGENCE, 'Maître Akesse Model Management', messageDocuments(liste))).ok : false;
+  if (!ok) await noterAuJournal('[Documents] alerte de ' + liste.length + ' document(s) non partie' + (cle ? '' : ' (clé EmailJS absente)'), 'documents');
+  return liste.length;
+}
+// Tâche quotidienne (vercel.json, 8 h à Abidjan) : anniversaires et documents chaque jour, relances des mensualités le 3 et le 5
 async function relancesDuJour(req, res) {
   // seule la tâche planifiée de Vercel (variable CRON_SECRET, envoyée par Vercel) peut les lancer
   const secret = process.env.CRON_SECRET;
@@ -107,7 +128,8 @@ async function relancesDuJour(req, res) {
   const jour = new Date().getUTCDate();  // (Abidjan : heure UTC)
   // (une panne des anniversaires n'empêche jamais les relances)
   const anniversaires = await anniversairesDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Anniversaires] ' + ((e && e.message) || e), 'anniversaires'); return 0; });
-  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, rien: 'pas un jour de relance' });
+  const documents = await documentsDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Documents] ' + ((e && e.message) || e), 'documents'); return 0; });
+  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, documents, rien: 'pas un jour de relance' });
   try {
     const liste = await rpcService('mensualites_relances', { p_jour: jour });
     const cle = process.env.EMAILJS_PRIVATE_KEY;
@@ -121,7 +143,7 @@ async function relancesDuJour(req, res) {
     if ((liste || []).length && envoyes < liste.length) {
       await noterAuJournal('[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), 'relances');
     }
-    return res.status(200).json({ ok: true, anniversaires, relances: (liste || []).length, envoyes });
+    return res.status(200).json({ ok: true, anniversaires, documents, relances: (liste || []).length, envoyes });
   } catch (e) {
     return res.status(500).json({ error: 'Erreur serveur.' });
   }

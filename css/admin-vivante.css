@@ -1118,3 +1118,18 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .mq-mens-table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .mq-mens-table th, .mq-mens-table td { padding: 6px 8px; border-bottom: 1px solid var(--av-lignes); text-align: left; color: #1B1817; white-space: nowrap; text-transform: none; letter-spacing: normal; }
 .mq-mens-change { font-weight: 700; }
+
+/* Documents des mannequins qui expirent (chantier 14, 01/11/2026) */
+.doc-form h2 { margin: 0; }
+.doc-resume { margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-liste { list-style: none; margin: 0; padding: 0; }
+.doc-ligne { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 0 10px 10px; border-bottom: 1px solid var(--av-lignes); border-left: 4px solid #1E7A45; }
+.doc-ligne.orange { border-left-color: #9A5800; }
+.doc-ligne.rouge { border-left-color: var(--rouge-mat); }
+.doc-quoi, .doc-fin { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: break-word; }
+.doc-fin { align-items: flex-end; }
+.doc-boutons { display: flex; gap: 6px; }
+@media (max-width: 700px) {
+  .doc-ligne { grid-template-columns: 1fr; }
+  .doc-fin { align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+}

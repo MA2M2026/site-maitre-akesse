@@ -4013,6 +4013,19 @@ départ pour chaque fiche existante ; `mensurations_historique_lire` (équipe). 
 à essayer pour de vrai avec le compte de test (règle 3 de `CLAUDE.md`). **Administration** : fiche d'une
 mannequin, « Mensurations dans le temps » (12 derniers relevés, changements en gras, « À revoir » au-delà de
 3 mois). Essai : `test-nouvelle-admin-mannequins.js`.
+
+## Documents des mannequins qui expirent (01/11/2026, chantier 14, partie 3)
+
+**Base** : `supabase-documents.sql` (Extension 147 ; essais `essais-documents.sql`) : table
+`documents_mannequins` (mannequin du registre, sorte : autorisation parentale / pièce d'identité / contrat /
+autre, précision, date de fin, note ; fermée) ; `documents_liste`, `document_enregistrer` (une nouvelle date de
+fin relance les alertes), `document_supprimer` (équipe : `presences_equipe`) ; `documents_alertes_du_jour`
+(serveur seulement) choisit ET note les alertes du jour : « bientot » 30 jours avant la fin, « expire » le jour
+de la fin, une seule fois chacune. **Serveur** : `documentsDuJour` dans la tâche du matin de `api/portail.js`
+(tous les jours) : un seul e-mail récapitulatif à l'agence ; panne → journal ; ne bloque jamais les
+anniversaires ni les relances. **Administration** : rubrique « Documents des mannequins » (`b2-documents`,
+`js/admin/site-documents.js`) : triés par urgence (rouge expiré, orange moins de 30 jours, vert valable),
+ajouter / modifier / supprimer. Essai : `test-documents.js` (serveur + Administration).
 ### Relecture du site dynamique (01/11/2026)
 - Tout texte venu de la base est posé dans la page par un remplacement **par fonction**
   (`html.replace(x, () => …)`) : un « $' » ou « $& » dans un nom ou un article n'est jamais lu comme motif
