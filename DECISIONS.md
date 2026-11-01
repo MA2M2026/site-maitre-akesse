@@ -7,3 +7,5 @@ Une ligne par décision : décision — pourquoi — autre choix écarté.
 - Branche de travail `phase2-dynamique` créée depuis `main` 8250275 (demandée par la mission) — travailler directement sur `main` écarté.
 - Repère de retour `pre-phase2-8250275` (étiquette Git) — l'identifiant du déploiement Vercel n'est pas lisible : accès Vercel de l'équipe « ma-2-m » non autorisé pour Claude (à autoriser par la propriétaire).
 - Le site en ligne n'est pas joignable depuis l'espace de travail de Claude (réglage réseau : www.maitreakessemodelmanagement.com refusé) : aucune mesure en ligne possible tant que l'adresse n'est pas ajoutée aux « Allowed domains » — pas de résultats inventés à la place.
+- 02/11/2026 : accès Vercel autorisé par la propriétaire. Version en ligne = déploiement `dpl_99F9Ue1NvHjsvqzdbJGJY3547yxP` (main 8250275) ; retour en arrière possible vers `dpl_3Pr6SMGmavSd9uh1AiXHPsr4ykVM` (main 16594d6). L'étiquette Git `pre-phase2-8250275` a été refusée à l'envoi (403) : le repère reste le commit 8250275.
+- 02/11/2026 : site en ligne joignable depuis l'espace de travail (adresse ajoutée par la propriétaire).
