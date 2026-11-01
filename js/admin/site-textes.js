@@ -60,7 +60,7 @@
       '<form class="f textes-page" data-form="textes-enregistrer">' + z.map((x) => {
         const e = ouverte.enregistre.get(x.cle) || {};
         const fr = e.fr || x.fr, en = e.en || x.en;
-        return '<section class="carte texte-zone' + (/^h|span/.test(x.sorte) ? ' est-titre' : '') + '"><p class="sur-titre">' + P.esc(SORTES[x.sorte] || 'Texte') +
+        return '<section class="carte texte-zone' + (/^(h\d|span)$/.test(x.sorte) ? ' est-titre' : '') + '"><p class="sur-titre">' + P.esc(SORTES[x.sorte] || 'Texte') +
           (ouverte.enregistre.has(x.cle) ? ' ' + P.pastille('changé', 'ok') : '') + '</p>' +
           '<label class="fl" for="tx-' + x.cle + '-fr">Français<textarea id="tx-' + x.cle + '-fr" name="' + x.cle + '|fr" rows="' + lignes(fr) + '" maxlength="4000" placeholder="' + P.esc(x.fr) + '">' + P.esc(fr) + '</textarea></label>' +
           '<label class="fl" for="tx-' + x.cle + '-en">Anglais<textarea id="tx-' + x.cle + '-en" name="' + x.cle + '|en" rows="' + lignes(en) + '" maxlength="4000" placeholder="' + P.esc(x.en) + '">' + P.esc(en) + '</textarea></label></section>';

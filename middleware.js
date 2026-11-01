@@ -789,7 +789,7 @@ async function recuRempli(url) {
     html = [['rc-numero', c.numero || '—'], ['rc-etat', 'Paiement effectué ✓'], ['rc-qui', c.beneficiaire], ['rc-quoi', c.prestation || K.libelle(c.motif)],
       ['rc-date', K.jour(c.paye_le)], ['rc-montant', K.fcfa(c.montant)]].reduce((h, [id, t]) => texteElement(h, id, t || ''), html);
     if (c.reference_wave) html = montrer(texteElement(html, 'rc-ref', c.reference_wave), 'rc-ref-ligne');
-    html = ['rc-lignes', 'rc-montant-bloc', 'rc-merci', 'rc-actions'].reduce(montrer, html);
+    html = ['rc-lignes', 'rc-montant-bloc', 'rc-merci', 'rc-actions'].reduce((h, id) => montrer(h, id), html);
     return html.replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper('Reçu ' + (c.numero || '') + ' · Maître Akesse Model Management') + '</title>');
   });
 }

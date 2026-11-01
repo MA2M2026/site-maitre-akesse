@@ -93,6 +93,9 @@ def repere_existants(html):
 
 
 def marquer(chemin, page):
+    # (seulement les 5 pages prévues, dans le dossier du site : SonarCloud S2083)
+    if page not in PAGES or chemin.resolve() not in (RACINE / (page + '.html'), RACINE / 'en' / (page + '.html')):
+        raise ValueError('page non prévue : %s' % chemin)
     html = chemin.read_text(encoding='utf-8')
     if repere_existants(html):
         return len(repere_existants(html))
