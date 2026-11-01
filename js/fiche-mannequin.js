@@ -245,6 +245,7 @@ async function chargerProfilInterne() {
   // (« reveal ») qui revenait en fondu ≈ 1 s après. Le bloc est visible d'emblée, et l'image déjà affichée
   // (même adresse) est gardée telle quelle au lieu d'être rechargée.
   const imageDejaLa = contenu.querySelector('[data-couv-img]');
+  const apercuDejaLa = contenu.querySelector('.hero-apercu');  // (photo de la carte du Book, posée par le serveur)
   contenu.innerHTML = `
     <div class="reveal visible">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
@@ -330,6 +331,8 @@ async function chargerProfilInterne() {
   {
     const neuve = contenu.querySelector('[data-couv-img]');
     if (imageDejaLa && neuve && imageDejaLa.getAttribute('src') === neuve.getAttribute('src')) neuve.replaceWith(imageDejaLa);
+    const imgFinale = contenu.querySelector('[data-couv-img]');
+    if (apercuDejaLa && imgFinale && !(imgFinale.complete && imgFinale.naturalWidth)) imgFinale.before(apercuDejaLa);
     const imgCouverture = contenu.querySelector('[data-couv-img]');
     if (imgCouverture) {
       const pos = photoCouverture ? photoCouverture.couverture_position : '';

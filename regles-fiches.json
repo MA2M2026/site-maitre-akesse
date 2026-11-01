@@ -1,1 +1,1 @@
-{"prerender":[{"where":{"or":[{"href_matches":"/book/*"},{"href_matches":"/en/book/*"},{"href_matches":"/mannequin.html?id=*"},{"href_matches":"/en/mannequin.html?id=*"}]},"eagerness":"moderate"}]}
+{"prerender":[{"where":{"or":[{"href_matches":"/book/*"},{"href_matches":"/en/book/*"},{"href_matches":"/mannequin.html?id=*"},{"href_matches":"/en/mannequin.html?id=*"},{"href_matches":"/mannequins"},{"href_matches":"/en/mannequins"},{"href_matches":"/mannequins.html"},{"href_matches":"/en/mannequins.html"}]},"eagerness":"moderate"}]}

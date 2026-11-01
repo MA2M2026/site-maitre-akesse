@@ -146,6 +146,28 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(/19/.test(await p.textContent('#contenu')), n + 'l’âge est affiché');
     ok(!errs.length, n + 'aucune erreur' + (errs.length ? ' — ' + errs[0] : ''));
   }
+  // (01/11/2026, « ça doit être instantané ») la photo de la carte du Book (déjà dans le téléphone) s'affiche AUSSITÔT
+  // sous la grande photo, même si celle-ci n'est pas encore arrivée, et reste jusqu'à ce qu'elle arrive
+  {
+    Object.assign(tables.model_photos[0], { url_miniature: 'https://x/1-mini.jpg', url_petite: 'https://x/1-petite.jpg', url_moyenne: 'https://x/1-moy.jpg' });
+    const mw2 = await middleware();
+    const telephone = await (await mw2(new Request('https://www.maitreakessemodelmanagement.com/book/awa-kone', { headers: { 'user-agent': 'Mozilla/5.0 (Linux; Android 14) Mobile' } }))).text();
+    const ordinateur = await (await mw2(new Request('https://www.maitreakessemodelmanagement.com/book/awa-kone', { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0)' } }))).text();
+    ok(/<img class="hero-apercu" src="https:\/\/x\/1-petite\.jpg"[^>]*><img data-couv-img src="https:\/\/x\/1-moy\.jpg"/.test(telephone) && /<img class="hero-apercu" src="https:\/\/x\/1-mini\.jpg"/.test(ordinateur),
+      'la photo de la carte du Book (petite sur téléphone) est posée sous la grande photo, dans le HTML');
+    const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage(); const errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await brancher(p, { tables, rpc }, []);
+    const image = fs.readFileSync(path.join(__dirname, 'medias', 'photo1.jpg'));
+    await p.route(/https:\/\/x\/1-petite\.jpg/, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: image }));
+    await p.route(/https:\/\/x\/1-moy\.jpg/, () => { /* la grande photo n'arrive pas (réseau lent) */ });
+    await p.route(/\/book\/awa-kone$/, (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: telephone }));
+    await p.goto('http://127.0.0.1:' + PORT + '/book/awa-kone', { waitUntil: 'domcontentloaded' });
+    await p.waitForFunction(() => /Awa Koné/.test(document.getElementById('contenu')?.textContent || ''), null, { timeout: 15000 });
+    await p.waitForTimeout(2500);
+    const etat = await p.evaluate(() => { const a = document.querySelector('.hero-apercu'); return { la: !!a && a.complete && a.naturalWidth > 0 && a.getBoundingClientRect().height > 300, avant: !!a && a.nextElementSibling === document.querySelector('[data-couv-img]') }; });
+    ok(etat.la && etat.avant && !errs.length, 'téléphone : grande photo pas encore arrivée → la photo de la carte est affichée, et le reste après que la page s’est redessinée ' + errs.join(' | '));
+  }
   await b.close();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.'); process.exit(ko ? 1 : 0);
 })();

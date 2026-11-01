@@ -312,6 +312,9 @@ section { padding: 5rem 0; }
     linear-gradient(to top, var(--voile-photo-a55) 0%, var(--voile-photo-a00) 45%);
 }
 .profil-hero-fullbleed { background: var(--voile-photo-a100); }
+/* photo de la carte du Book, affichée aussitôt sous la grande photo (01/11/2026) */
+.profil-hero-fullbleed img.hero-apercu { z-index: 0; }
+.profil-hero-fullbleed img[data-couv-img] { z-index: 0; }
 .profil-hero-contenu { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(1.6rem, 5vw, 4rem); max-width: 760px; }
 .profil-hero-contenu h1 {
   color: var(--titre-clair); margin-top: 0.6rem;

@@ -485,7 +485,7 @@ const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () =
 // 1,2 s) ou pas du tout : la fiche part comme avant et se remplit elle-même. Gardée 3 minutes en mémoire (enMemoire)
 // (une fiche modifiée dans l'Administration se voit au plus 3 minutes après).
 const COLONNES_PROFIL_FICHE = 'id,full_name,city,category,niveau_mannequin,height_cm,weight_kg,chest_cm,waist_cm,hips_cm,inseam_cm,shoe_size,carnation,clothing_size,eye_color,hair_color,bio,years_experience,model_types,languages,availability,video_url';
-const COLONNES_PHOTOS_FICHE = 'id,url,url_miniature,url_moyenne,compcard_ordre,principale,photo_couverture,couverture_position,tri_statut,created_at';
+const COLONNES_PHOTOS_FICHE = 'id,url,url_miniature,url_moyenne,url_petite,compcard_ordre,principale,photo_couverture,couverture_position,tri_statut,created_at';
 // même choix de grande photo que photosAffichees (js/app.js) : vérifié par test-fiche-serveur.js
 function couvertureFiche(photos) {
   const date = (p) => { const t = Date.parse(p.created_at); return Number.isNaN(t) ? Infinity : t; };
@@ -501,7 +501,15 @@ function couvertureFiche(photos) {
 // ville, grande photo, mensurations toujours publiques, présentation) ; la page le remplace ensuite par la
 // fiche complète (projets, vidéo, compcard). Les mensurations « à reprendre » (poitrine, taille, bassin…) ne
 // sont jamais écrites ici : seulement ce que la fiche publique montre toujours.
-function contenuFiche(d, anglais, photo) {
+// (01/11/2026, « ça doit être instantané ») la photo que la carte du Book montrait déjà (même règle que
+// photos_couverture_petites : principale d'abord, puis la plus ancienne ; petite version sur téléphone) : déjà
+// dans le téléphone, elle s'affiche AUSSITÔT sous la grande photo, qui la recouvre dès qu'elle arrive
+function photoDeLaCarte(photos, telephone) {
+  const p = photos[0];  // (photos lues triées principale d'abord, puis par date)
+  if (!p) return '';
+  return photoLegere(p.url_miniature && p.url_petite && telephone ? p.url_petite : (p.url_miniature || p.url));
+}
+function contenuFiche(d, anglais, photo, apercu) {
   const p = d.profil, T = (fr, en) => (anglais ? en : fr);
   const categorie = p.category === 'homme' ? T('Homme', 'Man') : p.category === 'femme' ? T('Femme', 'Woman') : 'New Face';
   const mesures = [
@@ -509,7 +517,8 @@ function contenuFiche(d, anglais, photo) {
     [T('Poids', 'Weight'), p.weight_kg ? p.weight_kg + ' kg' : null], [T('Pointure', 'Shoe Size'), p.shoe_size ? (anglais ? 'EU ' : '') + p.shoe_size : null],
     // (couleurs des yeux et des cheveux : écrites en français seulement ; la page anglaise les traduit elle-même)
     [T('Yeux', 'Eyes'), anglais ? null : p.eye_color], [T('Cheveux', 'Hair'), anglais ? null : p.hair_color]].filter((m) => m[1]);
-  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar"><img data-couv-img src="' + echapper(photo || '/assets/logo-dark-bg.png') + '" alt="" fetchpriority="high">' +
+  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar">' +
+    (apercu && apercu !== photo ? '<img class="hero-apercu" src="' + echapper(apercu) + '" alt="" aria-hidden="true" fetchpriority="high">' : '') + '<img data-couv-img src="' + echapper(photo || '/assets/logo-dark-bg.png') + '" alt="" fetchpriority="high">' +
     '<div class="profil-hero-scrim"></div><div class="profil-hero-contenu"><div class="eyebrow eyebrow--clair">' + echapper(categorie) + '</div>' +
     '<h1>' + echapper(p.full_name || T('Mannequin', 'Model')) + '</h1><p>' + echapper(p.city || '') + '</p></div></div>' +
     (mesures.length ? '<div class="fiche-entete"><dl class="fiche-mesures" aria-label="' + T('Mensurations', 'Measurements') + '">' +
@@ -539,7 +548,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
       .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
       .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
       .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>')
-      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(dPage, anglais, couvertureFiche(d.photos)) + '</div>'), couvertureFiche(d.photos));
+      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(dPage, anglais, couvertureFiche(d.photos), photoDeLaCarte(d.photos, estTelephone(requete))) + '</div>'), couvertureFiche(d.photos));
   });
 }
 
