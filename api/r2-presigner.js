@@ -11,7 +11,7 @@
 // R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
 
 
-const { verifierUtilisateur, adminVerifie, cheminSur } = require('./_commun.js');
+const { verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal } = require('./_commun.js');
 const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
@@ -74,6 +74,7 @@ module.exports = async function handler(req, res) {
     await repondreR2(res, action, chemin, typeFichier, taille, TAILLE_MAX); // api/_r2.js
   } catch (e) {
     console.error('r2-presigner :', e);
+    await noterAuJournal('[Photos du Book] ' + ((e && e.message) || e), 'r2-presigner', '/api/r2-presigner');
     res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });
   }
 };

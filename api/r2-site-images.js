@@ -16,7 +16,7 @@
 // R2_BUCKET_NAME, R2_PUBLIC_URL, SUPABASE_SERVICE_ROLE_KEY.
 
 
-const { verifierUtilisateur, adminVerifie, cheminSur } = require('./_commun.js');
+const { verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal } = require('./_commun.js');
 const { debutR2, repondreR2, TYPES_IMAGES, traiterNoteIntegration } = require('./_r2.js');
 // ('boutique' : photos des produits de la Marketplace, retirée du site le 23/10/2026 ; les photos
 // déjà envoyées restent dans le stockage.)
@@ -53,6 +53,7 @@ module.exports = async function handler(req, res) {
       await traiterNoteIntegration(res, debut.corps);
     } catch (e) {
       console.error('r2-site-images (note) :', e);
+      await noterAuJournal('[Note d’intégration] ' + ((e && e.message) || e), 'r2-site-images', '/api/r2-site-images');
       res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });
     }
     return;
@@ -94,6 +95,7 @@ module.exports = async function handler(req, res) {
     await repondreR2(res, action, chemin, typeFichier, taille, tailleMax); // api/_r2.js
   } catch (e) {
     console.error('r2-site-images :', e);
+    await noterAuJournal('[Images du site] ' + ((e && e.message) || e), 'r2-site-images', '/api/r2-site-images');
     res.status(500).json({ error: e && e.message ? e.message : 'Erreur inattendue.' });
   }
 };

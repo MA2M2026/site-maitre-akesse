@@ -9,7 +9,7 @@
 // (Les actions de l'inscription par code et des paiements viendront avec l'espace 2.)
 
 const crypto = require('crypto');
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives, EMAIL_VALIDE } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives, EMAIL_VALIDE, noterAuJournal } = require('./_commun.js');
 
 // adresse séparée de l'Administration (v2.4) : le lien d'invitation y mène
 const ADMINISTRATION = 'https://admin.maitreakessemodelmanagement.com';
@@ -72,10 +72,6 @@ async function envoyerEmailServeur(cle, email, nom, message) {
   }).catch(() => null);
   return { ok: !!(rep && rep.ok), statut: rep ? rep.status : 0 };
 }
-async function noterAuJournal(message, origine) {
-  await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({ message, page: '/api/portail', user_agent: 'serveur (' + origine + ')' }) }).catch(() => {});
-}
 // Anniversaires du jour (Extension 143, chantier 14, 01/11/2026) : noté d'abord (une seule fois par an ;
 // le message arrive dans l'application et sur le téléphone), puis l'e-mail (au parent pour une mineure) ;
 // l'agence reçoit le récapitulatif avec les messages WhatsApp déjà écrits (pas d'envoi WhatsApp automatique).
@@ -122,6 +118,30 @@ async function documentsDuJour(cle) {
   if (!ok) await noterAuJournal('[Documents] alerte de ' + liste.length + ' document(s) non partie' + (cle ? '' : ' (clé EmailJS absente)'), 'documents');
   return liste.length;
 }
+// Surveillance (lot 3, étape 5 de PLAN-SERVEUR.md, 01/11/2026) : chaque matin, les pannes du serveur des
+// dernières 24 heures (lignes « serveur (…) » du journal des erreurs) sont regroupées et envoyées à l'agence
+// en UN e-mail, seulement s'il y en a. Rien n'est envoyé un jour sans panne.
+async function surveillanceDuJour(cle) {
+  const depuis = new Date(Date.now() - 24 * 3600e3).toISOString();
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs?user_agent=like.serveur*&created_at=gte.' + encodeURIComponent(depuis) +
+    '&select=message,user_agent,created_at&order=created_at.desc&limit=200', { headers: enTetesService() });
+  if (!rep.ok) throw new Error('journal illisible (' + rep.status + ')');
+  const lignes = await rep.json();
+  if (!Array.isArray(lignes) || !lignes.length) return 0;
+  const parOrigine = new Map();
+  for (const l of lignes) {
+    const origine = String(l.user_agent || '').replace(/^serveur \(|\)$/g, '') || 'serveur';
+    const g = parOrigine.get(origine) || { n: 0, dernier: l.message };
+    g.n++; parOrigine.set(origine, g);
+  }
+  const resume = [...parOrigine].map(([o, g]) => '• ' + o + ' : ' + g.n + ' panne' + (g.n > 1 ? 's' : '') + ' (dernière : « ' + String(g.dernier).slice(0, 160) + ' »)');
+  if (cle) {
+    await envoyerEmailServeur(cle, EMAIL_AGENCE, 'Maître Akesse Model Management',
+      '🛠️ Surveillance du site : ' + lignes.length + ' panne' + (lignes.length > 1 ? 's' : '') + ' du serveur ces dernières 24 heures.\n\n' + resume.join('\n') +
+      '\n\nLe détail est dans l’Administration, rubrique « Journal des erreurs ». Si une panne se répète, transmettez cet e-mail à la personne qui s’occupe du site.');
+  }
+  return lignes.length;
+}
 // Tâche quotidienne (vercel.json, 8 h à Abidjan) : anniversaires et documents chaque jour, relances des mensualités le 3 et le 5
 async function relancesDuJour(req, res) {
   // seule la tâche planifiée de Vercel (variable CRON_SECRET, envoyée par Vercel) peut les lancer
@@ -131,7 +151,9 @@ async function relancesDuJour(req, res) {
   // (une panne des anniversaires n'empêche jamais les relances)
   const anniversaires = await anniversairesDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Anniversaires] ' + ((e && e.message) || e), 'anniversaires'); return 0; });
   const documents = await documentsDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { noterAuJournal('[Documents] ' + ((e && e.message) || e), 'documents'); return 0; });
-  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, documents, rien: 'pas un jour de relance' });
+  // (surveillance : jamais bloquante ; ses propres pannes partent seulement dans les journaux de Vercel)
+  const pannes = await surveillanceDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { console.error('surveillance :', e); return 0; });
+  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, documents, pannes, rien: 'pas un jour de relance' });
   try {
     const liste = await rpcService('mensualites_relances', { p_jour: jour });
     const cle = process.env.EMAILJS_PRIVATE_KEY;
@@ -145,7 +167,7 @@ async function relancesDuJour(req, res) {
     if ((liste || []).length && envoyes < liste.length) {
       await noterAuJournal('[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), 'relances');
     }
-    return res.status(200).json({ ok: true, anniversaires, documents, relances: (liste || []).length, envoyes });
+    return res.status(200).json({ ok: true, anniversaires, documents, pannes, relances: (liste || []).length, envoyes });
   } catch (e) {
     return res.status(500).json({ error: 'Erreur serveur.' });
   }

@@ -22,7 +22,7 @@ async function serveur() {
     if (/rpc\/documents_alertes_du_jour/.test(url)) { if (panne) return { ok: false, status: 500, json: async () => ({ message: 'panne' }), text: async () => 'panne' }; const a = alertes; alertes = []; return { ok: true, json: async () => a }; }
     if (/rpc\/anniversaires_du_jour/.test(url)) return { ok: true, json: async () => [] };
     if (/rpc\/mensualites_relances/.test(url)) return { ok: true, json: async () => [] };
-    if (/journal_erreurs/.test(url)) { journal.push(JSON.parse(o.body)); return { ok: true }; }
+    if (/journal_erreurs/.test(url)) { if (o.method !== 'POST') return { ok: true, json: async () => [] }; journal.push(JSON.parse(o.body)); return { ok: true }; }
     if (/api\.emailjs\.com/.test(url)) { envois.push(JSON.parse(o.body)); return { ok: true }; }
     return { ok: true, json: async () => ({}), text: async () => '' };
   };

@@ -199,12 +199,20 @@ function cleAccesTableauValide(req, userId) {
   return attendue.length === recue.length && require('crypto').timingSafeEqual(attendue, recue);
 }
 
+// Journal des erreurs du serveur (lot 3, étape 5 de PLAN-SERVEUR.md, 01/11/2026 ; partagé, avant dans
+// api/portail.js seulement) : une ligne « serveur (origine) » dans journal_erreurs. Ne lève jamais d'erreur.
+// La tâche du matin (api/portail.js, surveillanceDuJour) envoie à l'agence le récapitulatif des pannes.
+async function noterAuJournal(message, origine, page) {
+  await fetch(SUPABASE_URL + '/rest/v1/journal_erreurs', { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ message: String(message).slice(0, 2000), page: page || '/api/portail', user_agent: 'serveur (' + origine + ')' }) }).catch(() => {});
+}
+
 // Adresse e-mail acceptée (une seule façon de lire l'adresse : étiquettes du domaine sans point,
 // séparées par des points — SonarCloud S8786, 26/10/2026). Même règle que js/app.js.
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 module.exports = {
-  EMAIL_VALIDE,
+  EMAIL_VALIDE, noterAuJournal,
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
   verifierUtilisateur, lignesAdmin, estAdmin, adminVerifie, ficheStaff, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
   debutRequete, chargeJeton, dernierCode, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
