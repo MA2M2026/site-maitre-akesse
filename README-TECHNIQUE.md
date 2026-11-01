@@ -1623,13 +1623,20 @@ en une fois via SQL (Extension 90). **Ne jamais repasser `R2_PUBLIC_URL`
 sur une URL `r2.dev`**, même temporairement pour dépanner : le bug mobile
 reviendrait.
 
-**CORS obligatoire sur le compartiment R2** (Paramètres → Politique CORS),
+**CORS obligatoire sur le compartiment R2** `ma2m-photos` (Paramètres → Politique CORS) — CHAQUE adresse qui envoie
+des photos doit y figurer (panne du 26/10 au 01/11/2026 : l'application déménagée sur mannequin.… n'y était pas,
+aucune mannequin ne pouvait envoyer de photo ; vérification : requête OPTIONS avec l'en-tête Origin),
 sinon le navigateur ne peut pas envoyer directement vers l'URL signée :
 
 ```json
 [
   {
-    "AllowedOrigins": ["https://www.maitreakessemodelmanagement.com"],
+    "AllowedOrigins": [
+      "https://www.maitreakessemodelmanagement.com",
+      "https://maitreakessemodelmanagement.com",
+      "https://mannequin.maitreakessemodelmanagement.com",
+      "https://admin.maitreakessemodelmanagement.com"
+    ],
     "AllowedMethods": ["PUT", "GET"],
     "AllowedHeaders": ["Content-Type"],
     "MaxAgeSeconds": 3600
