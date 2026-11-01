@@ -754,7 +754,8 @@ async function quiSommesNousRempli(url, anglais) {
 // échappé (du texte seul, jamais de code ; un retour à la ligne devient <br>). Sans texte enregistré (ou base lente,
 // 1 s au plus) : la page part telle qu'écrite. Gardé 3 minutes en mémoire (une modification se voit au plus 3 minutes après).
 const PAGES_TEXTES = /^\/(en\/)?(services|qui-sommes-nous|integrer-agence|mentions-legales|politique-confidentialite)$/;
-const textesDePage = (page) => enMemoire('textes:' + page, () => lireSupabase('textes_pages?page=eq.' + page + '&select=cle,fr,en', null, 1000));
+// (table pas encore créée ou base en panne : « aucun texte », gardé 3 minutes aussi, pour ne pas redemander à chaque visite)
+const textesDePage = (page) => enMemoire('textes:' + page, () => lireSupabase('textes_pages?page=eq.' + page + '&select=cle,fr,en', null, 1000).catch(() => null).then((l) => (Array.isArray(l) ? l : [])));
 function poserTextes(html, lignes, anglais) {
   const textes = new Map();
   (Array.isArray(lignes) ? lignes : []).forEach((l) => {
