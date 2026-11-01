@@ -4088,3 +4088,24 @@ SonarCloud : les 7 remarques du site dynamique corrigées (`middleware.js`, `js/
 - Reste volontairement : les écrans de paiement gardent leur calcul d'avant quand la base n'est pas encore à
   jour (repli), et le corrigent par la règle de la base quand elle l'est.
 
+## Site dynamique, étape A : pages écrites par le serveur (01/11/2026, décision de la propriétaire)
+
+Avant, le serveur (`middleware.js`) posait seulement les DONNÉES dans les 9 pages (bloc JSON) et le navigateur
+dessinait le contenu. Désormais le serveur écrit aussi le CONTENU visible dans le HTML (lisible sans programme,
+par Google et les aperçus) ; la page le reprend ou le redessine ensuite.
+- **The Book** et **l'accueil** (visages, À la une, nombre) : dessin partagé `js/rendu-book.js` (script classique
+  ET importé par `middleware.js`, pose `RenduBook`). The Book garde les cartes du serveur au premier affichage
+  (`data-serveur="1"`), seul l'état « dans ma sélection » est mis à jour ; un seul écouteur pour la grille.
+- **Actualités, événements, partenaires** : dessin partagé `js/rendu-publications.js` (`RenduPublications`,
+  avec `extrait` désormais commun à `js/publications.js`).
+- **Fiche d'un mannequin** (`contenuFiche`), **Qui sommes-nous** (cartes des événements, reprises par la page
+  grâce à `data-evenement`), **parcours** (mois et projets), **agenda** (projets à venir) : contenu principal
+  écrit par le serveur, la page le complète (photos, animations, calendrier).
+- Pages anglaises : textes traduits côté serveur (`versAnglaisServeur`, même table `traductions_en` que la page).
+- **Mémoire de 3 minutes** (`enMemoire`, demande de la propriétaire) : une lecture réussie de la base est gardée
+  3 minutes par serveur ; une modification se voit au plus 3 minutes après ; une lecture ratée n'est jamais gardée.
+- Essais : les copies de `middleware.js` des essais sont faites à la racine (`/mw-*.mjs`, ignorés par git) pour
+  que les imports relatifs marchent ; `globalThis.MA2M_SANS_MEMOIRE` coupe la mémoire dans les essais.
+  Preuves dans `test-book-serveur.js`, `test-publications-serveur.js`, `test-pages-serveur.js`,
+  `test-fiche-serveur.js`, `test-accueil-serveur.js` (contenu présent dans le HTML sans programme).
+

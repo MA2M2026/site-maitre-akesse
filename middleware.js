@@ -609,7 +609,19 @@ async function agendaRempli(url, anglais) {
     lireSupabase('rpc/agenda_public', {}, ATTENTE_FICHE),
     lireSupabase('evenements?select=id,titre,date_evenement,lieu&date_evenement=gte.' + depuis + '&order=date_evenement.asc,id.asc&limit=1000', null, ATTENTE_FICHE)
   ]).then(([agenda, evenements]) => (Array.isArray(agenda) && Array.isArray(evenements) && evenements.length < 1000 ? { agenda, evenements } : null)));
-  return pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture);
+  return pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture, async (html, d) => {
+    // étape A (01/11/2026) : les projets à venir (titre, dates, lieu) écrits dans la page, à la place de
+    // « Chargement de l'agenda… » ; la page dessine ensuite son calendrier et ses cartes complètes par-dessus.
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const avenir = d.agenda.filter((p) => String(p.date_fin || p.date_debut || '') >= aujourdhui)
+      .sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut))).slice(0, 30);
+    if (!avenir.length) return html;
+    const liste = anglais ? await versAnglaisServeur(avenir, ['titre', 'lieu']) : avenir;
+    const jour = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const cartes = liste.map((p) => '<article class="agenda-carte"><h3>' + echapper(p.titre) + '</h3><p>' +
+      echapper([jour(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' – ' + jour(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p></article>').join('');
+    return html.replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' + cartes + '</div>');
+  });
 }
 
 // ================== Parcours préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
