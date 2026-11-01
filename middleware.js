@@ -267,7 +267,7 @@ const PHOTOS_DIRECTES_ACTIVES = true;  // 24/10/2026 : de nouveau par Cloudflare
 const PHOTOS_DIRECTES = 'https://photos.maitreakessemodelmanagement.com/';
 const RELAIS_PHOTOS = /^(?:https:\/\/(?:www\.)?maitreakessemodelmanagement\.com)?\/book-photos\//;
 const MARQUE_WEBP = /\/(miniatures|moyennes|petites)\/[^/?]*-w\.jpg(\?.*)?$/;
-const DUREE_ACCUEIL = 5 * 60 * 1000;
+const DUREE_ACCUEIL = 3 * 60 * 1000;  // (3 minutes comme les autres pages : 100 % dynamique, plus de vérification par le navigateur)
 const ATTENTE_ACCUEIL = 800;
 let memoireAccueil = null;  // { quand, donnees }
 let lectureAccueil = null;  // lecture de la base en cours (partagée par les visites simultanées)
@@ -289,16 +289,30 @@ async function lireDonneesAccueil() {
   if (!profils) throw new Error('base : mannequins');
   // (en même temps : le mot de Maître Akesse et les castings ouverts, écrits dans la page pour
   // qu'elle ne saute pas quand ils arrivent — 24/10/2026 ; s'ils manquent, le navigateur les lit)
-  const [couvertures, mots, castings] = await Promise.all([
+  // (100 % dynamique, 01/11/2026 : aussi les partenaires, Instagram, les 3 prochains projets de l'agenda, la vidéo
+  // de l'accueil et les versions moyennes des photos ; chacun manquant, la page le lit elle-même comme avant)
+  const [couvertures, mots, castings, partenaires, instagram, agenda, video, moyennes] = await Promise.all([
     profils.length ? lireCouvertures(profils.map(p => p.id)) : [],
     lireSupabase('mot_responsable?id=eq.principal&select=nom,titre,message,photo_url', null, 3000).catch(() => null),
-    lireSupabase('casting_projets?actif=eq.true&select=id&limit=1', null, 3000).catch(() => null)]);
+    lireSupabase('casting_projets?actif=eq.true&select=id&limit=1', null, 3000).catch(() => null),
+    lireSupabase('partenaires?select=id,nom,logo_url&order=created_at.desc&limit=14', null, 3000).catch(() => null),
+    lireSupabase('instagram_posts_cache?id=eq.principal&select=posts', null, 3000).catch(() => null),
+    lireSupabase('rpc/agenda_public', { seulement_a_venir: true, limite: 3 }, 3000).catch(() => null),
+    lireSupabase('reglages_site?cle=eq.video_accueil&select=valeur', null, 3000).catch(() => null),
+    profils.length ? lireSupabase('model_photos?select=model_id,url_miniature,url_moyenne&url_moyenne=not.is.null&model_id=in.(' + profils.map(p => p.id).join(',') + ')', null, 3000).catch(() => null) : []]);
   if (!couvertures) throw new Error('base : photos');
   const photoDe = {};
   couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
   const donnees = { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
   if (Array.isArray(mots)) donnees.mot = mots[0] || null;
   if (Array.isArray(castings)) donnees.castingOuvert = castings.length > 0;
+  if (Array.isArray(partenaires)) donnees.partenaires = partenaires;
+  if (Array.isArray(instagram)) donnees.instagram = (instagram[0] && Array.isArray(instagram[0].posts)) ? instagram[0].posts : [];
+  if (Array.isArray(agenda)) donnees.agenda = agenda;
+  if (Array.isArray(video)) donnees.video = (video[0] && video[0].valeur) || null;
+  // version moyenne (plus nette) de la photo de chaque mannequin, pour la couverture qui défile
+  if (Array.isArray(moyennes)) donnees.moyennesLues = true;
+  if (Array.isArray(moyennes)) donnees.profils.forEach((p) => { const m = moyennes.find((x) => x.model_id === p.id && x.url_miniature === p.photo); if (m) p.moyenne = m.url_moyenne; });
   // le mot en anglais pour l'accueil anglais (traductions_en, même empreinte que versAnglais, js/app.js)
   if (donnees.mot) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
   return donnees;
@@ -426,6 +440,8 @@ async function accueilRempli(requete, url) {
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
+  const blocEn = await blocTraductions(url);
+  if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
   return reponseHtml(html, page);
 }
 // page complétée : mêmes en-têtes que la page d'origine, sauf taille et compression (le texte a été
@@ -464,6 +480,7 @@ const estTelephone = (requete) => requete?.headers.get('sec-ch-ua-mobile') === '
 async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: { 'x-ma2m-remplie': '1', 'accept': 'text/html' }, redirect: 'manual' });
   const murPromesse = murDuSite().catch(() => null);  // (en même temps que la page ; gardé 3 minutes)
+  const traductionsPromesse = blocTraductions(url);
   const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
   // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
@@ -478,7 +495,8 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const avecMur = /<h1[\s>]/.test(html) && html.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(html);
   const mur = avecMur ? await murPromesse : null;
   const blocMur = mur && mur.length ? '\n<script type="application/json" id="mur-donnees">' + jsonSur(mur) + '</script>' : '';
-  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocMur), page);
+  const blocEn = await traductionsPromesse;
+  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocMur + blocEn), page);
 }
 const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
 
@@ -540,16 +558,27 @@ function contenuFiche(d, anglais, photo, apercu) {
       mesures.map(([l, v]) => '<div class="fiche-mesure"><dt>' + echapper(l) + '</dt><dd>' + echapper(v) + '</dd></div>').join('') + '</dl></div>' : '') +
     (p.bio ? '<section class="fiche-carte"><h3 class="fiche-carte-titre">' + T('À propos', 'About') + '</h3><p class="mannequin-bio fiche-bio">' + echapper(p.bio) + '</p></section>' : '') + '</div>';
 }
+// premier jour du mois, dix ans plus tôt (même période que ma2mExperiencesAgence, js/app.js)
+const dixAnsAvant = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear() - 10, d.getUTCMonth(), 1)).toISOString().slice(0, 10); };
 async function ficheRemplie(requete, url, id, slug, anglais) {
   if (requete.method !== 'GET') return null;
   const lecture = enMemoire('fiche-' + id, () => Promise.all([
     lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=' + COLONNES_PROFIL_FICHE, null, ATTENTE_FICHE),
     lireSupabase('model_photos?model_id=eq.' + id + '&select=' + COLONNES_PHOTOS_FICHE + '&order=principale.desc,created_at.asc', null, ATTENTE_FICHE),
-    lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE)
-  ]).then(([profils, photos, ages]) => {
+    lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE),
+    // (100 % dynamique, 01/11/2026) aussi les expériences, le parcours avec l'agence (10 ans, comme
+    // ma2mExperiencesAgence, js/app.js) et les mesures de l'Extension 121 ; manquants, la page les lit elle-même
+    lireSupabase('model_projects?model_id=eq.' + id + '&select=*&order=created_at.desc', null, ATTENTE_FICHE).catch(() => null),
+    lireSupabase('rpc/parcours_public', { p_debut: dixAnsAvant(), p_fin: new Date().toISOString().slice(0, 10), p_model: id }, ATTENTE_FICHE).catch(() => null),
+    lireSupabase('model_profiles?id=eq.' + id + '&select=shoulder_cm,arm_cm,neck_cm', null, ATTENTE_FICHE).catch(() => null)
+  ]).then(([profils, photos, ages, projets, parcours, mesures]) => {
     const profil = Array.isArray(profils) && profils[0];
     if (!profil || !Array.isArray(photos)) return null;
-    return { id, slug, profil, photos, age: Array.isArray(ages) ? ages[0]?.age ?? null : null };
+    const d = { id, slug, profil, photos, age: Array.isArray(ages) ? ages[0]?.age ?? null : null };
+    if (Array.isArray(projets)) d.projets = projets;
+    if (Array.isArray(parcours)) d.parcours = parcours;
+    if (Array.isArray(mesures)) d.mesures = mesures[0] || {};
+    return d;
   }));
   return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, async (html, d) => {
     // (page anglaise : présentation traduite, comme la page le fait)
@@ -770,6 +799,17 @@ async function quiSommesNousRempli(url, anglais) {
     return poserTextes(html, await textesDePage('qui-sommes-nous').catch(() => null), anglais);
   });
 }
+
+// ================== 100 % dynamique, étape 4 (01/11/2026) : traductions anglaises ==================
+// Toutes les traductions (table traductions_en : 62 textes, 26 Ko le 01/11/2026) posées dans chaque page anglaise ;
+// versAnglais (js/app.js) les y lit au lieu de les demander à la base. Gardées 3 minutes.
+const toutesTraductions = () => enMemoire('traductions', () => lireSupabase('traductions_en?select=cle,en', null, 1000)
+  .then((l) => (Array.isArray(l) ? Object.fromEntries(l.map((r) => [r.cle, r.en])) : null)));
+const blocTraductions = async (url) => {
+  if (!/^\/en(\/|$)/.test(url.pathname)) return '';
+  const t = await toutesTraductions().catch(() => null);
+  return t ? '\n<script type="application/json" id="traductions-donnees">' + jsonSur(t) + '</script>' : '';
+};
 
 // ================== 100 % dynamique, étape 1 (01/11/2026) ==================
 // Mur de photos : les 24 dernières mannequins publiées, petite version de leur photo de couverture (comme

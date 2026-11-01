@@ -36,12 +36,14 @@ async function middleware() {
   globalThis.fetch = async (u, o = {}) => {
     u = String(u);
     if (u.includes('supabase.co')) {
-      appelsBase++;
+      if (!/traductions_en/.test(String(u))) appelsBase++;  // (les traductions des pages anglaises ont leur propre mémoire)
       if (basePanne) throw new Error('base en panne');
       if (baseLente) await new Promise((r) => setTimeout(r, baseLente));
       // mot de Maître Akesse et casting ouvert (24/10/2026), écrits dans la page par le serveur
       if (u.includes('mot_responsable')) return new Response(JSON.stringify([MOT]), { headers: { 'content-type': 'application/json' } });
       if (u.includes('casting_projets')) return new Response(JSON.stringify([{ id: 'c1' }]), { headers: { 'content-type': 'application/json' } });
+      // (100 % dynamique : partenaires, Instagram, agenda, vidéo, photos nettes lus par le serveur ; vides ici)
+      if (/partenaires|instagram_posts_cache|agenda_public|reglages_site|model_photos\?|traductions_en/.test(u)) return new Response('[]', { headers: { 'content-type': 'application/json' } });
       const corps = u.includes('model_profiles') ? profils.map(({ photo: _p, ...x }) => x) : profils.map((p) => ({ model_id: p.id, url: p.photo || photo(p.id), url_petite: p.photo ? null : petite(p.id) }));
       return new Response(JSON.stringify(corps), { headers: { 'content-type': 'application/json' } });
     }
@@ -126,9 +128,11 @@ async function middleware() {
         else ok(/\/book-photos\//.test(couv.src), n + 'Cloudflare muet : la photo vient de la copie Vercel');
         const attendu = profils.find((x) => x.id === couv.enVue) || {};  // (la couverture défile toutes les 5 s)
         ok(couv.credit === attendu.full_name, n + '« En couverture » : le nom de la mannequin en photo (' + couv.credit + ')');
-        const questions = ordre.filter((u) => /model_profiles/.test(u));
-        ok(!journal.some((j) => j[0] === 'rpc' && j[1] === 'photos_couverture_mannequins') && questions.length === 1 && /select=id&/.test(questions[0]) && ordre.indexOf(questions[0]) > premiere,
-          n + 'le navigateur ne redemande pas la liste : une seule petite vérification, après la photo');
+        // (100 % dynamique, 01/11/2026) plus aucune question à la base pour l'accueil : liste, photos nettes, partenaires,
+        // Instagram, agenda, vidéo, tout est dans la page
+        const questions = ordre.filter((u) => /model_profiles|model_photos|partenaires|instagram_posts_cache|agenda_public|reglages_site|traductions_en/.test(u));
+        ok(!journal.some((j) => j[0] === 'rpc' && j[1] === 'photos_couverture_mannequins') && questions.length === 0,
+          n + 'le navigateur ne demande plus rien à la base pour l’accueil (' + questions.map((u) => u.split('/v1/')[1]).join(', ') + ')');
         ok(textesArrivee === await textes() && textesArrivee.includes(MOT.message) && textesArrivee.includes(MOT.nom) && /Casting ouvert|Open casting/.test(textesArrivee) && !/u-hidden/.test(textesArrivee)
           && !ordre.some((u) => /mot_responsable|casting_projets/.test(u)), n + 'mot de Maître Akesse et casting ouvert déjà écrits par le serveur : rien ne change ensuite, la page ne saute pas');
         const vignettes = await p.$$eval('#grille-femmes img, #grille-hommes img', (l) => l.map((i) => i.getAttribute('src')));
@@ -141,9 +145,14 @@ async function middleware() {
     }
   }
   profils.forEach((x) => { delete x.photo; });
-  // mannequin retirée après la préparation de la liste : le navigateur revérifie et la retire
+  // mannequin retirée de la publication : (100 % dynamique, 01/11/2026) plus de vérification par le navigateur ; dès que
+  // le serveur relit la liste (mémoire de 3 minutes au plus, comme The Book), elle n'est plus dans la page
   {
-    const page = await pageServeur('');
+    const toutes = profils.slice(); profils.splice(profils.findIndex((x) => x.id === 'a3'), 1);
+    // (un serveur neuf : sa mémoire relit la liste, comme après 3 minutes)
+    const mwNeuf = await (async () => { const c = path.join(dossierCopies(), 'mw-retiree-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), c); process.on('exit', () => fs.rmSync(c, { force: true })); return (await import(pathToFileURL(c).href)).default; })();
+    const page = await (await mwNeuf(new Request('https://www.maitreakessemodelmanagement.com/'))).text();
+    profils.splice(0, profils.length, ...toutes);
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript(() => { try { localStorage.setItem('ma2m_cookies', 'non'); sessionStorage.setItem('ma2m_entree_vue', '1'); } catch (e) { /* */ } });
@@ -153,7 +162,7 @@ async function middleware() {
     await p.route('http://127.0.0.1:' + PORT + '/', (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: page }));
     await p.goto('http://127.0.0.1:' + PORT + '/'); await p.waitForTimeout(3000);
     const t = await p.evaluate(() => [...document.querySelectorAll('#mag a, #couv-modele-nom')].map((a) => a.textContent).join(' | '));
-    ok(!/GRÂCE TROIS/.test(t) && (await p.$$('#grille-femmes a')).length === 2, 'mannequin retirée de la publication : elle disparaît aussitôt de l’accueil (couverture et visages)');
+    ok(!/GRÂCE TROIS/.test(t) && (await p.$$('#grille-femmes a')).length === 2, 'mannequin retirée de la publication : absente de l’accueil dès que le serveur relit la liste (3 minutes au plus)');
     ok(!errs.length, 'mannequin retirée : aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }

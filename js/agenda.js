@@ -481,7 +481,9 @@
     // L'accueil ne demande que les 3 prochains projets (moins de données sur mobile).
     const seulAccueil = !avenirBoite && !passesBoite;
     // page Agenda préparée par le serveur (middleware.js, 01/11/2026) : les deux lectures déjà dans la page
-    const d = seulAccueil ? null : donneesServeur('agenda-donnees');  // (js/app.js)
+    // (accueil : les 3 prochains projets posés par le serveur avec l'accueil, 100 % dynamique, 01/11/2026)
+    const dAccueil = seulAccueil ? donneesServeur('accueil-donnees') : null;
+    const d = seulAccueil ? (dAccueil && Array.isArray(dAccueil.agenda) ? { agenda: dAccueil.agenda, evenements: [] } : null) : donneesServeur('agenda-donnees');  // (js/app.js)
     const serveur = d && Array.isArray(d.agenda) && Array.isArray(d.evenements) ? d : null;
     if (!serveur && (typeof sb === 'undefined' || !sb)) return;
     const [{ data, error }, lectureEvenements] = serveur ? [{ data: serveur.agenda, error: null }, { data: serveur.evenements, error: null }] : await Promise.all([

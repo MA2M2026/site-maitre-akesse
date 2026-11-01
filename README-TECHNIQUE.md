@@ -4174,3 +4174,19 @@ Cases vides et à venir avec un contour rouge (avant : invisibles hors survol). 
 (administratrice principale) : `sortie_proposer` puis `sortie_decider` (même chemin que Paiements › Sorties et
 suspensions, `supabase-bloc2-complements.sql`) ; la mannequin passe « suspendu », hors présence et paiements ;
 réactivation dans Sorties et suspensions. Essai : `test-presences-admin.js`.
+
+## 100 % dynamique (01/11/2026, décision de la propriétaire)
+
+Mesure : chaque page publique ouverte comme un visiteur ne doit plus rien demander elle-même à la base pour s'afficher
+(seul reste le compteur de visites `page_views`, qui enregistre et n'affiche rien). Le serveur (`middleware.js`) pose :
+- le mur de photos derrière les titres (`murDuSite`, bloc `mur-donnees`, dans `pageRemplie`) ;
+- le bandeau « Mannequin du mois » du Book (`RenduBook.bandeauMdm`, dessin partagé) ;
+- la liste des castings ouverts (Candidature, `formulairesRemplis`, bloc `page-donnees`) ;
+- l'accueil : partenaires, Instagram, 3 prochains projets de l'agenda, vidéo, versions moyennes des photos
+  (`lireDonneesAccueil`) ; la vérification « mannequin retirée » par le navigateur est supprimée : mémoire du
+  serveur de 3 minutes (`DUREE_ACCUEIL`), comme The Book ;
+- la fiche : expériences, parcours avec l'agence (10 ans), mesures de l'Extension 121 ;
+- les pages anglaises : toutes les traductions (`toutesTraductions`, bloc `traductions-donnees`, lu par
+  `traductionsDe`, js/app.js) — 26 Ko le 01/11/2026 ; si la table grossit beaucoup, ne poser que les textes de la page.
+Chaque donnée manquante (base lente ou en panne) : la page la lit elle-même comme avant.
+Essais : `test-dynamique.js`, `test-accueil-serveur.js`, `test-fiche-serveur.js`, `test-book-serveur.js`.

@@ -139,15 +139,8 @@
   })();
   async function chargerMannequins(depuisLaBase) {
     if (typeof sb === 'undefined' || !sb) return;
-    const { profils: avecPhoto, nombre: total, deLaPage } = await mannequinsAvecPhoto(depuisLaBase);
-    // liste du serveur (jusqu'à 5 minutes d'âge) : une mannequin retirée entre-temps ne doit pas
-    // rester affichée ; une seule petite question à la base, après l'affichage
-    if (deLaPage) {
-      sb.from('model_profiles').select('id').eq('published', true).limit(200).then(({ data }) => {
-        const publiees = new Set((data || []).map(x => x.id));
-        if (data && avecPhoto.some(p => !publiees.has(p.id))) chargerMannequins(true).catch(e => console.warn('Accueil : liste à jour', e));
-      });
-    }
+    const { profils: avecPhoto, nombre: total } = await mannequinsAvecPhoto(depuisLaBase);
+    // (liste du serveur : 3 minutes d'âge au plus ; plus de question de vérification à la base, 100 % dynamique)
     if (total) {
       document.getElementById('couv-nombre').textContent = R.nombreAccueil(total, EN);
     }
@@ -198,8 +191,10 @@
 
     // Couverture et « À la une » sont en pleine page : la version moyenne de la même photo
     // (plus nette que la miniature de 800 px) remplace la miniature dès qu'elle est connue.
-    const { data: moyennes } = await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', [couv.id, une.id]);
-    const moyenneDe = m => ((moyennes || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne;
+    // (versions moyennes posées par le serveur avec la liste, 100 % dynamique ; sinon lues ici)
+    const page = donneesDeLaPage();
+    const { data: moyennes } = page && page.moyennesLues ? { data: [] } : await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', [couv.id, une.id]);
+    const moyenneDe = m => m.moyenne || ((moyennes || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne;
     if (moyenneDe(couv)) photo(document.getElementById('couv-img'), moyenneDe(couv), couv.full_name, true);
     if (moyenneDe(une)) photo(document.getElementById('une-img'), moyenneDe(une), une.full_name);
 
@@ -215,8 +210,9 @@
   async function defilerCouverture(liste) {
     clearInterval(minuteurCouverture);
     if (liste.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const { data: photos } = await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', liste.map(m => m.id));
-    const nette = m => ((photos || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne || m.photo;
+    const page = donneesDeLaPage();
+    const { data: photos } = page && page.moyennesLues ? { data: [] } : await sb.from('model_photos').select('model_id, url_miniature, url_moyenne').in('model_id', liste.map(m => m.id));
+    const nette = m => m.moyenne || ((photos || []).find(x => x.model_id === m.id && x.url_miniature === m.photo && x.url_moyenne) || {}).url_moyenne || m.photo;
     const images = [document.getElementById('couv-img'), document.getElementById('couv-img-2')];
     const couverture = document.getElementById('couverture');
     const credit = document.getElementById('couv-modele');
@@ -316,8 +312,9 @@
 
   // --- Ils nous font confiance : logos des partenaires ---
   async function chargerPartenaires() {
-    if (typeof sb === 'undefined' || !sb) return;
-    const { data } = await sb.from('partenaires').select('id, nom, logo_url').order('created_at', { ascending: false }).limit(14);
+    const page = donneesDeLaPage();  // (posés par le serveur : 100 % dynamique, 01/11/2026)
+    if (!(page && Array.isArray(page.partenaires)) && (typeof sb === 'undefined' || !sb)) return;
+    const { data } = page && Array.isArray(page.partenaires) ? { data: page.partenaires } : await sb.from('partenaires').select('id, nom, logo_url').order('created_at', { ascending: false }).limit(14);
     const avecLogo = (data || []).filter(p => p.logo_url).slice(0, 9);
     if (!avecLogo.length) { confirmer('ils-nous-font-confiance', false); return; }
     document.getElementById('confiance-liste').innerHTML = avecLogo.map(p => `
@@ -329,8 +326,9 @@
 
   // --- Instagram : publications mises en cache depuis le tableau de bord ---
   async function chargerInstagram() {
-    if (typeof sb === 'undefined' || !sb) return;
-    const { data } = await sb.from('instagram_posts_cache').select('posts').eq('id', 'principal').maybeSingle();
+    const page = donneesDeLaPage();  // (posées par le serveur : 100 % dynamique, 01/11/2026)
+    if (!(page && Array.isArray(page.instagram)) && (typeof sb === 'undefined' || !sb)) return;
+    const { data } = page && Array.isArray(page.instagram) ? { data: { posts: page.instagram } } : await sb.from('instagram_posts_cache').select('posts').eq('id', 'principal').maybeSingle();
     const posts = data && Array.isArray(data.posts) ? data.posts.filter(p => p && p.image) : [];
     if (!posts.length) { confirmer('flux-instagram', false); return; }
     document.getElementById('instagram-grille').innerHTML = posts.slice(0, 9).map(p => `

@@ -151,6 +151,8 @@
       var c = JSON.parse(sessionStorage.getItem(CLE_CACHE) || 'null');
       if (c && Date.now() - c.t < 5 * 60 * 1000) { afficher(c.v); return; }
     } catch (e) {}
+    // (réglage posé par le serveur avec l'accueil : 100 % dynamique, 01/11/2026)
+    try { var p = JSON.parse((document.getElementById('accueil-donnees') || {}).textContent || 'null'); if (p && 'video' in p) { afficher(p.video); return; } } catch (e) {}
     if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') return;
     fetch(SUPABASE_URL + '/rest/v1/reglages_site?cle=eq.video_accueil&select=valeur', { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY } })
       .then(function (r) { return r.ok ? r.json() : []; })

@@ -114,6 +114,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
       else if (/model_profiles\?.*select=[^&]*bio/.test(u)) nombre.profil = (nombre.profil || 0) + 1;
       if (/\/rest\/v1\/model_photos\?.*model_id=eq\./.test(u)) nombre.photos = (nombre.photos || 0) + 1;
       if (/ages_mannequins/.test(u)) nombre.age = (nombre.age || 0) + 1;
+      if (/model_projects|parcours_public|shoulder_cm|traductions_en/.test(u)) nombre.autres = (nombre.autres || 0) + 1;  // (100 % dynamique)
       if (/https:\/\/x\/1\.jpg/.test(u)) photo = photo || Date.now() - t0;
     });
     await p.route(new RegExp('/' + chemin.replace(/\//g, '\\/') + '$'), (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: pages[chemin] }));
@@ -140,7 +141,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     await p.waitForTimeout(1500);
     const suivi = await p.evaluate(() => { window.__finSuivi = true; return { min: window.__opaciteMin, meme: document.querySelector('[data-couv-img]') === window.__photoServeur }; });
     ok(suivi.min > 0.99 && suivi.meme, n + 'la grande photo posée par le serveur reste affichée du début à la fin, jamais effacée ni rechargée (opacité minimale ' + suivi.min.toFixed(2) + ')');
-    ok(!nombre.profil && !nombre.photos && !nombre.age && !nombre.identite, n + 'la fiche s’affiche sans redemander profil, photos, âge ni identité à la base (' + JSON.stringify(nombre) + ')');
+    ok(!nombre.profil && !nombre.photos && !nombre.age && !nombre.identite && !nombre.autres, n + 'la fiche s’affiche sans rien demander à la base : profil, photos, âge, identité, expériences, parcours, mesures, traductions (' + JSON.stringify(nombre) + ')');
     ok(photo > 0, n + 'la grande photo est demandée (' + photo + ' ms)');
     ok((await p.title()) === 'Awa Koné · Maître Akesse Model Management' && (await p.$$('link[rel="canonical"]')).length === 1, n + 'titre juste et une seule adresse canonique');
     ok(/19/.test(await p.textContent('#contenu')), n + 'l’âge est affiché');

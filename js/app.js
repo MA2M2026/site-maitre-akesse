@@ -634,6 +634,9 @@ async function empreinteTexte(t) {
 async function traductionsDe(textes) {
   const uniques = [...new Set(textes.filter((t) => typeof t === 'string' && t.trim()))];
   const cles = await Promise.all(uniques.map(empreinteTexte)), en = {}, paquets = [];
+  // (pages anglaises préparées par le serveur : toutes les traductions sont déjà dans la page, 100 % dynamique)
+  const serveur = typeof donneesServeur === 'function' ? donneesServeur('traductions-donnees') : null;
+  if (serveur && typeof serveur === 'object') return new Map(uniques.map((t, i) => [t, serveur[cles[i]]]).filter((x) => x[1]));
   for (let i = 0; i < cles.length; i += 80) paquets.push(cles.slice(i, i + 80));
   await Promise.all(paquets.map(async (p) => {
     const { data, error } = await sb.from('traductions_en').select('cle, en').in('cle', p);
@@ -1071,11 +1074,12 @@ function memeProjet(a, b) {
 const TYPES_EXPERIENCE_AGENDA = { defile: 'Défilé', show: 'Show', shooting: 'Shooting', evenement: 'Événement', autre: 'Projet' };
 // Projets de l'agence d'une mannequin, au format des expériences (table model_projects).
 // Une panne de lecture ne bloque jamais la page : la liste est alors simplement vide.
-async function ma2mExperiencesAgence(idMannequin) {
+// (parcoursServeur : parcours des 10 dernières années déjà posé dans la page par le serveur, 100 % dynamique)
+async function ma2mExperiencesAgence(idMannequin, parcoursServeur) {
   if (!idMannequin) return [];
   try {
     const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
-    const projets = await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
+    const projets = parcoursServeur || await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
     return projets.filter(p => p.type in TYPES_EXPERIENCE_AGENDA).map(p => {
       const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
       return { type_projet: EN ? libelleTypeAgenda(p.type, true) : TYPES_EXPERIENCE_AGENDA[p.type], titre: p.titre,

@@ -96,11 +96,12 @@ async function chargerProfilInterne() {
     .eq('model_id', id)
     .order('principale', { ascending: false })
     .order('created_at', { ascending: true }));
+  // (100 % dynamique, 01/11/2026 : expériences, parcours avec l'agence et mesures posés par le serveur)
   const demandeProjets = Promise.all([
-    sb.from('model_projects').select('*').eq('model_id', id).order('created_at', { ascending: false }),
-    ma2mExperiencesAgence(id)
+    serveur && Array.isArray(serveur.projets) ? { data: serveur.projets, error: null } : sb.from('model_projects').select('*').eq('model_id', id).order('created_at', { ascending: false }),
+    ma2mExperiencesAgence(id, serveur && Array.isArray(serveur.parcours) ? serveur.parcours : null)
   ]);
-  const demandeMesures = window.ma2mMesuresSupp(id);
+  const demandeMesures = serveur && serveur.mesures ? Promise.resolve(serveur.mesures) : window.ma2mMesuresSupp(id);
   // l'âge aussi, en même temps (31/10/2026 : il était demandé après tout le reste)
   const demandeAge = serveur ? Promise.resolve({ data: [{ age: serveur.age }] }) : Promise.resolve(sb.rpc('ages_mannequins', { ids: [id] }));
   // une demande abandonnée (profil non publié) ne doit pas laisser d'erreur non gérée
