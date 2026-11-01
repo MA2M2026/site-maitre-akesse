@@ -27,6 +27,43 @@ function debutR2(req, res) {
   return { jeton: jetonDe(req), corps: corpsDe(req) };
 }
 
+// Contenu RÉEL d'un fichier (lot 3, étape 4 de PLAN-SERVEUR.md, 01/11/2026) : le type annoncé ne suffit pas.
+// On lit les premiers octets (la « signature » de chaque format). image : JPEG, PNG, GIF, WebP, HEIC/AVIF ;
+// video : MP4 (ftyp), WebM ; pdf : %PDF. Renvoie la famille reconnue ('image', 'video', 'pdf') ou null.
+function familleDuContenu(o) {
+  if (!o || o.length < 12) return null;
+  const debut = (octets) => octets.every((x, i) => o[i] === x);
+  const texte = (de, a) => String.fromCharCode(...o.slice(de, a));
+  if (debut([0xFF, 0xD8, 0xFF]) || debut([0x89, 0x50, 0x4E, 0x47]) || texte(0, 4) === 'GIF8' || (texte(0, 4) === 'RIFF' && texte(8, 12) === 'WEBP')) return 'image';
+  if (texte(4, 8) === 'ftyp') return /^(heic|heix|heim|heis|hevc|hevx|mif1|msf1|avif|avis)$/.test(texte(8, 12)) ? 'image' : 'video';
+  if (debut([0x1A, 0x45, 0xDF, 0xA3])) return 'video';
+  if (texte(0, 5) === '%PDF-') return 'pdf';
+  return null;
+}
+// Familles permises selon le type annoncé à l'envoi (octet-stream : seulement une vraie image)
+function famillesPermises(typeFichier) {
+  if (/^video\//i.test(typeFichier)) return ['video'];
+  if (typeFichier === 'application/pdf') return ['pdf'];
+  return ['image'];
+}
+// Après l'envoi : lit les 32 premiers octets du fichier déposé ; si ce n'est pas le format annoncé, le fichier
+// est SUPPRIMÉ du stockage et l'envoi refusé (422). Appelé par le navigateur juste après l'envoi.
+async function verifierContenuR2(res, chemin, typeFichier) {
+  const { GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+  const client = creerClientR2();
+  const bucket = process.env.R2_BUCKET_NAME;
+  let octets = null;
+  try {
+    const objet = await client.send(new GetObjectCommand({ Bucket: bucket, Key: chemin, Range: 'bytes=0-31' }));
+    octets = Array.from(await objet.Body.transformToByteArray());
+  } catch (e) {
+    res.status(404).json({ error: 'Fichier introuvable dans le stockage.' }); return;
+  }
+  if (famillesPermises(typeFichier).includes(familleDuContenu(octets))) { res.status(200).json({ ok: true }); return; }
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: chemin })).catch(() => {});
+  res.status(422).json({ error: 'Ce fichier n’est pas une vraie ' + (typeFichier === 'application/pdf' ? 'document PDF' : /^video/i.test(typeFichier) ? 'vidéo' : 'photo') + ' : il a été refusé.', refuse: true });
+}
+
 // Une fois l'autorisation vérifiée : supprime le fichier (action « suppression ») ou renvoie
 // une adresse d'envoi signée valable 5 minutes. La taille annoncée est inscrite dans la
 // signature : le stockage refuse tout fichier d'une autre taille (personne ne peut remplir
@@ -42,6 +79,7 @@ async function repondreR2(res, action, chemin, typeFichier, taille, tailleMax) {
     res.status(200).json({ ok: true });
     return;
   }
+  if (action === 'verifier') { await verifierContenuR2(res, chemin, typeFichier); return; }
 
   // Par défaut : demande d'envoi (upload).
   if (!Number.isInteger(taille) || taille <= 0 || taille > tailleMax) {
@@ -99,8 +137,9 @@ async function traiterNoteIntegration(res, corps) {
     else res.status(404).json({ error: 'Document introuvable.' });
     return;
   }
+  if (action === 'verifier') { await verifierContenuR2(res, chemin, 'application/pdf'); return; }
   if (action || contentType !== 'application/pdf') { res.status(400).json({ error: 'Format non accepté (document PDF uniquement).' }); return; }
   await repondreR2(res, undefined, chemin, 'application/pdf', taille, 15 * 1024 * 1024);
 }
 
-module.exports = { debutR2, repondreR2, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
+module.exports = { debutR2, repondreR2, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
