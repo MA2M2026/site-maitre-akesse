@@ -38,6 +38,10 @@ export const config = {
     '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html',
     '/agenda', '/agenda.html', '/en/agenda', '/en/agenda.html', '/parcours', '/parcours.html', '/en/parcours', '/en/parcours.html',
     '/qui-sommes-nous', '/qui-sommes-nous.html', '/en/qui-sommes-nous', '/en/qui-sommes-nous.html',
+    // pages de texte modifiables depuis l'Administration (étape C, 01/11/2026)
+    '/services', '/services.html', '/en/services', '/en/services.html', '/integrer-agence', '/integrer-agence.html', '/en/integrer-agence', '/en/integrer-agence.html',
+    '/mentions-legales', '/mentions-legales.html', '/en/mentions-legales', '/en/mentions-legales.html',
+    '/politique-confidentialite', '/politique-confidentialite.html', '/en/politique-confidentialite', '/en/politique-confidentialite.html',
     // pages d'un lien personnel écrites par le serveur (étape B, 01/11/2026)
     '/recu', '/places',
     // page d'accueil servie déjà remplie (23/10/2026)
@@ -738,8 +742,34 @@ async function quiSommesNousRempli(url, anglais) {
     const debut = html.indexOf('<div class="qsn-evenements" id="qsn-evenements">'), fin = debut < 0 ? -1 : html.indexOf('\n    </div>', debut);
     if (cartes.length && fin > 0) html = html.slice(0, fin) + '\n      ' + cartes.join('\n      ') + html.slice(fin);
     // (comme js/qui-sommes-nous.js : le nom n'est changé que si le portrait a une photo)
-    return d.portrait && d.portrait.nom && d.portrait.photo_url ? texteElement(html, 'qsn-portrait-nom', d.portrait.nom) : html;
+    if (d.portrait && d.portrait.nom && d.portrait.photo_url) html = texteElement(html, 'qsn-portrait-nom', d.portrait.nom);
+    return poserTextes(html, await textesDePage('qui-sommes-nous').catch(() => null), anglais);
   });
+}
+
+// ================== Étape C (01/11/2026) : textes des pages modifiables depuis l'Administration ==================
+// Services, Qui sommes-nous, Intégrer l'agence, Mentions légales, Politique de confidentialité : chaque texte simple
+// porte un repère data-texte="page-N" (le même en français et en anglais, scripts/textes-pages.py). Le texte choisi
+// dans Administration › Textes des pages (table textes_pages, supabase-textes-pages.sql) remplace celui de la page,
+// échappé (du texte seul, jamais de code ; un retour à la ligne devient <br>). Sans texte enregistré (ou base lente,
+// 1 s au plus) : la page part telle qu'écrite. Gardé 3 minutes en mémoire (une modification se voit au plus 3 minutes après).
+const PAGES_TEXTES = /^\/(en\/)?(services|qui-sommes-nous|integrer-agence|mentions-legales|politique-confidentialite)$/;
+const textesDePage = (page) => enMemoire('textes:' + page, () => lireSupabase('textes_pages?page=eq.' + page + '&select=cle,fr,en', null, 1000));
+function poserTextes(html, lignes, anglais) {
+  const textes = new Map();
+  (Array.isArray(lignes) ? lignes : []).forEach((l) => {
+    const t = String((anglais ? l.en : l.fr) || '').trim();
+    if (t) textes.set(l.cle, t);
+  });
+  if (!textes.size) return html;
+  // (le texte d'un repère : du texte et des <br>, jusqu'à la balise suivante — fermante, ou point rouge du titre)
+  return html.replace(/(<\w+\b[^>]*? data-texte="([a-z-]+-\d+)"[^>]*>)[^<]*(?:<br\s*\/?>[^<]*)*(?=<)/g,
+    (tout, ouvrante, cle) => (textes.has(cle) ? ouvrante + echapper(textes.get(cle)).replace(/\r?\n/g, '<br>') : tout));
+}
+async function textesRemplis(url, anglais) {
+  const page = PAGES_TEXTES.exec(url.pathname)[2];
+  const lecture = textesDePage(page).then((l) => (Array.isArray(l) && l.length ? l : null));
+  return pageRemplie(url, (anglais ? '/en/' : '/') + page, 'textes-donnees', lecture, (html, l) => poserTextes(html, l, anglais));
 }
 
 // ================== Étape B (01/11/2026) : pages d'un lien personnel écrites par le serveur ==================
@@ -783,6 +813,7 @@ const PAGES_REMPLIES = [
   [/^\/(en\/)?agenda$/, agendaRempli],
   [/^\/(en\/)?parcours$/, parcoursRempli],
   [/^\/(en\/)?qui-sommes-nous$/, quiSommesNousRempli],
+  [PAGES_TEXTES, textesRemplis],
   [/^\/recu$/, recuRempli],
   [/^\/places$/, placesRempli]
 ];
