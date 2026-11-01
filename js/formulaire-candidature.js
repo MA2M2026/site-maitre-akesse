@@ -63,7 +63,10 @@ async function chargerProjetsActifs() {
   // faisant sauter la page (journal du 04/10). Le bloc garde une hauteur minimale.
   const finChargement = () => { const c = document.getElementById('ca-chargement'); if (c) c.remove(); };
   if (!sb) { finChargement(); document.getElementById('form-casting').classList.remove('u-hidden'); return; }
-  const { data: projets } = await sb.from('casting_projets').select('id, nom, description').eq('actif', true).order('ordre_affichage', { ascending: true }).order('nom');
+  // (liste posée par le serveur dans la page : middleware.js, page-donnees, 01/11/2026 ; sinon lue ici)
+  const serveur = typeof donneesServeur === 'function' ? donneesServeur('page-donnees') : null;
+  const { data: projets } = serveur && Array.isArray(serveur.projets) ? { data: serveur.projets }
+    : await sb.from('casting_projets').select('id, nom, description').eq('actif', true).order('ordre_affichage', { ascending: true }).order('nom');
   const liste = projets || [];
   DESCRIPTIONS_PROJETS = {};
   liste.forEach(p => { if (p.description) DESCRIPTIONS_PROJETS[p.nom] = p.description; });

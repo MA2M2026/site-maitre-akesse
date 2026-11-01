@@ -26,6 +26,12 @@
       '<div class="medaillon-info">' + echapper(profil.city || '') + (profil.height_cm ? ' · ' + echapper(profil.height_cm) + ' cm' : '') + '</div></div>' +
       '</div></a></div>';
   }
+  // bandeau « Mannequin du mois » en haut du Book (chantier 14) : seulement si sa fiche est publiée (slug)
+  function bandeauMdm(d, en) {
+    if (!d || !d.slug || !/^[a-z0-9-]{1,80}$/.test(d.slug)) return '';
+    return '<a class="mannequin-du-mois" href="' + (en ? '/en' : '') + '/book/' + d.slug + '"><span class="mdm-titre">🏆 ' + (en ? 'Model of the month' : 'Mannequin du mois') + '</span>' +
+      '<b>' + echapper(d.nom || '') + '</b><span class="mdm-lien">' + (en ? 'See her book →' : 'Voir sa fiche →') + '</span></a>';
+  }
   const compte = (n, en) => (en ? n + (n > 1 ? ' profiles' : ' profile') : n + (n > 1 ? ' profils correspondent' : ' profil correspond'));
   // Accueil (magazine) : vignette d'un visage (photo + nom), « À la une », nombre de mannequins
   function vignetteAccueil(m, o) {
@@ -54,5 +60,5 @@
     document.addEventListener('pointerdown', preparer, { passive: true });
     document.addEventListener('mouseover', preparer, { passive: true });
   }
-  racine.RenduBook = { echapper, lienFiche, ordonner, carte, compte, vignetteAccueil, categorieAccueil, infoUne, nombreAccueil, visagesAccueil };
+  racine.RenduBook = { echapper, lienFiche, bandeauMdm, ordonner, carte, compte, vignetteAccueil, categorieAccueil, infoUne, nombreAccueil, visagesAccueil };
 })(typeof window !== 'undefined' ? window : globalThis);

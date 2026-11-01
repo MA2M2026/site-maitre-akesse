@@ -36,6 +36,7 @@ async function middleware() {
       if (baseLente) await new Promise((r, x) => { const m = setTimeout(r, baseLente); if (o.signal) o.signal.addEventListener('abort', () => { clearTimeout(m); x(new Error('abandon')); }); });
       if (u.includes('model_profiles')) return json(profils.map(({ published: _p, featured: _f, genre: _g, ...x }) => x));  // (le nom d'adresse « slug » est public : /book/nom)
       if (u.includes('photos_couverture')) return json(couvertures);
+      if (u.includes('mannequin_du_mois_actuelle')) return json(rpcs.mannequin_du_mois_actuelle);
       return json([]);
     }
     const chemin = new URL(u).pathname.startsWith('/en') ? 'en/mannequins.html' : 'mannequins.html';
@@ -71,6 +72,7 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     const visible = pages[chemin].replace(/<script[\s\S]*?<\/script>/g, '');
     const noms = [...visible.matchAll(/<div class="medaillon-nom">([^<]*)<\/div>/g)].map((m) => m[1]);
     ok(noms.length === 3 && noms[0] === 'Awa Koné' && noms[1] === 'Grâce &lt;img src=x onerror=alert(1)&gt;' && noms.includes('Mariam Bamba') && /data-serveur="1"/.test(visible), chemin + ' : les cartes (noms, photos) sont écrites dans le HTML avant tout programme ' + noms.join(' | '));
+    ok(visible.includes('<a class="mannequin-du-mois" href="' + (chemin.startsWith('en/') ? '/en' : '') + '/book/mariam">') && /<b>Mariam Bamba<\/b>/.test(visible), chemin + ' : bandeau « Mannequin du mois » écrit par le serveur (100 % dynamique)');
     ok(/<span id="f-compte">3 (profils correspondent|profiles)<\/span>/.test(visible) && /src="https:\/\/x\/1\.jpg"/.test(visible), chemin + ' : le nombre de profils et les photos aussi');
     // (01/11/2026, demande de la propriétaire : la fiche ouverte depuis une carte arrivait vide ≈ 3,6 s) la carte va
     // DIRECTEMENT à la fiche écrite par le serveur (/book/nom) ; sans nom d'adresse, l'ancienne adresse
@@ -109,7 +111,7 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
   {
     globalThis.MA2M_SANS_MEMOIRE = false;
     let lectures = 0; const vraiFetch = globalThis.fetch;
-    globalThis.fetch = (u, o) => { if (String(u).includes('model_profiles')) lectures++; return vraiFetch(u, o); };
+    globalThis.fetch = (u, o) => { if (String(u).includes('model_profiles') && String(u).includes('chest_cm')) lectures++; return vraiFetch(u, o); };  // (la liste du Book ; le mur a sa propre mémoire)
     await demander('mannequins'); await demander('mannequins'); basePanne = true;
     const r3 = await (await demander('mannequins')).text();
     ok(lectures === 1 && /<div class="medaillon-nom">Mariam Bamba<\/div>/.test(r3), 'mémoire de 3 minutes : la base n’est lue qu’une fois pour 3 visites (' + lectures + ')');
@@ -124,12 +126,12 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     p.on('pageerror', (e) => errs.push(e.message)); p.on('dialog', (dl) => { errs.push('fenêtre : ' + dl.message()); dl.dismiss(); });
     await brancher(p, { tables, rpc: rpcs }, []);
     const nombre = { liste: 0, photos: 0 };
-    p.on('request', (r) => { const u = r.url(); if (/model_profiles\?.*published=eq\.true/.test(u) && /chest_cm/.test(u)) nombre.liste++; if (/photos_couverture/.test(u)) nombre.photos++; });
+    p.on('request', (r) => { const u = r.url(); if (/model_profiles\?.*published=eq\.true/.test(u) && /chest_cm/.test(u)) nombre.liste++; if (/photos_couverture/.test(u)) nombre.photos++; if (/mannequin_du_mois_actuelle|model_profiles\?select=id&/.test(u)) nombre.autres = (nombre.autres || 0) + 1; });
     await p.route(new RegExp('/' + chemin.replace(/\//g, '\\/') + '$'), (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: pages[chemin] }));
     await p.goto('http://127.0.0.1:' + PORT + '/' + chemin, { waitUntil: 'domcontentloaded' });
     await p.waitForFunction(() => document.querySelectorAll('#grille .medaillon-carte').length === 3, null, { timeout: 15000 });
     await p.waitForTimeout(800);
-    ok(!nombre.liste && !nombre.photos, n + 'le Book s’affiche sans redemander la liste ni les photos à la base (' + JSON.stringify(nombre) + ')');
+    ok(!nombre.liste && !nombre.photos && !nombre.autres, n + 'le Book s’affiche sans rien redemander à la base : liste, photos, mannequin du mois, mur (' + JSON.stringify(nombre) + ')');
     ok(/Mariam Bamba/.test(await p.textContent('#grille')) && !(await p.$('#grille img[src="x"]')), n + 'les 3 mannequins sont là, rien d’injecté');
     await p.evaluate(() => { const c = document.getElementById('f-recherche'); c.value = 'Mariam'; c.dispatchEvent(new Event('input', { bubbles: true })); });  // (replié sur téléphone) await p.waitForTimeout(600);
     ok(await p.$$eval('#grille .medaillon-carte', (l) => l.filter((c) => c.offsetParent !== null).length) === 1, n + 'la recherche marche toujours');

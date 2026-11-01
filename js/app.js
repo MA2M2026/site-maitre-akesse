@@ -3787,6 +3787,9 @@ function donneesServeur(id) {
   const CLE = 'ma2m_mur_titre';
   async function adresses() {
     try { const deja = JSON.parse(sessionStorage.getItem(CLE) || 'null'); if (Array.isArray(deja) && deja.length) return deja; } catch (e) { /* mémoire du navigateur indisponible */ }
+    // posés par le serveur dans la page (middleware.js, mur-donnees : 100 % dynamique, 01/11/2026)
+    const serveur = donneesServeur('mur-donnees');
+    if (Array.isArray(serveur) && serveur.length) return serveur;
     // The Book préparé par le serveur (middleware.js, 01/11/2026) : les visages sont déjà dans la page
     // (mêmes visages que la lecture ci-dessous : les 24 dernières mannequins publiées ; gardés pour la visite)
     const d = donneesServeur('book-donnees');

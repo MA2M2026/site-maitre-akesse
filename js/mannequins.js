@@ -13,17 +13,11 @@ async function chargerMannequins() {
 // Bandeau « Mannequin du mois » (chantier 14, 01/11/2026 ; supabase-mannequin-du-mois.sql) : seulement si
 // sa fiche est publiée au Book (la base ne renvoie rien sinon)
 async function mannequinDuMois(grille) {
-  if (typeof sb === 'undefined' || !sb || !grille) return;
-  const { data } = await sb.rpc('mannequin_du_mois_actuelle');
-  if (!data || !data.slug || !/^[a-z0-9-]{1,80}$/.test(data.slug)) return;
-  const bandeau = document.createElement('a');
-  bandeau.className = 'mannequin-du-mois';
-  bandeau.href = (EN ? '/en' : '') + '/book/' + data.slug;
-  const titre = document.createElement('span'); titre.className = 'mdm-titre'; titre.textContent = '🏆 ' + (EN ? 'Model of the month' : 'Mannequin du mois');
-  const nom = document.createElement('b'); nom.textContent = data.nom || '';
-  const lien = document.createElement('span'); lien.className = 'mdm-lien'; lien.textContent = EN ? 'See her book →' : 'Voir sa fiche →';
-  bandeau.append(titre, nom, lien);
-  grille.before(bandeau);
+  if (typeof sb === 'undefined' || !sb || !grille || document.querySelector('.mannequin-du-mois')) return;  // (déjà posé par le serveur)
+  const serveur = typeof donneesServeur === 'function' ? donneesServeur('book-donnees') : null;
+  const data = serveur && 'mdm' in serveur ? serveur.mdm : (await sb.rpc('mannequin_du_mois_actuelle')).data;
+  const html = window.RenduBook.bandeauMdm(data, EN);  // (même dessin que le serveur : js/rendu-book.js)
+  if (html) grille.insertAdjacentHTML('beforebegin', html);
 }
 // Champs de recherche (14/10/2026, demande de la propriétaire) : chacun s'utilise SEUL ; un
 // champ vide ne filtre rien. Un critère rempli écarte les fiches où cette mesure manque.

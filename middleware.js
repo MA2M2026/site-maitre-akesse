@@ -38,6 +38,8 @@ export const config = {
     '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html',
     '/agenda', '/agenda.html', '/en/agenda', '/en/agenda.html', '/parcours', '/parcours.html', '/en/parcours', '/en/parcours.html',
     '/qui-sommes-nous', '/qui-sommes-nous.html', '/en/qui-sommes-nous', '/en/qui-sommes-nous.html',
+    // 100 % dynamique, étape 1 (01/11/2026) : contact et candidature (mur de photos, liste des castings)
+    '/contact', '/contact.html', '/en/contact', '/en/contact.html', '/candidature', '/candidature.html', '/en/candidature', '/en/candidature.html',
     // pages de texte modifiables depuis l'Administration (étape C, 01/11/2026)
     '/services', '/services.html', '/en/services', '/en/services.html', '/integrer-agence', '/integrer-agence.html', '/en/integrer-agence', '/en/integrer-agence.html',
     '/mentions-legales', '/mentions-legales.html', '/en/mentions-legales', '/en/mentions-legales.html',
@@ -461,6 +463,7 @@ function enMemoire(cle, lire) {
 const estTelephone = (requete) => requete?.headers.get('sec-ch-ua-mobile') === '?1' || /Mobi|Android|iPhone|iPod/i.test(requete?.headers.get('user-agent') || '');
 async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: { 'x-ma2m-remplie': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const murPromesse = murDuSite().catch(() => null);  // (en même temps que la page ; gardé 3 minutes)
   const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
   // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
@@ -469,7 +472,13 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   // (« <body> », ou « <body class=… »)
   if (!/<body[\s>]/.test(html) || !html.includes('</head>')) return null;
   if (retoucher) html = await retoucher(html, donnees);
-  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
+  // 100 % dynamique (01/11/2026) : les visages du mur de photos derrière le titre (js/app.js, murDeTitre) posés
+  // dans chaque page qui en a un, au lieu d'être demandés à la base par le téléphone
+  // (pas sur l'accueil, Qui sommes-nous ni la fiche : ils ont leur grande photo, comme dans js/app.js)
+  const avecMur = /<h1[\s>]/.test(html) && html.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(html);
+  const mur = avecMur ? await murPromesse : null;
+  const blocMur = mur && mur.length ? '\n<script type="application/json" id="mur-donnees">' + jsonSur(mur) + '</script>' : '';
+  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocMur), page);
 }
 const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
 
@@ -567,8 +576,8 @@ async function bookRempli(url, anglais, requete) {
     const profils = await lireSupabase('model_profiles?published=eq.true&select=' + COLONNES_BOOK + '&order=created_at.desc&limit=300', null, reste());
     if (!Array.isArray(profils) || !profils.length) return null;
     const ids = profils.map((p) => p.id);
-    const photos = await lireCouvertures(ids, reste);
-    return Array.isArray(photos) ? { profils, photos } : null;
+    const [photos, mdm] = await Promise.all([lireCouvertures(ids, reste), lireSupabase('rpc/mannequin_du_mois_actuelle', {}, reste()).catch(() => null)]);
+    return Array.isArray(photos) ? { profils, photos, mdm: mdm && typeof mdm === 'object' && !Array.isArray(mdm) ? mdm : null } : null;
   });
   const telephone = estTelephone(requete);
   // les cartes elles-mêmes écrites dans la page (js/rendu-book.js, les mêmes que la page dessine)
@@ -581,7 +590,7 @@ async function bookRempli(url, anglais, requete) {
     const R = globalThis.RenduBook, liste = R.ordonner(d.profils.slice());
     const libelle = anglais ? 'Add to my selection' : 'Ajouter à ma sélection';
     const cartes = liste.map((p, rang) => R.carte(p, rang, { en: anglais, photo: photoDe[p.id] || '/assets/logo-dark-bg.png', selectionne: false, libelle })).join('');
-    return html.replace('<div id="grille" class="medaillon-grille" data-place-reservee></div>', () => '<div id="grille" class="medaillon-grille" data-serveur="1">' + cartes + '</div>')
+    return html.replace('<div id="grille" class="medaillon-grille" data-place-reservee></div>', () => R.bandeauMdm(d.mdm, anglais) + '<div id="grille" class="medaillon-grille" data-serveur="1">' + cartes + '</div>')
       .replace('<span id="f-compte"></span>', () => '<span id="f-compte">' + R.compte(liste.length, anglais) + '</span>');
   });
 }
@@ -756,6 +765,26 @@ async function quiSommesNousRempli(url, anglais) {
   });
 }
 
+// ================== 100 % dynamique, étape 1 (01/11/2026) ==================
+// Mur de photos : les 24 dernières mannequins publiées, petite version de leur photo de couverture (comme
+// js/app.js : urlGrille(l, true)) ; gardé 3 minutes. Le tirage des 8 visages reste fait par la page.
+const murDuSite = () => enMemoire('mur', async () => {
+  const profils = await lireSupabase('model_profiles?published=eq.true&select=id&order=created_at.desc&limit=24', null, ATTENTE_FICHE);
+  if (!Array.isArray(profils) || !profils.length) return null;
+  const lignes = await lireCouvertures(profils.map((p) => p.id), ATTENTE_FICHE);
+  return Array.isArray(lignes) ? lignes.filter((l) => l.url).map((l) => photoLegere(l.url_petite || l.url)) : null;
+});
+// Contact (rien d'autre à lire que le mur) et candidature (la liste des castings ouverts, lue par
+// js/formulaire-candidature.js) ; base lente ou en panne : la page part comme avant
+const PAGES_FORMULAIRES = /^\/(en\/)?(contact|candidature)$/;
+async function formulairesRemplis(url, anglais) {
+  const page = PAGES_FORMULAIRES.exec(url.pathname)[2];
+  const lecture = page === 'candidature'
+    ? enMemoire('castings', () => lireSupabase('casting_projets?actif=eq.true&select=id,nom,description&order=ordre_affichage.asc,nom.asc', null, ATTENTE_FICHE)).then((l) => (Array.isArray(l) ? { projets: l } : null))
+    : Promise.resolve({});
+  return pageRemplie(url, (anglais ? '/en/' : '/') + page, 'page-donnees', lecture);
+}
+
 // ================== Étape C (01/11/2026) : textes des pages modifiables depuis l'Administration ==================
 // Services, Qui sommes-nous, Intégrer l'agence, Mentions légales, Politique de confidentialité : chaque texte simple
 // porte un repère data-texte="page-N" (le même en français et en anglais, scripts/textes-pages.py). Le texte choisi
@@ -824,6 +853,7 @@ const PAGES_REMPLIES = [
   [/^\/(en\/)?parcours$/, parcoursRempli],
   [/^\/(en\/)?qui-sommes-nous$/, quiSommesNousRempli],
   [PAGES_TEXTES, textesRemplis],
+  [PAGES_FORMULAIRES, formulairesRemplis],
   [/^\/recu$/, recuRempli],
   [/^\/places$/, placesRempli]
 ];

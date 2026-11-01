@@ -20,7 +20,7 @@ async function middleware() {
   globalThis.fetch = async (u) => {
     u = String(u);
     if (u.includes('supabase.co')) {
-      lectures++;
+      if (/cachet_recu_lire|places_lire/.test(u)) lectures++;  // (lectures des données personnelles ; le mur de photos a sa mémoire)
       if (panne) throw new Error('base en panne');
       if (u.includes('cachet_recu_lire')) return json([recu]);
       if (u.includes('places_lire')) return json(places);
