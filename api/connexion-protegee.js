@@ -72,6 +72,21 @@ module.exports = async function handler(req, res) {
 
     await tentatives.succes();
 
+    // Verrou fort d'un appareil de confiance (Extension 149, 01/11/2026) : seul le mot de passe est vérifié
+    // ici. La base le note pour CET appareil (portail_mot_de_passe_verifie) ; la session de l'appareil est
+    // gardée, la nouvelle session ouverte pour la vérification est refermée aussitôt (jamais renvoyée).
+    if (espace === 'portail' && corps.verrouFort === true) {
+      const repNote = await fetch(SUPABASE_URL + '/rest/v1/rpc/portail_mot_de_passe_verifie', {
+        method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_user: resultatAuth.user.id, p_appareil: nettoyerAppareil(corps.appareil) || '' })
+      });
+      const note = repNote.ok ? await repNote.json().catch(() => false) : false;
+      await fetch(SUPABASE_URL + '/auth/v1/logout?scope=local', { method: 'POST', headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: 'Bearer ' + resultatAuth.access_token } }).catch(() => {});
+      if (note !== true) { res.status(409).json({ error: 'Cet appareil n’est plus de confiance : reconnectez-vous complètement.', complet: true }); return; }
+      res.status(200).json({ ok: true });
+      return;
+    }
+
     res.status(200).json({
       access_token: resultatAuth.access_token,
       refresh_token: resultatAuth.refresh_token

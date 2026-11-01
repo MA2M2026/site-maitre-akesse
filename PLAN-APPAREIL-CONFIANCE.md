@@ -1,6 +1,8 @@
 # Chantier 6 : appareil de confiance pour l'Administration (plan, 31/10/2026)
 
-Aucun secret dans ce fichier (dépôt public). Rien n'est encore codé : ce plan attend l'accord de la propriétaire.
+Aucun secret dans ce fichier (dépôt public). Codé le 01/11/2026 (branche `confiance`) après l'accord de la propriétaire ;
+précision de la propriétaire le 01/11/2026 : le mot de passe (avec le code à 4 chiffres) est redemandé après
+**24 heures** sans utilisation (et non 1 h 30) ; avant 24 heures, le code à 4 chiffres suffit.
 
 ## Pour la propriétaire (en simple)
 
@@ -8,7 +10,7 @@ Aucun secret dans ce fichier (dépôt public). Rien n'est encore codé : ce plan
 |---|---|---|
 | Nouveau téléphone ou navigateur | e-mail, mot de passe, code de l'application d'authentification, code à 4 chiffres | pareil ; ensuite l'appareil est « de confiance » 30 jours |
 | 15 minutes sans rien faire | code à 4 chiffres | pareil |
-| 1 h 30 sans rien faire | code à 4 chiffres (puis tout refaire au bout de 8 h) | e-mail, mot de passe et code à 4 chiffres, **sans** le code de l'application |
+| 24 heures sans utiliser l'Administration | code à 4 chiffres (puis tout refaire au bout de 8 h) | e-mail, mot de passe et code à 4 chiffres, **sans** le code de l'application |
 | « Se déconnecter » | tout est à refaire | sur un appareil de confiance : mot de passe et code à 4 chiffres seulement |
 | 30 jours passés, ou « Oublier cet appareil », ou appareil retiré dans « Sécurité » | — | tout est à refaire (avec le code de l'application) |
 
@@ -36,7 +38,7 @@ fermer**, et on la protège par des verrous contrôlés par la base.
      TOTP sur cet appareil), `mdp_verifie_le timestamptz` ;
    - `portail_appareil_ok()` et `portail_code_appareil_verifier()` : la limite « dernier code < 8 h »
      devient « < 8 h, OU appareil de confiance non expiré ET dernier code < 30 jours » ;
-   - verrou fort : si l'appareil est resté plus de 90 min sans signe de vie (`derniere_activite`) ou a été
+   - verrou fort : si l'appareil est resté plus de 24 heures sans signe de vie (`derniere_activite`) ou a été
      « déconnecté », la base exige un mot de passe vérifié APRÈS ce moment (`mdp_verifie_le`) en plus du
      code à 4 chiffres ;
    - « Oublier cet appareil » / appareil révoqué / `sessions_valides_apres` : confiance retirée.
@@ -48,6 +50,6 @@ fermer**, et on la protège par des verrous contrôlés par la base.
    mot de passe, code à 4 chiffres) ; « Se déconnecter » = verrou fort sur un appareil de confiance ;
    bouton « Oublier cet appareil » (déconnexion complète) ; dans « Sécurité », la date de fin de confiance
    de chaque appareil.
-4. **Essais** : simulés dans `scripts/tests-visiteur` (nouvel appareil, 15 min, 90 min, déconnexion, 30 jours,
+4. **Essais** : simulés dans `scripts/tests-visiteur` (nouvel appareil, 15 min, 24 heures, déconnexion, 30 jours,
    oubli, révocation, contournement de l'écran refusé par la base) ; base d'essai `scripts/base-essai`
    pour le SQL ; puis essai réel avec le compte de test (accord de la propriétaire).

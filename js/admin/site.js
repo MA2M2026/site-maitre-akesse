@@ -62,7 +62,7 @@
   let pret = null;
   async function preparer() {
     const session = (await sb.auth.getSession()).data.session;
-    if (session) await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token }, credentials: 'same-origin' }).catch(() => { /* hors ligne : les pièces déjà en mémoire suffisent */ });
+    if (session) await fetch('/api/acces-tableau', { method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token, 'x-appareil': identifiantAppareilPortail() }, credentials: 'same-origin' }).catch(() => { /* hors ligne : les pièces déjà en mémoire suffisent */ });
     // toutes les pièces TÉLÉCHARGÉES en même temps (« preload », 23/10/2026 : une par une, un
     // rafraîchissement prenait ~7 s avec une connexion d'Abidjan), puis exécutées une par une dans
     // l'ordre, comme avant : la première qui manque arrête tout (jamais une pièce sans celles dont
