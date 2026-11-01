@@ -104,17 +104,9 @@
     prechargerPhoto(urlLegere(url), ok => { if (img.dataset.voulue === url) img.src = ok; }, !!prioritaire);
   }
   const fiche = id => 'mannequin.html?id=' + encodeURIComponent(id);
-  const categorie = c => c === 'homme' ? T('Homme', 'Male') : c === 'femme' ? T('Femme', 'Female') : 'New Face';
-
-  function vignette(m) {
-    const a = document.createElement('a');
-    a.href = fiche(m.id);
-    a.innerHTML = '<div class="mag-cadre"><img alt="" loading="lazy"></div><span></span>';
-    // le nom est écrit juste dessous : image décorative pour les lecteurs d'écran (pas de nom lu deux fois)
-    a.querySelector('img').src = urlLegere(urlGrille({ url: m.photo, url_petite: m.petite }));  // (petite sur téléphone)
-    a.querySelector('span').textContent = m.full_name || T('Mannequin', 'Model');
-    return a;
-  }
+  // (dessin partagé avec le serveur : js/rendu-book.js)
+  const R = window.RenduBook;
+  const vignette = (m) => R.vignetteAccueil(m, { en: EN, photo: urlLegere(urlGrille({ url: m.photo, url_petite: m.petite })) });  // (petite sur téléphone)
 
   // --- Mannequins publiés : couverture, Femmes, Hommes, À la une, et les photos des autres pages ---
   // Mannequins publiées et leur photo de couverture : déjà dans la page quand le serveur l'a
@@ -157,9 +149,7 @@
       });
     }
     if (total) {
-      document.getElementById('couv-nombre').textContent = total > 1
-        ? T(total + ' mannequins à découvrir', total + ' models to discover')
-        : T('Nos mannequins à découvrir', 'Our models to discover');
+      document.getElementById('couv-nombre').textContent = R.nombreAccueil(total, EN);
     }
     if (!avecPhoto.length) { ['femmes', 'hommes', 'a-la-une'].forEach(id => { document.getElementById(id).hidden = true; }); return; }
 
@@ -169,7 +159,7 @@
     lienUne.href = fiche(une.id);
     photo(document.getElementById('une-img'), une.photo, une.full_name);
     document.getElementById('une-nom').textContent = une.full_name || T('Mannequin', 'Model');
-    document.getElementById('une-info').textContent = [categorie(une.category), une.city, une.height_cm ? une.height_cm + ' cm' : null].filter(Boolean).join(' · ');
+    document.getElementById('une-info').textContent = R.infoUne(une, EN);
 
     // Couverture : une autre mannequin à chaque visite (choisie par le serveur quand la photo
     // est déjà en place : on la garde)
@@ -187,14 +177,14 @@
     credit.hidden = !couv.full_name;
 
     // Les visages : 6 femmes, 3 hommes (les plus récents)
-    const remplir = (page, grille, liste, max) => {
+    const visages = R.visagesAccueil(avecPhoto);
+    const remplir = (page, grille, liste) => {
       const g = document.getElementById(grille);
-      g.textContent = '';
-      liste.slice(0, max).forEach(m => g.appendChild(vignette(m)));
+      g.innerHTML = liste.map(vignette).join('');
       document.getElementById(page).hidden = !g.children.length;
     };
-    remplir('femmes', 'grille-femmes', avecPhoto.filter(p => p.category === 'femme'), 6);
-    remplir('hommes', 'grille-hommes', avecPhoto.filter(p => p.category === 'homme'), 3);
+    remplir('femmes', 'grille-femmes', visages.femmes);
+    remplir('hommes', 'grille-hommes', visages.hommes);
 
     // Photos d'ambiance des autres pages : d'autres visages, sans répéter la couverture
     const reste = autres.slice(1).concat(autres.slice(0, 1));

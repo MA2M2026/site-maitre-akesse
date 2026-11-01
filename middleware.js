@@ -391,7 +391,20 @@ async function accueilRempli(requete, url) {
   const une = donnees.profils.find(p => p.featured) || donnees.profils[0];
   const autres = donnees.profils.filter(p => p.id !== une.id);
   const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
-  html = completerAccueil(html, donnees, /^\/en(\/|$)/.test(url.pathname));
+  const anglais = /^\/en(\/|$)/.test(url.pathname);
+  html = completerAccueil(html, donnees, anglais);
+  // étape A (01/11/2026) : les visages (6 femmes, 3 hommes), « À la une » et le nombre de mannequins écrits
+  // dans la page (js/rendu-book.js, le même dessin que js/accueil.js)
+  const R = globalThis.RenduBook, telephone = estTelephone(requete);
+  const photoDe = (m) => photoLegere(m.petite && telephone ? m.petite : m.photo);
+  const visages = R.visagesAccueil(donnees.profils);
+  const grille = (id, liste) => (h) => h.replace('<div class="grille" id="' + id + '"></div>', () => '<div class="grille" id="' + id + '">' + liste.map((m) => R.vignetteAccueil(m, { en: anglais, photo: photoDe(m) })).join('') + '</div>');
+  html = grille('grille-hommes', visages.hommes)(grille('grille-femmes', visages.femmes)(html));
+  html = texteElement(html, 'une-nom', une.full_name || (anglais ? 'Model' : 'Mannequin'));
+  html = texteElement(html, 'une-info', R.infoUne(une, anglais));
+  html = html.replace('<a href="mannequins.html" id="une-lien">', () => '<a href="mannequin.html?id=' + encodeURIComponent(une.id) + '" id="une-lien">')
+    .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy">');
+  if (donnees.nombre) html = texteElement(html, 'couv-nombre', R.nombreAccueil(donnees.nombre, anglais));
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');

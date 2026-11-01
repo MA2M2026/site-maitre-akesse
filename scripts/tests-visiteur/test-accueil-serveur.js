@@ -63,6 +63,13 @@ async function middleware() {
   ok(donnees && donnees.profils.length === 4 && donnees.nombre === 4, 'serveur : la liste des mannequins publiées est dans la page');
   ok(new RegExp('<img id="couv-img" class="visible" src="' + (ACTIVES ? 'https://photos\\.maitreakessemodelmanagement\\.com/' : '/book-photos/') + '[^"]+-w\\.webp" alt="[^"]+" data-modele="a[234]"').test(html), 'serveur : la photo de couverture est déjà en place (WebP, ' + (ACTIVES ? 'Cloudflare' : 'Vercel') + ' ; pas la mannequin « À la une »)');
   ok(!/<i>DEUX/.test(html) && /MARIAM \\u003ci\\u003eDEUX/.test(html), 'serveur : un nom avec des signes spéciaux ne peut rien injecter dans la page');
+  // étape A (01/11/2026) : visages, « À la une » et nombre écrits dans le HTML, avant tout programme
+  {
+    const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
+    const noms = [...visible.matchAll(/<div class="mag-cadre"><img alt="" loading="lazy" src="[^"]+"><\/div><span>([^<]*)<\/span><\/a>/g)].map((m) => m[1]);
+    ok(noms.length >= 2 && /<h2 class="mag-titre" id="une-nom">[^<]+<\/h2>/.test(visible) && !/id="une-nom">Mannequin à la une</.test(visible) && /id="couv-nombre">4 mannequins à découvrir</.test(visible) && !/<i>DEUX/.test(visible),
+      'serveur : visages, « À la une » et nombre de mannequins écrits dans le HTML avant tout programme (' + noms.join(' | ') + ')');
+  }
   const avant = appelsBase; await pageServeur('en/');
   ok(appelsBase === avant, 'serveur : 2e visite servie de mémoire (pas de nouvelle question à la base)');
   ok(await mw(new Request('https://www.maitreakessemodelmanagement.com/', { headers: { 'x-ma2m-accueil': '1' } })) === undefined, 'serveur : sa propre demande de la page passe sans boucle');
