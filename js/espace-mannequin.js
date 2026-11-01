@@ -756,7 +756,7 @@ function viewWizard(){
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'"><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>';
 }

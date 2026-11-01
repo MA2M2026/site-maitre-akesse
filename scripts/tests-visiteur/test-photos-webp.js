@@ -30,6 +30,13 @@ async function espace(b, sansWebp) {
   });
   await q.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
   await q.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await q.waitForTimeout(4000);
+  // (01/11/2026, plainte de la propriétaire : sur téléphone on ne trouvait pas « Récapitulatif ») les 6 onglets sont visibles,
+  // en blocs blancs lisibles sur le fond rouge
+  if (!sansWebp) {
+    const onglets = await q.$$eval('.step-tab', (l) => l.map((t) => { const r = t.getBoundingClientRect(); return [t.textContent, r.width > 60 && r.bottom > 0 && r.right <= innerWidth, getComputedStyle(t).backgroundColor, t.classList.contains('active')]; }));
+    ok(onglets.length === 6 && onglets.every((o) => o[1]) && /Récapitulatif/.test(onglets[5][0]) && onglets.filter((o) => !o[3]).every((o) => o[2] === 'rgb(255, 255, 255)'),
+      'téléphone : les 6 onglets du profil (dont « Récapitulatif ») sont visibles, en blocs blancs ' + onglets.map((o) => o[2]).join(' '));
+  }
   for (let n = 1; n <= 6 && !(await q.$('#fBook')); n++) { await q.click('.step-tab[data-goto="' + n + '"]').catch(() => {}); await q.waitForTimeout(400); }
   await q.setInputFiles('#fBook', [{ name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: PHOTO }]).catch(e => errs.push('envoi : ' + e.message));
   await q.waitForTimeout(5000);

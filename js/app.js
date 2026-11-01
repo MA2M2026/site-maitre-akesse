@@ -1919,10 +1919,48 @@ async function jetonSessionCourante() {
 async function verifierEnvoiR2(adresse, jeton, corps) {
   const rep = await fetch(adresse, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
   if (rep.ok) return;
+  // (01/11/2026, panne) seul un refus explicite (422 : le fichier n'est pas une vraie photo) bloque l'envoi ;
+  // une vérification qui n'a pas pu se faire laisse passer la photo (elle est déjà déposée)
+  if (rep.status !== 422) return;
   const r = await rep.json().catch(() => ({}));
   const e = new Error(r.error || 'Vérification du fichier impossible.');
   e.refuse = rep.status === 422;
   throw e;
+}
+// Barre de progression des envois de photos (01/11/2026, demande de la propriétaire) : en haut de l'écran,
+// pour tous les envois en cours (plusieurs photos à la fois : une seule barre, le total), sur toutes les pages
+// qui envoient des photos (application des mannequins, Administration, site).
+const envoisEnCours = new Map();
+let barreEnvoi = null, finBarreEnvoi = null;
+function majBarreEnvoi() {
+  if (!document.body) return;
+  if (!barreEnvoi) {
+    barreEnvoi = document.createElement('div');
+    barreEnvoi.className = 'barre-envoi';
+    barreEnvoi.setAttribute('role', 'progressbar');
+    barreEnvoi.setAttribute('aria-valuemin', '0'); barreEnvoi.setAttribute('aria-valuemax', '100');
+    Object.assign(barreEnvoi.style, { position: 'fixed', left: '0', right: '0', top: '0', zIndex: '100000', background: '#FFFFFF', color: '#7C2128',
+      font: '600 13px/1.2 "Work Sans", system-ui, sans-serif', padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 14px 8px', boxShadow: '0 2px 10px rgba(0,0,0,.18)' });
+    // (styles posés par le programme, pas dans le HTML : permis par la règle de sécurité CSP de toutes les pages)
+    const texte = document.createElement('div'), piste = document.createElement('div'), plein = document.createElement('div');
+    texte.className = 'barre-envoi-texte'; plein.className = 'barre-envoi-plein';
+    Object.assign(piste.style, { height: '6px', marginTop: '6px', borderRadius: '3px', background: 'rgba(124,33,40,.15)', overflow: 'hidden' });
+    Object.assign(plein.style, { height: '100%', width: '0', background: '#7C2128', transition: 'width .2s' });
+    piste.appendChild(plein); barreEnvoi.append(texte, piste);
+  }
+  const liste = [...envoisEnCours.values()];
+  if (!liste.length) {
+    clearTimeout(finBarreEnvoi);
+    finBarreEnvoi = setTimeout(() => { if (!envoisEnCours.size && barreEnvoi) barreEnvoi.remove(); }, 700);
+    return;
+  }
+  clearTimeout(finBarreEnvoi);
+  if (!barreEnvoi.isConnected) document.body.appendChild(barreEnvoi);
+  const total = liste.reduce((t, e) => t + e.total, 0), charge = liste.reduce((t, e) => t + Math.min(e.charge, e.total), 0);
+  const pct = total ? Math.round(charge / total * 100) : 0;
+  barreEnvoi.setAttribute('aria-valuenow', String(pct));
+  barreEnvoi.querySelector('.barre-envoi-plein').style.width = pct + '%';
+  barreEnvoi.querySelector('.barre-envoi-texte').textContent = (liste.length > 1 ? 'Envoi de ' + liste.length + ' photos' : 'Envoi de la photo') + ' : ' + pct + ' %';
 }
 // Envoi vers Cloudflare R2 par une adresse signée temporaire, délivrée par
 // api/r2-presigner.js (au propriétaire de la photo ou à un admin) : les clés R2 ne
@@ -1941,7 +1979,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType) {
       });
       const resultat = await reponse.json().catch(() => ({}));
       if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
-      const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
+      const envoi = await envoyerAvecProgression(resultat.uploadUrl, blob, null, contentType || 'image/jpeg');
       if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
       await verifierEnvoiR2('/api/r2-presigner', jeton, { modelId, chemin, contentType: contentType || 'image/jpeg' });
       return resultat.publicUrl;
@@ -2064,14 +2102,24 @@ async function supprimerFichiersPhoto(modelId, p) {
 // espace-mannequin.html/tableau-de-bord.html pour les photos du Book. ==================
 // progression (facultatif) : fonction appelée avec la part envoyée (0 à 1) — utile pour les
 // longues vidéos de l'accueil (plusieurs dizaines de Mo, 06/10/2026).
-function envoyerAvecProgression(url, fichier, progression) {
+// Envoi PUT avec suivi de la progression (XMLHttpRequest : fetch ne la donne pas) : barre en haut de l'écran
+// (majBarreEnvoi) et, si donné, rappel progression(0 à 1). Partagé par toutes les photos (01/11/2026).
+function envoyerAvecProgression(url, fichier, progression, type) {
+  const cle = {};
+  envoisEnCours.set(cle, { charge: 0, total: fichier.size || 1 });
+  majBarreEnvoi();
+  const fin = () => { envoisEnCours.delete(cle); majBarreEnvoi(); };
   return new Promise((ok, ko) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url);
-    xhr.setRequestHeader('Content-Type', fichier.type || 'image/jpeg');
-    xhr.upload.onprogress = (e) => { if (e.lengthComputable) progression(e.loaded / e.total); };
-    xhr.onload = () => ok({ ok: xhr.status >= 200 && xhr.status < 300 });
-    xhr.onerror = () => ko(new Error("Échec de l'envoi du fichier (connexion)."));
+    xhr.setRequestHeader('Content-Type', type || fichier.type || 'image/jpeg');
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      envoisEnCours.set(cle, { charge: e.loaded, total: e.total }); majBarreEnvoi();
+      if (progression) progression(e.loaded / e.total);
+    };
+    xhr.onload = () => { fin(); ok({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status }); };
+    xhr.onerror = () => { fin(); ko(new Error("Échec de l'envoi du fichier (connexion).")); };
     xhr.send(fichier);
   });
 }
@@ -2088,13 +2136,7 @@ async function envoyerImageSite(categorie, chemin, fichier, progression) {
       });
       const resultat = await reponsePresign.json().catch(() => ({}));
       if (!reponsePresign.ok) throw new Error(resultat.error || "Échec de la préparation de l'envoi.");
-      const reponseUpload = progression
-        ? await envoyerAvecProgression(resultat.uploadUrl, fichier, progression)
-        : await fetch(resultat.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': fichier.type || 'image/jpeg' },
-          body: fichier
-        });
+      const reponseUpload = await envoyerAvecProgression(resultat.uploadUrl, fichier, progression);
       if (!reponseUpload.ok) throw new Error("Échec de l'envoi du fichier.");
       await verifierEnvoiR2('/api/r2-site-images', session.access_token, { categorie, chemin, contentType: fichier.type || 'image/jpeg' });
       return resultat.publicUrl;

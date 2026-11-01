@@ -1,7 +1,7 @@
 // Envoi / suppression de fichiers sur le stockage R2, partagé par r2-presigner.js (photos du
 // Book) et r2-site-images.js (images du site). Fichier à part (et non dans _commun.js) pour
 // que les fonctions de connexion n'embarquent pas les modules du stockage.
-const { jetonDe, corpsDe, creerClientR2 } = require('./_commun.js');
+const { jetonDe, corpsDe, creerClientR2, noterAuJournal } = require('./_commun.js');
 
 // Types de fichiers acceptés (audit du 28 septembre 2026). Les photos sont servies
 // depuis le domaine du site lui-même (relais /book-photos) : un fichier HTML ou SVG
@@ -57,7 +57,11 @@ async function verifierContenuR2(res, chemin, typeFichier) {
     const objet = await client.send(new GetObjectCommand({ Bucket: bucket, Key: chemin, Range: 'bytes=0-31' }));
     octets = Array.from(await objet.Body.transformToByteArray());
   } catch (e) {
-    res.status(404).json({ error: 'Fichier introuvable dans le stockage.' }); return;
+    // (01/11/2026, panne : les mannequins ne pouvaient plus ajouter de photos) relecture impossible (droit de
+    // lecture du stockage, réseau…) : l'envoi n'est JAMAIS bloqué pour ça ; seul un fichier lu et faux est refusé
+    console.error('verifierContenuR2 :', e);
+    await noterAuJournal('[Vérification des fichiers] relecture impossible : ' + ((e && (e.name || e.message)) || e), 'r2', '/api/r2-presigner').catch(() => {});
+    res.status(200).json({ ok: true, verifie: false }); return;
   }
   if (famillesPermises(typeFichier).includes(familleDuContenu(octets))) { res.status(200).json({ ok: true }); return; }
   await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: chemin })).catch(() => {});

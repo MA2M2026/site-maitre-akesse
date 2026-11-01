@@ -42,7 +42,8 @@ ok(familleDuContenu(HTML) === null && familleDuContenu(SVG) === null && familleD
   ok((await appeler('m1/migr.bin', 'application/octet-stream')).statut === 200, 'type « octet-stream » (anciennes migrations) : accepté seulement si c’est une vraie image');
   fichiers['m1/migr2.bin'] = PDF;
   ok((await appeler('m1/migr2.bin', 'application/octet-stream')).statut === 422, '« octet-stream » qui n’est pas une image : refusé');
-  ok((await appeler('m1/absent.jpg', 'image/jpeg')).statut === 404, 'fichier absent : « introuvable »');
+  // (01/11/2026, panne : les mannequins ne pouvaient plus ajouter de photos) relecture impossible : l'envoi n'est PAS bloqué
+  { const r = await appeler('m1/absent.jpg', 'image/jpeg'); ok(r.statut === 200 && r.corps.verifie === false && !supprimes.includes('m1/absent.jpg'), 'relecture impossible (droit de lecture, réseau…) : la photo passe, rien n’est supprimé'); }
   // dans le navigateur : après un refus, l'envoi s'arrête (pas 3 essais), le message est clair ; vraie photo : envoyée
   const { chromium } = require('playwright'); const { spawn } = require('child_process');
   const PORT = String(9570 + Math.floor(Math.random() * 20));
@@ -62,12 +63,33 @@ ok(familleDuContenu(HTML) === null && familleDuContenu(SVG) === null && familleD
       if (corps.action === 'verifier') return new Response(JSON.stringify(v === 200 ? { ok: true } : { error: 'Ce fichier n’est pas une vraie photo : il a été refusé.', refuse: true }), { status: v });
       return new Response(JSON.stringify({ uploadUrl: 'https://r2.test/upload', publicUrl: 'https://r2.test/m1/p.jpg' }), { status: 200 });
     };
+    // envoi vers le stockage (XMLHttpRequest, pour la barre de progression) : à moitié, puis terminé
+    window.__barre = [];
+    window.XMLHttpRequest = class {
+      constructor() { this.upload = {}; }
+      open() {} setRequestHeader() {}
+      send() {
+        appels.push('PUT');
+        setTimeout(() => {
+          if (this.upload.onprogress) this.upload.onprogress({ lengthComputable: true, loaded: 50, total: 100 });
+          const t = document.querySelector('.barre-envoi-texte'); window.__barre.push(t ? t.textContent : '');
+          this.status = 200; this.onload();
+        }, 30);
+      }
+    };
     try { const u = await uploaderVersR2('m1', 'm1/p.jpg', new Blob(['x']), 'image/jpeg'); return { u, appels }; } catch (e) { return { erreur: e.message, appels }; }
   }, verdict);
   const refuse = await essai(422);
   ok(/pas une vraie photo/.test(refuse.erreur || '') && refuse.appels.join() === 'signer,PUT,verifier', 'navigateur : fichier refusé → message clair, un seul essai (' + refuse.appels.join() + ')');
   const accepte = await essai(200);
   ok(accepte.u === 'https://r2.test/m1/p.jpg' && accepte.appels.join() === 'signer,PUT,verifier', 'navigateur : vraie photo → envoyée puis vérifiée');
+  ok((await p.evaluate(() => window.__barre)).includes('Envoi de la photo : 50 %'), 'navigateur : pendant l’envoi, une barre de progression en haut de l’écran (« Envoi de la photo : 50 % »)');
+  await p.waitForTimeout(900);
+  ok(!(await p.$('.barre-envoi')), 'navigateur : la barre disparaît une fois l’envoi terminé');
+  for (const statut of [404, 500, 403]) {
+    const r = await essai(statut);
+    ok(r.u === 'https://r2.test/m1/p.jpg' && r.appels.join() === 'signer,PUT,verifier', 'navigateur : vérification impossible (' + statut + ') → la photo est quand même ajoutée, un seul envoi (' + r.appels.join() + ')');
+  }
   await b.close();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);

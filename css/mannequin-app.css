@@ -197,6 +197,12 @@ body.ap-page-profil .step-tab { min-width: 0; border: 0; border-radius: 14px; ba
 body.ap-page-profil .step-tab .n { font: 600 20px 'Cormorant Garamond', serif; color: var(--ap-rouge-texte); }
 body.ap-page-profil .step-tab.active { background: var(--ap-rouge); color: var(--blanc-pur); }
 body.ap-page-profil .step-tab.active .n { color: var(--blanc-pur); }
+/* (01/11/2026, plainte de la propriétaire : sur téléphone on ne trouvait pas « Récapitulatif », les onglets rouge
+   foncé se confondaient avec le fond rouge) : six blocs BLANCS bien lisibles, l'onglet ouvert en rouge contouré de blanc */
+body.ap-page-profil .step-tab { background: #FFFFFF; color: #1B1817; }
+body.ap-page-profil .step-tab .n { color: var(--rouge-mat); }
+body.ap-page-profil .step-tab.active { background: var(--rouge-mat); color: #FFFFFF; outline: 2px solid #FFFFFF; outline-offset: -2px; }
+body.ap-page-profil .step-tab.active .n { color: #FFFFFF; }
 body.ap-page-profil .panel, body.ap-page-profil .block, body.ap-page-profil .blocks-grid > * { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); }
 body.ap-page-profil .panel { padding: 20px 16px; }
 body.ap-page-profil .panel h2 { font-size: 28px; }
