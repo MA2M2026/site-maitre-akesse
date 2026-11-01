@@ -89,3 +89,22 @@ Plus tard (décision de la propriétaire) : facture / note de cachet conforme.
 
 Après relecture et corrections : 80 parcours, 3 901 vérifications, 0 échec ; base d'essai : tous les fichiers
 SQL passent. Mis en ligne avec l'accord de la propriétaire. Retour en arrière possible : `main` 59cc077.
+
+## Phase 2 : site écrit par le serveur + sécurité (mission du 01/11/2026)
+
+Vocabulaire : `UNVERIFIED`, `IN_PROGRESS`, `BLOCKED`, `PASS(preuve)`, `FAIL(raison)`. Preuves : `evidence/` (hors dépôt).
+Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiquette `pre-phase2-8250275`.
+
+| Chantier | État | Blocage / reste |
+|---|---|---|
+| W0 Tri de départ | IN_PROGRESS | envois programmés de 1 h et 3 h désactivés ; identifiant du déploiement Vercel : BLOCKED (accès Vercel à autoriser) |
+| W1 Inventaire des pages | UNVERIFIED | — |
+| W2 Pages complètes écrites par le serveur | UNVERIFIED | — |
+| W3 Cache exact | UNVERIFIED | — |
+| W4 Retirer le code d'administration des pages publiques | UNVERIFIED | — |
+| W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |
+| W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | UNVERIFIED | b3ef467 introuvable (à refaire) |
+| W7 Vitesse (LCP ≤ 2,5 s) | BLOCKED | site en ligne non joignable depuis l'espace de travail |
+| W8 Administration du contenu | UNVERIFIED | — |
+| W9 Essais automatiques | UNVERIFIED | — |
+| W10 Documentation | UNVERIFIED | — |
