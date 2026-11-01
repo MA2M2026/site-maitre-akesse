@@ -264,8 +264,9 @@ function photoLegere(url) {
 }
 // photos de couverture avec leur petite version (comme lirePhotosCouverture, js/photos.js) ;
 // l'ancienne fonction tant que supabase-photos-petites.sql n'est pas installé
-async function lireCouvertures(ids) {
-  return (await lireSupabase('rpc/photos_couverture_petites', { ids }, 3000)) || lireSupabase('rpc/photos_couverture_mannequins', { ids }, 3000);
+async function lireCouvertures(ids, delai) {
+  const d = () => (typeof delai === 'function' ? delai() : delai || 3000);
+  return (await lireSupabase('rpc/photos_couverture_petites', { ids }, d())) || lireSupabase('rpc/photos_couverture_mannequins', { ids }, d());
 }
 // les mannequins publiées avec leur photo de couverture (les mêmes questions que js/accueil.js)
 async function lireDonneesAccueil() {
@@ -372,8 +373,9 @@ async function accueilRempli(requete, url) {
   const autres = donnees.profils.filter(p => p.id !== une.id);
   const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
   html = completerAccueil(html, donnees, /^\/en(\/|$)/.test(url.pathname));
-  html = html.replace(marque, '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
-    .replace('<main', '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
+  // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
+  html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
+    .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   return reponseHtml(html, page);
 }
 // page complétée : mêmes en-têtes que la page d'origine, sauf taille et compression (le texte a été
@@ -395,13 +397,15 @@ const ATTENTE_FICHE = 1200;  // la base a 1,2 s au plus pour répondre
 async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: { 'x-ma2m-remplie': '1', 'accept': 'text/html' }, redirect: 'manual' });
   const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
-  if (!donnees || !page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
+  if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
+  // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
+  if (!donnees) return new Response(page.body, { status: page.status, headers: page.headers });
   let html = await page.text();
   if (html.indexOf('<body>') === -1 || html.indexOf('</head>') === -1) return null;
   if (retoucher) html = retoucher(html, donnees);
-  return reponseHtml(html.replace('<body>', '<body>\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
+  return reponseHtml(html.replace('<body>', () => '<body>\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
 }
-const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
+const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
 
 // ================== Fiche d'un mannequin préparée par le serveur (01/11/2026, site dynamique, étape 1) ==================
 // Décision de la propriétaire (31/10/2026, PLAN-SERVEUR.md, chemin A). Avant, la page /book/nom partait
@@ -444,9 +448,9 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
       (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
     const lien = SITE + (anglais ? '/en' : '') + '/book/' + slug;
     return photoAnnoncee(html
-      .replace(/<title>[^<]*<\/title>/, '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
-      .replace(/<meta name="description" content="[^"]*">/, '<meta name="description" content="' + echapper(description) + '">')
-      .replace('</head>', '<link rel="canonical" href="' + echapper(lien) + '">\n</head>'), couvertureFiche(d.photos));
+      .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
+      .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
+      .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>'), couvertureFiche(d.photos));
   });
 }
 
@@ -457,73 +461,62 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
 // colonnes que la page (seulement ce que le Book montre ou filtre déjà). Base lente (plus de 1,2 s au
 // total) ou en panne : la page part comme avant. Rien n'est gardé en mémoire (une mannequin publiée ou
 // retirée se voit tout de suite).
-const BOOK = /^\/(en\/)?mannequins(\.html)?$/;
 const COLONNES_BOOK = 'id,full_name,city,category,height_cm,chest_cm,waist_cm,hips_cm,shoe_size,eye_color,hair_color,languages,carnation,clothing_size,availability,niveau_mannequin,years_experience';
-async function bookRempli(requete, url) {
-  if (requete.method !== 'GET') return;
-  const anglais = /^\/en\//.test(url.pathname);
+async function bookRempli(url, anglais) {
   const fin = Date.now() + ATTENTE_FICHE;
   const reste = () => Math.max(fin - Date.now(), 1);
   const lecture = (async () => {
     const profils = await lireSupabase('model_profiles?published=eq.true&select=' + COLONNES_BOOK + '&order=created_at.desc&limit=300', null, reste());
     if (!Array.isArray(profils) || !profils.length) return null;
     const ids = profils.map((p) => p.id);
-    const photos = (await lireSupabase('rpc/photos_couverture_petites', { ids }, reste())) || (await lireSupabase('rpc/photos_couverture_mannequins', { ids }, reste()));
+    const photos = await lireCouvertures(ids, reste);
     return Array.isArray(photos) ? { profils, photos } : null;
   })();
-  return (await pageRemplie(url, (anglais ? '/en' : '') + '/mannequins', 'book-donnees', lecture)) || undefined;
+  return pageRemplie(url, (anglais ? '/en' : '') + '/mannequins', 'book-donnees', lecture);
 }
 
 // ================== Actualités et événements préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // Même principe que The Book : la liste et les photos (pour leur nombre) sont posées dans la page (bloc
 // « publications-donnees », lu par publicationsServeur, js/publications.js), mêmes questions que la page ;
 // la photo « À la une » est annoncée en tête. Base lente (plus de 1,2 s) ou en panne : comme avant.
-const PUBLICATIONS_PAGES = /^\/(en\/)?(actualites|evenements)(\.html)?$/;
+const PUBLICATIONS_PAGES = /^\/(en\/)?(actualites|evenements)$/;
 const LECTURES_PUBLICATIONS = {
   actualites: ['actualites?select=*&order=created_at.desc', 'actualite_photos?select=actualite_id'],
   evenements: ['evenements?select=*&order=date_evenement.desc.nullslast,created_at.desc', 'evenement_photos?select=evenement_id']
 };
-async function publicationsRemplies(requete, url) {
-  if (requete.method !== 'GET') return;
-  const m = url.pathname.match(PUBLICATIONS_PAGES);
-  const anglais = !!m[1], quoi = m[2];
+async function publicationsRemplies(url, anglais) {
+  const quoi = url.pathname.match(PUBLICATIONS_PAGES)[2];
   const [liste, photos] = LECTURES_PUBLICATIONS[quoi];
   const lecture = Promise.all([lireSupabase(liste, null, ATTENTE_FICHE), lireSupabase(photos, null, ATTENTE_FICHE)])
     .then(([l, p]) => (Array.isArray(l) && Array.isArray(p) ? { liste: l, photos: p } : null));
-  return (await pageRemplie(url, (anglais ? '/en/' : '/') + quoi + url.search, 'publications-donnees', lecture,
-    (html, d) => photoAnnoncee(html, d.liste[0] && d.liste[0].image_url ? photoLegere(d.liste[0].image_url) : ''))) || undefined;
+  return pageRemplie(url, (anglais ? '/en/' : '/') + quoi + url.search, 'publications-donnees', lecture,
+    (html, d) => photoAnnoncee(html, d.liste[0] && d.liste[0].image_url ? photoLegere(d.liste[0].image_url) : ''));
 }
 
 // ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // La liste des partenaires (même lecture que js/partenaires.js) posée dans la page (bloc « partenaires-donnees »).
-async function partenairesRemplis(requete, url) {
-  if (requete.method !== 'GET') return;
-  const anglais = /^\/en\//.test(url.pathname);
+async function partenairesRemplis(url, anglais) {
   const lecture = lireSupabase('partenaires?select=*&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null));
-  return (await pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture)) || undefined;
+  return pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture);
 }
 
 // ================== Agenda préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // Mêmes lectures que js/agenda.js (page Agenda, pas l'encart de l'accueil) : agenda_public, et les événements
 // des 12 derniers mois (bloc « agenda-donnees »). Plus de 1000 événements : la page les lit elle-même.
-async function agendaRempli(requete, url) {
-  if (requete.method !== 'GET') return;
-  const anglais = /^\/en\//.test(url.pathname);
+async function agendaRempli(url, anglais) {
   const depuis = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
   const lecture = Promise.all([
     lireSupabase('rpc/agenda_public', {}, ATTENTE_FICHE),
     lireSupabase('evenements?select=id,titre,date_evenement,lieu&date_evenement=gte.' + depuis + '&order=date_evenement.asc,id.asc&limit=1000', null, ATTENTE_FICHE)
   ]).then(([agenda, evenements]) => (Array.isArray(agenda) && Array.isArray(evenements) && evenements.length < 1000 ? { agenda, evenements } : null));
-  return (await pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture)) || undefined;
+  return pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture);
 }
 
 // ================== Parcours préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // Mêmes lectures que js/parcours.js : les projets des 24 derniers mois (parcours_public, du 1er du mois il y
 // a 23 mois à aujourd'hui), puis les visages des mannequins (photos de couverture). La page vérifie que la
 // période est la même que la sienne (sinon elle relit la base). Bloc « parcours-donnees ».
-async function parcoursRempli(requete, url) {
-  if (requete.method !== 'GET') return;
-  const anglais = /^\/en\//.test(url.pathname);
+async function parcoursRempli(url, anglais) {
   const jour = new Date(), debutMois = new Date(Date.UTC(jour.getUTCFullYear(), jour.getUTCMonth() - 23, 1));
   const debut = debutMois.toISOString().slice(0, 10), fin = jour.toISOString().slice(0, 10);
   const limite = Date.now() + ATTENTE_FICHE, reste = () => Math.max(limite - Date.now(), 1);
@@ -531,10 +524,10 @@ async function parcoursRempli(requete, url) {
     const projets = await lireSupabase('rpc/parcours_public', { p_debut: debut, p_fin: fin, p_model: null }, reste());
     if (!Array.isArray(projets)) return null;
     const ids = [...new Set(projets.flatMap((p) => (p.mannequins || []).map((m) => m.id).filter(Boolean)))];
-    const photos = ids.length ? ((await lireSupabase('rpc/photos_couverture_petites', { ids }, reste())) || (await lireSupabase('rpc/photos_couverture_mannequins', { ids }, reste()))) : [];
+    const photos = ids.length ? await lireCouvertures(ids, reste) : [];
     return Array.isArray(photos) ? { debut, fin, projets, photos } : null;
   })();
-  return (await pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture)) || undefined;
+  return pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture);
 }
 
 // ================== « Qui sommes-nous » préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
@@ -552,9 +545,7 @@ async function lireToutesSupabase(chemin, reste) {
   }
   return null;
 }
-async function quiSommesNousRempli(requete, url) {
-  if (requete.method !== 'GET') return;
-  const anglais = /^\/en\//.test(url.pathname);
+async function quiSommesNousRempli(url, anglais) {
   const limite = Date.now() + ATTENTE_FICHE, reste = () => Math.max(limite - Date.now(), 1);
   const lecture = Promise.all([
     lireSupabase('evenements?select=id,titre,lieu,image_url&order=date_evenement.desc', null, reste()),
@@ -564,11 +555,22 @@ async function quiSommesNousRempli(requete, url) {
   ]).then(([evenements, photos, mots, photosMannequins]) => {
     if (![evenements, photos, mots, photosMannequins].every(Array.isArray)) return null;
     const parMannequin = new Map();
-    photosMannequins.slice().sort(() => Math.random() - 0.5).forEach(({ model_profiles: _p, ...ph }) => { if (!parMannequin.has(ph.model_id)) parMannequin.set(ph.model_id, ph); });
-    return { evenements, photos, portrait: mots[0] || null, visages: [...parMannequin.values()] };
+    photosMannequins.forEach(({ model_profiles: _p, ...ph }) => { if (!parMannequin.has(ph.model_id)) parMannequin.set(ph.model_id, []); parMannequin.get(ph.model_id).push(ph); });
+    const auHasard = (l) => l[Math.floor(Math.random() * l.length)];  // chaque photo a la même chance
+    return { evenements, photos, portrait: mots[0] || null, visages: [...parMannequin.values()].map(auHasard) };
   });
-  return (await pageRemplie(url, (anglais ? '/en' : '') + '/qui-sommes-nous', 'qsn-donnees', lecture)) || undefined;
+  return pageRemplie(url, (anglais ? '/en' : '') + '/qui-sommes-nous', 'qsn-donnees', lecture);
 }
+
+// Aiguillage des pages préparées par le serveur (adresse propre → fonction(url, anglais))
+const PAGES_REMPLIES = [
+  [/^\/(en\/)?mannequins$/, bookRempli],
+  [PUBLICATIONS_PAGES, publicationsRemplies],
+  [/^\/(en\/)?partenaires$/, partenairesRemplis],
+  [/^\/(en\/)?agenda$/, agendaRempli],
+  [/^\/(en\/)?parcours$/, parcoursRempli],
+  [/^\/(en\/)?qui-sommes-nous$/, quiSommesNousRempli]
+];
 
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les
 // redirections de vercel.json, il renvoie donc lui-même vers www pour les adresses qu'il traite
@@ -592,9 +594,6 @@ export default async function middleware(requete) {
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
     if (requete.headers.get('x-ma2m-remplie')) return;  // (page demandée par pageRemplie elle-même)
-    if (BOOK.test(url.pathname) && !ROBOTS_APERCU.test(requete.headers.get('user-agent') || '')) {
-      try { return await bookRempli(requete, url); } catch (e) { return; }
-    }
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
     // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche
@@ -604,7 +603,8 @@ export default async function middleware(requete) {
     if (joli) {
       const ficheSansId = () => new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin', url).toString() } });
       let lignes = null;
-      try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id'); } catch (x) { lignes = null; }
+      // (un visiteur n'attend pas plus de 1,2 s : sinon la fiche retrouve elle-même le mannequin)
+      try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id', null, ROBOTS_APERCU.test(agent) ? 2500 : ATTENTE_FICHE); } catch (x) { lignes = null; }
       // Base lente ou en panne : la fiche retrouve elle-même le mannequin (js/adresse-fiche.js).
       if (lignes === null) return ROBOTS_APERCU.test(agent) ? undefined : ficheSansId();
       const id = lignes[0] && lignes[0].id;
@@ -618,20 +618,11 @@ export default async function middleware(requete) {
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
     }
-    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?qui-sommes-nous(\.html)?$/.test(url.pathname)) {
-      try { return await quiSommesNousRempli(requete, url); } catch (e) { return; }
-    }
-    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?parcours(\.html)?$/.test(url.pathname)) {
-      try { return await parcoursRempli(requete, url); } catch (e) { return; }
-    }
-    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?agenda(\.html)?$/.test(url.pathname)) {
-      try { return await agendaRempli(requete, url); } catch (e) { return; }
-    }
-    if (!ROBOTS_APERCU.test(agent) && /^\/(en\/)?partenaires(\.html)?$/.test(url.pathname)) {
-      try { return await partenairesRemplis(requete, url); } catch (e) { return; }
-    }
-    if (!ROBOTS_APERCU.test(agent) && PUBLICATIONS_PAGES.test(url.pathname)) {
-      try { return await publicationsRemplies(requete, url); } catch (e) { return; }
+    // pages des visiteurs préparées par le serveur (site dynamique) ; jamais les adresses en .html, qui
+    // suivent le renvoi vers l'adresse propre (vercel.json, cleanUrls) ; au moindre souci : comme avant
+    const remplir = requete.method === 'GET' && !ROBOTS_APERCU.test(agent) && PAGES_REMPLIES.find(([chemin]) => chemin.test(url.pathname));
+    if (remplir) {
+      try { return (await remplir[1](url, anglais)) || undefined; } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     if (/\/mannequin(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);

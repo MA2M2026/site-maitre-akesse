@@ -16,7 +16,7 @@ const ID = '4f6c1d2e-8a3b-4c5d-9e0f-1a2b3c4d5e6f';
 const { tables: t0, rpc } = require('./pages-publiques');
 const tables = JSON.parse(JSON.stringify(t0).replace(/"a1"/g, '"' + ID + '"'));
 const profil = tables.model_profiles.find((p) => p.id === ID);
-let basePanne = false, baseLente = 0, nomPiege = false, nonPublie = false;
+let basePanne = false, baseLente = 0, nomPiege = false, nonPublie = false, nomDollar = false;
 const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
 
 async function middleware() {
@@ -28,7 +28,7 @@ async function middleware() {
       if (basePanne) throw new Error('base en panne');
       if (baseLente) await new Promise((r, x) => { const m = setTimeout(r, baseLente); if (o.signal) o.signal.addEventListener('abort', () => { clearTimeout(m); x(new Error('abandon')); }); });
       if (u.includes('slug=eq.')) return json([{ id: ID }]);
-      if (u.includes('model_profiles')) return json(nonPublie ? [] : [{ ...profil, full_name: nomPiege ? 'Awa <script>alert(1)</script> "Koné"' : profil.full_name, date_naissance: undefined, slug: undefined, published: undefined, featured: undefined, genre: undefined }]);
+      if (u.includes('model_profiles')) return json(nonPublie ? [] : [{ ...profil, full_name: nomDollar ? "Awa $' $& $` Koné" : nomPiege ? 'Awa <script>alert(1)</script> "Koné"' : profil.full_name, date_naissance: undefined, slug: undefined, published: undefined, featured: undefined, genre: undefined }]);
       if (u.includes('model_photos')) return json(tables.model_photos.filter((p) => p.model_id === ID));
       if (u.includes('ages_mannequins')) return json([{ id: ID, age: 19 }]);
       return json([]);
@@ -66,13 +66,19 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
   const piege = await (await demander('book/awa-kone')).text();
   ok(!/<script>alert/.test(piege) && /\\u003cscript\\u003ealert/.test(piege) && /<title>Awa &lt;script&gt;/.test(piege), 'un nom avec des signes spéciaux ne peut rien injecter (bloc de données, titre)');
   nomPiege = false;
+  // relecture du 01/11/2026 : « $' », « $& » dans un texte de la base ne sont jamais lus comme motifs de remplacement
+  nomDollar = true;
+  const dollar = await (await demander('book/awa-kone')).text();
+  ok((dollar.match(/<body>/g) || []).length === 1 && donneesDe(dollar).profil.full_name === "Awa $' $& $` Koné" && dollar.includes("<title>Awa $&#39; $&amp; $` Koné"), 'un nom avec « $\' » ou « $& » : page intacte, titre et données justes');
+  nomDollar = false;
+  ok(await demander('mannequin.html?id=' + ID) === undefined, 'adresse en .html : pas préparée, le renvoi vers l’adresse propre reste');
   ok(await demander('mannequin', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
   ok(reecrite(await demander('book/awa-kone', { method: 'HEAD' })), 'seulement les visites (GET) : sinon comme avant');
   baseLente = 1500; let t = Date.now();
   const lente = await demander('book/awa-kone');
-  ok(reecrite(lente) && Date.now() - t < 4000, 'base lente : la fiche part comme avant, sans attendre (' + (Date.now() - t) + ' ms)');
+  ok((reecrite(lente) || (lente && !(await lente.text()).includes('fiche-donnees'))) && Date.now() - t < 3000, 'base lente : la fiche part comme avant (sans données), en moins de 3 s (' + (Date.now() - t) + ' ms)');
   baseLente = 0; nonPublie = true;
-  ok(reecrite(await demander('book/awa-kone')), 'profil non publié entre-temps : comme avant (la page le dit elle-même)');
+  { const r = await demander('book/awa-kone'); ok(reecrite(r) || (r && !(await r.text()).includes('fiche-donnees')), 'profil non publié entre-temps : comme avant (la page le dit elle-même)'); }
   nonPublie = false; basePanne = true;
   const panne = await demander('book/awa-kone');
   ok(!panne || reecrite(panne) || panne.status === 302, 'base en panne : comme avant, jamais de page cassée');

@@ -84,3 +84,7 @@ Pas de mise en ligne unique (trop risquée), mais 4 lots, chacun avec batterie c
 3. **Lot 3** : protections serveur (étapes 3 à 5 de `PLAN-SERVEUR.md`).
 4. **Lot 4** : appareil de confiance (chantier 6), SEUL, essai réel avec la propriétaire.
 Plus tard (décision de la propriétaire) : facture / note de cachet conforme.
+## Lot 1 (site dynamique) : batterie du 01/11/2026
+
+Après relecture et corrections : 80 parcours, 3 901 vérifications, 0 échec ; base d'essai : tous les fichiers
+SQL passent. Mis en ligne avec l'accord de la propriétaire. Retour en arrière possible : `main` 59cc077.
