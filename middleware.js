@@ -467,6 +467,24 @@ function couvertureFiche(photos) {
   const choisie = triees.find((p) => p.photo_couverture) || triees[0];
   return choisie ? photoLegere(choisie.url_moyenne || choisie.url) : '';
 }
+// Étape A (01/11/2026) : le contenu principal de la fiche écrit dans la page par le serveur (nom, catégorie,
+// ville, grande photo, mensurations toujours publiques, présentation) ; la page le remplace ensuite par la
+// fiche complète (projets, vidéo, compcard). Les mensurations « à reprendre » (poitrine, taille, bassin…) ne
+// sont jamais écrites ici : seulement ce que la fiche publique montre toujours.
+function contenuFiche(d, anglais, photo) {
+  const p = d.profil, T = (fr, en) => (anglais ? en : fr);
+  const categorie = p.category === 'homme' ? T('Homme', 'Man') : p.category === 'femme' ? T('Femme', 'Woman') : 'New Face';
+  const mesures = [
+    [T('Âge', 'Age'), d.age != null ? d.age + ' ' + T('ans', 'years') : null], [T('Taille', 'Height'), p.height_cm ? p.height_cm + ' cm' : null],
+    [T('Poids', 'Weight'), p.weight_kg ? p.weight_kg + ' kg' : null], [T('Pointure', 'Shoe Size'), p.shoe_size ? (anglais ? 'EU ' : '') + p.shoe_size : null],
+    [T('Yeux', 'Eyes'), p.eye_color], [T('Cheveux', 'Hair'), p.hair_color]].filter((m) => m[1]);
+  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar"><img data-couv-img src="' + echapper(photo) + '" alt="" fetchpriority="high">' +
+    '<div class="profil-hero-scrim"></div><div class="profil-hero-contenu"><div class="eyebrow eyebrow--clair">' + echapper(categorie) + '</div>' +
+    '<h1>' + echapper(p.full_name || T('Mannequin', 'Model')) + '</h1><p>' + echapper(p.city || '') + '</p></div></div>' +
+    (mesures.length ? '<div class="fiche-entete"><dl class="fiche-mesures" aria-label="' + T('Mensurations', 'Measurements') + '">' +
+      mesures.map(([l, v]) => '<div class="fiche-mesure"><dt>' + echapper(l) + '</dt><dd>' + echapper(v) + '</dd></div>').join('') + '</dl></div>' : '') +
+    (p.bio ? '<section class="fiche-carte"><h3 class="fiche-carte-titre">' + T('À propos', 'About') + '</h3><p class="mannequin-bio fiche-bio">' + echapper(p.bio) + '</p></section>' : '') + '</div>';
+}
 async function ficheRemplie(requete, url, id, slug, anglais) {
   if (requete.method !== 'GET') return null;
   const lecture = enMemoire('fiche-' + id, () => Promise.all([
@@ -486,7 +504,8 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     return photoAnnoncee(html
       .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
       .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
-      .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>'), couvertureFiche(d.photos));
+      .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>')
+      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(d, anglais, couvertureFiche(d.photos)) + '</div>'), couvertureFiche(d.photos));
   });
 }
 

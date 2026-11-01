@@ -64,7 +64,11 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(new RegExp('<meta name="description" content="Awa Koné · Abidjan · 178 cm · ' + (en ? 'Full book' : 'Book complet')).test(html), chemin + ' : la vraie description');
     ok(html.includes('<link rel="canonical" href="https://www.maitreakessemodelmanagement.com' + (en ? '/en' : '') + '/book/awa-kone">'), chemin + ' : adresse canonique /book/…');
     ok(/<link rel="preload" as="image" fetchpriority="high" href="https:\/\/x\/1\.jpg">\n<\/head>/.test(html), chemin + ' : la grande photo est annoncée dans l’en-tête');
-    ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache (une fiche modifiée se voit tout de suite)');
+    ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée par le navigateur (le serveur, lui, la garde 3 minutes au plus)');
+    // étape A (01/11/2026) : le contenu principal est écrit dans le HTML, avant tout programme
+    const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
+    ok(/<div id="contenu" class="u-mt-2"><div class="reveal visible">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm<\/dd>/.test(visible) && /<dd>19 (ans|years)<\/dd>/.test(visible) && !/fiche-en-chargement/.test(visible),
+      chemin + ' : nom, taille et âge écrits dans le HTML avant tout programme');
   }
   nomPiege = true;
   const piege = await (await demander('book/awa-kone')).text();
