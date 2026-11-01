@@ -103,9 +103,8 @@ async function afficherMannequins(vide) {
     profil.langues = (profil.languages || '').split(',').map(l => l.trim()).filter(Boolean);
   });
 
-  // Ordre alphabétique des prénoms (choix de la propriétaire, sept. 2026,
-  // quand les cœurs sur les photos ont été retirés du site).
-  profils.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'fr', { sensitivity: 'base' }));
+  // Ordre alphabétique des prénoms (choix de la propriétaire, sept. 2026, js/rendu-book.js)
+  window.RenduBook.ordonner(profils);
 
   tousLesProfils = profils;
   remplirChoix();
@@ -185,7 +184,9 @@ function correspond(p, c, marge) {
 function appliquerFiltres() {
   const grille = document.getElementById('grille');
   const vide = document.getElementById('vide');
-  grille.innerHTML = '';
+  // cartes déjà écrites par le serveur (middleware.js, 01/11/2026) : gardées telles quelles la première fois
+  const cartesServeur = grille.dataset.serveur === '1';
+  delete grille.dataset.serveur;
 
   const c = criteres();
   let resultats = tousLesProfils.filter(p => correspond(p, c, 0));
@@ -200,46 +201,42 @@ function appliquerFiltres() {
   }
   proches.classList.toggle('u-hidden', !aPeuPres.length);
   const n = resultats.length;
-  document.getElementById('f-compte').textContent = EN ? n + (n > 1 ? ' profiles' : ' profile') : n + (n > 1 ? ' profils correspondent' : ' profil correspond');
+  document.getElementById('f-compte').textContent = window.RenduBook.compte(n, EN);
   document.getElementById('f-effacer').hidden = listeComplete();
 
   if (resultats.length === 0) {
+    grille.innerHTML = '';
     vide.style.display = 'block';
     return;
   }
   vide.style.display = 'none';
 
-  resultats.forEach((profil, rang) => {
-    const carte = document.createElement('div');
-    carte.className = 'medaillon-carte reveal';
-    const dejaSelectionne = estDansSelection(profil.id);
-    carte.innerHTML = `
-      <button class="btn-selection${dejaSelectionne ? ' est-selectionne' : ''}" data-id="${profil.id}" title="${libelleSelection(dejaSelectionne)}" aria-label="${libelleSelection(dejaSelectionne)}">
-        ${dejaSelectionne ? '✓' : '+'}
-      </button>
-      <a href="mannequin.html?id=${profil.id}" class="u-flex-col-centre">
-        <div class="medaillon-photo">
-          <img src="${echapperHtml(profil.photoUrl)}" alt="${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}"${rang < 5 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"'}>
-          <div class="book-carte-legende">
-            <div class="medaillon-nom">${echapperHtml(profil.full_name || (EN ? 'Model' : 'Mannequin'))}</div>
-            <div class="medaillon-info">${echapperHtml(profil.city || '')}${profil.height_cm ? ' · ' + profil.height_cm + ' cm' : ''}</div>
-          </div>
-        </div>
-      </a>
-    `;
-    grille.appendChild(carte);
-
-    carte.querySelector('.btn-selection').addEventListener('click', (e) => {
-      e.preventDefault();
-      if (estDansSelection(profil.id)) {
-        retirerSelection(profil.id);
-      } else {
-        ajouterSelection({ id: profil.id, full_name: profil.full_name, height_cm: profil.height_cm, photoUrl: profil.photoUrl });
-      }
-      appliquerFiltres();
+  // liste complète déjà dessinée par le serveur (mêmes cartes, js/rendu-book.js) : seul l'état « dans ma
+  // sélection » (gardé sur ce téléphone) est mis à jour ; sinon, les cartes sont redessinées
+  if (cartesServeur && !aPeuPres.length && grille.querySelectorAll('.medaillon-carte').length === n) {
+    grille.querySelectorAll('.btn-selection').forEach((b) => {
+      const oui = estDansSelection(b.dataset.id);
+      b.classList.toggle('est-selectionne', oui); b.textContent = oui ? '✓' : '+';
+      b.title = libelleSelection(oui); b.setAttribute('aria-label', libelleSelection(oui));
     });
-  });
+    return;
+  }
+  grille.innerHTML = resultats.map((profil, rang) => {
+    const oui = estDansSelection(profil.id);
+    return window.RenduBook.carte(profil, rang, { en: EN, photo: profil.photoUrl, selectionne: oui, libelle: libelleSelection(oui) });
+  }).join('');
 }
+// bouton « + » de chaque carte (un seul écouteur pour toute la grille, cartes du serveur comprises)
+document.getElementById('grille').addEventListener('click', (e) => {
+  const bouton = e.target.closest('.btn-selection');
+  if (!bouton) return;
+  e.preventDefault();
+  const profil = tousLesProfils.find((p) => p.id === bouton.dataset.id);
+  if (!profil) return;
+  if (estDansSelection(profil.id)) retirerSelection(profil.id);
+  else ajouterSelection({ id: profil.id, full_name: profil.full_name, height_cm: profil.height_cm, photoUrl: profil.photoUrl });
+  appliquerFiltres();
+});
 
 // Bouton « + » d'une photo : ce qu'il fait, dit à voix haute et au survol (20/10/2026 : « à quoi
 // sert le + ? »)

@@ -3,3 +3,4 @@ node_modules/
 .agents/
 .claude/
 skills-lock.json
+/mw-*.mjs

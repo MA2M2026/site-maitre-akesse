@@ -6,6 +6,10 @@
 //    Cloudflare ; le navigateur ne redemande pas la liste à la base ;
 //  - Cloudflare muet : la photo arrive par la roue de secours Vercel (/book-photos/) ;
 //  - base en panne côté serveur : la page part comme avant (la page se remplit elle-même).
+// copies de middleware.js DANS le dépôt (01/11/2026 : il importe js/rendu-*.js par un chemin relatif)
+const dossierCopies = () => require('path').resolve(__dirname, '../..');
+// (mémoire de 3 minutes du serveur coupée : chaque essai lit la base simulée telle qu'il la règle)
+globalThis.MA2M_SANS_MEMOIRE = true;
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path'), fs = require('fs'), os = require('os'), { pathToFileURL } = require('url');
 const RACINE = path.resolve(__dirname, '../..');
@@ -27,7 +31,7 @@ const petite = (id) => CF + id + '/petites/179000000000' + id.slice(1) + '-abc-n
 // le middleware, avec une base simulée et la page lue sur le disque
 let basePanne = false, baseLente = 0, appelsBase = 0;
 async function middleware() {
-  const copie = path.join(os.tmpdir(), 'mw-essai-' + process.pid + '.mjs');
+  const copie = path.join(dossierCopies(), 'mw-essai-' + process.pid + '.mjs');
   fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
   globalThis.fetch = async (u, o = {}) => {
     u = String(u);
@@ -76,7 +80,7 @@ async function middleware() {
     const serveur = [];
     for (const u of exemples) {
       profils.forEach((x) => { x.photo = u; });
-      const copie = path.join(os.tmpdir(), 'mw-regle-' + process.pid + '-' + serveur.length + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
+      const copie = path.join(dossierCopies(), 'mw-regle-' + process.pid + '-' + serveur.length + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
       const m = (await import(pathToFileURL(copie).href)).default;
       const h = await (await m(new Request('https://www.maitreakessemodelmanagement.com/'))).text();
       serveur.push((h.match(/<img id="couv-img" class="visible" src="([^"]+)"/) || [])[1]);
@@ -149,7 +153,7 @@ async function middleware() {
   // base lente côté serveur : la page n'attend pas plus de 0,8 s, la liste sert aux visiteurs suivants
   {
     baseLente = 1500;
-    const copie = path.join(os.tmpdir(), 'mw-lente-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
+    const copie = path.join(dossierCopies(), 'mw-lente-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
     const m = (await import(pathToFileURL(copie).href)).default;
     const t0 = Date.now(), r1 = await m(new Request('https://www.maitreakessemodelmanagement.com/'));
     ok(r1 === undefined && Date.now() - t0 < 1200, 'base lente : la page part comme avant au bout de 0,8 s au plus (' + (Date.now() - t0) + ' ms)');
@@ -160,7 +164,7 @@ async function middleware() {
   }
   // base en panne côté serveur : page normale, remplie par le navigateur comme avant
   basePanne = true;
-  const mw2 = await (async () => { const copie = path.join(os.tmpdir(), 'mw-essai2-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie); return (await import(pathToFileURL(copie).href)).default; })();
+  const mw2 = await (async () => { const copie = path.join(dossierCopies(), 'mw-essai2-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie); return (await import(pathToFileURL(copie).href)).default; })();
   const t0 = Date.now(), r = await mw2(new Request('https://www.maitreakessemodelmanagement.com/'));
   ok(r === undefined && Date.now() - t0 < 1000, 'base en panne côté serveur : la page part comme avant, sans attendre');
   const t1 = Date.now(); await mw2(new Request('https://www.maitreakessemodelmanagement.com/'));

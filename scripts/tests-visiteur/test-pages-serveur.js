@@ -3,6 +3,10 @@
 // Pour chaque page : les données sont dans la page, rien d'injectable, base lente ou en panne → comme avant ;
 // dans le navigateur (téléphone et ordinateur, français et anglais) : la page s'affiche sans redemander ces
 // données à la base, et sans erreur.
+// copies de middleware.js DANS le dépôt (01/11/2026 : il importe js/rendu-*.js par un chemin relatif)
+const dossierCopies = () => require('path').resolve(__dirname, '../..');
+// (mémoire de 3 minutes du serveur coupée : chaque essai lit la base simulée telle qu'il la règle)
+globalThis.MA2M_SANS_MEMOIRE = true;
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path'), fs = require('fs'), os = require('os'), { pathToFileURL } = require('url');
 const RACINE = path.resolve(__dirname, '../..');
@@ -36,7 +40,7 @@ const PAGES = [
 ];
 
 async function middleware() {
-  const copie = path.join(os.tmpdir(), 'mw-pages-' + process.pid + '.mjs');
+  const copie = path.join(dossierCopies(), 'mw-pages-' + process.pid + '.mjs');
   fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
   globalThis.fetch = async (u, o = {}) => {
     u = String(u);

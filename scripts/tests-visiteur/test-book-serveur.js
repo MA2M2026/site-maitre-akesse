@@ -5,6 +5,10 @@
 //  - base lente ou en panne, robot d'aperçu, requête autre que GET : la page part comme avant ;
 //  - dans le navigateur (téléphone et ordinateur, français et anglais) : le Book s'affiche sans redemander
 //    la liste ni les photos à la base, et la recherche marche.
+// copies de middleware.js DANS le dépôt (01/11/2026 : il importe js/rendu-*.js par un chemin relatif)
+const dossierCopies = () => require('path').resolve(__dirname, '../..');
+// (mémoire de 3 minutes du serveur coupée : chaque essai lit la base simulée telle qu'il la règle)
+globalThis.MA2M_SANS_MEMOIRE = true;
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path'), fs = require('fs'), os = require('os'), { pathToFileURL } = require('url');
 const RACINE = path.resolve(__dirname, '../..');
@@ -23,7 +27,7 @@ let basePanne = false, baseLente = 0;
 const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
 
 async function middleware() {
-  const copie = path.join(os.tmpdir(), 'mw-book-' + process.pid + '.mjs');
+  const copie = path.join(dossierCopies(), 'mw-book-' + process.pid + '.mjs');
   fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
   globalThis.fetch = async (u, o = {}) => {
     u = String(u);
@@ -60,7 +64,18 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     ok(d && d.profils.length === 3 && d.photos.length === 3, chemin + ' : la liste des mannequins et leurs photos sont dans la page');
     ok(d && !/slug|published|phone|email|naissance/.test(JSON.stringify(d.profils)), chemin + ' : rien de plus que ce que le Book montre');
     ok(!/<img src=x onerror/.test(html) && /\\u003cimg src=x onerror/.test(html), chemin + ' : un nom avec des signes spéciaux ne peut rien injecter');
-    ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardé en cache (une mannequin publiée ou retirée se voit tout de suite)');
+    ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardé par le navigateur (le serveur, lui, garde la liste 3 minutes au plus)');
+  }
+  // étape A (01/11/2026) : les CARTES elles-mêmes sont dans le HTML (sans aucun programme), dans l'ordre alphabétique
+  for (const chemin of ['mannequins', 'en/mannequins']) {
+    const visible = pages[chemin].replace(/<script[\s\S]*?<\/script>/g, '');
+    const noms = [...visible.matchAll(/<div class="medaillon-nom">([^<]*)<\/div>/g)].map((m) => m[1]);
+    ok(noms.length === 3 && noms[0] === 'Awa Koné' && noms[1] === 'Grâce &lt;img src=x onerror=alert(1)&gt;' && noms.includes('Mariam Bamba') && /data-serveur="1"/.test(visible), chemin + ' : les cartes (noms, photos) sont écrites dans le HTML avant tout programme ' + noms.join(' | '));
+    ok(/<span id="f-compte">3 (profils correspondent|profiles)<\/span>/.test(visible) && /src="https:\/\/x\/1\.jpg"/.test(visible), chemin + ' : le nombre de profils et les photos aussi');
+  }
+  {
+    const tel = await (await demander('mannequins', { headers: { 'user-agent': 'Mozilla/5.0 (Linux; Android 14) Mobile' } })).text();
+    ok(/<img src="https:\/\/x\/[123]\.jpg"/.test(tel), 'téléphone : la page part avec ses cartes');
   }
   ok(await demander('mannequins', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
   ok(await demander('mannequins', { method: 'HEAD' }) === undefined, 'seulement les visites (GET)');
@@ -71,6 +86,17 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
   baseLente = 0; basePanne = true;
   ok(await sansDonnees(await demander('mannequins')), 'base en panne : la page part comme avant');
   basePanne = false;
+  // mémoire de 3 minutes : la base n'est lue qu'une fois pour plusieurs visites ; une base en panne juste après
+  // ne casse rien (la page garde la liste lue)
+  {
+    globalThis.MA2M_SANS_MEMOIRE = false;
+    let lectures = 0; const vraiFetch = globalThis.fetch;
+    globalThis.fetch = (u, o) => { if (String(u).includes('model_profiles')) lectures++; return vraiFetch(u, o); };
+    await demander('mannequins'); await demander('mannequins'); basePanne = true;
+    const r3 = await (await demander('mannequins')).text();
+    ok(lectures === 1 && /<div class="medaillon-nom">Mariam Bamba<\/div>/.test(r3), 'mémoire de 3 minutes : la base n’est lue qu’une fois pour 3 visites (' + lectures + ')');
+    globalThis.fetch = vraiFetch; basePanne = false; globalThis.MA2M_SANS_MEMOIRE = true;
+  }
 
   // 2. Dans le navigateur
   const b = await chromium.launch();

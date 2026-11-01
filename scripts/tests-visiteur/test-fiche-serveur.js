@@ -6,6 +6,10 @@
 //  - base lente (> 1,2 s) ou en panne, profil non publié : la fiche part comme avant (elle se remplit seule) ;
 //  - dans le navigateur (téléphone et ordinateur, français et anglais) : la fiche s'affiche sans redemander
 //    à la base le profil, les photos, l'âge ni l'identité, et la grande photo part tout de suite.
+// copies de middleware.js DANS le dépôt (01/11/2026 : il importe js/rendu-*.js par un chemin relatif)
+const dossierCopies = () => require('path').resolve(__dirname, '../..');
+// (mémoire de 3 minutes du serveur coupée : chaque essai lit la base simulée telle qu'il la règle)
+globalThis.MA2M_SANS_MEMOIRE = true;
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path'), fs = require('fs'), os = require('os'), { pathToFileURL } = require('url');
 const RACINE = path.resolve(__dirname, '../..');
@@ -20,7 +24,7 @@ let basePanne = false, baseLente = 0, nomPiege = false, nonPublie = false, nomDo
 const json = (x) => new Response(JSON.stringify(x), { headers: { 'content-type': 'application/json' } });
 
 async function middleware() {
-  const copie = path.join(os.tmpdir(), 'mw-fiche-' + process.pid + '-' + Math.random().toString(36).slice(2) + '.mjs');
+  const copie = path.join(dossierCopies(), 'mw-fiche-' + process.pid + '-' + Math.random().toString(36).slice(2) + '.mjs');
   fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
   globalThis.fetch = async (u, o = {}) => {
     u = String(u);

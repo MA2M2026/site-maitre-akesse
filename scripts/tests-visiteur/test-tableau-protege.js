@@ -4,13 +4,17 @@
 // authentification, api/acces-tableau.js) les laisse passer ; une fausse ou périmée, non.
 // L'ancienne adresse du tableau de bord renvoie vers /admin/. (Le parcours d'une vraie personne,
 // connexion puis chargement des pièces, est essayé dans test-nouvelle-admin.js.)
+// copies de middleware.js DANS le dépôt (01/11/2026 : il importe js/rendu-*.js par un chemin relatif)
+const dossierCopies = () => require('path').resolve(__dirname, '../..');
+// (mémoire de 3 minutes du serveur coupée : chaque essai lit la base simulée telle qu'il la règle)
+globalThis.MA2M_SANS_MEMOIRE = true;
 const fs = require('fs'); const path = require('path'); const os = require('os');
 const RACINE = path.resolve(__dirname, '../..');
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const ADMIN = '11111111-2222-3333-4444-555555555555';
 
 (async () => {
-  const tmp = path.join(os.tmpdir(), 'mw-' + process.pid + '.mjs');
+  const tmp = path.join(dossierCopies(), 'mw-' + process.pid + '.mjs');
   fs.writeFileSync(tmp, fs.readFileSync(path.join(RACINE, 'middleware.js')));
   const mw = (await import(tmp)).default;
   const req = (chemin, cookie) => new Request('https://admin.maitreakessemodelmanagement.com' + chemin, { headers: cookie ? { cookie } : {} });
