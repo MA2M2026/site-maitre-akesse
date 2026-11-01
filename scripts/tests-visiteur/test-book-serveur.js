@@ -74,6 +74,10 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     ok(/<span id="f-compte">3 (profils correspondent|profiles)<\/span>/.test(visible) && /src="https:\/\/x\/1\.jpg"/.test(visible), chemin + ' : le nombre de profils et les photos aussi');
   }
   {
+    const filtre = await (await demander('mannequins?categorie=homme')).text();
+    ok(donneesDe(filtre) && !/<div class="medaillon-nom">/.test(filtre.replace(/<script[\s\S]*?<\/script>/g, '')), 'Book filtré par l’adresse (?categorie=) : données dans la page, mais pas de cartes qui disparaîtraient aussitôt');
+  }
+  {
     const tel = await (await demander('mannequins', { headers: { 'user-agent': 'Mozilla/5.0 (Linux; Android 14) Mobile' } })).text();
     ok(/<img src="https:\/\/x\/[123]\.jpg"/.test(tel), 'téléphone : la page part avec ses cartes');
   }

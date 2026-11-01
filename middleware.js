@@ -315,18 +315,26 @@ async function motEnAnglais(mot) {
 // Copies anglaises de lignes (pages /en préparées par le serveur, 01/11/2026) : mêmes traductions que la page
 // (table traductions_en, même empreinte que versAnglais de js/app.js) ; un texte sans traduction reste en
 // français (comme dans la page). Ne modifie jamais les lignes reçues (elles sont gardées en mémoire).
+// Traductions gardées 3 minutes (comme les données) ; les lectures manquantes partent ensemble et ne durent
+// jamais plus de 0,8 s : au-delà, le texte reste en français (la page le traduit ensuite elle-même).
+const memoireTraductions = new Map();  // texte → { quand, en (ou null : pas de traduction) }
 async function versAnglaisServeur(lignes, champs) {
   const copies = lignes.map((l) => Object.assign({}, l));
   const textes = [...new Set(copies.flatMap((l) => champs.map((c) => l[c]).filter((v) => typeof v === 'string' && rognerBlancs(v))))];
-  if (!textes.length) return copies;
-  const cles = await Promise.all(textes.map(empreinteTexte));
-  const parCle = new Map();
-  for (let i = 0; i < cles.length; i += 80) {
-    const lu = await lireSupabase('traductions_en?select=cle,en&cle=in.(' + cles.slice(i, i + 80).join(',') + ')', null, 1500).catch(() => null);
-    (lu || []).forEach((x) => parCle.set(x.cle, x.en));
+  const frais = (t) => { const m = memoireTraductions.get(t); return m && Date.now() - m.quand < DUREE_MEMOIRE && !globalThis.MA2M_SANS_MEMOIRE; };
+  const manquants = textes.filter((t) => !frais(t));
+  if (manquants.length) {
+    const cles = await Promise.all(manquants.map(empreinteTexte));
+    const parCle = new Map(), paquets = [];
+    for (let i = 0; i < cles.length; i += 80) paquets.push(cles.slice(i, i + 80));
+    const lus = await Promise.all(paquets.map((p) => lireSupabase('traductions_en?select=cle,en&cle=in.(' + p.join(',') + ')', null, 800).catch(() => null)));
+    if (lus.every(Array.isArray)) {
+      lus.forEach((lu) => lu.forEach((x) => parCle.set(x.cle, x.en)));
+      manquants.forEach((t, i) => memoireTraductions.set(t, { quand: Date.now(), en: parCle.get(cles[i]) || null }));
+      if (memoireTraductions.size > 5000) memoireTraductions.clear();
+    }
   }
-  const parTexte = new Map(textes.map((t, i) => [t, parCle.get(cles[i])]));
-  copies.forEach((l) => champs.forEach((c) => { const v = parTexte.get(l[c]); if (v) l[c] = v; }));
+  copies.forEach((l) => champs.forEach((c) => { const m = memoireTraductions.get(l[c]); if (m && m.en) l[c] = m.en; }));
   return copies;
 }
 // Texte d'un élément de la page (repéré par son id) ; brut : déjà écrit pour du HTML
@@ -490,8 +498,9 @@ function contenuFiche(d, anglais, photo) {
   const mesures = [
     [T('Âge', 'Age'), d.age != null ? d.age + ' ' + T('ans', 'years') : null], [T('Taille', 'Height'), p.height_cm ? p.height_cm + ' cm' : null],
     [T('Poids', 'Weight'), p.weight_kg ? p.weight_kg + ' kg' : null], [T('Pointure', 'Shoe Size'), p.shoe_size ? (anglais ? 'EU ' : '') + p.shoe_size : null],
-    [T('Yeux', 'Eyes'), p.eye_color], [T('Cheveux', 'Hair'), p.hair_color]].filter((m) => m[1]);
-  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar"><img data-couv-img src="' + echapper(photo) + '" alt="" fetchpriority="high">' +
+    // (couleurs des yeux et des cheveux : écrites en français seulement ; la page anglaise les traduit elle-même)
+    [T('Yeux', 'Eyes'), anglais ? null : p.eye_color], [T('Cheveux', 'Hair'), anglais ? null : p.hair_color]].filter((m) => m[1]);
+  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar"><img data-couv-img src="' + echapper(photo || '/assets/logo-dark-bg.png') + '" alt="" fetchpriority="high">' +
     '<div class="profil-hero-scrim"></div><div class="profil-hero-contenu"><div class="eyebrow eyebrow--clair">' + echapper(categorie) + '</div>' +
     '<h1>' + echapper(p.full_name || T('Mannequin', 'Model')) + '</h1><p>' + echapper(p.city || '') + '</p></div></div>' +
     (mesures.length ? '<div class="fiche-entete"><dl class="fiche-mesures" aria-label="' + T('Mensurations', 'Measurements') + '">' +
@@ -509,7 +518,9 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     if (!profil || !Array.isArray(photos)) return null;
     return { id, slug, profil, photos, age: Array.isArray(ages) ? ages[0]?.age ?? null : null };
   }));
-  return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, (html, d) => {
+  return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, async (html, d) => {
+    // (page anglaise : présentation traduite, comme la page le fait)
+    const dPage = anglais && d.profil.bio ? Object.assign({}, d, { profil: (await versAnglaisServeur([d.profil], ['bio']))[0] }) : d;
     const nom = d.profil.full_name || (anglais ? 'Model' : 'Mannequin');
     const description = [d.profil.full_name, d.profil.city, d.profil.height_cm ? d.profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
       (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
@@ -518,7 +529,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
       .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
       .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
       .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>')
-      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(d, anglais, couvertureFiche(d.photos)) + '</div>'), couvertureFiche(d.photos));
+      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(dPage, anglais, couvertureFiche(d.photos)) + '</div>'), couvertureFiche(d.photos));
   });
 }
 
@@ -543,6 +554,9 @@ async function bookRempli(url, anglais, requete) {
   const telephone = estTelephone(requete);
   // les cartes elles-mêmes écrites dans la page (js/rendu-book.js, les mêmes que la page dessine)
   return pageRemplie(url, (anglais ? '/en' : '') + '/mannequins', 'book-donnees', lecture, (html, d) => {
+    // Book filtré par l'adresse (?categorie=, ?niveau= : liens Femmes, Hommes, New Faces) : la page dessine la
+    // liste filtrée elle-même (pas de cartes écrites ici qui disparaîtraient aussitôt)
+    if (url.searchParams.has('categorie') || url.searchParams.has('niveau')) return html;
     const photoDe = {};
     d.photos.forEach((ph) => { photoDe[ph.model_id] = photoLegere(ph.url_petite && telephone ? ph.url_petite : ph.url); });
     const R = globalThis.RenduBook, liste = R.ordonner(d.profils.slice());
@@ -647,7 +661,8 @@ async function parcoursRempli(url, anglais) {
     if (!projets.length) return html;
     const mois = (p) => String(p.date_debut || '').slice(0, 7), moisFin = (p) => String(p.date_fin || p.date_debut || '').slice(0, 7);
     const choisi = projets.map(moisFin).sort().pop();
-    const duMois = (anglais ? await versAnglaisServeur(projets, ['titre', 'lieu']) : projets).filter((p) => mois(p) <= choisi && moisFin(p) >= choisi);
+    const duMoisFr = projets.filter((p) => mois(p) <= choisi && moisFin(p) >= choisi);
+    const duMois = anglais ? await versAnglaisServeur(duMoisFr, ['titre', 'lieu']) : duMoisFr;
     const libelle = new Date(choisi + '-15T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
     const cartes = duMois.map((p) => '<article class="parcours-projet"><h3>' + echapper(p.titre) + '</h3>' +
       '<p class="parcours-projet-meta">' + echapper([p.lieu, p.ville].filter(Boolean).join(', ')) + '</p>' +
@@ -687,9 +702,13 @@ async function quiSommesNousRempli(url, anglais) {
       liste.push(ph);
       parMannequin.set(ph.model_id, liste);
     });
-    const auHasard = (l) => l[Math.floor(Math.random() * l.length)];  // chaque photo a la même chance
-    return { evenements, photos, portrait: mots[0] || null, visages: [...parMannequin.values()].map(auHasard) };
-  }));
+    return { evenements, photos, portrait: mots[0] || null, parMannequin: [...parMannequin.values()] };
+  })).then((d) => {
+    if (!d) return null;
+    // tirage à CHAQUE visite (hors mémoire) : chaque photo a la même chance
+    const auHasard = (l) => l[Math.floor(Math.random() * l.length)];
+    return { evenements: d.evenements, photos: d.photos, portrait: d.portrait, visages: d.parMannequin.map(auHasard) };
+  });
   return pageRemplie(url, (anglais ? '/en' : '') + '/qui-sommes-nous', 'qsn-donnees', lecture, async (html, d) => {
     // étape A (01/11/2026) : les cartes des événements déjà réalisés écrites dans la page (titre, lieu), après les
     // deux cartes du texte ; la page les reconnaît (même clé que cleTitre, js/qui-sommes-nous.js), y pose les
@@ -708,7 +727,8 @@ async function quiSommesNousRempli(url, anglais) {
     });
     const debut = html.indexOf('<div class="qsn-evenements" id="qsn-evenements">'), fin = debut < 0 ? -1 : html.indexOf('\n    </div>', debut);
     if (cartes.length && fin > 0) html = html.slice(0, fin) + '\n      ' + cartes.join('\n      ') + html.slice(fin);
-    return d.portrait && d.portrait.nom ? texteElement(html, 'qsn-portrait-nom', d.portrait.nom) : html;
+    // (comme js/qui-sommes-nous.js : le nom n'est changé que si le portrait a une photo)
+    return d.portrait && d.portrait.nom && d.portrait.photo_url ? texteElement(html, 'qsn-portrait-nom', d.portrait.nom) : html;
   });
 }
 

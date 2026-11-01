@@ -213,7 +213,8 @@ function appliquerFiltres() {
 
   // liste complète déjà dessinée par le serveur (mêmes cartes, js/rendu-book.js) : seul l'état « dans ma
   // sélection » (gardé sur ce téléphone) est mis à jour ; sinon, les cartes sont redessinées
-  if (cartesServeur && !aPeuPres.length && grille.querySelectorAll('.medaillon-carte').length === n) {
+  const idsServeur = [...grille.querySelectorAll('.medaillon-carte .btn-selection')].map((b) => b.dataset.id);
+  if (cartesServeur && !aPeuPres.length && idsServeur.length === n && idsServeur.every((id, i) => id === resultats[i].id)) {
     grille.querySelectorAll('.btn-selection').forEach((b) => {
       const oui = estDansSelection(b.dataset.id);
       b.classList.toggle('est-selectionne', oui); b.textContent = oui ? '✓' : '+';
