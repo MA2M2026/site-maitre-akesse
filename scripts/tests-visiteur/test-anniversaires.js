@@ -28,7 +28,7 @@ ok(/^Joyeux anniversaire, Yao Chloé ! 🎂/.test(mineure.application), 'mineure
     if (/rpc\/anniversaires_du_jour/.test(url)) return { ok: true, json: async () => liste.filter((m) => !deja.has(m.id)) };
     if (/rpc\/anniversaire_noter/.test(url)) { const c = JSON.parse(o.body); notes.push(c); const nouveau = !deja.has(c.p_mannequin); deja.add(c.p_mannequin); return { ok: true, json: async () => nouveau }; }
     if (/rpc\/mensualites_relances/.test(url)) return { ok: true, json: async () => [] };
-    if (/journal_erreurs/.test(url)) { journal.push(JSON.parse(o.body)); return { ok: true }; }
+    if (/journal_erreurs/.test(url)) { if (o.method !== 'POST') return { ok: true, json: async () => [] }; journal.push(JSON.parse(o.body)); return { ok: true }; }
     if (/api\.emailjs\.com/.test(url)) { envois.push(JSON.parse(o.body)); return { ok: true }; }
     return { ok: true, json: async () => ({}), text: async () => '' };
   };

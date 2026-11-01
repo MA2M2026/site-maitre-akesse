@@ -1914,6 +1914,16 @@ async function jetonSessionCourante() {
   const { data: { session } } = await sb.auth.getSession();
   return session ? session.access_token : null;
 }
+// Après chaque envoi vers R2 (lot 3, 01/11/2026) : le serveur lit le début du fichier déposé et le supprime si ce
+// n'est pas une vraie photo / vidéo / PDF (api/_r2.js, verifierContenuR2). Erreur « refuse » : définitive.
+async function verifierEnvoiR2(adresse, jeton, corps) {
+  const rep = await fetch(adresse, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
+  if (rep.ok) return;
+  const r = await rep.json().catch(() => ({}));
+  const e = new Error(r.error || 'Vérification du fichier impossible.');
+  e.refuse = rep.status === 422;
+  throw e;
+}
 // Envoi vers Cloudflare R2 par une adresse signée temporaire, délivrée par
 // api/r2-presigner.js (au propriétaire de la photo ou à un admin) : les clés R2 ne
 // sont jamais dans le navigateur. Sur une connexion mobile instable, ce trajet échoue
@@ -1933,9 +1943,11 @@ async function uploaderVersR2(modelId, chemin, blob, contentType) {
       if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
       const envoi = await fetch(resultat.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType || 'image/jpeg' }, body: blob });
       if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
+      await verifierEnvoiR2('/api/r2-presigner', jeton, { modelId, chemin, contentType: contentType || 'image/jpeg' });
       return resultat.publicUrl;
     } catch (e) {
       derniereErreur = e;
+      if (e && e.refuse) break;  // (pas une vraie photo : inutile de réessayer)
       if (essai < 3) await new Promise(r => setTimeout(r, 700 * essai));
     }
   }
@@ -2084,9 +2096,11 @@ async function envoyerImageSite(categorie, chemin, fichier, progression) {
           body: fichier
         });
       if (!reponseUpload.ok) throw new Error("Échec de l'envoi du fichier.");
+      await verifierEnvoiR2('/api/r2-site-images', session.access_token, { categorie, chemin, contentType: fichier.type || 'image/jpeg' });
       return resultat.publicUrl;
     } catch (e) {
       derniereErreur = e;
+      if (e && e.refuse) break;  // (pas un vrai fichier du type annoncé : inutile de réessayer)
       if (essai < 3) await new Promise(r => setTimeout(r, 700 * essai));
     }
   }
