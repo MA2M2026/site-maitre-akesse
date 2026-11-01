@@ -117,9 +117,29 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
       if (/https:\/\/x\/1\.jpg/.test(u)) photo = photo || Date.now() - t0;
     });
     await p.route(new RegExp('/' + chemin.replace(/\//g, '\\/') + '$'), (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: pages[chemin] }));
+    // (01/11/2026, plainte de la propriétaire) la grande photo du serveur ne disparaît jamais : on note, à chaque image
+    // affichée, l'opacité réelle de la photo, et si c'est toujours la même image (pas rechargée)
+    await p.addInitScript(() => {
+      window.__opaciteMin = 1;
+      const suivre = () => {
+        const img = document.querySelector('[data-couv-img]');
+        if (img) {
+          if (!window.__photoServeur) window.__photoServeur = img;
+          let o = 1;
+          for (let el = img; el && el.nodeType === 1; el = el.parentElement) o *= Number(getComputedStyle(el).opacity);
+          window.__opaciteMin = Math.min(window.__opaciteMin, o);
+        }
+        if (!window.__finSuivi) requestAnimationFrame(suivre);
+      };
+      requestAnimationFrame(suivre);
+    });
     await p.goto('http://127.0.0.1:' + PORT + '/' + chemin, { waitUntil: 'domcontentloaded' });
     await p.waitForFunction(() => /Awa Koné/.test(document.getElementById('contenu')?.textContent || ''), null, { timeout: 15000 });
     await p.waitForTimeout(800);
+    await p.waitForSelector('.fiche-contact-tuile, .fiche-types, #couverture-clic', { timeout: 8000 }).catch(() => {});
+    await p.waitForTimeout(1500);
+    const suivi = await p.evaluate(() => { window.__finSuivi = true; return { min: window.__opaciteMin, meme: document.querySelector('[data-couv-img]') === window.__photoServeur }; });
+    ok(suivi.min > 0.99 && suivi.meme, n + 'la grande photo posée par le serveur reste affichée du début à la fin, jamais effacée ni rechargée (opacité minimale ' + suivi.min.toFixed(2) + ')');
     ok(!nombre.profil && !nombre.photos && !nombre.age && !nombre.identite, n + 'la fiche s’affiche sans redemander profil, photos, âge ni identité à la base (' + JSON.stringify(nombre) + ')');
     ok(photo > 0, n + 'la grande photo est demandée (' + photo + ' ms)');
     ok((await p.title()) === 'Awa Koné · Maître Akesse Model Management' && (await p.$$('link[rel="canonical"]')).length === 1, n + 'titre juste et une seule adresse canonique');

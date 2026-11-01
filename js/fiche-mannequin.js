@@ -240,8 +240,13 @@ async function chargerProfilInterne() {
 
   // Mesures incohérentes (« à reprendre ») : mensurations cachées au public (js/tailles.js)
   const masquer = ma2mMesuresAReprendre(profil);
+  // (01/11/2026, plainte de la propriétaire : « l'image n'apparaît pas automatiquement ») la grande photo posée
+  // par le serveur ne doit JAMAIS disparaître : avant, la fiche redessinée repartait d'un bloc invisible
+  // (« reveal ») qui revenait en fondu ≈ 1 s après. Le bloc est visible d'emblée, et l'image déjà affichée
+  // (même adresse) est gardée telle quelle au lieu d'être rechargée.
+  const imageDejaLa = contenu.querySelector('[data-couv-img]');
   contenu.innerHTML = `
-    <div class="reveal">
+    <div class="reveal visible">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="" fetchpriority="high">
         <div class="profil-hero-scrim"></div>
@@ -323,6 +328,8 @@ async function chargerProfilInterne() {
   }
 
   {
+    const neuve = contenu.querySelector('[data-couv-img]');
+    if (imageDejaLa && neuve && imageDejaLa.getAttribute('src') === neuve.getAttribute('src')) neuve.replaceWith(imageDejaLa);
     const imgCouverture = contenu.querySelector('[data-couv-img]');
     if (imgCouverture) {
       const pos = photoCouverture ? photoCouverture.couverture_position : '';
