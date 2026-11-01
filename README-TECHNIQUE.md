@@ -4109,3 +4109,14 @@ par Google et les aperçus) ; la page le reprend ou le redessine ensuite.
   Preuves dans `test-book-serveur.js`, `test-publications-serveur.js`, `test-pages-serveur.js`,
   `test-fiche-serveur.js`, `test-accueil-serveur.js` (contenu présent dans le HTML sans programme).
 
+## Site dynamique, étape B : pages d'un lien personnel écrites par le serveur (01/11/2026)
+
+`/recu?r=jeton` (reçu d'un cachet) et `/places?c=jeton` (places limitées) arrivent écrites par `middleware.js`
+(`recuRempli`, `placesRempli`) : numéro, date, montant du reçu ; titre, phrase d'accueil et places restantes.
+Mêmes outils que les pages : `js/cachets-communs.js` (`CachetsMa2m`) et `js/lien-public.js` (`LienPublic`,
+avec désormais `placesRestantes`, `placesDetails`, `placesEtat`, partagés avec `js/places.js`), qui posent
+leur objet sur `window` ou `globalThis`. JAMAIS gardées en mémoire (données personnelles ; les places changent
+sans arrêt). Lien non valable ou base lente : la page part comme avant. `pageRemplie` accepte désormais
+`<body class=…>`. La page « Ma sélection » (`selection.html`) n'est pas concernée : la sélection est gardée
+dans le navigateur du visiteur, le serveur ne la connaît pas. Essai : `test-liens-serveur.js`.
+

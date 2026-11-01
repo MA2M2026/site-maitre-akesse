@@ -24,6 +24,8 @@
 // (scripts classiques qui posent globalThis.Rendu…), une seule façon de dessiner pour les deux.
 import './js/rendu-book.js';
 import './js/rendu-publications.js';
+import './js/cachets-communs.js';
+import './js/lien-public.js';
 
 export const config = {
   matcher: [
@@ -36,6 +38,8 @@ export const config = {
     '/mannequins', '/mannequins.html', '/en/mannequins', '/en/mannequins.html',
     '/agenda', '/agenda.html', '/en/agenda', '/en/agenda.html', '/parcours', '/parcours.html', '/en/parcours', '/en/parcours.html',
     '/qui-sommes-nous', '/qui-sommes-nous.html', '/en/qui-sommes-nous', '/en/qui-sommes-nous.html',
+    // pages d'un lien personnel écrites par le serveur (étape B, 01/11/2026)
+    '/recu', '/places',
     // page d'accueil servie déjà remplie (23/10/2026)
     '/', '/index.html', '/en', '/en/', '/en/index.html',
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
@@ -458,9 +462,10 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
   if (!donnees) return new Response(page.body, { status: page.status, headers: page.headers });
   let html = await page.text();
-  if (!html.includes('<body>') || !html.includes('</head>')) return null;
+  // (« <body> », ou « <body class=… »)
+  if (!/<body[\s>]/.test(html) || !html.includes('</head>')) return null;
   if (retoucher) html = await retoucher(html, donnees);
-  return reponseHtml(html.replace('<body>', () => '<body>\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
+  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
 }
 const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
 
@@ -732,6 +737,39 @@ async function quiSommesNousRempli(url, anglais) {
   });
 }
 
+// ================== Étape B (01/11/2026) : pages d'un lien personnel écrites par le serveur ==================
+// Reçu d'un cachet (/recu?r=jeton) et places limitées (/places?c=jeton) : lues avec la clé publique et le seul
+// jeton du lien (comme la page), JAMAIS gardées en mémoire (données personnelles, et les places changent sans
+// arrêt). Mêmes outils que la page (js/cachets-communs.js, js/lien-public.js). Lien non valable, base lente :
+// la page part comme avant et se remplit elle-même.
+const JETON_RECU = /^[0-9a-f-]{36}$/, JETON_PLACES = /^[0-9a-f]{36}$/;
+const montrer = (html, id) => html.replace(new RegExp('(<[a-z0-9]+ [^>]*id="' + id + '"[^>]*?) hidden>'), (m, debut) => debut + '>');
+async function recuRempli(url) {
+  const jeton = url.searchParams.get('r') || '';
+  if (!JETON_RECU.test(jeton)) return null;
+  const lecture = lireSupabase('rpc/cachet_recu_lire', { p_jeton: jeton }, ATTENTE_FICHE).then((l) => (Array.isArray(l) && l[0] ? { recu: l[0] } : null));
+  return pageRemplie(url, '/recu' + url.search, 'recu-donnees', lecture, (html, d) => {
+    const c = d.recu, K = globalThis.CachetsMa2m;
+    html = [['rc-numero', c.numero || '—'], ['rc-etat', 'Paiement effectué ✓'], ['rc-qui', c.beneficiaire], ['rc-quoi', c.prestation || K.libelle(c.motif)],
+      ['rc-date', K.jour(c.paye_le)], ['rc-montant', K.fcfa(c.montant)]].reduce((h, [id, t]) => texteElement(h, id, t || ''), html);
+    if (c.reference_wave) html = montrer(texteElement(html, 'rc-ref', c.reference_wave), 'rc-ref-ligne');
+    html = ['rc-lignes', 'rc-montant-bloc', 'rc-merci', 'rc-actions'].reduce(montrer, html);
+    return html.replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper('Reçu ' + (c.numero || '') + ' · Maître Akesse Model Management') + '</title>');
+  });
+}
+async function placesRempli(url) {
+  const jeton = url.searchParams.get('c') || '', parent = url.searchParams.get('p') === '1';
+  if (!JETON_PLACES.test(jeton)) return null;
+  const lecture = lireSupabase('rpc/places_lire', { p_jeton: jeton }, ATTENTE_FICHE).then((e) => (e && typeof e === 'object' && e.titre ? { places: e } : null));
+  return pageRemplie(url, '/places' + url.search, 'places-donnees', lecture, (html, d) => {
+    const L = globalThis.LienPublic, e = Object.assign({ pris: [] }, d.places), [classe, titre, texte] = L.placesEtat(e, parent);
+    // (titre suivi du point décoratif <span class="oeil">)
+    html = texteElement(html.replace(/(<h1 id="pl-titre">)[^<]*(<span)/, (m, a, b) => a + echapper(e.titre) + b), 'pl-details', L.placesDetails(e, parent));
+    return html.replace(/<div class="pl-etat" id="pl-etat" role="status" aria-live="polite" hidden><\/div>/, () =>
+      '<div class="pl-etat ' + echapper(classe) + '" id="pl-etat" role="status" aria-live="polite"><strong>' + echapper(titre) + '</strong>' + echapper(texte) + '</div>');
+  });
+}
+
 // Aiguillage des pages préparées par le serveur (adresse propre → fonction(url, anglais))
 const PAGES_REMPLIES = [
   [/^\/(en\/)?mannequins$/, bookRempli],
@@ -739,7 +777,9 @@ const PAGES_REMPLIES = [
   [/^\/(en\/)?partenaires$/, partenairesRemplis],
   [/^\/(en\/)?agenda$/, agendaRempli],
   [/^\/(en\/)?parcours$/, parcoursRempli],
-  [/^\/(en\/)?qui-sommes-nous$/, quiSommesNousRempli]
+  [/^\/(en\/)?qui-sommes-nous$/, quiSommesNousRempli],
+  [/^\/recu$/, recuRempli],
+  [/^\/places$/, placesRempli]
 ];
 
 // Adresse sans « www » (26/10/2026, inscription hstspreload.org) : le middleware passe AVANT les

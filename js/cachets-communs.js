@@ -2,7 +2,8 @@
 // l'Administration (« Payer les mannequins », js/portail/espace-compta-cachets.js), la page du reçu
 // (recu.html, js/recu.js) et l'Espace mannequin (« Mes cachets »).
 // Base : cachets_mannequins.motif, numero_recu, jeton (supabase-cachets-recus.sql).
-(function () {
+// (01/11/2026 : aussi importé par middleware.js, qui écrit le reçu dans la page : window, ou globalThis côté serveur)
+(function (racine) {
   'use strict';
   var MOTIFS = [['defile', 'Défilé'], ['shooting', 'Shooting photo'], ['campagne', 'Campagne publicitaire'], ['video', 'Tournage vidéo'],
     ['evenement', 'Événement / hôtesse'], ['casting', 'Casting rémunéré'], ['autre', 'Autre']];
@@ -11,7 +12,7 @@
   // (même format que « Mes paiements », qui s'en sert aussi)
   var fcfa = function (n) { return (Math.round(Number(n) || 0) || 0).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ') + ' FCFA'; };
   var jour = function (iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Abidjan' }) : ''; };
-  window.CachetsMa2m = {
+  racine.CachetsMa2m = {
     MOTIFS: MOTIFS,
     libelle: libelle,
     fcfa: fcfa,
@@ -25,7 +26,7 @@
       return 'Bonjour ' + (parent || c.beneficiaire) + ',\n\nMaître Akesse Model Management vous confirme le paiement ' + (parent ? 'du cachet de ' + c.beneficiaire + '. Merci pour son travail !' : 'de votre cachet. Merci pour votre travail !') + '\n\n' +
         '🧾 Reçu n° ' + (c.numero_recu || '—') + '\n📅 Payé le ' + jour(c.paye_le) + '\n🎬 ' + quoi + '\n💰 Montant reçu : ' + fcfa(c.montant) +
         (c.reference_wave ? '\n🔖 Référence Wave : ' + c.reference_wave : '') +
-        '\n\nVotre reçu (à garder ou enregistrer en PDF) :\n' + window.CachetsMa2m.lienRecu(c.jeton);
+        '\n\nVotre reçu (à garder ou enregistrer en PDF) :\n' + racine.CachetsMa2m.lienRecu(c.jeton);
     }
   };
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

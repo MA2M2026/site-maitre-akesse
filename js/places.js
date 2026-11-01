@@ -9,10 +9,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
   var jeton = params.get('c') || '', parent = params.get('p') === '1';
-  var L = window.LienPublic, rpc = L.rpc, dateFr = L.dateFr;
+  var L = window.LienPublic, rpc = L.rpc;
   var etat = null, dejaVues = null, enCours = false;  // dejaVues : places déjà montrées (les nouvelles apparaissent en grandissant)
-  var homme = function () { return etat && etat.sexe === 'homme'; };
-  var accord = function (f, h) { return homme() ? h : f; };
   function montrerEtat(classe, titre, texte) {
     var b = $('pl-etat');
     b.hidden = false; b.className = 'pl-etat ' + (classe || '');
@@ -20,26 +18,15 @@
     var s = document.createElement('strong'); s.textContent = titre; b.appendChild(s);
     if (texte) b.appendChild(document.createTextNode(texte));
   }
-  function restantes() {
-    var total = homme() ? etat.places_hommes : etat.places_femmes;
-    return Math.max(0, total - etat.pris.filter(function (x) { return x.sexe === etat.sexe; }).length);
-  }
+  // (textes partagés avec le serveur, qui écrit la page avant de l'envoyer : js/lien-public.js)
   function dessiner() {
-    var e = etat, pris = e.statut === 'pris', libres = restantes();
+    var e = etat, pris = e.statut === 'pris', libres = L.placesRestantes(e);
     $('pl-titre').textContent = e.titre;
-    var qui = parent ? 'Bonjour ! Message pour le parent de ' + e.nom : 'Bonjour ' + [e.civilite, e.nom].filter(Boolean).join(' ');
-    $('pl-details').textContent = qui + ' · ' + dateFr(e.date_debut) + (e.heure_evenement ? ', ' + e.heure_evenement.replace(':', 'h') : '')
-      + ([e.lieu, e.ville].filter(Boolean).length ? ', ' + [e.lieu, e.ville].filter(Boolean).join(', ') : '') + '.';
+    $('pl-details').textContent = L.placesDetails(e, parent);
     $('pl-prendre').hidden = pris || e.passe || !e.ouvert || !libres;
     $('pl-rendre').hidden = !pris || e.passe;
     $('pl-boutons').hidden = $('pl-prendre').hidden && $('pl-rendre').hidden;
-    if (e.passe) montrerEtat('oups', 'Ce projet est terminé.', '');
-    else if (pris && parent && e.pris_par === 'mannequin') montrerEtat('bravo', '🎉 ' + accord('Votre fille', 'Votre fils') + ' a déjà pris sa place !', accord('Elle est sélectionnée', 'Il est sélectionné') + '. Vous recevrez la convocation avec tous les détails.');
-    else if (pris && !parent && e.pris_par === 'parent') montrerEtat('bravo', '🎉 Bravo, vous êtes ' + accord('sélectionnée', 'sélectionné') + ' !', 'Votre parent a déjà pris votre place. Vous recevrez la convocation avec tous les détails.');
-    else if (pris) montrerEtat('bravo', '🎉 Bravo, ' + (parent ? accord('votre fille est sélectionnée', 'votre fils est sélectionné') : 'vous êtes ' + accord('sélectionnée', 'sélectionné')) + ' !', 'Vous recevrez la convocation avec tous les détails.');
-    else if (!e.ouvert) montrerEtat('oups', 'Les inscriptions sont fermées.', 'Rendez-vous au prochain projet !');
-    else if (!libres) montrerEtat('oups', 'Oups… plus de place disponible.', 'Rendez-vous au prochain projet !');
-    else montrerEtat('', (libres > 1 ? 'Il reste ' + libres + ' places' : 'Il reste 1 place') + ' pour les ' + accord('femmes', 'hommes') + '.', ' Premier arrivé, premier servi !' + (e.statut === 'desiste' ? ' (Vous vous étiez ' + accord('désistée', 'désisté') + ' : vous pouvez reprendre une place.)' : ''));
+    montrerEtat.apply(null, L.placesEtat(e, parent));
     dessinerGrilles();
   }
   function dessinerGrilles() {
