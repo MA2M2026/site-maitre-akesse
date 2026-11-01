@@ -223,24 +223,31 @@ async function envoisConvocations(req, res) {
 // le serveur vérifie le jeton (clé secrète TURNSTILE_SECRET_KEY, jamais dans le navigateur), puis enregistre par
 // formulaire_public_enregistrer (mêmes limites qu'avant : par minute, par adresse, casting ouvert).
 const TABLES_FORMULAIRES = ['casting_applications', 'messages_contact', 'recruiter_requests'];
-async function jetonAntiRobotValide(jeton, ip) {
+// Renvoie { ok, raison } (raison : codes d'erreur de Cloudflare, ou ce que le navigateur a signalé)
+async function jetonAntiRobotValide(jeton, ip, raisonNavigateur) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) { await noterAuJournal('[Anti-robots] clé secrète TURNSTILE_SECRET_KEY absente : formulaire accepté sans vérification', 'portail', '/api/portail').catch(() => {}); return true; }
-  if (typeof jeton !== 'string' || !jeton || jeton.length > 2048) return false;
-  const corps = new URLSearchParams({ secret, response: jeton });
+  if (!secret) return { ok: false, raison: 'clé secrète TURNSTILE_SECRET_KEY absente du serveur' };
+  if (typeof jeton !== 'string' || !jeton || jeton.length > 2048) return { ok: false, raison: 'pas de jeton (navigateur : ' + String(raisonNavigateur || 'inconnu').slice(0, 80) + ')' };
+  const corps = new URLSearchParams({ secret: secret.trim(), response: jeton });
   if (ip) corps.set('remoteip', ip);
   const rep = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: corps });
   const r = await rep.json().catch(() => ({}));
-  return r.success === true;
+  return r.success === true ? { ok: true } : { ok: false, raison: 'Cloudflare : ' + ((r['error-codes'] || []).join(', ') || 'réponse ' + rep.status) + (r.hostname ? ' (site ' + r.hostname + ')' : '') };
 }
+// (01/11/2026, 22 h : le premier vrai essai de la propriétaire a été refusé ; tant que la cause n'est pas connue,
+// une vérification qui n'aboutit pas n'empêche PAS l'envoi : la raison exacte est notée au journal ; les limites
+// d'envois par minute et par adresse de la base restent la protection. Repasser à true une fois la cause corrigée.)
+const ANTI_ROBOTS_STRICT = false;
 async function formulairePublic(req, corps, res) {
   const table = String(corps.table || ''), ligne = corps.ligne;
   if (!TABLES_FORMULAIRES.includes(table) || !ligne || typeof ligne !== 'object' || Array.isArray(ligne) || JSON.stringify(ligne).length > 30000) {
     return res.status(400).json({ error: 'Formulaire invalide.' });
   }
   const ip = extraireIp(req) || '';
-  if (!(await jetonAntiRobotValide(corps.jeton, ip))) {
-    return res.status(403).json({ error: 'La vérification anti-robot n’a pas abouti : rechargez la page puis réessayez.', robot: true });
+  const verif = await jetonAntiRobotValide(corps.jeton, ip, corps.raisonJeton);
+  if (!verif.ok) {
+    await noterAuJournal('[Anti-robots] vérification non aboutie : ' + verif.raison + ' — ' + table + (ANTI_ROBOTS_STRICT ? ' (refusé)' : ' (accepté quand même)'), 'portail', '/api/portail').catch(() => {});
+    if (ANTI_ROBOTS_STRICT) return res.status(403).json({ error: 'La vérification anti-robot n’a pas abouti : rechargez la page puis réessayez.', robot: true });
   }
   try {
     const id = await rpcService('formulaire_public_enregistrer', { p_table: table, p_ligne: ligne, p_ip: ip });

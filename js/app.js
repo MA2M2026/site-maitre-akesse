@@ -2959,8 +2959,11 @@ function chargerTurnstile() {
   });
   return chargementTurnstile;
 }
-// un jeton neuf (à usage unique) ; null si Cloudflare ne répond pas (le serveur dira alors ce qu'il faut faire)
+// un jeton neuf (à usage unique) ; null si Cloudflare ne répond pas (le serveur dira alors ce qu'il faut faire) ;
+// la raison d'un échec est gardée dans raisonJetonAntiRobot (envoyée au serveur, qui la note au journal)
+let raisonJetonAntiRobot = '';
 async function jetonAntiRobot() {
+  raisonJetonAntiRobot = '';
   try {
     const ts = await chargerTurnstile();
     return await new Promise((ok) => {
@@ -2970,15 +2973,15 @@ async function jetonAntiRobot() {
       document.body.appendChild(boite);
       let fini = false;
       const finir = (j) => { if (fini) return; fini = true; clearTimeout(minuteur); try { ts.remove(id); } catch (e) { /* déjà retiré */ } boite.remove(); ok(j); };
-      const minuteur = setTimeout(() => finir(null), 60000);
+      const minuteur = setTimeout(() => { raisonJetonAntiRobot = 'délai de 60 s dépassé'; finir(null); }, 60000);
       const id = ts.render(boite, { sitekey: CLE_SITE_TURNSTILE, appearance: 'interaction-only', language: document.documentElement.lang === 'en' ? 'en' : 'fr',
-        callback: (j) => finir(j), 'error-callback': () => finir(null), 'expired-callback': () => finir(null) });
+        callback: (j) => finir(j), 'error-callback': (code) => { raisonJetonAntiRobot = 'erreur Turnstile ' + code; finir(null); return true; }, 'expired-callback': () => { raisonJetonAntiRobot = 'jeton expiré'; finir(null); } });
     });
-  } catch (e) { return null; }
+  } catch (e) { raisonJetonAntiRobot = 'script Cloudflare non chargé (' + ((e && e.message) || e) + ')'; return null; }
 }
 async function envoyerFormulairePublic(table, ligne) {
   const jeton = await jetonAntiRobot();
-  const rep = await fetch('/api/portail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'formulaire', table, ligne, jeton }) })
+  const rep = await fetch('/api/portail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'formulaire', table, ligne, jeton, raisonJeton: raisonJetonAntiRobot }) })
     .catch(() => null);
   if (!rep) return { error: { message: 'Connexion interrompue.' } };
   const r = await rep.json().catch(() => ({}));

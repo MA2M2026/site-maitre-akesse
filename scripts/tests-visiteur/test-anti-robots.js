@@ -30,10 +30,14 @@ async function serveur() {
   let r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
   ok(r.statut === 200 && verifs.pop()?.secret === 'secret-essai' && rpcs.length === 1 && rpcs[0].p_table === 'messages_contact' && rpcs[0].p_ip === '41.2.3.4' && rpcs[0].p_ligne.nom === 'Awa',
     'serveur : jeton vérifié chez Cloudflare avec la clé secrète, puis enregistré (adresse du visiteur transmise)');
+  // (mode souple du 01/11/2026 au soir, ANTI_ROBOTS_STRICT = false : l'envoi passe, la raison exacte est notée au journal)
+  const journal = []; const fetchAvant = global.fetch;
+  global.fetch = async (url, o = {}) => { if (/journal_erreurs/.test(String(url))) { journal.push(JSON.parse(o.body)); return { ok: true, status: 201, json: async () => ({}), text: async () => '' }; } return fetchAvant(url, o); };
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'jeton-de-robot' });
-  ok(r.statut === 403 && r.rep.robot && rpcs.length === 1, 'serveur : jeton faux (robot) : refusé, rien n’est enregistré');
-  r = await appeler({ table: 'messages_contact', ligne });
-  ok(r.statut === 403 && rpcs.length === 1, 'serveur : sans jeton : refusé');
+  ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('[Anti-robots] vérification non aboutie : Cloudflare'), 'serveur : jeton refusé par Cloudflare : envoi accepté (mode souple), raison notée au journal');
+  r = await appeler({ table: 'messages_contact', ligne, raisonJeton: 'erreur Turnstile 110200' });
+  ok(r.statut === 200 && JSON.stringify(journal).includes('erreur Turnstile 110200'), 'serveur : pas de jeton : la raison donnée par le navigateur est notée au journal');
+  global.fetch = fetchAvant; rpcs.length = 1;
   r = await appeler({ table: 'model_profiles', ligne, jeton: 'bon-jeton' });
   ok(r.statut === 400 && rpcs.length === 1, 'serveur : une autre table que les 3 formulaires : refusée');
   limite = true; r = await appeler({ table: 'recruiter_requests', ligne: { id: 'r1', contact_name: 'x', email: 'x@x.ci' }, jeton: 'bon-jeton' }); limite = false;
