@@ -1135,3 +1135,13 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
   .doc-ligne { grid-template-columns: 1fr; }
   .doc-fin { align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 8px; }
 }
+
+/* Textes des pages (étape C, 01/11/2026) : choix de la page, puis chaque texte en français et en anglais */
+.tuiles-textes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.tuile-texte { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; }
+.textes-page { display: grid; gap: 12px; }
+.texte-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.texte-zone .sur-titre { grid-column: 1 / -1; margin: 0; }
+.texte-zone.est-titre textarea { font-weight: 700; }
+.textes-enregistrer { position: sticky; bottom: 12px; z-index: 2; }
+@media (max-width: 700px) { .texte-zone { grid-template-columns: 1fr; } .textes-enregistrer { bottom: 84px; } }

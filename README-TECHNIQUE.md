@@ -4133,3 +4133,37 @@ rôle choisi, code récent exigé ; `portail_demande_refuser`) : sans ligne `sta
 Double authentification obligatoire à la première connexion (inchangé). La connexion d'une personne en
 attente affiche « l'agence doit encore l'accepter ». Essais : `essais-demandes-acces.sql`, `test-demandes-acces.js`.
 
+
+## Site dynamique, étape C : textes des pages modifiables depuis l'Administration (01/11/2026)
+
+Pages : Services, Qui sommes-nous, Intégrer l'agence, Mentions légales, Politique de confidentialité (choix de
+la propriétaire). Chaque texte simple (titre, paragraphe, élément de liste, sans lien ni mise en forme) porte un
+repère `data-texte="page-N"`, le même sur la page française et la page anglaise : `python3 scripts/textes-pages.py
+--marquer` les pose, `--verifier` contrôle FR/EN (à relancer après toute modification de ces pages ; un texte
+ajouté au milieu décale les numéros suivants : vérifier alors la table). Les parties remplies par la page
+(cartes d'événements, formulaires, éléments avec id) n'en ont pas.
+- Base : `textes_pages` (`supabase-textes-pages.sql`, Extension 151), lecture publique, écriture par
+  `textes_pages_enregistrer` (équipe du site) ; texte vide = texte d'origine. Essais : `essais-textes-pages.sql`.
+- Serveur : `middleware.js` (`poserTextes`, `textesRemplis`, et dans `quiSommesNousRempli`) remplace le texte
+  d'un repère, échappé (un retour à la ligne devient `<br>`), mémoire 3 minutes ; table absente : page telle quelle.
+- Administration › Contenu du site › Textes des pages (`js/admin/site-textes.js`) : lit le texte d'origine dans
+  la page elle-même (en-tête `x-ma2m-remplie`), n'envoie que les textes changés.
+- Essais : `test-textes-pages.js` (serveur), `test-textes-admin.js` (écran, téléphone et ordinateur).
+
+## Fiche d'un mannequin sans temps mort (01/11/2026, plainte de la propriétaire)
+
+Mesuré sur le site en ligne : la fiche ouverte depuis une carte du Book montrait sa photo après ≈ 3,6 s. Deux causes :
+1. les cartes menaient à `mannequin.html?id=` (page non préparée, puis renvoi vers `/book/nom`) : elles mènent
+   maintenant à `/book/nom` (`RenduBook.lienFiche`, `js/rendu-book.js`) ; la fiche est demandée dès que le doigt
+   touche une carte (`<link rel="prefetch">`), et Chrome/Android la préparent entière (`regles-fiches.json`,
+   annoncé par l'en-tête `Speculation-Rules` de `vercel.json` sur l'accueil et le Book) ;
+2. la fiche redessinée par `js/fiche-mannequin.js` repartait d'un bloc `reveal` invisible (fondu ≈ 1 s) qui
+   effaçait la photo posée par le serveur : bloc visible d'emblée, et même image gardée. `test-fiche-serveur.js`
+   mesure l'opacité de la photo du début à la fin (elle tombait à 0).
+
+## Liste de présence : cases visibles, « Ne vient plus » (01/11/2026)
+
+Cases vides et à venir avec un contour rouge (avant : invisibles hors survol). Bouton « Ne vient plus »
+(administratrice principale) : `sortie_proposer` puis `sortie_decider` (même chemin que Paiements › Sorties et
+suspensions, `supabase-bloc2-complements.sql`) ; la mannequin passe « suspendu », hors présence et paiements ;
+réactivation dans Sorties et suspensions. Essai : `test-presences-admin.js`.
