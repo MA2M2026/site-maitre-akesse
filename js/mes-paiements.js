@@ -1,5 +1,5 @@
-// « Mes paiements » du mannequin (cahier v2.4, 5.6 et 5.7) : ses 24 mois de formation (vert payé,
-// orange en attente de validation, rouge non payé), le paiement du mois avec Wave, puis
+// « Mes paiements » du mannequin (cahier v2.4, 5.6 et 5.7) : ses 18 mois de cours (01/11/2026 : décembre,
+// janvier et février sont des congés sans mensualité, en gris ; vert payé, orange en attente de validation, rouge non payé), le paiement du mois avec Wave, puis
 // « J'ai payé » — sans capture ni référence. Seule l'agence valide un mois (espace 2).
 // Base : mes_mensualites() et mensualite_declarer() (supabase-administration.sql, section 9).
 // « Mes cachets reçus » (22/10/2026) : cachets payés par l'agence, avec leur reçu (mes_cachets,
@@ -17,7 +17,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fcfa = window.CachetsMa2m.fcfa;  // (js/cachets-communs.js, chargé avant)
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
-  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
+  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'], conge: ['Congés : pas de mensualité', 'conge'], termine: ['Formation terminée', 'neutre'] };
   let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
   const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
@@ -76,20 +76,27 @@
     const mois = donnees.mois || [];
     const ouverts = mois.filter((m) => m.etat === 'a_payer' || m.etat === 'non_paye');
     const courant = mois.find((m) => String(m.mois).slice(0, 7) === new Date().toISOString().slice(0, 7));
-    const payes = mois.filter((m) => m.etat === 'paye').length;
+    const { payes, total } = bilanFormation(donnees);  // (js/app.js)
     const bandeau = !courant ? '' : courant.etat === 'paye' ? '<div class="mp-bandeau vert">À jour pour ' + esc(nomMois(courant.mois)) + '. Merci !</div>'
       : courant.etat === 'attente' ? '<div class="mp-bandeau bleu">Paiement déclaré : l’agence le vérifie. Vous serez prévenu(e) dès qu’il est confirmé.</div>'
+      : courant.etat === 'conge' ? '<div class="mp-bandeau vert">Congés : pas de mensualité en ' + esc(MOIS[Number(String(courant.mois).slice(5, 7)) - 1]) + '.</div>'
       : courant.etat === 'non_paye' ? '<div class="mp-bandeau rouge">Votre paiement de ' + esc(MOIS[Number(String(courant.mois).slice(5, 7)) - 1]) + ' n’est pas encore fait.</div>'
       : '<div class="mp-bandeau bleu">À payer avant le 5 : ' + fcfa(donnees.mensualite) + '</div>';
     zone.innerHTML = '<div class="mp-tete"><h1>Mes paiements</h1><div class="mp-doux">' + esc(donnees.nom || '') + (donnees.mineur ? ' · mineur : les messages vont au parent' : '') + '</div></div>' +
       (message ? '<div class="mp-bandeau ' + message[1] + '" role="status">' + esc(message[0]) + '</div>' : '') + bandeau +
       ouverts.map(carteAPayer).join('') +
       (moisPayablesAvance(mois).length ? carteAvance(moisPayablesAvance(mois)) : '') +
-      '<h2>Ma formation · 24 mois</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur 24.</p>' +
-      '<div class="mp-calendrier" role="list">' + mois.map((m, i) => {
-        const e = ETATS[m.etat] || [m.etat, 'neutre'];
-        return '<div class="mp-mois ' + e[1] + '" role="listitem"><span class="mp-mois-num">' + (i + 1) + '</span><b>' + esc(nomMois(m.mois)) + '</b><span>' + esc(e[0]) + '</span></div>';
+      '<h2>Ma formation · ' + total + ' mois de cours</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur ' + total + '. Décembre, janvier et février sont des congés : pas de mensualité.</p>' +
+      '<div class="mp-calendrier" role="list">' + numeroter(mois).map(([m, n]) => {
+        const conge = m.conge || m.etat === 'conge';
+        const e = conge && m.etat === 'paye' ? ['Payé · compte pour le mois de cours suivant', 'ok'] : conge ? ETATS.conge : ETATS[m.etat] || [m.etat, 'neutre'];
+        return '<div class="mp-mois ' + e[1] + '" role="listitem">' + (n ? '<span class="mp-mois-num">' + n + '</span>' : '') + '<b>' + esc(nomMois(m.mois)) + '</b><span>' + esc(e[0]) + '</span></div>';
       }).join('') + '</div>' + historique() + mesCachets();
+  }
+  // numéro de chaque mois de cours (1 à 18) ; les congés n'ont pas de numéro
+  function numeroter(mois) {
+    let n = 0;
+    return mois.map((m) => [m, m.conge || m.etat === 'conge' ? 0 : ++n]);
   }
   function historique() {
     if (!recus.length) return '';

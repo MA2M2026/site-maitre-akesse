@@ -4026,6 +4026,26 @@ de la fin, une seule fois chacune. **Serveur** : `documentsDuJour` dans la tâch
 anniversaires ni les relances. **Administration** : rubrique « Documents des mannequins » (`b2-documents`,
 `js/admin/site-documents.js`) : triés par urgence (rouge expiré, orange moins de 30 jours, vert valable),
 ajouter / modifier / supprimer. Essai : `test-documents.js` (serveur + Administration).
+
+## Formation de 18 mois de cours, congés sans mensualité (01/11/2026, chantier 14, partie 2)
+
+Décisions de la propriétaire : 2 ans = 2 × 9 mois de cours ; décembre, janvier, février = congés chaque année
+(pas de cours, PAS de mensualité, ni appel ni relance) ; 18 mensualités en tout ; un mois de congé déjà payé
+compte pour le prochain mois de cours non payé. **Base** : `supabase-formation.sql` (Extension 148 ; essais
+`essais-formation.sql`) : `mois_conge`, `formation_mois` (les 18 mois de cours), `formation_debut` /
+`formation_fin`, `mensualite_credit` (report du congé payé), et nouvelles versions de `mensualite_etat` (nouveaux
+états `conge` et `termine`), `mes_mensualites` (du départ au 18e mois, champ `conge`, `total` = 18),
+`mensualite_declarer` (refuse un congé, au plus 3 mois de COURS d'avance), `mensualites_payer_avance` (les 3
+prochains mois de cours), `mensualites_appeler` (aucun appel en congé ni après la formation) ; nouvelle
+`mensualites_etats(debut, fin)` (Paiements, 12 mois au plus) = la seule règle pour les écrans de l'Administration
+(`P.etatsMensualites` dans `js/portail/espace-paiements.js` ; base pas encore à jour → calcul d'avant).
+Les relances (`mensualites_relances`) et le signe « à payer » de la liste de présence suivent `mensualite_etat`.
+**Écrans** : Mes paiements et l'application (`bilanFormation` et `moisPayablesAvance` dans `js/app.js`) :
+« x / 18 », congés en gris sans numéro ; Administration : appel du mois (rien en congé, « Formation terminée »
+non cochable), tableau du mois, paiements mois par mois (○ congés, ◇ formation terminée, ✓ reporté),
+récapitulatif (congés sautés dans les impayés d'affilée, 12 derniers mois), sorties (« Formation terminée
+(18 mois de cours) »). Essai : `test-formation.js`. ⚠ Touche les paiements : à essayer pour de vrai avec le
+compte de test. Coller `supabase-formation.sql` AVANT la mise en ligne du code.
 ### Relecture du site dynamique (01/11/2026)
 - Tout texte venu de la base est posé dans la page par un remplacement **par fonction**
   (`html.replace(x, () => …)`) : un « $' » ou « $& » dans un nom ou un article n'est jamais lu comme motif

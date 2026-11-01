@@ -45,3 +45,5 @@
 
 /* Mes cachets reçus (22/10/2026) : montant et lien du reçu, à droite */
 .mp-cachet { text-align: right; flex: none; }
+/* congés (décembre, janvier, février : pas de mensualité, 01/11/2026) */
+.mp-mois.conge { background: #FFFFFF; color: #595959; border: 1px dashed #B9B9B9; }

@@ -265,3 +265,6 @@ body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; bo
 .pr-app-notes li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid #EEE; }
 .pr-app-etoiles { color: #7C2128; letter-spacing: 2px; white-space: nowrap; }
 .pr-app-appreciation { margin: 10px 0 0; font-style: italic; }
+/* formation : 18 mois de cours, congés sans mensualité (01/11/2026) */
+.ap-formation-note { margin: 6px 0 0; font-size: 12px; }
+body.ap-page-paiements .mp-mois.conge { background: #FFFFFF; color: #595959; box-shadow: none; border: 1px dashed #B9B9B9; }

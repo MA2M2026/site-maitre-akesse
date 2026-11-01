@@ -373,31 +373,51 @@
   // Le 1er : appel aux mannequins actifs cochés (on décoche ceux qui ne paient plus). Le 3 et le 5 :
   // relances e-mail automatiques (serveur) et ici la liste WhatsApp prête. Messages communs :
   // js/messages-mensualites.js. Couleurs : vert payé, orange en attente, rouge non payé (après le 5).
-  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'] };
+  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'],
+    conge: ['Congés : pas de mensualité', 'neutre'], termine: ['Formation terminée', 'neutre'] };
+  // États des mensualités selon la base (supabase-formation.sql, Extension 148, 01/11/2026) : 18 mois de cours,
+  // congés en décembre, janvier et février, mois de congé payé reporté sur le mois de cours suivant, formation
+  // terminée. Une seule règle pour tous les écrans. Tant que ce fichier n'est pas collé : null (calcul d'avant).
+  P.etatsMensualites = async (debut, fin) => {
+    let r;
+    try { r = await P.rpc('mensualites_etats', { p_debut: debut, p_fin: fin }); } catch (e) { return null; }
+    if (!r || !Array.isArray(r.mannequins)) return null;
+    const parId = new Map(r.mannequins.map((m) => [m.id, m]));
+    return { conges: new Set((r.conges || []).map((x) => String(x).slice(0, 10))),
+      etat: (id, mois) => ((parId.get(id) || {}).etats || {})[mois],
+      fin: (id) => (parId.get(id) || {}).fin || null };
+  };
+  // état d'un mois pour l'écran : celui de la base s'il est connu, sinon d'après le seul paiement du mois
+  function etatDuMois(E, m, mois, paiement, jour) {
+    const b = E && E.etat(m.id, mois);
+    if (b) return b;
+    return paiement ? (paiement.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
+  }
+  const NOTE_CONGES = '<div class="carte"><h2>Congés</h2><p>Décembre, janvier et février sont des congés : pas de cours, pas de mensualité, pas d’appel ni de relance.</p></div>';
   async function mensualites() {
     const mois = moisCourant();
-    const [actifs, paiements, appels] = await Promise.all([
+    const [actifs, paiements, appels, E] = await Promise.all([
       mannequinsSuivis(false),
       P.bd(sb.from('paiements_mannequins').select('mannequin_id, statut').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
-      P.bd(sb.from('mensualites_appels').select('*').eq('mois', mois))
+      P.bd(sb.from('mensualites_appels').select('*').eq('mois', mois)),
+      P.etatsMensualites(mois, mois)
     ]);
     const jour = new Date().getDate();
-    const etat = (m) => {
-      const p = paiements.find((x) => x.mannequin_id === m.id);
-      return p ? (p.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
-    };
+    const conges = !!(E && E.conges.has(mois));
+    const etat = (m) => etatDuMois(E, m, mois, paiements.find((x) => x.mannequin_id === m.id), jour);
     const appele = (m) => appels.find((a) => a.mannequin_id === m.id);
     const compte = (e) => actifs.filter((m) => etat(m) === e).length;
     P.etat.mensualites = { actifs, etat, appele };
     const relance = jour >= 5 ? 'relance5' : jour >= 3 ? 'relance3' : null;
+    if (conges) return P.entete('Mensualités · ' + libelleMois(mois)) + NOTE_CONGES;
     return P.entete('Mensualités · ' + libelleMois(mois)) +
       '<div class="grille chiffres">' + P.chiffre('Payé', compte('paye'), 'vert') + P.chiffre('En attente de validation', compte('attente'), 'orange') +
       P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', compte('non_paye') + compte('a_payer'), 'rouge') + '</div>' +
-      '<div class="note info">Le 1er : cochez les mannequins à appeler (décochez ceux qui ne paient plus), puis envoyez l’appel. Le 3 et le 5, les relances partent toutes seules par e-mail aux personnes appelées qui n’ont pas payé ; pour WhatsApp, utilisez « Relances WhatsApp ». Un mannequin qui ne paie plus : passez sa fiche en « Suspendu » ou « Sorti ».</div>' +
+      '<div class="note info">Le 1er : cochez les mannequins à appeler (décochez ceux qui ne paient plus), puis envoyez l’appel. Le 3 et le 5, les relances partent toutes seules par e-mail aux personnes appelées qui n’ont pas payé ; pour WhatsApp, utilisez « Relances WhatsApp ». Un mannequin qui ne paie plus : passez sa fiche en « Suspendu » ou « Sorti ». La formation compte 18 mois de cours ; décembre, janvier et février sont des congés sans mensualité.</div>' +
       '<form data-form="mensualites-appel" class="carte"><h2>Appel du mois</h2>' +
       P.tableau(['', 'Mannequin', '#Mensualité', 'Ce mois', 'Appel'], actifs.map((m) => {
         const e = etat(m), a = appele(m), coche = !a && (e === 'a_payer' || e === 'non_paye');
-        return '<tr><td><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || e === 'paye' || e === 'attente' ? ' disabled' : '') + '></td>' +
+        return '<tr><td><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || !['a_payer', 'non_paye'].includes(e) ? ' disabled' : '') + '></td>' +
           '<td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
           '<td>' + P.pastille(ETATS[e][0], ETATS[e][1]) + '</td><td class="petit-texte">' + (a ? 'envoyé le ' + P.dateHeure(a.appel_le) + (a.relance3_le ? ' · relancé le 3' : '') + (a.relance5_le ? ' · relancé le 5' : '') : '—') + '</td></tr>';
       })) + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Envoyer l’appel aux personnes cochées</button>' +
@@ -504,9 +524,10 @@
   // « Mensualités du mois » : non payé seulement après le 5.
   async function tableauDuMois() {
     const mois = moisCourant();
-    const [tousActifs, paiements] = await Promise.all([
+    const [tousActifs, paiements, E] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('statut', 'actif').order('full_name')),
-      P.bd(sb.from('paiements_mannequins').select('id, mannequin_id, statut, montant').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse'))
+      P.bd(sb.from('paiements_mannequins').select('id, mannequin_id, statut, montant').eq('objet', 'mensualite').eq('mois', mois).neq('statut', 'refuse')),
+      P.etatsMensualites(mois, mois)
     ]);
     // Suivi choisi par l'agence : seuls les mannequins ajoutés avec la liste déroulante apparaissent ici
     const suiviPret = tousActifs.length === 0 || tousActifs.some((m) => 'suivi' in m);
@@ -517,10 +538,10 @@
     const jour = new Date().getDate();
     const filtre = P.etat.filtreTableau || 'tous';
     const lignes = actifs.map((m) => {
-      const p = paiements.find((x) => x.mannequin_id === m.id);
-      const e = p ? (p.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
+      const e = etatDuMois(E, m, mois, paiements.find((x) => x.mannequin_id === m.id), jour);
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
-      return { m, e, montant: m.mensualite || 0, inscrit: !!m.user_id, destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name };
+      // (congés et formation terminée : rien n'est attendu)
+      return { m, e, montant: e === 'conge' || e === 'termine' ? 0 : m.mensualite || 0, inscrit: !!m.user_id, destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name };
     });
     const somme = (l) => l.reduce((t, x) => t + x.montant, 0);
     const attendu = somme(lignes), valide = somme(lignes.filter((x) => x.e === 'paye')), attente = somme(lignes.filter((x) => x.e === 'attente'));
@@ -529,7 +550,7 @@
     const nb = (e) => lignes.filter((x) => x.e === e).length;
     const montrees = lignes.filter((x) => filtre === 'tous' || (filtre === 'inscrits' ? x.inscrit : !x.inscrit));
     const FILTRES_GROUPE = [['tous', 'Tous'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits']];
-    return P.entete('Tableau du mois · ' + libelleMois(mois)) +
+    return P.entete('Tableau du mois · ' + libelleMois(mois)) + (E && E.conges.has(mois) ? NOTE_CONGES : '') +
       '<div class="grille chiffres">' + P.chiffre('Attendu', P.fcfa(attendu)) + P.chiffre('Validé', P.fcfa(valide), 'vert') +
       P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') +
       P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
@@ -550,7 +571,7 @@
         (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
-        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
+        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : x.e === 'conge' || x.e === 'termine' ? '<span class="doux">Rien à payer</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
         ' <button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button></td></tr>'))
         : '<p class="doux">' + (suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : choisissez un mannequin dans la liste ci-dessus.') + '</p>') + '</div>';
   }
@@ -586,9 +607,10 @@
   // sur la seule couleur : chaque pastille porte un signe et un texte pour les lecteurs d'écran.
   async function matrice() {
     const annee = P.etat.anneeMatrice || new Date().getFullYear();
-    const [registreComplet, paiements] = await Promise.all([
+    const [registreComplet, paiements, E] = await Promise.all([
       mannequinsSuivis(true),
-      P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse').gte('mois', annee + '-01-01').lte('mois', annee + '-12-01'))
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse').gte('mois', annee + '-01-01').lte('mois', annee + '-12-01')),
+      P.etatsMensualites(annee + '-01-01', annee + '-12-01')
     ]);
     const mannequins = registreComplet.filter((m) => m.statut !== 'sorti');
     const maintenant = new Date(), moisActuel = maintenant.getFullYear() * 12 + maintenant.getMonth(), jour = maintenant.getDate();
@@ -600,12 +622,17 @@
       const st = paye[m.id + '|' + n];
       // (avant l'entrée du mannequin : « — », non concerné ; jamais confondu avec « à venir »)
       let e = st ? (st === 'valide' ? 'paye' : 'attente') : avantEntree ? 'hors' : rang > moisActuel ? 'neutre' : rang === moisActuel && jour <= 5 ? 'neutre' : 'non_paye';
-      const sign = { paye: ['✓', 'ok', 'payé'], attente: ['…', 'alerte', 'en attente de validation'], non_paye: ['✕', 'erreur', 'non payé'], hors: ['—', 'neutre', 'avant l’entrée (non concerné)'], neutre: ['·', 'neutre', rang > moisActuel ? 'à venir' : 'à payer avant le 5'] }[e];
+      // (selon la base : congés, formation terminée, mois réglé par un mois de congé payé plus tôt)
+      const b = E && E.etat(m.id, annee + '-' + String(n).padStart(2, '0') + '-01');
+      if (!st && (b === 'conge' || b === 'termine')) e = b;
+      else if (!st && b === 'paye') e = 'reporte';
+      const sign = { paye: ['✓', 'ok', 'payé'], attente: ['…', 'alerte', 'en attente de validation'], non_paye: ['✕', 'erreur', 'non payé'], hors: ['—', 'neutre', 'avant l’entrée (non concerné)'], neutre: ['·', 'neutre', rang > moisActuel ? 'à venir' : 'à payer avant le 5'],
+        conge: ['○', 'neutre', 'congés, pas de mensualité'], termine: ['◇', 'neutre', 'formation terminée'], reporte: ['✓', 'ok', 'payé par un mois de congé réglé plus tôt'] }[e];
       return '<td class="case-mois' + (rang === moisActuel ? ' mois-actuel' : '') + '"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
     };
     const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     return P.entete('Paiements mois par mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
-      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + '</div>' +
+      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + P.pastille('○ congés', 'neutre') + P.pastille('◇ formation terminée', 'neutre') + '</div>' +
       '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
         '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
         : '<p class="doux">Aucun mannequin dans le registre.</p>') + '</div>';
@@ -626,33 +653,47 @@
   const isoMois = (i) => Math.floor(i / 12) + '-' + String(i % 12 + 1).padStart(2, '0') + '-01';
   async function donneesRecap() {
     const cible = P.etat.moisRecap || moisCourant();
-    const [actifs, paiements] = await Promise.all([
+    const t = indexMois(cible);
+    const [actifs, paiements, E] = await Promise.all([
       mannequinsSuivis(false),
-      P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse'))
+      P.bd(sb.from('paiements_mannequins').select('mannequin_id, mois, statut').eq('objet', 'mensualite').neq('statut', 'refuse')),
+      // (les 12 derniers mois selon la base : congés, formation terminée, mois réglé par un mois de congé payé)
+      P.etatsMensualites(isoMois(t - 11), isoMois(t))
     ]);
-    const ici = new Date(), courant = ici.getFullYear() * 12 + ici.getMonth(), t = indexMois(cible);
+    const ici = new Date(), courant = ici.getFullYear() * 12 + ici.getMonth();
+    // selon la base : « conge » (sauté, ne coupe pas la suite d'impayés), « regle » (formation terminée ou mois
+    // réglé par un mois de congé payé), sinon rien ; avant les 12 mois connus, la suite d'impayés s'arrête
+    const selonBase = (id, i) => {
+      if (!E) return null;
+      if (i < t - 11) return 'regle';
+      const b = E.etat(id, isoMois(i));
+      return b === 'conge' ? 'conge' : b === 'termine' || b === 'paye' ? 'regle' : null;
+    };
     // dernier mois dont le délai (le 5) est passé, vu depuis le mois affiché
     const dernierEchu = t < courant || (t === courant && ici.getDate() > 5) ? t : t - 1;
     const statutDe = (id, i) => { const p = paiements.find((x) => x.mannequin_id === id && indexMois(x.mois) === i); return p ? p.statut : null; };
     const lignes = actifs.map((m) => {
       // (sans date d'entrée : on compte à partir du dernier mois échu, jamais « depuis toujours »)
       const entree = m.date_entree ? indexMois(m.date_entree) : dernierEchu;
-      const st = statutDe(m.id, t);
+      const st = statutDe(m.id, t), baseT = selonBase(m.id, t);
       // (preuve du mois affiché en attente : on compte les mois impayés d'avant, sans s'arrêter sur elle)
       const depart = dernierEchu === t && st === 'declare' ? t - 1 : dernierEchu;
-      let affilee = 0, i = depart;
-      while (i >= entree && affilee < 240 && !statutDe(m.id, i)) { affilee++; i--; }
-      const premierImpaye = depart - affilee + 1;
+      // mois impayés d'affilée (les congés sont sautés sans couper la suite)
+      let affilee = 0, i = depart, premierImpaye = depart + 1;
+      while (i >= entree && affilee < 240 && !statutDe(m.id, i) && selonBase(m.id, i) !== 'regle') {
+        if (selonBase(m.id, i) !== 'conge') { affilee++; premierImpaye = i; }
+        i--;
+      }
       const retard = affilee ? Math.max(0, Math.floor((ici - new Date(Math.floor(premierImpaye / 12), premierImpaye % 12, 5)) / 864e5)) : 0;
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
       // montant dû coupé en deux (décision de la propriétaire, 22/10/2026) : le mois affiché, et les mois d'avant
-      const duMois = affilee && depart === t ? (m.mensualite || 0) : 0;
-      return { m, ok: st === 'valide', attente: st === 'declare', affilee, retard, du: affilee * (m.mensualite || 0), duMois, duAvant: affilee * (m.mensualite || 0) - duMois,
+      const duMois = affilee && depart === t && !baseT ? (m.mensualite || 0) : 0;
+      return { m, ok: st === 'valide' || baseT === 'regle' && !st, attente: st === 'declare', rien: !st && baseT === 'conge', affilee, retard, du: affilee * (m.mensualite || 0), duMois, duAvant: affilee * (m.mensualite || 0) - duMois,
         destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name, entreeApres: entree > t };
     }).filter((x) => !x.entreeApres);
     // trois groupes : payé / preuve reçue, à valider / non payé (une preuve en attente n'est pas un
     // impayé ; mais une dette des mois précédents reste dans « Non payé » et dans le montant dû)
-    return { cible, lignes, ont: lignes.filter((x) => x.ok), attente: lignes.filter((x) => x.attente), pas: lignes.filter((x) => x.affilee || (!x.ok && !x.attente)) };
+    return { cible, lignes, ont: lignes.filter((x) => x.ok), attente: lignes.filter((x) => x.attente), pas: lignes.filter((x) => x.affilee || (!x.ok && !x.attente && !x.rien)) };
   }
   async function recapitulatif() {
     const d = await donneesRecap();

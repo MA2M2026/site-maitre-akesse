@@ -7,6 +7,8 @@ const { verifierBoutons } = require('./boutons');
 const PORT = String(9300 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 
+// mois relatifs au jour de l'essai (01/11/2026 : les dates figées d'octobre faisaient échouer l'essai le mois suivant)
+const ICI = new Date(), MOIS_ISO = (dec) => { const d = new Date(ICI.getFullYear(), ICI.getMonth() + dec, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
 function donnees(role) {
   const espaces = { site: role === 'principal' || role === 'site', paiements: role === 'principal' || role === 'caisse', compta: role === 'principal' || role === 'compta' };
   return {
@@ -16,16 +18,16 @@ function donnees(role) {
         { user_id: 'u-k', nom: 'Comptable', email: 'k@test.ci', role: 'compta', actif: true, cree_le: '2026-10-19', appareils: [] }],
       staff_module_grants: [], staff_devices: [{ id: 'sd1', appareil: 'abc', libelle: 'Android, Chrome', installe_le: '2026-10-19', derniere_activite: new Date().toISOString(), revoque: false, personne: { nom: 'Maître Akesse' } }],
       // Espace 2 — registre : un compte du site et un mannequin ajouté à la main
-      agence_mannequins: [{ id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', suivi: false, user_id: 'm-site', date_entree: '2026-09-01' },
-        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: '2026-10-01', date_naissance: '2000-01-01' },
-        { id: 'r3', full_name: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: '2026-10-10' },
-        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: '2026-10-11' }],
+      agence_mannequins: [{ id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', suivi: false, user_id: 'm-site', date_entree: MOIS_ISO(-1) + '-01' },
+        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: MOIS_ISO(0) + '-01', date_naissance: '2000-01-01' },
+        { id: 'r3', full_name: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: MOIS_ISO(0) + '-10' },
+        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_entree: MOIS_ISO(0) + '-11' }],
       // code de l'espace de SANOGO MARIAM (inscription validée), valable encore 7 jours
       codes_espace: [{ code: 'ESP-MARIAM', mannequin_id: 'r4', annule: false, utilise_le: null, cree_le: new Date().toISOString(), expire_le: new Date(Date.now() + 7 * 864e5).toISOString() }],
       // « J'ai payé » de YAO : inscription 15 000 + 1er mois 10 000, déclarés ensemble (orange)
       paiements_mannequins: [
         { id: 'pi3', mannequin_id: 'r3', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
-        { id: 'pm3', mannequin_id: 'r3', objet: 'mensualite', mois: '2026-10-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
+        { id: 'pm3', mannequin_id: 'r3', objet: 'mensualite', mois: MOIS_ISO(0) + '-01', montant: 10000, mode: 'wave', statut: 'declare', declare_le: '2026-10-19T09:00:00Z', mannequin: { full_name: 'YAO KOUASSI', telephone: '0505050505' } },
         { id: 'pi4', mannequin_id: 'r4', objet: 'inscription', mois: null, montant: 15000, mode: 'wave', statut: 'valide', declare_le: '2026-10-15T09:00:00Z', valide_le: '2026-10-15T10:00:00Z' }],
       // Espace 3 (le parcours complet est dans test-comptabilite.js)
       compta_comptes: [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde_initial: 0, date_initiale: '2026-10-01', actif: true }],
@@ -65,13 +67,14 @@ function donnees(role) {
   const now = new Date(); const mois = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01';
   const apres5 = now.getDate() > 5;
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
+    // (entrés ce mois-ci : du 1er au 5, le mois d'avant n'est pas compté comme impayé — 01/11/2026)
     const e = await ouvrir('caisse', ecran, (d) => {
       d.tables.agence_mannequins = [
-        { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', suivi: false, user_id: 'm-site', date_naissance: '1999-01-01' },
-        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 20000, statut: 'actif', suivi: false, user_id: null, date_naissance: '2000-01-01' },
-        { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101' },
-        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_naissance: '1998-01-01' },
-        { id: 'r5', full_name: 'ANCIEN SORTI', telephone: '0808080808', mensualite: 10000, statut: 'sorti', suivi: false, user_id: null, date_naissance: '1990-01-01' }];
+        { id: 'r1', full_name: 'ROXANE OUATTARA', telephone: '0102030405', mensualite: 10000, statut: 'actif', suivi: false, user_id: 'm-site', date_naissance: '1999-01-01', date_entree: mois },
+        { id: 'r2', full_name: 'KONÉ AWA', telephone: '0707070707', mensualite: 20000, statut: 'actif', suivi: false, user_id: null, date_naissance: '2000-01-01', date_entree: mois },
+        { id: 'r3', full_name: 'KOUAME JEAN', telephone: '0505050505', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_naissance: '2012-05-05', parent_nom: 'MADAME KOUAME', parent_telephone: '0101010101', date_entree: mois },
+        { id: 'r4', full_name: 'SANOGO MARIAM', telephone: '0606060606', mensualite: 10000, statut: 'actif', suivi: false, user_id: null, date_naissance: '1998-01-01', date_entree: mois },
+        { id: 'r5', full_name: 'ANCIEN SORTI', telephone: '0808080808', mensualite: 10000, statut: 'sorti', suivi: false, user_id: null, date_naissance: '1990-01-01', date_entree: mois }];
       d.tables.paiements_mannequins = [
         { id: 'p1', mannequin_id: 'r1', objet: 'mensualite', mois, montant: 10000, mode: 'wave', statut: 'valide', declare_le: now.toISOString() },
         { id: 'p3', mannequin_id: 'r3', objet: 'mensualite', mois, montant: 10000, mode: 'wave', statut: 'declare', declare_le: now.toISOString(), mannequin: { full_name: 'KOUAME JEAN', telephone: '0505050505' } }];

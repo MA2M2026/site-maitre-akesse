@@ -246,7 +246,7 @@
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
       '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/app/espace-mannequin.html"><span>🗂️</span>Ma compcard</a><a href="/app/espace-mannequin.html"><span>📄</span>Mon CV</a></nav>' +
-      (m && m.inscrit && moisCourant() && moisCourant().etat !== 'paye' && moisCourant().etat !== 'attente'
+      (m && m.inscrit && moisCourant() && (moisCourant().etat === 'a_payer' || moisCourant().etat === 'non_paye')
         ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
       (etat.castings.length ? '<h2 class="ap-titre-sec">Messages de l’agence</h2><div class="ap-carte ap-messages">' + etat.castings.map((c) =>
         '<div class="ap-msg"><i></i><div><b>Casting ouvert : ' + esc(c.nom) + '</b><br><span class="doux">' + esc([c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.') + '</span></div></div>').join('') + '</div>' : '');
@@ -288,14 +288,16 @@
     if (!m) haut = '<div class="ap-carte doux">Vos paiements ne sont pas disponibles pour le moment. Réessayez plus tard.</div>';
     else if (!m.inscrit) haut = '<div class="ap-carte doux">Votre espace n’est pas encore rattaché au registre de l’agence. Contactez l’agence.</div>';
     else {
-      const mois = m.mois || [], payes = mois.filter((x) => x.etat === 'paye').length, total = Math.max(24, mois.length);
+      const mois = m.mois || [], { payes, total } = bilanFormation(m);  // (js/app.js)
       const courant = moisCourant(), enRetard = mois.some((x) => x.etat === 'non_paye');
       const prochain = mois.find((x) => x.etat === 'a_payer' || x.etat === 'non_paye' || x.etat === 'a_venir');
       const avance = moisPayablesAvance(mois).length > 0;  // (js/app.js)
       haut = '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div></div>' +
         (enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
-          : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
+          : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
+          : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
         '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
+        '<p class="doux ap-formation-note">' + total + ' mois de cours en 2 ans. Décembre, janvier et février : congés, pas de mensualité.</p>' +
         (prochain ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
         // « Payer avec Wave » s'il y a un mois à payer ; à jour, « Payer à l'avance » (avant, le bouton
         // menait à la grille des mois sans rien à payer, relevé par la propriétaire le 26/10/2026)

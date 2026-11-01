@@ -87,20 +87,23 @@
   const TYPES_SORTIE = { suspendu: 'Suspension', sorti: 'Sortie définitive' };
   const DECISIONS = { en_attente: ['En attente de décision', 'alerte'], accepte: ['Acceptée', 'ok'], refuse: ['Refusée', 'neutre'] };
   async function sorties() {
-    let props, registre;
+    let props, registre, E;
+    const d = new Date(), mois = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
     try {
-      [props, registre] = await Promise.all([
+      [props, registre, E] = await Promise.all([
         P.bd(sb.from('sorties_mannequins').select('*, mannequin:agence_mannequins(full_name)').order('propose_le', { ascending: false })),
-        P.bd(sb.from('agence_mannequins').select('id, full_name, statut, date_entree').order('full_name'))
+        P.bd(sb.from('agence_mannequins').select('id, full_name, statut, date_entree').order('full_name')),
+        P.etatsMensualites(mois, mois)  // (js/portail/espace-paiements.js)
       ]);
     } catch (e) { return P.entete('Sorties et suspensions') + ABSENT; }
     const principal = estPrincipal();
     const attente = props.filter((x) => x.decision === 'en_attente'), enAttenteIds = new Set(attente.map((x) => x.mannequin_id));
     const proposables = registre.filter((m) => m.statut === 'actif' && !enAttenteIds.has(m.id));
     const inactifs = registre.filter((m) => m.statut !== 'actif');
-    // formation de 24 mois écoulée : plus de mensualité à attendre, donc plus d'appel ni de relance une fois sortie
+    // formation terminée (18 mois de cours, supabase-formation.sql : le dernier mois de cours est passé) : plus de
+    // mensualité à attendre ; une fois sortie, plus aucun appel ni relance. (Base pas encore à jour : 24 mois écoulés.)
     const limite = new Date(); limite.setMonth(limite.getMonth() - 24);
-    const terminees = proposables.filter((m) => m.date_entree && new Date(m.date_entree) <= limite);
+    const terminees = proposables.filter((m) => (E ? E.fin(m.id) && String(E.fin(m.id)).slice(0, 10) < mois : m.date_entree && new Date(m.date_entree) <= limite));
     return P.entete('Sorties et suspensions', P.pastille(attente.length + ' en attente', attente.length ? 'alerte' : 'ok')) +
       '<div class="note info">L’équipe d’encaissement propose une suspension ou une sortie avec un motif ; seul l’administrateur principal décide, avec son code. Rien n’est supprimé : un mannequin sorti peut être réactivé.</div>' +
       '<div class="carte"><h2>Proposer</h2>' + (proposables.length
@@ -109,7 +112,7 @@
           '<label class="fl large" for="so-motif">Motif (obligatoire)<textarea id="so-motif" name="motif" rows="3" required></textarea></label>' +
           '<div class="large ligne"><button class="btn rouge" type="submit">Envoyer la proposition</button></div></form>'
         : '<p class="doux">Aucun mannequin actif à proposer.</p>') + '</div>' +
-      (terminees.length ? '<div class="carte"><h2>Formation terminée (24 mois écoulés)</h2><p class="doux">Ces mannequins ne paient plus de mensualité. Proposez leur sortie : ils ne recevront plus aucun appel ni relance.</p>' +
+      (terminees.length ? '<div class="carte"><h2>Formation terminée (18 mois de cours)</h2><p class="doux">Ces mannequins ne paient plus de mensualité. Proposez leur sortie : ils ne recevront plus aucun appel ni relance.</p>' +
         P.tableau(['Mannequin', 'Entrée à l’agence', ''], terminees.map((m) => '<tr><td>' + P.lienFiche(m.id, m.full_name) + '</td><td>' + P.esc(P.date(m.date_entree)) + '</td><td><button class="btn rouge petit" type="button" data-action="sortie-formation-terminee" data-id="' + m.id + '">Proposer la sortie</button></td></tr>')) + '</div>' : '') +
       '<div class="carte"><h2>En attente de décision</h2>' + (attente.length ? P.tableau(['Mannequin', 'Proposition', 'Motif', 'Proposée le', ''], attente.map((x) =>
         '<tr><td>' + P.lienFiche(x.mannequin_id, x.mannequin && x.mannequin.full_name) + '</td><td>' + P.esc(TYPES_SORTIE[x.type] || x.type) + '</td><td>' + P.esc(x.motif) + '</td><td>' + P.dateHeure(x.propose_le) + '</td>' +
@@ -131,7 +134,7 @@
   P.actions['sortie-formation-terminee'] = async (el) => {
     if (!confirm('Proposer la sortie de ce mannequin (formation terminée) ? L’administrateur principal devra la confirmer.')) return;
     try {
-      await P.rpc('sortie_proposer', { p_mannequin: el.getAttribute('data-id'), p_type: 'sorti', p_motif: 'Formation terminée (24 mois)' });
+      await P.rpc('sortie_proposer', { p_mannequin: el.getAttribute('data-id'), p_type: 'sorti', p_motif: 'Formation terminée (18 mois de cours)' });
       P.message('Proposition envoyée.'); await P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
@@ -155,7 +158,7 @@
   };
 
   // ---------- Mois figés ----------
-  const ETATS_FIGES = { paye: 'Payé', attente: 'En attente', non_paye: 'Non payé', a_payer: 'À payer', a_venir: 'À venir' };
+  const ETATS_FIGES = { paye: 'Payé', attente: 'En attente', non_paye: 'Non payé', a_payer: 'À payer', a_venir: 'À venir', conge: 'Congés', termine: 'Formation terminée' };
   const moisIso = (decalage) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - decalage); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01'; };
   async function figes() {
     let liste;

@@ -947,15 +947,22 @@ async function abonnementPush(enregistrement) {
 }
 
 // Paiement à l'avance des mensualités (26/10/2026, décision de la propriétaire : jusqu'à 3 mois,
-// même prix) : les prochains mois « à venir », quand aucun mois n'est à payer. Partagé par Mes
-// paiements (js/mes-paiements.js) et l'onglet Paiements de l'application (js/mannequin-app.js) ;
-// la base décide en dernier (mensualites_payer_avance, supabase-paiement-avance.sql).
+// même prix) : parmi les 3 prochains mois de COURS (01/11/2026 : décembre, janvier et février sont des
+// congés sans mensualité, sautés), ceux encore « à venir », quand aucun mois n'est à payer. Partagé par
+// Mes paiements (js/mes-paiements.js) et l'onglet Paiements de l'application (js/mannequin-app.js) ;
+// la base décide en dernier (mensualites_payer_avance, supabase-formation.sql).
 const MA2M_AVANCE_MAX = 3;
 function moisPayablesAvance(mois) {
   const liste = mois || [];
   if (liste.some((m) => m.etat === 'a_payer' || m.etat === 'non_paye')) return [];
-  const d = new Date(), limite = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + MA2M_AVANCE_MAX, 1)).toISOString().slice(0, 10);
-  return liste.filter((m) => m.etat === 'a_venir' && String(m.mois).slice(0, 10) <= limite).slice(0, MA2M_AVANCE_MAX);
+  const d = new Date(), courant = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  return liste.filter((m) => !m.conge && m.etat !== 'conge' && String(m.mois).slice(0, 7) > courant).slice(0, MA2M_AVANCE_MAX).filter((m) => m.etat === 'a_venir');
+}
+// Mensualités de la formation (01/11/2026) : 18 mois de cours ; un mois de congé payé (reporté sur le
+// mois de cours suivant) n'est pas compté deux fois. Partagé par Mes paiements et l'application.
+function bilanFormation(d) {
+  const cours = ((d && d.mois) || []).filter((m) => !m.conge && m.etat !== 'conge');
+  return { payes: cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
 }
 
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
