@@ -78,6 +78,12 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
       const d = html && donneesDe(html, bloc);
       ok(!!d && verifier(d), chemin + ' : les données sont dans la page');
       ok(!/<img src=x onerror/.test(html), chemin + ' : rien d’injectable');
+      // étape A (01/11/2026) : parcours — le mois et ses projets (titre, lieu, mannequins) sont dans le HTML
+      if (page === 'parcours') {
+        const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
+        ok(/<h2 class="parcours-titre-mois" id="parcours-titre-mois">[^<]+20\d\d<\/h2>/.test(visible) && /<article class="parcours-projet"><h3>Gala &lt;img src=x onerror=alert\(1\)&gt;<\/h3><p class="parcours-projet-meta">Sofitel, Abidjan<\/p><p class="parcours-projet-visages">Awa &lt;img/.test(visible),
+          chemin + ' : le mois et ses projets (titre, lieu, mannequins) sont dans le HTML avant tout programme');
+      }
       // étape A (01/11/2026) : qui sommes-nous — les cartes des événements déjà réalisés sont dans le HTML
       if (page === 'qui-sommes-nous') {
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');

@@ -627,7 +627,22 @@ async function parcoursRempli(url, anglais) {
     const photos = ids.length ? await lireCouvertures(ids, reste) : [];
     return Array.isArray(photos) ? { debut, fin, projets, photos } : null;
   });
-  return pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture);
+  return pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture, async (html, d) => {
+    // étape A (01/11/2026) : le mois affiché au départ (le plus récent qui a des activités, comme js/parcours.js)
+    // et ses projets (titre, lieu, mannequins) écrits dans la page ; la page redessine ensuite sa scène animée
+    // (chiffres, visages, filtres) par-dessus. Seulement les projets qui ont des mannequins (projetsAvecNoms).
+    const projets = d.projets.filter((p) => (p.mannequins || []).length);
+    if (!projets.length) return html;
+    const mois = (p) => String(p.date_debut || '').slice(0, 7), moisFin = (p) => String(p.date_fin || p.date_debut || '').slice(0, 7);
+    const choisi = projets.map(moisFin).sort().pop();
+    const duMois = (anglais ? await versAnglaisServeur(projets, ['titre', 'lieu']) : projets).filter((p) => mois(p) <= choisi && moisFin(p) >= choisi);
+    const libelle = new Date(choisi + '-15T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const cartes = duMois.map((p) => '<article class="parcours-projet"><h3>' + echapper(p.titre) + '</h3>' +
+      '<p class="parcours-projet-meta">' + echapper([p.lieu, p.ville].filter(Boolean).join(', ')) + '</p>' +
+      '<p class="parcours-projet-visages">' + echapper((p.mannequins || []).map((m) => m.nom).filter(Boolean).join(', ')) + '</p></article>').join('');
+    return texteElement(html, 'parcours-titre-mois', libelle)
+      .replace('<div class="parcours-projets" id="parcours-projets"></div>', () => '<div class="parcours-projets" id="parcours-projets">' + cartes + '</div>');
+  });
 }
 
 // ================== « Qui sommes-nous » préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================
