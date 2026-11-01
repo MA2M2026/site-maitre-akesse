@@ -529,7 +529,8 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     const nom = d.profil.full_name || (anglais ? 'Model' : 'Mannequin');
     const description = [d.profil.full_name, d.profil.city, d.profil.height_cm ? d.profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
       (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
-    const lien = SITE + (anglais ? '/en' : '') + '/book/' + slug;
+    // (adresse /mannequin?id=… ouverte depuis une carte du Book : pas encore de nom d'adresse connu ici)
+    const lien = SITE + (anglais ? '/en' : '') + (slug ? '/book/' + slug : '/mannequin?id=' + id);
     return photoAnnoncee(html
       .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
       .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
@@ -831,6 +832,13 @@ export default async function middleware(requete) {
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
+    }
+    // fiche ouverte depuis une carte du Book (/mannequin?id=…, après le renvoi de mannequin.html) : écrite par le
+    // serveur comme /book/nom (étape A, 01/11/2026) ; au moindre souci, la page habituelle
+    if (/^\/(en\/)?mannequin$/.test(url.pathname) && requete.method === 'GET' && !ROBOTS_APERCU.test(agent) && ID_VALIDE.test(url.searchParams.get('id') || '')) {
+      const remplie = await ficheRemplie(requete, url, url.searchParams.get('id'), null, anglais).catch(() => null);
+      if (remplie) return remplie;
+      return;
     }
     // pages des visiteurs préparées par le serveur (site dynamique) ; jamais les adresses en .html, qui
     // suivent le renvoi vers l'adresse propre (vercel.json, cleanUrls) ; au moindre souci : comme avant

@@ -81,6 +81,14 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
   nomDollar = false;
   ok(await demander('mannequin.html?id=' + ID) === undefined, 'adresse en .html : pas préparée, le renvoi vers l’adresse propre reste');
   ok(await demander('mannequin', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
+  // fiche ouverte depuis une carte du Book (/mannequin?id=…) : écrite par le serveur aussi (01/11/2026)
+  for (const chemin of ['mannequin?id=' + ID, 'en/mannequin?id=' + ID]) {
+    const r = await demander(chemin);
+    const h = r ? (await r.text()).replace(/<script[\s\S]*?<\/script>/g, '') : '';
+    ok(/<h1>Awa Koné<\/h1>/.test(h) && /<dd>178 cm<\/dd>/.test(h) && h.includes('<link rel="canonical" href="https://www.maitreakessemodelmanagement.com' + (chemin.startsWith('en/') ? '/en' : '') + '/mannequin?id=' + ID + '">'),
+      chemin.split('?')[0] + '?id=… (carte du Book) : nom et taille écrits dans le HTML avant tout programme');
+  }
+  ok(await demander('mannequin?id=pas-un-id') === undefined && await demander('mannequin?id=' + ID, { headers: { 'user-agent': 'WhatsApp/2.23' } }) !== null, '/mannequin?id= non valable : la page habituelle ; robots : l’aperçu habituel');
   ok(reecrite(await demander('book/awa-kone', { method: 'HEAD' })), 'seulement les visites (GET) : sinon comme avant');
   baseLente = 1500; let t = Date.now();
   const lente = await demander('book/awa-kone');
