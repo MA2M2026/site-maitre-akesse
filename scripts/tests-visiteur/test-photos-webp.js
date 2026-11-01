@@ -108,7 +108,7 @@ async function espace(b, sansWebp) {
       { id: 'v1', model_id: 'm1', url: 'https://www.maitreakessemodelmanagement.com/book-photos/m1/orig.jpg', url_miniature: 'https://photos.test/m1/miniatures/1-a-n800.jpg', chemin_miniature: 'm1/miniatures/1-a-n800.jpg', url_moyenne: 'https://photos.test/m1/moyennes/1-b.jpg', chemin_moyenne: 'm1/moyennes/1-b.jpg' },
       { id: 'v2', model_id: 'm1', url: 'https://www.maitreakessemodelmanagement.com/book-photos/m1/orig2.jpg', url_miniature: 'x', chemin_miniature: 'm1/miniatures/2-a-n800-w.jpg', url_moyenne: 'y', chemin_moyenne: 'm1/moyennes/2-b-w.jpg' }];
     await brancher(p, d, journal);
-    await p.route(/\/api\/r2-presigner/, async r => { const c = JSON.parse(r.request().postData() || '{}'); envois.push(c.chemin);
+    await p.route(/\/api\/r2-presigner/, async r => { const c = JSON.parse(r.request().postData() || '{}'); if (c.action !== 'verifier') envois.push(c.chemin);  // (la vérification après envoi n'est pas un envoi)
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://127.0.0.1:' + PORT + '/__stockage', publicUrl: 'https://photos.test/' + c.chemin }) }); });
     await p.route(/__stockage/, r => r.fulfill({ status: 200, body: '' }));
     await p.route(/photos\.test\//, r => r.fulfill({ status: 200, contentType: 'image/jpeg', body: PHOTO }));
