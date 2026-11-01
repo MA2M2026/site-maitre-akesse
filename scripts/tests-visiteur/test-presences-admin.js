@@ -49,6 +49,11 @@ function moisSimule(corps) {
     await p.goto(URL_ADMIN + '#/site/b2-presences'); await p.waitForSelector('.pr-grille'); await p.waitForTimeout(600);
     ok(/Liste de présence/.test(await p.textContent('.lateral, nav, body')), n + 'la rubrique est dans le menu « Mannequins »');
     ok((await p.$$('.pr-grille thead .pr-jour')).length === C.dimanchesDuMois(ceMois).length && (await p.$$('.pr-grille tbody tr')).length === 3, n + 'ce mois-ci : ses ' + C.dimanchesDuMois(ceMois).length + ' dimanches et les 3 mannequins');
+    // (01/11/2026, capture de la propriétaire : les cases vides ne se voyaient qu'au survol) chaque case vide ou à venir
+    // a un contour rouge bien visible, sans passer la souris dessus
+    await p.mouse.move(0, 0);
+    const contours = await p.$$eval('.pr-grille tbody .pr-case:not(.e-present):not(.e-excuse):not(.e-absent):not(.e-annulee):not(.e-vacances):not(.e-avant_entree)', (l) => l.map((b) => { const c = getComputedStyle(b); return [c.borderTopColor, c.borderTopStyle, c.opacity]; }));
+    ok(contours.length > 0 && contours.every(([couleur, , opacite]) => /rgba?\(124, 33, 40/.test(couleur) && opacite === '1'), n + 'cases vides et à venir : contour rouge bien visible sans survol (' + contours.length + ' cases)');
     // mannequin du mois : proposée parmi les assidues du mois précédent (Awa), choisie avec un petit mot
     ok(/Mannequin du mois/.test(await p.textContent('.pr-mdm')) && (await p.$$('.pr-mdm-liste li')).length === 1 && /AWA KONÉ/.test(await p.textContent('.pr-mdm-liste')), n + 'mannequin du mois : seule l’assidue du mois précédent est proposée');
     await p.click('.pr-mdm-liste [data-action="mdm-choisir"]'); await p.waitForTimeout(800);

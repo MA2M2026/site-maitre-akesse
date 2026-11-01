@@ -1071,13 +1071,13 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .pr-jour span { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; font-family: var(--av-texte); }
 .pr-jour.aujourdhui span { color: var(--rouge-mat); }
 .pr-annuler { border: 0; background: none; color: var(--rouge-mat); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 2px; min-height: 24px; }
-.pr-case { width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--av-lignes); background: var(--blanc-pur); font-weight: 700; font-size: 16px; cursor: pointer; color: #1B1817; }
+.pr-case { width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--rouge-mat); background: var(--blanc-pur); font-weight: 700; font-size: 16px; cursor: pointer; color: #1B1817; }   /* (01/11/2026 : contour rouge bien visible, la propriétaire ne voyait les cases qu'au survol) */
 .pr-case.e-present { background: #1E7A45; border-color: #1E7A45; color: #FFFFFF; }
 .pr-case.e-excuse { background: #9A5800; border-color: #9A5800; color: #FFFFFF; }
 .pr-case.e-absent { background: var(--rouge-mat); border-color: var(--rouge-mat); color: #FFFFFF; }
 .pr-case.e-annulee, .pr-case.e-avant_entree, .pr-case.e-vacances { background: #EFEFEF; border-color: #EFEFEF; color: #6B6B6B; cursor: default; }
 .pr-case:disabled { cursor: default; }
-.pr-case.e-a_venir:disabled { opacity: .45; }
+.pr-case.e-a_venir:disabled { border-style: dashed; border-color: rgba(124, 33, 40, .55); }   /* (dimanche à venir : visible, pas encore cochable) */
 .pr-mention { min-width: 96px; font-size: 12px; }
 .pr-badge { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 600; line-height: 1.3; color: #FFFFFF; }
 .pr-badge.vert { background: #1E7A45; } .pr-badge.orange { background: #9A5800; } .pr-badge.rouge { background: var(--rouge-mat); }
