@@ -4,28 +4,29 @@ Règle : « terminé » seulement si tout le chantier est fait, essayé, vu fonc
 Sinon « en cours » (avec ce qui reste) ou « pas commencé ». Aucun secret dans ce fichier (dépôt public).
 
 Branche de travail : `chantier-couleurs-site` (à jour avec `main` le 31/10/2026).
-Version en ligne : `main` 1430a75 (lot C, 31/10/2026 au soir, déploiement Vercel réussi, fichiers en ligne identiques à la branche).
-Retour en arrière possible : version précédente `main` 0a0f4e4 (lot A).
+Version en ligne : `main` c485622 (01/11/2026, après-midi : batterie complète 0 échec sur 4 198 vérifications, en ligne et vérifiée).
+Retour en arrière possible : version précédente `main` d179d85 ; base : `retour-appareil-confiance.sql` (gardé hors dépôt) pour le téléphone de confiance.
 
 | Chantier | État | Ce qui reste |
 |---|---|---|
 | Étape 1 : vérifier avant de coder | terminé (31/10) | — |
 | 0. Installation de l'application sur tous les téléphones | en cours | corrections en ligne depuis le 28/10, jamais essayées sur de vrais téléphones ; essais réels (iPhone d'abord), corrections, puis vidéo |
 | 1. Grille du Book 3 / 4 / 5 | terminé (31/10) | — (vérifié en ligne : 3 / 4 / 5 colonnes, rien ne déborde) |
-| 2. Fiche mannequin plus rapide | en cours | en ligne (lot C) ; mesuré en ligne (téléphone simulé, Pixel 7) : grande photo visible en ≈ 3,5 à 4 s au lieu de ≈ 6,2 s ; photo de 107 Ko à la taille de l'écran ; reste : mettre en ligne la correction SonarCloud (bug d'une promesse dans js/adresse-fiche.js, corrigé sur la branche) |
+| 2. Fiche mannequin plus rapide | en cours | EN LIGNE (01/11, c485622) : cartes vers /book/nom, fiche préparée au toucher, photo du serveur jamais effacée (elle tombait à 0 % : fondu « reveal ») ; mesuré en ligne (Pixel 7 simulé, 4G) : photo en ≈ 1,8 à 2 s au lieu de ≈ 3,6 s, visibilité 100 % ; reste : vérification par la propriétaire sur son téléphone |
 | 3. Application mannequin pleine largeur | en cours | en ligne (31/10) ; reste : vérification en ligne sur téléphone/tablette (adresse de l'application bloquée depuis l'espace de travail) |
 | 4. Bande « Télécharger l'application » rouge foncé | terminé (31/10) | — (vérifié en ligne : rouge profond #5A141B, contour blanc) |
 | 5. Édito (SonarCloud) + documentation | terminé (31/10) | — (SonarCloud après mise en ligne : 0 bug, 0 faille, notes au maximum ; README à jour) |
-| 6. Appareil de confiance (Administration) | pas commencé | lot à part, essai réel avec compte de test et accord de la propriétaire |
+| 6. Appareil de confiance (Administration) | en cours | EN LIGNE (01/11, c485622), base installée (Extension 149) ; connexion de la propriétaire vérifiée par elle le 01/11 ; reste : essai réel avec un compte de test créé par « Créer mon compte » |
 | 7. Brouillon des actualités et événements | en cours | EN LIGNE (lot C, 31/10) ; reste : essai réel par la propriétaire |
 | 8. Photos ajoutées en plusieurs fois | en cours | EN LIGNE (lot C, 31/10) ; reste : essai réel par la propriétaire |
 | 9. Modifier les photos d'un article publié | en cours | EN LIGNE (lot C, 31/10) ; reste : essai réel par la propriétaire |
 | 10. Même mécanisme pour tous les envois d'images | en cours | EN LIGNE (lot C, 31/10) ; reste : essai réel par la propriétaire |
 | 11. Candidatures : plus d'ajout de photos par l'agence | en cours | EN LIGNE (lot C, 31/10) ; reste : vérification |
 | 12. Évaluation globale (6 visiteurs, contrôles externes) | pas commencé | — |
-| 13. Audit des secrets et protection du dépôt | pas commencé | décision de la propriétaire (31/10) : à faire À LA FIN |
-| Après : site dynamique (`PLAN-SERVEUR.md`, chemin A choisi le 31/10) | en cours | branche `site-dynamique` (pas en ligne) : étape 1 faite (fiche d'un mannequin), étape 2 faite (The Book, actualités, événements, partenaires, agenda, parcours, qui sommes-nous : toutes les pages publiques qui affichent des données partent remplies par le serveur ; outil commun pageRemplie / donneesServeur) ; reste : batterie, relecture, mise en ligne avec accord, mesures avant / après ; puis étapes 3 à 5 (formulaires anti-robot, contenu des fichiers, surveillance) |
+| 13. Audit des secrets et protection du dépôt | pas commencé | à faire quand la propriétaire est devant son ordinateur (01/11) |
+| Après : site dynamique (`PLAN-SERVEUR.md`) | en cours | EN LIGNE : étape A (pages écrites par le serveur), étape B (reçu, places), étape C (textes des 5 pages modifiables, Extension 151 collée le 01/11, écran « Textes des pages ») ; « Créer mon compte » (Extension 150) ; lot 3 (vérification des fichiers, surveillance) ; reste : anti-robot des formulaires (clé Cloudflare Turnstile de la propriétaire, devant son ordinateur) ; corrections SonarCloud du 01/11 prêtes sur la branche `demain` |
 | 14. Liste de présence des cours du dimanche | en cours | partie 1 faite sur la branche `presences` (pas en ligne) : base (supabase-presences.sql, Extension 142, droits essayés sur la base locale), écran de l'Administration, « Mes cours du dimanche » dans l'application, synthèse ; SQL collé par la propriétaire le 01/11 à 22 h 03 (vérifié : les 5 fonctions existent, un visiteur est refusé partout) ; reste : essai réel avec un compte de test (accord), batterie, mise en ligne ; partie 2 faite sur la branche : formation de 18 mois de cours, congés (décembre, janvier, février) sans mensualité, mois de congé payé reporté sur le mois de cours suivant (choix de la propriétaire le 01/11), formation terminée proposée à la sortie (supabase-formation.sql, Extension 148, à coller AVANT la mise en ligne) et partie 3 : anniversaires automatiques faits sur la branche (supabase-anniversaires.sql, Extension 143, à coller ; tâche du matin quotidienne) ; mannequin du mois faite (supabase-mannequin-du-mois.sql, Extension 144, à coller) ; signe « mensualité à payer » fait (supabase-presences.sql à recoller) ; bulletins trimestriels faits (supabase-bulletins.sql, Extension 145, à coller) ; mensurations suivies faites (supabase-mensurations.sql, Extension 146, à coller ; déclencheur à essayer pour de vrai) ; documents qui expirent faits (supabase-documents.sql, Extension 147, à coller ; e-mail du matin à l'agence) |
+| 15. Liste de présence : cases visibles, « Ne vient plus » | en cours | EN LIGNE (01/11, c485622) ; reste : essai réel par la propriétaire |
 
 ## Constats de l'étape 1 (31/10/2026)
 
