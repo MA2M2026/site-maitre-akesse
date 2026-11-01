@@ -31,20 +31,8 @@ async function chargerPartenaires() {
   vide.style.display = 'none';
   window.partenairesData = data;
 
-  grille.innerHTML = data.map((p, i) => `
-    <div class="news-carte reveal" data-index="${i}">
-      <div class="news-img ${EN ? 'enpt-9' : 'pt-9'}">
-        ${p.logo_url
-          ? `<img src="${echapperHtml(urlLegere(p.logo_url))}" loading="lazy" alt="${echapperHtml(p.nom)}" class="${EN ? 'enpt-10' : 'pt-10'}">`
-          : `<span class="${EN ? 'enpt-11' : 'pt-11'}">${echapperHtml((p.nom || '?').charAt(0))}</span>`}
-      </div>
-      <div class="news-corps">
-        <div class="news-date">${echapperHtml(p.role || '')}</div>
-        <h3>${echapperHtml(p.nom || '')}</h3>
-        <span class="news-lire">${T('Voir la fiche →', 'View Details →')}</span>
-      </div>
-    </div>
-  `).join('');
+  // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
+  grille.innerHTML = data.map((p, i) => window.RenduPublications.partenaire(p, i, { en: EN, logo: p.logo_url ? urlLegere(p.logo_url) : '' })).join('');
 
   grille.querySelectorAll('.news-carte').forEach(carte => {
     carte.addEventListener('click', () => ouvrirPartModal(parseInt(carte.dataset.index)));

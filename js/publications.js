@@ -31,17 +31,9 @@ function urlVideoIntegree(url) {
   return null;
 }
 
+// (règle partagée avec le serveur : js/rendu-publications.js, chargé avant)
 function extraitTexte(texte, longueur) {
-  if (!texte) return '';
-  if (texte.length <= longueur) return texte;
-  // Coupe entre deux mots (et non au milieu d'un mot : « Cette nouvel… »).
-  let coupe = texte.slice(0, longueur);
-  const espace = coupe.lastIndexOf(' ');
-  if (espace > longueur * 0.6) coupe = coupe.slice(0, espace);
-  // ponctuation et espaces de fin retirés un à un (sans expression régulière : SonarCloud S8786)
-  let fin = coupe.length;
-  while (fin > 0 && (/\s/.test(coupe[fin - 1]) || ',;:.-–—('.includes(coupe[fin - 1]))) fin--;
-  return coupe.slice(0, fin) + '…';
+  return window.RenduPublications.extrait(texte, longueur);
 }
 
 function ouvrirNewsModal() {

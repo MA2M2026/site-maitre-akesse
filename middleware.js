@@ -23,6 +23,7 @@
 // Dessin des pages par le serveur (01/11/2026, site dynamique, étape A) : les mêmes fichiers que la page
 // (scripts classiques qui posent globalThis.Rendu…), une seule façon de dessiner pour les deux.
 import './js/rendu-book.js';
+import './js/rendu-publications.js';
 
 export const config = {
   matcher: [
@@ -307,12 +308,26 @@ async function empreinteTexte(t) {
   return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
 }
 async function motEnAnglais(mot) {
-  const champs = ['titre', 'message'].filter((c) => mot[c]);
-  const cles = await Promise.all(champs.map((c) => empreinteTexte(mot[c])));
-  const lignes = await lireSupabase('traductions_en?select=cle,en&cle=in.(' + cles.join(',') + ')', null, 2000);
-  const en = {};
-  champs.forEach((c, i) => { const l = (lignes || []).find((x) => x.cle === cles[i]); if (l) en[c] = l.en; });
-  return Object.keys(en).length ? en : null;
+  const [en] = await versAnglaisServeur([{ titre: mot.titre, message: mot.message }], ['titre', 'message']);
+  const champs = ['titre', 'message'].filter((c) => mot[c] && en[c] !== mot[c]);
+  return champs.length ? Object.fromEntries(champs.map((c) => [c, en[c]])) : null;
+}
+// Copies anglaises de lignes (pages /en préparées par le serveur, 01/11/2026) : mêmes traductions que la page
+// (table traductions_en, même empreinte que versAnglais de js/app.js) ; un texte sans traduction reste en
+// français (comme dans la page). Ne modifie jamais les lignes reçues (elles sont gardées en mémoire).
+async function versAnglaisServeur(lignes, champs) {
+  const copies = lignes.map((l) => Object.assign({}, l));
+  const textes = [...new Set(copies.flatMap((l) => champs.map((c) => l[c]).filter((v) => typeof v === 'string' && rognerBlancs(v))))];
+  if (!textes.length) return copies;
+  const cles = await Promise.all(textes.map(empreinteTexte));
+  const parCle = new Map();
+  for (let i = 0; i < cles.length; i += 80) {
+    const lu = await lireSupabase('traductions_en?select=cle,en&cle=in.(' + cles.slice(i, i + 80).join(',') + ')', null, 1500).catch(() => null);
+    (lu || []).forEach((x) => parCle.set(x.cle, x.en));
+  }
+  const parTexte = new Map(textes.map((t, i) => [t, parCle.get(cles[i])]));
+  copies.forEach((l) => champs.forEach((c) => { const v = parTexte.get(l[c]); if (v) l[c] = v; }));
+  return copies;
 }
 // Texte d'un élément de la page (repéré par son id) ; brut : déjà écrit pour du HTML
 function texteElement(html, id, texte, brut) {
@@ -423,7 +438,7 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   if (!donnees) return new Response(page.body, { status: page.status, headers: page.headers });
   let html = await page.text();
   if (!html.includes('<body>') || !html.includes('</head>')) return null;
-  if (retoucher) html = retoucher(html, donnees);
+  if (retoucher) html = await retoucher(html, donnees);
   return reponseHtml(html.replace('<body>', () => '<body>\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>'), page);
 }
 const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
@@ -520,15 +535,37 @@ async function publicationsRemplies(url, anglais) {
   const [liste, photos] = LECTURES_PUBLICATIONS[quoi];
   const lecture = enMemoire('publications-' + quoi, () => Promise.all([lireSupabase(liste, null, ATTENTE_FICHE), lireSupabase(photos, null, ATTENTE_FICHE)])
     .then(([l, p]) => (Array.isArray(l) && Array.isArray(p) ? { liste: l, photos: p } : null)));
-  return pageRemplie(url, (anglais ? '/en/' : '/') + quoi + url.search, 'publications-donnees', lecture,
-    (html, d) => photoAnnoncee(html, d.liste[0]?.image_url ? photoLegere(d.liste[0].image_url) : ''));
+  return pageRemplie(url, (anglais ? '/en/' : '/') + quoi + url.search, 'publications-donnees', lecture, async (html, d) => {
+    // les cartes elles-mêmes écrites dans la page (js/rendu-publications.js, les mêmes que la page dessine),
+    // en anglais sur les pages /en (traductions de l'agence)
+    const R = globalThis.RenduPublications, sorte = quoi === 'actualites' ? 'actualite' : 'evenement';
+    const texteLong = sorte === 'actualite' ? 'commentaire' : 'description';
+    const liste = anglais ? await versAnglaisServeur(d.liste, sorte === 'actualite' ? ['titre', 'commentaire'] : ['titre', 'lieu', 'description']) : d.liste;
+    const nb = {};
+    d.photos.forEach((p) => { const id = p.actualite_id || p.evenement_id; nb[id] = (nb[id] || 0) + 1; });
+    const extrait = (p, n) => (p[texteLong] ? R.extrait(R.texteBrut(p[texteLong]), n) : '');
+    const prefixe = sorte === 'actualite' ? 'actus' : 'evenements';
+    if (liste.length) {
+      html = html.replace('<div id="' + prefixe + '-une" class="une-reservee"></div>', () => '<div id="' + prefixe + '-une" class="une-reservee">' +
+        R.une(liste[0], { en: anglais, sorte, photo: photoLegere(liste[0].image_url || ''), extrait: extrait(liste[0], 180) }) + '</div>')
+        .replace('<div id="' + prefixe + '-grille" class="news-grille"></div>', () => '<div id="' + prefixe + '-grille" class="news-grille">' +
+          liste.slice(1).map((p, i) => R.carte(p, i + 1, { en: anglais, sorte, photo: photoLegere(p.image_url || ''), nbPhotos: nb[p.id] || (p.image_url ? 1 : 0), extrait: extrait(p, 110) })).join('') + '</div>');
+    }
+    return photoAnnoncee(html, d.liste[0]?.image_url ? photoLegere(d.liste[0].image_url) : '');
+  });
 }
 
 // ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // La liste des partenaires (même lecture que js/partenaires.js) posée dans la page (bloc « partenaires-donnees »).
 async function partenairesRemplis(url, anglais) {
   const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=*&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
-  return pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture);
+  return pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture, async (html, d) => {
+    // les cartes écrites dans la page (js/rendu-publications.js), en anglais sur /en/partenaires
+    const liste = anglais ? await versAnglaisServeur(d.liste, ['structure', 'evenement', 'role', 'description']) : d.liste;
+    const R = globalThis.RenduPublications;
+    return liste.length ? html.replace('<div id="partenaires-grille" class="news-grille"></div>', () => '<div id="partenaires-grille" class="news-grille">' +
+      liste.map((p, i) => R.partenaire(p, i, { en: anglais, logo: p.logo_url ? photoLegere(p.logo_url) : '' })).join('') + '</div>') : html;
+  });
 }
 
 // ================== Agenda préparé par le serveur (01/11/2026, site dynamique, étape 2) ==================

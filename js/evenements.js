@@ -6,15 +6,15 @@ const quillRedaction = editeurRicheDiffere('red-editeur', T('Racontez cet évén
 
 // "date" (sans heure) : new Date('2026-05-01') est interprété en UTC, ce qui peut
 // afficher la veille selon le fuseau du visiteur — on force midi pour l'éviter.
+// (règles partagées avec le serveur : js/rendu-publications.js, chargé avant)
 function formatDateEvenement(dateStr) {
-  if (!dateStr) return '';
-  return new Date(dateStr + 'T12:00:00').toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return dateStr ? window.RenduPublications.dateEvenement({ date_evenement: dateStr }, EN) : '';
 }
 function formatDatePublication(dateStr) {
-  return new Date(dateStr).toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return window.RenduPublications.dateLongue(dateStr, EN);
 }
 function dateAffichageEvenement(e) {
-  return e.date_evenement ? formatDateEvenement(e.date_evenement) : formatDatePublication(e.created_at);
+  return window.RenduPublications.dateEvenement(e, EN);
 }
 
 async function chargerEvenements() {
@@ -41,41 +41,14 @@ async function chargerEvenements() {
 
   // Le dernier événement publié est mis en avant séparément, dans un grand bloc "À la une".
   const une = data[0];
-  uneZone.innerHTML = `
-    <div class="news-une reveal" data-index="0">
-      <img src="${echapperHtml(urlLegere(une.image_url || ''))}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
-      <div class="news-une-scrim"></div>
-      <div class="news-une-corps">
-        <span class="news-une-badge">★ ${T('À la une', 'Featured')}</span>
-        ${une.lieu ? `<span class="news-categorie">📍 ${echapperHtml(une.lieu)}</span>` : ''}
-        <div class="news-date">${dateAffichageEvenement(une)}</div>
-        ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
-        ${une.description ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.description), 180))}</p>` : ''}
-        <span class="news-lire">${T('Voir l\'événement →', 'View Event →')}</span>
-      </div>
-    </div>
-  `;
+  // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
+  const R = window.RenduPublications;
+  uneZone.innerHTML = R.une(une, { en: EN, sorte: 'evenement', photo: urlLegere(une.image_url || ''), extrait: une.description ? extraitTexte(texteBrutDepuis(une.description), 180) : '' });
   uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirEvenementModal(0));
 
   const reste = data.slice(1);
-  grille.innerHTML = reste.map((e, i) => {
-    const indexReel = i + 1;
-    const nbPhotos = compteurParEvenement[e.id] || (e.image_url ? 1 : 0);
-    return `
-    <div class="news-carte reveal" data-index="${indexReel}">
-      <div class="news-img">
-        <img src="${echapperHtml(urlLegere(e.image_url || ''))}" loading="lazy" alt="${echapperHtml(e.titre || '')}">
-        ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
-      </div>
-      <div class="news-corps">
-        ${e.lieu ? `<span class="news-categorie">📍 ${echapperHtml(e.lieu)}</span>` : ''}
-        <div class="news-date">${dateAffichageEvenement(e)}</div>
-        ${e.titre ? `<h3>${echapperHtml(e.titre)}</h3>` : ''}
-        ${e.description ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(e.description), 110))}</p>` : ''}
-        <span class="news-lire">${T('Voir l\'album →', 'View Album →')}</span>
-      </div>
-    </div>
-  `; }).join('');
+  grille.innerHTML = reste.map((e, i) => R.carte(e, i + 1, { en: EN, sorte: 'evenement', photo: urlLegere(e.image_url || ''), nbPhotos: compteurParEvenement[e.id] || (e.image_url ? 1 : 0),
+    extrait: e.description ? extraitTexte(texteBrutDepuis(e.description), 110) : '' })).join('');
 
   grille.querySelectorAll('.news-carte').forEach(carte => {
     carte.addEventListener('click', () => ouvrirEvenementModal(parseInt(carte.dataset.index)));

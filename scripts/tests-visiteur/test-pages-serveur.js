@@ -78,6 +78,12 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
       const d = html && donneesDe(html, bloc);
       ok(!!d && verifier(d), chemin + ' : les données sont dans la page');
       ok(!/<img src=x onerror/.test(html), chemin + ' : rien d’injectable');
+      // étape A (01/11/2026) : partenaires — les cartes (noms) sont dans le HTML, avant tout programme
+      if (page === 'partenaires') {
+        const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
+        const noms = [...visible.matchAll(/<div class="news-corps"><div class="news-date">[^<]*<\/div><h3>([^<]*)<\/h3>/g)].map((m) => m[1]);
+        ok(noms.length === 2, chemin + ' : les cartes des partenaires (noms) sont dans le HTML avant tout programme ' + noms.join(' | '));
+      }
       ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache');
     }
     ok(await demander(page, { headers: { 'x-ma2m-remplie': '1' } }) === undefined, page + ' : sa propre demande de la page passe sans boucle');

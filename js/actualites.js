@@ -10,7 +10,7 @@ function libelleCategorieActu(cat) {
 }
 
 function formatDateActu(dateStr) {
-  return new Date(dateStr).toLocaleDateString(EN ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return window.RenduPublications.dateLongue(dateStr, EN);  // (js/rendu-publications.js)
 }
 
 function afficherFiltresCategories(data) {
@@ -59,42 +59,14 @@ async function chargerActualites() {
 
   // Le dernier article publié est mis en avant séparément, dans un grand bloc "À la une".
   const une = data[0];
-  uneZone.innerHTML = `
-    <div class="news-une reveal" data-index="0">
-      <img src="${echapperHtml(urlLegere(une.image_url))}" loading="lazy" alt="${echapperHtml(une.titre || '')}">
-      <div class="news-une-scrim"></div>
-      <div class="news-une-corps">
-        <span class="news-une-badge">★ ${T('À la une', 'Featured')}</span>
-        ${une.categorie ? `<span class="news-categorie">${echapperHtml(une.categorie)}</span>` : ''}
-        <div class="news-date">${formatDateActu(une.created_at)}</div>
-        ${une.titre ? `<h2>${echapperHtml(une.titre)}</h2>` : ''}
-        ${une.commentaire ? `<p>${echapperHtml(extraitTexte(texteBrutDepuis(une.commentaire), 180))}</p>` : ''}
-        <span class="news-lire">${T('Lire l\'article →', 'Read Article →')}</span>
-      </div>
-    </div>
-  `;
+  // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
+  const R = window.RenduPublications;
+  uneZone.innerHTML = R.une(une, { en: EN, sorte: 'actualite', photo: urlLegere(une.image_url), extrait: une.commentaire ? extraitTexte(texteBrutDepuis(une.commentaire), 180) : '' });
   uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirActuModal(0));
 
   const reste = data.slice(1);
-  grille.innerHTML = reste.map((a, i) => {
-    const indexReel = i + 1;
-    const nbPhotos = compteurParActu[a.id] || (a.image_url ? 1 : 0);
-    return `
-    <div class="news-carte reveal" data-index="${indexReel}" data-categorie="${echapperHtml(a.categorie || '')}">
-      <div class="news-img">
-        <img src="${echapperHtml(urlLegere(a.image_url))}" loading="lazy" alt="${echapperHtml(a.titre || '')}">
-        ${a.video_url ? '<span class="news-play">▶</span>' : ''}
-        ${nbPhotos > 1 ? `<span class="news-compteur-photos">${nbPhotos}</span>` : ''}
-      </div>
-      <div class="news-corps">
-        ${a.categorie ? `<span class="news-categorie">${echapperHtml(a.categorie)}</span>` : ''}
-        <div class="news-date">${formatDateActu(a.created_at)}</div>
-        ${a.titre ? `<h3>${echapperHtml(a.titre)}</h3>` : ''}
-        ${a.commentaire ? `<p class="news-extrait">${echapperHtml(extraitTexte(texteBrutDepuis(a.commentaire), 110))}</p>` : ''}
-        <span class="news-lire">${T('Lire la suite →', 'Read More →')}</span>
-      </div>
-    </div>
-  `; }).join('');
+  grille.innerHTML = reste.map((a, i) => R.carte(a, i + 1, { en: EN, sorte: 'actualite', photo: urlLegere(a.image_url), nbPhotos: compteurParActu[a.id] || (a.image_url ? 1 : 0),
+    extrait: a.commentaire ? extraitTexte(texteBrutDepuis(a.commentaire), 110) : '' })).join('');
 
   grille.querySelectorAll('.news-carte').forEach(carte => {
     carte.addEventListener('click', () => ouvrirActuModal(parseInt(carte.dataset.index)));

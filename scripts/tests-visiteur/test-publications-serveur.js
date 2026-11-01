@@ -61,6 +61,11 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     ok(d && d.liste.length === 2 && d.photos.length === nbPhotos - 1, chemin + ' : la liste et les photos sont dans la page');
     ok(html.includes('<link rel="preload" as="image" fetchpriority="high" href="' + une + '">'), chemin + ' : la photo « À la une » est annoncée dans l’en-tête');
     ok(!/<img src=x onerror/.test(html), chemin + ' : un titre avec des signes spéciaux ne peut rien injecter');
+    // étape A (01/11/2026) : les CARTES (titres, dates, photos) sont écrites dans le HTML, avant tout programme
+    const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
+    ok(/<div class="news-une reveal" data-index="0">/.test(visible) && /<div class="news-carte reveal" data-index="1"/.test(visible) && /<h2>[^<]+<\/h2>/.test(visible) && /<div class="news-date">[^<]+<\/div>/.test(visible),
+      chemin + ' : « À la une » et les cartes (titres, dates) sont dans le HTML avant tout programme');
+    ok(!/<h3>Atelier <img/.test(visible) && (!/actualites/.test(chemin) || /<h3>Atelier &lt;img src=x onerror=alert\(1\)&gt;<\/h3>/.test(visible)), chemin + ' : titre piégé écrit sans danger');
     ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache (un article publié se voit tout de suite)');
   }
   ok(await demander('actualites', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
