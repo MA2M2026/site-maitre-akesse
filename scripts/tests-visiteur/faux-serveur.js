@@ -130,6 +130,19 @@ function brancher(page, donnees, journal) {
     page.route(/127\.0\.0\.1:\d+\/api\//, async (route) => {
       const u = new URL(route.request().url());
       journal.push(['API', u.pathname, route.request().postData()]);
+      // formulaires publics passés par le serveur (anti-robots, Extension 152) : la base simulée les note comme
+      // avant (« POST table ») ; donnees.formulaire = (corps) => réponse pour imiter un refus (robot, limite)
+      if (u.pathname === '/api/portail' && !(donnees.api && donnees.api['/api/portail'])) {
+        const corps = JSON.parse(route.request().postData() || '{}');
+        if (corps.action === 'formulaire') {
+          journal.push(['ANTI-ROBOT', corps.table, corps.jeton || '']);
+          const refus = typeof donnees.formulaire === 'function' ? donnees.formulaire(corps) : null;
+          if (refus) return route.fulfill({ status: refus.statut || 403, contentType: 'application/json', body: JSON.stringify(refus) });
+          journal.push(['POST', corps.table, '', JSON.stringify(corps.ligne)]);
+          if (donnees.memoriser) (donnees.tables[corps.table] = donnees.tables[corps.table] || []).push(Object.assign({}, corps.ligne));
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: (corps.ligne && corps.ligne.id) || 'nouveau-' + journal.length }) });
+        }
+      }
       const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
       const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 36000, email: 'admin@test.ci' }) + '.c2lnbmF0dXJl';
       const repPortail = portail && u.pathname === '/api/connexion-protegee' ? (() => { const x = sessionPortail(portail.aal || 'aal1'); return { access_token: x.access_token, refresh_token: x.refresh_token }; })() : null;
@@ -140,6 +153,9 @@ function brancher(page, donnees, journal) {
       const statut = (rep && rep.statut) || 200; if (rep && rep.statut) { rep = Object.assign({}, rep); delete rep.statut; }
       route.fulfill({ status: statut, contentType: 'application/json', body: JSON.stringify(rep) });
     }),
+    // Cloudflare Turnstile (anti-robots) simulé : contrôle invisible réussi, jeton « jeton-essai »
+    page.route(/challenges\.cloudflare\.com\/turnstile\//, (route) => route.fulfill({ status: 200, contentType: 'text/javascript',
+      body: 'window.turnstile={render:function(el,o){setTimeout(function(){o.callback("jeton-essai")},20);return "w1"},remove:function(){},reset:function(){}};' })),
     page.route(/api\.emailjs\.com/, async (route) => { journal.push(['EMAIL', route.request().postData()]); route.fulfill({ status: 200, body: 'OK' }); })
   ]));
 }

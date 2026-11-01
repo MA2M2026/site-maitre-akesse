@@ -4190,3 +4190,15 @@ Mesure : chaque page publique ouverte comme un visiteur ne doit plus rien demand
   `traductionsDe`, js/app.js) — 26 Ko le 01/11/2026 ; si la table grossit beaucoup, ne poser que les textes de la page.
 Chaque donnée manquante (base lente ou en panne) : la page la lit elle-même comme avant.
 Essais : `test-dynamique.js`, `test-accueil-serveur.js`, `test-fiche-serveur.js`, `test-book-serveur.js`.
+
+## Anti-robots des formulaires publics (01/11/2026, Extension 152)
+
+Candidature, Contact et Demande d'un recruteur : `insererAvecPatience` (js/app.js) obtient un jeton Cloudflare
+Turnstile (clé du site, publique, dans `CLE_SITE_TURNSTILE` ; contrôle invisible, une case n'apparaît en bas de l'écran
+que si Cloudflare doute) puis envoie à `api/portail.js` (action `formulaire`), qui vérifie le jeton avec
+`TURNSTILE_SECRET_KEY` (variable Vercel de la propriétaire) et enregistre par `formulaire_public_enregistrer`
+(`supabase-anti-robots.sql` : mêmes limites qu'avant par minute et par adresse, casting ouvert, statut ;
+plus d'écriture directe des visiteurs ; liste des mannequins d'une demande seulement pour une demande de moins de
+15 minutes). SQL pas encore collé : le serveur enregistre quand même (repli). Retour en arrière :
+`supabase-anti-robots-retour.sql`. CSP : `https://challenges.cloudflare.com` (script-src, frame-src).
+Essais : `essais-anti-robots.sql`, `test-anti-robots.js` ; la base simulée des tests (faux-serveur.js) imite Turnstile.

@@ -218,6 +218,52 @@ async function envoisConvocations(req, res) {
   }
 }
 
+// ---------- Formulaires publics (Extension 152, anti-robots, 01/11/2026) ----------
+// Candidature, Contact, Demande d'un recruteur : le navigateur envoie la ligne et le jeton Cloudflare Turnstile ;
+// le serveur vérifie le jeton (clé secrète TURNSTILE_SECRET_KEY, jamais dans le navigateur), puis enregistre par
+// formulaire_public_enregistrer (mêmes limites qu'avant : par minute, par adresse, casting ouvert).
+const TABLES_FORMULAIRES = ['casting_applications', 'messages_contact', 'recruiter_requests'];
+async function jetonAntiRobotValide(jeton, ip) {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) { await noterAuJournal('[Anti-robots] clé secrète TURNSTILE_SECRET_KEY absente : formulaire accepté sans vérification', 'portail', '/api/portail').catch(() => {}); return true; }
+  if (typeof jeton !== 'string' || !jeton || jeton.length > 2048) return false;
+  const corps = new URLSearchParams({ secret, response: jeton });
+  if (ip) corps.set('remoteip', ip);
+  const rep = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: corps });
+  const r = await rep.json().catch(() => ({}));
+  return r.success === true;
+}
+async function formulairePublic(req, corps, res) {
+  const table = String(corps.table || ''), ligne = corps.ligne;
+  if (!TABLES_FORMULAIRES.includes(table) || !ligne || typeof ligne !== 'object' || Array.isArray(ligne) || JSON.stringify(ligne).length > 30000) {
+    return res.status(400).json({ error: 'Formulaire invalide.' });
+  }
+  const ip = extraireIp(req) || '';
+  if (!(await jetonAntiRobotValide(corps.jeton, ip))) {
+    return res.status(403).json({ error: 'La vérification anti-robot n’a pas abouti : rechargez la page puis réessayez.', robot: true });
+  }
+  try {
+    const id = await rpcService('formulaire_public_enregistrer', { p_table: table, p_ligne: ligne, p_ip: ip });
+    return res.status(200).json({ ok: true, id });
+  } catch (e) {
+    const m = String((e && e.message) || e);
+    if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
+    if (/duplicate key|23505/.test(m) && ligne.id) return res.status(200).json({ ok: true, id: ligne.id });  // (déjà enregistré : réponse perdue)
+    if (/Aucun casting ouvert/.test(m)) return res.status(403).json({ error: 'Aucun casting n’est ouvert en ce moment.' });
+    // (SQL de l'Extension 152 pas encore collé : la fonction n'existe pas ; l'envoi passe quand même, comme avant,
+    // pour que la mise en ligne du code avant le SQL ne bloque jamais les candidats)
+    if (/Could not find the function|PGRST202|does not exist/.test(m)) {
+      const propre = Object.assign({}, ligne); delete propre.status;
+      const rep = await fetch(SUPABASE_URL + '/rest/v1/' + table, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(propre) });
+      if (rep.ok || (rep.status === 409 && ligne.id)) return res.status(200).json({ ok: true, id: ligne.id || null });
+      await noterAuJournal('[Formulaire ' + table + '] envoi de secours refusé (' + rep.status + ')', 'portail', '/api/portail').catch(() => {});
+      return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.' });
+    }
+    await noterAuJournal('[Formulaire ' + table + '] ' + m, 'portail', '/api/portail').catch(() => {});
+    return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.' });
+  }
+}
+
 async function demandeAcces(corps, res) {
   const nom = String(corps.nom || '').trim().slice(0, 80), email = String(corps.email || '').trim().toLowerCase();
   const telephone = String(corps.telephone || '').trim().slice(0, 20), motdepasse = String(corps.motdepasse || '');
@@ -268,6 +314,7 @@ module.exports = async function handler(req, res) {
     // n'a AUCUN accès tant que l'administratrice principale n'a pas accepté (staff_demandes ; la base refuse
     // tout le reste). Elle est prévenue par e-mail. 10 demandes en attente au plus par heure (contre les robots).
     if (action === 'demande_acces') return await demandeAcces(corps, res);
+    if (action === 'formulaire') return await formulairePublic(req, corps, res);
     // ---------- administrateur principal ----------
     if (['inviter', 'reinitialiser_mfa', 'acces'].includes(action)) {
       const appareil = String(req.headers['x-appareil'] || '');

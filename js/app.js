@@ -2941,10 +2941,55 @@ function avecDelai(promesse, ms) {
 // Wi-Fi), un envoi refusé pour cette seule raison était perdu avec « Erreur lors de
 // l'envoi » (constaté lors de l'audit du 30/09). Il est désormais retenté tout seul,
 // en affichant un compte à rebours. Les autres erreurs sont renvoyées telles quelles.
+// ---- Anti-robots des formulaires publics (Extension 152, 01/11/2026, clé Cloudflare Turnstile de la propriétaire) ----
+// Candidature, Contact et Demande d'un recruteur passent par le serveur (api/portail.js, action « formulaire »),
+// qui vérifie le jeton Turnstile. Le contrôle est invisible pour la plupart des visiteurs ; une case à cocher
+// n'apparaît (en bas de l'écran) que si Cloudflare a un doute.
+const CLE_SITE_TURNSTILE = '0x4AAAAAAFvunC6ncjwuy5if';  // (clé publique ; la clé secrète est seulement sur le serveur)
+const TABLES_ANTI_ROBOTS = ['casting_applications', 'messages_contact', 'recruiter_requests'];
+let chargementTurnstile = null;
+function chargerTurnstile() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (!chargementTurnstile) chargementTurnstile = new Promise((ok, ko) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true; s.onload = () => (window.turnstile ? ok(window.turnstile) : ko(new Error('Turnstile absent')));
+    s.onerror = () => { chargementTurnstile = null; ko(new Error('Turnstile injoignable')); };
+    document.head.appendChild(s);
+  });
+  return chargementTurnstile;
+}
+// un jeton neuf (à usage unique) ; null si Cloudflare ne répond pas (le serveur dira alors ce qu'il faut faire)
+async function jetonAntiRobot() {
+  try {
+    const ts = await chargerTurnstile();
+    return await new Promise((ok) => {
+      const boite = document.createElement('div');
+      boite.className = 'anti-robot';
+      Object.assign(boite.style, { position: 'fixed', left: '50%', bottom: '16px', transform: 'translateX(-50%)', zIndex: '100000' });
+      document.body.appendChild(boite);
+      let fini = false;
+      const finir = (j) => { if (fini) return; fini = true; clearTimeout(minuteur); try { ts.remove(id); } catch (e) { /* déjà retiré */ } boite.remove(); ok(j); };
+      const minuteur = setTimeout(() => finir(null), 60000);
+      const id = ts.render(boite, { sitekey: CLE_SITE_TURNSTILE, appearance: 'interaction-only', language: document.documentElement.lang === 'en' ? 'en' : 'fr',
+        callback: (j) => finir(j), 'error-callback': () => finir(null), 'expired-callback': () => finir(null) });
+    });
+  } catch (e) { return null; }
+}
+async function envoyerFormulairePublic(table, ligne) {
+  const jeton = await jetonAntiRobot();
+  const rep = await fetch('/api/portail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'formulaire', table, ligne, jeton }) })
+    .catch(() => null);
+  if (!rep) return { error: { message: 'Connexion interrompue.' } };
+  const r = await rep.json().catch(() => ({}));
+  if (rep.ok) return { error: null };
+  // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
+  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.' } };
+}
 async function insererAvecPatience(table, ligne, surAttente) {
   const attentes = [15, 25, 35];
   for (let essai = 0; ; essai++) {
-    const { error } = await sb.from(table).insert(ligne);
+    const { error } = TABLES_ANTI_ROBOTS.includes(table) ? await envoyerFormulairePublic(table, ligne) : await sb.from(table).insert(ligne);
     if (!error) return { error: null };
     // Déjà enregistré lors d'un essai précédent dont la réponse s'est perdue.
     if (error.code === '23505' && ligne && ligne.id) return { error: null };
