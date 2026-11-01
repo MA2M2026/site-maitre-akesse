@@ -4120,3 +4120,16 @@ sans arrêt). Lien non valable ou base lente : la page part comme avant. `pageRe
 `<body class=…>`. La page « Ma sélection » (`selection.html`) n'est pas concernée : la sélection est gardée
 dans le navigateur du visiteur, le serveur ne la connaît pas. Essai : `test-liens-serveur.js`.
 
+## « Créer mon compte » pour l'équipe (01/11/2026, décision de la propriétaire)
+
+L'invitation par e-mail ne partait pas (service d'e-mails gratuit de Supabase : très peu d'envois, adresses
+hors de l'équipe Supabase refusées) et créait des comptes sans mot de passe. Remplacée par : écran de
+connexion → « Créer mon compte » (nom, e-mail, téléphone, mot de passe de 12 caractères au moins) ;
+`api/portail.js`, action `demande_acces` (sans connexion) : compte créé confirmé (aucun e-mail à recevoir),
+demande notée dans `staff_demandes` (`supabase-demandes-acces.sql`, Extension 150), la propriétaire prévenue
+par e-mail (EmailJS du serveur) ; 10 demandes au plus par heure ; adresse déjà connue refusée. AUCUN accès tant
+que la propriétaire n'a pas accepté dans Sécurité › Comptes et rôles (`portail_demande_accepter` avec le
+rôle choisi, code récent exigé ; `portail_demande_refuser`) : sans ligne `staff_profiles`, la base refuse tout.
+Double authentification obligatoire à la première connexion (inchangé). La connexion d'une personne en
+attente affiche « l'agence doit encore l'accepter ». Essais : `essais-demandes-acces.sql`, `test-demandes-acces.js`.
+

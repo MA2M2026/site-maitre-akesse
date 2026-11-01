@@ -58,7 +58,14 @@ module.exports = async function handler(req, res) {
       const rep = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?user_id=eq.' + encodeURIComponent(resultatAuth.user.id) + '&select=actif', { headers: enTetesService() });
       const lignes = rep.ok ? await rep.json() : null;
       if (!lignes || !lignes.length || !lignes[0].actif) {
-        res.status(403).json({ error: lignes && lignes.length ? 'Votre accès à l’Administration a été coupé.' : "Ce compte n'a pas accès à l'Administration." });
+        // compte créé avec « Créer mon compte » (Extension 150) : demande en attente ou refusée
+        let message = lignes && lignes.length ? 'Votre accès à l’Administration a été coupé.' : "Ce compte n'a pas accès à l'Administration.";
+        if (lignes && !lignes.length) {
+          const d = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes?select=statut&user_id=eq.' + encodeURIComponent(resultatAuth.user.id), { headers: enTetesService() }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+          if (d[0] && d[0].statut === 'en_attente') message = 'Votre demande d’accès est bien arrivée : l’agence doit encore l’accepter. Réessayez plus tard.';
+          else if (d[0] && d[0].statut === 'refusee') message = 'Votre demande d’accès n’a pas été acceptée. Contactez l’agence.';
+        }
+        res.status(403).json({ error: message });
         return;
       }
     }

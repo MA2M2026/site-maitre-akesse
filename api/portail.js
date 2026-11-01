@@ -196,6 +196,39 @@ async function envoisConvocations(req, res) {
   }
 }
 
+async function demandeAcces(corps, res) {
+  const nom = String(corps.nom || '').trim().slice(0, 80), email = String(corps.email || '').trim().toLowerCase();
+  const telephone = String(corps.telephone || '').trim().slice(0, 20), motdepasse = String(corps.motdepasse || '');
+  if (nom.length < 2 || !EMAIL_VALIDE.test(email)) return res.status(400).json({ error: 'Nom et e-mail obligatoires.' });
+  if (telephone && !/^[0-9+ ]{6,20}$/.test(telephone)) return res.status(400).json({ error: 'Numéro de téléphone invalide.' });
+  if (motdepasse.length < 12) return res.status(400).json({ error: 'Mot de passe : 12 caractères au moins.' });
+  const depuis = new Date(Date.now() - 3600e3).toISOString();
+  const recentes = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes?select=id&cree_le=gte.' + encodeURIComponent(depuis), { headers: enTetesService() });
+  if (!recentes.ok) return res.status(503).json({ error: 'Création de compte pas encore activée : réessayez plus tard.' });
+  if ((await recentes.json()).length >= 10) return res.status(429).json({ error: 'Trop de demandes en ce moment : réessayez dans une heure.' });
+  if (await rpcService('portail_utilisateur_par_email', { p_email: email })) {
+    return res.status(409).json({ error: 'Un compte existe déjà avec cette adresse : connectez-vous, ou contactez l’agence.' });
+  }
+  const compte = await adminAuth('admin/users', 'POST', { email, password: motdepasse, email_confirm: true, user_metadata: { nom, portail_demande: true, portail_mdp_choisi: true } });
+  const note = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes', {
+    method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ user_id: compte.id, nom, email, telephone: telephone || null })
+  });
+  if (!note.ok) {
+    // (demande non notée : le compte créé est retiré, la personne peut réessayer)
+    await adminAuth('admin/users/' + compte.id, 'DELETE').catch(() => {});
+    return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' });
+  }
+  // l'administratrice principale est prévenue (e-mail du serveur, comme les autres alertes)
+  const principale = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=email,nom&role=eq.principal', { headers: enTetesService() }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+  const cle = process.env.EMAILJS_PRIVATE_KEY, destinataire = (principale[0] && principale[0].email) || EMAIL_AGENCE;
+  const envoi = cle ? await envoyerEmailServeur(cle, destinataire, (principale[0] && principale[0].nom) || 'Maître Akesse Model Management',
+    '🔑 Nouvelle demande d’accès à l’Administration\n\nNom : ' + nom + '\nE-mail : ' + email + (telephone ? '\nTéléphone : ' + telephone : '') +
+    '\n\nCette personne n’a encore AUCUN accès. Pour l’accepter (et choisir son rôle) ou la refuser : Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles.') : { ok: false };
+  if (!envoi.ok) await noterAuJournal('[Demande d’accès] alerte non partie pour ' + email + (cle ? '' : ' (clé EmailJS absente)'), 'demandes');
+  return res.status(200).json({ ok: true });
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'GET' && req.query && req.query.tache === 'convocations') return envoisConvocations(req, res);
   if (req.method === 'GET') return relancesDuJour(req, res);
@@ -208,6 +241,11 @@ module.exports = async function handler(req, res) {
   // middleware, mises en ligne bloquées le 05/10 puis le 19/10/2026)
   if (action === 'creer_admin') return require('./_creer-admin.js')(req, res);
   try {
+    // ---------- « Créer mon compte » de l'équipe (Extension 150, 01/11/2026) : sans compte, sans e-mail à recevoir ----------
+    // Le compte est créé tout de suite (mot de passe choisi par la personne, aucun lien à ouvrir), mais il
+    // n'a AUCUN accès tant que l'administratrice principale n'a pas accepté (staff_demandes ; la base refuse
+    // tout le reste). Elle est prévenue par e-mail. 10 demandes en attente au plus par heure (contre les robots).
+    if (action === 'demande_acces') return await demandeAcces(corps, res);
     // ---------- administrateur principal ----------
     if (['inviter', 'reinitialiser_mfa', 'acces'].includes(action)) {
       const appareil = String(req.headers['x-appareil'] || '');

@@ -8,14 +8,20 @@
   const NAV = [['comptes', 'Comptes et rôles', principal], ['delegations', 'Délégations', principal], ['appareils', 'Appareils et sessions', principal], ['journal', 'Journal d’audit', principal], ['codes', 'Mes codes de secours']];
   const MODULES = { site: 'Administration du site', paiements: 'Suivi des paiements', compta: 'Comptabilité', noms_payeurs: 'Noms des payeurs (comptable)', contacts_prives: 'Contacts privés des mannequins' };
 
+  // Demandes d'accès (« Créer mon compte », Extension 150, 01/11/2026 : remplace l'invitation par e-mail)
+  const ROLES_DEMANDE = [['site', 'Administrateur du site'], ['caisse', 'Responsable des encaissements'], ['compta', 'Comptable']];
+  function carteDemandes(demandes) {
+    const attente = demandes.filter((d) => d.statut === 'en_attente');
+    return '<div class="carte"><h2>Demandes d’accès</h2><p class="doux">Une nouvelle personne de l’équipe crée elle-même son compte (« Créer mon compte » sur l’écran de connexion) ; vous êtes prévenue par e-mail. Elle n’a aucun accès tant que vous n’avez pas accepté. À sa première connexion, elle active sa double authentification.</p>' +
+      (attente.length ? P.tableau(['Personne', 'Demandée le', 'Rôle', ''], attente.map((d) => '<tr><td><b>' + P.esc(d.nom) + '</b><div class="petit-texte doux">' + P.esc(d.email) + (d.telephone ? ' · ' + P.esc(d.telephone) : '') + '</div></td>' +
+        '<td>' + P.dateHeure(d.cree_le) + '</td><td><select id="role-' + P.esc(d.id) + '" aria-label="Rôle de ' + P.esc(d.nom) + '">' + ROLES_DEMANDE.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('') + '</select></td>' +
+        '<td class="ligne"><button class="btn rouge petit" data-action="demande-accepter" data-id="' + P.esc(d.id) + '">Accepter</button><button class="btn petit" data-action="demande-refuser" data-id="' + P.esc(d.id) + '" data-nom="' + P.esc(d.nom) + '">Refuser</button></td></tr>'))
+        : '<p class="doux">Aucune demande en attente.</p>') + '</div>';
+  }
   async function comptes() {
-    const liste = await P.bd(sb.from('staff_profiles').select('*').order('cree_le'));
+    const [liste, demandes] = await Promise.all([P.bd(sb.from('staff_profiles').select('*').order('cree_le')), P.rpc('portail_demandes_liste').catch(() => null)]);
     return P.entete('Comptes et rôles', P.pastille('Administrateur principal seul', 'neutre')) +
-      '<div class="carte"><h2>Inviter une personne</h2><p class="doux">Elle reçoit un lien d’invitation par e-mail (valable 24 heures), choisit son mot de passe (12 caractères au moins) et active sa double authentification. Aucune inscription libre n’est possible.</p>' +
-      '<form class="f" data-form="securite-inviter" style="margin-top:12px"><label class="fl" for="iv-nom">Nom<input id="iv-nom" name="nom" required></label>' +
-      '<label class="fl" for="iv-mail">E-mail<input id="iv-mail" name="email" type="email" required></label>' +
-      '<label class="fl" for="iv-role">Rôle<select id="iv-role" name="role"><option value="site">Administrateur du site</option><option value="caisse">Responsable des encaissements</option><option value="compta">Comptable</option></select></label>' +
-      '<button class="btn rouge" type="submit">Envoyer l’invitation</button></form></div>' +
+      (Array.isArray(demandes) ? carteDemandes(demandes) : '<div class="carte"><h2>Demandes d’accès</h2><p class="doux">Pas encore activées : il faut d’abord coller le fichier <b>supabase-demandes-acces.sql</b> dans Supabase.</p></div>') +
       P.tableau(['Personne', 'Rôle', 'Accès', 'Depuis', 'Actions'], liste.map((s) => '<tr><td><b>' + P.esc(s.nom) + '</b><div class="petit-texte doux">' + P.esc(s.email) + '</div></td>' +
         '<td>' + (s.role === 'principal' ? P.esc(P.ROLES.principal) : '<select data-change="securite-role" data-id="' + s.user_id + '" aria-label="Rôle de ' + P.esc(s.nom) + '">' +
           ['site', 'caisse', 'compta'].map((r) => '<option value="' + r + '"' + (r === s.role ? ' selected' : '') + '>' + P.esc(P.ROLES[r]) + '</option>').join('') + '</select>') + '</td>' +
@@ -24,9 +30,20 @@
           '<button class="btn petit" data-action="securite-actif" data-id="' + s.user_id + '" data-actif="' + (s.actif ? '1' : '0') + '">' + (s.actif ? 'Couper l’accès' : 'Rétablir') + '</button>' +
           '<button class="btn petit" data-action="securite-mfa" data-id="' + s.user_id + '" data-nom="' + P.esc(s.nom) + '">Réinitialiser la double authentification</button>') + '</td></tr>'));
   }
-  P.formulaires['securite-inviter'] = async (f) => {
-    await P.sensible(() => P.serveur('inviter', { nom: String(f.get('nom')).trim(), email: String(f.get('email')).trim().toLowerCase(), role: f.get('role') }));
-    P.message('Invitation envoyée à ' + f.get('email') + '.');
+  P.actions['demande-accepter'] = async (el) => {
+    const id = el.getAttribute('data-id'), role = (document.getElementById('role-' + id) || {}).value || 'site';
+    try {
+      await P.sensible(() => P.rpc('portail_demande_accepter', { p_id: id, p_role: role }));
+      P.message('Demande acceptée : la personne peut se connecter et activer sa double authentification.');
+    } catch (e) { P.message(P.erreurTexte(e)); }
+    P.afficher();
+  };
+  P.actions['demande-refuser'] = async (el) => {
+    if (!confirm('Refuser la demande de ' + el.getAttribute('data-nom') + ' ? Elle n’aura aucun accès.')) return;
+    try {
+      await P.rpc('portail_demande_refuser', { p_id: el.getAttribute('data-id') });
+      P.message('Demande refusée.');
+    } catch (e) { P.message(P.erreurTexte(e)); }
     P.afficher();
   };
   P.changements['securite-role'] = async (el) => {

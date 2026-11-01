@@ -125,7 +125,24 @@
         '<label class="fl" for="cx-mdp">Mot de passe<input id="cx-mdp" name="motdepasse" type="password" autocomplete="current-password" required></label>' +
         (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
         '<button class="btn rouge" type="submit">Continuer</button>' +
-        '<button class="retour" type="button" data-action="oubli">Mot de passe oublié ?</button></form>';
+        '<button class="retour" type="button" data-action="oubli">Mot de passe oublié ?</button>' +
+        '<button class="retour" type="button" data-action="demande-acces">Nouveau dans l’équipe ? Créer mon compte</button></form>';
+    } else if (etape === 'demande') {
+      // « Créer mon compte » (Extension 150, 01/11/2026) : la personne crée son compte ; l'agence accepte ensuite
+      droite = '<form data-form="demande-acces" class="grille" style="gap:14px"><div><div class="etape">Équipe de l’agence</div><h2 style="font-size:22px">Créer mon compte</h2></div>' +
+        '<p class="doux">Votre compte est créé tout de suite, mais il n’ouvre l’Administration qu’une fois accepté par l’agence (elle est prévenue). À la première connexion, vous activerez la double authentification.</p>' +
+        '<label class="fl" for="da-nom">Nom et prénom<input id="da-nom" name="nom" autocomplete="name" required minlength="2" maxlength="80"></label>' +
+        '<label class="fl" for="da-mail">Adresse e-mail<input id="da-mail" name="email" type="email" autocomplete="username" required></label>' +
+        '<label class="fl" for="da-tel">Téléphone (facultatif)<input id="da-tel" name="telephone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20"></label>' +
+        '<label class="fl" for="da-m1">Mot de passe (12 caractères au moins)<input id="da-m1" name="m1" type="password" minlength="12" autocomplete="new-password" required></label>' +
+        '<label class="fl" for="da-m2">Le même, une seconde fois<input id="da-m2" name="m2" type="password" minlength="12" autocomplete="new-password" required></label>' +
+        (extra ? '<div class="note erreur" role="alert">' + P.esc(extra) + '</div>' : '') +
+        '<button class="btn rouge" type="submit">Créer mon compte</button>' +
+        '<button class="retour" type="button" data-action="deconnexion">J’ai déjà un compte : me connecter</button></form>';
+    } else if (etape === 'demande-envoyee') {
+      droite = '<div class="grille" style="gap:14px"><div><div class="etape">Équipe de l’agence</div><h2 style="font-size:22px">Demande envoyée ✓</h2></div>' +
+        '<p>Votre compte est créé. L’agence a été prévenue : dès qu’elle l’aura accepté, connectez-vous avec votre e-mail et votre mot de passe.</p>' +
+        '<button class="btn" data-action="deconnexion">Retour à la connexion</button></div>';
     } else if (etape === 'code') {
       droite = '<form data-form="code" class="grille" style="gap:14px"><div><div class="etape">Étape 2 sur 2</div><h2 style="font-size:22px">Double authentification</h2></div>' +
         '<label class="fl" for="cx-code">Code de l’application d’authentification (6 chiffres)<input id="cx-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>' +
@@ -269,6 +286,27 @@
     } catch (e) {
       ecranConnexion('nouveau-mdp', P.erreurTexte(e));
     }
+  };
+  P.actions['demande-acces'] = () => ecranConnexion('demande');
+  // (message d'erreur sous le formulaire, sans le vider : la personne ne retape pas tout)
+  function erreurDemande(texte) {
+    const form = document.querySelector('form[data-form="demande-acces"]');
+    if (!form) return ecranConnexion('demande', texte);
+    let note = form.querySelector('.note.erreur');
+    if (!note) { note = document.createElement('div'); note.className = 'note erreur'; note.setAttribute('role', 'alert'); form.querySelector('[type=submit]').before(note); }
+    note.textContent = texte;
+  }
+  P.formulaires['demande-acces'] = async (f) => {
+    const m1 = String(f.get('m1')), m2 = String(f.get('m2'));
+    if (m1 !== m2) return erreurDemande('Les deux mots de passe ne sont pas identiques.');
+    if (!P.motDePasseValable(m1)) return erreurDemande('12 caractères au moins, et pas un mot de passe courant.');
+    try {
+      const rep = await fetch('/api/portail', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'demande_acces', nom: String(f.get('nom')).trim(), email: String(f.get('email')).trim().toLowerCase(), telephone: String(f.get('telephone') || '').trim(), motdepasse: m1 }) });
+      const corps = await rep.json().catch(() => ({}));
+      if (!rep.ok) return erreurDemande(corps.error || 'Demande non envoyée : réessayez dans un instant.');
+      ecranConnexion('demande-envoyee');
+    } catch (e) { erreurDemande(P.erreurTexte(e)); }
   };
   P.actions.oubli = async () => {
     const champ = document.getElementById('cx-mail');
