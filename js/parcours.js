@@ -244,7 +244,7 @@
   return {
     MOIS_HISTOIRE, mettreEnScene, decouperTitre, afficher, cleMois,
     regler: (x) => { if (x.projets) projets = x.projets; if (x.photos) photos = x.photos; if (x.mois) moisChoisi = x.mois; if (x.tous !== undefined) tousLesVisages = x.tous; },
-    moisRecent: (fin) => { const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort(); return recents.length ? recents[recents.length - 1] : dateLocaleIso(fin).slice(0, 7); }
+    moisRecent: (fin) => { const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort((a, b) => a.localeCompare(b)); return recents.length ? recents[recents.length - 1] : dateLocaleIso(fin).slice(0, 7); }
   };
   }
   // Serveur : la page dessinée dans un petit document en mémoire ; renvoie chaque zone (contenu, caché ou non)
