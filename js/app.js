@@ -69,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   observerAjouts.observe(document.body, { childList: true, subtree: true });
 });
+// Outils partagés avec le serveur (js/partage.js, phase 2, 02/11/2026)
+const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure } = window.Partage;
+
 
 // Sécurité : neutralise tout HTML dans un texte avant de l'insérer dans la page
 // (protège contre les injections XSS via un nom, un titre, un commentaire...)
@@ -90,19 +93,8 @@ function echapperHtml(texte) {
 // valeur « Amateur » compte comme New Face). Sur le site public, la compcard et le CV,
 // « Professionnel » s'affiche « Main Board », comme dans les grandes agences.
 // Règle d'ancienneté : de 0 à 2 ans → New Face ; plus de 2 ans → Professionnel.
-function deriverNiveauMannequin(anneesExperience) {
-  const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
-    ? NaN : parseInt(anneesExperience, 10);
-  return !isNaN(annees) && annees > 2 ? 'Professionnel' : 'New Face';
-}
 // Niveau à utiliser pour un profil : la valeur enregistrée (Amateur → New Face), sinon la
 // règle d'ancienneté.
-function niveauNormalise(stocke, anneesExperience) {
-  if (stocke === 'Professionnel') return 'Professionnel';
-  if (stocke === 'New Face' || stocke === 'Amateur') return 'New Face';
-  return deriverNiveauMannequin(anneesExperience);
-}
-function libelleNiveauPublic(niveau) { return niveau === 'Professionnel' ? 'Main Board' : 'New Face'; }
 // Années couvertes par les expériences saisies (de la plus ancienne année à aujourd'hui).
 function anneesDepuisPremiereExperience(experiences) {
   const annees = (experiences || []).map(function (e) { const m = String((e && e.annee) || '').match(/(19|20)\d{2}/); return m ? parseInt(m[0], 10) : NaN; })
@@ -294,13 +286,6 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
 
 // Lien cliquable seulement pour une vraie adresse web (http/https) : bloque les liens piégés
 // du type « javascript:… » ou « data:… ». Partagé le 11/10/2026 (Actualités, fiche mannequin).
-function urlHttpSure(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(url, window.location.href);
-    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
-  } catch (e) { return null; }
-}
 
 // Pages publiques Actualités, Événements, Partenaires : si l'agence est connectée (session du
 // tableau de bord), révèle le panneau d'ajout (#admin-bloc). Partagé le 11/10/2026.
@@ -593,25 +578,8 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // Mesures impériales pour les recruteurs américains / britanniques (06/10/2026, fiche et
 // Compcard en anglais) : taille en pieds et pouces, mensurations en pouces, poids en livres,
 // pointure US — à côté des valeurs métriques, calculées automatiquement (rien à saisir).
-function enPieds(cm) {
-  const pouces = cm / 2.54; let pieds = Math.floor(pouces / 12); let reste = Math.round((pouces - pieds * 12) * 2) / 2;
-  if (reste >= 12) { pieds += 1; reste -= 12; }
-  return pieds + "'" + String(reste).replace('.5', '½') + '"';
-}
-function enPouces(cm) { return String(Math.round(cm / 2.54 * 2) / 2).replace('.5', '½') + '"'; }
-function enLivres(kg) { return Math.round(kg * 2.2046) + ' lbs'; }
-function pointureUS(eu, categorie) {
-  const n = parseFloat(String(eu || '').replace(',', '.'));
-  if (!n || n < 34 || n > 50) return '';
-  const us = categorie === 'homme' ? n - 33 : n - 30.5;
-  return 'US ' + String(Math.round(us * 2) / 2).replace('.5', '½');
-}
 // Carnation, yeux et cheveux sont saisis en français par les mannequins : traduits ici pour
 // les recruteurs internationaux (une valeur inconnue reste telle quelle).
-const TRADUCTIONS_EN = { 'claire': 'Light', 'métisse claire': 'Light medium', 'métisse foncée': 'Medium dark', 'foncée': 'Dark', 'très foncée': 'Very dark',
-  'marron': 'Brown', 'marron foncé': 'Dark brown', 'noir': 'Black', 'noire': 'Black', 'vert': 'Green', 'bleu': 'Blue', 'gris': 'Grey', 'noisette': 'Hazel',
-  'brun': 'Brown', 'châtain': 'Chestnut', 'blond': 'Blonde', 'roux': 'Red', 'gris / blanc': 'Grey / White', 'la tête rasée': 'Shaved', 'rasé': 'Shaved', 'tête rasée': 'Shaved' };
-function enAnglais(v) { const k = String(v || '').trim().toLowerCase(); return TRADUCTIONS_EN[k] || v; }
 // Textes saisis dans l'Administration (actualités, événements, agenda, partenaires, mot du
 // fondateur, présentations…) : sur les pages anglaises, leur version anglaise (table traductions_en,
 // supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
@@ -1039,24 +1007,8 @@ function projetsAvecNoms(data) { return window.Partage.projetsAvecNoms(data); }
 // mots contenu mot pour mot dans l'autre (« JNCC/ cacao fashion show » = « Cacao Fashion
 // Show ») — et, si elle a indiqué une année, la même année : « Abidjan Fashion Week 2023 »
 // ne remplace pas l'édition 2026. Un nom court (« Shooting ») ne remplace jamais rien.
-function cleProjet(titre) {
-  return String(titre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-    .replace(/\b(19|20)\d{2}\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
-}
-function anneesDe(texte) { return String(texte || '').match(/\b(19|20)\d{2}\b/g) || []; }
-function memeProjet(a, b) {
-  const x = cleProjet(a.titre || a.nom), y = cleProjet(b.titre || b.nom);
-  if (!x || !y) return false;
-  const [court, long] = x.length <= y.length ? [x, y] : [y, x];
-  const contenu = court.split(' ').length >= 3 && (' ' + long + ' ').includes(' ' + court + ' ');
-  if (x !== y && !contenu) return false;
-  const ansA = anneesDe((a.titre || a.nom) + ' ' + (a.periode || a.annee || ''));
-  const ansB = anneesDe((b.titre || b.nom) + ' ' + (b.periode || b.annee || ''));
-  return !ansA.length || !ansB.length || ansA.some(an => ansB.includes(an));
-}
 // Types de l'agenda qui comptent comme expérience professionnelle (pas les castings,
 // essayages, formations, masterclasses ni rencontres).
-const TYPES_EXPERIENCE_AGENDA = { defile: 'Défilé', show: 'Show', shooting: 'Shooting', evenement: 'Événement', autre: 'Projet' };
 // Projets de l'agence d'une mannequin, au format des expériences (table model_projects).
 // Une panne de lecture ne bloque jamais la page : la liste est alors simplement vide.
 // (parcoursServeur : parcours des 10 dernières années déjà posé dans la page par le serveur, 100 % dynamique)
@@ -1065,11 +1017,7 @@ async function ma2mExperiencesAgence(idMannequin, parcoursServeur) {
   try {
     const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
     const projets = parcoursServeur || await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
-    return projets.filter(p => p.type in TYPES_EXPERIENCE_AGENDA).map(p => {
-      const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
-      return { type_projet: EN ? libelleTypeAgenda(p.type, true) : TYPES_EXPERIENCE_AGENDA[p.type], titre: p.titre,
-        periode: mois.charAt(0).toUpperCase() + mois.slice(1), lieu: p.lieu || '', ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
-    });
+    return experiencesDepuisParcours(projets, EN);  // (js/partage.js)
   } catch (e) {
     if (window.signalerErreur) window.signalerErreur('Expériences avec l’agence : lecture', (e && e.message) || String(e));
     return [];
@@ -1077,10 +1025,6 @@ async function ma2mExperiencesAgence(idMannequin, parcoursServeur) {
 }
 // Projets de l'agence d'abord, puis les expériences de la mannequin qui ne les répètent pas.
 // Les deux listes peuvent être au format model_projects (titre, periode) ou CV (nom, annee).
-function estDoublonDe(e, agence) { return (agence || []).some(a => memeProjet(e, a)); }
-function fusionnerExperiences(agence, propres) {
-  return (agence || []).concat((propres || []).filter(e => !estDoublonDe(e, agence)));
-}
 // Format attendu par le CV (construireHtmlCv / construireCanvasCv).
 function experiencePourCv(e) {
   return e.titre !== undefined || e.type_projet !== undefined
@@ -1134,18 +1078,6 @@ function melanger(liste) {
 // profil. Les photos écartées du book ne comptent pas (le public ne les voit pas). Renvoie
 // aussi les photos choisies (null si aucune). L'aperçu des liens partagés (middleware.js)
 // a sa propre règle côté serveur.
-function photosAffichees(photos) {
-  const date = function (p) { const t = Date.parse(p.created_at); return isNaN(t) ? Infinity : t; };
-  const triees = (photos || []).filter(function (p) { return p.tri_statut !== 'ecartee'; }).sort(function (x, y) {
-    if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
-    if (date(x) !== date(y)) return date(x) - date(y);
-    const ix = String(x.id), iy = String(y.id);
-    return ix === iy ? 0 : (ix < iy ? -1 : 1);
-  });
-  const profil = triees[0] || null;
-  const couvertureChoisie = triees.find(function (p) { return p.photo_couverture; }) || null;
-  return { profil: profil, couverture: couvertureChoisie || profil, profilChoisi: !!(profil && profil.principale), couvertureChoisie: couvertureChoisie };
-}
 
 // Fiche mannequin FR/EN (journal du 07/10/2026 : « délai dépassé », « sb is not defined »
 // sur connexion faible) : second essai automatique avant d'afficher le bouton

@@ -138,6 +138,10 @@
       var idMain = (html.match(/<main[^>]*\sid="([^"]+)"/) || [])[1];
       if (!idMain) { idMain = 'contenu-principal'; html = html.replace(/<main(?=[\s>])/, '<main id="contenu-principal" tabindex="-1"'); }
       html = html.replace(/<body[^>]*>/, function (b) { return b + lienEvitement(en, idMain); });
+    } else if (html.indexOf('class="lien-evitement"') === -1 && /<div id="contenu"[\s>]/.test(html)) {
+      // (pages sans <main>, comme la fiche d'une mannequin : vers #contenu, comme js/confort.js)
+      html = html.replace(/<div id="contenu"(?![^>]*tabindex)/, '<div id="contenu" tabindex="-1"')
+        .replace(/<body[^>]*>/, function (b) { return b + lienEvitement(en, 'contenu'); });
     }
     if (['integrer-agence', 'tableau-de-bord'].indexOf(page) === -1 && html.indexOf('class="bandeau-integrer"') === -1) {
       html = html.replace(/<footer class="site-footer"/, function (f) { return bandeauIntegrer(en) + '\n' + f; });

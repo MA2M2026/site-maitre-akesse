@@ -31,6 +31,8 @@ import './js/partage.js';
 import './js/formulaire-candidature-champs.js';
 import './js/rendu-agenda.js';
 import './js/parcours.js';
+import './js/tailles.js';
+import './js/rendu-fiche.js';
 
 export const config = {
   matcher: [
@@ -687,10 +689,8 @@ function couvertureFiche(photos) {
   const choisie = choixCouverture(photos);
   return choisie ? photoLegere(choisie.url_moyenne || choisie.url) : '';
 }
-// Étape A (01/11/2026) : le contenu principal de la fiche écrit dans la page par le serveur (nom, catégorie,
-// ville, grande photo, mensurations toujours publiques, présentation) ; la page le remplace ensuite par la
-// fiche complète (projets, vidéo, compcard). Les mensurations « à reprendre » (poitrine, taille, bassin…) ne
-// sont jamais écrites ici : seulement ce que la fiche publique montre toujours.
+// (phase 2, 02/11/2026 : la fiche complète est écrite par js/rendu-fiche.js, ficheRemplie ci-dessous ; les mensurations
+// « à reprendre » y restent cachées, comme sur la page)
 // (01/11/2026, « ça doit être instantané ») la photo que la carte du Book montrait déjà (même règle que
 // photos_couverture_petites : principale d'abord, puis la plus ancienne ; petite version sur téléphone) : déjà
 // dans le téléphone, elle s'affiche AUSSITÔT sous la grande photo, qui la recouvre dès qu'elle arrive
@@ -701,22 +701,6 @@ function photoDeLaCarte(photos, telephone) {
   const grande = choixCouverture(photos);
   if (!p || !grande || grande.id !== p.id) return '';
   return photoLegere(p.url_miniature && p.url_petite && telephone ? p.url_petite : (p.url_miniature || p.url));
-}
-function contenuFiche(d, anglais, photo, apercu) {
-  const p = d.profil, T = (fr, en) => (anglais ? en : fr);
-  const categorie = p.category === 'homme' ? T('Homme', 'Man') : p.category === 'femme' ? T('Femme', 'Woman') : 'New Face';
-  const mesures = [
-    [T('Âge', 'Age'), d.age != null ? d.age + ' ' + T('ans', 'years') : null], [T('Taille', 'Height'), p.height_cm ? p.height_cm + ' cm' : null],
-    [T('Poids', 'Weight'), p.weight_kg ? p.weight_kg + ' kg' : null], [T('Pointure', 'Shoe Size'), p.shoe_size ? (anglais ? 'EU ' : '') + p.shoe_size : null],
-    // (couleurs des yeux et des cheveux : écrites en français seulement ; la page anglaise les traduit elle-même)
-    [T('Yeux', 'Eyes'), anglais ? null : p.eye_color], [T('Cheveux', 'Hair'), anglais ? null : p.hair_color]].filter((m) => m[1]);
-  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar">' +
-    (apercu && apercu !== photo ? '<img class="hero-apercu" src="' + echapper(apercu) + '" alt="" aria-hidden="true" fetchpriority="high">' : '') + '<img data-couv-img src="' + echapper(photo || '/assets/logo-dark-bg.png') + '" alt="" fetchpriority="high">' +
-    '<div class="profil-hero-scrim"></div><div class="profil-hero-contenu"><div class="eyebrow eyebrow--clair">' + echapper(categorie) + '</div>' +
-    '<h1>' + echapper(p.full_name || T('Mannequin', 'Model')) + '</h1><p>' + echapper(p.city || '') + '</p></div></div>' +
-    (mesures.length ? '<div class="fiche-entete"><dl class="fiche-mesures" aria-label="' + T('Mensurations', 'Measurements') + '">' +
-      mesures.map(([l, v]) => '<div class="fiche-mesure"><dt>' + echapper(l) + '</dt><dd>' + echapper(v) + '</dd></div>').join('') + '</dl></div>' : '') +
-    (p.bio ? '<section class="fiche-carte"><h3 class="fiche-carte-titre">' + T('À propos', 'About') + '</h3><p class="mannequin-bio fiche-bio">' + echapper(p.bio) + '</p></section>' : '') + '</div>';
 }
 // premier jour du mois, dix ans plus tôt (même période que ma2mExperiencesAgence, js/app.js)
 const dixAnsAvant = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear() - 10, d.getUTCMonth(), 1)).toISOString().slice(0, 10); };
@@ -741,8 +725,20 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     return d;
   }));
   return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, async (html, d) => {
-    // (page anglaise : présentation traduite, comme la page le fait)
-    const dPage = anglais && d.profil.bio ? Object.assign({}, d, { profil: (await versAnglaisServeur([d.profil], ['bio']))[0] }) : d;
+    // (phase 2, 02/11/2026) la fiche COMPLÈTE écrite ici par le même dessin que la page (js/rendu-fiche.js) : mesures et
+    // tailles, à propos, parcours (projets de l'agence + expériences saisies), vidéo, boutons, photos du Book, contact.
+    // Page anglaise : présentation et types d'expérience traduits, comme la page le fait (versAnglais).
+    const P = globalThis.Partage;
+    const projetsFusionnes = P.fusionnerExperiences(P.experiencesDepuisParcours(d.parcours || [], anglais), d.projets || []);
+    const [profilPage, ...projetsPage] = anglais ? await versAnglaisServeur([Object.assign({}, d.profil, d.mesures || {}), ...projetsFusionnes], ['bio', 'type_projet']) : [Object.assign({}, d.profil, d.mesures || {}), ...projetsFusionnes];
+    const vues = P.photosAffichees(d.photos);
+    const dessin = globalThis.RenduFiche.fiche({ profil: profilPage, photos: d.photos, projets: projetsPage, age: d.age != null ? d.age : '' }, {
+      en: anglais, urlLegere: photoLegere,
+      photoHero: vues.couverture ? photoLegere(vues.couverture.url_moyenne || vues.couverture.url) : '/assets/logo-dark-bg.png',
+      photoAvatar: vues.profil ? photoLegere(vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png' });
+    // (la photo que la carte du Book montrait déjà, sous la grande photo le temps qu'elle arrive : 01/11/2026)
+    const apercu = photoDeLaCarte(d.photos, estTelephone(requete)), grande = vues.couverture ? photoLegere(vues.couverture.url_moyenne || vues.couverture.url) : '';
+    if (apercu && apercu !== grande) dessin.contenu = dessin.contenu.replace('<img data-couv-img', () => '<img class="hero-apercu" src="' + echapper(apercu) + '" alt="" aria-hidden="true" fetchpriority="high">\n        <img data-couv-img');
     const nom = d.profil.full_name || (anglais ? 'Model' : 'Mannequin');
     const description = [d.profil.full_name, d.profil.city, d.profil.height_cm ? d.profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
       (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
@@ -758,7 +754,9 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     if (d.profil.height_cm) personne.height = { '@type': 'QuantitativeValue', value: d.profil.height_cm, unitCode: 'CMT' };
     return photoAnnoncee(metaEntite(html, { titre: nom, description, photo: photoApercu, lien, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin, type: 'profile',
       ld: { '@context': 'https://schema.org', '@type': 'ProfilePage', url: lien, mainEntity: personne } })
-      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(dPage, anglais, couvertureFiche(d.photos), photoDeLaCarte(d.photos, estTelephone(requete))) + '</div>'), couvertureFiche(d.photos));
+      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + dessin.contenu + '</div>')
+      .replace('<div id="galerie" class="book-grille-ig reveal reveal-delay-1"></div>', () => '<div id="galerie" class="book-grille-ig reveal reveal-delay-1">' + dessin.galerie + '</div>')
+      .replace('<div id="fiche-contact-bas"></div>', () => '<div id="fiche-contact-bas">' + dessin.contact + '</div>'), grande);
   });
 }
 

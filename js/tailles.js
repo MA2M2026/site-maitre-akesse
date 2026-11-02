@@ -9,7 +9,7 @@
 // Fichier partagé : Espace mannequin, fiche publique FR/EN, compcard, CV, fiche
 // événement. Tailles selon la grille des mensurations MA2M ; équivalences étrangères
 // selon les correspondances standard du prêt-à-porter.
-(function () {
+(function (window) {
   // Femmes : grille de l'agence (tableau de la propriétaire, 26/10/2026) pour XS, S, M et L ;
   // une mesure pile sur la limite de deux tailles reste dans la plus petite (règle n° 1 de la
   // propriétaire : on ne pousse jamais une mannequin vers une taille plus grande pour 1 cm).
@@ -232,4 +232,4 @@
       '<p class="eq-note">' + (anglais ? 'Calculated from the measurements (MA2M size chart, standard international conversions). Shoes: JP in cm, KR / CN in mm.' : 'Calculées d’après les mensurations (grille MA2M, correspondances internationales standard). Pointure : JP en cm, KR / CN en mm.') + '</p>' +
       '</details></section>';
   };
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

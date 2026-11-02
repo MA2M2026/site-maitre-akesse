@@ -390,7 +390,86 @@
   }
   const documentVirtuel = { createElement: (t) => new Noeud(t), createTextNode: (t) => ({ texte: String(t) }) };
 
-  racine.Partage = { Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
+  // Fiche d'une mannequin (js/app.js jusqu'au 02/11/2026) : niveau, mesures impériales, traductions des couleurs,
+  // photos affichées, expériences fusionnées
+  function deriverNiveauMannequin(anneesExperience) {
+    const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
+      ? NaN : parseInt(anneesExperience, 10);
+    return !isNaN(annees) && annees > 2 ? 'Professionnel' : 'New Face';
+  }
+  function niveauNormalise(stocke, anneesExperience) {
+    if (stocke === 'Professionnel') return 'Professionnel';
+    if (stocke === 'New Face' || stocke === 'Amateur') return 'New Face';
+    return deriverNiveauMannequin(anneesExperience);
+  }
+  function libelleNiveauPublic(niveau) { return niveau === 'Professionnel' ? 'Main Board' : 'New Face'; }
+  function enPieds(cm) {
+    const pouces = cm / 2.54; let pieds = Math.floor(pouces / 12); let reste = Math.round((pouces - pieds * 12) * 2) / 2;
+    if (reste >= 12) { pieds += 1; reste -= 12; }
+    return pieds + "'" + String(reste).replace('.5', '½') + '"';
+  }
+  function enPouces(cm) { return String(Math.round(cm / 2.54 * 2) / 2).replace('.5', '½') + '"'; }
+  function enLivres(kg) { return Math.round(kg * 2.2046) + ' lbs'; }
+  function pointureUS(eu, categorie) {
+    const n = parseFloat(String(eu || '').replace(',', '.'));
+    if (!n || n < 34 || n > 50) return '';
+    const us = categorie === 'homme' ? n - 33 : n - 30.5;
+    return 'US ' + String(Math.round(us * 2) / 2).replace('.5', '½');
+  }
+  const TRADUCTIONS_EN = { 'claire': 'Light', 'métisse claire': 'Light medium', 'métisse foncée': 'Medium dark', 'foncée': 'Dark', 'très foncée': 'Very dark',
+    'marron': 'Brown', 'marron foncé': 'Dark brown', 'noir': 'Black', 'noire': 'Black', 'vert': 'Green', 'bleu': 'Blue', 'gris': 'Grey', 'noisette': 'Hazel',
+    'brun': 'Brown', 'châtain': 'Chestnut', 'blond': 'Blonde', 'roux': 'Red', 'gris / blanc': 'Grey / White', 'la tête rasée': 'Shaved', 'rasé': 'Shaved', 'tête rasée': 'Shaved' };
+  function enAnglais(v) { const k = String(v || '').trim().toLowerCase(); return TRADUCTIONS_EN[k] || v; }
+  function cleProjet(titre) {
+    return String(titre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .replace(/\b(19|20)\d{2}\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+  function anneesDe(texte) { return String(texte || '').match(/\b(19|20)\d{2}\b/g) || []; }
+  function memeProjet(a, b) {
+    const x = cleProjet(a.titre || a.nom), y = cleProjet(b.titre || b.nom);
+    if (!x || !y) return false;
+    const [court, long] = x.length <= y.length ? [x, y] : [y, x];
+    const contenu = court.split(' ').length >= 3 && (' ' + long + ' ').includes(' ' + court + ' ');
+    if (x !== y && !contenu) return false;
+    const ansA = anneesDe((a.titre || a.nom) + ' ' + (a.periode || a.annee || ''));
+    const ansB = anneesDe((b.titre || b.nom) + ' ' + (b.periode || b.annee || ''));
+    return !ansA.length || !ansB.length || ansA.some(an => ansB.includes(an));
+  }
+  const TYPES_EXPERIENCE_AGENDA = { defile: 'Défilé', show: 'Show', shooting: 'Shooting', evenement: 'Événement', autre: 'Projet' };
+  function estDoublonDe(e, agence) { return (agence || []).some(a => memeProjet(e, a)); }
+  function fusionnerExperiences(agence, propres) {
+    return (agence || []).concat((propres || []).filter(e => !estDoublonDe(e, agence)));
+  }
+  function photosAffichees(photos) {
+    const date = function (p) { const t = Date.parse(p.created_at); return isNaN(t) ? Infinity : t; };
+    const triees = (photos || []).filter(function (p) { return p.tri_statut !== 'ecartee'; }).sort(function (x, y) {
+      if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
+      if (date(x) !== date(y)) return date(x) - date(y);
+      const ix = String(x.id), iy = String(y.id);
+      return ix === iy ? 0 : (ix < iy ? -1 : 1);
+    });
+    const profil = triees[0] || null;
+    const couvertureChoisie = triees.find(function (p) { return p.photo_couverture; }) || null;
+    return { profil: profil, couverture: couvertureChoisie || profil, profilChoisi: !!(profil && profil.principale), couvertureChoisie: couvertureChoisie };
+  }
+  // Projets de l'agenda (parcours) au format des expériences (model_projects) : seulement les types qui comptent
+  function experiencesDepuisParcours(projets, EN) {
+    return projets.filter(p => p.type in TYPES_EXPERIENCE_AGENDA).map(p => {
+      const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
+      return { type_projet: EN ? libelleTypeAgenda(p.type, true) : TYPES_EXPERIENCE_AGENDA[p.type], titre: p.titre,
+        periode: mois.charAt(0).toUpperCase() + mois.slice(1), lieu: p.lieu || '', ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
+    });
+  }
+  // Lien cliquable seulement pour une vraie adresse web (http/https) : bloque « javascript:… » ou « data:… »
+  function urlHttpSure(url) {
+    if (!url) return null;
+    try {
+      const u = new URL(url, typeof location !== 'undefined' ? location.href : 'https://www.maitreakessemodelmanagement.com/');
+      return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+    } catch (e) { return null; }
+  }
+  racine.Partage = { urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
+    Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
     lienFicheMannequin, lieuProjet, dateLieuProjet, ma2mCompteParType, nombreTypeAgenda, projetsAvecNoms };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };
 })(typeof window !== 'undefined' ? window : globalThis);
