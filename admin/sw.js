@@ -9,7 +9,7 @@ const VERSION = 'administration-v20';
 // (les pièces réservées js/admin/site-*.js ne sont jamais gardées : elles exigent la clé d'accès)
 const INTERFACE = ['/admin/', '/css/polices.css', '/css/jetons.css', '/css/installation.css', '/css/admin-vivante.css', '/js/supabase-config.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/vendor/emailjs-browser-3.12.1.min.js', '/js/emailjs-config.js', '/js/verrou-defilement.js',
-  '/js/conversion-heic.js', '/js/photos.js', '/js/partage.js', '/js/tailles.js', '/js/analyse-profil.js', '/js/app.js', '/js/images-site-ecriture.js', '/js/bouton-appui.js',
+  '/js/conversion-heic.js', '/js/photos.js', '/js/partage.js', '/js/tailles.js', '/js/analyse-profil.js', '/js/app.js', '/js/bouton-appui.js',
   '/js/portail/inactivite.js', '/js/messages-mensualites.js', '/js/portail/noyau.js', '/js/admin/coque.js', '/js/admin/notifications.js', '/js/admin/site.js',
   '/js/portail/espace-paiements.js', '/js/portail/espace-paiements-suivi.js',
   '/js/portail/espace-compta.js', '/js/portail/espace-compta-suivi.js', '/js/portail/compta-pdf.js', '/js/portail/compta-xlsx.js',

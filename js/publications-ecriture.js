@@ -1,6 +1,14 @@
 // Écriture des Actualités et des Événements (phase 2, W4, 02/11/2026) : réservé à l'Administration (/admin/,
 // js/admin/site-contenu.js). Servi seulement à l'agence connectée (middleware.js, SCRIPTS_ADMIN : « introuvable » sinon).
-// Lecture (tables, vidéos, fenêtre de lecture) : js/publications-lecture.js, chargé avant.
+// Lecture (vidéos, fenêtre de lecture) : js/publications-lecture.js, chargé avant.
+
+// Tables et dossiers d'images des publications, partagés par les pages publiques et la
+// nouvelle Administration (js/admin/site-contenu.js).
+const PUBLICATIONS = {
+  actualites: { table: 'actualites', tablePhotos: 'actualite_photos', colonne: 'actualite_id', dossier: 'actualites', seau: 'actualites-images' },
+  evenements: { table: 'evenements', tablePhotos: 'evenement_photos', colonne: 'evenement_id', dossier: 'evenements', seau: 'evenements-images' }
+};
+const CATEGORIES_ACTUALITES = window.RenduPublications.CATEGORIES_ACTUALITES;  // (js/rendu-publications.js, chargé avant)
 
 // Publie (id null) ou modifie une publication : photos d'abord, puis la ligne, puis ses photos.
 // Renvoie { ok, id, photos } ; ok est faux si rien n'a été enregistré (session expirée comprise).
@@ -20,6 +28,7 @@ async function sauverPublication(t, idExistant, champs, fichiers) {
 async function envoyerPhotosPublication(t, id, fichiers) {
   const dossier = t.dossier;
   const urls = [];
+  if (fichiers.length && typeof envoyerImageSite !== 'function') throw new Error('Outil d’envoi des photos absent (js/images-site-ecriture.js) : rechargez la page.');
   for (const fichierOriginal of fichiers) {
     const fichier = await convertirSiHeic(fichierOriginal);
     const chemin = `site/${dossier}/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;

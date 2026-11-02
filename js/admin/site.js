@@ -39,7 +39,7 @@
   // Pièces réservées (middleware.js) : la clé d'accès est posée par le serveur après la double
   // authentification (api/acces-tableau.js), puis les pièces sont chargées une seule fois, dans
   // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.
-  const PIECES = ['/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
+  const PIECES = ['/js/images-site-ecriture.js', '/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
     '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js',
     '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js',
     '/js/admin/photos-choisies.js', '/js/presences-calcul.js', '/js/admin/site-presences.js', '/js/admin/site-bulletins.js', '/js/documents-communs.js', '/js/admin/site-documents.js', '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-places.js', '/js/defile-repartition.js', '/js/admin/site-defiles.js', '/js/cartes-acces.js', '/js/admin/site-exterieures.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-infos.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',

@@ -7309,7 +7309,8 @@ begin
     select p.oid::regprocedure as signature
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.prokind in ('f', 'p')
+    where n.nspname = 'public' and p.prokind = 'f'
+      and pg_has_role(p.proowner, 'USAGE')  -- (seulement celles que le rôle qui colle ce SQL peut modifier)
       and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')
       and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
   loop

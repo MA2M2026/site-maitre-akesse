@@ -4,13 +4,6 @@
 // seulement à l'agence connectée (middleware.js, SCRIPTS_ADMIN). Aucun bouton ni code d'écriture dans les pages publiques.
 let newsModalEstOuverte = false;
 
-// Tables et dossiers d'images des publications, partagés par les pages publiques et la
-// nouvelle Administration (js/admin/site-contenu.js).
-const PUBLICATIONS = {
-  actualites: { table: 'actualites', tablePhotos: 'actualite_photos', colonne: 'actualite_id', dossier: 'actualites', seau: 'actualites-images' },
-  evenements: { table: 'evenements', tablePhotos: 'evenement_photos', colonne: 'evenement_id', dossier: 'evenements', seau: 'evenements-images' }
-};
-const CATEGORIES_ACTUALITES = window.RenduPublications.CATEGORIES_ACTUALITES;  // (js/rendu-publications.js, chargé avant)
 
 // Lien YouTube / Vimeo collé par l'agence → adresse du lecteur intégré (null si non reconnu).
 function urlVideoIntegree(url) {
