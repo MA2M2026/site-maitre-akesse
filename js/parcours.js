@@ -283,6 +283,8 @@
       (await lirePhotosCouverture(sb, ids)).forEach(c => { photos[c.model_id] = urlLegere(urlGrille(c, true)); });
     }
     // Mois affiché au départ : le plus récent qui a des activités (sinon le mois en cours).
+    // (page anglaise : titres et lieux en anglais, comme le serveur, middleware.js parcoursRempli)
+    if (EN && typeof versAnglais === 'function') await versAnglais(projets, ['titre', 'lieu']);
     R.regler({ projets, photos });
     R.regler({ mois: R.moisRecent(fin) });
     $('parcours-plus').addEventListener('click', () => { R.regler({ tous: true }); afficher(); });

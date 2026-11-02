@@ -68,11 +68,15 @@ async function relever(page) {
   });
 }
 
+// (3 essais : au tout premier appel, la base peut répondre trop lentement et la liste part sans ses cartes)
 async function premiereFiche() {
-  const r = await fetch(BASE + '/mannequins', { headers: TEMOINS ? { cookie: TEMOINS } : {} });
-  const html = await r.text();
-  const m = html.match(/\/book\/([a-z0-9-]{1,80})/);
-  return m ? '/book/' + m[1] : null;
+  for (let essai = 0; essai < 3; essai++) {
+    const r = await fetch(BASE + '/mannequins', { headers: TEMOINS ? { cookie: TEMOINS } : {} });
+    const m = (await r.text()).match(/\/book\/([a-z0-9-]{1,80})/);
+    if (m) return '/book/' + m[1];
+    await new Promise((ok) => setTimeout(ok, 1500));
+  }
+  return null;
 }
 
 const extraireTexte = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<(a|figcaption|span|p|strong)\b[^>]*\sdata-hasard[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
