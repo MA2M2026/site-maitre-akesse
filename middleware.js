@@ -30,6 +30,7 @@ import './js/gabarit.js';
 import './js/partage.js';
 import './js/formulaire-candidature-champs.js';
 import './js/rendu-agenda.js';
+import './js/parcours.js';
 
 export const config = {
   matcher: [
@@ -906,21 +907,20 @@ async function parcoursRempli(url, anglais) {
     return Array.isArray(photos) ? { debut, fin, projets, photos } : null;
   });
   return pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture, async (html, d) => {
-    // étape A (01/11/2026) : le mois affiché au départ (le plus récent qui a des activités, comme js/parcours.js)
-    // et ses projets (titre, lieu, mannequins) écrits dans la page ; la page redessine ensuite sa scène animée
-    // (chiffres, visages, filtres) par-dessus. Seulement les projets qui ont des mannequins (projetsAvecNoms).
-    const projets = d.projets.filter((p) => (p.mannequins || []).length);
-    if (!projets.length) return html;
-    const mois = (p) => String(p.date_debut || '').slice(0, 7), moisFin = (p) => String(p.date_fin || p.date_debut || '').slice(0, 7);
-    const choisi = projets.map(moisFin).sort().pop();
-    const duMoisFr = projets.filter((p) => mois(p) <= choisi && moisFin(p) >= choisi);
-    const duMois = anglais ? await versAnglaisServeur(duMoisFr, ['titre', 'lieu']) : duMoisFr;
-    const libelle = new Date(choisi + '-15T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-    const cartes = duMois.map((p) => '<article class="parcours-projet"><h3>' + echapper(p.titre) + '</h3>' +
-      '<p class="parcours-projet-meta">' + echapper([p.lieu, p.ville].filter(Boolean).join(', ')) + '</p>' +
-      '<p class="parcours-projet-visages">' + echapper((p.mannequins || []).map((m) => m.nom).filter(Boolean).join(', ')) + '</p></article>').join('');
-    return texteElement(html, 'parcours-titre-mois', libelle)
-      .replace('<div class="parcours-projets" id="parcours-projets"></div>', () => '<div class="parcours-projets" id="parcours-projets">' + cartes + '</div>');
+    // (phase 2, 02/11/2026) la scène complète écrite ici par le même dessin que la page (js/parcours.js, RenduParcours) :
+    // frise des mois, titre du mois, chiffres, filtres, visages, projets ; le mois le plus récent qui a des activités
+    const photos = {};
+    d.photos.forEach((c) => { if (c.url) photos[c.model_id] = photoLegere(c.url_petite || c.url); });
+    const z = globalThis.RenduParcours.page(d.projets, photos, anglais, new Date());
+    // zones vides de la page : contenu écrit ; zones à texte fixe (parcours-vide) ou à enfants (parcours-contenu) : seulement cachées ou non
+    ['parcours-mois', 'parcours-titre-mois', 'parcours-chiffres', 'parcours-filtres', 'parcours-visages', 'parcours-plus', 'parcours-detail', 'parcours-projets'].forEach((id) => {
+      html = html.replace(new RegExp('<(nav|h2|div|button)([^>]*) id="' + id + '"([^>]*)><\\/\\1>'), (_, tag, avant, apres) =>
+        '<' + tag + avant + ' id="' + id + '"' + apres.replace(/\s+hidden\b/, '') + (z[id].cache ? ' hidden' : '') + '>' + z[id].html + '</' + tag + '>');
+    });
+    ['parcours-vide', 'parcours-contenu'].forEach((id) => {
+      html = html.replace(new RegExp('(<(?:p|div)[^>]* id="' + id + '")([^>]*)>'), (_, debut, apres) => debut + apres.replace(/\s+hidden\b/, '') + (z[id].cache ? ' hidden' : '') + '>');
+    });
+    return html;
   });
 }
 

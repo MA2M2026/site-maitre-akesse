@@ -7,45 +7,7 @@
 (function (racine) {
   'use strict';
   const echapper = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  // ---- Petit document en mémoire (serveur) : juste ce que le dessin de l'agenda utilise ----
-  const VIDES = new Set(['img', 'br', 'input']);
-  class Noeud {
-    constructor(tag) { this.tagName = tag.toUpperCase(); this.tag = tag; this.enfants = []; this.attributs = {}; this.className = ''; this.dataset = {}; this.hidden = false; this.apres = []; this.parent = null; }
-    get classList() {
-      const n = this, liste = () => n.className.split(/\s+/).filter(Boolean);
-      return { add: (...c) => { n.className = [...new Set(liste().concat(c))].join(' '); }, remove: (...c) => { n.className = liste().filter((x) => !c.includes(x)).join(' '); },
-        contains: (c) => liste().includes(c), toggle: (c, oui) => { const a = oui === undefined ? !liste().includes(c) : oui; if (a) n.classList.add(c); else n.classList.remove(c); return a; } };
-    }
-    set textContent(t) { this.enfants = t === null || t === undefined || t === '' ? [] : [{ texte: String(t) }]; }
-    get textContent() { return this.enfants.map((e) => (e.texte !== undefined ? e.texte : e.textContent)).join(''); }
-    get firstChild() { return this.enfants[0] || null; }
-    get children() { return this.enfants.filter((e) => e instanceof Noeud); }
-    get nextElementSibling() { return null; }
-    appendChild(n) { this.enfants.push(n); if (n instanceof Noeud) n.parent = this; return n; }
-    insertBefore(n, ref) { const i = this.enfants.indexOf(ref); if (i < 0) this.enfants.push(n); else this.enfants.splice(i, 0, n); return n; }
-    after(n) { this.apres.push(n); }
-    remove() {}
-    setAttribute(k, v) { this.attributs[k] = String(v); }
-    getAttribute(k) { return this.attributs[k]; }
-    addEventListener() {}
-    closest() { return null; }
-    contains() { return false; }
-    querySelector() { return null; }
-    get outerHTML() {
-      const a = [];
-      if (this.className) a.push('class="' + echapper(this.className) + '"');
-      ['type', 'href', 'src', 'alt', 'loading', 'decoding'].forEach((k) => { if (this[k] !== undefined && this[k] !== null) a.push(k + '="' + echapper(this[k]) + '"'); });
-      Object.keys(this.attributs).forEach((k) => a.push(k + '="' + echapper(this.attributs[k]) + '"'));
-      Object.keys(this.dataset).forEach((k) => a.push('data-' + k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()) + '="' + echapper(this.dataset[k]) + '"'));
-      if (this.hidden) a.push('hidden');
-      const ouverture = '<' + this.tag + (a.length ? ' ' + a.join(' ') : '') + '>';
-      if (VIDES.has(this.tag)) return ouverture;
-      return ouverture + this.enfants.map((e) => (e.texte !== undefined ? echapper(e.texte) : e.outerHTML)).join('') + '</' + this.tag + '>';
-    }
-    get innerHTML() { return this.enfants.map((e) => (e.texte !== undefined ? echapper(e.texte) : e.outerHTML)).join(''); }
-  }
-  const documentVirtuel = { createElement: (t) => new Noeud(t), createTextNode: (t) => ({ texte: String(t) }) };
-
+  const Noeud = racine.Partage.Noeud, documentVirtuel = racine.Partage.documentVirtuel;
   // o : { doc (document de la page, ou rien pour le serveur), en, urlLegere }
   function creer(o) {
     const document = o.doc || documentVirtuel;

@@ -6,12 +6,24 @@
 // apparaissent, triées par nombre d'activités, les suivantes derrière « Voir les autres ».
 // Outils communs : EN, T, libelleTypeAgenda, dateAgenda, lienFicheMannequin, ma2mParcours,
 // ma2mCompteParType, echapperHtml (js/app.js).
-(function () {
+// Phase 2 (02/11/2026) : le dessin est une « fabrique » utilisée par la page (vrai document) ET par le serveur
+// (middleware.js, petit document en mémoire de js/partage.js) : la page arrive déjà complète. Script classique ET
+// importable : il pose window.RenduParcours / globalThis.RenduParcours.
+(function (racine) {
+  // o : { doc, $ (élément par identifiant), en, animer, urlPhoto }
+  function creer(o) {
+  const document = o.doc;
+  const $ = o.$;
+  const EN = !!o.en;
+  const T = (fr, en) => (EN ? en : fr);
+  const animer = !!o.animer;
+  const P = racine.Partage;
+  const echapperHtml = (t) => (t === null || t === undefined ? '' : String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'));
+  const libelleTypeAgenda = P.libelleTypeAgenda, nombreTypeAgenda = P.nombreTypeAgenda, ma2mCompteParType = P.ma2mCompteParType, lienFicheMannequin = P.lienFicheMannequin;
+  const dateLocaleIso = P.dateDuJour, dateLieuProjet = (p) => P.dateLieuProjet(p, EN);
   const VISAGES_MAX = 18;
   const MOIS_HISTOIRE = 24; // les deux dernières années
-  const $ = (id) => document.getElementById(id);
   const PHOTO_DEFAUT = '/assets/logo-dark-bg.png';
-  const animer = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   let projets = [];        // tous les projets réalisés de la période
   let photos = {};         // id mannequin → photo de couverture
@@ -33,7 +45,7 @@
   // Entrée en scène au défilement (12/10/2026) : chaque élément reçoit .pm-entree, puis .pm-vu
   // quand il arrive à l'écran (css/parcours.css). quandVisible : action lancée à ce moment-là
   // (ex. le compteur qui défile). Sans IntersectionObserver ou sans animation : tout de suite.
-  const observateur = animer && 'IntersectionObserver' in window ? new IntersectionObserver((entrees) => {
+  const observateur = animer && typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((entrees) => {
     entrees.forEach(e => {
       if (!e.isIntersecting) return;
       observateur.unobserve(e.target);
@@ -106,7 +118,7 @@
       frise.appendChild(b);
     });
     const actif = frise.querySelector('.actif');
-    if (actif) frise.scrollLeft = actif.offsetLeft - frise.clientWidth / 2 + actif.clientWidth / 2; // .parcours-mois est positionnée (css)
+    if (actif && actif.offsetLeft !== undefined) frise.scrollLeft = actif.offsetLeft - frise.clientWidth / 2 + actif.clientWidth / 2; // .parcours-mois est positionnée (css)
   }
 
   function dessinerFiltres() {
@@ -226,9 +238,35 @@
     $('parcours-contenu').hidden = !duMois.length;
     // relance l'animation d'apparition à chaque changement de mois
     const scene = $('parcours-scene');
-    scene.classList.remove('joue'); scene.getBoundingClientRect(); scene.classList.add('joue');  // relance l'animation
+    if (scene) { scene.classList.remove('joue'); scene.getBoundingClientRect(); scene.classList.add('joue'); }  // relance l'animation
   }
 
+  return {
+    MOIS_HISTOIRE, mettreEnScene, decouperTitre, afficher, cleMois,
+    regler: (x) => { if (x.projets) projets = x.projets; if (x.photos) photos = x.photos; if (x.mois) moisChoisi = x.mois; if (x.tous !== undefined) tousLesVisages = x.tous; },
+    moisRecent: (fin) => { const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort(); return recents.length ? recents[recents.length - 1] : dateLocaleIso(fin).slice(0, 7); }
+  };
+  }
+  // Serveur : la page dessinée dans un petit document en mémoire ; renvoie chaque zone (contenu, caché ou non)
+  const ZONES = ['parcours-titre-mois', 'parcours-detail', 'parcours-mois', 'parcours-filtres', 'parcours-chiffres', 'parcours-visages', 'parcours-plus', 'parcours-projets', 'parcours-vide', 'parcours-contenu', 'parcours-scene'];
+  function page(projets, photos, en, fin) {
+    const P = racine.Partage, zones = {};
+    ZONES.forEach((id) => { zones[id] = new P.Noeud('div'); });
+    const R = creer({ doc: P.documentVirtuel, $: (id) => zones[id], en, animer: false });
+    R.regler({ projets: P.projetsAvecNoms(projets), photos });
+    R.regler({ mois: R.moisRecent(fin) });
+    R.afficher();
+    const sortie = {};
+    ZONES.forEach((id) => { sortie[id] = { html: zones[id].innerHTML, cache: !!zones[id].hidden }; });
+    return sortie;
+  }
+  racine.RenduParcours = { creer, page };
+  if (typeof document === 'undefined') return;
+
+  const $ = (id) => document.getElementById(id);
+  const animer = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const R = creer({ doc: document, $, en: EN, animer });
+  const { MOIS_HISTOIRE, mettreEnScene, decouperTitre, afficher } = R;
   async function demarrer() {
     try { decouperTitre(); } catch (e) { /* titre laissé tel quel : l'animation est un plus */ }
     mettreEnScene([...document.querySelectorAll('.parcours-sous-titre')]);
@@ -236,7 +274,8 @@
     // préparé par le serveur (middleware.js, 01/11/2026) pour la même période : projets et visages déjà là
     const d = donneesServeur('parcours-donnees');  // (js/app.js)
     const serveur = d?.debut === dateLocaleIso(debut) && d.fin === dateLocaleIso(fin) && Array.isArray(d.projets) && Array.isArray(d.photos) ? d : null;
-    projets = serveur ? projetsAvecNoms(serveur.projets) : await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
+    const projets = serveur ? projetsAvecNoms(serveur.projets) : await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin));
+    const photos = {};
     const ids = [...new Set(projets.flatMap(p => (p.mannequins || []).map(m => m.id).filter(Boolean)))];
     if (serveur) serveur.photos.forEach(c => { photos[c.model_id] = urlLegere(urlGrille(c, true)); });
     else if (ids.length && typeof sb !== 'undefined' && sb) {
@@ -244,12 +283,12 @@
       (await lirePhotosCouverture(sb, ids)).forEach(c => { photos[c.model_id] = urlLegere(urlGrille(c, true)); });
     }
     // Mois affiché au départ : le plus récent qui a des activités (sinon le mois en cours).
-    const recents = projets.map(p => cleMois(p.date_fin || p.date_debut)).sort();
-    moisChoisi = recents.length ? recents[recents.length - 1] : dateLocaleIso(fin).slice(0, 7);
-    $('parcours-plus').addEventListener('click', () => { tousLesVisages = true; afficher(); });
+    R.regler({ projets, photos });
+    R.regler({ mois: R.moisRecent(fin) });
+    $('parcours-plus').addEventListener('click', () => { R.regler({ tous: true }); afficher(); });
     afficher();
   }
   // place gardée pour le programme le temps qu'il arrive (journal du 24/10/2026 : la page sautait
   // à l'arrivée des chiffres ; même principe que The Book, js/gabarit.js)
   demarrer().finally(() => { if (typeof libererPlaceListe === 'function') libererPlaceListe($('parcours-scene')); }).catch(e => { if (window.signalerErreur) window.signalerErreur('Parcours MA2M : chargement', (e && e.message) || String(e)); });
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

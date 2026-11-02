@@ -1003,10 +1003,7 @@ function libelleTypeAgenda(type, enAnglais) { return window.Partage.libelleTypeA
 // Parcours MA2M). Partagé le 11/10/2026.
 // Lien vide pour une mannequin écrite à la main dans l'agenda (« Autres mannequins »,
 // Extension 137) : elle n'a pas encore de profil sur le site.
-function lienFicheMannequin(m) {
-  if (m.slug) return 'book/' + encodeURIComponent(m.slug);
-  return m.id ? 'mannequin.html?id=' + encodeURIComponent(m.id) : '';
-}
+function lienFicheMannequin(m) { return window.Partage.lienFicheMannequin(m); }
 
 // Parcours MA2M (Extension 136) : projets réalisés de l'agenda entre deux dates (« AAAA-MM-JJ »),
 // pour une seule mannequin si idMannequin est donné. Rien de privé (ni adresse exacte, ni
@@ -1031,7 +1028,7 @@ async function lireParcours(debut, fin, idMannequin) {
   // mannequin (idMannequin), ses projets comptent même si son profil n'est pas public.
   return idMannequin ? (data || []) : projetsAvecNoms(data);
 }
-function projetsAvecNoms(data) { return (data || []).filter(p => (p.mannequins || []).length); }
+function projetsAvecNoms(data) { return window.Partage.projetsAvecNoms(data); }
 
 // Expériences d'une mannequin synchronisées avec l'agenda (demande de la propriétaire,
 // 12/10/2026) : chaque projet réalisé avec l'agence apparaît tout seul dans ses expériences
@@ -1092,28 +1089,15 @@ function experiencePourCv(e) {
 }
 // Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
 // (toISOString passe en heure universelle et peut décaler d'un jour).
-function dateLocaleIso(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
+function dateLocaleIso(d) { return window.Partage.dateDuJour(d); }
 // « Sofitel, Abidjan, Côte d'Ivoire » et « sam. 20 sept. 2026 · Sofitel, Abidjan, … »
-function lieuProjet(p) { return [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); }
-function dateLieuProjet(p) {
-  const lieu = lieuProjet(p);
-  return dateAgenda(p.date_debut, p.date_fin, EN) + (lieu ? ' · ' + lieu : '');
-}
+function lieuProjet(p) { return window.Partage.lieuProjet(p); }
+function dateLieuProjet(p) { return window.Partage.dateLieuProjet(p, EN); }
 // Nombre de projets par type, du plus fréquent au moins fréquent : [['defile', 4], …]
-function ma2mCompteParType(projets) {
-  const compte = {};
-  projets.forEach(p => { compte[p.type] = (compte[p.type] || 0) + 1; });
-  return Object.entries(compte).sort((a, b) => b[1] - a[1]);
-}
+function ma2mCompteParType(projets) { return window.Partage.ma2mCompteParType(projets); }
 
 // « 3 défilés », « 1 shooting », « 2 fashion shows » : nombre + type, au pluriel si besoin.
-function nombreTypeAgenda(type, n, enAnglais) {
-  const l = libelleTypeAgenda(type, enAnglais).toLowerCase();
-  if (n < 2 || /[x]$/.test(l) || /[^s]s$/.test(l)) return n + ' ' + l; // déjà au pluriel (essayages, fittings)
-  return n + ' ' + l + (/ss$/.test(l) ? 'es' : 's');                      // masterclass → masterclasses
-}
+function nombreTypeAgenda(type, n, enAnglais) { return window.Partage.nombreTypeAgenda(type, n, enAnglais); }
 
 function dateAgenda(debut, fin, enAnglais) { return window.Partage.dateAgenda(debut, fin, enAnglais); }
 

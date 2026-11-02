@@ -325,6 +325,72 @@
       passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
     };
   }
-  racine.Partage = { titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda };
+  function lienFicheMannequin(m) {
+    if (m.slug) return 'book/' + encodeURIComponent(m.slug);
+    return m.id ? 'mannequin.html?id=' + encodeURIComponent(m.id) : '';
+  }
+  function lieuProjet(p) { return [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); }
+  function dateLieuProjet(p, EN) {
+    const lieu = lieuProjet(p);
+    return dateAgenda(p.date_debut, p.date_fin, EN) + (lieu ? ' · ' + lieu : '');
+  }
+  function ma2mCompteParType(projets) {
+    const compte = {};
+    projets.forEach(p => { compte[p.type] = (compte[p.type] || 0) + 1; });
+    return Object.entries(compte).sort((a, b) => b[1] - a[1]);
+  }
+  function nombreTypeAgenda(type, n, enAnglais) {
+    const l = libelleTypeAgenda(type, enAnglais).toLowerCase();
+    if (n < 2 || /[x]$/.test(l) || /[^s]s$/.test(l)) return n + ' ' + l; // déjà au pluriel (essayages, fittings)
+    return n + ' ' + l + (/ss$/.test(l) ? 'es' : 's');                      // masterclass → masterclasses
+  }
+  function projetsAvecNoms(data) { return (data || []).filter(p => (p.mannequins || []).length); }
+  // Petit document en mémoire (phase 2) : le serveur y fait tourner le MÊME dessin que la page (agenda, parcours…),
+  // puis le transforme en HTML. Juste ce que ces dessins utilisent.
+  // ---- Petit document en mémoire (serveur) : juste ce que le dessin de l'agenda utilise ----
+  const VIDES = new Set(['img', 'br', 'input']);
+  class Noeud {
+    constructor(tag) { this.tagName = tag.toUpperCase(); this.tag = tag; this.enfants = []; this.attributs = {}; this.className = ''; this.dataset = {}; this.hidden = false; this.apres = []; this.parent = null; }
+    get classList() {
+      const n = this, liste = () => n.className.split(/\s+/).filter(Boolean);
+      return { add: (...c) => { n.className = [...new Set(liste().concat(c))].join(' '); }, remove: (...c) => { n.className = liste().filter((x) => !c.includes(x)).join(' '); },
+        contains: (c) => liste().includes(c), toggle: (c, oui) => { const a = oui === undefined ? !liste().includes(c) : oui; if (a) n.classList.add(c); else n.classList.remove(c); return a; } };
+    }
+    set textContent(t) { this.enfants = t === null || t === undefined || t === '' ? [] : [{ texte: String(t) }]; }
+    get textContent() { return this.enfants.map((e) => (e.texte !== undefined ? e.texte : e.brut !== undefined ? e.brut.replace(/<[^>]*>/g, '') : e.textContent)).join(''); }
+    get firstChild() { return this.enfants[0] || null; }
+    get children() { return this.enfants.filter((e) => e instanceof Noeud); }
+    get nextElementSibling() { return null; }
+    appendChild(n) { this.enfants.push(n); if (n instanceof Noeud) n.parent = this; return n; }
+    insertBefore(n, ref) { const i = this.enfants.indexOf(ref); if (i < 0) this.enfants.push(n); else this.enfants.splice(i, 0, n); return n; }
+    after(n) { this.apres.push(n); }
+    remove() {}
+    setAttribute(k, v) { this.attributs[k] = String(v); }
+    getAttribute(k) { return this.attributs[k]; }
+    addEventListener() {}
+    closest() { return null; }
+    contains() { return false; }
+    querySelector() { return null; }
+    get outerHTML() {
+      const a = [];
+      if (this.className) a.push('class="' + echapper(this.className) + '"');
+      ['type', 'href', 'src', 'alt', 'loading', 'decoding'].forEach((k) => { if (this[k] !== undefined && this[k] !== null) a.push(k + '="' + echapper(this[k]) + '"'); });
+      Object.keys(this.attributs).forEach((k) => a.push(k + '="' + echapper(this.attributs[k]) + '"'));
+      Object.keys(this.dataset).forEach((k) => a.push('data-' + k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()) + '="' + echapper(this.dataset[k]) + '"'));
+      if (this.hidden) a.push('hidden');
+      const ouverture = '<' + this.tag + (a.length ? ' ' + a.join(' ') : '') + '>';
+      if (VIDES.has(this.tag)) return ouverture;
+      return ouverture + this.innerHTML + '</' + this.tag + '>';
+    }
+    get innerHTML() { return this.enfants.map((e) => (e.brut !== undefined ? e.brut : e.texte !== undefined ? echapper(e.texte) : e.outerHTML)).join(''); }
+    set innerHTML(h) { this.enfants = h ? [{ brut: String(h) }] : []; }
+    get style() { return { setProperty() {} }; }
+    querySelectorAll() { return []; }
+    getBoundingClientRect() { return {}; }
+  }
+  const documentVirtuel = { createElement: (t) => new Noeud(t), createTextNode: (t) => ({ texte: String(t) }) };
+
+  racine.Partage = { Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
+    lienFicheMannequin, lieuProjet, dateLieuProjet, ma2mCompteParType, nombreTypeAgenda, projetsAvecNoms };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };
 })(typeof window !== 'undefined' ? window : globalThis);
