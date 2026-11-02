@@ -10,3 +10,4 @@ skills-lock.json
 .env.*
 *.pem
 *.key
+evidence/
