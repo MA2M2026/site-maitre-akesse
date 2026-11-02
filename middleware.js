@@ -249,7 +249,7 @@ async function lireDonneesAccueil() {
   // le mot en anglais pour l'accueil anglais (traductions_en, même empreinte que versAnglais, js/app.js)
   if (donnees.mot) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
   // (phase 2) l'encart Agenda de l'accueil anglais, traduit comme la page le ferait (versAnglais)
-  if (Array.isArray(donnees.agenda) && donnees.agenda.length) donnees.agendaEn = await versAnglaisServeur(donnees.agenda, ['titre', 'lieu', 'description']).catch(() => null);
+  if (Array.isArray(donnees.agenda) && donnees.agenda.length) donnees.agendaEn = await versAnglaisServeur(donnees.agenda, ['titre', 'lieu', 'description'], 3000).catch(() => null);
   return donnees;
 }
 // Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
@@ -267,7 +267,7 @@ async function empreinteTexte(t) {
   return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
 }
 async function motEnAnglais(mot) {
-  const [en] = await versAnglaisServeur([{ titre: mot.titre, message: mot.message }], ['titre', 'message']);
+  const [en] = await versAnglaisServeur([{ titre: mot.titre, message: mot.message }], ['titre', 'message'], 3000);
   const champs = ['titre', 'message'].filter((c) => mot[c] && en[c] !== mot[c]);
   return champs.length ? Object.fromEntries(champs.map((c) => [c, en[c]])) : null;
 }
@@ -277,7 +277,7 @@ async function motEnAnglais(mot) {
 // Traductions gardées 3 minutes (comme les données) ; les lectures manquantes partent ensemble et ne durent
 // jamais plus de 0,8 s : au-delà, le texte reste en français (la page le traduit ensuite elle-même).
 const memoireTraductions = new Map();  // texte → { quand, en (ou null : pas de traduction) }
-async function versAnglaisServeur(lignes, champs) {
+async function versAnglaisServeur(lignes, champs, delai = 800) {
   const copies = lignes.map((l) => Object.assign({}, l));
   const textes = [...new Set(copies.flatMap((l) => champs.map((c) => l[c]).filter((v) => typeof v === 'string' && rognerBlancs(v))))];
   const frais = (t) => { const m = memoireTraductions.get(t); return m && Date.now() - m.quand < DUREE_MEMOIRE && !globalThis.MA2M_SANS_MEMOIRE; };
@@ -286,7 +286,7 @@ async function versAnglaisServeur(lignes, champs) {
     const cles = await Promise.all(manquants.map(empreinteTexte));
     const parCle = new Map(), paquets = [];
     for (let i = 0; i < cles.length; i += 80) paquets.push(cles.slice(i, i + 80));
-    const lus = await Promise.all(paquets.map((p) => lireSupabase('traductions_en?select=cle,en&cle=in.(' + p.join(',') + ')', null, 800).catch(() => null)));
+    const lus = await Promise.all(paquets.map((p) => lireSupabase('traductions_en?select=cle,en&cle=in.(' + p.join(',') + ')', null, delai).catch(() => null)));
     if (lus.every(Array.isArray)) {
       lus.forEach((lu) => lu.forEach((x) => parCle.set(x.cle, x.en)));
       manquants.forEach((t, i) => memoireTraductions.set(t, { quand: Date.now(), en: parCle.get(cles[i]) || null }));
@@ -427,7 +427,8 @@ async function accueilRempli(requete, url) {
   html = texteElement(html, 'une-nom', une.full_name || (anglais ? 'Model' : 'Mannequin'));
   html = texteElement(html, 'une-info', R.infoUne(une, anglais));
   html = html.replace('<a href="mannequins.html" id="une-lien">', () => '<a href="' + echapper(R.lienFiche(une, anglais)) + '" id="une-lien">')
-    .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy">');
+    // (version moyenne, la même que la page pose ensuite : pas de seconde photo à télécharger)
+    .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.moyenne || une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy">');
   if (donnees.nombre) html = texteElement(html, 'couv-nombre', R.nombreAccueil(donnees.nombre, anglais));
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
@@ -575,7 +576,12 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const poserLeMur = async (h) => {
     const avecMur = /<h1[\s>]/.test(h) && h.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(h);
     const mur = avecMur ? await murPromesse : null;
-    return mur && mur.length ? globalThis.RenduGabarit.poserMur(h, mur) : h;
+    if (!mur || !mur.length) return h;
+    h = globalThis.RenduGabarit.poserMur(h, mur);
+    // (W7) le premier visage du mur annoncé dans l'en-tête quand la page n'annonce pas déjà sa grande photo : c'est
+    // souvent la plus grande image du haut de page (mesuré par Lighthouse sur The Book)
+    const premier = (h.match(/<div class="mur-titre" aria-hidden="true"><img [^>]*src="([^"]+)"/) || [])[1];
+    return premier && !/<link rel="preload" as="image"/.test(h) ? photoAnnoncee(h, premier.replace(/&amp;/g, '&')) : h;
   };
   // données absentes : la page déjà demandée part sans elles (elle se remplira elle-même), complétée, sans seconde demande
   if (!donnees) return reponseHtml(await poserLeMur(await page.text()), page, url, /^\/(recu|places)/.test(cheminPage));
@@ -587,11 +593,12 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const blocEn = await traductionsPromesse;
   return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocEn), page, url, /^\/(recu|places)/.test(cheminPage));
 }
-// (phase 2 : annoncée tout en haut de l'en-tête, juste après le jeu de caractères, pour partir le plus tôt possible)
+// (phase 2 : annoncée tout en haut de l'en-tête, pour partir le plus tôt possible)
 const photoAnnoncee = (html, adresse) => {
   if (!adresse) return html;
   const balise = '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">';
-  return /<meta charset="[^"]*">/i.test(html) ? html.replace(/<meta charset="[^"]*">/i, (m) => m + '\n' + balise) : html.replace('</head>', () => balise + '\n</head>');
+  // (W7 : juste après <head>, AVANT les scripts de surveillance et de mesure qui bloquent la lecture de la page)
+  return /<head>/i.test(html) ? html.replace(/<head>/i, (m) => m + '\n' + balise) : html.replace('</head>', () => balise + '\n</head>');
 };
 
 // ================== Fiche d'un mannequin préparée par le serveur (01/11/2026, site dynamique, étape 1) ==================
