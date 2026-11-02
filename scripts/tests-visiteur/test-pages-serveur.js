@@ -98,8 +98,8 @@ const memePagePourRobot = async (dem, chemin) => { const a = await dem(chemin, {
       // étape A (01/11/2026) : qui sommes-nous — les cartes des événements déjà réalisés sont dans le HTML
       if (page === 'qui-sommes-nous') {
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-        ok(/<article class="qsn-evenement reveal" data-evenement="[^"]+" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"><\/div><h3>[^<]+<\/h3><p>Plateau<\/p><\/article>/.test(visible),
-          chemin + ' : la carte de l’événement (titre, lieu) est dans le HTML avant tout programme');
+        ok(/<article class="qsn-evenement reveal" data-evenement="[^"]+" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"[^>]*>(<img [^>]*>)+<\/div><h3>[^<]+<\/h3><p>Plateau<\/p><\/article>/.test(visible),
+          chemin + ' : la carte de l’événement (titre, lieu, photos) est dans le HTML avant tout programme');
       }
       // étape A (01/11/2026) : partenaires — les cartes (noms) sont dans le HTML, avant tout programme
       if (page === 'partenaires') {

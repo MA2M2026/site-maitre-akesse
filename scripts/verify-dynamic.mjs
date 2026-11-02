@@ -49,7 +49,10 @@ async function relever(page) {
     const cle = (u) => decodeURIComponent(u.split('?')[0]).replace(/^https?:\/\/[^/]+/, '').replace(/^\/book-photos\//, '/').replace(/^\/_vercel\/image$/, '')
       .replace(/\/(miniatures|moyennes|petites)\//, '/').replace(/(-n\d+)?(-w)?\.(jpe?g|webp|png)$/i, '');
     const visible = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 4 && r.height > 4 && s.visibility !== 'hidden' && s.display !== 'none'; };
-    const lignes = (document.body ? document.body.innerText : '').split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter((l) => l.length >= 3);
+    const decouper = (t) => t.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter((l) => l.length >= 3);
+    // (textes tirés au hasard à chaque visite, data-hasard : nom en couverture, légende… comparés à part)
+    const auHasardTexte = new Set([...document.querySelectorAll('[data-hasard]')].flatMap((e) => decouper(e.innerText || '')));
+    const lignes = decouper(document.body ? document.body.innerText : '').filter((l) => !auHasardTexte.has(l));
     // (images tirées au hasard à chaque visite — mur de photos derrière le titre, couverture de l'accueil — :
     // comptées, pas comparées une à une)
     const auHasard = (i) => !!i.closest('.mur-titre, [data-hasard]') || i.id === 'couv-img';
@@ -70,7 +73,7 @@ async function premiereFiche() {
   return m ? '/book/' + m[1] : null;
 }
 
-const extraireTexte = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
+const extraireTexte = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<(a|figcaption|span|p|strong)\b[^>]*\sdata-hasard[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ')
   .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim();
 // (jetons qui changent à chaque réponse : empreintes, nonces, horodatages)
 const stabiliser = (t) => t.replace(/\b[0-9a-f]{16,}\b/gi, 'X').replace(/\b\d{10,}\b/g, 'N');
@@ -105,7 +108,9 @@ async function main() {
       const entetes = rep ? rep.headers() : {};
       const htmlSansJs = await p2.content(); await p2.close();
       const texteB = new Set(b.lignes);
-      const manquants = [...new Set(a.lignes)].filter((l) => !texteB.has(l) && !exceptions.has(l));
+      // (texte coupé à la largeur de l'écran par la page, terminé par « … » : présent en entier sans programme)
+      const coupeTrouvee = (l) => /…$/.test(l) && b.lignes.some((x) => x.startsWith(l.replace(/[\s.,;:]*…$/, '')));
+      const manquants = [...new Set(a.lignes)].filter((l) => !texteB.has(l) && !exceptions.has(l) && !coupeTrouvee(l));
       const totalA = new Set(a.lignes).size || 1;
       const partTexte = 1 - manquants.length / totalA;
       note(partTexte >= SEUIL_TEXTE, 'W2-SSR-TEXTE' + id, (partTexte * 100).toFixed(1) + '% (' + manquants.length + ' lignes JS seul' + (manquants.length ? ' ex: « ' + manquants.slice(0, 3).join(' | ').slice(0, 160) + ' »' : '') + ')');

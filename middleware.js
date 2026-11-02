@@ -396,6 +396,54 @@ function completerAccueil(html, donnees, anglais) {
   }
   return html;
 }
+// Phase 2 (02/11/2026) : le reste du magazine écrit par le serveur, comme js/accueil.js le dessine : mois de l'édition,
+// « En couverture », photos d'ambiance, partenaires, Instagram, film, puis numéros de page et sommaire (d'après les
+// pages réellement affichées). La page reprend ensuite ces éléments (défilement de la couverture, clics).
+function magazineComplet(html, donnees, anglais, une, couv, photoDe) {
+  const mois = new Date().toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'Africa/Abidjan' });
+  const edition = mois.charAt(0).toUpperCase() + mois.slice(1);
+  html = html.replace(/<span class="mag-date"><\/span>/g, () => '<span class="mag-date">' + echapper(edition) + '</span>')
+    .replace(/<span class="mag-signature-folio"><\/span>/g, () => '<span class="mag-signature-folio">MA2M · ' + echapper(edition) + '</span>');
+  if (couv.full_name) {
+    html = html.replace(/<a class="modele" id="couv-modele" href="[^"]*" data-hasard hidden>En couverture<strong id="couv-modele-nom"><\/strong><\/a>/, () => '<a class="modele" id="couv-modele" href="' + echapper(globalThis.RenduBook.lienFiche(couv, anglais)) + '" data-hasard>En couverture<strong id="couv-modele-nom">' + echapper(couv.full_name) + '</strong></a>')
+      .replace(/<a class="modele" id="couv-modele" href="[^"]*" data-hasard hidden>On the cover<strong id="couv-modele-nom"><\/strong><\/a>/, () => '<a class="modele" id="couv-modele" href="' + echapper(globalThis.RenduBook.lienFiche(couv, anglais)) + '" data-hasard>On the cover<strong id="couv-modele-nom">' + echapper(couv.full_name) + '</strong></a>');
+  }
+  // photos d'ambiance (sommaire, agence, dos ; édito sans photo du mot) : d'autres visages que la couverture
+  const autres = donnees.profils.filter((p) => p.id !== une.id && p.id !== couv.id);
+  const reste = autres.length ? autres : [une];
+  const poserPhoto = (id, m) => { html = html.replace(new RegExp('<img id="' + id + '" src="data:image\\/gif;base64,[^"]*" alt=""'), () => '<img id="' + id + '" src="' + echapper(photoDe(m)) + '" alt="' + echapper(m.full_name || '') + '"'); };
+  [['sommaire-img', 0], ['agence-img', 1], ['dos-img', 2]].forEach(([id, i]) => poserPhoto(id, reste[i % reste.length]));
+  html = html.replace('<figcaption id="sommaire-legende" data-hasard></figcaption>', () => '<figcaption id="sommaire-legende" data-hasard>' + echapper(reste[0].full_name || '') + '</figcaption>');
+  const mot = donnees.mot;
+  if (mot && mot.message && mot.photo_url) html = html.replace(/<img id="edito-img" src="data:image\/gif;base64,[^"]*" alt=""/, () => '<img id="edito-img" data-mot="1" src="' + echapper(photoLegere(mot.photo_url)) + '" alt="' + echapper(mot.nom || 'Maître Akesse') + '"');
+  else poserPhoto('edito-img', reste[3 % reste.length]);
+  // partenaires (9 logos au plus) et Instagram (9 publications au plus) : la page s'affiche s'il y en a
+  const logos = Array.isArray(donnees.partenaires) ? donnees.partenaires.filter((p) => p.logo_url).slice(0, 9) : [];
+  if (logos.length) {
+    html = html.replace('<div class="logos" id="confiance-liste"></div>', () => '<div class="logos" id="confiance-liste">' + logos.map((p) => '\n      <a href="partenaires.html?partenaire=' + encodeURIComponent(p.id) + '" title="' + echapper(p.nom || '') + '">\n        <img src="' + echapper(photoLegere(p.logo_url)) + '" alt="' + echapper(p.nom || '') + '" loading="lazy">\n      </a>').join('') + '</div>')
+      .replace(/(<article class="mag-page p-partenaires[^"]*" id="ils-nous-font-confiance"[^>]*?) hidden>/, (_, d) => d + '>');
+  }
+  const posts = Array.isArray(donnees.instagram) ? donnees.instagram.filter((p) => p && p.image).slice(0, 9) : [];
+  if (posts.length) {
+    html = html.replace('<div class="grille" id="instagram-grille"></div>', () => '<div class="grille" id="instagram-grille">' + posts.map((p) => '\n      <a href="' + echapper(/^https:\/\//i.test(p.lien || '') ? p.lien : 'https://www.instagram.com/maitreakessemodelmanagement') + '" target="_blank" rel="noopener" title="' + echapper(p.legende || '') + '">\n        <img src="' + echapper(p.image) + '" alt="' + echapper(p.legende || (anglais ? 'Instagram post' : 'Publication Instagram')) + '" loading="lazy">\n      </a>').join('') + '</div>')
+      .replace(/(<article class="mag-page p-instagram[^"]*" id="flux-instagram"[^>]*?) hidden>/, (_, d) => d + '>');
+  }
+  // film : seulement un fichier du dossier prévu (même règle que js/video-accueil.js) ; la page le charge à l'approche
+  const v = donnees.video;
+  if (v && v.type === 'video' && typeof v.chemin === 'string' && /^site\/video-accueil\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(v.chemin)) {
+    html = html.replace('<article class="mag-page p-film u-hidden" id="video-accueil"', () => '<article class="mag-page p-film' + (v.largeur && v.hauteur && v.hauteur > v.largeur ? ' video-verticale' : '') + '" id="video-accueil" data-confirme="1"');
+  }
+  // numéros de page et sommaire : les pages affichées, dans l'ordre (comme numeroter, js/accueil.js)
+  const lignes = []; let n = 0;
+  html = html.replace(/<article class="mag-page([^"]*)" id="([a-z-]+)"([^>]*)>([\s\S]*?)<\/article>/g, (tout, classes, id, attributs, corps) => {
+    if (/\bu-hidden\b/.test(classes) || /\shidden(\s|$)/.test(attributs)) return tout;
+    const num = String(++n).padStart(2, '0');
+    const sommaire = (attributs.match(/data-sommaire="([^"]*)"/) || [])[1];
+    if (sommaire) { const [titre, sous] = sommaire.split('|'); lignes.push('<li><a href="#' + id + '"><b>' + num + '</b><div><strong>' + titre + '</strong><span>' + (sous || '') + '</span></div></a></li>'); }
+    return tout.replace('<div class="mag-folio"><span class="num"></span>', () => '<div class="mag-folio"><span class="num">' + num + '</span>');
+  });
+  return html.replace('<ol id="sommaire-liste"></ol>', () => '<ol id="sommaire-liste">' + lignes.join('') + '</ol>');
+}
 // liste fraîche (ou vieille de moins de 5 minutes) ; sinon on lance la lecture (une seule à la fois)
 // et on l'attend au plus ATTENTE_ACCUEIL ; une liste plus ancienne sert en attendant
 function donneesAccueil() {
@@ -443,6 +491,7 @@ async function accueilRempli(requete, url) {
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
+  html = magazineComplet(html, donnees, anglais, une, couv, photoDe);
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
   return reponseHtml(html, page, url);
