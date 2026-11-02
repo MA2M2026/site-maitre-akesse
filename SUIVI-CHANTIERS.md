@@ -101,10 +101,15 @@ Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiq
 | W1 Inventaire des pages | IN_PROGRESS | docs/routes.md écrit ; reste : sitemap généré depuis la base |
 | W2 Pages complètes écrites par le serveur | IN_PROGRESS | EN LIGNE le 02/11 (main ede3766) : 178/180 sur le vrai site (evidence/prod-apres-phase2.txt) ; reste : 2 photos d'ambiance de l'accueil à marquer « au hasard » (corrigé sur la branche), sitemap depuis la base |
 | W3 Cache exact | PASS(evidence/prod-apres-phase2.txt) | en ligne : Cache-Control explicite, x-ma2m-render: ssr, x-ma2m-build, plus de x-vercel-cache/age recopiés ; borne de fraîcheur 180 s documentée |
-| W4 Retirer le code d'administration des pages publiques | IN_PROGRESS | branche : 6 pages sans panneau ni bouton ni script d'écriture ; publications.js séparé en publications-lecture.js (public) et publications-ecriture.js (Administration, « introuvable » sans connexion) ; écriture des images hors de app.js (images-site-ecriture.js) ; essai test-publications.js réécrit (session de l'agence ouverte : rien d'écrit) ; reste : batterie, mise en ligne |
+| W4 Retirer le code d'administration des pages publiques | PASS(evidence/prod-apres-w4.txt) | EN LIGNE (fdf866b) : 6 pages sans panneau ni bouton ; scripts d'écriture « introuvables » (404) sans la clé de l'agence ; essai test-publications.js |
 | W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |
 | W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | IN_PROGRESS | W6i secrets : PASS(evidence/W6i-secrets.txt) — historique complet, aucun secret (clé anon seulement), npm audit 0 ; reste : a, b, c, d, e, f, g, h, j, k, l |
-| W7 Vitesse (LCP ≤ 2,5 s) | UNVERIFIED | — |
+| W7 Vitesse (LCP ≤ 2,5 s) | FAIL(evidence/W7-lcp-apres.txt) | accueil 5,4 → 3,3 s, Book 4,9 → 4,3 s, fiche 3,9 → 4,0 s (Slow 4G simulé, médiane de 5) ; branche : annonce de la photo avant les scripts bloquants, premier visage du mur annoncé ; reste : feuilles de style bloquantes |
 | W8 Administration du contenu | UNVERIFIED | — |
 | W9 Essais automatiques | UNVERIFIED | — |
 | W10 Documentation | UNVERIFIED | — |
+
+### Prêt sur la branche `phase2-dynamique`, PAS encore en ligne (02/11/2026)
+- Jauge « Envoi de la photo… » qui s'affichait à l'ouverture de l'Administration (travail automatique) : corrigée, essai test-jauge-rattrapage.js.
+- Vitesse : photo annoncée avant les scripts bloquants, premier visage du mur annoncé ; accueil : photo « À la une » en version moyenne, traductions avec 3 s.
+- Avant la mise en ligne : batterie complète + relecture du code (pas encore faites sur ces derniers changements).
