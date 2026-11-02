@@ -2,8 +2,6 @@
 // français et l'anglais (11/10/2026 : avant, deux copies dans les pages). EN, T : js/app.js.
 window.partenairesData = [];
 
-const quillPDescription = editeurRicheDiffere('p-description-editeur', EN ? 'Write here… (you can paste text already formatted from Word)' : undefined);
-const quillEditPDescription = editeurRicheDiffere('edit-p-description-editeur', EN ? 'Write here… (you can paste text already formatted from Word)' : undefined);
 
 async function chargerPartenaires() {
   const grille = document.getElementById('partenaires-grille');
@@ -18,14 +16,14 @@ async function chargerPartenaires() {
     vide.style.display = 'block';
     return;
   }
-  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('partenaires').select('*').order('created_at', { ascending: false });
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('partenaires').select('id, nom, structure, evenement, role, description, logo_url, created_at').order('created_at', { ascending: false });
 
   if (error || !data || !data.length) {
     grille.innerHTML = '';
     vide.style.display = 'block';
     return;
   }
-  await versAnglais(data, ['structure', 'evenement', 'role', 'description'], true);  // (page anglaise, js/app.js)
+  await versAnglais(data, ['structure', 'evenement', 'role', 'description']);  // (page anglaise, js/app.js)
   // après la traduction (grand test du 26/10/2026) : masquer ce message libère la place
   // réservée à la liste (css/style.css) ; avant, le bas de page remontait le temps de traduire
   vide.style.display = 'none';
@@ -69,8 +67,6 @@ function ouvrirPartModal(index) {
   document.getElementById('part-modal-structure').style.display = 'block';
   document.getElementById('part-modal-evenement').style.display = 'block';
   document.getElementById('part-modal-description').style.display = 'block';
-  document.getElementById('part-modal-edition').style.display = 'none';
-  document.getElementById('part-modal-admin-actions').style.display = window.estAdminConnecte ? 'block' : 'none';
 
   afficherPartModal();
 }
@@ -90,117 +86,5 @@ function fermerPartModal() {
 }
 document.getElementById('part-modal-fermer').addEventListener('click', fermerPartModal);
 
-// --- Modification / suppression directement depuis la fiche ouverte (admin) ---
-document.getElementById('part-modal-modifier-btn').addEventListener('click', () => {
-  const p = window.partenairesData.find(x => x.id === window.partenaireModalCourant);
-  if (!p) return;
-  document.getElementById('edit-p-nom').value = p.nom || '';
-  document.getElementById('edit-p-structure').value = p.structure || '';
-  document.getElementById('edit-p-evenement').value = p.evenement || '';
-  document.getElementById('edit-p-role').value = p.role || '';
-  void quillEditPDescription.preparer().then(() => chargerContenuDansEditeur(quillEditPDescription, p.description));  // (js/app.js)
-  document.getElementById('edit-p-logo').value = '';
-  document.getElementById('edit-p-msg').style.display = 'none';
-
-  document.getElementById('part-modal-nom').style.display = 'none';
-  document.getElementById('part-modal-structure').style.display = 'none';
-  document.getElementById('part-modal-evenement').style.display = 'none';
-  document.getElementById('part-modal-description').style.display = 'none';
-  document.getElementById('part-modal-admin-actions').style.display = 'none';
-  document.getElementById('part-modal-edition').style.display = 'block';
-});
-
-document.getElementById('edit-p-annuler-btn').addEventListener('click', () => {
-  document.getElementById('part-modal-edition').style.display = 'none';
-  document.getElementById('part-modal-nom').style.display = 'block';
-  document.getElementById('part-modal-structure').style.display = 'block';
-  document.getElementById('part-modal-evenement').style.display = 'block';
-  document.getElementById('part-modal-description').style.display = 'block';
-  document.getElementById('part-modal-admin-actions').style.display = 'block';
-});
-
-document.getElementById('edit-p-enregistrer-btn').addEventListener('click', async () => {
-  const id = window.partenaireModalCourant;
-  const msg = document.getElementById('edit-p-msg');
-  const nom = document.getElementById('edit-p-nom').value.trim();
-  if (!nom) { msg.className = 'form-msg err'; msg.textContent = T('Le nom est obligatoire.', 'Name is required.'); msg.style.display = 'block'; return; }
-
-  msg.className = 'form-msg ok'; msg.textContent = T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
-
-  await quillEditPDescription.preparer();
-  const maj = {
-    nom,
-    structure: document.getElementById('edit-p-structure').value.trim(),
-    evenement: document.getElementById('edit-p-evenement').value.trim(),
-    role: document.getElementById('edit-p-role').value,
-    description: lireContenuEditeur(quillEditPDescription)
-  };
-
-  const logoInput = document.getElementById('edit-p-logo');
-  if (logoInput.files[0]) Object.assign(maj, await envoyerLogoPartenaire(id, logoInput.files[0]));  // js/partenaires-communs.js
-
-  const ancien = window.partenairesData.find(x => x.id === id);
-  const { error } = await sbAdmin.from('partenaires').update(maj).eq('id', id);
-  if (error) { msg.className = 'form-msg err'; msg.textContent = T('Erreur lors de la modification.', 'Error while updating.'); return; }
-  // ancien logo remplacé : plus utilisé nulle part (base d'abord, fichier ensuite), comme dans l'Administration
-  if (maj.logo_chemin && ancien && ancien.logo_chemin && ancien.logo_chemin !== maj.logo_chemin) await supprimerCheminsImagesSite('partenaires', 'partenaires-logos', [ancien.logo_chemin]);
-
-  msg.className = 'form-msg ok'; msg.textContent = T('Partenaire modifié !', 'Partner updated!');
-  await chargerPartenaires();
-  const index = window.partenairesData.findIndex(x => x.id === id);
-  if (index > -1) ouvrirPartModal(index);
-});
-
-document.getElementById('part-modal-supprimer-btn').addEventListener('click', async () => {
-  const id = window.partenaireModalCourant;
-  if (!confirm(T('Supprimer définitivement ce partenaire ?', 'Permanently delete this partner?'))) return;
-  const p = window.partenairesData.find(x => x.id === id);
-  // Base d'abord : si la suppression échoue, les images restent intactes (js/partenaires-communs.js).
-  if (!p || !(await effacerPartenaire(p))) { alert(T('La suppression a échoué. Réessayez.', 'Deletion failed. Please try again.')); return; }
-  fermerPartModal();
-  chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
-});
-
-// --- Ajout d'un nouveau partenaire ---
-document.getElementById('p-publier-btn').addEventListener('click', async () => {
-  const msg = document.getElementById('p-msg');
-  const nom = document.getElementById('p-nom').value.trim();
-  if (!nom) { msg.className = 'form-msg err'; msg.textContent = T('Le nom est obligatoire.', 'Name is required.'); msg.style.display = 'block'; return; }
-
-  msg.className = 'form-msg ok'; msg.textContent = T('Enregistrement…', 'Saving…'); msg.style.display = 'block';
-
-  await quillPDescription.preparer();
-  const idPartenaire = crypto.randomUUID();
-  const logoInput = document.getElementById('p-logo');
-  const { logo_url, logo_chemin } = (logoInput.files[0] && await envoyerLogoPartenaire(idPartenaire, logoInput.files[0])) || { logo_url: null, logo_chemin: null };
-
-  const { error } = await sbAdmin.from('partenaires').insert({
-    id: idPartenaire, nom,
-    structure: document.getElementById('p-structure').value.trim(),
-    evenement: document.getElementById('p-evenement').value.trim(),
-    role: document.getElementById('p-role').value,
-    description: lireContenuEditeur(quillPDescription),
-    logo_url, logo_chemin
-  });
-
-  if (error) { msg.className = 'form-msg err'; msg.textContent = T("Erreur d'enregistrement.", 'Error saving.'); return; }
-
-  msg.className = 'form-msg ok'; msg.textContent = T('Partenaire ajouté !', 'Partner added!');
-  document.getElementById('p-nom').value = '';
-  document.getElementById('p-structure').value = '';
-  document.getElementById('p-evenement').value = '';
-  document.getElementById('p-role').value = '';
-  quillPDescription.setText('');
-  logoInput.value = '';
-  chargerPartenaires().catch(e => { if (window.signalerErreur) window.signalerErreur('Partenaires : chargement', (e && e.message) || String(e)); });
-});
-
-// Aucune interface de connexion sur cette page publique : un admin se connecte
-// depuis tableau-de-bord.html, puis sa session est simplement détectée ici pour
-// révéler le panneau d'ajout de partenaire — sans aucune trace visible pour un visiteur.
-document.getElementById('admin-logout-btn').addEventListener('click', async () => {
-  await sbAdmin.auth.signOut();
-  window.location.reload();
-});
-
-verifierAdmin().catch(() => {});
+// (phase 2, W4, 02/11/2026) ajouter, modifier ou supprimer un partenaire : dans l'Administration seulement ; plus aucun
+// code d'écriture dans la page publique.

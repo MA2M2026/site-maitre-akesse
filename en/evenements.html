@@ -87,69 +87,10 @@
       <p id="news-modal-lieu" class="u-c-texte-doux u-hidden"></p>
       <div id="news-modal-texte" class="contenu-riche u-mt-1"></div>
 
-      <div id="news-modal-admin-actions" class="news-modal-section-admin">
-        <button id="news-modal-modifier-btn" class="btn-mini-admin">✎ Edit</button>
-        <button id="news-modal-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Delete</button>
-      </div>
     </div>
   </div>
 </div>
 
-<!-- Admin panel: entirely invisible to a visitor.
-     Only shown if an admin session already logged in (via the Administration, /admin/)
-     is detected by verifierAdmin() — no trace for the public. -->
-<section id="admin-bloc" class="fond-anthracite u-hidden u-pt-3">
-  <div class="container u-maxw-520">
-    <div id="admin-publier">
-      <div class="badge-page-admin">📍 You are on: Our Events (Administration)</div>
-      <p class="admin-note-texte">To edit or delete an already published event, simply open it by clicking on it in the page (like a visitor). The options will appear directly in its detail view.</p>
-      <button class="btn btn--principal u-mt-1-5" id="ouvrir-redaction-btn">✍️ Publish a New Event</button>
-      <button class="btn u-ml-0-5" id="admin-logout-btn">Logout</button>
-      <a href="/admin/" class="lien-tableau-bord">Open the Administration →</a>
-    </div>
-  </div>
-</section>
-
-<!-- Full-screen writing page (admin): replaces the old small embedded form and the
-     edit form hidden inside the event view — a real, spacious writing page, with a
-     live preview of the public rendering. -->
-<div class="redaction-overlay" id="redaction-overlay">
-  <div class="redaction-shell">
-    <div class="redaction-entete">
-      <h2 id="redaction-titre-mode">Publish a New Event</h2>
-      <button class="redaction-fermer" id="redaction-fermer" aria-label="Close">✕</button>
-    </div>
-    <div class="redaction-corps">
-      <div class="redaction-colonne-edition">
-        <div class="form-champ"><label for="red-titre">Title</label><input type="text" id="red-titre"></div>
-        <div class="form-champ"><label for="red-date">Event date</label><input type="date" id="red-date"></div>
-        <div class="form-champ"><label for="red-lieu">Location (optional)</label><input type="text" id="red-lieu"></div>
-        <div class="form-champ"><label>Description (optional)</label><div id="red-editeur" class="editeur-riche redaction-editeur"></div></div>
-        <div class="form-champ"><label for="red-images" id="red-images-label">Photos (you can select several at once)</label><input type="file" id="red-images" accept="image/*" multiple></div>
-        <div id="red-images-apercu" class="redaction-images-apercu"></div>
-
-        <div class="redaction-actions">
-          <button class="btn btn--principal" id="red-enregistrer-btn">Publish Event</button>
-          <button class="btn" id="red-annuler-btn">Cancel</button>
-          <button class="btn u-ml-0-5 u-hidden" id="red-supprimer-btn">🗑 Delete</button>
-        </div>
-        <div id="red-msg" class="form-msg"></div>
-      </div>
-      <div class="redaction-colonne-apercu">
-        <div class="redaction-apercu-etiquette">Preview (approximate public rendering)</div>
-        <div class="redaction-apercu-carte">
-          <div class="news-une-photo" id="red-apercu-photo"><img id="red-apercu-img" class="u-hidden" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""></div>
-          <div class="news-une-corps">
-            <span class="news-categorie u-hidden" id="red-apercu-lieu"></span>
-            <div class="news-date" id="red-apercu-date"></div>
-            <h2 id="red-apercu-titre">Event title</h2>
-            <div id="red-apercu-texte" class="contenu-riche"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 </main>
 
@@ -163,11 +104,11 @@
 <script src="../js/conversion-heic.js?v=82dc3921"></script>
 <script src="../js/photos.js?v=992c058a"></script>
 <script src="../js/partage.js?v=1ab93ecd"></script>
-<script src="../js/app.js?v=9406b4bd"></script>
+<script src="../js/app.js?v=97685eed"></script>
 <script src="../js/confort.js?v=cad83e86"></script>
 <script src="../js/menu.js?v=e2094e8d"></script>
 <script src="../js/rendu-publications.js?v=2f409bc4"></script>
-<script src="../js/publications.js?v=603de059"></script>
-<script src="../js/evenements.js?v=fb3d98e8"></script>
+<script src="../js/publications-lecture.js?v=61112776"></script>
+<script src="../js/evenements.js?v=3bcd350b"></script>
 </body>
 </html>

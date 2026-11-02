@@ -29,7 +29,6 @@
 <link rel="stylesheet" href="css/menu.css?v=c97a207f">
 <link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f">
 <link rel="stylesheet" href="css/style.css?v=296e46ec">
-<script src="js/portail/inactivite.js?v=6750ba5e"></script>
 <link rel="stylesheet" href="css/jetons.css?v=60171933">
 <link rel="stylesheet" href="css/installation.css?v=9b814af1">
 <link rel="stylesheet" href="css/charte-ma2m.css?v=2be99f74">
@@ -101,74 +100,11 @@
       <p id="part-modal-evenement" class="pt-4"></p>
       <div id="part-modal-description" class="contenu-riche pt-5"></div>
 
-      <div id="part-modal-admin-actions" class="pt-6">
-        <button id="part-modal-modifier-btn" class="btn-mini-admin">✎ Modifier</button>
-        <button id="part-modal-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Supprimer</button>
-      </div>
 
-      <div id="part-modal-edition" class="pt-6">
-        <div class="form-champ"><label for="edit-p-nom">Nom (personne ou institution) *</label><input type="text" id="edit-p-nom"></div>
-        <div class="form-champ"><label for="edit-p-structure">Structure représentée</label><input type="text" id="edit-p-structure"></div>
-        <div class="form-champ"><label for="edit-p-evenement">Événement associé</label><input type="text" id="edit-p-evenement"></div>
-        <div class="form-champ">
-          <label for="edit-p-role">Rôle</label>
-          <select id="edit-p-role">
-            <option value="">Choisir</option>
-            <option value="DA">DA (Directeur artistique)</option>
-            <option value="Styliste">Styliste</option>
-            <option value="Directeur de casting">Directeur de casting</option>
-            <option value="Promoteur">Promoteur</option>
-            <option value="Organisateur">Organisateur</option>
-            <option value="Régisseur">Régisseur</option>
-            <option value="Autre">Autre</option>
-          </select>
-        </div>
-        <div class="form-champ"><label>Description / notes</label><div id="edit-p-description-editeur" class="editeur-riche"></div></div>
-        <div class="form-champ"><label for="edit-p-logo">Remplacer le logo (facultatif)</label><input type="file" id="edit-p-logo" accept="image/*"></div>
-        <button class="btn btn--principal" id="edit-p-enregistrer-btn">Enregistrer</button>
-        <button class="btn u-ml-0-5" id="edit-p-annuler-btn">Annuler</button>
-        <div id="edit-p-msg" class="form-msg"></div>
-      </div>
     </div>
   </div>
 </div>
 
-<!-- Panneau d'administration : entièrement invisible pour un visiteur.
-     Ne s'affiche que si une session admin déjà connectée (via l’Administration, /admin/)
-     est détectée par verifierAdmin() — aucune trace pour le public. -->
-<section id="admin-bloc" class="fond-anthracite u-hidden u-pt-3">
-  <div class="container u-maxw-520">
-    <div id="admin-publier">
-      <div class="badge-page-admin">📍 Vous êtes sur : Nos partenaires (Administration)</div>
-      <p class="pt-7">Pour modifier ou supprimer un partenaire déjà publié, ouvre simplement sa fiche en cliquant dessus dans la page.</p>
-
-      <h3 class="u-mb-1">Ajouter un partenaire</h3>
-      <div class="form-champ"><label for="p-nom">Nom (personne ou institution) *</label><input type="text" id="p-nom" placeholder="ex. : Gilles Touré"></div>
-      <div class="form-champ"><label for="p-structure">Structure représentée</label><input type="text" id="p-structure" placeholder="ex. : Conseil du Café-Cacao"></div>
-      <div class="form-champ"><label for="p-evenement">Événement associé</label><input type="text" id="p-evenement" placeholder="ex. : Cacao Fashion Show, JNCC 2026"></div>
-      <div class="form-champ">
-        <label for="p-role">Rôle</label>
-        <select id="p-role">
-          <option value="">Choisir</option>
-          <option value="DA">DA (Directeur artistique)</option>
-          <option value="Styliste">Styliste</option>
-          <option value="Directeur de casting">Directeur de casting</option>
-          <option value="Promoteur">Promoteur</option>
-          <option value="Organisateur">Organisateur</option>
-          <option value="Régisseur">Régisseur</option>
-          <option value="Autre">Autre</option>
-        </select>
-      </div>
-      <div class="form-champ"><label>Description / notes (facultatif)</label><div id="p-description-editeur" class="editeur-riche"></div></div>
-      <div class="form-champ"><label for="p-logo">Logo ou affiche (grand format, bonne résolution)</label><input type="file" id="p-logo" accept="image/*"></div>
-
-      <button class="btn btn--principal u-mt-1-2" id="p-publier-btn">Ajouter ce partenaire</button>
-      <button class="btn u-ml-0-5" id="admin-logout-btn">Déconnexion</button>
-      <a href="/admin/" class="pt-8">Ouvrir l’Administration →</a>
-      <div id="p-msg" class="form-msg"></div>
-    </div>
-  </div>
-</section>
 
 </main>
 
@@ -182,11 +118,10 @@
 <script src="js/conversion-heic.js?v=82dc3921"></script>
 <script src="js/photos.js?v=992c058a"></script>
 <script src="js/partage.js?v=1ab93ecd"></script>
-<script src="js/app.js?v=9406b4bd"></script>
+<script src="js/app.js?v=97685eed"></script>
 <script src="js/confort.js?v=cad83e86"></script>
 <script src="js/menu.js?v=e2094e8d"></script>
-<script src="js/partenaires-communs.js?v=6b95194f"></script>
 <script src="js/rendu-publications.js?v=2f409bc4"></script>
-<script src="js/partenaires.js?v=37625e37"></script>
+<script src="js/partenaires.js?v=ef662331"></script>
 </body>
 </html>
