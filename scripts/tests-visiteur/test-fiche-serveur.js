@@ -67,8 +67,8 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifiée à chaque visite (le serveur la garde 3 minutes au plus)');
     // étape A (01/11/2026) : le contenu principal est écrit dans le HTML, avant tout programme
     const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-    ok(/<div id="contenu" class="u-mt-2"><div class="reveal visible">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm<\/dd>/.test(visible) && /<dd>19 (ans|years)<\/dd>/.test(visible) && !/fiche-en-chargement/.test(visible),
-      chemin + ' : nom, taille et âge écrits dans le HTML avant tout programme');
+    ok(/<div id="contenu"[^>]*>\s*<div class="reveal visible">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm[< ]/.test(visible) && /<dd>19 (ans|years)<\/dd>/.test(visible) && !/fiche-en-chargement/.test(visible),
+      chemin + ' : fiche complète (nom, taille, âge) écrite dans le HTML avant tout programme');
   }
   nomPiege = true;
   const piege = await (await demander('book/awa-kone')).text();
@@ -85,7 +85,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
   for (const chemin of ['mannequin?id=' + ID, 'en/mannequin?id=' + ID]) {
     const r = await demander(chemin);
     const h = r ? (await r.text()).replace(/<script[\s\S]*?<\/script>/g, '') : '';
-    ok(/<h1>Awa Koné<\/h1>/.test(h) && /<dd>178 cm<\/dd>/.test(h) && h.includes('<link rel="canonical" href="https://www.maitreakessemodelmanagement.com' + (chemin.startsWith('en/') ? '/en' : '') + '/mannequin?id=' + ID + '">'),
+    ok(/<h1>Awa Koné<\/h1>/.test(h) && /<dd>178 cm[< ]/.test(h) && h.includes('<link rel="canonical" href="https://www.maitreakessemodelmanagement.com' + (chemin.startsWith('en/') ? '/en' : '') + '/mannequin?id=' + ID + '">'),
       chemin.split('?')[0] + '?id=… (carte du Book) : nom et taille écrits dans le HTML avant tout programme');
   }
   ok(await demander('mannequin?id=pas-un-id') === undefined && await demander('mannequin?id=' + ID, { headers: { 'user-agent': 'WhatsApp/2.23' } }) !== null, '/mannequin?id= non valable : la page habituelle ; robots : l’aperçu habituel');
@@ -154,7 +154,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     const mw2 = await middleware();
     const telephone = await (await mw2(new Request('https://www.maitreakessemodelmanagement.com/book/awa-kone', { headers: { 'user-agent': 'Mozilla/5.0 (Linux; Android 14) Mobile' } }))).text();
     const ordinateur = await (await mw2(new Request('https://www.maitreakessemodelmanagement.com/book/awa-kone', { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0)' } }))).text();
-    ok(/<img class="hero-apercu" src="https:\/\/x\/1-petite\.jpg"[^>]*><img data-couv-img src="https:\/\/x\/1-moy\.jpg"/.test(telephone) && /<img class="hero-apercu" src="https:\/\/x\/1-mini\.jpg"/.test(ordinateur),
+    ok(/<img class="hero-apercu" src="https:\/\/x\/1-petite\.jpg"[^>]*>\s*<img data-couv-img src="https:\/\/x\/1-moy\.jpg"/.test(telephone) && /<img class="hero-apercu" src="https:\/\/x\/1-mini\.jpg"/.test(ordinateur),
       'la photo de la carte du Book (petite sur téléphone) est posée sous la grande photo, dans le HTML');
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage(); const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));

@@ -98,8 +98,8 @@ Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiq
 | Chantier | État | Blocage / reste |
 |---|---|---|
 | W0 Tri de départ | PASS(DECISIONS.md) | envois de 1 h et 3 h désactivés ; retour en arrière : dpl_99F9Ue1NvHjsvqzdbJGJY3547yxP → dpl_3Pr6SMGmavSd9uh1AiXHPsr4ykVM |
-| W1 Inventaire des pages | IN_PROGRESS | 30 pages publiques mesurées par scripts/verify-dynamic.mjs (FR + EN + fiche) ; docs/routes.md à écrire |
-| W2 Pages complètes écrites par le serveur | IN_PROGRESS | départ en ligne 15/140 ; branche (serveur local) : accueil, Book, actualités, événements, partenaires, qui sommes-nous, services, contact, candidature, intégrer l'agence, mentions, confidentialité complets ; reste agenda (calendrier), parcours (frise), fiche mannequin ; pas encore en ligne |
+| W1 Inventaire des pages | IN_PROGRESS | docs/routes.md écrit ; reste : sitemap généré depuis la base |
+| W2 Pages complètes écrites par le serveur | IN_PROGRESS | serveur local : 180/180 (evidence/W2-local-180.txt) ; batterie et mise en ligne en cours |
 | W3 Cache exact | IN_PROGRESS | en-têtes d'origine plus recopiés (x-vercel-cache, age), politique explicite + x-ma2m-render/x-ma2m-build ; à vérifier en ligne |
 | W4 Retirer le code d'administration des pages publiques | UNVERIFIED | — |
 | W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |
