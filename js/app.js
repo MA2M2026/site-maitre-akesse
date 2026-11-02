@@ -1847,7 +1847,8 @@ function majBarreEnvoi() {
 // parfois une fois puis réussit : 3 essais avant de faire remonter l'échec.
 // (verifier : false pour les copies réduites fabriquées par le téléphone lui-même ; seule la photo choisie
 // par la personne est relue par le serveur : un aller-retour de moins par copie, 01/11/2026)
-async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = true) {
+// (silencieux : envoi sans la jauge du bas, pour le travail automatique de l'Administration, 02/11/2026)
+async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = true, silencieux = false) {
   const jeton = await jetonSessionCourante();
   if (!jeton) throw new Error('Session expirée, reconnectez-vous.');
   let derniereErreur;
@@ -1860,7 +1861,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = tru
       });
       const resultat = await reponse.json().catch(() => ({}));
       if (!reponse.ok) throw new Error(resultat.error || "Échec de l'obtention de l'URL d'envoi.");
-      const envoi = await envoyerAvecProgression(resultat.uploadUrl, blob, null, contentType || 'image/jpeg');
+      const envoi = await envoyerAvecProgression(resultat.uploadUrl, blob, null, contentType || 'image/jpeg', silencieux);
       if (!envoi.ok) throw new Error("Échec de l'envoi vers le stockage.");
       if (verifier) await verifierEnvoiR2('/api/r2-presigner', jeton, { modelId, chemin, contentType: contentType || 'image/jpeg' });
       return resultat.publicUrl;
@@ -1924,7 +1925,8 @@ async function compresserPhotoOrigine(fichier, coteMax = 4000, qualite = 0.92) {
 // Photos légères en WebP et photos directes Cloudflare : js/photos.js (chargé avant ce fichier).
 // Version réduite d'une photo (fichier ou blob), envoyée dans « dossier » ; fin : fin du nom
 // avant l'extension (« -n800 » pour la miniature). Renvoie { url, chemin } ou null.
-async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite) {
+// silencieux : sans la jauge du bas (rattrapage automatique des photos, js/photos.js ; 02/11/2026).
+async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite, silencieux = false) {
   const blobs = await redessinerPhoto(source, cote, (canvas, finir) => canvas.toBlob(jpg => {
     if (!jpg) { finir(null); return; }
     canvas.toBlob(webp => finir({ jpg, webp: webp?.type === 'image/webp' ? webp : null }), 'image/webp', qualite);
@@ -1935,11 +1937,11 @@ async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite)
   // annonce sa copie WebP) seulement si celle-ci est bien arrivée
   if (!blobs.webp) {  // (iPhone ancien : pas de WebP, un seul envoi, sans « -w »)
     const chemin = base + '.jpg';
-    return { url: await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg', false), chemin };
+    return { url: await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg', false, silencieux), chemin };
   }
   const [webp, jpg] = await Promise.allSettled([
-    uploaderVersR2(modelId, base + '-w.webp', blobs.webp, 'image/webp', false),
-    uploaderVersR2(modelId, base + '-w.jpg', blobs.jpg, 'image/jpeg', false)
+    uploaderVersR2(modelId, base + '-w.webp', blobs.webp, 'image/webp', false, silencieux),
+    uploaderVersR2(modelId, base + '-w.jpg', blobs.jpg, 'image/jpeg', false, silencieux)
   ]);
   if (jpg.status === 'rejected') {
     if (webp.status === 'fulfilled') await supprimerDeR2(modelId, base + '-w.webp');  // pas de copie WebP orpheline
@@ -1949,7 +1951,7 @@ async function envoyerVersionPhoto(modelId, source, dossier, fin, cote, qualite)
   // (copie WebP perdue en route, rare : le JPEG est renvoyé sans « -w », comme avant)
   const chemin = base + '.jpg';
   try {
-    const url = await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg', false);
+    const url = await uploaderVersR2(modelId, chemin, blobs.jpg, 'image/jpeg', false, silencieux);
     await supprimerDeR2(modelId, base + '-w.jpg');
     return { url, chemin };
   } catch (e) { console.warn('Copie JPEG renommée non envoyée :', e); return { url: jpg.value, chemin: base + '-w.jpg' }; }
@@ -1990,18 +1992,20 @@ async function supprimerFichiersPhoto(modelId, p) {
 
 // Envoi PUT avec suivi de la progression (XMLHttpRequest : fetch ne la donne pas) : barre en haut de l'écran
 // (majBarreEnvoi) et, si donné, rappel progression(0 à 1). Partagé par toutes les photos (01/11/2026).
-function envoyerAvecProgression(url, fichier, progression, type) {
+// silencieux : pas de jauge (travail automatique en arrière-plan : la propriétaire voyait « Envoi de la
+// photo… » à l'ouverture de l'Administration sans rien envoyer elle-même, 02/11/2026).
+function envoyerAvecProgression(url, fichier, progression, type, silencieux = false) {
   const cle = {};
-  envoisEnCours.set(cle, { charge: 0, total: fichier.size || 1 });
-  majBarreEnvoi();
-  const fin = () => { envoisEnCours.delete(cle); majBarreEnvoi(); };
+  const suivre = (etat) => { if (!silencieux) { envoisEnCours.set(cle, etat); majBarreEnvoi(); } };
+  suivre({ charge: 0, total: fichier.size || 1 });
+  const fin = () => { if (!silencieux) { envoisEnCours.delete(cle); majBarreEnvoi(); } };
   return new Promise((ok, ko) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url);
     xhr.setRequestHeader('Content-Type', type || fichier.type || 'image/jpeg');
     xhr.upload.onprogress = (e) => {
       if (!e.lengthComputable) return;
-      envoisEnCours.set(cle, { charge: e.loaded, total: e.total }); majBarreEnvoi();
+      suivre({ charge: e.loaded, total: e.total });
       if (progression) progression(e.loaded / e.total);
     };
     xhr.onload = () => { fin(); ok({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status }); };

@@ -232,7 +232,7 @@ document.addEventListener('load', function (e) {
 // Une version (miniature ou moyenne) refaite à partir de l'original ; false si la copie
 // WebP attendue n'a pas pu être envoyée.
 async function refaireVersion(photo, original, maj, cle, dossier, fin, cote, qualite) {
-  const v = await envoyerVersionPhoto(photo.model_id, original, dossier, fin, cote, qualite);
+  const v = await envoyerVersionPhoto(photo.model_id, original, dossier, fin, cote, qualite, true);  // (sans la jauge du bas : travail automatique)
   if (!v) throw new Error('Image illisible');
   maj['url_' + cle] = v.url; maj['chemin_' + cle] = v.chemin;
   return !!cheminWebp(v.chemin);

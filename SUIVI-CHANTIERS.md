@@ -108,3 +108,8 @@ Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiq
 | W8 Administration du contenu | UNVERIFIED | — |
 | W9 Essais automatiques | UNVERIFIED | — |
 | W10 Documentation | UNVERIFIED | — |
+
+### Prêt sur la branche `phase2-dynamique`, PAS encore en ligne (02/11/2026)
+- Jauge « Envoi de la photo… » qui s'affichait à l'ouverture de l'Administration (travail automatique) : corrigée, essai test-jauge-rattrapage.js.
+- Vitesse : photo annoncée avant les scripts bloquants, premier visage du mur annoncé ; accueil : photo « À la une » en version moyenne, traductions avec 3 s.
+- Avant la mise en ligne : batterie complète + relecture du code (pas encore faites sur ces derniers changements).
