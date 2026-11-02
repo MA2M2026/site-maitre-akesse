@@ -337,6 +337,9 @@ function urlIndiqueRecuperationMdp() {
   return /type=recovery/.test(window.location.hash + window.location.search);
 }
 
+// Adresse e-mail acceptée (même règle que api/_commun.js ; SonarCloud S8786, 26/10/2026)
+const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
 // Langue de la page et petit traducteur partagés (11/10/2026) : T('texte français',
 // 'English text') renvoie le texte de la langue de la page (<html lang="en"> = anglais).
 const EN = document.documentElement.lang === 'en';
