@@ -106,7 +106,14 @@ async function main() {
     const id = route.replace(/\//g, '_') || '_';
     try {
       // --- SSR : texte et images avec JS ⊆ sans JS
+      // (UNE seule réponse du serveur, affichée avec puis sans JavaScript : deux demandes séparées pouvaient tomber sur
+      // deux serveurs Vercel dont la mémoire de 3 minutes n'a pas le même âge, et différer sans défaut du site)
+      const reponseUnique = await fetch(BASE + route, { headers: Object.assign({ 'user-agent': AGENTS.chrome, accept: 'text/html' }, TEMOINS ? { cookie: TEMOINS } : {}) });
+      const corpsUnique = await reponseUnique.text();
+      const entetesUniques = Object.fromEntries(reponseUnique.headers.entries());
+      const servirUnique = (pg) => pg.route((u) => u.href.split('#')[0] === BASE + route || u.href === BASE + route + '/', (r) => r.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8' }, body: corpsUnique }));
       const p1 = await avecJs.newPage();
+      await servirUnique(p1);
       await p1.goto(BASE + route, { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
       await p1.waitForTimeout(2500);
       // (défilement : les images « au fil de l'écran » se chargent)
@@ -114,9 +121,10 @@ async function main() {
       await p1.waitForTimeout(1200).catch(() => {});
       const a = await relever(p1); await p1.close();
       const p2 = await sansJs.newPage();
-      const rep = await p2.goto(BASE + route, { waitUntil: 'load', timeout: 60000 });
+      await servirUnique(p2);
+      await p2.goto(BASE + route, { waitUntil: 'load', timeout: 60000 });
       const b = await relever(p2);
-      const entetes = rep ? rep.headers() : {};
+      const entetes = entetesUniques;
       const htmlSansJs = await p2.content(); await p2.close();
       const texteB = new Set(b.lignes);
       // (texte coupé à la largeur de l'écran par la page, terminé par « … » : présent en entier sans programme)

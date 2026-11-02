@@ -416,6 +416,10 @@ async function accueilRempli(requete, url) {
   const autres = donnees.profils.filter(p => p.id !== une.id);
   const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
   const anglais = /^\/en(\/|$)/.test(url.pathname);
+  // (définitif, 02/11/2026) page anglaise : le mot du fondateur et l'agenda TOUJOURS traduits avant l'envoi, même juste
+  // après une mise en ligne (la liste gardée en mémoire pouvait encore être sans traduction : la page arrivait en français)
+  if (anglais && donnees.mot && donnees.mot.message && !donnees.motEn) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
+  if (anglais && Array.isArray(donnees.agenda) && donnees.agenda.length && !donnees.agendaEn) donnees.agendaEn = await versAnglaisServeur(donnees.agenda, ['titre', 'lieu', 'description'], 1500).catch(() => null);
   html = completerAccueil(html, donnees, anglais);
   // étape A (01/11/2026) : les visages (6 femmes, 3 hommes), « À la une » et le nombre de mannequins écrits
   // dans la page (js/rendu-book.js, le même dessin que js/accueil.js)
