@@ -103,7 +103,7 @@ Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiq
 | W3 Cache exact | PASS(evidence/prod-apres-phase2.txt) | en ligne : Cache-Control explicite, x-ma2m-render: ssr, x-ma2m-build, plus de x-vercel-cache/age recopiés ; borne de fraîcheur 180 s documentée |
 | W4 Retirer le code d'administration des pages publiques | IN_PROGRESS | branche : 6 pages sans panneau ni bouton ni script d'écriture ; publications.js séparé en publications-lecture.js (public) et publications-ecriture.js (Administration, « introuvable » sans connexion) ; écriture des images hors de app.js (images-site-ecriture.js) ; essai test-publications.js réécrit (session de l'agence ouverte : rien d'écrit) ; reste : batterie, mise en ligne |
 | W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |
-| W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | UNVERIFIED | b3ef467 introuvable (à refaire) |
+| W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | IN_PROGRESS | W6i secrets : PASS(evidence/W6i-secrets.txt) — historique complet, aucun secret (clé anon seulement), npm audit 0 ; reste : a, b, c, d, e, f, g, h, j, k, l |
 | W7 Vitesse (LCP ≤ 2,5 s) | UNVERIFIED | — |
 | W8 Administration du contenu | UNVERIFIED | — |
 | W9 Essais automatiques | UNVERIFIED | — |
