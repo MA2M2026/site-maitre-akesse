@@ -4,9 +4,8 @@ const PUBLICATION = PUBLICATIONS.actualites;  // js/publications.js
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
 
 const quillRedaction = editeurRicheDiffere('red-editeur', T('Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)', 'Write here… (you can paste text already formatted from Word)'));
-const LIBELLES_CATEGORIES_EN = { Casting: 'Casting', Mannequinat: 'Modeling', Conseils: 'Tips', Événements: 'Events' };
 function libelleCategorieActu(cat) {
-  return EN ? (LIBELLES_CATEGORIES_EN[cat] || cat) : cat;
+  return window.RenduPublications.libelleCategorie(cat, EN);  // (js/rendu-publications.js)
 }
 
 function formatDateActu(dateStr) {
@@ -15,13 +14,11 @@ function formatDateActu(dateStr) {
 
 function afficherFiltresCategories(data) {
   const conteneur = document.getElementById('actus-filtres');
-  const categoriesPresentes = CATEGORIES_ACTUALITES.filter(cat => data.some(a => a.categorie === cat));
-  if (categoriesPresentes.length < 2) { conteneur.style.display = 'none'; return; }
+  const boutons = window.RenduPublications.filtresActualites(data, EN);  // (même dessin que le serveur)
+  if (!boutons) { conteneur.style.display = 'none'; return; }
 
   conteneur.style.display = 'flex';
-  conteneur.innerHTML = ['Toutes', ...categoriesPresentes].map(cat => `
-    <button class="filtre-categorie${cat === 'Toutes' ? ' actif' : ''}" data-categorie="${echapperHtml(cat)}">${echapperHtml(cat === 'Toutes' ? T('Toutes', 'All') : libelleCategorieActu(cat))}</button>
-  `).join('');
+  conteneur.innerHTML = boutons;
 
   conteneur.querySelectorAll('.filtre-categorie').forEach(bouton => {
     bouton.addEventListener('click', () => {

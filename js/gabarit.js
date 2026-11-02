@@ -10,10 +10,11 @@
 // data-autre-langue (facultatif) : page de l'autre langue quand elle n'existe pas (ex. Espace).
 // Aussi : <div class="reseaux" data-gabarit="reseaux"></div> (icônes des réseaux sociaux).
 // Pour ajouter une page au menu : une seule ligne dans PAGES ci-dessous.
-(function () {
-  if (window.ma2mGabarit) { window.ma2mGabarit(); return; } // 2e chargement : bas de page
-  var EN_G = document.documentElement.lang === 'en';
-  var RACINE_G = EN_G ? '../' : '';
+(function (racine) {
+  // Phase 2 (02/11/2026, « 100 % écrit par le serveur ») : UNE seule façon de dessiner la barre du haut, le menu,
+  // le bas de page et les réseaux, partagée par le serveur (middleware.js les écrit dans la page avant de
+  // l'envoyer : visibles sans programme) et par la page (emplacements encore vides seulement).
+  // Script classique ET importable par middleware.js : il pose window.RenduGabarit / globalThis.RenduGabarit.
   // [fichier, libellé menu FR, libellé menu EN, libellé bas de page FR, libellé bas de page EN]
   // (libellé bas de page null = absent du bas de page)
   // Ordre du menu « Modèle A » (11/10/2026) ; « Intégrer l'agence » devient le grand bouton rouge.
@@ -46,73 +47,121 @@
     '<a href="https://wa.me/message/HJAMXGXHCL46I1" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" class="u-ic-whatsapp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0a12 12 0 00-10.288 18.06L0 24l6.084-1.688A12 12 0 1012 0zm0 21.938a9.917 9.917 0 01-5.052-1.383l-.362-.215-3.752 1.041 1.004-3.665-.235-.375A9.938 9.938 0 1112 21.938z"/></svg></a>'
   ];
 
-  function remplir() {
-  function placeHolders(nom) { return document.querySelectorAll('[data-gabarit="' + nom + '"]:not([data-rempli])'); }
-  var entete = document.querySelector('[data-gabarit="entete"]');
-  var page = (entete && entete.dataset.page) || (document.body && document.body.dataset.page) || '';
 
   // « Qui sommes-nous » : dans le menu partout, dans le bas de page seulement sur sa propre
   // page ; le lien « Inscription » n'est pas proposé dans le menu français des deux pages de
-  // candidature.
-  // La fiche d'une mannequin garde « The Book » allumé dans le menu.
-  var actif = page === 'mannequin' ? 'mannequins' : page;
-  function visible(p, menu) {
+  // candidature. La fiche d'une mannequin garde « The Book » allumé dans le menu.
+  function visible(page, en, p, menu) {
     if (!menu && p[0] === 'qui-sommes-nous') return page === 'qui-sommes-nous';
-    if (menu && !EN_G && p[0] === 'inscription-mannequin') return page !== 'candidature' && page !== 'integrer-agence';
+    if (menu && !en && p[0] === 'inscription-mannequin') return page !== 'candidature' && page !== 'integrer-agence';
     return true;
   }
-
-  placeHolders('entete').forEach(function (el) {
-    var autre = el.dataset.autreLangue || ((EN_G ? '../' : 'en/') + page + '.html');
-    el.innerHTML = '\n  <div class="container header-v2-inner">\n' +
-      '    <a href="index.html" class="logo-img-header"><img src="' + RACINE_G + 'assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="600" height="182"></a>\n' +
+  function entete(page, en, autreLangue) {
+    var autre = autreLangue || ((en ? '../' : 'en/') + page + '.html');
+    return '\n  <div class="container header-v2-inner">\n' +
+      '    <a href="index.html" class="logo-img-header"><img src="' + (en ? '../' : '') + 'assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="600" height="182"></a>\n' +
       '    <div class="header-v2-droite">\n' +
-      '      <a href="' + autre + '" class="lang-switch" data-bouton-libre aria-label="' + (EN_G ? 'FR, version française">FR' : 'EN, English version">EN') + '</a>\n' +
+      '      <a href="' + autre + '" class="lang-switch" data-bouton-libre aria-label="' + (en ? 'FR, version française">FR' : 'EN, English version">EN') + '</a>\n' +
       '      <button class="menu-trigger" id="menuBtn" data-bouton-libre>\n        <span>Menu</span>\n        <span class="dots"><span></span><span></span><span></span></span>\n      </button>\n' +
       '    </div>\n  </div>\n';
-    el.setAttribute('data-rempli', '');
-  });
-
-  placeHolders('menu').forEach(function (el) {
-    var liens = PAGES.filter(function (p) { return visible(p, true); }).map(function (p) {
-      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + lienPage(p) + '"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (EN_G ? p[2] : p[1]) + '</a></li>';
+  }
+  function menu(page, en) {
+    var actif = page === 'mannequin' ? 'mannequins' : page;
+    var liens = PAGES.filter(function (p) { return visible(page, en, p, true); }).map(function (p) {
+      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + lienPage(p) + '"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (en ? p[2] : p[1]) + '</a></li>';
     });
     // (plus de bouton « Espace mannequin » : les mannequins entrent par l'application, 26/10/2026)
-    el.innerHTML = '\n  <button class="close-menu" id="closeMenuBtn">' + (EN_G ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
-    el.setAttribute('data-rempli', '');
-  });
-
-  // Liens vers les réseaux sociaux (page Contact, 12/10/2026 : avant, recopiés dans la page)
-  placeHolders('reseaux').forEach(function (el, n) {
-    // ordre de la page Contact : TikTok, Facebook, Instagram, YouTube, WhatsApp
-    el.innerHTML = [1, 2, 0, 3, 4].map(function (i) { return RESEAUX[i]; }).join('').replace(/ig-grad-pied/g, 'ig-grad-r' + n);
-    el.setAttribute('data-rempli', '');
-  });
-
-  placeHolders('pied').forEach(function (el) {
-    var nav = PAGES.filter(function (p) { return p[3] && visible(p, false); }).sort(function (a, b) {
+    return '\n  <button class="close-menu" id="closeMenuBtn">' + (en ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
+  }
+  // Liens vers les réseaux sociaux (page Contact, 12/10/2026) ; ordre : TikTok, Facebook, Instagram, YouTube, WhatsApp
+  function reseaux(n) {
+    return [1, 2, 0, 3, 4].map(function (i) { return RESEAUX[i]; }).join('').replace(/ig-grad-pied/g, 'ig-grad-r' + n);
+  }
+  function pied(page, en) {
+    var nav = PAGES.filter(function (p) { return p[3] && visible(page, en, p, false); }).sort(function (a, b) {
       return ORDRE_PIED.indexOf(a[0]) - ORDRE_PIED.indexOf(b[0]);
     }).map(function (p) {
-      return '        <a href="' + lienPage(p) + '">' + (EN_G ? p[4] : p[3]) + '</a>';
+      return '        <a href="' + lienPage(p) + '">' + (en ? p[4] : p[3]) + '</a>';
     }).join('\n');
     // Titre de structure invisible (12/10/2026) : sur les pages sans titre de niveau 2, les
     // titres h3 du bas de page « sautaient » un niveau (relevé par Lighthouse et le W3C).
-    el.innerHTML = '\n  <div class="container">\n    <h2 class="u-lecteur-ecran">' + (EN_G ? 'Site information' : 'Informations du site') + '</h2>\n    <div class="footer-grille">\n      <div>\n' +
+    return '\n  <div class="container">\n    <h2 class="u-lecteur-ecran">' + (en ? 'Site information' : 'Informations du site') + '</h2>\n    <div class="footer-grille">\n      <div>\n' +
       '        <h3>Maître Akesse Model Management</h3>\n' +
-      '        <p>' + (EN_G ? 'Every great journey begins with a dream. Ours begins in Abidjan.' : 'Chaque grand parcours commence par un rêve. Le nôtre commence à Abidjan.') + '</p>\n' +
+      '        <p>' + (en ? 'Every great journey begins with a dream. Ours begins in Abidjan.' : 'Chaque grand parcours commence par un rêve. Le nôtre commence à Abidjan.') + '</p>\n' +
       '      </div>\n      <div>\n        <h3>Navigation</h3>\n' + nav + '\n      </div>\n      <div>\n        <h3>Contact</h3>\n' +
       '        <a href="tel:+2250545656687">+225 05 45 65 66 87</a>\n        <a href="tel:+2252722231176">+225 27 22 23 11 76</a>\n        <a href="mailto:infos.ma2m@gmail.com">infos.ma2m@gmail.com</a>\n' +
       '        <div class="footer-reseaux">\n          ' + RESEAUX.join('\n          ') + '\n        </div>\n      </div>\n    </div>\n' +
       '    <div class="footer-bas">\n      <span>© <span id="an">' + new Date().getFullYear() + '</span> Maître Akesse Model Management</span>\n' +
       "      <span>Abidjan, Côte d'Ivoire</span>\n" +
-      '      <span><a href="mentions-legales.html">' + (EN_G ? 'Legal Notice' : 'Mentions légales') + '</a> · <a href="politique-confidentialite.html">' + (EN_G ? 'Privacy Policy' : 'Confidentialité') + '</a></span>\n' +
+      '      <span><a href="mentions-legales.html">' + (en ? 'Legal Notice' : 'Mentions légales') + '</a> · <a href="politique-confidentialite.html">' + (en ? 'Privacy Policy' : 'Confidentialité') + '</a></span>\n' +
       '    </div>\n  </div>\n';
-    el.setAttribute('data-rempli', '');
-  });
   }
-  window.ma2mGabarit = remplir;
+  // Pour le serveur : remplit les emplacements vides d'une page entière (texte HTML), marqués « data-rempli »
+  // (la page ne les redessine pas). page : data-page de la barre du haut.
+  function remplirHtml(html, en) {
+    var m = html.match(/<header class="site-header-v2" data-gabarit="entete" data-page="([a-z-]+)"( data-autre-langue="([^"<>]*)")?><\/header>/);
+    var page = m ? m[1] : ((html.match(/<body[^>]*data-page="([a-z-]+)"/) || [])[1] || '');
+    var n = 0;
+    return complements(html
+      .replace(/(<header class="site-header-v2" data-gabarit="entete" data-page="[a-z-]+"(?: data-autre-langue="[^"<>]*")?)><\/header>/, function (_, debutBalise) { return debutBalise + ' data-rempli>' + entete(page, en, m && m[3]) + '</header>'; })
+      .replace(/(<div class="menu-overlay" id="menuOverlay" data-gabarit="menu")><\/div>/, function (_, d) { return d + ' data-rempli>' + menu(page, en) + '</div>'; })
+      .replace(/(<div class="reseaux" data-gabarit="reseaux")><\/div>/g, function (_, d) { return d + ' data-rempli>' + reseaux(n++) + '</div>'; })
+      .replace(/(<footer class="site-footer" data-gabarit="pied")><\/footer>/, function (_, d) { return d + ' data-rempli>' + pied(page, en) + '</footer>'; })
+      , en, page);
+  }
+  // Lien « Aller au contenu » (js/confort.js, 29/09/2026) et bandeau « Vous êtes mannequin ? » au-dessus du bas de page
+  // (js/menu.js, 06/10/2026) : écrits par le serveur aussi (phase 2) ; les scripts ne les recréent pas s'ils existent.
+  function lienEvitement(en, cible) { return '<a class="lien-evitement" href="#' + cible + '">' + (en ? 'Skip to content' : 'Aller au contenu') + '</a>'; }
+  function bandeauIntegrer(en) {
+    return '<section class="bandeau-integrer" aria-label="' + (en ? 'Join the agency' : 'Intégrer l\'agence') + '"><p>' + (en ? 'You are a model?' : 'Vous êtes mannequin ?') +
+      '</p><a href="integrer-agence.html">' + (en ? 'Join the agency' : 'Intégrer l\'agence') + '</a></section>';
+  }
+  function echapperAttr(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  // Mur de photos derrière le titre (js/app.js, murDeTitre, 28/10/2026) : huit visages au hasard, écrits par le serveur
+  // dans la section du premier titre (main > section > .container > h1) ; moins de 4 visages : haut de page uni.
+  function poserMur(html, adresses) {
+    if (!Array.isArray(adresses) || adresses.length < 4) return html;
+    var iH1 = html.indexOf('<h1'), iMain = html.indexOf('<main');
+    if (iH1 < 0 || iMain < 0 || iH1 < iMain) return html;
+    var iSection = html.lastIndexOf('<section', iH1);
+    if (iSection < iMain || !/^<section[^>]*>\s*<div class="container"[^>]*>/.test(html.slice(iSection, iH1 + 3))) return html;
+    if (html.slice(iMain, iSection).indexOf('<section') !== -1) return html;  // (pas la première section de la page)
+    var melange = adresses.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 8);
+    var mur = '<div class="mur-titre" aria-hidden="true">' + melange.map(function (u) { return '<img alt="" decoding="async" src="' + echapperAttr(u) + '">'; }).join('') + '</div>';
+    var balise = html.slice(iSection).match(/^<section([^>]*)>/)[0];
+    var nouvelle = /class="/.test(balise) ? balise.replace('class="', 'class="avec-mur-titre ') : balise.replace('<section', '<section class="avec-mur-titre"');
+    return html.slice(0, iSection) + nouvelle + mur + html.slice(iSection + balise.length);
+  }
+  function complements(html, en, page) {
+    // lien d'évitement : vers <main> (son id, ou contenu-principal)
+    if (html.indexOf('class="lien-evitement"') === -1 && /<main[\s>]/.test(html)) {
+      var idMain = (html.match(/<main[^>]*\sid="([^"]+)"/) || [])[1];
+      if (!idMain) { idMain = 'contenu-principal'; html = html.replace(/<main(?=[\s>])/, '<main id="contenu-principal" tabindex="-1"'); }
+      html = html.replace(/<body[^>]*>/, function (b) { return b + lienEvitement(en, idMain); });
+    }
+    if (['integrer-agence', 'tableau-de-bord'].indexOf(page) === -1 && html.indexOf('class="bandeau-integrer"') === -1) {
+      html = html.replace(/<footer class="site-footer"/, function (f) { return bandeauIntegrer(en) + '\n' + f; });
+    }
+    return html;
+  }
+  racine.RenduGabarit = { entete: entete, menu: menu, pied: pied, reseaux: reseaux, remplirHtml: remplirHtml, poserMur: poserMur };
+  if (typeof document === 'undefined') return;  // (serveur : rien à remplir ici)
+
+  // Dans la page : seulement les emplacements encore vides (le serveur a normalement déjà tout écrit)
+  if (racine.ma2mGabarit) { racine.ma2mGabarit(); return; } // 2e chargement : bas de page
+  var EN_G = document.documentElement.lang === 'en';
+  function remplir() {
+    function placeHolders(nom) { return document.querySelectorAll('[data-gabarit="' + nom + '"]:not([data-rempli])'); }
+    var elEntete = document.querySelector('[data-gabarit="entete"]');
+    var page = (elEntete && elEntete.dataset.page) || (document.body && document.body.dataset.page) || '';
+    placeHolders('entete').forEach(function (el) { el.innerHTML = entete(page, EN_G, el.dataset.autreLangue); el.setAttribute('data-rempli', ''); });
+    placeHolders('menu').forEach(function (el) { el.innerHTML = menu(page, EN_G); el.setAttribute('data-rempli', ''); });
+    placeHolders('reseaux').forEach(function (el, n) { el.innerHTML = reseaux(n); el.setAttribute('data-rempli', ''); });
+    placeHolders('pied').forEach(function (el) { el.innerHTML = pied(page, EN_G); el.setAttribute('data-rempli', ''); });
+  }
+  racine.ma2mGabarit = remplir;
   remplir();
-})();
+})(typeof window !== 'undefined' ? window : globalThis);
 
 // --- Place réservée pour une liste remplie par la base (The Book : #grille) ---
 // Journal du 14/10/2026 (« Affichage qui saute », téléphone) : au retour en arrière, le
@@ -140,4 +189,4 @@ function libererPlaceListe(el, memoriser) {
     try { if (el.offsetHeight > 0) localStorage.setItem(cleHauteurListe(el), String(el.offsetHeight)); else localStorage.removeItem(cleHauteurListe(el)); } catch (e) { /* idem */ }
   });
 }
-document.querySelectorAll('[data-place-reservee]').forEach(reserverPlaceListe);
+if (typeof document !== 'undefined') document.querySelectorAll('[data-place-reservee]').forEach(reserverPlaceListe);

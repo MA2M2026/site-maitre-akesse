@@ -22,8 +22,12 @@
   // Enchaînement de photos dans un même cadre : la nouvelle entre en volet par-dessus
   // la précédente, puis zoome lentement.
   function diaporama(cadre, urls, alt, delai) {
-    if (!cadre || !urls.length) return;
-    const imgs = urls.map((u, i) => {
+    if (!cadre) return;
+    // (phase 2, 02/11/2026) photos déjà écrites par le serveur : reprises telles quelles
+    const deja = [...cadre.querySelectorAll('img')];
+    deja.forEach((img) => img.addEventListener('error', () => img.remove()));
+    if (!deja.length && !urls.length) return;
+    const imgs = deja.length ? deja : urls.map((u, i) => {
       const img = image(u, alt);
       if (i > 0) img.loading = 'lazy';
       img.addEventListener('error', () => img.remove());
@@ -84,7 +88,7 @@
 
     // Photo du bloc « marques » : une photo de défilé, en léger décalage au défilement.
     const fond = document.getElementById('qsn-marques-fond');
-    if (fond && toutes.length) {
+    if (fond && toutes.length && !fond.querySelector('img')) {
       const img = image(melanger(toutes)[0], '');
       img.loading = 'lazy';
       fond.appendChild(img);
@@ -121,7 +125,7 @@
       const titre = carte.querySelector('h3');
       // carte écrite par le serveur (middleware.js, étape A du 01/11/2026) : titre et lieu mis en forme ici
       if (carte.dataset.serveur) carte.querySelectorAll('h3, p').forEach((el) => { el.textContent = titreLisible(el.textContent); });
-      if (!urls.length) { carte.querySelector('.qsn-evenement-photo').hidden = true; return; }
+      if (!urls.length && !carte.querySelector('.qsn-evenement-photo img')) { carte.querySelector('.qsn-evenement-photo').hidden = true; return; }
       diaporama(carte.querySelector('.qsn-evenement-photo'), melanger(urls).slice(0, 6), titre ? titre.textContent : '', 4500);
     });
   }
@@ -142,6 +146,7 @@
     const piste = document.getElementById('qsn-visages-piste');
     const bloc = piste && piste.closest('.qsn-visages');
     if (!piste || !bloc) return;
+    if (piste.children.length) { bloc.hidden = false; return; }  // (phase 2 : visages déjà écrits par le serveur)
     // Toutes les photos (par paquets) pour que chaque mannequin publié ait sa chance.
     const { data, error } = serveur ? { data: serveur.visages, error: null } : await lireToutesLignes(() => sb
       .from('model_photos')

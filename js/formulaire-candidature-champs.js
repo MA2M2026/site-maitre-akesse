@@ -3,12 +3,13 @@
 // formulaire recopiées dans chaque page. Ce script est placé DANS le <form> à l'endroit des
 // champs : il les écrit aussitôt, avant la suite de la page (js/formulaire-candidature.js
 // les branche ensuite). Parcours : data-parcours du <form> ; langue : <html lang="en">.
-(function () {
-  var script = document.currentScript;
-  var AG = script.closest('form').dataset.parcours === 'agence';
-  var EN_F = document.documentElement.lang === 'en';
+// Phase 2 (02/11/2026) : même dessin pour le serveur (middleware.js écrit les champs dans la page, à la place de
+// ce script, avec « data-rempli » : la page ne les réécrit pas) et pour la page. Script classique ET importable :
+// il pose window.ChampsCandidature / globalThis.ChampsCandidature.
+(function (racine) {
+  function champs(AG, EN_F) {
   function T(fr, en) { return EN_F ? en : fr; }
-  script.insertAdjacentHTML('beforebegin', [
+  return [
   "",
   T("      <p class=\"ca-7\">Merci d'indiquer un e-mail et un numéro WhatsApp valides et actifs ci-dessous : c'est par là que l'agence vous recontactera si votre candidature est retenue.</p>", "      <p class=\"ca-7\">Please enter a valid, active email address and WhatsApp number below: this is how the agency will contact you if your application is selected.</p>"),
   "",
@@ -148,7 +149,8 @@
   "      </div>",
   "",
   "      <div class=\"form-champ\">",
-  (AG ? T("        <label for=\"ca-photos\" id=\"ca-photos-label\">Photos (3 minimum : un portrait, une photo en pied, une autre au choix) *</label>", "        <label for=\"ca-photos\" id=\"ca-photos-label\">Photos (3 minimum: a portrait, a full-body photo, another of your choice) *</label>") : T("        <label for=\"ca-photos\" id=\"ca-photos-label\">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>", "        <label for=\"ca-photos\" id=\"ca-photos-label\">Photos (4 minimum: portrait, full body, no makeup, other...) *</label>")),
+  // (au départ, l'expérience n'est pas choisie : 4 photos au moins, comme majParcours, js/formulaire-candidature.js)
+  T("        <label for=\"ca-photos\" id=\"ca-photos-label\">Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *</label>", "        <label for=\"ca-photos\" id=\"ca-photos-label\">Photos (4 minimum: portrait, full body, no makeup, other...) *</label>"),
   "        <input type=\"file\" id=\"ca-photos\" accept=\"image/*\" multiple>",
   T("        <input aria-label=\"Photo de remplacement\" type=\"file\" id=\"ca-photo-remplacement\" accept=\"image/*\" class=\"u-hidden\">", "        <input aria-label=\"Replacement photo\" type=\"file\" id=\"ca-photo-remplacement\" accept=\"image/*\" class=\"u-hidden\">"),
   "        <span id=\"ca-photos-compteur\" class=\"ca-14\"></span>",
@@ -190,5 +192,18 @@
   "          <div class=\"jauge-barre\"><span class=\"jauge-remplie\"></span></div>",
   "        </div>",
   "      </div>"
-  ].join('\n'));
-})();
+  ].join('\n');
+  }
+  // Pour le serveur : remplace la balise de ce script (dans un <form data-parcours=…>) par les champs eux-mêmes.
+  function remplirHtml(html, en) {
+    return html.replace(/(<form[^>]*data-parcours="([a-z]*)"[^>]*>[\s\S]*?)<script src="[^"]*formulaire-candidature-champs\.js(\?v=[0-9a-f]+)?"><\/script>/, function (_, avant, parcours) {
+      // (repère invisible après les champs : pas d'enveloppe, la mise en page reste exactement la même)
+      return avant + champs(parcours === 'agence', en) + '<span class="champs-candidature" data-rempli hidden></span>';
+    });
+  }
+  racine.ChampsCandidature = { champs: champs, remplirHtml: remplirHtml };
+  if (typeof document === 'undefined' || !document.currentScript) return;
+  var script = document.currentScript;
+  if (script.closest('form').querySelector('.champs-candidature[data-rempli]')) return;  // (déjà écrits par le serveur)
+  script.insertAdjacentHTML('beforebegin', champs(script.closest('form').dataset.parcours === 'agence', document.documentElement.lang === 'en'));
+})(typeof window !== 'undefined' ? window : globalThis);

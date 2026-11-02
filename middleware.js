@@ -26,6 +26,9 @@ import './js/rendu-book.js';
 import './js/rendu-publications.js';
 import './js/cachets-communs.js';
 import './js/lien-public.js';
+import './js/gabarit.js';
+import './js/partage.js';
+import './js/formulaire-candidature-champs.js';
 
 export const config = {
   matcher: [
@@ -442,15 +445,101 @@ async function accueilRempli(requete, url) {
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
-  return reponseHtml(html, page);
+  return reponseHtml(html, page, url);
 }
-// page complétée : mêmes en-têtes que la page d'origine, sauf taille et compression (le texte a été
-// décompressé pour être complété ; Vercel le recompresse), et jamais gardée en cache
-function reponseHtml(html, page) {
-  const entetes = new Headers(page.headers);
-  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
-  entetes.set('Cache-Control', 'no-cache, must-revalidate');
+
+// ================== En-tête complet de chaque page (phase 2, 02/11/2026) ==================
+// Le même en-tête pour tous (visiteurs, Google, WhatsApp…) : plus de petite page réservée aux robots.
+// metaEntite : titre, description, adresse officielle (canonical), balises og:/twitter: d'UN élément (fiche,
+// article, événement, partenaire) ; enteteComplete : adresse officielle de la page (www, sans .html) et données
+// structurées (JSON-LD : organisation, page, fil d'Ariane) quand la page n'en a pas déjà.
+const NOM_SITE = 'Maître Akesse Model Management';
+const ldJson = (objet) => '<script type="application/ld+json">' + jsonSur(objet) + '</script>';
+function poserMeta(html, attribut, nom, valeur) {
+  const motif = new RegExp('<meta ' + attribut + '="' + nom.replace(/[:.]/g, '\\$&') + '" content="[^"]*">');
+  const balise = '<meta ' + attribut + '="' + nom + '" content="' + echapper(valeur) + '">';
+  return motif.test(html) ? html.replace(motif, () => balise) : html.replace('</head>', () => balise + '\n</head>');
+}
+function poserCanonique(html, lien) {
+  const balise = '<link rel="canonical" href="' + echapper(lien) + '">';
+  return /<link rel="canonical" href="[^"]*">/.test(html) ? html.replace(/<link rel="canonical" href="[^"]*">/, () => balise) : html.replace('</head>', () => balise + '\n</head>');
+}
+// o : { titre, description, photo, lien, lienFr, lienEn, type, ld }
+function metaEntite(html, o) {
+  html = html.replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(o.titre + ' · ' + NOM_SITE) + '</title>');
+  html = poserMeta(html, 'name', 'description', o.description);
+  html = poserMeta(html, 'property', 'og:type', o.type || 'website');
+  html = poserMeta(html, 'property', 'og:title', o.titre);
+  html = poserMeta(html, 'property', 'og:description', o.description);
+  html = poserMeta(html, 'property', 'og:url', o.lien);
+  if (o.photo) {
+    html = poserMeta(html, 'property', 'og:image', o.photo);
+    html = poserMeta(html, 'property', 'og:image:alt', o.titre);
+    // (dimensions inconnues pour une photo de la base : balises de l'image par défaut retirées)
+    html = html.replace(/<meta property="og:image:(width|height|type)" content="[^"]*">\n?/g, '');
+    html = poserMeta(html, 'name', 'twitter:image', o.photo);
+  }
+  html = poserMeta(html, 'name', 'twitter:title', o.titre);
+  html = poserMeta(html, 'name', 'twitter:description', o.description);
+  html = poserCanonique(html, o.lien);
+  if (o.lienFr && o.lienEn) {
+    html = html.replace(/<link rel="alternate" hreflang="fr" href="[^"]*">/, () => '<link rel="alternate" hreflang="fr" href="' + echapper(o.lienFr) + '">')
+      .replace(/<link rel="alternate" hreflang="en" href="[^"]*">/, () => '<link rel="alternate" hreflang="en" href="' + echapper(o.lienEn) + '">')
+      .replace(/<link rel="alternate" hreflang="x-default" href="[^"]*">/, () => '<link rel="alternate" hreflang="x-default" href="' + echapper(o.lienFr) + '">');
+  }
+  if (o.ld) html = html.replace('</head>', () => ldJson(o.ld) + '\n</head>');
+  return html;
+}
+function enteteComplete(html, url, anglais) {
+  const chemin = url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/');
+  if (!/<link rel="canonical"/.test(html)) html = poserCanonique(html, SITE + chemin);
+  if (!/property="og:url"/.test(html)) html = poserMeta(html, 'property', 'og:url', (html.match(/<link rel="canonical" href="([^"]*)">/) || [])[1] || SITE + chemin);
+  const titre = ((html.match(/<title>([^<]*)<\/title>/) || [])[1] || NOM_SITE).replace(/&amp;/g, '&');
+  // (pages sans balises d'aperçu : mentions légales, confidentialité) titre, description et image de l'accueil
+  if (!/property="og:title"/.test(html)) html = poserMeta(html, 'property', 'og:title', titre);
+  if (!/property="og:description"/.test(html)) html = poserMeta(html, 'property', 'og:description', ((html.match(/<meta name="description" content="([^"]*)">/) || [])[1] || NOM_SITE).replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
+  if (!/property="og:image"/.test(html)) html = poserMeta(html, 'property', 'og:image', SITE + '/assets/apercus/' + (anglais ? 'en' : 'fr') + '-index.jpg?v=2');
+  if (!/property="og:type"/.test(html)) html = poserMeta(html, 'property', 'og:type', 'website');
+  const accueil = SITE + (anglais ? '/en/' : '/');
+  const morceaux = chemin.replace(/^\/en/, '').split('/').filter(Boolean);
+  const ariane = [{ '@type': 'ListItem', position: 1, name: anglais ? 'Home' : 'Accueil', item: accueil }];
+  if (morceaux.length) ariane.push({ '@type': 'ListItem', position: 2, name: titre.split(/ [|·—] /)[0], item: SITE + chemin });
+  const graphe = [{ '@type': 'WebPage', name: titre, url: SITE + chemin, inLanguage: anglais ? 'en' : 'fr' }, { '@type': 'BreadcrumbList', itemListElement: ariane }];
+  if (!/application\/ld\+json/.test(html)) graphe.unshift({ '@type': 'Organization', name: NOM_SITE, url: SITE + '/', logo: SITE + '/assets/logo-header-clair.png' });
+  return html.replace('</head>', () => ldJson({ '@context': 'https://schema.org', '@graph': graphe }) + '\n</head>');
+}
+
+// Page complétée (phase 2, 02/11/2026) : la barre du haut, le menu, le bas de page et les réseaux sont écrits
+// ici (js/gabarit.js, même dessin que dans le navigateur) : la page est complète sans programme.
+// En-têtes : ceux de la page d'origine (sécurité, CSP…) SAUF ceux qui décrivent la réponse d'origine elle-même
+// (taille, compression, cache de Vercel, âge, date) : avant, « x-vercel-cache: HIT » et « age » étaient recopiés
+// et faisaient croire que la page complétée venait du cache. Politique de cache explicite :
+//  - pages publiques : « public, max-age=0, s-maxage=60, stale-while-revalidate=120 » (le navigateur revérifie
+//    à chaque visite ; une modification faite dans l'Administration se voit au plus 180 s après, mémoire de
+//    3 minutes de ce serveur comprise : DUREE_MEMOIRE) ;
+//  - pages d'un lien personnel (/recu, /places) : « private, no-store ».
+const ENTETES_RETIRES = /^(content-length|content-encoding|etag|last-modified|age|date|server|cache-control|set-cookie|x-matched-path|x-vercel-[\w-]+)$/i;
+const VERSION = (typeof process !== 'undefined' && process.env && process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7);
+function reponseHtml(html, page, url, personnel) {
+  const anglais = /<html[^>]*\slang="en"/.test(html.slice(0, 400));
+  html = globalThis.RenduGabarit.remplirHtml(html, anglais);
+  // (formulaires publics : champs de la candidature et listes déroulantes écrits ici, js/formulaire-candidature-champs.js
+  // et js/partage.js)
+  html = globalThis.ListesFormulaires.remplirSelectsHtml(globalThis.ChampsCandidature.remplirHtml(html, anglais), anglais);
+  if (url) html = enteteComplete(html, url, anglais);
+  const entetes = new Headers();
+  page.headers.forEach((v, k) => { if (!ENTETES_RETIRES.test(k)) entetes.set(k, v); });
+  entetes.set('Cache-Control', personnel ? 'private, no-store' : 'public, max-age=0, s-maxage=60, stale-while-revalidate=120');
+  entetes.set('x-ma2m-render', 'ssr');
+  entetes.set('x-ma2m-build', VERSION);
   return new Response(html, { status: 200, headers: entetes });
+}
+// Page publique sans données à poser (base lente ou en panne, ou page sans données) : elle part quand même
+// complétée (barre du haut, menu, bas de page), jamais vide.
+async function pageNue(url, enteteBoucle) {
+  const page = await fetch(url.toString(), { headers: { [enteteBoucle]: '1', 'accept': 'text/html' }, redirect: 'manual' });
+  if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return undefined;
+  return reponseHtml(await page.text(), page, url, /^\/(recu|places)$/.test(url.pathname));
 }
 
 // ================== Pages préparées par le serveur : outil commun (01/11/2026, site dynamique) ==================
@@ -484,7 +573,12 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
   // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
-  if (!donnees) return new Response(page.body, { status: page.status, headers: page.headers });
+  if (!donnees) {
+    let html0 = await page.text();
+    const mur0 = /<h1[\s>]/.test(html0) && html0.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(html0) ? await murPromesse : null;
+    if (mur0 && mur0.length) html0 = globalThis.RenduGabarit.poserMur(html0, mur0);
+    return reponseHtml(html0, page, url, /^\/(recu|places)/.test(cheminPage));
+  }
   let html = await page.text();
   // (« <body> », ou « <body class=… »)
   if (!/<body[\s>]/.test(html) || !html.includes('</head>')) return null;
@@ -494,11 +588,18 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   // (pas sur l'accueil, Qui sommes-nous ni la fiche : ils ont leur grande photo, comme dans js/app.js)
   const avecMur = /<h1[\s>]/.test(html) && html.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(html);
   const mur = avecMur ? await murPromesse : null;
-  const blocMur = mur && mur.length ? '\n<script type="application/json" id="mur-donnees">' + jsonSur(mur) + '</script>' : '';
+  // (phase 2, 02/11/2026) les visages écrits dans la page elle-même (js/gabarit.js, poserMur), plus dans un bloc de données
+  if (mur && mur.length) html = globalThis.RenduGabarit.poserMur(html, mur);
+  const blocMur = '';
   const blocEn = await traductionsPromesse;
-  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocMur + blocEn), page);
+  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocMur + blocEn), page, url, /^\/(recu|places)/.test(cheminPage));
 }
-const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
+// (phase 2 : annoncée tout en haut de l'en-tête, juste après le jeu de caractères, pour partir le plus tôt possible)
+const photoAnnoncee = (html, adresse) => {
+  if (!adresse) return html;
+  const balise = '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">';
+  return /<meta charset="[^"]*">/i.test(html) ? html.replace(/<meta charset="[^"]*">/i, (m) => m + '\n' + balise) : html.replace('</head>', () => balise + '\n</head>');
+};
 
 // ================== Fiche d'un mannequin préparée par le serveur (01/11/2026, site dynamique, étape 1) ==================
 // Décision de la propriétaire (31/10/2026, PLAN-SERVEUR.md, chemin A). Avant, la page /book/nom partait
@@ -568,7 +669,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE),
     // (100 % dynamique, 01/11/2026) aussi les expériences, le parcours avec l'agence (10 ans, comme
     // ma2mExperiencesAgence, js/app.js) et les mesures de l'Extension 121 ; manquants, la page les lit elle-même
-    lireSupabase('model_projects?model_id=eq.' + id + '&select=*&order=created_at.desc', null, ATTENTE_FICHE).catch(() => null),
+    lireSupabase('model_projects?model_id=eq.' + id + '&select=id,model_id,type_projet,titre,periode,pays,ville,promoteur,lieu,created_at&order=created_at.desc', null, ATTENTE_FICHE).catch(() => null),
     lireSupabase('rpc/parcours_public', { p_debut: dixAnsAvant(), p_fin: new Date().toISOString().slice(0, 10), p_model: id }, ATTENTE_FICHE).catch(() => null),
     lireSupabase('model_profiles?id=eq.' + id + '&select=shoulder_cm,arm_cm,neck_cm', null, ATTENTE_FICHE).catch(() => null)
   ]).then(([profils, photos, ages, projets, parcours, mesures]) => {
@@ -588,10 +689,16 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
       (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
     // (adresse /mannequin?id=… ouverte depuis une carte du Book : pas encore de nom d'adresse connu ici)
     const lien = SITE + (anglais ? '/en' : '') + (slug ? '/book/' + slug : '/mannequin?id=' + id);
-    return photoAnnoncee(html
-      .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
-      .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
-      .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>')
+    const chemin = slug ? '/book/' + slug : '/mannequin?id=' + id;
+    const couv = couvertureFiche(d.photos);
+    const photoApercu = imageApercu(couv || '', anglais, 'mannequin');
+    // (phase 2, 02/11/2026 : balises og: et données structurées de la mannequin, pour tous ; jamais de coordonnées)
+    const personne = { '@type': 'Person', name: nom, url: lien, image: photoApercu, jobTitle: anglais ? 'Model' : 'Mannequin',
+      worksFor: { '@type': 'Organization', name: NOM_SITE, url: SITE + '/' } };
+    if (d.profil.city) personne.homeLocation = { '@type': 'Place', name: d.profil.city };
+    if (d.profil.height_cm) personne.height = { '@type': 'QuantitativeValue', value: d.profil.height_cm, unitCode: 'CMT' };
+    return photoAnnoncee(metaEntite(html, { titre: nom, description, photo: photoApercu, lien, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin, type: 'profile',
+      ld: { '@context': 'https://schema.org', '@type': 'ProfilePage', url: lien, mainEntity: personne } })
       .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(dPage, anglais, couvertureFiche(d.photos), photoDeLaCarte(d.photos, estTelephone(requete))) + '</div>'), couvertureFiche(d.photos));
   });
 }
@@ -636,8 +743,8 @@ async function bookRempli(url, anglais, requete) {
 // la photo « À la une » est annoncée en tête. Base lente (plus de 1,2 s) ou en panne : comme avant.
 const PUBLICATIONS_PAGES = /^\/(en\/)?(actualites|evenements)$/;
 const LECTURES_PUBLICATIONS = {
-  actualites: ['actualites?select=*&order=created_at.desc', 'actualite_photos?select=actualite_id'],
-  evenements: ['evenements?select=*&order=date_evenement.desc.nullslast,created_at.desc', 'evenement_photos?select=evenement_id']
+  actualites: ['actualites?select=id,titre,image_url,commentaire,created_at,video_url,featured,categorie&order=created_at.desc', 'actualite_photos?select=actualite_id'],
+  evenements: ['evenements?select=id,titre,date_evenement,lieu,description,image_url,created_at&order=date_evenement.desc.nullslast,created_at.desc', 'evenement_photos?select=evenement_id']
 };
 async function publicationsRemplies(url, anglais) {
   const quoi = url.pathname.match(PUBLICATIONS_PAGES)[2];
@@ -654,11 +761,31 @@ async function publicationsRemplies(url, anglais) {
     d.photos.forEach((p) => { const id = p.actualite_id || p.evenement_id; nb[id] = (nb[id] || 0) + 1; });
     const extrait = (p, n) => (p[texteLong] ? R.extrait(R.texteBrut(p[texteLong]), n) : '');
     const prefixe = sorte === 'actualite' ? 'actus' : 'evenements';
+    // (phase 2) filtres par catégorie des actualités, visibles d'avance (classe u-hidden retirée, comme la page le fait)
+    const filtres = sorte === 'actualite' ? R.filtresActualites(d.liste, anglais) : '';
+    if (filtres) html = html.replace('<div id="actus-filtres" class="filtres-categories reveal u-hidden"></div>', () => '<div id="actus-filtres" class="filtres-categories reveal">' + filtres + '</div>');
     if (liste.length) {
       html = html.replace('<div id="' + prefixe + '-une" class="une-reservee"></div>', () => '<div id="' + prefixe + '-une" class="une-reservee">' +
         R.une(liste[0], { en: anglais, sorte, photo: photoLegere(liste[0].image_url || ''), extrait: extrait(liste[0], 180) }) + '</div>')
         .replace('<div id="' + prefixe + '-grille" class="news-grille"></div>', () => '<div id="' + prefixe + '-grille" class="news-grille">' +
           liste.slice(1).map((p, i) => R.carte(p, i + 1, { en: anglais, sorte, photo: photoLegere(p.image_url || ''), nbPhotos: nb[p.id] || (p.image_url ? 1 : 0), extrait: extrait(p, 110) })).join('') + '</div>');
+    }
+    // (phase 2, 02/11/2026) lien d'UN article ou événement (?actu=… / ?evenement=…) : son titre, son extrait et sa
+    // photo dans l'en-tête, pour tous (avant : petite page réservée aux robots d'aperçu)
+    const idEl = url.searchParams.get(sorte === 'actualite' ? 'actu' : 'evenement');
+    const el = idEl && ID_VALIDE.test(idEl) && liste.find((p) => p.id === idEl);
+    if (el && el.titre) {
+      const chemin = '/' + quoi + '?' + (sorte === 'actualite' ? 'actu' : 'evenement') + '=' + el.id;
+      const lien = SITE + (anglais ? '/en' : '') + chemin;
+      let entete = '';
+      if (el.date_evenement) { try { entete = new Date(el.date_evenement + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }); } catch (x) { entete = ''; } }
+      const description = [[entete, el.lieu].filter(Boolean).join(' · '), texteSimple(el[texteLong], 200)].filter(Boolean).join(' — ') || NOM_SITE;
+      const photo = imageApercu(el.image_url, anglais, quoi);
+      const ld = sorte === 'actualite'
+        ? { '@context': 'https://schema.org', '@type': 'NewsArticle', headline: el.titre, image: photo, datePublished: el.created_at, url: lien, publisher: { '@type': 'Organization', name: NOM_SITE, url: SITE + '/' } }
+        : { '@context': 'https://schema.org', '@type': 'Event', name: el.titre, image: photo, url: lien, startDate: el.date_evenement || undefined,
+          location: el.lieu ? { '@type': 'Place', name: el.lieu, address: el.lieu } : undefined, organizer: { '@type': 'Organization', name: NOM_SITE, url: SITE + '/' } };
+      html = metaEntite(html, { titre: el.titre, description, photo, lien, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin, type: 'article', ld });
     }
     return photoAnnoncee(html, d.liste[0]?.image_url ? photoLegere(d.liste[0].image_url) : '');
   });
@@ -667,11 +794,19 @@ async function publicationsRemplies(url, anglais) {
 // ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // La liste des partenaires (même lecture que js/partenaires.js) posée dans la page (bloc « partenaires-donnees »).
 async function partenairesRemplis(url, anglais) {
-  const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=*&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
+  const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=id,nom,structure,evenement,role,description,logo_url,created_at&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
   return pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture, async (html, d) => {
     // les cartes écrites dans la page (js/rendu-publications.js), en anglais sur /en/partenaires
     const liste = anglais ? await versAnglaisServeur(d.liste, ['structure', 'evenement', 'role', 'description']) : d.liste;
     const R = globalThis.RenduPublications;
+    // (phase 2, 02/11/2026) lien d'UN partenaire (?partenaire=…) : son nom, sa description et son logo dans l'en-tête
+    const idP = url.searchParams.get('partenaire');
+    const pa = idP && ID_VALIDE.test(idP) && liste.find((p) => p.id === idP);
+    if (pa && pa.nom) {
+      const chemin = '/partenaires?partenaire=' + pa.id;
+      html = metaEntite(html, { titre: pa.nom, description: texteSimple(pa.description, 220) || (anglais ? 'A partner of ' : 'Partenaire de ') + NOM_SITE,
+        photo: imageApercu(pa.logo_url, anglais, 'partenaires'), lien: SITE + (anglais ? '/en' : '') + chemin, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin });
+    }
     return liste.length ? html.replace('<div id="partenaires-grille" class="news-grille"></div>', () => '<div id="partenaires-grille" class="news-grille">' +
       liste.map((p, i) => R.partenaire(p, i, { en: anglais, logo: p.logo_url ? photoLegere(p.logo_url) : '' })).join('') + '</div>') : html;
   });
@@ -782,6 +917,32 @@ async function quiSommesNousRempli(url, anglais) {
     // photos et met les titres en forme. Un événement sans photo n'a pas de carte (comme dans la page).
     const evenements = anglais ? await versAnglaisServeur(d.evenements, ['titre', 'lieu']) : d.evenements;
     const cle = (t) => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const lisible = globalThis.Partage.titreLisible;
+    // (phase 2, 02/11/2026) photos écrites dans la page, comme js/qui-sommes-nous.js les choisit (au hasard à chaque
+    // visite) ; la première de chaque cadre déjà affichée (classe « actif ») : visible sans programme. La page les reprend.
+    const melanger = (l) => l.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+    const urlsDe = (e) => { const u = d.photos.filter((p) => p.evenement_id === e.id).map((p) => p.url); if (!u.length && e.image_url) u.push(e.image_url); return u.filter(Boolean); };
+    const imgs = (urls, alt) => urls.map((u, i) => '<img src="' + echapper(photoLegere(u)) + '" alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : ' class="actif"') + '>').join('');
+    const toutes = []; evenements.forEach((e) => urlsDe(e).forEach((u) => toutes.push(u)));
+    if (toutes.length) {
+      html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(melanger(toutes).slice(0, 8), '') + '</div>')
+        .replace('<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>', () => '<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true" data-hasard><img src="' + echapper(photoLegere(melanger(toutes)[0])) + '" alt="" decoding="async" loading="lazy"></div>');
+    }
+    // visages : une photo par mannequin (tirée par la lecture), 16 au hasard, deux rangées (la 2e à l'envers)
+    const visages = melanger(d.visages.filter((v) => v && (v.url || v.url_moyenne))).slice(0, 16);
+    if (visages.length >= 4) {
+      const lien = (v, cache) => '<a href="mannequin.html?id=' + encodeURIComponent(v.model_id) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '><img src="' + echapper(photoLegere(v.url_moyenne || v.url)) + '" alt="' + (anglais ? 'Model of the agency' : 'Mannequin de l\'agence') + '" decoding="async" loading="lazy"></a>';
+      const rangee = visages.map((v) => lien(v, false)).join('') + visages.map((v) => lien(v, true)).join('');
+      const inverse = [...visages, ...visages].reverse().map((v) => lien(v, true)).join('');
+      html = html.replace('<section class="qsn-visages" aria-label="Nos mannequins" hidden>', () => '<section class="qsn-visages" aria-label="Nos mannequins">')
+        .replace('<section class="qsn-visages" aria-label="Our models" hidden>', () => '<section class="qsn-visages" aria-label="Our models">')
+        .replace('<div class="qsn-visages-piste" id="qsn-visages-piste"></div>', () => '<div class="qsn-visages-piste" id="qsn-visages-piste" data-hasard>' + rangee + '</div><div class="qsn-visages-piste qsn-visages-inverse" data-hasard>' + inverse + '</div>');
+    }
+    // portrait du fondateur
+    if (d.portrait && d.portrait.photo_url) {
+      html = html.replace(/<img id="qsn-portrait-img" src="data:image\/gif;base64,[^"]*" alt="([^"]*)" hidden>/, (_, alt) => '<img id="qsn-portrait-img" src="' + echapper(photoLegere(d.portrait.photo_url)) + '" alt="' + alt + '">')
+        .replace('<figure class="qsn-portrait reveal qsn-rideau">', () => '<figure class="qsn-portrait reveal qsn-rideau avec-photo">');
+    }
     const vus = new Set([...html.matchAll(/data-evenement="([^"]*)"/g)].map((m) => m[1]));
     const avecPhoto = new Set(d.photos.map((p) => p.evenement_id));
     const cartes = [];
@@ -790,10 +951,16 @@ async function quiSommesNousRempli(url, anglais) {
       if (!t || vus.has(t) || !(avecPhoto.has(e.id) || e.image_url)) return;
       vus.add(t);
       cartes.push('<article class="qsn-evenement reveal" data-evenement="' + echapper(t) + '" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"></div>' +
-        '<h3>' + echapper(e.titre) + '</h3>' + (e.lieu ? '<p>' + echapper(e.lieu) + '</p>' : '') + '</article>');
+        '<h3>' + echapper(lisible(e.titre)) + '</h3>' + (e.lieu ? '<p>' + echapper(lisible(e.lieu)) + '</p>' : '') + '</article>');
     });
     const debut = html.indexOf('<div class="qsn-evenements" id="qsn-evenements">'), fin = debut < 0 ? -1 : html.indexOf('\n    </div>', debut);
     if (cartes.length && fin > 0) html = html.slice(0, fin) + '\n      ' + cartes.join('\n      ') + html.slice(fin);
+    // photos de chaque carte (celles de la page et celles ajoutées ci-dessus) : 6 au hasard parmi les événements du même nom
+    html = html.replace(/(<article class="qsn-evenement[^"]*" data-evenement="([^"]*)"[^>]*>\s*)<div class="qsn-evenement-photo qsn-rideau"><\/div>(\s*<h3>([^<]*)<\/h3>)?/g, (tout, debutCarte, cleCarte, h3, titreCarte) => {
+      const urls = []; evenements.filter((e) => cle(e.titre) === cleCarte.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')).forEach((e) => urlsDe(e).forEach((u) => urls.push(u)));
+      if (!urls.length) return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" hidden></div>' + (h3 || '');
+      return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" data-hasard>' + imgs(melanger(urls).slice(0, 6), titreCarte ? titreCarte.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&') : '') + '</div>' + (h3 || '');
+    });
     // (comme js/qui-sommes-nous.js : le nom n'est changé que si le portrait a une photo)
     if (d.portrait && d.portrait.nom && d.portrait.photo_url) html = texteElement(html, 'qsn-portrait-nom', d.portrait.nom);
     return poserTextes(html, await textesDePage('qui-sommes-nous').catch(() => null), anglais);
@@ -828,7 +995,20 @@ async function formulairesRemplis(url, anglais) {
   const lecture = page === 'candidature'
     ? enMemoire('castings', () => lireSupabase('casting_projets?actif=eq.true&select=id,nom,description&order=ordre_affichage.asc,nom.asc', null, ATTENTE_FICHE)).then((l) => (Array.isArray(l) ? { projets: l } : null))
     : Promise.resolve({});
-  return pageRemplie(url, (anglais ? '/en/' : '/') + page, 'page-donnees', lecture);
+  // (phase 2, 02/11/2026) candidature : la liste des castings ouverts écrite dans la page, et le bon bloc montré d'avance
+  // (le formulaire, ou « Aucun casting n'est ouvert… »), comme chargerProjetsActifs (js/formulaire-candidature.js)
+  const retoucher = page !== 'candidature' ? null : (html, d) => {
+    if (!Array.isArray(d.projets)) return html;
+    const aucun = d.projets.length === 0;
+    const options = '<option value="">' + (anglais ? 'Select' : 'Sélectionner') + '</option>' +
+      d.projets.map((p) => '<option value="' + echapper(p.nom) + '">' + echapper(p.nom) + '</option>').join('') +
+      '<option value="__autre__">' + (anglais ? 'Other (specify)' : 'Autre (précisez)') + '</option>';
+    return html.replace(/<p id="ca-chargement"[^>]*>[^<]*<\/p>\s*/, '')
+      .replace('<div id="ca-aucun-casting" class="ca-24 u-hidden"', () => '<div id="ca-aucun-casting" class="ca-24' + (aucun ? '' : ' u-hidden') + '"')
+      .replace('<form id="form-casting" data-parcours="projet" class="u-hidden">', () => '<form id="form-casting" data-parcours="projet"' + (aucun ? ' class="u-hidden"' : '') + '>')
+      .replace(/(<select id="ca-projet" required>)[\s\S]*?(<\/select>)/, (_, o, f) => o + options + f);
+  };
+  return pageRemplie(url, (anglais ? '/en/' : '/') + page, 'page-donnees', lecture, retoucher);
 }
 
 // ================== Étape C (01/11/2026) : textes des pages modifiables depuis l'Administration ==================
@@ -922,7 +1102,9 @@ export default async function middleware(requete) {
     if (url.hostname === DOMAINE_NU) return versWww(url);
     if (ACCUEIL.test(url.pathname)) {
       if (requete.headers.get('x-ma2m-accueil')) return;  // (la page elle-même, demandée ci-dessous)
-      try { return await accueilRempli(requete, url); } catch (e) { return; }
+      if (requete.method !== 'GET') return;
+      // (base lente ou en panne : la page part quand même complète, sans les mannequins)
+      try { return (await accueilRempli(requete, url)) || await pageNue(url, 'x-ma2m-accueil'); } catch (e) { return; }
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
     if (requete.headers.get('x-ma2m-remplie')) return;  // (page demandée par pageRemplie elle-même)
@@ -938,30 +1120,29 @@ export default async function middleware(requete) {
       // (un visiteur n'attend pas plus de 1,2 s : sinon la fiche retrouve elle-même le mannequin)
       try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id', null, ROBOTS_APERCU.test(agent) ? 2500 : ATTENTE_FICHE); } catch (error_) { lignes = null; }  // (base trop lente : la fiche se remplit dans la page)
       // Base lente ou en panne : la fiche retrouve elle-même le mannequin (js/adresse-fiche.js).
-      if (lignes === null) return ROBOTS_APERCU.test(agent) ? undefined : ficheSansId();
+      if (lignes === null) return ficheSansId();
       const id = lignes[0] && lignes[0].id;
       if (!id || !ID_VALIDE.test(id)) return Response.redirect(SITE + (anglais ? '/en' : '') + '/mannequins', 302);
-      if (ROBOTS_APERCU.test(agent)) {
-        const apercu = await apercuMannequin(url, anglais, id);
-        if (apercu) return apercu;
-      }
-      // visiteur : la fiche part déjà remplie ; au moindre souci, comme avant (la page se remplit elle-même)
+      // (phase 2, 02/11/2026 : visiteurs ET robots d'aperçu reçoivent la même fiche, avec ses balises og:)
+      // la fiche part déjà remplie ; au moindre souci, comme avant (la page se remplit elle-même)
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
     }
     // fiche ouverte depuis une carte du Book (/mannequin?id=…, après le renvoi de mannequin.html) : écrite par le
     // serveur comme /book/nom (étape A, 01/11/2026) ; au moindre souci, la page habituelle
-    if (/^\/(en\/)?mannequin$/.test(url.pathname) && requete.method === 'GET' && !ROBOTS_APERCU.test(agent) && ID_VALIDE.test(url.searchParams.get('id') || '')) {
+    if (/^\/(en\/)?mannequin$/.test(url.pathname) && requete.method === 'GET' && ID_VALIDE.test(url.searchParams.get('id') || '')) {
       const remplie = await ficheRemplie(requete, url, url.searchParams.get('id'), null, anglais).catch(() => null);
       if (remplie) return remplie;
       return;
     }
     // pages des visiteurs préparées par le serveur (site dynamique) ; jamais les adresses en .html, qui
     // suivent le renvoi vers l'adresse propre (vercel.json, cleanUrls) ; au moindre souci : comme avant
-    const remplir = requete.method === 'GET' && !ROBOTS_APERCU.test(agent) && PAGES_REMPLIES.find(([chemin]) => chemin.test(url.pathname));
+    // (phase 2, 02/11/2026 : la même page pour tous, robots d'aperçu compris ; base lente : la page part quand même
+    // complète, barre du haut, menu et bas de page écrits)
+    const remplir = requete.method === 'GET' && PAGES_REMPLIES.find(([chemin]) => chemin.test(url.pathname));
     if (remplir) {
-      try { return (await remplir[1](url, anglais, requete)) || undefined; } catch (e) { return; }
+      try { return (await remplir[1](url, anglais, requete)) || await pageNue(url, 'x-ma2m-remplie'); } catch (e) { return; }
     }
     if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
     if (/\/mannequin(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);

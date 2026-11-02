@@ -62,5 +62,16 @@
       '<div class="news-corps"><div class="news-date">' + echapper(p.role || '') + '</div><h3>' + echapper(p.nom || '') + '</h3>' +
       '<span class="news-lire">' + (o.en ? 'View Details →' : 'Voir la fiche →') + '</span></div></div>';
   }
-  racine.RenduPublications = { echapper, extrait, texteBrut, dateLongue, dateEvenement, une, carte, partenaire };
+  // Filtres par catégorie des Actualités (phase 2, 02/11/2026 : écrits aussi par le serveur ; js/actualites.js y
+  // branche les clics). Moins de 2 catégories présentes : aucun filtre ('').
+  const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
+  const LIBELLES_CATEGORIES_EN = { Casting: 'Casting', Mannequinat: 'Modeling', Conseils: 'Tips', Événements: 'Events' };
+  const libelleCategorie = (cat, en) => (en ? (LIBELLES_CATEGORIES_EN[cat] || cat) : cat);
+  function filtresActualites(liste, en) {
+    const presentes = CATEGORIES_ACTUALITES.filter((cat) => liste.some((a) => a.categorie === cat));
+    if (presentes.length < 2) return '';
+    return ['Toutes', ...presentes].map((cat) => '\n    <button class="filtre-categorie' + (cat === 'Toutes' ? ' actif' : '') + '" data-categorie="' + echapper(cat) + '">' +
+      echapper(cat === 'Toutes' ? (en ? 'All' : 'Toutes') : libelleCategorie(cat, en)) + '</button>\n  ').join('');
+  }
+  racine.RenduPublications = { echapper, extrait, texteBrut, dateLongue, dateEvenement, une, carte, partenaire, CATEGORIES_ACTUALITES, libelleCategorie, filtresActualites };
 })(typeof window !== 'undefined' ? window : globalThis);

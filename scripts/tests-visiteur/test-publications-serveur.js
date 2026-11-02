@@ -44,6 +44,9 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
 // base lente ou en panne : la page habituelle, sans bloc de données (aucune page cassée)
 const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json" id="[a-z-]+-donnees"/.test(await r.text()));
 
+
+const texteVu = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const memePagePourRobot = async (dem, chemin) => { const a = await dem(chemin, { headers: { 'user-agent': 'WhatsApp/2.23' } }); const b = await dem(chemin); return !!(a && b) && texteVu(await a.text()) === texteVu(await b.text()); };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
@@ -66,11 +69,11 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     ok(/<div class="news-une reveal" data-index="0">/.test(visible) && /<div class="news-carte reveal" data-index="1"/.test(visible) && /<h2>[^<]+<\/h2>/.test(visible) && /<div class="news-date">[^<]+<\/div>/.test(visible),
       chemin + ' : « À la une » et les cartes (titres, dates) sont dans le HTML avant tout programme');
     ok(!/<h3>Atelier <img/.test(visible) && (!/actualites/.test(chemin) || /<h3>Atelier &lt;img src=x onerror=alert\(1\)&gt;<\/h3>/.test(visible)), chemin + ' : titre piégé écrit sans danger');
-    ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache (un article publié se voit tout de suite)');
+    ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifiée à chaque visite (un article publié se voit en 180 s au plus)');
   }
   ok(await demander('actualites', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
   ok(await demander('actualites', { method: 'HEAD' }) === undefined, 'seulement les visites (GET)');
-  ok(await demander('actualites', { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, 'robot d’aperçu sur la liste : la page habituelle');
+  ok(await memePagePourRobot(demander, 'actualites'), 'robot d’aperçu sur la liste : exactement la même page que les visiteurs');
   baseLente = 1500; const t = Date.now();
   ok(await sansDonnees(await demander('evenements')) && Date.now() - t < 2500, 'base lente : la page part comme avant (sans données), sans attendre (' + (Date.now() - t) + ' ms)');
   baseLente = 0; basePanne = true;

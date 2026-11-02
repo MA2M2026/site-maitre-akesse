@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pied = document.querySelector('footer.site-footer');
     const cible = overlay.querySelector('a[href$="integrer-agence.html"], a[href$="integrer-agence"]');
     if (!pied || !cible || ['integrer-agence', 'tableau-de-bord'].indexOf(page) !== -1) return;
+    if (document.querySelector('.bandeau-integrer')) return;  // (déjà écrit par le serveur, js/gabarit.js, phase 2)
     const en = document.documentElement.lang === 'en';
     const bandeau = document.createElement('section');
     bandeau.className = 'bandeau-integrer';

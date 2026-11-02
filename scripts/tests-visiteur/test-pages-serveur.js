@@ -61,6 +61,9 @@ const donneesDe = (html, bloc) => JSON.parse((html.match(new RegExp('<script typ
 // base lente ou en panne : la page habituelle, sans bloc de données (aucune page cassée)
 const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json" id="[a-z-]+-donnees"/.test(await r.text()));
 
+
+const texteVu = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const memePagePourRobot = async (dem, chemin) => { const a = await dem(chemin, { headers: { 'user-agent': 'WhatsApp/2.23' } }); const b = await dem(chemin); return !!(a && b) && texteVu(await a.text()) === texteVu(await b.text()); };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
@@ -104,10 +107,10 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
         const noms = [...visible.matchAll(/<div class="news-corps"><div class="news-date">[^<]*<\/div><h3>([^<]*)<\/h3>/g)].map((m) => m[1]);
         ok(noms.length === 2, chemin + ' : les cartes des partenaires (noms) sont dans le HTML avant tout programme ' + noms.join(' | '));
       }
-      ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache');
+      ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifiée à chaque visite (max-age=0), écrite par le serveur');
     }
     ok(await demander(page, { headers: { 'x-ma2m-remplie': '1' } }) === undefined, page + ' : sa propre demande de la page passe sans boucle');
-    ok(await demander(page, { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, page + ' : robot d’aperçu → la page habituelle');
+    ok(await memePagePourRobot(demander, page), page + ' : robot d’aperçu → exactement la même page que les visiteurs');
     baseLente = 1500; const t = Date.now();
     ok(await sansDonnees(await demander(page)) && Date.now() - t < 2500, page + ' : base lente → comme avant (sans données), sans attendre (' + (Date.now() - t) + ' ms)');
     baseLente = 0; basePanne = true;

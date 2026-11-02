@@ -70,6 +70,13 @@
 
   // --- Lien « Aller au contenu » (premier élément atteint avec la touche Tab) ---
   function lienContenu() {
+    // (phase 2, 02/11/2026) déjà écrit par le serveur (js/gabarit.js) : seulement le comportement au clic
+    const deja = document.querySelector('a.lien-evitement');
+    if (deja) {
+      const cibleServeur = document.getElementById(deja.getAttribute('href').slice(1));
+      if (cibleServeur) deja.addEventListener('click', e => { e.preventDefault(); cibleServeur.focus(); cibleServeur.scrollIntoView(); });
+      return;
+    }
     // Le premier bloc de contenu (sur l'accueil : le magazine, <main>), pas le menu.
     const candidats = [document.querySelector('main'), document.getElementById('contenu')]
       .concat(Array.from(document.querySelectorAll('section')));
