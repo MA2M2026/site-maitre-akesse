@@ -35,7 +35,7 @@ const donneeDe = (html, id) => JSON.parse((html.match(new RegExp('<script type="
     pages[chemin] = await demander(chemin);
     // (phase 2, 02/11/2026) les visages sont écrits dans la page elle-même : 8 au hasard parmi les 10, petites versions
     const murHtml = ((pages[chemin] || '').match(/<div class="mur-titre" aria-hidden="true">([\s\S]*?)<\/div>/) || [])[1] || '';
-    const visages = [...murHtml.matchAll(/<img alt="" decoding="async" src="([^"]+)">/g)].map((m) => m[1]);
+    const visages = [...murHtml.matchAll(/<img alt="" decoding="async"(?: fetchpriority="high")? src="([^"]+)">/g)].map((m) => m[1]);
     ok(visages.length === 8 && visages.every((u) => /^https:\/\/x\/\d-p\.jpg$/.test(u)) && /class="avec-mur-titre/.test(pages[chemin]), chemin + ' : les visages du mur de photos sont écrits dans la page (8 petites versions)');
   }
   ok((donneeDe(pages.candidature, 'page-donnees') || {}).projets?.[0]?.nom === 'Défilé Cacao <b>' && !pages.candidature.includes('Défilé Cacao <b>'), 'candidature : la liste des castings ouverts est dans la page (texte protégé)');

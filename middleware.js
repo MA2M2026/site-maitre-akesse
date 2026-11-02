@@ -433,6 +433,9 @@ async function accueilRempli(requete, url) {
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   html = magazineComplet(html, donnees, anglais, une, couv, photoDe);
+  // (W7, 02/11/2026) la photo de couverture annoncée tout en haut de l'en-tête : le téléphone la demande dès la
+  // première seconde, avant les styles et les programmes (c'est la plus grande image de la page, mesurée par Lighthouse)
+  html = photoAnnoncee(html, photoLegere(couv.photo));
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
   return reponseHtml(html, page, url);
