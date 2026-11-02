@@ -189,6 +189,11 @@ font plus que l'interaction (menu, filtres, calendrier, galerie, formulaires).
   User-Agent` ; liens personnels (`/recu`, `/places`) `private, no-store` ; en-têtes `x-ma2m-render: ssr` et
   `x-ma2m-build` (version). Une modification de l'Administration se voit au plus 180 s après (mémoire de 3 min).
 - **Éléments tirés au hasard** (couverture, mur, diaporamas) : marqués `data-hasard`.
+- **Plus aucune écriture depuis les pages publiques** (W4, 02/11/2026) : Actualités, Événements et Partenaires sont en
+  lecture seule (`js/publications-lecture.js`) ; publier, modifier, supprimer se fait dans l'Administration
+  (`js/publications-ecriture.js`, `js/partenaires-communs.js`, `js/images-site-ecriture.js`), pièces chargées par
+  `js/admin/site.js` APRÈS la clé d'accès et protégées par le serveur (SCRIPTS_ADMIN : « introuvable » sans clé).
+  `verifierAdmin` n'existe plus (les mentions plus anciennes de cette notice sont historiques).
 - **Vérifier** : `NODE_USE_ENV_PROXY=1 node scripts/serveur-local.mjs 8787` (le dépôt servi comme Vercel, base lue
   en lecture seule) puis `node scripts/verify-dynamic.mjs --url http://127.0.0.1:8787` ; sur le vrai site :
   `--url https://www.maitreakessemodelmanagement.com`. Une ligne PASS/FAIL par contrôle. Inventaire :
@@ -308,7 +313,7 @@ apparitions en fondu (`lisibilite.js`). `test-espace1-cadre.js` (tuile de l'anci
   (`js/note-integration.js`), nettoyage (`js/nettoyage-supabase.js`).
 - **Outils partagés créés pour l'occasion** : `js/photos.js` (affichage des photos, sorti de
   `js/app.js`, chargé avant lui sur toutes les pages), `PUBLICATIONS`, `sauverPublication`,
-  `effacerPublication` (`js/publications.js`), `js/partenaires-communs.js`,
+  `effacerPublication` (`js/publications-ecriture.js`), `js/partenaires-communs.js`,
   `lienWhatsAppCode` (`js/messages-candidats.js`), `allegerPhotoSite` et
   `pageAdministration()` (`js/app.js` : l'Administration n'est ni comptée comme visite ni
   dotée de la pastille WhatsApp publique).
@@ -1099,7 +1104,7 @@ avec secours automatique, puis quitter le relais une fois le rodage réussi.
   rattrapés). La page Sélection repasse aussi ses photos gardées en mémoire par `urlLegere`.
 - **Étendu le 13/10/2026 (2e lot, demande de la propriétaire : « tout ce qui est photo et
   vidéo transite par Cloudflare, Vercel reste l'hébergeur »)** : actualités (liste +
-  galerie `js/publications.js`), événements, partenaires (page + accueil + agenda), photo
+  galerie `js/publications-lecture.js`), événements, partenaires (page + accueil + agenda), photo
   du mot du responsable (accueil, Qui sommes-nous), boutique (`js/marketplace-vitrine.js`)
   passent aussi par `urlLegere`. **Vidéo de l'accueil** (`js/video-accueil.js`) : servie
   directement, avec le même secours : erreur → même vidéo par le relais, au même moment
@@ -3183,7 +3188,7 @@ CSS `.couverture-faisceau` / `--couv-h` restent sans effet (nettoyage CSS à fai
 - `js/filet-reveal.js` : filet d'affichage (33 pages, chargé en `async`).
 - Un seul script FR/EN par page : `js/accueil.js`, `js/inscription-mannequin.js`,
   `js/contact.js`, `js/demande-recruteur.js` (page Sélection), `js/partenaires.js`,
-  `js/actualites.js`, `js/evenements.js` (+ `js/publications.js`, fonctions communes à ces deux).
+  `js/actualites.js`, `js/evenements.js` (+ `js/publications-lecture.js`, fonctions communes à ces deux).
 - Essai visiteur `scripts/tests-visiteur/test-pages-publiques.js` : ces pages en FR et EN.
 - `js/fiche-mannequin.js` : fiche d'une mannequin, `mannequin.html` et `en/mannequin.html`
   (avant : deux scripts de ~400 lignes dans les pages). Textes `T('fr', 'en')` ; en anglais,
@@ -3332,7 +3337,7 @@ Regroupements faits pour supprimer les derniers blocs recopiés signalés par So
   `js/formulaire-candidature.js`. Contact : icônes des réseaux via `data-gabarit="reseaux"`.
 - Actualités / Événements : `afficherMediasPublication`, `brancherRedaction`,
   `envoyerPhotosPublication`, `enregistrerPhotosPublication`, `supprimerPublication`
-  (`js/publications.js`, constante `PUBLICATION` dans chaque page). Depuis le 20/10/2026 (code
+  (`js/publications-lecture.js`, constante `PUBLICATION` dans chaque page). Depuis le 20/10/2026 (code
   recopié signalé par jscpd) aussi : `ouvrirRedactionPublication`, `enregistrerPublication`,
   `messageRedaction`, `montrerFichePublication`, `brancherFicheLecture` et l'état `redaction`
   ({ id, images }) ; chaque page ne garde que ses champs propres (catégorie et vidéo ; date et
@@ -3845,7 +3850,7 @@ si la base refuse, le nouveau fichier est effacé), et « Annuler » pour tout r
 - Il faut garder au moins une photo (ou, pour une actualité, un lien vidéo), seulement si on a touché
   aux photos (un ancien article sans photo reste modifiable).
 - Enregistrement : `sauverPublication` (texte, photos ajoutées) puis, seulement si les photos ont changé,
-  `appliquerPhotosEnLigne` (`js/publications.js`) : base d'abord (lignes retirées — avec vérification si
+  `appliquerPhotosEnLigne` (`js/publications-ecriture.js`) : base d'abord (lignes retirées — avec vérification si
   la base en efface moins que prévu —, ordre, couverture), PUIS les fichiers retirés sont effacés du
   stockage (`supprimerCheminsImagesSite`). Les tables de photos n'ont pas de colonne d'ordre : l'ordre
   des pages publiques suit `created_at`, donc les photos gardées sont renumérotées (1 seconde d'écart)
@@ -3901,7 +3906,7 @@ sinon, remplissage comme avant. Les 4 petites cases ne changent pas. Essai : `te
   efface le brouillon. Le brouillon garde la version de la publication sur laquelle il a été fait (`base`) :
   si elle a changé depuis (modifiée ailleurs), on demande « Reprendre mon brouillon » / « L'ignorer » au
   lieu d'écraser en silence ; « Ignorer ce brouillon » est toujours proposé.
-- Photos d'un article : règle de couverture partagée `choisirCouverture` (`js/publications.js`), utilisée par
+- Photos d'un article : règle de couverture partagée `choisirCouverture` (`js/publications-ecriture.js`), utilisée par
   l'aperçu et par l'enregistrement ; un enregistrement interrompu en cours de route garde ce qui est fait
   (`ancienneUrl`, `aEffacer`) pour qu'un nouvel essai termine ; mises à jour de l'ordre envoyées ensemble ;
   « Annuler » remet tout (ordre et couverture compris).
@@ -3947,7 +3952,7 @@ reçoit toujours la page habituelle du Book.
 avec ou sans `?actu=` / `?evenement=`) : bloc `<script type="application/json" id="publications-donnees">`
 `{ liste, photos }` (mêmes lectures que `js/actualites.js` / `js/evenements.js` : liste triée, puis les
 identifiants des photos pour leur nombre) et la photo « À la une » annoncée en tête (`preload`). Lu par
-`publicationsServeur()` (`js/publications.js`, partagé par les deux pages). 1,2 s au plus ; sinon (base
+`publicationsServeur()` (`js/publications-lecture.js`, partagé par les deux pages). 1,2 s au plus ; sinon (base
 lente ou en panne, robot d'aperçu — qui garde son aperçu d'article —, autre que GET) comme avant.
 Outil commun `pageRemplie`. Essai : `test-publications-serveur.js`.
 
@@ -3962,7 +3967,7 @@ la base elle-même comme avant :
 | Accueil | `accueilRempli` (5 min en mémoire) | `accueil-donnees` | `js/accueil.js` |
 | Fiche `/book/nom` | `ficheRemplie` | `fiche-donnees` | `js/adresse-fiche.js`, `js/fiche-mannequin.js` |
 | The Book | `bookRempli` | `book-donnees` | `js/mannequins.js`, mur de photos (`js/app.js`) |
-| Actualités, événements | `publicationsRemplies` | `publications-donnees` | `publicationsServeur` (`js/publications.js`) |
+| Actualités, événements | `publicationsRemplies` | `publications-donnees` | `publicationsServeur` (`js/publications-lecture.js`) |
 | Partenaires | `partenairesRemplis` | `partenaires-donnees` | `js/partenaires.js` |
 | Agenda | `agendaRempli` | `agenda-donnees` | `js/agenda.js` (pas l'encart de l'accueil) |
 | Parcours | `parcoursRempli` (période vérifiée par la page) | `parcours-donnees` | `js/parcours.js` (`projetsAvecNoms`, `js/app.js`) |
@@ -4130,7 +4135,7 @@ par Google et les aperçus) ; la page le reprend ou le redessine ensuite.
   ET importé par `middleware.js`, pose `RenduBook`). The Book garde les cartes du serveur au premier affichage
   (`data-serveur="1"`), seul l'état « dans ma sélection » est mis à jour ; un seul écouteur pour la grille.
 - **Actualités, événements, partenaires** : dessin partagé `js/rendu-publications.js` (`RenduPublications`,
-  avec `extrait` désormais commun à `js/publications.js`).
+  avec `extrait` désormais commun à `js/publications-lecture.js`).
 - **Fiche d'un mannequin** (`contenuFiche`), **Qui sommes-nous** (cartes des événements, reprises par la page
   grâce à `data-evenement`), **parcours** (mois et projets), **agenda** (projets à venir) : contenu principal
   écrit par le serveur, la page le complète (photos, animations, calendrier).

@@ -127,7 +127,8 @@
     if (iSection < iMain || !/^<section[^>]*>\s*<div class="container"[^>]*>/.test(html.slice(iSection, iH1 + 3))) return html;
     if (html.slice(iMain, iSection).indexOf('<section') !== -1) return html;  // (pas la première section de la page)
     var melange = adresses.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 8);
-    var mur = '<div class="mur-titre" aria-hidden="true">' + melange.map(function (u) { return '<img alt="" decoding="async" src="' + echapperAttr(u) + '">'; }).join('') + '</div>';
+    // (W7, 02/11/2026) les deux premiers visages en priorité : le mur est souvent la plus grande image du haut de page
+    var mur = '<div class="mur-titre" aria-hidden="true">' + melange.map(function (u, i) { return '<img alt="" decoding="async"' + (i < 2 ? ' fetchpriority="high"' : '') + ' src="' + echapperAttr(u) + '">'; }).join('') + '</div>';
     var balise = html.slice(iSection).match(/^<section([^>]*)>/)[0];
     var nouvelle = /class="/.test(balise) ? balise.replace('class="', 'class="avec-mur-titre ') : balise.replace('<section', '<section class="avec-mur-titre"');
     return html.slice(0, iSection) + nouvelle + mur + html.slice(iSection + balise.length);

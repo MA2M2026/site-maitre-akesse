@@ -4,7 +4,7 @@ Règle : « terminé » seulement si tout le chantier est fait, essayé, vu fonc
 Sinon « en cours » (avec ce qui reste) ou « pas commencé ». Aucun secret dans ce fichier (dépôt public).
 
 Branche de travail : `chantier-couleurs-site` (à jour avec `main` le 31/10/2026).
-Version en ligne : `main` c485622 (01/11/2026, après-midi : batterie complète 0 échec sur 4 198 vérifications, en ligne et vérifiée).
+Version en ligne : `main` ede3766 (02/11/2026, phase 2 ; avant : c485622 (01/11/2026, après-midi : batterie complète 0 échec sur 4 198 vérifications, en ligne et vérifiée).
 Retour en arrière possible : version précédente `main` d179d85 ; base : `retour-appareil-confiance.sql` (gardé hors dépôt) pour le téléphone de confiance.
 
 | Chantier | État | Ce qui reste |
@@ -99,11 +99,11 @@ Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiq
 |---|---|---|
 | W0 Tri de départ | PASS(DECISIONS.md) | envois de 1 h et 3 h désactivés ; retour en arrière : dpl_99F9Ue1NvHjsvqzdbJGJY3547yxP → dpl_3Pr6SMGmavSd9uh1AiXHPsr4ykVM |
 | W1 Inventaire des pages | IN_PROGRESS | docs/routes.md écrit ; reste : sitemap généré depuis la base |
-| W2 Pages complètes écrites par le serveur | IN_PROGRESS | serveur local : 180/180 (evidence/W2-local-180.txt) ; batterie et mise en ligne en cours |
-| W3 Cache exact | IN_PROGRESS | en-têtes d'origine plus recopiés (x-vercel-cache, age), politique explicite + x-ma2m-render/x-ma2m-build ; à vérifier en ligne |
-| W4 Retirer le code d'administration des pages publiques | UNVERIFIED | — |
+| W2 Pages complètes écrites par le serveur | IN_PROGRESS | EN LIGNE le 02/11 (main ede3766) : 178/180 sur le vrai site (evidence/prod-apres-phase2.txt) ; reste : 2 photos d'ambiance de l'accueil à marquer « au hasard » (corrigé sur la branche), sitemap depuis la base |
+| W3 Cache exact | PASS(evidence/prod-apres-phase2.txt) | en ligne : Cache-Control explicite, x-ma2m-render: ssr, x-ma2m-build, plus de x-vercel-cache/age recopiés ; borne de fraîcheur 180 s documentée |
+| W4 Retirer le code d'administration des pages publiques | IN_PROGRESS | branche : 6 pages sans panneau ni bouton ni script d'écriture ; publications.js séparé en publications-lecture.js (public) et publications-ecriture.js (Administration, « introuvable » sans connexion) ; écriture des images hors de app.js (images-site-ecriture.js) ; essai test-publications.js réécrit (session de l'agence ouverte : rien d'écrit) ; reste : batterie, mise en ligne |
 | W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |
-| W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | UNVERIFIED | b3ef467 introuvable (à refaire) |
+| W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | IN_PROGRESS | W6i secrets : PASS(evidence/W6i-secrets.txt) — historique complet, aucun secret (clé anon seulement), npm audit 0 ; reste : a, b, c, d, e, f, g, h, j, k, l |
 | W7 Vitesse (LCP ≤ 2,5 s) | UNVERIFIED | — |
 | W8 Administration du contenu | UNVERIFIED | — |
 | W9 Essais automatiques | UNVERIFIED | — |

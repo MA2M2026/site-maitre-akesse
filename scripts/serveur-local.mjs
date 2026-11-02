@@ -48,7 +48,9 @@ const motifs = config.matcher.map((m) => new RegExp('^' + m.replace(/[.]/g, '\\.
 
 http.createServer(async (req, res) => {
   try {
-    const url = new URL(req.url, SITE);
+    // (seulement un chemin de CE site : une adresse complète venue d'ailleurs n'est jamais suivie)
+    const url = new URL(/^\/(?!\/)/.test(req.url) ? req.url : '/', SITE);
+    if (url.origin !== SITE) throw new Error('adresse refusée');
     let rep;
     if (motifs.some((m) => m.test(url.pathname))) {
       const r = await middleware(new Request(url.toString(), { method: req.method, headers: req.headers }));

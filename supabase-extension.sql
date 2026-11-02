@@ -7293,3 +7293,29 @@ alter table model_projects add column if not exists lieu text
   check (lieu is null or length(lieu) <= 160);
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Extension 153 (02/11/2026, phase 2, W6f — contrôle de sécurité de Supabase « Function Search Path Mutable ») :
+-- chaque fonction du schéma public dont le chemin de recherche n'est pas fixé le reçoit (public, extensions,
+-- pg_temp). Sans effet sur le site (mêmes tables, mêmes résultats) ; empêche qu'un objet de même nom placé
+-- ailleurs soit pris à la place. Les fonctions des extensions (pgcrypto…) ne sont pas touchées. Peut être
+-- recollée sans risque (ne touche que les fonctions encore sans chemin fixé).
+-- Retour en arrière : ALTER FUNCTION … RESET search_path; (liste : evidence/W6f, hors dépôt).
+-- ===========================================================================
+do $$
+declare f record;
+begin
+  for f in
+    select p.oid::regprocedure as signature
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prokind = 'f'
+      and pg_has_role(p.proowner, 'USAGE')  -- (seulement celles que le rôle qui colle ce SQL peut modifier)
+      and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')
+      and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
+  loop
+    execute format('alter function %s set search_path = public, extensions, pg_temp', f.signature);
+  end loop;
+end $$;
+
+NOTIFY pgrst, 'reload schema';

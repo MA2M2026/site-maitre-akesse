@@ -60,7 +60,7 @@
 <header class="site-header-v2" data-gabarit="entete" data-page="partenaires"></header>
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
-<script src="../js/gabarit.js?v=f7e6962c"></script>
+<script src="../js/gabarit.js?v=536c012d"></script>
 <main>
 
 <section class="u-pb-1">
@@ -100,92 +100,27 @@
       <p id="part-modal-evenement" class="enpt-4"></p>
       <div id="part-modal-description" class="contenu-riche enpt-5"></div>
 
-      <div id="part-modal-admin-actions" class="enpt-6">
-        <button id="part-modal-modifier-btn" class="btn-mini-admin">✎ Edit</button>
-        <button id="part-modal-supprimer-btn" class="btn-mini-admin u-ml-0-6">🗑 Delete</button>
-      </div>
 
-      <div id="part-modal-edition" class="enpt-6">
-        <div class="form-champ"><label for="edit-p-nom">Name (person or institution) *</label><input type="text" id="edit-p-nom"></div>
-        <div class="form-champ"><label for="edit-p-structure">Represented Organization</label><input type="text" id="edit-p-structure"></div>
-        <div class="form-champ"><label for="edit-p-evenement">Associated Event</label><input type="text" id="edit-p-evenement"></div>
-        <div class="form-champ">
-          <label for="edit-p-role">Role</label>
-          <select id="edit-p-role">
-            <option value="">Choose</option>
-            <option value="DA">DA (Artistic Director)</option>
-            <option value="Styliste">Stylist</option>
-            <option value="Directeur de casting">Casting Director</option>
-            <option value="Promoteur">Promoter</option>
-            <option value="Organisateur">Organizer</option>
-            <option value="Régisseur">Stage Manager</option>
-            <option value="Autre">Other</option>
-          </select>
-        </div>
-        <div class="form-champ"><label>Description / Notes</label><div id="edit-p-description-editeur" class="editeur-riche"></div></div>
-        <div class="form-champ"><label for="edit-p-logo">Replace Logo (optional)</label><input type="file" id="edit-p-logo" accept="image/*"></div>
-        <button class="btn btn--principal" id="edit-p-enregistrer-btn">Save</button>
-        <button class="btn u-ml-0-5" id="edit-p-annuler-btn">Cancel</button>
-        <div id="edit-p-msg" class="form-msg"></div>
-      </div>
     </div>
   </div>
 </div>
 
-<!-- Admin panel: entirely invisible to a visitor.
-     Only shown if an admin session already logged in (via the Administration, /admin/)
-     is detected by verifierAdmin() — no trace for the public. -->
-<section id="admin-bloc" class="fond-anthracite u-hidden u-pt-3">
-  <div class="container u-maxw-520">
-    <div id="admin-publier">
-      <div class="badge-page-admin">📍 You are on: Our Partners (Administration)</div>
-      <p class="enpt-7">To edit or delete an already published partner, simply open its detail view by clicking on it in the page.</p>
-
-      <h3 class="u-mb-1">Add a Partner</h3>
-      <div class="form-champ"><label for="p-nom">Name (person or institution) *</label><input type="text" id="p-nom" placeholder="e.g. Gilles Touré"></div>
-      <div class="form-champ"><label for="p-structure">Represented Organization</label><input type="text" id="p-structure" placeholder="e.g. Conseil du Café-Cacao"></div>
-      <div class="form-champ"><label for="p-evenement">Associated Event</label><input type="text" id="p-evenement" placeholder="e.g. Cacao Fashion Show, JNCC 2026"></div>
-      <div class="form-champ">
-        <label for="p-role">Role</label>
-        <select id="p-role">
-          <option value="">Choose</option>
-          <option value="DA">DA (Artistic Director)</option>
-          <option value="Styliste">Stylist</option>
-          <option value="Directeur de casting">Casting Director</option>
-          <option value="Promoteur">Promoter</option>
-          <option value="Organisateur">Organizer</option>
-          <option value="Régisseur">Stage Manager</option>
-          <option value="Autre">Other</option>
-        </select>
-      </div>
-      <div class="form-champ"><label>Description / Notes (optional)</label><div id="p-description-editeur" class="editeur-riche"></div></div>
-      <div class="form-champ"><label for="p-logo">Logo or Poster (large size, good resolution)</label><input type="file" id="p-logo" accept="image/*"></div>
-
-      <button class="btn btn--principal u-mt-1-2" id="p-publier-btn">Add This Partner</button>
-      <button class="btn u-ml-0-5" id="admin-logout-btn">Logout</button>
-      <a href="/admin/" class="enpt-8">Open the Administration →</a>
-      <div id="p-msg" class="form-msg"></div>
-    </div>
-  </div>
-</section>
 
 </main>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
-<script src="../js/gabarit.js?v=f7e6962c"></script>
+<script src="../js/gabarit.js?v=536c012d"></script>
 
 <script src="../js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
 <script src="../js/supabase-config.js?v=16708773"></script>
 <script src="../js/vendor/dompurify-3.4.16.min.js?v=ef9c6753"></script>
 <script src="../js/verrou-defilement.js?v=83d529ab"></script>
-<script src="../js/conversion-heic.js?v=82dc3921"></script>
 <script src="../js/photos.js?v=992c058a"></script>
 <script src="../js/partage.js?v=1ab93ecd"></script>
-<script src="../js/app.js?v=9406b4bd"></script>
+<script src="../js/app.js?v=a69c1ca1"></script>
 <script src="../js/confort.js?v=cad83e86"></script>
 <script src="../js/menu.js?v=e2094e8d"></script>
-<script src="../js/partenaires-communs.js?v=6b95194f"></script>
 <script src="../js/rendu-publications.js?v=2f409bc4"></script>
-<script src="../js/partenaires.js?v=37625e37"></script>
+<script src="../js/partenaires.js?v=ef662331"></script>
 </body>
 </html>

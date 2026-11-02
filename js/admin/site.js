@@ -39,13 +39,13 @@
   // Pièces réservées (middleware.js) : la clé d'accès est posée par le serveur après la double
   // authentification (api/acces-tableau.js), puis les pièces sont chargées une seule fois, dans
   // l'ordre. Sans clé (compte sans droit), elles restent introuvables : la page le dit.
-  const PIECES = ['/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
+  const PIECES = ['/js/images-site-ecriture.js', '/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
     '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js',
     '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js',
     '/js/admin/photos-choisies.js', '/js/presences-calcul.js', '/js/admin/site-presences.js', '/js/admin/site-bulletins.js', '/js/documents-communs.js', '/js/admin/site-documents.js', '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-places.js', '/js/defile-repartition.js', '/js/admin/site-defiles.js', '/js/cartes-acces.js', '/js/admin/site-exterieures.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-infos.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',
     '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/admin/site-outils-mannequins.js', '/js/admin/site-pilotage.js',
-    '/js/rendu-publications.js', '/js/publications.js', '/js/partenaires-communs.js', '/js/admin/brouillons.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js', '/js/admin/site-traductions.js', '/js/admin/site-textes.js',
+    '/js/rendu-publications.js', '/js/publications-lecture.js', '/js/publications-ecriture.js', '/js/partenaires-communs.js', '/js/admin/brouillons.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js', '/js/admin/site-traductions.js', '/js/admin/site-textes.js',
     '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/admin/site-agenda.js',
     '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/admin/site-video.js',
     '/js/note-integration.js', '/js/nettoyage-supabase.js', '/js/admin/site-acces.js',

@@ -1,18 +1,7 @@
-// Tables et dossiers d'images de cette page (fonctions communes : js/publications.js)
-const PUBLICATION = PUBLICATIONS.evenements;  // js/publications.js
 // Événements (evenements.html et en/evenements.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
-const quillRedaction = editeurRicheDiffere('red-editeur', T('Racontez cet événement ici… (facultatif)', 'Tell the story of this event here… (optional)'));
 
-// "date" (sans heure) : new Date('2026-05-01') est interprété en UTC, ce qui peut
-// afficher la veille selon le fuseau du visiteur — on force midi pour l'éviter.
-// (règles partagées avec le serveur : js/rendu-publications.js, chargé avant)
-function formatDateEvenement(dateStr) {
-  return dateStr ? window.RenduPublications.dateEvenement({ date_evenement: dateStr }, EN) : '';
-}
-function formatDatePublication(dateStr) {
-  return window.RenduPublications.dateLongue(dateStr, EN);
-}
+// (dates : règles partagées avec le serveur, js/rendu-publications.js, chargé avant)
 function dateAffichageEvenement(e) {
   return window.RenduPublications.dateEvenement(e, EN);
 }
@@ -21,7 +10,7 @@ async function chargerEvenements() {
   const grille = document.getElementById('evenements-grille');
   const uneZone = document.getElementById('evenements-une');
   const vide = document.getElementById('evenements-vide');
-  const serveur = publicationsServeur();  // (js/publications.js)
+  const serveur = publicationsServeur();  // (js/publications-lecture.js)
   if (!serveur && !sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
@@ -30,9 +19,9 @@ async function chargerEvenements() {
     vide.style.display = 'block';
     return;
   }
-  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('evenements').select('*').order('date_evenement', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('evenements').select('id, titre, date_evenement, lieu, description, image_url, created_at').order('date_evenement', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
-  await versAnglais(data, ['titre', 'lieu', 'description'], true);  // (page anglaise, js/app.js)
+  await versAnglais(data, ['titre', 'lieu', 'description']);  // (page anglaise, js/app.js)
   window.evenementsData = data;
 
   const { data: toutesLesPhotos } = serveur ? { data: serveur.photos } : await sb.from('evenement_photos').select('evenement_id');
@@ -79,56 +68,8 @@ async function ouvrirEvenementModal(index) {
   document.getElementById('news-modal-lieu').classList.toggle('u-hidden', !e.lieu);
   document.getElementById('news-modal-texte').innerHTML = rendreContenuRiche(e.description);
 
-  montrerFichePublication('evenement', e); // js/publications.js
+  montrerFichePublication('evenement', e); // js/publications-lecture.js
 }
-// Fenêtre de lecture, modification et suppression (admin) : js/publications.js.
-const QUESTION_SUPPRESSION = T("Supprimer définitivement cet événement et toutes ses photos ?", 'Permanently delete this event and all its photos?');
-brancherFicheLecture(PUBLICATION, () => window.evenementsData, ouvrirRedaction, QUESTION_SUPPRESSION, chargerEvenements);
-
-// --- Page de rédaction plein écran : sert à la fois pour publier un nouvel événement et pour
-// modifier un événement existant — un seul éditeur, un seul jeu de champs, avec un aperçu du
-// rendu public qui se met à jour en direct pendant la saisie (js/publications.js).
-function ouvrirRedaction(evenementExistant) {
-  const editeurPret = quillRedaction.preparer();  // éditeur chargé à la demande (js/app.js)
-  ouvrirRedactionPublication(evenementExistant, {
-    nouvelle: T('Publier un nouvel événement', 'Publish a New Event'), modifier: T('Modifier l’événement', 'Edit Event'),
-    images: T('Photos (tu peux en sélectionner plusieurs à la fois)', 'Photos (you can select several at once)'), publier: T('Publier l’événement', 'Publish Event')
-  });
-  document.getElementById('red-date').value = evenementExistant ? (evenementExistant.date_evenement || '') : '';
-  document.getElementById('red-lieu').value = evenementExistant ? (evenementExistant.lieu || '') : '';
-  mettreAJourApercuRedaction();
-  void editeurPret.then(() => {
-    chargerContenuDansEditeur(quillRedaction, evenementExistant ? evenementExistant.description : '');
-    mettreAJourApercuRedaction();
-  });
-}
-
-function mettreAJourApercuRedaction() {
-  const titre = document.getElementById('red-titre').value.trim();
-  const lieu = document.getElementById('red-lieu').value.trim();
-  const dateEvenement = document.getElementById('red-date').value;
-  document.getElementById('red-apercu-titre').textContent = titre || T('Titre de l’événement', 'Event title');
-  const lieuEl = document.getElementById('red-apercu-lieu');
-  lieuEl.textContent = lieu ? ('📍 ' + lieu) : '';
-  lieuEl.classList.toggle('u-hidden', !lieu);
-  document.getElementById('red-apercu-date').textContent = dateEvenement ? formatDateEvenement(dateEvenement) : '';
-  document.getElementById('red-apercu-texte').innerHTML = rendreContenuRiche(lireContenuEditeur(quillRedaction));
-}
-document.getElementById('red-titre').addEventListener('input', mettreAJourApercuRedaction);
-document.getElementById('red-date').addEventListener('input', mettreAJourApercuRedaction);
-document.getElementById('red-lieu').addEventListener('input', mettreAJourApercuRedaction);
-quillRedaction.on('text-change', mettreAJourApercuRedaction);
-
-brancherRedaction(PUBLICATION, ouvrirRedaction, QUESTION_SUPPRESSION, chargerEvenements);
-
-document.getElementById('red-enregistrer-btn').addEventListener('click', async () => {
-  const titre = document.getElementById('red-titre').value.trim();
-  if (!titre) { messageRedaction('err', T('Le titre est obligatoire.', 'Title is required.')); return; }
-  if (!redaction.id && !redaction.images.length) { messageRedaction('err', T('Choisis au moins une photo.', 'Choose at least one photo.')); return; }
-  await quillRedaction.preparer();
-  const description = lireContenuEditeur(quillRedaction);
-  void enregistrerPublication(PUBLICATION, {
-    titre, date_evenement: document.getElementById('red-date').value || null,
-    lieu: document.getElementById('red-lieu').value.trim() || null, description: description || null
-  }, (n) => T(`Événement publié avec ${n} photo(s) !`, `Event published with ${n} photo(s)!`), chargerEvenements);
-});
+// Fenêtre de lecture (js/publications-lecture.js) ; publier, modifier et supprimer : dans l'Administration seulement
+// (phase 2, W4, 02/11/2026 : plus aucun code d'écriture dans la page publique).
+brancherFicheLecture();

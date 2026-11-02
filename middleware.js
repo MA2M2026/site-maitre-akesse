@@ -58,7 +58,7 @@ export const config = {
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
     '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js', '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/agenda-outils.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js', '/js/messages-convocations.js',
-    '/js/messages-candidats.js', '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/note-integration.js', '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js', '/js/defile-repartition.js', '/js/cartes-acces.js',
+    '/js/publications-ecriture.js', '/js/partenaires-communs.js', '/js/images-site-ecriture.js', '/js/messages-candidats.js', '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js', '/js/nettoyage-supabase.js', '/js/note-integration.js', '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js', '/js/defile-repartition.js', '/js/cartes-acces.js',
     // pièces du bloc 1 de la nouvelle Administration (PLAN-NOUVELLE-ADMINISTRATION.md, 22/10/2026)
     '/js/admin/:fichier*'
   ]
@@ -74,7 +74,7 @@ export const config = {
 // doit jamais être enfermée dehors. (L'ancien tableau de bord, protégé ici aussi, est démoli le
 // 23/10/2026 ; son adresse renvoie vers /admin/, vercel.json.)
 // ⚠ Même liste que dans config.matcher ci-dessus (vérifié par test-tableau-protege.js).
-const SCRIPTS_ADMIN = /^\/js\/(erreurs-gabarit|erreurs-site|note-integration|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|defile-repartition|cartes-acces|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
+const SCRIPTS_ADMIN = /^\/js\/(publications-ecriture|partenaires-communs|images-site-ecriture|erreurs-gabarit|erreurs-site|note-integration|video-accueil-gabarit|agenda-gabarit|fiches-evenement-gabarit|rapport-profils-gabarit|photos-mises-de-cote-gabarit|couverture-admin|photos-mises-de-cote|fiches-evenement-admin|rapport-profils-admin|agenda-admin|agenda-outils|convocations-gabarit|convocations-page|convocations-admin|messages-convocations|messages-candidats|defile-repartition|cartes-acces|messages-groupes-gabarit|messages-groupes|nettoyage-supabase|erreurs-corrigees)\.js$/;
 // Nouvelle Administration : les pièces du bloc 1 (js/admin/site-*.js) sont réservées de la même
 // façon ; js/admin/coque.js et js/admin/site.js (décoration, menu) restent publics.
 const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;
@@ -433,6 +433,9 @@ async function accueilRempli(requete, url) {
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   html = magazineComplet(html, donnees, anglais, une, couv, photoDe);
+  // (W7, 02/11/2026) la photo de couverture annoncée tout en haut de l'en-tête : le téléphone la demande dès la
+  // première seconde, avant les styles et les programmes (c'est la plus grande image de la page, mesurée par Lighthouse)
+  html = photoAnnoncee(html, photoLegere(couv.photo));
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
   return reponseHtml(html, page, url);
@@ -780,7 +783,7 @@ async function publicationsRemplies(url, anglais) {
 // ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // La liste des partenaires (même lecture que js/partenaires.js) posée dans la page (bloc « partenaires-donnees »).
 async function partenairesRemplis(url, anglais) {
-  const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=id,nom,structure,evenement,role,description,logo_url,logo_chemin,created_at&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
+  const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=id,nom,structure,evenement,role,description,logo_url,created_at&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
   return pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture, async (html, d) => {
     // les cartes écrites dans la page (js/rendu-publications.js), en anglais sur /en/partenaires
     const liste = anglais ? await versAnglaisServeur(d.liste, ['structure', 'evenement', 'role', 'description']) : d.liste;

@@ -1,16 +1,5 @@
-// Tables et dossiers d'images de cette page (fonctions communes : js/publications.js)
-const PUBLICATION = PUBLICATIONS.actualites;  // js/publications.js
 // Actualités (actualites.html et en/actualites.html) : un seul script pour le français et
 // l'anglais (11/10/2026 : avant, la version anglaise était recopiée dans la page). EN, T : js/app.js.
-
-const quillRedaction = editeurRicheDiffere('red-editeur', T('Racontez votre actualité ici… (vous pouvez coller un texte déjà mis en forme)', 'Write here… (you can paste text already formatted from Word)'));
-function libelleCategorieActu(cat) {
-  return window.RenduPublications.libelleCategorie(cat, EN);  // (js/rendu-publications.js)
-}
-
-function formatDateActu(dateStr) {
-  return window.RenduPublications.dateLongue(dateStr, EN);  // (js/rendu-publications.js)
-}
 
 function afficherFiltresCategories(data) {
   const conteneur = document.getElementById('actus-filtres');
@@ -36,7 +25,7 @@ async function chargerActualites() {
   const grille = document.getElementById('actus-grille');
   const uneZone = document.getElementById('actus-une');
   const vide = document.getElementById('actus-vide');
-  const serveur = publicationsServeur();  // (js/publications.js)
+  const serveur = publicationsServeur();  // (js/publications-lecture.js)
   if (!serveur && !sb) {
     // "sb" peut valoir null sur une connexion instable (échec de chargement de
     // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
@@ -45,9 +34,9 @@ async function chargerActualites() {
     vide.style.display = 'block';
     return;
   }
-  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('actualites').select('*').order('created_at', { ascending: false });
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('actualites').select('id, titre, image_url, commentaire, created_at, video_url, featured, categorie').order('created_at', { ascending: false });
   if (error || !data || !data.length) { vide.style.display = 'block'; return; }
-  await versAnglais(data, ['titre', 'commentaire'], true);  // (page anglaise, js/app.js)
+  await versAnglais(data, ['titre', 'commentaire']);  // (page anglaise, js/app.js)
   window.actualitesData = data;
 
   const { data: toutesLesPhotos } = serveur ? { data: serveur.photos } : await sb.from('actualite_photos').select('actualite_id');
@@ -107,54 +96,8 @@ async function ouvrirActuModal(index) {
     lienVideo.style.display = 'none';
   }
 
-  montrerFichePublication('actu', a); // js/publications.js
+  montrerFichePublication('actu', a); // js/publications-lecture.js
 }
-// Fenêtre de lecture, modification et suppression (admin) : js/publications.js.
-const QUESTION_SUPPRESSION = T('Supprimer définitivement cette actualité et toutes ses photos ?', 'Permanently delete this news item and all its photos?');
-brancherFicheLecture(PUBLICATION, () => window.actualitesData, ouvrirRedaction, QUESTION_SUPPRESSION, chargerActualites);
-
-// --- Page de rédaction plein écran : sert à la fois pour publier une nouvelle actualité et
-// pour modifier une actualité existante — un seul éditeur, un seul jeu de champs, avec un
-// aperçu du rendu public qui se met à jour en direct pendant la saisie (js/publications.js).
-function ouvrirRedaction(actualiteExistante) {
-  const editeurPret = quillRedaction.preparer();  // éditeur chargé à la demande (js/app.js)
-  ouvrirRedactionPublication(actualiteExistante, {
-    nouvelle: T('Rédiger une actualité', 'Write a News Item'), modifier: T('Modifier l’actualité', 'Edit News Item'),
-    images: T('Images (tu peux en sélectionner plusieurs à la fois)', 'Images (you can select several at once)'), publier: T('Publier', 'Publish')
-  });
-  document.getElementById('red-categorie').value = actualiteExistante ? (actualiteExistante.categorie || '') : '';
-  document.getElementById('red-video').value = actualiteExistante ? (actualiteExistante.video_url || '') : '';
-  mettreAJourApercuRedaction();
-  void editeurPret.then(() => {
-    chargerContenuDansEditeur(quillRedaction, actualiteExistante ? actualiteExistante.commentaire : '');
-    mettreAJourApercuRedaction();
-  });
-}
-
-function mettreAJourApercuRedaction() {
-  const titre = document.getElementById('red-titre').value.trim();
-  const categorie = document.getElementById('red-categorie').value;
-  document.getElementById('red-apercu-titre').textContent = titre || T('Titre de l’actualité', 'News item title');
-  const catEl = document.getElementById('red-apercu-categorie');
-  catEl.textContent = categorie ? libelleCategorieActu(categorie) : '';
-  catEl.classList.toggle('u-hidden', !categorie);
-  document.getElementById('red-apercu-date').textContent = formatDateActu(new Date().toISOString());
-  document.getElementById('red-apercu-texte').innerHTML = rendreContenuRiche(lireContenuEditeur(quillRedaction));
-}
-document.getElementById('red-titre').addEventListener('input', mettreAJourApercuRedaction);
-document.getElementById('red-categorie').addEventListener('change', mettreAJourApercuRedaction);
-quillRedaction.on('text-change', mettreAJourApercuRedaction);
-
-brancherRedaction(PUBLICATION, ouvrirRedaction, QUESTION_SUPPRESSION, chargerActualites);
-
-document.getElementById('red-enregistrer-btn').addEventListener('click', () => {
-  const titre = document.getElementById('red-titre').value.trim();
-  const categorie = document.getElementById('red-categorie').value;
-  const videoUrl = document.getElementById('red-video').value.trim();
-  if (!redaction.id && !redaction.images.length && !videoUrl) {
-    messageRedaction('err', T('Choisis au moins une image ou ajoute un lien vidéo.', 'Choose at least one image or add a video link.'));
-    return;
-  }
-  void quillRedaction.preparer().then(() => enregistrerPublication(PUBLICATION, { titre, categorie: categorie || null, commentaire: lireContenuEditeur(quillRedaction), video_url: videoUrl },
-    (n) => T(`Actualité publiée avec ${n} photo(s) !`, `News item published with ${n} photo(s)!`), chargerActualites));
-});
+// Fenêtre de lecture (js/publications-lecture.js) ; publier, modifier et supprimer : dans l'Administration seulement
+// (phase 2, W4, 02/11/2026 : plus aucun code d'écriture dans la page publique).
+brancherFicheLecture();

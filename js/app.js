@@ -287,28 +287,6 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
 // Lien cliquable seulement pour une vraie adresse web (http/https) : bloque les liens piégés
 // du type « javascript:… » ou « data:… ». Partagé le 11/10/2026 (Actualités, fiche mannequin).
 
-// Pages publiques Actualités, Événements, Partenaires : si l'agence est connectée (session du
-// tableau de bord), révèle le panneau d'ajout (#admin-bloc). Partagé le 11/10/2026.
-// Adresse e-mail acceptée (même règle que api/_commun.js ; SonarCloud S8786, 26/10/2026)
-const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
-
-async function verifierAdmin() {
-  // Sur une connexion instable, la bibliothèque Supabase (chargée depuis un
-  // CDN) peut échouer à se charger — sans ce filet, "sbAdmin" vaut alors null et
-  // cette vérification silencieuse plante toute la page au chargement pour
-  // un simple visiteur, pour une fonctionnalité qui ne concerne que l'admin.
-  try {
-    if (!sbAdmin) return;
-    const { data: { user } } = await sbAdmin.auth.getUser();
-    if (!user) return;
-    const { data } = await sbAdmin.from('admins').select('user_id').eq('user_id', user.id).single();
-    if (data) {
-      window.estAdminConnecte = true;
-      document.getElementById('admin-bloc').style.display = 'block';
-      preparerEditeursDifferes();  // l'éditeur de texte, seulement pour l'agence
-    }
-  } catch (e) {}
-}
 
 // Liste « Taille » des formulaires (candidature et inscription) : elle commence à la taille
 // minimale requise selon le genre (175 cm femmes, 185 cm hommes) — impossible de choisir en
@@ -358,6 +336,9 @@ function messageAccesRefuse(reponse, resultat, refus) {
 function urlIndiqueRecuperationMdp() {
   return /type=recovery/.test(window.location.hash + window.location.search);
 }
+
+// Adresse e-mail acceptée (même règle que api/_commun.js ; SonarCloud S8786, 26/10/2026)
+const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 // Langue de la page et petit traducteur partagés (11/10/2026) : T('texte français',
 // 'English text') renvoie le texte de la langue de la page (<html lang="en"> = anglais).
@@ -615,14 +596,11 @@ async function traductionsDe(textes) {
   }));
   return new Map(uniques.map((t, i) => [t, en[cles[i]]]).filter((x) => x[1]));
 }
-// garderPourAgence : pages où l'agence connectée modifie les publications (actualités,
-// événements, partenaires) ; elle y garde le français, qu'elle corrige
 // Les lignes sont modifiées sur place (rien n'est rendu : SonarCloud S3516, 26/10/2026).
-async function versAnglais(lignes, champs, garderPourAgence) {
+async function versAnglais(lignes, champs) {
   const liste = (Array.isArray(lignes) ? lignes : [lignes]).filter(Boolean);
   if (!EN || !liste.length || typeof sb === 'undefined' || !sb || !(window.crypto && crypto.subtle)) return;
   try {
-    if (garderPourAgence && typeof sbAdmin !== 'undefined' && sbAdmin && (await sbAdmin.auth.getSession()).data.session) return;
     const parTexte = await traductionsDe(liste.flatMap((l) => champs.map((c) => l[c])));
     liste.forEach((l) => champs.forEach((c) => { const v = parTexte.get(l[c]); if (v) l[c] = v; }));
   } catch (e) { /* table pas encore créée, réseau… : le français reste */ }
@@ -2010,14 +1988,6 @@ async function supprimerFichiersPhoto(modelId, p) {
   await Promise.all([p.chemin].concat(VERSIONS_PHOTO_BOOK.map(([cle]) => p['chemin_' + cle])).filter(Boolean).map((c) => supprimerDeR2(modelId, c)));
 }
 
-// ================== Images du site (actualités/événements/partenaires) sur
-// Cloudflare R2, via api/r2-site-images.js — remplace l'envoi direct vers
-// Supabase Storage, dont le quota gratuit de bande passante était dépassé
-// (voir README-TECHNIQUE.md, diagnostic du 28 septembre 2026). Même
-// principe de nouvelle tentative (3 essais) que uploaderVersR2() dans
-// espace-mannequin.html/tableau-de-bord.html pour les photos du Book. ==================
-// progression (facultatif) : fonction appelée avec la part envoyée (0 à 1) — utile pour les
-// longues vidéos de l'accueil (plusieurs dizaines de Mo, 06/10/2026).
 // Envoi PUT avec suivi de la progression (XMLHttpRequest : fetch ne la donne pas) : barre en haut de l'écran
 // (majBarreEnvoi) et, si donné, rappel progression(0 à 1). Partagé par toutes les photos (01/11/2026).
 function envoyerAvecProgression(url, fichier, progression, type) {
@@ -2039,63 +2009,8 @@ function envoyerAvecProgression(url, fichier, progression, type) {
     xhr.send(fichier);
   });
 }
-async function envoyerImageSite(categorie, chemin, fichier, progression) {
-  const { data: { session } } = await sbAdmin.auth.getSession();
-  if (!session) throw new Error('Session expirée, reconnectez-vous.');
-  let derniereErreur;
-  for (let essai = 1; essai <= 3; essai++) {
-    try {
-      const reponsePresign = await fetch('/api/r2-site-images', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ categorie, chemin, contentType: fichier.type || 'image/jpeg', taille: fichier.size })
-      });
-      const resultat = await reponsePresign.json().catch(() => ({}));
-      if (!reponsePresign.ok) throw new Error(resultat.error || "Échec de la préparation de l'envoi.");
-      const reponseUpload = await envoyerAvecProgression(resultat.uploadUrl, fichier, progression);
-      if (!reponseUpload.ok) throw new Error("Échec de l'envoi du fichier.");
-      await verifierEnvoiR2('/api/r2-site-images', session.access_token, { categorie, chemin, contentType: fichier.type || 'image/jpeg' });
-      return resultat.publicUrl;
-    } catch (e) {
-      derniereErreur = e;
-      if (e && e.refuse) break;  // (pas un vrai fichier du type annoncé : inutile de réessayer)
-      if (essai < 3) await new Promise(r => setTimeout(r, 700 * essai));
-    }
-  }
-  throw derniereErreur;
-}
 
-// Autre action sur un fichier du site (suppression ; pour la note d'intégration : 'lire',
-// 'nettoyer'). Renvoie la réponse du serveur, ou lève une erreur.
-async function actionImageSite(corps) {
-  const { data: { session } } = await sbAdmin.auth.getSession();
-  if (!session) throw new Error('Session expirée, reconnectez-vous.');
-  const rep = await fetch('/api/r2-site-images', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-    body: JSON.stringify(corps)
-  });
-  const resultat = await rep.json().catch(() => ({}));
-  if (!rep.ok) throw new Error(resultat.error || 'Le serveur a refusé la demande.');
-  return resultat;
-}
-
-async function supprimerImageSite(categorie, chemin) {
-  if (!chemin) return;
-  try { await actionImageSite({ action: 'suppression', categorie, chemin }); } catch (e) {}
-}
-
-// Pendant la période de transition, certaines lignes ont encore leur
-// ancienne image chez Supabase Storage (chemin sans préfixe "site/"),
-// pendant que les nouvelles passent déjà par R2 — trie et supprime au
-// bon endroit selon le cas, sans que chaque page ait à s'en soucier.
-async function supprimerCheminsImagesSite(categorie, bucketSupabase, chemins) {
-  const versR2 = [];
-  const versSupabase = [];
-  (chemins || []).filter(Boolean).forEach(c => (c.startsWith('site/' + categorie + '/') ? versR2 : versSupabase).push(c));
-  await Promise.all(versR2.map(c => supprimerImageSite(categorie, c)));
-  if (versSupabase.length) await sbAdmin.storage.from(bucketSupabase).remove(versSupabase);
-}
+// (envoi et suppression des images du site : js/images-site-ecriture.js, Administration seulement ; phase 2, W4)
 
 // ================== Texte enrichi (actualités, événements, partenaires) ==================
 // Les champs "commentaire"/"description" étaient de simples <textarea> : un mannequin
@@ -2431,8 +2346,7 @@ function creerEditeurRiche(idConteneur, placeholder) {
 
 // Éditeur riche « différé » (26/10/2026) : Quill (≈ 200 Ko) n'est plus téléchargé par les
 // visiteurs des pages Actualités, Événements et Partenaires. La page reçoit tout de suite une
-// poignée ; Quill se charge seulement quand l'agence est reconnue (verifierAdmin) ou qu'un
-// formulaire en a besoin (poignee.preparer(), à attendre avant de lire ou remplir l'éditeur).
+// poignée ; Quill se charge seulement quand un formulaire de l'Administration en a besoin (poignee.preparer(), à attendre avant de lire ou remplir l'éditeur).
 const EDITEURS_DIFFERES = [];
 let quillEnChargement = null;
 function chargerFichierPage(balise, attributs) {
