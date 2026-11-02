@@ -994,25 +994,11 @@ async function lireToutesLignes(fabrique) {
 // Agenda MA2M (Extension 124) : libellés des types de projet [français, anglais] et
 // date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
 // partagés par le tableau de bord et la page Agenda.
-const MA2M_TYPES_AGENDA = {
-  defile: ['Défilé', 'Fashion show'],
-  show: ['Show', 'Show'],
-  shooting: ['Shooting', 'Photo shoot'],
-  casting: ['Casting', 'Casting'],
-  essayage: ['Essayages', 'Fittings'],
-  masterclass: ['Masterclass', 'Masterclass'],
-  formation: ['Formation', 'Training'],
-  rencontre: ['Rencontre', 'Meeting'],
-  evenement: ['Événement', 'Event'],
-  autre: ['Projet', 'Project']
-};
+const MA2M_TYPES_AGENDA = window.Partage.MA2M_TYPES_AGENDA;  // (js/partage.js, phase 2)
 // Rôles proposés pour les intervenants d'un projet (la liste reste libre).
 const MA2M_ROLES_INTERVENANTS = ['Photographe', 'Vidéaste', 'Chorégraphe', 'Styliste', 'Créateur / créatrice',
   'Maquilleur / maquilleuse', 'Coiffeur / coiffeuse', 'Directeur artistique', 'Organisateur', 'Présentateur', 'Formateur'];
-function libelleTypeAgenda(type, enAnglais) {
-  const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
-  return l[enAnglais ? 1 : 0];
-}
+function libelleTypeAgenda(type, enAnglais) { return window.Partage.libelleTypeAgenda(type, enAnglais); }
 // Lien vers la fiche publique d'une mannequin : adresse « book » si elle existe (Agenda,
 // Parcours MA2M). Partagé le 11/10/2026.
 // Lien vide pour une mannequin écrite à la main dans l'agenda (« Autres mannequins »,
@@ -1129,15 +1115,7 @@ function nombreTypeAgenda(type, n, enAnglais) {
   return n + ' ' + l + (/ss$/.test(l) ? 'es' : 's');                      // masterclass → masterclasses
 }
 
-function dateAgenda(debut, fin, enAnglais) {
-  const langue = enAnglais ? 'en-GB' : 'fr-FR';
-  const d = new Date(debut + 'T12:00:00');
-  if (Number.isNaN(d.getTime())) return '';
-  const complet = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
-  if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
-  const f = new Date(fin + 'T12:00:00');
-  return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
-}
+function dateAgenda(debut, fin, enAnglais) { return window.Partage.dateAgenda(debut, fin, enAnglais); }
 
 // « CACAO FASHION SHOW » → « Cacao Fashion Show », « AFRICA IN RYTHM » → « Africa in Rythm »
 // (titres saisis en capitales). Les mots avec un chiffre (MA2M, 2026…) gardent leurs
@@ -1152,21 +1130,8 @@ function jourLong(j) {
 // Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
 // en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
 // plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.
-function dateDuJour(d = new Date()) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-function separerAgenda(projets) {
-  const jour = dateDuJour();
-  const cle = p => String(p.date_debut || '');
-  const tries = (projets || []).slice().sort((x, y) => {
-    if (cle(x) === cle(y)) return 0;
-    return cle(x) < cle(y) ? -1 : 1;
-  });
-  return {
-    avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
-    passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
-  };
-}
+function dateDuJour(d = new Date()) { return window.Partage.dateDuJour(d); }
+function separerAgenda(projets) { return window.Partage.separerAgenda(projets); }
 
 // Copie mélangée d'une liste (mélange de Fisher-Yates) : photos de l'accueil, visages et
 // photos d'événements de la page « Qui sommes-nous »…

@@ -283,6 +283,48 @@
       return i > 0 && /^[dl]['’]/.test(bas) ? capitale.charAt(0).toLowerCase() + capitale.slice(1) : capitale; // « d'Abidjan »
     }).join('');
   }
-  racine.Partage = { titreLisible };
+  // Agenda (Extension 124) : libellés des types de projet [français, anglais], date lisible, date du jour (AAAA-MM-JJ)
+  // et projets séparés en « à venir » / « réalisés » (js/app.js jusqu'au 02/11/2026)
+  const MA2M_TYPES_AGENDA = {
+    defile: ['Défilé', 'Fashion show'],
+    show: ['Show', 'Show'],
+    shooting: ['Shooting', 'Photo shoot'],
+    casting: ['Casting', 'Casting'],
+    essayage: ['Essayages', 'Fittings'],
+    masterclass: ['Masterclass', 'Masterclass'],
+    formation: ['Formation', 'Training'],
+    rencontre: ['Rencontre', 'Meeting'],
+    evenement: ['Événement', 'Event'],
+    autre: ['Projet', 'Project']
+  };
+  function libelleTypeAgenda(type, enAnglais) {
+    const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
+    return l[enAnglais ? 1 : 0];
+  }
+  function dateAgenda(debut, fin, enAnglais) {
+    const langue = enAnglais ? 'en-GB' : 'fr-FR';
+    const d = new Date(debut + 'T12:00:00');
+    if (Number.isNaN(d.getTime())) return '';
+    const complet = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+    if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
+    const f = new Date(fin + 'T12:00:00');
+    return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function dateDuJour(d = new Date()) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function separerAgenda(projets) {
+    const jour = dateDuJour();
+    const cle = p => String(p.date_debut || '');
+    const tries = (projets || []).slice().sort((x, y) => {
+      if (cle(x) === cle(y)) return 0;
+      return cle(x) < cle(y) ? -1 : 1;
+    });
+    return {
+      avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
+      passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
+    };
+  }
+  racine.Partage = { titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };
 })(typeof window !== 'undefined' ? window : globalThis);

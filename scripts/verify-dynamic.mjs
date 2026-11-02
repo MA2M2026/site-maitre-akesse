@@ -20,6 +20,8 @@ const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] :
 const BASE = (arg('--url', 'https://www.maitreakessemodelmanagement.com')).replace(/\/$/, '');
 const SEUL = arg('--seul', null);
 const DETAIL = args.includes('--detail');  // toutes les lignes manquantes
+const PARTAGE = arg('--partage', null);  // lien de partage Vercel (version d'essai protégée) : ses témoins servent à toutes les demandes
+let TEMOINS = '';
 const SEUIL_TEXTE = 0.98;   // part du texte visible (avec JS) déjà présente sans JS
 const SEUIL_IMAGES = 0.95;  // part des images visibles (avec JS) déjà présentes sans JS
 
@@ -67,7 +69,7 @@ async function relever(page) {
 }
 
 async function premiereFiche() {
-  const r = await fetch(BASE + '/mannequins');
+  const r = await fetch(BASE + '/mannequins', { headers: TEMOINS ? { cookie: TEMOINS } : {} });
   const html = await r.text();
   const m = html.match(/\/book\/([a-z0-9-]{1,80})/);
   return m ? '/book/' + m[1] : null;
@@ -79,14 +81,19 @@ const extraireTexte = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ')
 const stabiliser = (t) => t.replace(/\b[0-9a-f]{16,}\b/gi, 'X').replace(/\b\d{10,}\b/g, 'N');
 
 async function main() {
-  const fiche = await premiereFiche();
   let routes = [...PAGES, ...PAGES.map((p) => '/en' + (p === '/' ? '/' : p))];
-  if (fiche) routes.push(fiche, '/en' + fiche); else note(false, 'W2-FICHE-TROUVEE', 'aucun lien /book/ dans /mannequins');
-  if (SEUL) routes = routes.filter((r) => r === SEUL);
 
   const navigateur = await chromium.launch();
   const avecJs = await navigateur.newContext({ viewport: { width: 1280, height: 900 } });
   const sansJs = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
+  if (PARTAGE) {
+    const p0 = await avecJs.newPage(); await p0.goto(PARTAGE, { waitUntil: 'domcontentloaded' }); await p0.close();
+    const temoins = await avecJs.cookies(); await sansJs.addCookies(temoins);
+    TEMOINS = temoins.map((c) => c.name + '=' + c.value).join('; ');
+  }
+  const fiche = await premiereFiche();
+  if (fiche) routes.push(fiche, '/en' + fiche); else note(false, 'W2-FICHE-TROUVEE', 'aucun lien /book/ dans /mannequins');
+  if (SEUL) routes = routes.filter((r) => r === SEUL);
   // jamais d'écriture dans la base pendant la mesure (statistiques de visite, journal d'erreurs…)
   for (const c of [avecJs, sansJs]) {
     await c.route(/supabase\.co\/rest\/v1\//, (r) => (r.request().method() !== 'GET' && !/\/rest\/v1\/rpc\//.test(r.request().url()) ? r.abort() : r.continue()));
@@ -138,7 +145,7 @@ async function main() {
       // --- UA : même texte visible pour tous
       const textes = {};
       for (const [nom, ua] of Object.entries(AGENTS)) {
-        const r = await fetch(BASE + route, { headers: { 'user-agent': ua, accept: 'text/html' }, redirect: 'follow' });
+        const r = await fetch(BASE + route, { headers: Object.assign({ 'user-agent': ua, accept: 'text/html' }, TEMOINS ? { cookie: TEMOINS } : {}), redirect: 'follow' });
         textes[nom] = stabiliser(extraireTexte(await r.text()));
       }
       const ref = textes.chrome;

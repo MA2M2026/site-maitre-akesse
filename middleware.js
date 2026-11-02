@@ -29,6 +29,7 @@ import './js/lien-public.js';
 import './js/gabarit.js';
 import './js/partage.js';
 import './js/formulaire-candidature-champs.js';
+import './js/rendu-agenda.js';
 
 export const config = {
   matcher: [
@@ -318,6 +319,8 @@ async function lireDonneesAccueil() {
   if (Array.isArray(moyennes)) donnees.profils.forEach((p) => { const m = moyennes.find((x) => x.model_id === p.id && x.url_miniature === p.photo); if (m) p.moyenne = m.url_moyenne; });
   // le mot en anglais pour l'accueil anglais (traductions_en, même empreinte que versAnglais, js/app.js)
   if (donnees.mot) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
+  // (phase 2) l'encart Agenda de l'accueil anglais, traduit comme la page le ferait (versAnglais)
+  if (Array.isArray(donnees.agenda) && donnees.agenda.length) donnees.agendaEn = await versAnglaisServeur(donnees.agenda, ['titre', 'lieu', 'description']).catch(() => null);
   return donnees;
 }
 // Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
@@ -428,6 +431,12 @@ function magazineComplet(html, donnees, anglais, une, couv, photoDe) {
     html = html.replace('<div class="grille" id="instagram-grille"></div>', () => '<div class="grille" id="instagram-grille">' + posts.map((p) => '\n      <a href="' + echapper(/^https:\/\//i.test(p.lien || '') ? p.lien : 'https://www.instagram.com/maitreakessemodelmanagement') + '" target="_blank" rel="noopener" title="' + echapper(p.legende || '') + '">\n        <img src="' + echapper(p.image) + '" alt="' + echapper(p.legende || (anglais ? 'Instagram post' : 'Publication Instagram')) + '" loading="lazy">\n      </a>').join('') + '</div>')
       .replace(/(<article class="mag-page p-instagram[^"]*" id="flux-instagram"[^>]*?) hidden>/, (_, d) => d + '>');
   }
+  // agenda : les 3 prochains projets (js/rendu-agenda.js, comme js/agenda.js) ; l'encart s'affiche s'il y en a
+  if (Array.isArray(donnees.agenda) && donnees.agenda.length) {
+    const encart = globalThis.RenduAgenda.encartAccueil(anglais && Array.isArray(donnees.agendaEn) ? donnees.agendaEn : donnees.agenda, anglais);
+    if (encart) html = html.replace('<div id="agenda-accueil" class="agenda-liste-publique"></div>', () => '<div id="agenda-accueil" class="agenda-liste-publique">' + encart + '</div>')
+      .replace(/(<article class="mag-page p-agenda" id="agenda"[^>]*?) hidden>/, (_, d) => d + '>');
+  }
   // film : seulement un fichier du dossier prévu (même règle que js/video-accueil.js) ; la page le charge à l'approche
   const v = donnees.video;
   if (v && v.type === 'video' && typeof v.chemin === 'string' && /^site\/video-accueil\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(v.chemin)) {
@@ -465,7 +474,7 @@ async function accueilRempli(requete, url) {
   if (requete.method !== 'GET') return;
   const donnees = await donneesAccueil();
   if (!donnees || !donnees.profils.length) return;
-  const page = await fetch(url.toString(), { headers: { 'x-ma2m-accueil': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const page = await fetch(url.toString(), { headers: entetesInternes(url, 'x-ma2m-accueil'), redirect: 'manual' });
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
   let html = await page.text();
   const marque = '<img id="couv-img" class="visible" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""';
@@ -586,7 +595,7 @@ function reponseHtml(html, page, url, personnel) {
 // Page publique sans données à poser (base lente ou en panne, ou page sans données) : elle part quand même
 // complétée (barre du haut, menu, bas de page), jamais vide.
 async function pageNue(url, enteteBoucle) {
-  const page = await fetch(url.toString(), { headers: { [enteteBoucle]: '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const page = await fetch(url.toString(), { headers: entetesInternes(url, enteteBoucle), redirect: 'manual' });
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return undefined;
   return reponseHtml(await page.text(), page, url, /^\/(recu|places)$/.test(url.pathname));
 }
@@ -616,7 +625,7 @@ function enMemoire(cle, lire) {
 // téléphone (photo plus légère, comme js/photos.js) : d'après le navigateur qui demande la page
 const estTelephone = (requete) => requete?.headers.get('sec-ch-ua-mobile') === '?1' || /Mobi|Android|iPhone|iPod/i.test(requete?.headers.get('user-agent') || '');
 async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
-  const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: { 'x-ma2m-remplie': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: entetesInternes(url, 'x-ma2m-remplie'), redirect: 'manual' });
   const murPromesse = murDuSite().catch(() => null);  // (en même temps que la page ; gardé 3 minutes)
   const traductionsPromesse = blocTraductions(url);
   const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
@@ -871,21 +880,13 @@ async function agendaRempli(url, anglais) {
     lireSupabase('evenements?select=id,titre,date_evenement,lieu&date_evenement=gte.' + depuis + '&order=date_evenement.asc,id.asc&limit=1000', null, ATTENTE_FICHE)
   ]).then(([agenda, evenements]) => (Array.isArray(agenda) && Array.isArray(evenements) && evenements.length < 1000 ? { agenda, evenements } : null)));
   return pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture, async (html, d) => {
-    // étape A (01/11/2026) : les projets à venir ET les projets réalisés (titre, dates, lieu) écrits dans la
-    // page, à la place de « Chargement de l'agenda… » ; rien à venir : le message de la page (js/agenda.js).
-    // La page dessine ensuite son calendrier et ses cartes complètes par-dessus.
-    const aujourdhui = new Date().toISOString().slice(0, 10), fin = (p) => String(p.date_fin || p.date_debut || '');
-    const avenirFr = d.agenda.filter((p) => fin(p) >= aujourdhui).sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut))).slice(0, 30);
-    const passesFr = d.agenda.filter((p) => fin(p) < aujourdhui).sort((a, b) => fin(b).localeCompare(fin(a))).slice(0, 12);
-    const [avenir, passes] = anglais ? await Promise.all([versAnglaisServeur(avenirFr, ['titre', 'lieu']), versAnglaisServeur(passesFr, ['titre', 'lieu'])]) : [avenirFr, passesFr];
-    const jour = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-    const cartes = (liste, vide) => (liste.length ? liste.map((p) => '<article class="agenda-carte"><h3>' + echapper(p.titre) + '</h3><p>' +
-      echapper([jour(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' – ' + jour(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p></article>').join('')
-      : '<p class="agenda-vide">' + vide + '</p>');
-    return html.replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' +
-      cartes(avenir, anglais ? 'Our upcoming projects will appear here very soon.' : 'Nos prochains projets seront affichés ici très bientôt.') + '</div>')
-      .replace('<div id="agenda-passes" class="agenda-liste-publique"></div>', () => '<div id="agenda-passes" class="agenda-liste-publique">' +
-        cartes(passes, anglais ? 'Our completed projects will appear here.' : 'Nos projets réalisés seront affichés ici.') + '</div>');
+    // (phase 2, 02/11/2026) la page complète écrite ici, par le même dessin que la page (js/rendu-agenda.js) : calendrier
+    // du mois, projets à venir, projets réalisés ; textes de l'agence en anglais sur /en (comme versAnglais, js/agenda.js)
+    const [agenda, evenements] = anglais ? await Promise.all([versAnglaisServeur(d.agenda, ['titre', 'lieu', 'description']), versAnglaisServeur(d.evenements, ['titre', 'lieu', 'description'])]) : [d.agenda, d.evenements];
+    const r = globalThis.RenduAgenda.pageAgenda(agenda, evenements, anglais);
+    return html.replace(/(<section id="agenda-calendrier" class="cal" aria-label="[^"]*">)<\/section>/, (_, o) => o + r.calendrier + '</section>' + r.calendrierSuite)
+      .replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' + r.avenir + '</div>' + r.avenirSuite)
+      .replace('<div id="agenda-passes" class="agenda-liste-publique"></div>', () => '<div id="agenda-passes" class="agenda-liste-publique">' + r.passes + '</div>' + r.passesSuite);
   });
 }
 
@@ -1145,9 +1146,17 @@ function versWww(url) {
   } });
 }
 
+// Demande interne de la page elle-même : repère anti-boucle, et les témoins du visiteur (versions d'essai Vercel
+// protégées par une connexion : sans eux, la page interne répond « non autorisé » et rien n'était écrit)
+function entetesInternes(url, repere) {
+  const h = { [repere]: '1', 'accept': 'text/html' };
+  if (url.temoins) h.cookie = url.temoins;
+  return h;
+}
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
+    Object.defineProperty(url, 'temoins', { value: requete.headers.get('cookie') || '' });
     if (url.hostname === DOMAINE_NU) return versWww(url);
     if (ACCUEIL.test(url.pathname)) {
       if (requete.headers.get('x-ma2m-accueil')) return;  // (la page elle-même, demandée ci-dessous)
