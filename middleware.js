@@ -398,7 +398,9 @@ function donneesAccueil() {
       .finally(() => { lectureAccueil = null; });
   }
   const ancienne = memoireAccueil ? memoireAccueil.donnees : null;
-  return Promise.race([lectureAccueil.then(d => d || ancienne), new Promise(ok => setTimeout(() => ok(ancienne), ATTENTE_ACCUEIL))]);
+  // (définitif, 02/11/2026) rien en mémoire (serveur qui vient de démarrer, juste après une mise en ligne) : on attend la
+  // base jusqu'à 3 s au lieu de 0,8 s, pour que même le tout premier visiteur reçoive l'accueil complet (photo comprise)
+  return Promise.race([lectureAccueil.then(d => d || ancienne), new Promise(ok => setTimeout(() => ok(ancienne), ancienne ? ATTENTE_ACCUEIL : 3000))]);
 }
 // JSON posé dans la page : jamais de « < » brut (pas de fin de bloc possible)
 const jsonSur = (x) => JSON.stringify(x).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');

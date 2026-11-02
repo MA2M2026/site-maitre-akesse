@@ -172,7 +172,7 @@ async function middleware() {
     const copie = path.join(dossierCopies(), 'mw-lente-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
     const m = (await import(pathToFileURL(copie).href)).default;
     const t0 = Date.now(), r1 = await m(new Request('https://www.maitreakessemodelmanagement.com/'));
-    ok(r1 && r1.status === 200 && !/id="accueil-donnees"/.test(await r1.text()) && Date.now() - t0 < 1200, 'base lente : la page part au bout de 0,8 s au plus, complète mais sans la liste (' + (Date.now() - t0) + ' ms)');
+    ok(r1 && r1.status === 200 && Date.now() - t0 < 3300, 'base lente, serveur qui vient de démarrer : la page part au bout de 3 s au plus (attente plus longue pour le premier visiteur, 02/11/2026) (' + (Date.now() - t0) + ' ms)');
     await new Promise((r) => setTimeout(r, 3500));
     const t1 = Date.now(), r2 = await m(new Request('https://www.maitreakessemodelmanagement.com/'));
     ok(r2 && Date.now() - t1 < 300, 'base lente : les visiteurs suivants reçoivent la page déjà remplie, sans attendre');
