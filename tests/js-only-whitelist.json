@@ -1,0 +1,29 @@
+{
+  "explication": "Textes visibles seulement avec les programmes de la page, et pourquoi (interactions uniquement). Vérifié par scripts/verify-dynamic.mjs.",
+  "textes": [
+    {
+      "texte": "Nous utilisons des cookies de mesure d’audience (Google Analytics) pour améliorer le site. Aucune publicité. En savoir plus",
+      "raison": "bandeau de consentement : sans programme, aucune mesure d'audience ni cookie, donc rien à accepter"
+    },
+    {
+      "texte": "Refuser",
+      "raison": "bouton du bandeau de consentement (voir ci-dessus)"
+    },
+    {
+      "texte": "Accepter",
+      "raison": "bouton du bandeau de consentement (voir ci-dessus)"
+    },
+    {
+      "texte": "We use audience measurement cookies (Google Analytics) to improve the site. No advertising. Read our cookie policy",
+      "raison": "consent banner: without scripts, no analytics and no cookie, nothing to accept"
+    },
+    {
+      "texte": "Decline",
+      "raison": "consent banner button"
+    },
+    {
+      "texte": "Accept",
+      "raison": "consent banner button"
+    }
+  ]
+}

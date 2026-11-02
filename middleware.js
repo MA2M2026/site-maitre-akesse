@@ -26,6 +26,13 @@ import './js/rendu-book.js';
 import './js/rendu-publications.js';
 import './js/cachets-communs.js';
 import './js/lien-public.js';
+import './js/gabarit.js';
+import './js/partage.js';
+import './js/formulaire-candidature-champs.js';
+import './js/rendu-agenda.js';
+import './js/parcours.js';
+import './js/tailles.js';
+import './js/rendu-fiche.js';
 
 export const config = {
   matcher: [
@@ -168,84 +175,10 @@ function imageApercu(url, anglais, page) {
   return SITE + '/_vercel/image?url=' + encodeURIComponent(absolue) + '&w=1080&q=75';
 }
 
-// Petite page d'aperçu : uniquement les balises lues par WhatsApp, Facebook, Instagram…
-function pageApercu({ titre, description, photo, lien, anglais, type }) {
-  const nomSite = 'Maître Akesse Model Management';
-  const html = '<!DOCTYPE html><html lang="' + (anglais ? 'en' : 'fr') + '"><head><meta charset="utf-8">' +
-    '<title>' + echapper(titre + ' — ' + nomSite) + '</title>' +
-    '<meta name="description" content="' + echapper(description) + '">' +
-    '<meta property="og:type" content="' + (type || 'website') + '">' +
-    '<meta property="og:site_name" content="' + echapper(nomSite) + '">' +
-    '<meta property="og:title" content="' + echapper(titre) + '">' +
-    '<meta property="og:description" content="' + echapper(description) + '">' +
-    '<meta property="og:image" content="' + echapper(photo) + '">' +
-    '<meta property="og:image:alt" content="' + echapper(titre) + '">' +
-    '<meta property="og:url" content="' + echapper(lien) + '">' +
-    '<meta property="og:locale" content="' + (anglais ? 'en_US' : 'fr_FR') + '">' +
-    '<meta name="twitter:card" content="summary_large_image">' +
-    '<meta name="twitter:title" content="' + echapper(titre) + '">' +
-    '<meta name="twitter:description" content="' + echapper(description) + '">' +
-    '<meta name="twitter:image" content="' + echapper(photo) + '">' +
-    '<link rel="canonical" href="' + echapper(lien) + '">' +
-    '</head><body><h1>' + echapper(titre) + '</h1><p>' + echapper(description) + '</p>' +
-    '<p><a href="' + echapper(lien) + '">' + echapper(nomSite) + '</a></p></body></html>';
-  return new Response(html, {
-    status: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' }
-  });
-}
 
-// Meilleure photo d'un mannequin pour l'aperçu : photo principale, sinon couverture, sinon la première.
-async function photoMannequin(id) {
-  const photos = await lireSupabase('model_photos?model_id=eq.' + id + '&select=url,url_moyenne,principale,photo_couverture&order=created_at.asc&limit=40');
-  if (!photos || !photos.length) return '';
-  const p = photos.find(x => x.principale) || photos.find(x => x.photo_couverture) || photos[0];
-  return p.url_moyenne || p.url || '';
-}
 
-// Fiche d'UN mannequin publié.
-async function slugMannequin(id) {
-  try {
-    const lignes = await lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=slug');
-    const slug = lignes && lignes[0] && lignes[0].slug;
-    return slug && /^[a-z0-9-]{1,80}$/.test(slug) ? slug : '';
-  } catch (e) { return ''; }
-}
 
-// The Book (liste) : plus de photo du mannequin à la une depuis le 14/10/2026 (demande de la
-// propriétaire : l'aperçu doit montrer la PAGE) ; c'est l'image assets/apercus/…-mannequins.jpg
-// des balises og: de la page qui est lue.
-async function apercuMannequin(url, anglais, idFiche) {
-  const id = idFiche || url.searchParams.get('id');
-  if (!id || !ID_VALIDE.test(id)) return;
-  const lignes = await lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=id,full_name,city,category,height_cm,niveau_mannequin');
-  const m = lignes && lignes[0];
-  if (!m || !m.full_name) return;
-  const categorie = m.category === 'femme' ? (anglais ? 'Female model' : 'Mannequin femme')
-    : m.category === 'homme' ? (anglais ? 'Male model' : 'Mannequin homme') : 'New Face';
-  const details = [categorie, m.city, m.height_cm ? (m.height_cm / 100).toFixed(2).replace('.', anglais ? '.' : ',') + ' m' : ''].filter(Boolean).join(' · ');
-  const description = details + ' — ' + (anglais
-    ? 'Discover the full book on Maître Akesse Model Management.'
-    : 'Découvrez son book complet sur Maître Akesse Model Management.');
-  const slug = await slugMannequin(id);
-  const lien = SITE + (anglais ? '/en' : '') + (slug ? '/book/' + slug : '/mannequin?id=' + id);
-  return pageApercu({ titre: m.full_name, description, photo: imageApercu(await photoMannequin(id), anglais, 'mannequin'), lien, anglais, type: 'profile' });
-}
 
-// Fiche d'UN partenaire (?partenaire=ID, 20/10/2026 : « chaque élément du site a son aperçu ») :
-// son nom, sa description et son logo ; sans logo, l'image de la page Partenaires.
-async function apercuPartenaire(url, anglais) {
-  const id = url.searchParams.get('partenaire');
-  if (!id || !ID_VALIDE.test(id)) return;
-  const lignes = await lireSupabase('partenaires?id=eq.' + id + '&select=nom,description,logo_url');
-  const p = lignes && lignes[0];
-  if (!p || !p.nom) return;
-  const description = texteSimple(p.description, 220) || (anglais
-    ? 'A partner of Maître Akesse Model Management.'
-    : 'Partenaire de Maître Akesse Model Management.');
-  const lien = SITE + url.pathname.replace(/\.html$/, '') + '?partenaire=' + id;
-  return pageApercu({ titre: p.nom, description, photo: imageApercu(p.logo_url, anglais, 'partenaires'), lien, anglais, type: 'website' });
-}
 
 // ================== Page d'accueil déjà remplie (23/10/2026, demande de la propriétaire) ==================
 // Avant, le serveur envoyait une page vide : le téléphone chargeait ses programmes, puis
@@ -315,6 +248,8 @@ async function lireDonneesAccueil() {
   if (Array.isArray(moyennes)) donnees.profils.forEach((p) => { const m = moyennes.find((x) => x.model_id === p.id && x.url_miniature === p.photo); if (m) p.moyenne = m.url_moyenne; });
   // le mot en anglais pour l'accueil anglais (traductions_en, même empreinte que versAnglais, js/app.js)
   if (donnees.mot) donnees.motEn = await motEnAnglais(donnees.mot).catch(() => null);
+  // (phase 2) l'encart Agenda de l'accueil anglais, traduit comme la page le ferait (versAnglais)
+  if (Array.isArray(donnees.agenda) && donnees.agenda.length) donnees.agendaEn = await versAnglaisServeur(donnees.agenda, ['titre', 'lieu', 'description']).catch(() => null);
   return donnees;
 }
 // Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
@@ -393,6 +328,63 @@ function completerAccueil(html, donnees, anglais) {
   }
   return html;
 }
+// Phase 2 (02/11/2026) : le reste du magazine écrit par le serveur, comme js/accueil.js le dessine : mois de l'édition,
+// « En couverture », photos d'ambiance, partenaires, Instagram, film, puis numéros de page et sommaire (d'après les
+// pages réellement affichées). La page reprend ensuite ces éléments (défilement de la couverture, clics).
+function magazineComplet(html, donnees, anglais, une, couv, photoDe) {
+  const mois = new Date().toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'Africa/Abidjan' });
+  const edition = mois.charAt(0).toUpperCase() + mois.slice(1);
+  html = html.replace(/<span class="mag-date"><\/span>/g, () => '<span class="mag-date">' + echapper(edition) + '</span>')
+    .replace(/<span class="mag-signature-folio"><\/span>/g, () => '<span class="mag-signature-folio">MA2M · ' + echapper(edition) + '</span>');
+  if (couv.full_name) {
+    html = html.replace(/<a class="modele" id="couv-modele" href="[^"]*" data-hasard hidden>En couverture<strong id="couv-modele-nom"><\/strong><\/a>/, () => '<a class="modele" id="couv-modele" href="' + echapper(globalThis.RenduBook.lienFiche(couv, anglais)) + '" data-hasard>En couverture<strong id="couv-modele-nom">' + echapper(couv.full_name) + '</strong></a>')
+      .replace(/<a class="modele" id="couv-modele" href="[^"]*" data-hasard hidden>On the cover<strong id="couv-modele-nom"><\/strong><\/a>/, () => '<a class="modele" id="couv-modele" href="' + echapper(globalThis.RenduBook.lienFiche(couv, anglais)) + '" data-hasard>On the cover<strong id="couv-modele-nom">' + echapper(couv.full_name) + '</strong></a>');
+  }
+  // photos d'ambiance (sommaire, agence, dos ; édito sans photo du mot) : d'autres visages que la couverture
+  const autres = donnees.profils.filter((p) => p.id !== une.id && p.id !== couv.id);
+  const reste = autres.length ? autres : [une];
+  const poserPhoto = (id, m) => { html = html.replace(new RegExp('<img id="' + id + '" src="data:image\\/gif;base64,[^"]*" alt=""'), () => '<img id="' + id + '" src="' + echapper(photoDe(m)) + '" alt="' + echapper(m.full_name || '') + '"'); };
+  [['sommaire-img', 0], ['agence-img', 1], ['dos-img', 2]].forEach(([id, i]) => poserPhoto(id, reste[i % reste.length]));
+  html = html.replace('<figcaption id="sommaire-legende" data-hasard></figcaption>', () => '<figcaption id="sommaire-legende" data-hasard>' + echapper(reste[0].full_name || '') + '</figcaption>');
+  const mot = donnees.mot;
+  if (mot && mot.message && mot.photo_url) html = html.replace(/<img id="edito-img" src="data:image\/gif;base64,[^"]*" alt=""/, () => '<img id="edito-img" data-mot="1" src="' + echapper(photoLegere(mot.photo_url)) + '" alt="' + echapper(mot.nom || 'Maître Akesse') + '"');
+  else poserPhoto('edito-img', reste[3 % reste.length]);
+  // partenaires (9 logos au plus) et Instagram (9 publications au plus) : la page s'affiche s'il y en a
+  const logos = Array.isArray(donnees.partenaires) ? donnees.partenaires.filter((p) => p.logo_url).slice(0, 9) : [];
+  if (logos.length) {
+    html = html.replace('<div class="logos" id="confiance-liste"></div>', () => '<div class="logos" id="confiance-liste">' + logos.map((p) => '\n      <a href="partenaires.html?partenaire=' + encodeURIComponent(p.id) + '" title="' + echapper(p.nom || '') + '">\n        <img src="' + echapper(photoLegere(p.logo_url)) + '" alt="' + echapper(p.nom || '') + '" loading="lazy">\n      </a>').join('') + '</div>')
+      .replace(/(<article class="mag-page p-partenaires[^"]*" id="ils-nous-font-confiance"[^>]*?) hidden>/, (_, d) => d + '>');
+  }
+  const posts = Array.isArray(donnees.instagram) ? donnees.instagram.filter((p) => p && p.image).slice(0, 9) : [];
+  if (posts.length) {
+    html = html.replace('<div class="grille" id="instagram-grille"></div>', () => '<div class="grille" id="instagram-grille">' + posts.map((p) => '\n      <a href="' + echapper(/^https:\/\//i.test(p.lien || '') ? p.lien : 'https://www.instagram.com/maitreakessemodelmanagement') + '" target="_blank" rel="noopener" title="' + echapper(p.legende || '') + '">\n        <img src="' + echapper(p.image) + '" alt="' + echapper(p.legende || (anglais ? 'Instagram post' : 'Publication Instagram')) + '" loading="lazy">\n      </a>').join('') + '</div>')
+      .replace(/(<article class="mag-page p-instagram[^"]*" id="flux-instagram"[^>]*?) hidden>/, (_, d) => d + '>');
+  }
+  // agenda : les 3 prochains projets (js/rendu-agenda.js, comme js/agenda.js) ; l'encart s'affiche s'il y en a
+  if (Array.isArray(donnees.agenda) && donnees.agenda.length) {
+    const encart = globalThis.RenduAgenda.encartAccueil(anglais && Array.isArray(donnees.agendaEn) ? donnees.agendaEn : donnees.agenda, anglais);
+    if (encart) html = html.replace('<div id="agenda-accueil" class="agenda-liste-publique"></div>', () => '<div id="agenda-accueil" class="agenda-liste-publique">' + encart + '</div>')
+      .replace(/(<article class="mag-page p-agenda" id="agenda"[^>]*?) hidden>/, (_, d) => d + '>');
+  }
+  // film : seulement un fichier du dossier prévu (même règle que js/video-accueil.js) ; la page le charge à l'approche
+  const v = donnees.video;
+  if (v && v.type === 'video' && typeof v.chemin === 'string' && /^site\/video-accueil\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(v.chemin)) {
+    html = html.replace('<article class="mag-page p-film u-hidden" id="video-accueil"', () => '<article class="mag-page p-film' + (v.largeur && v.hauteur && v.hauteur > v.largeur ? ' video-verticale' : '') + '" id="video-accueil" data-confirme="1"');
+  }
+  // numéros de page et sommaire : les pages affichées, dans l'ordre (comme numeroter, js/accueil.js)
+  // (découpe à chaque « <article class="mag-page » : une page du magazine peut contenir d'autres <article>, ex. l'agenda)
+  const lignes = []; let n = 0;
+  const morceaux = html.split('<article class="mag-page');
+  html = morceaux[0] + morceaux.slice(1).map((m) => {
+    const tete = m.match(/^([^"]*)" id="([a-z-]+)"([^>]*)>/);
+    if (!tete || /\bu-hidden\b/.test(tete[1]) || /\shidden(\s|$)/.test(tete[3])) return '<article class="mag-page' + m;
+    const num = String(++n).padStart(2, '0');
+    const sommaire = (tete[3].match(/data-sommaire="([^"]*)"/) || [])[1];
+    if (sommaire) { const [titre, sous] = sommaire.split('|'); lignes.push('<li><a href="#' + tete[2] + '"><b>' + num + '</b><div><strong>' + titre + '</strong><span>' + (sous || '') + '</span></div></a></li>'); }
+    return '<article class="mag-page' + m.replace('<div class="mag-folio"><span class="num"></span>', () => '<div class="mag-folio"><span class="num">' + num + '</span>');
+  }).join('');
+  return html.replace('<ol id="sommaire-liste"></ol>', () => '<ol id="sommaire-liste">' + lignes.join('') + '</ol>');
+}
 // liste fraîche (ou vieille de moins de 5 minutes) ; sinon on lance la lecture (une seule à la fois)
 // et on l'attend au plus ATTENTE_ACCUEIL ; une liste plus ancienne sert en attendant
 function donneesAccueil() {
@@ -414,7 +406,7 @@ async function accueilRempli(requete, url) {
   if (requete.method !== 'GET') return;
   const donnees = await donneesAccueil();
   if (!donnees || !donnees.profils.length) return;
-  const page = await fetch(url.toString(), { headers: { 'x-ma2m-accueil': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const page = await fetch(url.toString(), { headers: entetesInternes(url, 'x-ma2m-accueil'), redirect: 'manual' });
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return;
   let html = await page.text();
   const marque = '<img id="couv-img" class="visible" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""';
@@ -440,17 +432,108 @@ async function accueilRempli(requete, url) {
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
+  html = magazineComplet(html, donnees, anglais, une, couv, photoDe);
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
-  return reponseHtml(html, page);
+  return reponseHtml(html, page, url);
 }
-// page complétée : mêmes en-têtes que la page d'origine, sauf taille et compression (le texte a été
-// décompressé pour être complété ; Vercel le recompresse), et jamais gardée en cache
-function reponseHtml(html, page) {
-  const entetes = new Headers(page.headers);
-  ['content-length', 'content-encoding', 'etag', 'last-modified'].forEach(k => entetes.delete(k));
-  entetes.set('Cache-Control', 'no-cache, must-revalidate');
+
+// ================== En-tête complet de chaque page (phase 2, 02/11/2026) ==================
+// Le même en-tête pour tous (visiteurs, Google, WhatsApp…) : plus de petite page réservée aux robots.
+// metaEntite : titre, description, adresse officielle (canonical), balises og:/twitter: d'UN élément (fiche,
+// article, événement, partenaire) ; enteteComplete : adresse officielle de la page (www, sans .html) et données
+// structurées (JSON-LD : organisation, page, fil d'Ariane) quand la page n'en a pas déjà.
+const NOM_SITE = 'Maître Akesse Model Management';
+const ldJson = (objet) => '<script type="application/ld+json">' + jsonSur(objet) + '</script>';
+function poserMeta(html, attribut, nom, valeur) {
+  const motif = new RegExp('<meta ' + attribut + '="' + nom.replace(/[:.]/g, '\\$&') + '" content="[^"]*">');
+  const balise = '<meta ' + attribut + '="' + nom + '" content="' + echapper(valeur) + '">';
+  return motif.test(html) ? html.replace(motif, () => balise) : html.replace('</head>', () => balise + '\n</head>');
+}
+function poserCanonique(html, lien) {
+  const balise = '<link rel="canonical" href="' + echapper(lien) + '">';
+  return /<link rel="canonical" href="[^"]*">/.test(html) ? html.replace(/<link rel="canonical" href="[^"]*">/, () => balise) : html.replace('</head>', () => balise + '\n</head>');
+}
+// o : { titre, description, photo, lien, lienFr, lienEn, type, ld }
+function metaEntite(html, o) {
+  html = html.replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(o.titre + ' · ' + NOM_SITE) + '</title>');
+  html = poserMeta(html, 'name', 'description', o.description);
+  html = poserMeta(html, 'property', 'og:type', o.type || 'website');
+  html = poserMeta(html, 'property', 'og:title', o.titre);
+  html = poserMeta(html, 'property', 'og:description', o.description);
+  html = poserMeta(html, 'property', 'og:url', o.lien);
+  if (o.photo) {
+    html = poserMeta(html, 'property', 'og:image', o.photo);
+    html = poserMeta(html, 'property', 'og:image:alt', o.titre);
+    // (dimensions inconnues pour une photo de la base : balises de l'image par défaut retirées)
+    html = html.replace(/<meta property="og:image:(width|height|type)" content="[^"]*">\n?/g, '');
+    html = poserMeta(html, 'name', 'twitter:image', o.photo);
+  }
+  html = poserMeta(html, 'name', 'twitter:title', o.titre);
+  html = poserMeta(html, 'name', 'twitter:description', o.description);
+  html = poserCanonique(html, o.lien);
+  if (o.lienFr && o.lienEn) {
+    html = html.replace(/<link rel="alternate" hreflang="fr" href="[^"]*">/, () => '<link rel="alternate" hreflang="fr" href="' + echapper(o.lienFr) + '">')
+      .replace(/<link rel="alternate" hreflang="en" href="[^"]*">/, () => '<link rel="alternate" hreflang="en" href="' + echapper(o.lienEn) + '">')
+      .replace(/<link rel="alternate" hreflang="x-default" href="[^"]*">/, () => '<link rel="alternate" hreflang="x-default" href="' + echapper(o.lienFr) + '">');
+  }
+  if (o.ld) html = html.replace('</head>', () => ldJson(o.ld) + '\n</head>');
+  return html;
+}
+function enteteComplete(html, url, anglais) {
+  const chemin = url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/');
+  if (!/<link rel="canonical"/.test(html)) html = poserCanonique(html, SITE + chemin);
+  if (!/property="og:url"/.test(html)) html = poserMeta(html, 'property', 'og:url', (html.match(/<link rel="canonical" href="([^"]*)">/) || [])[1] || SITE + chemin);
+  const titre = ((html.match(/<title>([^<]*)<\/title>/) || [])[1] || NOM_SITE).replace(/&amp;/g, '&');
+  // (adresse officielle de la page, avec sa partie « ?… » pour une fiche ou un article : la même que la balise canonical)
+  const officielle = ((html.match(/<link rel="canonical" href="([^"]*)">/) || [])[1] || SITE + chemin).replace(/&amp;/g, '&');
+  // (pages sans balises d'aperçu : mentions légales, confidentialité) titre, description et image de l'accueil
+  if (!/property="og:title"/.test(html)) html = poserMeta(html, 'property', 'og:title', titre);
+  if (!/property="og:description"/.test(html)) html = poserMeta(html, 'property', 'og:description', ((html.match(/<meta name="description" content="([^"]*)">/) || [])[1] || NOM_SITE).replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
+  if (!/property="og:image"/.test(html)) html = poserMeta(html, 'property', 'og:image', SITE + '/assets/apercus/' + (anglais ? 'en' : 'fr') + '-index.jpg?v=2');
+  if (!/property="og:type"/.test(html)) html = poserMeta(html, 'property', 'og:type', 'website');
+  const accueil = SITE + (anglais ? '/en/' : '/');
+  const morceaux = chemin.replace(/^\/en/, '').split('/').filter(Boolean);
+  const ariane = [{ '@type': 'ListItem', position: 1, name: anglais ? 'Home' : 'Accueil', item: accueil }];
+  if (morceaux.length) ariane.push({ '@type': 'ListItem', position: 2, name: titre.split(/ [|·—] /)[0], item: officielle });
+  const graphe = [{ '@type': 'WebPage', name: titre, url: officielle, inLanguage: anglais ? 'en' : 'fr' }, { '@type': 'BreadcrumbList', itemListElement: ariane }];
+  if (!/application\/ld\+json/.test(html)) graphe.unshift({ '@type': 'Organization', name: NOM_SITE, url: SITE + '/', logo: SITE + '/assets/logo-header-clair.png' });
+  return html.replace('</head>', () => ldJson({ '@context': 'https://schema.org', '@graph': graphe }) + '\n</head>');
+}
+
+// Page complétée (phase 2, 02/11/2026) : la barre du haut, le menu, le bas de page et les réseaux sont écrits
+// ici (js/gabarit.js, même dessin que dans le navigateur) : la page est complète sans programme.
+// En-têtes : ceux de la page d'origine (sécurité, CSP…) SAUF ceux qui décrivent la réponse d'origine elle-même
+// (taille, compression, cache de Vercel, âge, date) : avant, « x-vercel-cache: HIT » et « age » étaient recopiés
+// et faisaient croire que la page complétée venait du cache. Politique de cache explicite :
+//  - pages publiques : « public, max-age=0, s-maxage=60, stale-while-revalidate=120 » (le navigateur revérifie
+//    à chaque visite ; une modification faite dans l'Administration se voit au plus 180 s après, mémoire de
+//    3 minutes de ce serveur comprise : DUREE_MEMOIRE) ;
+//  - pages d'un lien personnel (/recu, /places) : « private, no-store ».
+const ENTETES_RETIRES = /^(content-length|content-encoding|etag|last-modified|age|date|server|cache-control|set-cookie|x-matched-path|x-vercel-[\w-]+)$/i;
+const VERSION = (typeof process !== 'undefined' && process.env && process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7);
+function reponseHtml(html, page, url, personnel) {
+  const anglais = /<html[^>]*\slang="en"/.test(html.slice(0, 400));
+  html = globalThis.RenduGabarit.remplirHtml(html, anglais);
+  // (formulaires publics : champs de la candidature et listes déroulantes écrits ici, js/formulaire-candidature-champs.js
+  // et js/partage.js)
+  html = globalThis.ListesFormulaires.remplirSelectsHtml(globalThis.ChampsCandidature.remplirHtml(html, anglais), anglais);
+  if (url) html = enteteComplete(html, url, anglais);
+  const entetes = new Headers();
+  page.headers.forEach((v, k) => { if (!ENTETES_RETIRES.test(k)) entetes.set(k, v); });
+  entetes.set('Cache-Control', personnel ? 'private, no-store' : 'public, max-age=0, s-maxage=60, stale-while-revalidate=120');
+  // (la photo choisie dépend du téléphone ou de l'ordinateur : un cache partagé doit garder les deux versions à part)
+  entetes.set('Vary', 'Sec-CH-UA-Mobile, User-Agent');
+  entetes.set('x-ma2m-render', 'ssr');
+  entetes.set('x-ma2m-build', VERSION);
   return new Response(html, { status: 200, headers: entetes });
+}
+// Page publique sans données à poser (base lente ou en panne, ou page sans données) : elle part quand même
+// complétée (barre du haut, menu, bas de page), jamais vide.
+async function pageNue(url, enteteBoucle) {
+  const page = await fetch(url.toString(), { headers: entetesInternes(url, enteteBoucle), redirect: 'manual' });
+  if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return undefined;
+  return reponseHtml(await page.text(), page, url, /^\/(recu|places)$/.test(url.pathname));
 }
 
 // ================== Pages préparées par le serveur : outil commun (01/11/2026, site dynamique) ==================
@@ -478,27 +561,35 @@ function enMemoire(cle, lire) {
 // téléphone (photo plus légère, comme js/photos.js) : d'après le navigateur qui demande la page
 const estTelephone = (requete) => requete?.headers.get('sec-ch-ua-mobile') === '?1' || /Mobi|Android|iPhone|iPod/i.test(requete?.headers.get('user-agent') || '');
 async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
-  const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: { 'x-ma2m-remplie': '1', 'accept': 'text/html' }, redirect: 'manual' });
+  const demandePage = fetch(new URL(cheminPage, url).toString(), { headers: entetesInternes(url, 'x-ma2m-remplie'), redirect: 'manual' });
   const murPromesse = murDuSite().catch(() => null);  // (en même temps que la page ; gardé 3 minutes)
   const traductionsPromesse = blocTraductions(url);
   const [donnees, page] = await Promise.all([lecture.catch(() => null), demandePage]);
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return null;
   // données absentes : la page déjà demandée part telle quelle (elle se remplira elle-même), sans seconde demande
-  if (!donnees) return new Response(page.body, { status: page.status, headers: page.headers });
+  // 100 % dynamique (01/11/2026) : les visages du mur de photos derrière le titre (js/app.js, murDeTitre) écrits dans
+  // chaque page qui en a un (js/gabarit.js, poserMur) ; pas sur l'accueil, Qui sommes-nous ni la fiche (grande photo)
+  const poserLeMur = async (h) => {
+    const avecMur = /<h1[\s>]/.test(h) && h.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(h);
+    const mur = avecMur ? await murPromesse : null;
+    return mur && mur.length ? globalThis.RenduGabarit.poserMur(h, mur) : h;
+  };
+  // données absentes : la page déjà demandée part sans elles (elle se remplira elle-même), complétée, sans seconde demande
+  if (!donnees) return reponseHtml(await poserLeMur(await page.text()), page, url, /^\/(recu|places)/.test(cheminPage));
   let html = await page.text();
   // (« <body> », ou « <body class=… »)
   if (!/<body[\s>]/.test(html) || !html.includes('</head>')) return null;
   if (retoucher) html = await retoucher(html, donnees);
-  // 100 % dynamique (01/11/2026) : les visages du mur de photos derrière le titre (js/app.js, murDeTitre) posés
-  // dans chaque page qui en a un, au lieu d'être demandés à la base par le téléphone
-  // (pas sur l'accueil, Qui sommes-nous ni la fiche : ils ont leur grande photo, comme dans js/app.js)
-  const avecMur = /<h1[\s>]/.test(html) && html.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(html);
-  const mur = avecMur ? await murPromesse : null;
-  const blocMur = mur && mur.length ? '\n<script type="application/json" id="mur-donnees">' + jsonSur(mur) + '</script>' : '';
+  html = await poserLeMur(html);
   const blocEn = await traductionsPromesse;
-  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocMur + blocEn), page);
+  return reponseHtml(html.replace(/<body[^>]*>/, (b) => b + '\n<script type="application/json" id="' + idBloc + '">' + jsonSur(donnees) + '</script>' + blocEn), page, url, /^\/(recu|places)/.test(cheminPage));
 }
-const photoAnnoncee = (html, adresse) => (adresse ? html.replace('</head>', () => '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">\n</head>') : html);
+// (phase 2 : annoncée tout en haut de l'en-tête, juste après le jeu de caractères, pour partir le plus tôt possible)
+const photoAnnoncee = (html, adresse) => {
+  if (!adresse) return html;
+  const balise = '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">';
+  return /<meta charset="[^"]*">/i.test(html) ? html.replace(/<meta charset="[^"]*">/i, (m) => m + '\n' + balise) : html.replace('</head>', () => balise + '\n</head>');
+};
 
 // ================== Fiche d'un mannequin préparée par le serveur (01/11/2026, site dynamique, étape 1) ==================
 // Décision de la propriétaire (31/10/2026, PLAN-SERVEUR.md, chemin A). Avant, la page /book/nom partait
@@ -527,10 +618,8 @@ function couvertureFiche(photos) {
   const choisie = choixCouverture(photos);
   return choisie ? photoLegere(choisie.url_moyenne || choisie.url) : '';
 }
-// Étape A (01/11/2026) : le contenu principal de la fiche écrit dans la page par le serveur (nom, catégorie,
-// ville, grande photo, mensurations toujours publiques, présentation) ; la page le remplace ensuite par la
-// fiche complète (projets, vidéo, compcard). Les mensurations « à reprendre » (poitrine, taille, bassin…) ne
-// sont jamais écrites ici : seulement ce que la fiche publique montre toujours.
+// (phase 2, 02/11/2026 : la fiche complète est écrite par js/rendu-fiche.js, ficheRemplie ci-dessous ; les mensurations
+// « à reprendre » y restent cachées, comme sur la page)
 // (01/11/2026, « ça doit être instantané ») la photo que la carte du Book montrait déjà (même règle que
 // photos_couverture_petites : principale d'abord, puis la plus ancienne ; petite version sur téléphone) : déjà
 // dans le téléphone, elle s'affiche AUSSITÔT sous la grande photo, qui la recouvre dès qu'elle arrive
@@ -542,22 +631,6 @@ function photoDeLaCarte(photos, telephone) {
   if (!p || !grande || grande.id !== p.id) return '';
   return photoLegere(p.url_miniature && p.url_petite && telephone ? p.url_petite : (p.url_miniature || p.url));
 }
-function contenuFiche(d, anglais, photo, apercu) {
-  const p = d.profil, T = (fr, en) => (anglais ? en : fr);
-  const categorie = p.category === 'homme' ? T('Homme', 'Man') : p.category === 'femme' ? T('Femme', 'Woman') : 'New Face';
-  const mesures = [
-    [T('Âge', 'Age'), d.age != null ? d.age + ' ' + T('ans', 'years') : null], [T('Taille', 'Height'), p.height_cm ? p.height_cm + ' cm' : null],
-    [T('Poids', 'Weight'), p.weight_kg ? p.weight_kg + ' kg' : null], [T('Pointure', 'Shoe Size'), p.shoe_size ? (anglais ? 'EU ' : '') + p.shoe_size : null],
-    // (couleurs des yeux et des cheveux : écrites en français seulement ; la page anglaise les traduit elle-même)
-    [T('Yeux', 'Eyes'), anglais ? null : p.eye_color], [T('Cheveux', 'Hair'), anglais ? null : p.hair_color]].filter((m) => m[1]);
-  return '<div class="reveal visible"><div class="profil-hero-fullbleed profil-hero--avatar">' +
-    (apercu && apercu !== photo ? '<img class="hero-apercu" src="' + echapper(apercu) + '" alt="" aria-hidden="true" fetchpriority="high">' : '') + '<img data-couv-img src="' + echapper(photo || '/assets/logo-dark-bg.png') + '" alt="" fetchpriority="high">' +
-    '<div class="profil-hero-scrim"></div><div class="profil-hero-contenu"><div class="eyebrow eyebrow--clair">' + echapper(categorie) + '</div>' +
-    '<h1>' + echapper(p.full_name || T('Mannequin', 'Model')) + '</h1><p>' + echapper(p.city || '') + '</p></div></div>' +
-    (mesures.length ? '<div class="fiche-entete"><dl class="fiche-mesures" aria-label="' + T('Mensurations', 'Measurements') + '">' +
-      mesures.map(([l, v]) => '<div class="fiche-mesure"><dt>' + echapper(l) + '</dt><dd>' + echapper(v) + '</dd></div>').join('') + '</dl></div>' : '') +
-    (p.bio ? '<section class="fiche-carte"><h3 class="fiche-carte-titre">' + T('À propos', 'About') + '</h3><p class="mannequin-bio fiche-bio">' + echapper(p.bio) + '</p></section>' : '') + '</div>';
-}
 // premier jour du mois, dix ans plus tôt (même période que ma2mExperiencesAgence, js/app.js)
 const dixAnsAvant = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear() - 10, d.getUTCMonth(), 1)).toISOString().slice(0, 10); };
 async function ficheRemplie(requete, url, id, slug, anglais) {
@@ -568,7 +641,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE),
     // (100 % dynamique, 01/11/2026) aussi les expériences, le parcours avec l'agence (10 ans, comme
     // ma2mExperiencesAgence, js/app.js) et les mesures de l'Extension 121 ; manquants, la page les lit elle-même
-    lireSupabase('model_projects?model_id=eq.' + id + '&select=*&order=created_at.desc', null, ATTENTE_FICHE).catch(() => null),
+    lireSupabase('model_projects?model_id=eq.' + id + '&select=id,model_id,type_projet,titre,periode,pays,ville,promoteur,lieu,created_at&order=created_at.desc', null, ATTENTE_FICHE).catch(() => null),
     lireSupabase('rpc/parcours_public', { p_debut: dixAnsAvant(), p_fin: new Date().toISOString().slice(0, 10), p_model: id }, ATTENTE_FICHE).catch(() => null),
     lireSupabase('model_profiles?id=eq.' + id + '&select=shoulder_cm,arm_cm,neck_cm', null, ATTENTE_FICHE).catch(() => null)
   ]).then(([profils, photos, ages, projets, parcours, mesures]) => {
@@ -581,18 +654,38 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     return d;
   }));
   return pageRemplie(url, (anglais ? '/en' : '') + '/mannequin', 'fiche-donnees', lecture, async (html, d) => {
-    // (page anglaise : présentation traduite, comme la page le fait)
-    const dPage = anglais && d.profil.bio ? Object.assign({}, d, { profil: (await versAnglaisServeur([d.profil], ['bio']))[0] }) : d;
+    // (phase 2, 02/11/2026) la fiche COMPLÈTE écrite ici par le même dessin que la page (js/rendu-fiche.js) : mesures et
+    // tailles, à propos, parcours (projets de l'agence + expériences saisies), vidéo, boutons, photos du Book, contact.
+    // Page anglaise : présentation et types d'expérience traduits, comme la page le fait (versAnglais).
+    const P = globalThis.Partage;
+    const projetsFusionnes = P.fusionnerExperiences(P.experiencesDepuisParcours(d.parcours || [], anglais), d.projets || []);
+    const [profilPage, ...projetsPage] = anglais ? await versAnglaisServeur([Object.assign({}, d.profil, d.mesures || {}), ...projetsFusionnes], ['bio', 'type_projet']) : [Object.assign({}, d.profil, d.mesures || {}), ...projetsFusionnes];
+    const vues = P.photosAffichees(d.photos);
+    const dessin = globalThis.RenduFiche.fiche({ profil: profilPage, photos: d.photos, projets: projetsPage, age: d.age != null ? d.age : '' }, {
+      en: anglais, urlLegere: photoLegere,
+      photoHero: vues.couverture ? photoLegere(vues.couverture.url_moyenne || vues.couverture.url) : '/assets/logo-dark-bg.png',
+      photoAvatar: vues.profil ? photoLegere(vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png' });
+    // (la photo que la carte du Book montrait déjà, sous la grande photo le temps qu'elle arrive : 01/11/2026)
+    const apercu = photoDeLaCarte(d.photos, estTelephone(requete)), grande = vues.couverture ? photoLegere(vues.couverture.url_moyenne || vues.couverture.url) : '';
+    if (apercu && apercu !== grande) dessin.contenu = dessin.contenu.replace('<img data-couv-img', () => '<img class="hero-apercu" src="' + echapper(apercu) + '" alt="" aria-hidden="true" fetchpriority="high">\n        <img data-couv-img');
     const nom = d.profil.full_name || (anglais ? 'Model' : 'Mannequin');
     const description = [d.profil.full_name, d.profil.city, d.profil.height_cm ? d.profil.height_cm + ' cm' : null].filter(Boolean).join(' · ') +
       (anglais ? ' · Full book on the Maître Akesse Model Management agency website.' : " · Book complet sur le site de l'agence Maître Akesse Model Management.");
     // (adresse /mannequin?id=… ouverte depuis une carte du Book : pas encore de nom d'adresse connu ici)
     const lien = SITE + (anglais ? '/en' : '') + (slug ? '/book/' + slug : '/mannequin?id=' + id);
-    return photoAnnoncee(html
-      .replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper(nom + ' · Maître Akesse Model Management') + '</title>')
-      .replace(/<meta name="description" content="[^"]*">/, () => '<meta name="description" content="' + echapper(description) + '">')
-      .replace('</head>', () => '<link rel="canonical" href="' + echapper(lien) + '">\n</head>')
-      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + contenuFiche(dPage, anglais, couvertureFiche(d.photos), photoDeLaCarte(d.photos, estTelephone(requete))) + '</div>'), couvertureFiche(d.photos));
+    const chemin = slug ? '/book/' + slug : '/mannequin?id=' + id;
+    const couv = couvertureFiche(d.photos);
+    const photoApercu = imageApercu(couv || '', anglais, 'mannequin');
+    // (phase 2, 02/11/2026 : balises og: et données structurées de la mannequin, pour tous ; jamais de coordonnées)
+    const personne = { '@type': 'Person', name: nom, url: lien, image: photoApercu, jobTitle: anglais ? 'Model' : 'Mannequin',
+      worksFor: { '@type': 'Organization', name: NOM_SITE, url: SITE + '/' } };
+    if (d.profil.city) personne.homeLocation = { '@type': 'Place', name: d.profil.city };
+    if (d.profil.height_cm) personne.height = { '@type': 'QuantitativeValue', value: d.profil.height_cm, unitCode: 'CMT' };
+    return photoAnnoncee(metaEntite(html, { titre: nom, description, photo: photoApercu, lien, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin, type: 'profile',
+      ld: { '@context': 'https://schema.org', '@type': 'ProfilePage', url: lien, mainEntity: personne } })
+      .replace(/<div id="contenu" class="u-mt-2"><span class="fiche-en-chargement">[^<]*<\/span><\/div>/, () => '<div id="contenu" class="u-mt-2">' + dessin.contenu + '</div>')
+      .replace('<div id="galerie" class="book-grille-ig reveal reveal-delay-1"></div>', () => '<div id="galerie" class="book-grille-ig reveal reveal-delay-1">' + dessin.galerie + '</div>')
+      .replace('<div id="fiche-contact-bas"></div>', () => '<div id="fiche-contact-bas">' + dessin.contact + '</div>'), grande);
   });
 }
 
@@ -636,8 +729,8 @@ async function bookRempli(url, anglais, requete) {
 // la photo « À la une » est annoncée en tête. Base lente (plus de 1,2 s) ou en panne : comme avant.
 const PUBLICATIONS_PAGES = /^\/(en\/)?(actualites|evenements)$/;
 const LECTURES_PUBLICATIONS = {
-  actualites: ['actualites?select=*&order=created_at.desc', 'actualite_photos?select=actualite_id'],
-  evenements: ['evenements?select=*&order=date_evenement.desc.nullslast,created_at.desc', 'evenement_photos?select=evenement_id']
+  actualites: ['actualites?select=id,titre,image_url,commentaire,created_at,video_url,featured,categorie&order=created_at.desc', 'actualite_photos?select=actualite_id'],
+  evenements: ['evenements?select=id,titre,date_evenement,lieu,description,image_url,created_at&order=date_evenement.desc.nullslast,created_at.desc', 'evenement_photos?select=evenement_id']
 };
 async function publicationsRemplies(url, anglais) {
   const quoi = url.pathname.match(PUBLICATIONS_PAGES)[2];
@@ -654,11 +747,31 @@ async function publicationsRemplies(url, anglais) {
     d.photos.forEach((p) => { const id = p.actualite_id || p.evenement_id; nb[id] = (nb[id] || 0) + 1; });
     const extrait = (p, n) => (p[texteLong] ? R.extrait(R.texteBrut(p[texteLong]), n) : '');
     const prefixe = sorte === 'actualite' ? 'actus' : 'evenements';
+    // (phase 2) filtres par catégorie des actualités, visibles d'avance (classe u-hidden retirée, comme la page le fait)
+    const filtres = sorte === 'actualite' ? R.filtresActualites(d.liste, anglais) : '';
+    if (filtres) html = html.replace('<div id="actus-filtres" class="filtres-categories reveal u-hidden"></div>', () => '<div id="actus-filtres" class="filtres-categories reveal">' + filtres + '</div>');
     if (liste.length) {
       html = html.replace('<div id="' + prefixe + '-une" class="une-reservee"></div>', () => '<div id="' + prefixe + '-une" class="une-reservee">' +
         R.une(liste[0], { en: anglais, sorte, photo: photoLegere(liste[0].image_url || ''), extrait: extrait(liste[0], 180) }) + '</div>')
         .replace('<div id="' + prefixe + '-grille" class="news-grille"></div>', () => '<div id="' + prefixe + '-grille" class="news-grille">' +
           liste.slice(1).map((p, i) => R.carte(p, i + 1, { en: anglais, sorte, photo: photoLegere(p.image_url || ''), nbPhotos: nb[p.id] || (p.image_url ? 1 : 0), extrait: extrait(p, 110) })).join('') + '</div>');
+    }
+    // (phase 2, 02/11/2026) lien d'UN article ou événement (?actu=… / ?evenement=…) : son titre, son extrait et sa
+    // photo dans l'en-tête, pour tous (avant : petite page réservée aux robots d'aperçu)
+    const idEl = url.searchParams.get(sorte === 'actualite' ? 'actu' : 'evenement');
+    const el = idEl && ID_VALIDE.test(idEl) && liste.find((p) => p.id === idEl);
+    if (el && el.titre) {
+      const chemin = '/' + quoi + '?' + (sorte === 'actualite' ? 'actu' : 'evenement') + '=' + el.id;
+      const lien = SITE + (anglais ? '/en' : '') + chemin;
+      let entete = '';
+      if (el.date_evenement) { try { entete = new Date(el.date_evenement + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }); } catch (x) { entete = ''; } }
+      const description = [[entete, el.lieu].filter(Boolean).join(' · '), texteSimple(el[texteLong], 200)].filter(Boolean).join(' — ') || NOM_SITE;
+      const photo = imageApercu(el.image_url, anglais, quoi);
+      const ld = sorte === 'actualite'
+        ? { '@context': 'https://schema.org', '@type': 'NewsArticle', headline: el.titre, image: photo, datePublished: el.created_at, url: lien, publisher: { '@type': 'Organization', name: NOM_SITE, url: SITE + '/' } }
+        : { '@context': 'https://schema.org', '@type': 'Event', name: el.titre, image: photo, url: lien, startDate: el.date_evenement || undefined,
+          location: el.lieu ? { '@type': 'Place', name: el.lieu, address: el.lieu } : undefined, organizer: { '@type': 'Organization', name: NOM_SITE, url: SITE + '/' } };
+      html = metaEntite(html, { titre: el.titre, description, photo, lien, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin, type: 'article', ld });
     }
     return photoAnnoncee(html, d.liste[0]?.image_url ? photoLegere(d.liste[0].image_url) : '');
   });
@@ -667,11 +780,19 @@ async function publicationsRemplies(url, anglais) {
 // ================== Partenaires préparés par le serveur (01/11/2026, site dynamique, étape 2) ==================
 // La liste des partenaires (même lecture que js/partenaires.js) posée dans la page (bloc « partenaires-donnees »).
 async function partenairesRemplis(url, anglais) {
-  const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=*&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
+  const lecture = enMemoire('partenaires', () => lireSupabase('partenaires?select=id,nom,structure,evenement,role,description,logo_url,logo_chemin,created_at&order=created_at.desc', null, ATTENTE_FICHE).then((l) => (Array.isArray(l) ? { liste: l } : null)));
   return pageRemplie(url, (anglais ? '/en' : '') + '/partenaires' + url.search, 'partenaires-donnees', lecture, async (html, d) => {
     // les cartes écrites dans la page (js/rendu-publications.js), en anglais sur /en/partenaires
     const liste = anglais ? await versAnglaisServeur(d.liste, ['structure', 'evenement', 'role', 'description']) : d.liste;
     const R = globalThis.RenduPublications;
+    // (phase 2, 02/11/2026) lien d'UN partenaire (?partenaire=…) : son nom, sa description et son logo dans l'en-tête
+    const idP = url.searchParams.get('partenaire');
+    const pa = idP && ID_VALIDE.test(idP) && liste.find((p) => p.id === idP);
+    if (pa && pa.nom) {
+      const chemin = '/partenaires?partenaire=' + pa.id;
+      html = metaEntite(html, { titre: pa.nom, description: texteSimple(pa.description, 220) || (anglais ? 'A partner of ' : 'Partenaire de ') + NOM_SITE,
+        photo: imageApercu(pa.logo_url, anglais, 'partenaires'), lien: SITE + (anglais ? '/en' : '') + chemin, lienFr: SITE + chemin, lienEn: SITE + '/en' + chemin });
+    }
     return liste.length ? html.replace('<div id="partenaires-grille" class="news-grille"></div>', () => '<div id="partenaires-grille" class="news-grille">' +
       liste.map((p, i) => R.partenaire(p, i, { en: anglais, logo: p.logo_url ? photoLegere(p.logo_url) : '' })).join('') + '</div>') : html;
   });
@@ -687,21 +808,13 @@ async function agendaRempli(url, anglais) {
     lireSupabase('evenements?select=id,titre,date_evenement,lieu&date_evenement=gte.' + depuis + '&order=date_evenement.asc,id.asc&limit=1000', null, ATTENTE_FICHE)
   ]).then(([agenda, evenements]) => (Array.isArray(agenda) && Array.isArray(evenements) && evenements.length < 1000 ? { agenda, evenements } : null)));
   return pageRemplie(url, (anglais ? '/en' : '') + '/agenda', 'agenda-donnees', lecture, async (html, d) => {
-    // étape A (01/11/2026) : les projets à venir ET les projets réalisés (titre, dates, lieu) écrits dans la
-    // page, à la place de « Chargement de l'agenda… » ; rien à venir : le message de la page (js/agenda.js).
-    // La page dessine ensuite son calendrier et ses cartes complètes par-dessus.
-    const aujourdhui = new Date().toISOString().slice(0, 10), fin = (p) => String(p.date_fin || p.date_debut || '');
-    const avenirFr = d.agenda.filter((p) => fin(p) >= aujourdhui).sort((a, b) => String(a.date_debut).localeCompare(String(b.date_debut))).slice(0, 30);
-    const passesFr = d.agenda.filter((p) => fin(p) < aujourdhui).sort((a, b) => fin(b).localeCompare(fin(a))).slice(0, 12);
-    const [avenir, passes] = anglais ? await Promise.all([versAnglaisServeur(avenirFr, ['titre', 'lieu']), versAnglaisServeur(passesFr, ['titre', 'lieu'])]) : [avenirFr, passesFr];
-    const jour = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-    const cartes = (liste, vide) => (liste.length ? liste.map((p) => '<article class="agenda-carte"><h3>' + echapper(p.titre) + '</h3><p>' +
-      echapper([jour(p.date_debut) + (p.date_fin && p.date_fin !== p.date_debut ? ' – ' + jour(p.date_fin) : ''), [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p></article>').join('')
-      : '<p class="agenda-vide">' + vide + '</p>');
-    return html.replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' +
-      cartes(avenir, anglais ? 'Our upcoming projects will appear here very soon.' : 'Nos prochains projets seront affichés ici très bientôt.') + '</div>')
-      .replace('<div id="agenda-passes" class="agenda-liste-publique"></div>', () => '<div id="agenda-passes" class="agenda-liste-publique">' +
-        cartes(passes, anglais ? 'Our completed projects will appear here.' : 'Nos projets réalisés seront affichés ici.') + '</div>');
+    // (phase 2, 02/11/2026) la page complète écrite ici, par le même dessin que la page (js/rendu-agenda.js) : calendrier
+    // du mois, projets à venir, projets réalisés ; textes de l'agence en anglais sur /en (comme versAnglais, js/agenda.js)
+    const [agenda, evenements] = anglais ? await Promise.all([versAnglaisServeur(d.agenda, ['titre', 'lieu', 'description']), versAnglaisServeur(d.evenements, ['titre', 'lieu', 'description'])]) : [d.agenda, d.evenements];
+    const r = globalThis.RenduAgenda.pageAgenda(agenda, evenements, anglais);
+    return html.replace(/(<section id="agenda-calendrier" class="cal" aria-label="[^"]*">)<\/section>/, (_, o) => o + r.calendrier + '</section>' + r.calendrierSuite)
+      .replace(/<div id="agenda-avenir" class="agenda-liste-publique"><p class="agenda-vide">[^<]*<\/p><\/div>/, () => '<div id="agenda-avenir" class="agenda-liste-publique">' + r.avenir + '</div>' + r.avenirSuite)
+      .replace('<div id="agenda-passes" class="agenda-liste-publique"></div>', () => '<div id="agenda-passes" class="agenda-liste-publique">' + r.passes + '</div>' + r.passesSuite);
   });
 }
 
@@ -721,21 +834,22 @@ async function parcoursRempli(url, anglais) {
     return Array.isArray(photos) ? { debut, fin, projets, photos } : null;
   });
   return pageRemplie(url, (anglais ? '/en' : '') + '/parcours', 'parcours-donnees', lecture, async (html, d) => {
-    // étape A (01/11/2026) : le mois affiché au départ (le plus récent qui a des activités, comme js/parcours.js)
-    // et ses projets (titre, lieu, mannequins) écrits dans la page ; la page redessine ensuite sa scène animée
-    // (chiffres, visages, filtres) par-dessus. Seulement les projets qui ont des mannequins (projetsAvecNoms).
-    const projets = d.projets.filter((p) => (p.mannequins || []).length);
-    if (!projets.length) return html;
-    const mois = (p) => String(p.date_debut || '').slice(0, 7), moisFin = (p) => String(p.date_fin || p.date_debut || '').slice(0, 7);
-    const choisi = projets.map(moisFin).sort().pop();
-    const duMoisFr = projets.filter((p) => mois(p) <= choisi && moisFin(p) >= choisi);
-    const duMois = anglais ? await versAnglaisServeur(duMoisFr, ['titre', 'lieu']) : duMoisFr;
-    const libelle = new Date(choisi + '-15T12:00:00Z').toLocaleDateString(anglais ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-    const cartes = duMois.map((p) => '<article class="parcours-projet"><h3>' + echapper(p.titre) + '</h3>' +
-      '<p class="parcours-projet-meta">' + echapper([p.lieu, p.ville].filter(Boolean).join(', ')) + '</p>' +
-      '<p class="parcours-projet-visages">' + echapper((p.mannequins || []).map((m) => m.nom).filter(Boolean).join(', ')) + '</p></article>').join('');
-    return texteElement(html, 'parcours-titre-mois', libelle)
-      .replace('<div class="parcours-projets" id="parcours-projets"></div>', () => '<div class="parcours-projets" id="parcours-projets">' + cartes + '</div>');
+    // (phase 2, 02/11/2026) la scène complète écrite ici par le même dessin que la page (js/parcours.js, RenduParcours) :
+    // frise des mois, titre du mois, chiffres, filtres, visages, projets ; le mois le plus récent qui a des activités
+    const photos = {};
+    d.photos.forEach((c) => { if (c.url) photos[c.model_id] = photoLegere(c.url_petite || c.url); });
+    // (page anglaise : titres et lieux traduits, comme la page le fait, js/parcours.js)
+    const projets = anglais ? await versAnglaisServeur(d.projets, ['titre', 'lieu']) : d.projets;
+    const z = globalThis.RenduParcours.page(projets, photos, anglais, new Date());
+    // zones vides de la page : contenu écrit ; zones à texte fixe (parcours-vide) ou à enfants (parcours-contenu) : seulement cachées ou non
+    ['parcours-mois', 'parcours-titre-mois', 'parcours-chiffres', 'parcours-filtres', 'parcours-visages', 'parcours-plus', 'parcours-detail', 'parcours-projets'].forEach((id) => {
+      html = html.replace(new RegExp('<(nav|h2|div|button)([^>]*) id="' + id + '"([^>]*)><\\/\\1>'), (_, tag, avant, apres) =>
+        '<' + tag + avant + ' id="' + id + '"' + apres.replace(/\s+hidden\b/, '') + (z[id].cache ? ' hidden' : '') + '>' + z[id].html + '</' + tag + '>');
+    });
+    ['parcours-vide', 'parcours-contenu'].forEach((id) => {
+      html = html.replace(new RegExp('(<(?:p|div)[^>]* id="' + id + '")([^>]*)>'), (_, debut, apres) => debut + apres.replace(/\s+hidden\b/, '') + (z[id].cache ? ' hidden' : '') + '>');
+    });
+    return html;
   });
 }
 
@@ -782,6 +896,32 @@ async function quiSommesNousRempli(url, anglais) {
     // photos et met les titres en forme. Un événement sans photo n'a pas de carte (comme dans la page).
     const evenements = anglais ? await versAnglaisServeur(d.evenements, ['titre', 'lieu']) : d.evenements;
     const cle = (t) => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const lisible = globalThis.Partage.titreLisible;
+    // (phase 2, 02/11/2026) photos écrites dans la page, comme js/qui-sommes-nous.js les choisit (au hasard à chaque
+    // visite) ; la première de chaque cadre déjà affichée (classe « actif ») : visible sans programme. La page les reprend.
+    const melanger = (l) => l.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+    const urlsDe = (e) => { const u = d.photos.filter((p) => p.evenement_id === e.id).map((p) => p.url); if (!u.length && e.image_url) u.push(e.image_url); return u.filter(Boolean); };
+    const imgs = (urls, alt) => urls.map((u, i) => '<img src="' + echapper(photoLegere(u)) + '" alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : ' class="actif"') + '>').join('');
+    const toutes = []; evenements.forEach((e) => urlsDe(e).forEach((u) => toutes.push(u)));
+    if (toutes.length) {
+      html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(melanger(toutes).slice(0, 8), '') + '</div>')
+        .replace('<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>', () => '<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true" data-hasard><img src="' + echapper(photoLegere(melanger(toutes)[0])) + '" alt="" decoding="async" loading="lazy"></div>');
+    }
+    // visages : une photo par mannequin (tirée par la lecture), 16 au hasard, deux rangées (la 2e à l'envers)
+    const visages = melanger(d.visages.filter((v) => v && (v.url || v.url_moyenne))).slice(0, 16);
+    if (visages.length >= 4) {
+      const lien = (v, cache) => '<a href="mannequin.html?id=' + encodeURIComponent(v.model_id) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '><img src="' + echapper(photoLegere(v.url_moyenne || v.url)) + '" alt="' + (anglais ? 'Model of the agency' : 'Mannequin de l\'agence') + '" decoding="async" loading="lazy"></a>';
+      const rangee = visages.map((v) => lien(v, false)).join('') + visages.map((v) => lien(v, true)).join('');
+      const inverse = [...visages, ...visages].reverse().map((v) => lien(v, true)).join('');
+      html = html.replace('<section class="qsn-visages" aria-label="Nos mannequins" hidden>', () => '<section class="qsn-visages" aria-label="Nos mannequins">')
+        .replace('<section class="qsn-visages" aria-label="Our models" hidden>', () => '<section class="qsn-visages" aria-label="Our models">')
+        .replace('<div class="qsn-visages-piste" id="qsn-visages-piste"></div>', () => '<div class="qsn-visages-piste" id="qsn-visages-piste" data-hasard>' + rangee + '</div><div class="qsn-visages-piste qsn-visages-inverse" data-hasard>' + inverse + '</div>');
+    }
+    // portrait du fondateur
+    if (d.portrait && d.portrait.photo_url) {
+      html = html.replace(/<img id="qsn-portrait-img" src="data:image\/gif;base64,[^"]*" alt="([^"]*)" hidden>/, (_, alt) => '<img id="qsn-portrait-img" src="' + echapper(photoLegere(d.portrait.photo_url)) + '" alt="' + alt + '">')
+        .replace('<figure class="qsn-portrait reveal qsn-rideau">', () => '<figure class="qsn-portrait reveal qsn-rideau avec-photo">');
+    }
     const vus = new Set([...html.matchAll(/data-evenement="([^"]*)"/g)].map((m) => m[1]));
     const avecPhoto = new Set(d.photos.map((p) => p.evenement_id));
     const cartes = [];
@@ -790,10 +930,16 @@ async function quiSommesNousRempli(url, anglais) {
       if (!t || vus.has(t) || !(avecPhoto.has(e.id) || e.image_url)) return;
       vus.add(t);
       cartes.push('<article class="qsn-evenement reveal" data-evenement="' + echapper(t) + '" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"></div>' +
-        '<h3>' + echapper(e.titre) + '</h3>' + (e.lieu ? '<p>' + echapper(e.lieu) + '</p>' : '') + '</article>');
+        '<h3>' + echapper(lisible(e.titre)) + '</h3>' + (e.lieu ? '<p>' + echapper(lisible(e.lieu)) + '</p>' : '') + '</article>');
     });
     const debut = html.indexOf('<div class="qsn-evenements" id="qsn-evenements">'), fin = debut < 0 ? -1 : html.indexOf('\n    </div>', debut);
     if (cartes.length && fin > 0) html = html.slice(0, fin) + '\n      ' + cartes.join('\n      ') + html.slice(fin);
+    // photos de chaque carte (celles de la page et celles ajoutées ci-dessus) : 6 au hasard parmi les événements du même nom
+    html = html.replace(/(<article class="qsn-evenement[^"]*" data-evenement="([^"]*)"[^>]*>\s*)<div class="qsn-evenement-photo qsn-rideau"><\/div>(\s*<h3>([^<]*)<\/h3>)?/g, (tout, debutCarte, cleCarte, h3, titreCarte) => {
+      const urls = []; evenements.filter((e) => cle(e.titre) === cleCarte.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')).forEach((e) => urlsDe(e).forEach((u) => urls.push(u)));
+      if (!urls.length) return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" hidden></div>' + (h3 || '');
+      return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" data-hasard>' + imgs(melanger(urls).slice(0, 6), titreCarte ? titreCarte.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&') : '') + '</div>' + (h3 || '');
+    });
     // (comme js/qui-sommes-nous.js : le nom n'est changé que si le portrait a une photo)
     if (d.portrait && d.portrait.nom && d.portrait.photo_url) html = texteElement(html, 'qsn-portrait-nom', d.portrait.nom);
     return poserTextes(html, await textesDePage('qui-sommes-nous').catch(() => null), anglais);
@@ -828,7 +974,20 @@ async function formulairesRemplis(url, anglais) {
   const lecture = page === 'candidature'
     ? enMemoire('castings', () => lireSupabase('casting_projets?actif=eq.true&select=id,nom,description&order=ordre_affichage.asc,nom.asc', null, ATTENTE_FICHE)).then((l) => (Array.isArray(l) ? { projets: l } : null))
     : Promise.resolve({});
-  return pageRemplie(url, (anglais ? '/en/' : '/') + page, 'page-donnees', lecture);
+  // (phase 2, 02/11/2026) candidature : la liste des castings ouverts écrite dans la page, et le bon bloc montré d'avance
+  // (le formulaire, ou « Aucun casting n'est ouvert… »), comme chargerProjetsActifs (js/formulaire-candidature.js)
+  const retoucher = page !== 'candidature' ? null : (html, d) => {
+    if (!Array.isArray(d.projets)) return html;
+    const aucun = d.projets.length === 0;
+    const options = '<option value="">' + (anglais ? 'Select' : 'Sélectionner') + '</option>' +
+      d.projets.map((p) => '<option value="' + echapper(p.nom) + '">' + echapper(p.nom) + '</option>').join('') +
+      '<option value="__autre__">' + (anglais ? 'Other (specify)' : 'Autre (précisez)') + '</option>';
+    return html.replace(/<p id="ca-chargement"[^>]*>[^<]*<\/p>\s*/, '')
+      .replace('<div id="ca-aucun-casting" class="ca-24 u-hidden"', () => '<div id="ca-aucun-casting" class="ca-24' + (aucun ? '' : ' u-hidden') + '"')
+      .replace('<form id="form-casting" data-parcours="projet" class="u-hidden">', () => '<form id="form-casting" data-parcours="projet"' + (aucun ? ' class="u-hidden"' : '') + '>')
+      .replace(/(<select id="ca-projet" required>)[\s\S]*?(<\/select>)/, (_, o, f) => o + options + f);
+  };
+  return pageRemplie(url, (anglais ? '/en/' : '/') + page, 'page-donnees', lecture, retoucher);
 }
 
 // ================== Étape C (01/11/2026) : textes des pages modifiables depuis l'Administration ==================
@@ -916,13 +1075,23 @@ function versWww(url) {
   } });
 }
 
+// Demande interne de la page elle-même : repère anti-boucle, et les témoins du visiteur (versions d'essai Vercel
+// protégées par une connexion : sans eux, la page interne répond « non autorisé » et rien n'était écrit)
+function entetesInternes(url, repere) {
+  const h = { [repere]: '1', 'accept': 'text/html' };
+  if (url.temoins) h.cookie = url.temoins;
+  return h;
+}
 export default async function middleware(requete) {
   try {
     const url = new URL(requete.url);
+    Object.defineProperty(url, 'temoins', { value: requete.headers.get('cookie') || '' });
     if (url.hostname === DOMAINE_NU) return versWww(url);
     if (ACCUEIL.test(url.pathname)) {
       if (requete.headers.get('x-ma2m-accueil')) return;  // (la page elle-même, demandée ci-dessous)
-      try { return await accueilRempli(requete, url); } catch (e) { return; }
+      if (requete.method !== 'GET') return;
+      // (base lente ou en panne : la page part quand même complète, sans les mannequins)
+      try { return (await accueilRempli(requete, url)) || await pageNue(url, 'x-ma2m-accueil'); } catch (e) { return; }
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
     if (requete.headers.get('x-ma2m-remplie')) return;  // (page demandée par pageRemplie elle-même)
@@ -938,75 +1107,33 @@ export default async function middleware(requete) {
       // (un visiteur n'attend pas plus de 1,2 s : sinon la fiche retrouve elle-même le mannequin)
       try { lignes = await lireSupabase('model_profiles?slug=eq.' + joli[2] + '&published=eq.true&select=id', null, ROBOTS_APERCU.test(agent) ? 2500 : ATTENTE_FICHE); } catch (error_) { lignes = null; }  // (base trop lente : la fiche se remplit dans la page)
       // Base lente ou en panne : la fiche retrouve elle-même le mannequin (js/adresse-fiche.js).
-      if (lignes === null) return ROBOTS_APERCU.test(agent) ? undefined : ficheSansId();
+      if (lignes === null) return ficheSansId();
       const id = lignes[0] && lignes[0].id;
       if (!id || !ID_VALIDE.test(id)) return Response.redirect(SITE + (anglais ? '/en' : '') + '/mannequins', 302);
-      if (ROBOTS_APERCU.test(agent)) {
-        const apercu = await apercuMannequin(url, anglais, id);
-        if (apercu) return apercu;
-      }
-      // visiteur : la fiche part déjà remplie ; au moindre souci, comme avant (la page se remplit elle-même)
+      // (phase 2, 02/11/2026 : visiteurs ET robots d'aperçu reçoivent la même fiche, avec ses balises og:)
+      // la fiche part déjà remplie ; au moindre souci, comme avant (la page se remplit elle-même)
       const remplie = await ficheRemplie(requete, url, id, joli[2], anglais).catch(() => null);
       if (remplie) return remplie;
       return new Response(null, { headers: { 'x-middleware-rewrite': new URL((anglais ? '/en' : '') + '/mannequin?id=' + id, url).toString() } });
     }
     // fiche ouverte depuis une carte du Book (/mannequin?id=…, après le renvoi de mannequin.html) : écrite par le
     // serveur comme /book/nom (étape A, 01/11/2026) ; au moindre souci, la page habituelle
-    if (/^\/(en\/)?mannequin$/.test(url.pathname) && requete.method === 'GET' && !ROBOTS_APERCU.test(agent) && ID_VALIDE.test(url.searchParams.get('id') || '')) {
+    if (/^\/(en\/)?mannequin$/.test(url.pathname) && requete.method === 'GET' && ID_VALIDE.test(url.searchParams.get('id') || '')) {
       const remplie = await ficheRemplie(requete, url, url.searchParams.get('id'), null, anglais).catch(() => null);
       if (remplie) return remplie;
       return;
     }
     // pages des visiteurs préparées par le serveur (site dynamique) ; jamais les adresses en .html, qui
     // suivent le renvoi vers l'adresse propre (vercel.json, cleanUrls) ; au moindre souci : comme avant
-    const remplir = requete.method === 'GET' && !ROBOTS_APERCU.test(agent) && PAGES_REMPLIES.find(([chemin]) => chemin.test(url.pathname));
+    // (phase 2, 02/11/2026 : la même page pour tous, robots d'aperçu compris ; base lente : la page part quand même
+    // complète, barre du haut, menu et bas de page écrits)
+    const remplir = requete.method === 'GET' && PAGES_REMPLIES.find(([chemin]) => chemin.test(url.pathname));
     if (remplir) {
-      try { return (await remplir[1](url, anglais, requete)) || undefined; } catch (e) { return; }
+      try { return (await remplir[1](url, anglais, requete)) || await pageNue(url, 'x-ma2m-remplie'); } catch (e) { return; }
     }
-    if (!ROBOTS_APERCU.test(agent)) return; // visiteur normal : rien ne change
-    if (/\/mannequin(\.html)?$/.test(url.pathname)) return await apercuMannequin(url, anglais);
-    if (/\/partenaires(\.html)?$/.test(url.pathname)) return await apercuPartenaire(url, anglais);
-    const estEvenement = url.pathname.indexOf('evenements') !== -1;
-    const id = url.searchParams.get(estEvenement ? 'evenement' : 'actu');
-    if (!id || !ID_VALIDE.test(id)) return;
-
-    let titre = '';
-    let description = '';
-    let image = '';
-    if (estEvenement) {
-      const lignes = await lireSupabase('evenements?id=eq.' + id + '&select=titre,description,lieu,date_evenement,image_url');
-      const e = lignes && lignes[0];
-      if (!e) return;
-      titre = e.titre || '';
-      let date = '';
-      if (e.date_evenement) {
-        try {
-          date = new Date(e.date_evenement + 'T12:00:00Z').toLocaleDateString(anglais ? 'en-US' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-        } catch (x) { date = ''; }
-      }
-      const entete = [date, e.lieu].filter(Boolean).join(' · ');
-      description = [entete, texteSimple(e.description, 200)].filter(Boolean).join(' — ');
-      image = e.image_url;
-      if (!image) {
-        const photos = await lireSupabase('evenement_photos?evenement_id=eq.' + id + '&select=url&order=created_at.asc&limit=1');
-        image = photos && photos[0] && photos[0].url;
-      }
-    } else {
-      const lignes = await lireSupabase('actualites?id=eq.' + id + '&select=titre,commentaire,categorie,image_url');
-      const a = lignes && lignes[0];
-      if (!a) return;
-      titre = a.titre || '';
-      description = texteSimple(a.commentaire, 220);
-      image = a.image_url;
-      if (!image) {
-        const photos = await lireSupabase('actualite_photos?actualite_id=eq.' + id + '&select=url&order=created_at.asc&limit=1');
-        image = photos && photos[0] && photos[0].url;
-      }
-    }
-    if (!titre) return;
-
-    const lien = SITE + url.pathname.replace(/\.html$/, '') + '?' + (estEvenement ? 'evenement' : 'actu') + '=' + id;
-    return pageApercu({ titre, description, photo: imageApercu(image, anglais, estEvenement ? 'evenements' : 'actualites'), lien, anglais, type: 'article' });
+    // (phase 2, 02/11/2026) plus de petite page réservée aux robots d'aperçu : toutes les pages ci-dessus sont les mêmes
+    // pour tous ; les autres adresses (.html…) suivent les renvois de vercel.json vers l'adresse propre
+    return;
   } catch (e) {
     // au moindre souci : la page normale, comme avant (adresse lisible : The Book)
     try {

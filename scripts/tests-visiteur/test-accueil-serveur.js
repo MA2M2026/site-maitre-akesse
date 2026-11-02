@@ -172,7 +172,7 @@ async function middleware() {
     const copie = path.join(dossierCopies(), 'mw-lente-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie);
     const m = (await import(pathToFileURL(copie).href)).default;
     const t0 = Date.now(), r1 = await m(new Request('https://www.maitreakessemodelmanagement.com/'));
-    ok(r1 === undefined && Date.now() - t0 < 1200, 'base lente : la page part comme avant au bout de 0,8 s au plus (' + (Date.now() - t0) + ' ms)');
+    ok(r1 && r1.status === 200 && !/id="accueil-donnees"/.test(await r1.text()) && Date.now() - t0 < 1200, 'base lente : la page part au bout de 0,8 s au plus, complète mais sans la liste (' + (Date.now() - t0) + ' ms)');
     await new Promise((r) => setTimeout(r, 3500));
     const t1 = Date.now(), r2 = await m(new Request('https://www.maitreakessemodelmanagement.com/'));
     ok(r2 && Date.now() - t1 < 300, 'base lente : les visiteurs suivants reçoivent la page déjà remplie, sans attendre');
@@ -182,7 +182,7 @@ async function middleware() {
   basePanne = true;
   const mw2 = await (async () => { const copie = path.join(dossierCopies(), 'mw-essai2-' + process.pid + '.mjs'); fs.copyFileSync(path.join(RACINE, 'middleware.js'), copie); return (await import(pathToFileURL(copie).href)).default; })();
   const t0 = Date.now(), r = await mw2(new Request('https://www.maitreakessemodelmanagement.com/'));
-  ok(r === undefined && Date.now() - t0 < 1000, 'base en panne côté serveur : la page part comme avant, sans attendre');
+  ok(r && r.status === 200 && /data-gabarit="pied" data-rempli>/.test(await r.text()) && Date.now() - t0 < 1000, 'base en panne côté serveur : la page part sans attendre, barre du haut, menu et bas de page écrits par le serveur');
   const t1 = Date.now(); await mw2(new Request('https://www.maitreakessemodelmanagement.com/'));
   ok(Date.now() - t1 < 200, 'base en panne : la visite suivante n’attend pas la base');
   await b.close();

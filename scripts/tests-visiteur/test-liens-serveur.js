@@ -52,7 +52,8 @@ const visible = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '');
   ok(/Bonjour ! Message pour le parent de Awa Koné/.test(htmlParent), 'places : lien du parent : la phrase pour le parent');
   const avant = lectures; await demander('recu?r=' + JR); await demander('recu?r=' + JR);
   ok(lectures - avant === 2, 'jamais gardées en mémoire (données personnelles) : la base est lue à chaque visite');
-  ok(await demander('recu?r=abc') === undefined && await demander('places?c=xyz') === undefined, 'lien non valable : la page habituelle (« lien non valable »)');
+  { const r1 = await demander('recu?r=abc'), r2 = await demander('places?c=xyz');
+    ok(!!r1 && !!r2 && r1.status === 200 && /private, no-store/.test(r1.headers.get('cache-control') || '') && /private, no-store/.test(r2.headers.get('cache-control') || '') && !/-donnees"/.test(await r1.text()), 'lien non valable : la page habituelle (« lien non valable »), sans données, jamais gardée'); }
   panne = true;
   const r = await demander('recu?r=' + JR);
   ok(!r || !/Paiement effectué/.test(await r.text()), 'base en panne : la page part comme avant (elle se remplit elle-même)');

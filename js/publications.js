@@ -8,7 +8,7 @@ const PUBLICATIONS = {
   actualites: { table: 'actualites', tablePhotos: 'actualite_photos', colonne: 'actualite_id', dossier: 'actualites', seau: 'actualites-images' },
   evenements: { table: 'evenements', tablePhotos: 'evenement_photos', colonne: 'evenement_id', dossier: 'evenements', seau: 'evenements-images' }
 };
-const CATEGORIES_ACTUALITES = ['Casting', 'Mannequinat', 'Conseils', 'Événements'];
+const CATEGORIES_ACTUALITES = window.RenduPublications.CATEGORIES_ACTUALITES;  // (js/rendu-publications.js, chargé avant)
 
 // Lien YouTube / Vimeo collé par l'agence → adresse du lecteur intégré (null si non reconnu).
 function urlVideoIntegree(url) {

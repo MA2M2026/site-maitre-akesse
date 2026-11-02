@@ -89,3 +89,22 @@ Plus tard (décision de la propriétaire) : facture / note de cachet conforme.
 
 Après relecture et corrections : 80 parcours, 3 901 vérifications, 0 échec ; base d'essai : tous les fichiers
 SQL passent. Mis en ligne avec l'accord de la propriétaire. Retour en arrière possible : `main` 59cc077.
+
+## Phase 2 : site écrit par le serveur + sécurité (mission du 01/11/2026)
+
+Vocabulaire : `UNVERIFIED`, `IN_PROGRESS`, `BLOCKED`, `PASS(preuve)`, `FAIL(raison)`. Preuves : `evidence/` (hors dépôt).
+Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiquette `pre-phase2-8250275`.
+
+| Chantier | État | Blocage / reste |
+|---|---|---|
+| W0 Tri de départ | PASS(DECISIONS.md) | envois de 1 h et 3 h désactivés ; retour en arrière : dpl_99F9Ue1NvHjsvqzdbJGJY3547yxP → dpl_3Pr6SMGmavSd9uh1AiXHPsr4ykVM |
+| W1 Inventaire des pages | IN_PROGRESS | docs/routes.md écrit ; reste : sitemap généré depuis la base |
+| W2 Pages complètes écrites par le serveur | IN_PROGRESS | serveur local : 180/180 (evidence/W2-local-180.txt) ; batterie et mise en ligne en cours |
+| W3 Cache exact | IN_PROGRESS | en-têtes d'origine plus recopiés (x-vercel-cache, age), politique explicite + x-ma2m-render/x-ma2m-build ; à vérifier en ligne |
+| W4 Retirer le code d'administration des pages publiques | UNVERIFIED | — |
+| W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |
+| W6 Sécurité (envois, limites, en-têtes, RLS, secrets…) | UNVERIFIED | b3ef467 introuvable (à refaire) |
+| W7 Vitesse (LCP ≤ 2,5 s) | UNVERIFIED | — |
+| W8 Administration du contenu | UNVERIFIED | — |
+| W9 Essais automatiques | UNVERIFIED | — |
+| W10 Documentation | UNVERIFIED | — |

@@ -49,6 +49,9 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
 // base lente ou en panne : la page habituelle, sans bloc de données (aucune page cassée)
 const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json" id="[a-z-]+-donnees"/.test(await r.text()));
 
+
+const texteVu = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const memePagePourRobot = async (dem, chemin) => { const a = await dem(chemin, { headers: { 'user-agent': 'WhatsApp/2.23' } }); const b = await dem(chemin); return !!(a && b) && texteVu(await a.text()) === texteVu(await b.text()); };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
@@ -65,7 +68,7 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
     ok(d && d.profils.length === 3 && d.photos.length === 3, chemin + ' : la liste des mannequins et leurs photos sont dans la page');
     ok(d && !/published|phone|email|naissance/.test(JSON.stringify(d.profils)), chemin + ' : rien de plus que ce que le Book montre (et le nom d’adresse de la fiche)');
     ok(!/<img src=x onerror/.test(html) && /\\u003cimg src=x onerror/.test(html), chemin + ' : un nom avec des signes spéciaux ne peut rien injecter');
-    ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardé par le navigateur (le serveur, lui, garde la liste 3 minutes au plus)');
+    ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifié à chaque visite (le serveur garde la liste 3 minutes au plus)');
   }
   // étape A (01/11/2026) : les CARTES elles-mêmes sont dans le HTML (sans aucun programme), dans l'ordre alphabétique
   for (const chemin of ['mannequins', 'en/mannequins']) {
@@ -100,7 +103,7 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
   ok(await demander('mannequins', { headers: { 'x-ma2m-remplie': '1' } }) === undefined, 'sa propre demande de la page passe sans boucle');
   ok(await demander('mannequins', { method: 'HEAD' }) === undefined, 'seulement les visites (GET)');
   ok(await demander('mannequins.html') === undefined && await demander('en/mannequins.html') === undefined, 'adresse en .html : pas préparée, le renvoi vers l’adresse propre reste');
-  ok(await demander('mannequins', { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, 'robot d’aperçu (WhatsApp…) : la page habituelle');
+  ok(await memePagePourRobot(demander, 'mannequins'), 'robot d’aperçu (WhatsApp…) : exactement la même page que les visiteurs');
   baseLente = 1500; const t = Date.now();
   ok(await sansDonnees(await demander('mannequins')) && Date.now() - t < 2500, 'base lente : la page part comme avant (sans données, demandée une seule fois), sans attendre (' + (Date.now() - t) + ' ms)');
   baseLente = 0; basePanne = true;

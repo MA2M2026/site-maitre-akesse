@@ -168,6 +168,32 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🖥️ Phase 2 : tout le site public écrit par le serveur (02/11/2026, demande de la propriétaire)
+
+Chaque page publique part COMPLÈTE de `middleware.js` (texte, images, listes, en-tête og:/JSON-LD), la même pour
+les visiteurs, Google, WhatsApp et Facebook (plus de petite page réservée aux robots). Les programmes de la page ne
+font plus que l'interaction (menu, filtres, calendrier, galerie, formulaires).
+- **Un seul dessin, partagé** : chaque fichier ci-dessous est un script classique (chargé par la page) ET importé par
+  `middleware.js` ; il pose `window.X` / `globalThis.X`.
+  `js/gabarit.js` (barre du haut, menu, bas de page, lien « Aller au contenu », bandeau « Vous êtes mannequin ? »,
+  mur de photos), `js/partage.js` (listes des formulaires, outils de dates et d'agenda, fiche, petit document en
+  mémoire `Partage.Noeud`), `js/rendu-agenda.js`, `js/parcours.js` (RenduParcours), `js/rendu-fiche.js`,
+  `js/formulaire-candidature-champs.js`, `js/tailles.js`, `js/rendu-book.js`, `js/rendu-publications.js`.
+- **Ordre de chargement** : `js/partage.js` AVANT `js/app.js` sur toutes les pages qui chargent app.js (site,
+  `/admin/`, `/app/`) ; app.js reprend ses outils (`const { … } = window.Partage`). Il est aussi dans les copies hors
+  ligne (`admin/sw.js`, `app/sw.js`). `js/rendu-agenda.js` avant `js/agenda.js`, `js/rendu-fiche.js` avant
+  `js/fiche-mannequin.js`.
+- **Agenda et parcours** : le serveur fait tourner le même code que la page dans un petit document en mémoire
+  (`Partage.Noeud`, juste ce que ces dessins utilisent), puis le transforme en HTML.
+- **Cache** : pages publiques `public, max-age=0, s-maxage=60, stale-while-revalidate=120`, `Vary: Sec-CH-UA-Mobile,
+  User-Agent` ; liens personnels (`/recu`, `/places`) `private, no-store` ; en-têtes `x-ma2m-render: ssr` et
+  `x-ma2m-build` (version). Une modification de l'Administration se voit au plus 180 s après (mémoire de 3 min).
+- **Éléments tirés au hasard** (couverture, mur, diaporamas) : marqués `data-hasard`.
+- **Vérifier** : `NODE_USE_ENV_PROXY=1 node scripts/serveur-local.mjs 8787` (le dépôt servi comme Vercel, base lue
+  en lecture seule) puis `node scripts/verify-dynamic.mjs --url http://127.0.0.1:8787` ; sur le vrai site :
+  `--url https://www.maitreakessemodelmanagement.com`. Une ligne PASS/FAIL par contrôle. Inventaire :
+  `docs/routes.md` ; exceptions justifiées : `tests/js-only-whitelist.json`.
+
 ## 💸 Payer les mannequins (Comptabilité, 22/10/2026, choix de la propriétaire : Wave d'abord)
 « Rapport des cachets » (23/10/2026, `js/portail/espace-compta-cachets-rapport.js`, menu de la
 Comptabilité) : cachets payés d'un mois ou d'une année (filtre sur `paye_le`), totaux (prestations,

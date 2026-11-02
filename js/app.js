@@ -69,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   observerAjouts.observe(document.body, { childList: true, subtree: true });
 });
+// Outils partagés avec le serveur (js/partage.js, phase 2, 02/11/2026)
+const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure } = window.Partage;
+
 
 // Sécurité : neutralise tout HTML dans un texte avant de l'insérer dans la page
 // (protège contre les injections XSS via un nom, un titre, un commentaire...)
@@ -90,19 +93,8 @@ function echapperHtml(texte) {
 // valeur « Amateur » compte comme New Face). Sur le site public, la compcard et le CV,
 // « Professionnel » s'affiche « Main Board », comme dans les grandes agences.
 // Règle d'ancienneté : de 0 à 2 ans → New Face ; plus de 2 ans → Professionnel.
-function deriverNiveauMannequin(anneesExperience) {
-  const annees = anneesExperience === '' || anneesExperience === null || anneesExperience === undefined
-    ? NaN : parseInt(anneesExperience, 10);
-  return !isNaN(annees) && annees > 2 ? 'Professionnel' : 'New Face';
-}
 // Niveau à utiliser pour un profil : la valeur enregistrée (Amateur → New Face), sinon la
 // règle d'ancienneté.
-function niveauNormalise(stocke, anneesExperience) {
-  if (stocke === 'Professionnel') return 'Professionnel';
-  if (stocke === 'New Face' || stocke === 'Amateur') return 'New Face';
-  return deriverNiveauMannequin(anneesExperience);
-}
-function libelleNiveauPublic(niveau) { return niveau === 'Professionnel' ? 'Main Board' : 'New Face'; }
 // Années couvertes par les expériences saisies (de la plus ancienne année à aujourd'hui).
 function anneesDepuisPremiereExperience(experiences) {
   const annees = (experiences || []).map(function (e) { const m = String((e && e.annee) || '').match(/(19|20)\d{2}/); return m ? parseInt(m[0], 10) : NaN; })
@@ -285,6 +277,7 @@ function construireHtmlCv(d) {
 function remplirSelectNombres(id, min, max, pas, suffixe) {
   const champ = document.getElementById(id);
   if (!champ) return;
+  if (champ.hasAttribute('data-rempli') && champ.options.length > 1) return;  // (phase 2 : déjà écrite par le serveur)
   champ.appendChild(new Option('—', ''));
   for (let v = min; v <= max; v += pas) {
     champ.appendChild(new Option(v + (suffixe || ''), v));
@@ -293,13 +286,6 @@ function remplirSelectNombres(id, min, max, pas, suffixe) {
 
 // Lien cliquable seulement pour une vraie adresse web (http/https) : bloque les liens piégés
 // du type « javascript:… » ou « data:… ». Partagé le 11/10/2026 (Actualités, fiche mannequin).
-function urlHttpSure(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(url, window.location.href);
-    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
-  } catch (e) { return null; }
-}
 
 // Pages publiques Actualités, Événements, Partenaires : si l'agence est connectée (session du
 // tableau de bord), révèle le panneau d'ajout (#admin-bloc). Partagé le 11/10/2026.
@@ -383,6 +369,7 @@ function T(fr, en) { return EN ? en : fr; }
 function remplirSelectListe(id, liste) {
   const champ = document.getElementById(id);
   if (!champ) return;
+  if (champ.hasAttribute('data-rempli') && champ.options.length > 1) return;  // (phase 2 : déjà écrite par le serveur)
   champ.appendChild(new Option('—', ''));
   liste.forEach(v => champ.appendChild(new Option(v, v)));
   champ.appendChild(new Option(T('Autre', 'Other'), 'Autre'));
@@ -591,25 +578,8 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // Mesures impériales pour les recruteurs américains / britanniques (06/10/2026, fiche et
 // Compcard en anglais) : taille en pieds et pouces, mensurations en pouces, poids en livres,
 // pointure US — à côté des valeurs métriques, calculées automatiquement (rien à saisir).
-function enPieds(cm) {
-  const pouces = cm / 2.54; let pieds = Math.floor(pouces / 12); let reste = Math.round((pouces - pieds * 12) * 2) / 2;
-  if (reste >= 12) { pieds += 1; reste -= 12; }
-  return pieds + "'" + String(reste).replace('.5', '½') + '"';
-}
-function enPouces(cm) { return String(Math.round(cm / 2.54 * 2) / 2).replace('.5', '½') + '"'; }
-function enLivres(kg) { return Math.round(kg * 2.2046) + ' lbs'; }
-function pointureUS(eu, categorie) {
-  const n = parseFloat(String(eu || '').replace(',', '.'));
-  if (!n || n < 34 || n > 50) return '';
-  const us = categorie === 'homme' ? n - 33 : n - 30.5;
-  return 'US ' + String(Math.round(us * 2) / 2).replace('.5', '½');
-}
 // Carnation, yeux et cheveux sont saisis en français par les mannequins : traduits ici pour
 // les recruteurs internationaux (une valeur inconnue reste telle quelle).
-const TRADUCTIONS_EN = { 'claire': 'Light', 'métisse claire': 'Light medium', 'métisse foncée': 'Medium dark', 'foncée': 'Dark', 'très foncée': 'Very dark',
-  'marron': 'Brown', 'marron foncé': 'Dark brown', 'noir': 'Black', 'noire': 'Black', 'vert': 'Green', 'bleu': 'Blue', 'gris': 'Grey', 'noisette': 'Hazel',
-  'brun': 'Brown', 'châtain': 'Chestnut', 'blond': 'Blonde', 'roux': 'Red', 'gris / blanc': 'Grey / White', 'la tête rasée': 'Shaved', 'rasé': 'Shaved', 'tête rasée': 'Shaved' };
-function enAnglais(v) { const k = String(v || '').trim().toLowerCase(); return TRADUCTIONS_EN[k] || v; }
 // Textes saisis dans l'Administration (actualités, événements, agenda, partenaires, mot du
 // fondateur, présentations…) : sur les pages anglaises, leur version anglaise (table traductions_en,
 // supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
@@ -992,33 +962,16 @@ async function lireToutesLignes(fabrique) {
 // Agenda MA2M (Extension 124) : libellés des types de projet [français, anglais] et
 // date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
 // partagés par le tableau de bord et la page Agenda.
-const MA2M_TYPES_AGENDA = {
-  defile: ['Défilé', 'Fashion show'],
-  show: ['Show', 'Show'],
-  shooting: ['Shooting', 'Photo shoot'],
-  casting: ['Casting', 'Casting'],
-  essayage: ['Essayages', 'Fittings'],
-  masterclass: ['Masterclass', 'Masterclass'],
-  formation: ['Formation', 'Training'],
-  rencontre: ['Rencontre', 'Meeting'],
-  evenement: ['Événement', 'Event'],
-  autre: ['Projet', 'Project']
-};
+const MA2M_TYPES_AGENDA = window.Partage.MA2M_TYPES_AGENDA;  // (js/partage.js, phase 2)
 // Rôles proposés pour les intervenants d'un projet (la liste reste libre).
 const MA2M_ROLES_INTERVENANTS = ['Photographe', 'Vidéaste', 'Chorégraphe', 'Styliste', 'Créateur / créatrice',
   'Maquilleur / maquilleuse', 'Coiffeur / coiffeuse', 'Directeur artistique', 'Organisateur', 'Présentateur', 'Formateur'];
-function libelleTypeAgenda(type, enAnglais) {
-  const l = MA2M_TYPES_AGENDA[type] || MA2M_TYPES_AGENDA.autre;
-  return l[enAnglais ? 1 : 0];
-}
+function libelleTypeAgenda(type, enAnglais) { return window.Partage.libelleTypeAgenda(type, enAnglais); }
 // Lien vers la fiche publique d'une mannequin : adresse « book » si elle existe (Agenda,
 // Parcours MA2M). Partagé le 11/10/2026.
 // Lien vide pour une mannequin écrite à la main dans l'agenda (« Autres mannequins »,
 // Extension 137) : elle n'a pas encore de profil sur le site.
-function lienFicheMannequin(m) {
-  if (m.slug) return 'book/' + encodeURIComponent(m.slug);
-  return m.id ? 'mannequin.html?id=' + encodeURIComponent(m.id) : '';
-}
+function lienFicheMannequin(m) { return window.Partage.lienFicheMannequin(m); }
 
 // Parcours MA2M (Extension 136) : projets réalisés de l'agenda entre deux dates (« AAAA-MM-JJ »),
 // pour une seule mannequin si idMannequin est donné. Rien de privé (ni adresse exacte, ni
@@ -1043,7 +996,7 @@ async function lireParcours(debut, fin, idMannequin) {
   // mannequin (idMannequin), ses projets comptent même si son profil n'est pas public.
   return idMannequin ? (data || []) : projetsAvecNoms(data);
 }
-function projetsAvecNoms(data) { return (data || []).filter(p => (p.mannequins || []).length); }
+function projetsAvecNoms(data) { return window.Partage.projetsAvecNoms(data); }
 
 // Expériences d'une mannequin synchronisées avec l'agenda (demande de la propriétaire,
 // 12/10/2026) : chaque projet réalisé avec l'agence apparaît tout seul dans ses expériences
@@ -1054,24 +1007,8 @@ function projetsAvecNoms(data) { return (data || []).filter(p => (p.mannequins |
 // mots contenu mot pour mot dans l'autre (« JNCC/ cacao fashion show » = « Cacao Fashion
 // Show ») — et, si elle a indiqué une année, la même année : « Abidjan Fashion Week 2023 »
 // ne remplace pas l'édition 2026. Un nom court (« Shooting ») ne remplace jamais rien.
-function cleProjet(titre) {
-  return String(titre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-    .replace(/\b(19|20)\d{2}\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
-}
-function anneesDe(texte) { return String(texte || '').match(/\b(19|20)\d{2}\b/g) || []; }
-function memeProjet(a, b) {
-  const x = cleProjet(a.titre || a.nom), y = cleProjet(b.titre || b.nom);
-  if (!x || !y) return false;
-  const [court, long] = x.length <= y.length ? [x, y] : [y, x];
-  const contenu = court.split(' ').length >= 3 && (' ' + long + ' ').includes(' ' + court + ' ');
-  if (x !== y && !contenu) return false;
-  const ansA = anneesDe((a.titre || a.nom) + ' ' + (a.periode || a.annee || ''));
-  const ansB = anneesDe((b.titre || b.nom) + ' ' + (b.periode || b.annee || ''));
-  return !ansA.length || !ansB.length || ansA.some(an => ansB.includes(an));
-}
 // Types de l'agenda qui comptent comme expérience professionnelle (pas les castings,
 // essayages, formations, masterclasses ni rencontres).
-const TYPES_EXPERIENCE_AGENDA = { defile: 'Défilé', show: 'Show', shooting: 'Shooting', evenement: 'Événement', autre: 'Projet' };
 // Projets de l'agence d'une mannequin, au format des expériences (table model_projects).
 // Une panne de lecture ne bloque jamais la page : la liste est alors simplement vide.
 // (parcoursServeur : parcours des 10 dernières années déjà posé dans la page par le serveur, 100 % dynamique)
@@ -1080,11 +1017,7 @@ async function ma2mExperiencesAgence(idMannequin, parcoursServeur) {
   try {
     const fin = new Date(), debut = new Date(fin.getFullYear() - 10, fin.getMonth(), 1);
     const projets = parcoursServeur || await ma2mParcours(dateLocaleIso(debut), dateLocaleIso(fin), idMannequin);
-    return projets.filter(p => p.type in TYPES_EXPERIENCE_AGENDA).map(p => {
-      const mois = new Date((p.date_fin || p.date_debut) + 'T12:00:00').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', { month: 'long', year: 'numeric' });
-      return { type_projet: EN ? libelleTypeAgenda(p.type, true) : TYPES_EXPERIENCE_AGENDA[p.type], titre: p.titre,
-        periode: mois.charAt(0).toUpperCase() + mois.slice(1), lieu: p.lieu || '', ville: p.ville || '', pays: p.pays || '', promoteur: 'MA2M', agence: true };
-    });
+    return experiencesDepuisParcours(projets, EN);  // (js/partage.js)
   } catch (e) {
     if (window.signalerErreur) window.signalerErreur('Expériences avec l’agence : lecture', (e && e.message) || String(e));
     return [];
@@ -1092,10 +1025,6 @@ async function ma2mExperiencesAgence(idMannequin, parcoursServeur) {
 }
 // Projets de l'agence d'abord, puis les expériences de la mannequin qui ne les répètent pas.
 // Les deux listes peuvent être au format model_projects (titre, periode) ou CV (nom, annee).
-function estDoublonDe(e, agence) { return (agence || []).some(a => memeProjet(e, a)); }
-function fusionnerExperiences(agence, propres) {
-  return (agence || []).concat((propres || []).filter(e => !estDoublonDe(e, agence)));
-}
 // Format attendu par le CV (construireHtmlCv / construireCanvasCv).
 function experiencePourCv(e) {
   return e.titre !== undefined || e.type_projet !== undefined
@@ -1104,55 +1033,23 @@ function experiencePourCv(e) {
 }
 // Date du jour (ou d'une date) au format « AAAA-MM-JJ » dans le fuseau du visiteur
 // (toISOString passe en heure universelle et peut décaler d'un jour).
-function dateLocaleIso(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
+function dateLocaleIso(d) { return window.Partage.dateDuJour(d); }
 // « Sofitel, Abidjan, Côte d'Ivoire » et « sam. 20 sept. 2026 · Sofitel, Abidjan, … »
-function lieuProjet(p) { return [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); }
-function dateLieuProjet(p) {
-  const lieu = lieuProjet(p);
-  return dateAgenda(p.date_debut, p.date_fin, EN) + (lieu ? ' · ' + lieu : '');
-}
+function lieuProjet(p) { return window.Partage.lieuProjet(p); }
+function dateLieuProjet(p) { return window.Partage.dateLieuProjet(p, EN); }
 // Nombre de projets par type, du plus fréquent au moins fréquent : [['defile', 4], …]
-function ma2mCompteParType(projets) {
-  const compte = {};
-  projets.forEach(p => { compte[p.type] = (compte[p.type] || 0) + 1; });
-  return Object.entries(compte).sort((a, b) => b[1] - a[1]);
-}
+function ma2mCompteParType(projets) { return window.Partage.ma2mCompteParType(projets); }
 
 // « 3 défilés », « 1 shooting », « 2 fashion shows » : nombre + type, au pluriel si besoin.
-function nombreTypeAgenda(type, n, enAnglais) {
-  const l = libelleTypeAgenda(type, enAnglais).toLowerCase();
-  if (n < 2 || /[x]$/.test(l) || /[^s]s$/.test(l)) return n + ' ' + l; // déjà au pluriel (essayages, fittings)
-  return n + ' ' + l + (/ss$/.test(l) ? 'es' : 's');                      // masterclass → masterclasses
-}
+function nombreTypeAgenda(type, n, enAnglais) { return window.Partage.nombreTypeAgenda(type, n, enAnglais); }
 
-function dateAgenda(debut, fin, enAnglais) {
-  const langue = enAnglais ? 'en-GB' : 'fr-FR';
-  const d = new Date(debut + 'T12:00:00');
-  if (Number.isNaN(d.getTime())) return '';
-  const complet = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
-  if (!fin || fin === debut) return d.toLocaleDateString(langue, complet);
-  const f = new Date(fin + 'T12:00:00');
-  return d.toLocaleDateString(langue, { day: 'numeric', month: 'short' }) + ' – ' + f.toLocaleDateString(langue, { day: 'numeric', month: 'short', year: 'numeric' });
-}
+function dateAgenda(debut, fin, enAnglais) { return window.Partage.dateAgenda(debut, fin, enAnglais); }
 
 // « CACAO FASHION SHOW » → « Cacao Fashion Show », « AFRICA IN RYTHM » → « Africa in Rythm »
 // (titres saisis en capitales). Les mots avec un chiffre (MA2M, 2026…) gardent leurs
 // capitales ; les petits mots (de, la, in, of…) restent en minuscules sauf en tête.
-const MOTS_COURTS = ['de', 'du', 'des', 'la', 'le', 'les', 'et', 'à', 'au', 'aux', 'en', 'in', 'of', 'the', 'and', 'on'];
-function titreLisible(t) {
-  const s = String(t || '').trim();
-  if (s !== s.toUpperCase()) return s;
-  return s.split(/(\s+)/).map((mot, i) => {
-    const bas = mot.toLowerCase();
-    const motCourt = MOTS_COURTS.includes(bas);
-    if (i > 0 && motCourt) return bas;
-    if (/\d/.test(mot) || (!motCourt && /^[A-Z]{1,2}$/.test(mot))) return mot; // MA2M, 2026, sigles (CI, MA)
-    const capitale = bas.replace(/(^|['’(-])(\S)/g, (m, x, y) => x + y.toUpperCase());
-    return i > 0 && /^[dl]['’]/.test(bas) ? capitale.charAt(0).toLowerCase() + capitale.slice(1) : capitale; // « d'Abidjan »
-  }).join('');
-}
+// titreLisible : js/partage.js (phase 2, partagé avec le serveur)
+const titreLisible = (t) => window.Partage.titreLisible(t);
 
 // 'AAAA-MM-JJ' → « samedi 14 novembre » (Programmation défilé de l'Administration, application des mannequins)
 function jourLong(j) {
@@ -1161,21 +1058,8 @@ function jourLong(j) {
 // Date du jour au format AAAA-MM-JJ (heure de l'appareil), et projets d'agenda séparés
 // en « à venir » (du plus proche au plus lointain) et « réalisés » (du plus récent au
 // plus ancien) ; un projet sur plusieurs jours reste « à venir » jusqu'à son dernier jour.
-function dateDuJour(d = new Date()) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-function separerAgenda(projets) {
-  const jour = dateDuJour();
-  const cle = p => String(p.date_debut || '');
-  const tries = (projets || []).slice().sort((x, y) => {
-    if (cle(x) === cle(y)) return 0;
-    return cle(x) < cle(y) ? -1 : 1;
-  });
-  return {
-    avenir: tries.filter(p => (p.date_fin || p.date_debut) >= jour),
-    passes: tries.filter(p => (p.date_fin || p.date_debut) < jour).reverse()
-  };
-}
+function dateDuJour(d = new Date()) { return window.Partage.dateDuJour(d); }
+function separerAgenda(projets) { return window.Partage.separerAgenda(projets); }
 
 // Copie mélangée d'une liste (mélange de Fisher-Yates) : photos de l'accueil, visages et
 // photos d'événements de la page « Qui sommes-nous »…
@@ -1194,18 +1078,6 @@ function melanger(liste) {
 // profil. Les photos écartées du book ne comptent pas (le public ne les voit pas). Renvoie
 // aussi les photos choisies (null si aucune). L'aperçu des liens partagés (middleware.js)
 // a sa propre règle côté serveur.
-function photosAffichees(photos) {
-  const date = function (p) { const t = Date.parse(p.created_at); return isNaN(t) ? Infinity : t; };
-  const triees = (photos || []).filter(function (p) { return p.tri_statut !== 'ecartee'; }).sort(function (x, y) {
-    if (!!x.principale !== !!y.principale) return x.principale ? -1 : 1;
-    if (date(x) !== date(y)) return date(x) - date(y);
-    const ix = String(x.id), iy = String(y.id);
-    return ix === iy ? 0 : (ix < iy ? -1 : 1);
-  });
-  const profil = triees[0] || null;
-  const couvertureChoisie = triees.find(function (p) { return p.photo_couverture; }) || null;
-  return { profil: profil, couverture: couvertureChoisie || profil, profilChoisi: !!(profil && profil.principale), couvertureChoisie: couvertureChoisie };
-}
 
 // Fiche mannequin FR/EN (journal du 07/10/2026 : « délai dépassé », « sb is not defined »
 // sur connexion faible) : second essai automatique avant d'afficher le bouton
@@ -3492,18 +3364,7 @@ document.addEventListener('pointerdown', function (e) {
 // Reprise à l'identique de la liste utilisée jusqu'ici séparément dans
 // candidature.html et espace-mannequin-ancien.html (une seule copie désormais,
 // réutilisée aussi par espace-mannequin.html).
-const VILLES_CI = [
-  'Abidjan', 'Abengourou', 'Aboisso', 'Adiaké', 'Adzopé', 'Affery', 'Agboville', 'Agnibilékrou',
-  'Akoupé', 'Alépé', 'Anyama', 'Arrah', 'Attiégouakro', 'Bangolo', 'Bettié', 'Biankouma',
-  'Bingerville', 'Bloléquin', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bouaflé', 'Bouaké', 'Bouna',
-  'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
-  'Facobly', 'Ferkessédougou', 'Fresco', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo',
-  'Guitry', 'Issia', 'Jacqueville', 'Kani', 'Katiola', 'Kong', 'Korhogo', 'Kouibly', 'Lakota',
-  'Man', 'Mankono', "M'Bahiakro", 'Minignan', 'Nassian', 'Odienné', 'Oumé', 'Ouangolodougou',
-  'Ouragahio', 'Prikro', 'Sakassou', 'San-Pédro', 'Sassandra', 'Séguéla', 'Sikensi', 'Sinfra',
-  'Soubré', 'Tabou', 'Tanda', 'Tengréla', 'Tiassalé', 'Tiébissou', 'Toulepleu', 'Toumodi',
-  'Touba', 'Vavoua', 'Yamoussoukro', 'Zouan-Hounien', 'Zuénoula'
-];
+const VILLES_CI = (window.ListesFormulaires || {}).VILLES_CI || [];  // (js/partage.js, phase 2)
 
 // Communes du Grand Abidjan — affichées dans une seconde liste déroulante qui
 // n'apparaît que si "Abidjan" est choisi ci-dessus : les 10 communes historiques
@@ -3511,10 +3372,7 @@ const VILLES_CI = [
 // Bingerville existent déjà comme villes autonomes dans VILLES_CI ; ici on les
 // retrouve aussi comme communes du Grand Abidjan, pour ceux qui partent d'"Abidjan"
 // plutôt que de chercher directement leur commune dans la longue liste des villes).
-const COMMUNES_ABIDJAN = [
-  'Abobo', 'Adjamé', 'Anyama', 'Attécoubé', 'Bingerville', 'Cocody', 'Koumassi', 'Marcory',
-  'Plateau', 'Port-Bouët', 'Songon', 'Treichville', 'Yopougon'
-];
+const COMMUNES_ABIDJAN = (window.ListesFormulaires || {}).COMMUNES_ABIDJAN || [];  // (js/partage.js, phase 2)
 
 // Branche la cascade "ville → commune (→ quartier)" sur les champs déjà présents
 // dans la page : quand "Abidjan" est choisi dans le select ville, un second select
@@ -3611,222 +3469,16 @@ function definirVilleAvecCommune(valeurEnregistree, idSelectVille, idAutreVille,
 // pays, indicatif), utilisée sur tous les formulaires du site qui demandent un
 // numéro de téléphone/WhatsApp — pour garantir un numéro toujours complet et
 // utilisable en lien WhatsApp cliquable depuis le tableau de bord.
-const INDICATIFS_PAYS = [
-  ['+93', '🇦🇫 Afghanistan (+93)'],
-  ['+27', '🇿🇦 Afrique du Sud (+27)'],
-  ['+355', '🇦🇱 Albanie (+355)'],
-  ['+213', '🇩🇿 Algérie (+213)'],
-  ['+49', '🇩🇪 Allemagne (+49)'],
-  ['+376', '🇦🇩 Andorre (+376)'],
-  ['+244', '🇦🇴 Angola (+244)'],
-  ['+1268', '🇦🇬 Antigua-et-Barbuda (+1268)'],
-  ['+966', '🇸🇦 Arabie saoudite (+966)'],
-  ['+54', '🇦🇷 Argentine (+54)'],
-  ['+374', '🇦🇲 Arménie (+374)'],
-  ['+61', '🇦🇺 Australie (+61)'],
-  ['+43', '🇦🇹 Autriche (+43)'],
-  ['+994', '🇦🇿 Azerbaïdjan (+994)'],
-  ['+1242', '🇧🇸 Bahamas (+1242)'],
-  ['+973', '🇧🇭 Bahreïn (+973)'],
-  ['+880', '🇧🇩 Bangladesh (+880)'],
-  ['+1246', '🇧🇧 Barbade (+1246)'],
-  ['+32', '🇧🇪 Belgique (+32)'],
-  ['+501', '🇧🇿 Belize (+501)'],
-  ['+229', '🇧🇯 Bénin (+229)'],
-  ['+975', '🇧🇹 Bhoutan (+975)'],
-  ['+375', '🇧🇾 Biélorussie (+375)'],
-  ['+95', '🇲🇲 Birmanie / Myanmar (+95)'],
-  ['+591', '🇧🇴 Bolivie (+591)'],
-  ['+387', '🇧🇦 Bosnie-Herzégovine (+387)'],
-  ['+267', '🇧🇼 Botswana (+267)'],
-  ['+55', '🇧🇷 Brésil (+55)'],
-  ['+673', '🇧🇳 Brunei (+673)'],
-  ['+359', '🇧🇬 Bulgarie (+359)'],
-  ['+226', '🇧🇫 Burkina Faso (+226)'],
-  ['+257', '🇧🇮 Burundi (+257)'],
-  ['+855', '🇰🇭 Cambodge (+855)'],
-  ['+237', '🇨🇲 Cameroun (+237)'],
-  ['+1', '🇨🇦 Canada (+1)'],
-  ['+238', '🇨🇻 Cap-Vert (+238)'],
-  ['+56', '🇨🇱 Chili (+56)'],
-  ['+86', '🇨🇳 Chine (+86)'],
-  ['+357', '🇨🇾 Chypre (+357)'],
-  ['+57', '🇨🇴 Colombie (+57)'],
-  ['+269', '🇰🇲 Comores (+269)'],
-  ['+242', '🇨🇬 Congo-Brazzaville (+242)'],
-  ['+243', '🇨🇩 Congo-Kinshasa / RDC (+243)'],
-  ['+850', '🇰🇵 Corée du Nord (+850)'],
-  ['+82', '🇰🇷 Corée du Sud (+82)'],
-  ['+506', '🇨🇷 Costa Rica (+506)'],
-  ['+225', "🇨🇮 Côte d'Ivoire (+225)"],
-  ['+385', '🇭🇷 Croatie (+385)'],
-  ['+53', '🇨🇺 Cuba (+53)'],
-  ['+45', '🇩🇰 Danemark (+45)'],
-  ['+253', '🇩🇯 Djibouti (+253)'],
-  ['+1767', '🇩🇲 Dominique (+1767)'],
-  ['+20', '🇪🇬 Égypte (+20)'],
-  ['+971', '🇦🇪 Émirats arabes unis (+971)'],
-  ['+593', '🇪🇨 Équateur (+593)'],
-  ['+291', '🇪🇷 Érythrée (+291)'],
-  ['+34', '🇪🇸 Espagne (+34)'],
-  ['+372', '🇪🇪 Estonie (+372)'],
-  ['+268', '🇸🇿 Eswatini (+268)'],
-  ['+1', '🇺🇸 États-Unis (+1)'],
-  ['+251', '🇪🇹 Éthiopie (+251)'],
-  ['+679', '🇫🇯 Fidji (+679)'],
-  ['+358', '🇫🇮 Finlande (+358)'],
-  ['+33', '🇫🇷 France (+33)'],
-  ['+241', '🇬🇦 Gabon (+241)'],
-  ['+220', '🇬🇲 Gambie (+220)'],
-  ['+995', '🇬🇪 Géorgie (+995)'],
-  ['+233', '🇬🇭 Ghana (+233)'],
-  ['+30', '🇬🇷 Grèce (+30)'],
-  ['+1473', '🇬🇩 Grenade (+1473)'],
-  ['+502', '🇬🇹 Guatemala (+502)'],
-  ['+224', '🇬🇳 Guinée (+224)'],
-  ['+245', '🇬🇼 Guinée-Bissau (+245)'],
-  ['+240', '🇬🇶 Guinée équatoriale (+240)'],
-  ['+592', '🇬🇾 Guyana (+592)'],
-  ['+509', '🇭🇹 Haïti (+509)'],
-  ['+504', '🇭🇳 Honduras (+504)'],
-  ['+36', '🇭🇺 Hongrie (+36)'],
-  ['+91', '🇮🇳 Inde (+91)'],
-  ['+62', '🇮🇩 Indonésie (+62)'],
-  ['+964', '🇮🇶 Irak (+964)'],
-  ['+98', '🇮🇷 Iran (+98)'],
-  ['+353', '🇮🇪 Irlande (+353)'],
-  ['+354', '🇮🇸 Islande (+354)'],
-  ['+972', '🇮🇱 Israël (+972)'],
-  ['+39', '🇮🇹 Italie (+39)'],
-  ['+1876', '🇯🇲 Jamaïque (+1876)'],
-  ['+81', '🇯🇵 Japon (+81)'],
-  ['+962', '🇯🇴 Jordanie (+962)'],
-  ['+7', '🇰🇿 Kazakhstan (+7)'],
-  ['+254', '🇰🇪 Kenya (+254)'],
-  ['+996', '🇰🇬 Kirghizistan (+996)'],
-  ['+686', '🇰🇮 Kiribati (+686)'],
-  ['+965', '🇰🇼 Koweït (+965)'],
-  ['+856', '🇱🇦 Laos (+856)'],
-  ['+266', '🇱🇸 Lesotho (+266)'],
-  ['+371', '🇱🇻 Lettonie (+371)'],
-  ['+961', '🇱🇧 Liban (+961)'],
-  ['+231', '🇱🇷 Liberia (+231)'],
-  ['+218', '🇱🇾 Libye (+218)'],
-  ['+423', '🇱🇮 Liechtenstein (+423)'],
-  ['+370', '🇱🇹 Lituanie (+370)'],
-  ['+352', '🇱🇺 Luxembourg (+352)'],
-  ['+389', '🇲🇰 Macédoine du Nord (+389)'],
-  ['+261', '🇲🇬 Madagascar (+261)'],
-  ['+60', '🇲🇾 Malaisie (+60)'],
-  ['+265', '🇲🇼 Malawi (+265)'],
-  ['+960', '🇲🇻 Maldives (+960)'],
-  ['+223', '🇲🇱 Mali (+223)'],
-  ['+356', '🇲🇹 Malte (+356)'],
-  ['+212', '🇲🇦 Maroc (+212)'],
-  ['+230', '🇲🇺 Maurice (+230)'],
-  ['+222', '🇲🇷 Mauritanie (+222)'],
-  ['+52', '🇲🇽 Mexique (+52)'],
-  ['+691', '🇫🇲 Micronésie (+691)'],
-  ['+373', '🇲🇩 Moldavie (+373)'],
-  ['+377', '🇲🇨 Monaco (+377)'],
-  ['+976', '🇲🇳 Mongolie (+976)'],
-  ['+382', '🇲🇪 Monténégro (+382)'],
-  ['+258', '🇲🇿 Mozambique (+258)'],
-  ['+264', '🇳🇦 Namibie (+264)'],
-  ['+674', '🇳🇷 Nauru (+674)'],
-  ['+977', '🇳🇵 Népal (+977)'],
-  ['+505', '🇳🇮 Nicaragua (+505)'],
-  ['+227', '🇳🇪 Niger (+227)'],
-  ['+234', '🇳🇬 Nigeria (+234)'],
-  ['+47', '🇳🇴 Norvège (+47)'],
-  ['+64', '🇳🇿 Nouvelle-Zélande (+64)'],
-  ['+968', '🇴🇲 Oman (+968)'],
-  ['+256', '🇺🇬 Ouganda (+256)'],
-  ['+998', '🇺🇿 Ouzbékistan (+998)'],
-  ['+92', '🇵🇰 Pakistan (+92)'],
-  ['+680', '🇵🇼 Palaos (+680)'],
-  ['+507', '🇵🇦 Panama (+507)'],
-  ['+675', '🇵🇬 Papouasie-Nouvelle-Guinée (+675)'],
-  ['+595', '🇵🇾 Paraguay (+595)'],
-  ['+31', '🇳🇱 Pays-Bas (+31)'],
-  ['+51', '🇵🇪 Pérou (+51)'],
-  ['+63', '🇵🇭 Philippines (+63)'],
-  ['+48', '🇵🇱 Pologne (+48)'],
-  ['+351', '🇵🇹 Portugal (+351)'],
-  ['+974', '🇶🇦 Qatar (+974)'],
-  ['+236', '🇨🇫 République centrafricaine (+236)'],
-  ['+1809', '🇩🇴 République dominicaine (+1809)'],
-  ['+420', '🇨🇿 République tchèque (+420)'],
-  ['+40', '🇷🇴 Roumanie (+40)'],
-  ['+44', '🇬🇧 Royaume-Uni (+44)'],
-  ['+7', '🇷🇺 Russie (+7)'],
-  ['+250', '🇷🇼 Rwanda (+250)'],
-  ['+1869', '🇰🇳 Saint-Kitts-et-Nevis (+1869)'],
-  ['+378', '🇸🇲 Saint-Marin (+378)'],
-  ['+1784', '🇻🇨 Saint-Vincent-et-les-Grenadines (+1784)'],
-  ['+1758', '🇱🇨 Sainte-Lucie (+1758)'],
-  ['+677', '🇸🇧 Salomon (+677)'],
-  ['+503', '🇸🇻 Salvador (+503)'],
-  ['+685', '🇼🇸 Samoa (+685)'],
-  ['+239', '🇸🇹 São Tomé-et-Príncipe (+239)'],
-  ['+221', '🇸🇳 Sénégal (+221)'],
-  ['+381', '🇷🇸 Serbie (+381)'],
-  ['+248', '🇸🇨 Seychelles (+248)'],
-  ['+232', '🇸🇱 Sierra Leone (+232)'],
-  ['+65', '🇸🇬 Singapour (+65)'],
-  ['+421', '🇸🇰 Slovaquie (+421)'],
-  ['+386', '🇸🇮 Slovénie (+386)'],
-  ['+252', '🇸🇴 Somalie (+252)'],
-  ['+249', '🇸🇩 Soudan (+249)'],
-  ['+211', '🇸🇸 Soudan du Sud (+211)'],
-  ['+94', '🇱🇰 Sri Lanka (+94)'],
-  ['+46', '🇸🇪 Suède (+46)'],
-  ['+41', '🇨🇭 Suisse (+41)'],
-  ['+597', '🇸🇷 Suriname (+597)'],
-  ['+963', '🇸🇾 Syrie (+963)'],
-  ['+992', '🇹🇯 Tadjikistan (+992)'],
-  ['+255', '🇹🇿 Tanzanie (+255)'],
-  ['+235', '🇹🇩 Tchad (+235)'],
-  ['+66', '🇹🇭 Thaïlande (+66)'],
-  ['+670', '🇹🇱 Timor oriental (+670)'],
-  ['+228', '🇹🇬 Togo (+228)'],
-  ['+676', '🇹🇴 Tonga (+676)'],
-  ['+1868', '🇹🇹 Trinité-et-Tobago (+1868)'],
-  ['+216', '🇹🇳 Tunisie (+216)'],
-  ['+993', '🇹🇲 Turkménistan (+993)'],
-  ['+90', '🇹🇷 Turquie (+90)'],
-  ['+688', '🇹🇻 Tuvalu (+688)'],
-  ['+380', '🇺🇦 Ukraine (+380)'],
-  ['+598', '🇺🇾 Uruguay (+598)'],
-  ['+678', '🇻🇺 Vanuatu (+678)'],
-  ['+379', '🇻🇦 Vatican (+379)'],
-  ['+58', '🇻🇪 Venezuela (+58)'],
-  ['+84', '🇻🇳 Vietnam (+84)'],
-  ['+967', '🇾🇪 Yémen (+967)'],
-  ['+260', '🇿🇲 Zambie (+260)'],
-  ['+263', '🇿🇼 Zimbabwe (+263)']
-];
+const INDICATIFS_PAYS = (window.ListesFormulaires || {}).INDICATIFS_PAYS || [];  // (js/partage.js, phase 2)
 
 // Pages anglaises : noms des pays en anglais (traduits par le navigateur à partir du
 // drapeau, qui contient le code du pays), classés dans l'ordre alphabétique anglais.
 // Navigateur trop ancien pour traduire : la liste française reste affichée.
-function indicatifsAffiches() {
-  if ((document.documentElement.lang || '').indexOf('en') !== 0 || typeof Intl === 'undefined' || !Intl.DisplayNames) return INDICATIFS_PAYS;
-  try {
-    const noms = new Intl.DisplayNames(['en'], { type: 'region' });
-    return INDICATIFS_PAYS.map(([valeur, libelle]) => {
-      const lettres = Array.from(libelle).slice(0, 2).map(c => c.codePointAt(0) - 0x1F1E6);
-      if (lettres.length !== 2 || lettres.some(n => n < 0 || n > 25)) return [valeur, libelle, libelle];
-      const code = String.fromCharCode(65 + lettres[0], 65 + lettres[1]);
-      const nom = noms.of(code);
-      if (!nom || nom === code) return [valeur, libelle, libelle];
-      const drapeau = Array.from(libelle).slice(0, 2).join('');
-      return [valeur, `${drapeau} ${nom} (${valeur})`, nom];
-    }).sort((a, b) => a[2].localeCompare(b[2], 'en'));
-  } catch (e) { return INDICATIFS_PAYS; }
-}
+function indicatifsAffiches() { return !window.ListesFormulaires ? INDICATIFS_PAYS : window.ListesFormulaires.indicatifsAffiches((document.documentElement.lang || '').indexOf('en') === 0); }
 
 function remplirIndicatifs(selectEl, indicatifParDefaut) {
+  // (phase 2) liste déjà écrite par le serveur (js/partage.js) : seulement le pays choisi
+  if (selectEl.hasAttribute('data-rempli') && selectEl.options.length > 1) { selectEl.value = indicatifParDefaut || '+225'; return; }
   selectEl.innerHTML = indicatifsAffiches().map(([valeur, libelle]) => `<option value="${valeur}">${libelle}</option>`).join('');
   selectEl.value = indicatifParDefaut || '+225';
 }
@@ -3875,6 +3527,7 @@ function donneesServeur(id) {
   if (!document.querySelector('.site-header-v2') || typeof sb === 'undefined' || !sb || typeof lirePhotosCouverture !== 'function') return;
   const h1 = document.querySelector('main > section > .container > h1');
   if (!h1 || document.getElementById('couverture') || document.querySelector('.qsn-ouverture, .profil-hero-fullbleed')) return;
+  if (document.querySelector('.mur-titre')) return;  // (déjà écrit par le serveur, js/gabarit.js poserMur, phase 2)
   const section = h1.parentElement.parentElement;
   const CLE = 'ma2m_mur_titre';
   async function adresses() {

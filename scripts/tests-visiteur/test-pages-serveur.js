@@ -61,6 +61,9 @@ const donneesDe = (html, bloc) => JSON.parse((html.match(new RegExp('<script typ
 // base lente ou en panne : la page habituelle, sans bloc de données (aucune page cassée)
 const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json" id="[a-z-]+-donnees"/.test(await r.text()));
 
+
+const texteVu = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const memePagePourRobot = async (dem, chemin) => { const a = await dem(chemin, { headers: { 'user-agent': 'WhatsApp/2.23' } }); const b = await dem(chemin); return !!(a && b) && texteVu(await a.text()) === texteVu(await b.text()); };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: RACINE, stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
@@ -80,23 +83,24 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
       ok(!/<img src=x onerror/.test(html), chemin + ' : rien d’injectable');
       // étape A (01/11/2026) : agenda — les projets à venir (titre, dates, lieu) sont dans le HTML
       if (page === 'agenda') {
+        // (phase 2) le dessin complet de la page (js/rendu-agenda.js) : calendrier, à venir, réalisés (avec l'événement du site)
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-        ok(/<div id="agenda-avenir" class="agenda-liste-publique"><article class="agenda-carte"><h3>Forum &lt;img src=x onerror=alert\(1\)&gt;<\/h3><p>21 (octobre|October) 2030 – 22 (octobre|October) 2030 · Sofitel, Abidjan<\/p><\/article>/.test(visible),
+        ok(/<div id="agenda-avenir" class="agenda-liste-publique"><article class="agenda-carte reveal">[\s\S]*?<h3 class="agenda-titre">Forum &lt;img src=x onerror=alert\(1\)&gt;<\/h3>/.test(visible) && /Sofitel, Abidjan/.test(visible),
           chemin + ' : les projets à venir (titre, dates, lieu) sont dans le HTML avant tout programme');
-        ok(/<div id="agenda-passes" class="agenda-liste-publique"><p class="agenda-vide">(Nos projets réalisés seront affichés ici\.|Our completed projects will appear here\.)<\/p><\/div>/.test(visible),
-          chemin + ' : la liste des projets réalisés aussi (ici : le message « rien encore »)');
+        ok(/<div id="agenda-passes" class="agenda-liste-publique"><article class="agenda-carte reveal">/.test(visible) && /<section id="agenda-calendrier" class="cal"[^>]*><div class="cal-tete"><h2 class="cal-titre">/.test(visible),
+          chemin + ' : les projets réalisés (événement du site) et le calendrier du mois aussi');
       }
       // étape A (01/11/2026) : parcours — le mois et ses projets (titre, lieu, mannequins) sont dans le HTML
       if (page === 'parcours') {
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-        ok(/<h2 class="parcours-titre-mois" id="parcours-titre-mois">[^<]+20\d\d<\/h2>/.test(visible) && /<article class="parcours-projet"><h3>Gala &lt;img src=x onerror=alert\(1\)&gt;<\/h3><p class="parcours-projet-meta">Sofitel, Abidjan<\/p><p class="parcours-projet-visages">Awa &lt;img/.test(visible),
+        ok(/<h2 class="parcours-titre-mois" id="parcours-titre-mois">[^<]+20\d\d<\/h2>/.test(visible) && /<article class="parcours-projet">[\s\S]*?<h3>Gala &lt;img src=x onerror=alert\(1\)&gt;<\/h3><p class="parcours-projet-meta">[^<]*Sofitel, Abidjan/.test(visible) && /alt="Awa &lt;img/.test(visible),
           chemin + ' : le mois et ses projets (titre, lieu, mannequins) sont dans le HTML avant tout programme');
       }
       // étape A (01/11/2026) : qui sommes-nous — les cartes des événements déjà réalisés sont dans le HTML
       if (page === 'qui-sommes-nous') {
         const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-        ok(/<article class="qsn-evenement reveal" data-evenement="[^"]+" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"><\/div><h3>[^<]+<\/h3><p>Plateau<\/p><\/article>/.test(visible),
-          chemin + ' : la carte de l’événement (titre, lieu) est dans le HTML avant tout programme');
+        ok(/<article class="qsn-evenement reveal" data-evenement="[^"]+" data-serveur="1"><div class="qsn-evenement-photo qsn-rideau"[^>]*>(<img [^>]*>)+<\/div><h3>[^<]+<\/h3><p>Plateau<\/p><\/article>/.test(visible),
+          chemin + ' : la carte de l’événement (titre, lieu, photos) est dans le HTML avant tout programme');
       }
       // étape A (01/11/2026) : partenaires — les cartes (noms) sont dans le HTML, avant tout programme
       if (page === 'partenaires') {
@@ -104,10 +108,10 @@ const sansDonnees = async (r) => !r || (r.status === 200 && !/application\/json"
         const noms = [...visible.matchAll(/<div class="news-corps"><div class="news-date">[^<]*<\/div><h3>([^<]*)<\/h3>/g)].map((m) => m[1]);
         ok(noms.length === 2, chemin + ' : les cartes des partenaires (noms) sont dans le HTML avant tout programme ' + noms.join(' | '));
       }
-      ok(r && /no-cache/.test(r.headers.get('cache-control') || ''), chemin + ' : jamais gardée en cache');
+      ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifiée à chaque visite (max-age=0), écrite par le serveur');
     }
     ok(await demander(page, { headers: { 'x-ma2m-remplie': '1' } }) === undefined, page + ' : sa propre demande de la page passe sans boucle');
-    ok(await demander(page, { headers: { 'user-agent': 'WhatsApp/2.23' } }) === undefined, page + ' : robot d’aperçu → la page habituelle');
+    ok(await memePagePourRobot(demander, page), page + ' : robot d’aperçu → exactement la même page que les visiteurs');
     baseLente = 1500; const t = Date.now();
     ok(await sansDonnees(await demander(page)) && Date.now() - t < 2500, page + ' : base lente → comme avant (sans données), sans attendre (' + (Date.now() - t) + ' ms)');
     baseLente = 0; basePanne = true;
