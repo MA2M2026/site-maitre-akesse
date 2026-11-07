@@ -20,6 +20,10 @@ en ligne, une mise en ligne par jour si possible).
 - Jauge « Envoi de la photo… » de l'Administration cachée pendant le travail automatique.
 - Accueil : premier visiteur après une mise en ligne servi complet (attente de la base jusqu'à 3 s).
 
+## Reprise de mars (07/11/2026)
+- EN LIGNE (main f1e5c17, 180/180) et base installée le 07/11 (Extension 154, contrôle « ✅ », sauvegarde faite avant).
+  Novembre 2026 : 9 mensualités payées, 20 « rodage » jamais réclamées. Détails : README-TECHNIQUE.md, « Reprise du 1er mars ».
+
 ## Pas fait / à faire (par ordre de priorité)
 1. **Vitesse (W7)** : grande image en 3,3 s (accueil), 4,0 s (Book), 3,6 s (fiche) sur téléphone 4G lente simulé ;
    objectif 2,5 s. Reste : feuilles de style bloquantes (8 fichiers), scripts synchrones en tête de page.
