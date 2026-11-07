@@ -208,6 +208,14 @@ const DUREE_ACCUEIL = 3 * 60 * 1000;  // (3 minutes comme les autres pages : 100
 const ATTENTE_ACCUEIL = 800;
 let memoireAccueil = null;  // { quand, donnees }
 let lectureAccueil = null;  // lecture de la base en cours (partagée par les visites simultanées)
+// Photo envoyée à la taille de l'écran par l'outil d'images de Vercel (07/11/2026, vitesse de « Qui sommes-nous » :
+// les photos d'événements sont les originaux, 300 à 650 Ko chacune) ; largeurs permises : vercel.json (640, 1080)
+function photoReduite(url, largeur) {
+  const p = photoLegere(url);
+  if (!p) return '';
+  const absolue = /^https?:\/\//i.test(p) ? p : SITE + (p.charAt(0) === '/' ? '' : '/') + p;
+  return SITE + '/_vercel/image?url=' + encodeURIComponent(absolue) + '&w=' + (largeur || 1080) + '&q=75';
+}
 function photoLegere(url) {
   if (typeof url !== 'string') return '';
   const legere = MARQUE_WEBP.test(url) ? url.replace(/\.jpg(\?|$)/, '.webp$1') : url;
@@ -351,7 +359,7 @@ function magazineComplet(html, donnees, anglais, une, couv, photoDe) {
   [['sommaire-img', 0], ['agence-img', 1], ['dos-img', 2]].forEach(([id, i]) => poserPhoto(id, reste[i % reste.length]));
   html = html.replace('<figcaption id="sommaire-legende" data-hasard></figcaption>', () => '<figcaption id="sommaire-legende" data-hasard>' + echapper(reste[0].full_name || '') + '</figcaption>');
   const mot = donnees.mot;
-  if (mot && mot.message && mot.photo_url) html = html.replace(/<img id="edito-img" src="data:image\/gif;base64,[^"]*" alt=""/, () => '<img id="edito-img" data-mot="1" src="' + echapper(photoLegere(mot.photo_url)) + '" alt="' + echapper(mot.nom || 'Maître Akesse') + '"');
+  if (mot && mot.message && mot.photo_url) html = html.replace(/<img id="edito-img" src="data:image\/gif;base64,[^"]*" alt=""/, () => '<img id="edito-img" data-mot="1" src="' + echapper(photoReduite(mot.photo_url, 640)) + '" alt="' + echapper(mot.nom || 'Maître Akesse') + '"');
   else poserPhoto('edito-img', reste[3 % reste.length]);
   // partenaires (9 logos au plus) et Instagram (9 publications au plus) : la page s'affiche s'il y en a
   const logos = Array.isArray(donnees.partenaires) ? donnees.partenaires.filter((p) => p.logo_url).slice(0, 9) : [];
@@ -951,16 +959,21 @@ async function quiSommesNousRempli(url, anglais) {
     // visite) ; la première de chaque cadre déjà affichée (classe « actif ») : visible sans programme. La page les reprend.
     const melanger = (l) => l.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
     const urlsDe = (e) => { const u = d.photos.filter((p) => p.evenement_id === e.id).map((p) => p.url); if (!u.length && e.image_url) u.push(e.image_url); return u.filter(Boolean); };
-    const imgs = (urls, alt) => urls.map((u, i) => '<img src="' + echapper(photoLegere(u)) + '" alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : ' class="actif"') + '>').join('');
+    // (07/11/2026) à la taille de l'écran ; seule la première est chargée tout de suite, les autres attendent leur tour
+    // (cachées tant qu'elles ne sont pas « suivante » : css/qui-sommes-nous.css, js/qui-sommes-nous.js)
+    // (ouverture : 640 px sur téléphone, 1080 px sur grand écran ; cartes du bas : toutes « lazy », même la première)
+    const imgs = (urls, alt, largeur, basDePage) => urls.map((u, i) => '<img src="' + echapper(photoReduite(u, largeur)) + '"' +
+      (largeur === 1080 ? ' srcset="' + echapper(photoReduite(u, 640)) + ' 640w, ' + echapper(photoReduite(u, 1080)) + ' 1080w" sizes="100vw"' : '') +
+      ' alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : (basDePage ? ' loading="lazy"' : '') + ' class="actif"') + '>').join('');
     const toutes = []; evenements.forEach((e) => urlsDe(e).forEach((u) => toutes.push(u)));
     if (toutes.length) {
-      html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(melanger(toutes).slice(0, 8), '') + '</div>')
-        .replace('<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>', () => '<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true" data-hasard><img src="' + echapper(photoLegere(melanger(toutes)[0])) + '" alt="" decoding="async" loading="lazy"></div>');
+      html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(melanger(toutes).slice(0, 8), '', 1080) + '</div>')
+        .replace('<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>', () => '<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true" data-hasard><img src="' + echapper(photoReduite(melanger(toutes)[0], 1080)) + '" alt="" decoding="async" loading="lazy"></div>');
     }
     // visages : une photo par mannequin (tirée par la lecture), 16 au hasard, deux rangées (la 2e à l'envers)
     const visages = melanger(d.visages.filter((v) => v && (v.url || v.url_moyenne))).slice(0, 16);
     if (visages.length >= 4) {
-      const lien = (v, cache) => '<a href="mannequin.html?id=' + encodeURIComponent(v.model_id) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '><img src="' + echapper(photoLegere(v.url_moyenne || v.url)) + '" alt="' + (anglais ? 'Model of the agency' : 'Mannequin de l\'agence') + '" decoding="async" loading="lazy"></a>';
+      const lien = (v, cache) => '<a href="mannequin.html?id=' + encodeURIComponent(v.model_id) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '><img src="' + echapper(photoReduite(v.url_moyenne || v.url, 640)) + '" alt="' + (anglais ? 'Model of the agency' : 'Mannequin de l\'agence') + '" decoding="async" loading="lazy"></a>';
       const rangee = visages.map((v) => lien(v, false)).join('') + visages.map((v) => lien(v, true)).join('');
       const inverse = [...visages, ...visages].reverse().map((v) => lien(v, true)).join('');
       html = html.replace('<section class="qsn-visages" aria-label="Nos mannequins" hidden>', () => '<section class="qsn-visages" aria-label="Nos mannequins">')
@@ -969,7 +982,7 @@ async function quiSommesNousRempli(url, anglais) {
     }
     // portrait du fondateur
     if (d.portrait && d.portrait.photo_url) {
-      html = html.replace(/<img id="qsn-portrait-img" src="data:image\/gif;base64,[^"]*" alt="([^"]*)" hidden>/, (_, alt) => '<img id="qsn-portrait-img" src="' + echapper(photoLegere(d.portrait.photo_url)) + '" alt="' + alt + '">')
+      html = html.replace(/<img id="qsn-portrait-img" src="data:image\/gif;base64,[^"]*" alt="([^"]*)" hidden>/, (_, alt) => '<img id="qsn-portrait-img" src="' + echapper(photoReduite(d.portrait.photo_url, 640)) + '" alt="' + alt + '" loading="lazy" decoding="async">')
         .replace('<figure class="qsn-portrait reveal qsn-rideau">', () => '<figure class="qsn-portrait reveal qsn-rideau avec-photo">');
     }
     const vus = new Set([...html.matchAll(/data-evenement="([^"]*)"/g)].map((m) => m[1]));
@@ -988,7 +1001,7 @@ async function quiSommesNousRempli(url, anglais) {
     html = html.replace(/(<article class="qsn-evenement[^"]*" data-evenement="([^"]*)"[^>]*>\s*)<div class="qsn-evenement-photo qsn-rideau"><\/div>(\s*<h3>([^<]*)<\/h3>)?/g, (tout, debutCarte, cleCarte, h3, titreCarte) => {
       const urls = []; evenements.filter((e) => cle(e.titre) === cleCarte.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')).forEach((e) => urlsDe(e).forEach((u) => urls.push(u)));
       if (!urls.length) return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" hidden></div>' + (h3 || '');
-      return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" data-hasard>' + imgs(melanger(urls).slice(0, 6), titreCarte ? titreCarte.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&') : '') + '</div>' + (h3 || '');
+      return debutCarte + '<div class="qsn-evenement-photo qsn-rideau" data-hasard>' + imgs(melanger(urls).slice(0, 6), titreCarte ? titreCarte.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&') : '', 640, true) + '</div>' + (h3 || '');
     });
     // (comme js/qui-sommes-nous.js : le nom n'est changé que si le portrait a une photo)
     if (d.portrait && d.portrait.nom && d.portrait.photo_url) html = texteElement(html, 'qsn-portrait-nom', d.portrait.nom);

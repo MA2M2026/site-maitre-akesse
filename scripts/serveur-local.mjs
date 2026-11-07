@@ -53,7 +53,10 @@ http.createServer(async (req, res) => {
     const url = new URL(/^\/(?!\/)/.test(req.url) ? req.url : '/', SITE);
     if (url.origin !== SITE) throw new Error('adresse refusée');
     let rep;
-    if (motifs.some((m) => m.test(url.pathname))) {
+    // (07/11/2026) l'outil d'images de Vercel n'existe pas ici : on demande le vrai (lecture seule), pour mesurer
+    // les pages avec les photos à la taille de l'écran, comme en ligne
+    if (url.pathname === '/_vercel/image') rep = await vraiFetch(SITE + url.pathname + url.search, { headers: { accept: req.headers.accept || 'image/*' } });
+    else if (motifs.some((m) => m.test(url.pathname))) {
       const r = await middleware(new Request(url.toString(), { method: req.method, headers: req.headers }));
       if (r && r.headers.get('x-middleware-rewrite')) rep = reponseFichier(new URL(r.headers.get('x-middleware-rewrite')).pathname);
       else rep = r;

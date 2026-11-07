@@ -288,7 +288,8 @@
     if (data.photo_url) {
       const img = document.getElementById('edito-img');
       img.dataset.mot = '1';
-      photo(img, data.photo_url, data.nom || 'Maître Akesse');
+      // (07/11/2026) photo déjà posée par le serveur, à la taille de l'écran : on ne la retélécharge pas en grand
+      if (!/\/_vercel\/image/.test(img.getAttribute('src') || '')) photo(img, data.photo_url, data.nom || 'Maître Akesse');
     }
     numeroter();
     couperEdito();
