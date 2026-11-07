@@ -24,7 +24,9 @@ const iUrl = process.argv.indexOf('--url');
 const BASE = iUrl > 0 ? process.argv[iUrl + 1] : 'http://127.0.0.1:8787';
 // page publique → adresse à ouvrir (les fiches et le Book sont mesurés sur une vraie fiche)
 export const PAGES = {
-  'index.html': '/', 'en/index.html': '/en/', 'mannequins.html': '/mannequins', 'en/mannequins.html': '/en/mannequins',
+  // (accueil laissé de côté le 07/11/2026 : écran d'entrée animé et couverture au hasard, aucun gain mesuré — 4,6 s
+  // avant, 5,1 s après ; à reprendre à part)
+  'mannequins.html': '/mannequins', 'en/mannequins.html': '/en/mannequins',
   'mannequin.html': '/book/' + '__FICHE__', 'en/mannequin.html': '/en/book/' + '__FICHE__',
   'actualites.html': '/actualites', 'en/actualites.html': '/en/actualites', 'evenements.html': '/evenements', 'en/evenements.html': '/en/evenements',
   'agenda.html': '/agenda', 'en/agenda.html': '/en/agenda', 'parcours.html': '/parcours', 'en/parcours.html': '/en/parcours',
@@ -41,7 +43,11 @@ const ECRANS = [{ width: 390, height: 844, isMobile: true, hasTouch: true }, { w
 function extraire() {
   const limite = innerHeight * 1.3;
   // (un élément caché — menu fermé, fenêtre fermée — ne compte pas)
-  const visible = (el) => { const r = el.getBoundingClientRect(); return r.top < limite && r.bottom > -1 && (r.width > 0 || r.height > 0) && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }); };
+  const voit = (el) => el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+  // (un élément caché par les styles — menu fermé, fenêtre fermée — garde la règle qui le cache : sinon il s'affiche
+  // en plein milieu de la page tant que la feuille complète n'est pas là, et la page « saute » à son arrivée)
+  const racineCachee = (el) => !voit(el) && (!el.parentElement || voit(el.parentElement));
+  const visible = (el) => { if (racineCachee(el)) return true; const r = el.getBoundingClientRect(); return r.top < limite && r.bottom > -1 && (r.width > 0 || r.height > 0) && voit(el); };
   const toujours = /^(:root|html|body|\*|::selection|\*,\s*\*::before,\s*\*::after)$/i;
   const nettoyer = (s) => s.replace(/::?(before|after|placeholder|selection|marker|first-letter|first-line|-webkit-[\w-]+|-moz-[\w-]+)\b(\([^)]*\))?/gi, '')
     .replace(/:(hover|focus|focus-visible|focus-within|active|visited|link|target|checked|disabled|enabled|empty|invalid|valid|placeholder-shown|autofill|-webkit-autofill)\b/gi, '').trim() || '*';
