@@ -52,37 +52,41 @@ function extraire() {
   const toujours = /^(:root|html|body|\*|::selection|\*,\s*\*::before,\s*\*::after)$/i;
   const nettoyer = (s) => s.replace(/::?(before|after|placeholder|selection|marker|first-letter|first-line|-webkit-[\w-]+|-moz-[\w-]+)\b(\([^)]*\))?/gi, '')
     .replace(/:(hover|focus|focus-visible|focus-within|active|visited|link|target|checked|disabled|enabled|empty|invalid|valid|placeholder-shown|autofill|-webkit-autofill)\b/gi, '').trim() || '*';
-  const touche = (sel) => sel.split(',').some((s) => {
-    s = s.trim();
+  // (sélecteurs séparés par les virgules du premier niveau seulement : « :where(.a, .b) » reste entier)
+  const morceaux = (sel) => { const l = []; let n = 0, cur = ''; for (const c of sel) { if (c === '(') n++; if (c === ')') n--; if (c === ',' && !n) { l.push(cur.trim()); cur = ''; } else cur += c; } if (cur.trim()) l.push(cur.trim()); return l; };
+  // les seuls sélecteurs de la règle qui servent au haut de l'écran (les autres — ex. un bouton de l'Administration
+  // dans une règle partagée — ne sont jamais recopiés dans la page publique)
+  const touche = (sel) => morceaux(sel).filter((s) => {
     if (toujours.test(s)) return true;
     try { return [...document.querySelectorAll(nettoyer(s))].some(visible); } catch (e) { return false; }
   });
-  const gardees = new Set();
+  const gardees = new Map();
   const parcourir = (regles) => {
     for (const r of regles) {
-      if (r instanceof CSSStyleRule) { if (touche(r.selectorText)) gardees.add(r); }
+      if (r instanceof CSSStyleRule) { const t = touche(r.selectorText); if (t.length) gardees.set(r, t); }
       // (polices : l'alphabet latin seulement ; les accents rares « latin-ext » arrivent avec la feuille complète)
       // (polices : sur une page à grande photo, AUCUNE dans le haut de page — elles arrivent avec la feuille complète,
       // après la photo, pour ne pas lui prendre la bande passante ; sur une page de texte (pas de grande photo
       // annoncée), l'alphabet latin tout de suite : le texte est ce qu'on attend)
-      else if (r instanceof CSSFontFaceRule) { if (window.__lcpTexte && !/latin-ext/.test(r.cssText)) gardees.add(r); }
+      else if (r instanceof CSSFontFaceRule) { if (window.__lcpTexte && !/latin-ext/.test(r.cssText)) gardees.set(r, []); }
       else if (r.cssRules) parcourir(r.cssRules);
     }
   };
   for (const f of document.styleSheets) { try { if (f.href && new URL(f.href).origin === location.origin) parcourir(f.cssRules); } catch (e) { /* feuille illisible */ } }
-  return [...gardees].map((r) => r.cssText);
+  return [...gardees].map(([r, sels]) => [r.cssText, sels]);
 }
 
 // texte final dans l'ordre des feuilles, avec leurs @media / @supports
 function reconstruire(gardees) {
-  const garde = new Set(gardees);
+  const garde = new Map(gardees);
   const sortie = [];
   const animations = new Set();
   const parcourir = (regles) => regles.map((r) => {
     if (r instanceof CSSStyleRule || r instanceof CSSFontFaceRule) {
       if (!garde.has(r.cssText)) return '';
       (r.style && (r.style.animationName || r.style.animation) ? (r.style.animationName || r.style.animation).split(/[\s,]+/) : []).forEach((n) => animations.add(n));
-      return r.cssText;
+      const sels = garde.get(r.cssText);
+      return r instanceof CSSStyleRule && sels.length ? sels.join(', ') + ' { ' + r.style.cssText + ' }' : r.cssText;
     }
     if (r instanceof CSSMediaRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@media ' + r.conditionText + '{' + d + '}' : ''; }
     if (r instanceof CSSSupportsRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@supports ' + r.conditionText + '{' + d + '}' : ''; }
@@ -123,7 +127,7 @@ async function main() {
   let total = 0;
   for (const [fichier, adresse] of Object.entries(PAGES)) {
     if (seules.length && !seules.includes(fichier)) continue;
-    const gardees = new Set();
+    const gardees = new Map();  // texte de la règle → sélecteurs utiles (réunis sur téléphone et ordinateur)
     let texte = '', lcpTexte = false;
     for (const ecran of ECRANS) {
       const ctx = await navigateur.newContext({ viewport: { width: ecran.width, height: ecran.height }, isMobile: !!ecran.isMobile, hasTouch: !!ecran.hasTouch, serviceWorkers: 'block' });
@@ -135,7 +139,7 @@ async function main() {
       // (plus grand élément du haut de page : un texte → polices gardées ; une image → polices après)
       if (ecran === ECRANS[0]) lcpTexte = await p.evaluate(() => new Promise((ok) => new PerformanceObserver((l) => { const e = l.getEntries().pop(); ok(!!(e && e.element && !e.url)); }).observe({ type: 'largest-contentful-paint', buffered: true })));
       await p.evaluate((t) => { window.__lcpTexte = t; }, lcpTexte);
-      (await p.evaluate(extraire)).forEach((r) => gardees.add(r));
+      (await p.evaluate(extraire)).forEach(([r, sels]) => { const deja = gardees.get(r) || []; gardees.set(r, deja.concat(sels.filter((x) => !deja.includes(x)))); });
       if (ecran === ECRANS[ECRANS.length - 1]) texte = await p.evaluate(reconstruire, [...gardees]);
       await ctx.close();
     }
