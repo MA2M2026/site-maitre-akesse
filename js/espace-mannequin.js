@@ -758,7 +758,9 @@ function viewWizard(){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
     return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
   }).join('') + '</div>' +
-  '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>';
+  '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
+  // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
+  (state.meta.currentStep !== 6 ? '<div class="actions-row aller-recap"><button type="button" class="btn primary" data-goto="6" data-bouton-libre>Voir le récapitulatif et mettre mon profil en ligne →</button></div>' : '');
 }
 
 function stepContent(n){

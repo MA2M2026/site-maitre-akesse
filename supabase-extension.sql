@@ -7335,3 +7335,4 @@ revoke execute on function boutique_emettre_billets(uuid), boutique_prochain_num
 revoke execute on function boutique_annuler_expirees(), nettoyer_photos_traitees_anciennes() from public, anon;
 grant execute on function boutique_annuler_expirees(), nettoyer_photos_traitees_anciennes() to authenticated;
 NOTIFY pgrst, 'reload schema';
+
