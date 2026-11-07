@@ -374,7 +374,10 @@
   // relances e-mail automatiques (serveur) et ici la liste WhatsApp prête. Messages communs :
   // js/messages-mensualites.js. Couleurs : vert payé, orange en attente, rouge non payé (après le 5).
   const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'],
-    conge: ['Congés : pas de mensualité', 'neutre'], termine: ['Formation terminée', 'neutre'] };
+    conge: ['Congés : pas de mensualité', 'neutre'], termine: ['Formation terminée', 'neutre'],
+    // (période de rodage, septembre à novembre 2026 : archivée, jamais réclamée — supabase-reprise-mars.sql)
+    rodage: ['Rodage : jamais réclamé', 'neutre'] };
+  const RIEN_DU = (e) => e === 'conge' || e === 'termine' || e === 'rodage';
   // États des mensualités selon la base (supabase-formation.sql, Extension 148, 01/11/2026) : 18 mois de cours,
   // congés en décembre, janvier et février, mois de congé payé reporté sur le mois de cours suivant, formation
   // terminée. Une seule règle pour tous les écrans. Tant que ce fichier n'est pas collé : null (calcul d'avant).
@@ -393,6 +396,7 @@
     if (b) return b;
     return paiement ? (paiement.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
   }
+  const NOTE_RODAGE = '<div class="note info">Période de rodage (septembre à novembre 2026) : rien n’est réclamé, pas d’appel ni de relance. Les mensualités reprennent le 1er mars 2027 (« Reprise du 1er mars »).</div>';
   const NOTE_CONGES = '<div class="carte"><h2>Congés</h2><p>Décembre, janvier et février sont des congés : pas de cours, pas de mensualité, pas d’appel ni de relance.</p></div>';
   async function mensualites() {
     const mois = moisCourant();
@@ -410,6 +414,7 @@
     P.etat.mensualites = { actifs, etat, appele };
     const relance = jour >= 5 ? 'relance5' : jour >= 3 ? 'relance3' : null;
     if (conges) return P.entete('Mensualités · ' + libelleMois(mois)) + NOTE_CONGES;
+    if (actifs.some((m) => etat(m) === 'rodage')) return P.entete('Mensualités · ' + libelleMois(mois)) + NOTE_RODAGE;
     return P.entete('Mensualités · ' + libelleMois(mois)) +
       '<div class="grille chiffres">' + P.chiffre('Payé', compte('paye'), 'vert') + P.chiffre('En attente de validation', compte('attente'), 'orange') +
       P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', compte('non_paye') + compte('a_payer'), 'rouge') + '</div>' +
@@ -541,7 +546,7 @@
       const e = etatDuMois(E, m, mois, paiements.find((x) => x.mannequin_id === m.id), jour);
       const mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
       // (congés et formation terminée : rien n'est attendu)
-      return { m, e, montant: e === 'conge' || e === 'termine' ? 0 : m.mensualite || 0, inscrit: !!m.user_id, destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name };
+      return { m, e, montant: RIEN_DU(e) ? 0 : m.mensualite || 0, inscrit: !!m.user_id, destinataire: mineur && m.parent_nom ? m.parent_nom + ' (parent)' : m.full_name };
     });
     const somme = (l) => l.reduce((t, x) => t + x.montant, 0);
     const attendu = somme(lignes), valide = somme(lignes.filter((x) => x.e === 'paye')), attente = somme(lignes.filter((x) => x.e === 'attente'));
@@ -550,7 +555,7 @@
     const nb = (e) => lignes.filter((x) => x.e === e).length;
     const montrees = lignes.filter((x) => filtre === 'tous' || (filtre === 'inscrits' ? x.inscrit : !x.inscrit));
     const FILTRES_GROUPE = [['tous', 'Tous'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits']];
-    return P.entete('Tableau du mois · ' + libelleMois(mois)) + (E && E.conges.has(mois) ? NOTE_CONGES : '') +
+    return P.entete('Tableau du mois · ' + libelleMois(mois)) + (E && E.conges.has(mois) ? NOTE_CONGES : lignes.some((x) => x.e === 'rodage') ? NOTE_RODAGE : '') +
       '<div class="grille chiffres">' + P.chiffre('Attendu', P.fcfa(attendu)) + P.chiffre('Validé', P.fcfa(valide), 'vert') +
       P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') +
       P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
@@ -571,7 +576,7 @@
         (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
         '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
         '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
-        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : x.e === 'conge' || x.e === 'termine' ? '<span class="doux">Rien à payer</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
+        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : RIEN_DU(x.e) ? '<span class="doux">Rien à payer</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
         ' <button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button></td></tr>'))
         : '<p class="doux">' + (suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : choisissez un mannequin dans la liste ci-dessus.') + '</p>') + '</div>';
   }
@@ -624,15 +629,15 @@
       let e = st ? (st === 'valide' ? 'paye' : 'attente') : avantEntree ? 'hors' : rang > moisActuel ? 'neutre' : rang === moisActuel && jour <= 5 ? 'neutre' : 'non_paye';
       // (selon la base : congés, formation terminée, mois réglé par un mois de congé payé plus tôt)
       const b = E && E.etat(m.id, annee + '-' + String(n).padStart(2, '0') + '-01');
-      if (!st && (b === 'conge' || b === 'termine')) e = b;
+      if (!st && RIEN_DU(b)) e = b;
       else if (!st && b === 'paye') e = 'reporte';
       const sign = { paye: ['✓', 'ok', 'payé'], attente: ['…', 'alerte', 'en attente de validation'], non_paye: ['✕', 'erreur', 'non payé'], hors: ['—', 'neutre', 'avant l’entrée (non concerné)'], neutre: ['·', 'neutre', rang > moisActuel ? 'à venir' : 'à payer avant le 5'],
-        conge: ['○', 'neutre', 'congés, pas de mensualité'], termine: ['◇', 'neutre', 'formation terminée'], reporte: ['✓', 'ok', 'payé par un mois de congé réglé plus tôt'] }[e];
+        conge: ['○', 'neutre', 'congés, pas de mensualité'], termine: ['◇', 'neutre', 'formation terminée'], rodage: ['R', 'neutre', 'rodage, jamais réclamé'], reporte: ['✓', 'ok', 'payé par un mois de congé réglé plus tôt'] }[e];
       return '<td class="case-mois' + (rang === moisActuel ? ' mois-actuel' : '') + '"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
     };
     const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     return P.entete('Paiements mois par mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
-      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + P.pastille('○ congés', 'neutre') + P.pastille('◇ formation terminée', 'neutre') + '</div>' +
+      '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + P.pastille('○ congés', 'neutre') + P.pastille('◇ formation terminée', 'neutre') + P.pastille('R rodage (jamais réclamé)', 'neutre') + '</div>' +
       '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
         '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
         : '<p class="doux">Aucun mannequin dans le registre.</p>') + '</div>';
@@ -667,7 +672,7 @@
     const selonBase = (id, i) => {
       if (!E || i < t - 35) return null;
       const b = E.etat(id, isoMois(i));
-      return b === 'conge' || b === 'termine' ? 'saute' : b === 'paye' ? 'regle' : null;
+      return RIEN_DU(b) ? 'saute' : b === 'paye' ? 'regle' : null;
     };
     // dernier mois dont le délai (le 5) est passé, vu depuis le mois affiché
     const dernierEchu = t < courant || (t === courant && ici.getDate() > 5) ? t : t - 1;

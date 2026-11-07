@@ -425,6 +425,13 @@ async function accueilRempli(requete, url) {
   html = completerAccueil(html, donnees, anglais);
   // étape A (01/11/2026) : les visages (6 femmes, 3 hommes), « À la une » et le nombre de mannequins écrits
   // dans la page (js/rendu-book.js, le même dessin que js/accueil.js)
+  // (07/11/2026) versions nettes de la couverture et de « À la une » pas lues avec la liste : la même petite lecture
+  // que la page (js/accueil.js, moyenneDe), pour ces deux photos seulement, avant l'envoi (sinon la page les remplaçait)
+  if (!donnees.moyennesLues && (!une.moyenne || !couv.moyenne)) {
+    const ids = [...new Set([une.id, couv.id])].filter((x) => ID_VALIDE.test(x || ''));
+    const lues = ids.length ? await lireSupabase('model_photos?select=model_id,url_miniature,url_moyenne&url_moyenne=not.is.null&model_id=in.(' + ids.join(',') + ')', null, 800).catch(() => null) : null;
+    if (Array.isArray(lues)) [une, couv].forEach((m) => { const x = lues.find((l) => l.model_id === m.id && l.url_miniature === m.photo); if (x && !m.moyenne) m.moyenne = x.url_moyenne; });
+  }
   const R = globalThis.RenduBook, telephone = estTelephone(requete);
   const photoDe = (m) => photoLegere(m.petite && telephone ? m.petite : m.photo);
   const visages = R.visagesAccueil(donnees.profils);

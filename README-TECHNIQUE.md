@@ -4233,3 +4233,33 @@ plus d'écriture directe des visiteurs ; liste des mannequins d'une demande seul
 15 minutes). SQL pas encore collé : le serveur enregistre quand même (repli). Retour en arrière :
 `supabase-anti-robots-retour.sql`. CSP : `https://challenges.cloudflare.com` (script-src, frame-src).
 Essais : `essais-anti-robots.sql`, `test-anti-robots.js` ; la base simulée des tests (faux-serveur.js) imite Turnstile.
+
+## Reprise du 1er mars 2027 (07/11/2026, décision de la propriétaire ; Extension 154)
+Plan et décisions : `PLAN-REPRISE-MARS.md` (branche `plan-reprise-mars`). Septembre à novembre 2026 = **période de
+rodage** : rien n'est effacé, rien n'est réclamé (état `rodage`, gris). Décembre à février = congés (Extension 148).
+Reprise le 1er mars 2027 : 10 000 FCFA par mois, 15 000 FCFA d'inscription, pour toutes.
+- **Base** : `supabase-reprise-mars.sql` (essais : `scripts/base-essai/essais-reprise-mars.sql`, dans `lancer.sh`).
+  `reglages_reprise` (date de reprise, bornes du rodage), `reprise_date()`, `mois_rodage()` ; colonnes
+  `agence_mannequins.formation_niveaux` (1 ou 2 niveaux de 9 mois), `formation_mois_faits` (mois déjà faits avant la
+  reprise ; null = pas encore revue), `reprise_vue_le`. La règle unique `mensualite_etat_regle` renvoie `rodage` pour
+  tout mois non payé d'avant la reprise ; `mensualites_appeler` refuse ces mois ; `mes_mensualites` donne en plus
+  `niveau`, `mois_niveau`, `reste`, `faits_avant`, `fermee_jusqu_au`, `prochaine`. Assistant : `reprise_etat`,
+  `reprise_mannequin_enregistrer`, `reprise_inscription` (encaissée avant le système = paiement `avant_systeme` sans
+  recette ; à recevoir = créance « Ce qu'on nous doit » ; abandonnée = journal seulement). Comptages :
+  `compta_comptages` (lecture seule), `compta_ouverture` (une fois, à partir de la date de reprise) et
+  `compta_cloturer_complet` (rien en suspens, chaque compte actif compté, écart = UNE écriture `regularisation` avec
+  motif, puis `compta_cloturer`). Déclencheurs : `compta_mois_verrouille` (plus aucune écriture dans un mois clôturé,
+  sauf serveur et recettes automatiques) et `compta_regularisation_permise`. `archives_rodage()` : espace Paiements
+  seulement (le comptable ne voit aucun nom de mannequin ; `reprise_etat` lui renvoie une liste vide).
+- **Écrans** : `js/portail/espace-reprise.js` (chargé après `espace-compta-dossier.js`) : Paiements › « Reprise du
+  1er mars » et « Archives – période de rodage » (copie Excel `P.xlsx` et PDF `P.comptaPdf`) ; Comptabilité ›
+  « Clôture guidée » (le bilan du mois = le « Dossier du mois »). État `rodage` dans `espace-paiements.js`
+  (`RIEN_DU`, notes `NOTE_RODAGE`), `espace-paiements-suivi.js`, `mes-paiements.js`. Application et « Mes paiements » :
+  `situationFormation()` dans `js/app.js` (« Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois », « Agence fermée
+  jusqu'au 1er mars 2027 »), sans ces champs (fichier pas collé) : affichage d'avant.
+- **Ordre de mise en ligne** : le code d'abord (il marche sans le fichier SQL), PUIS coller `supabase-reprise-mars.sql`
+  (l'ancien code ne connaît pas l'état `rodage`). Contrôle final du fichier : « ✅ Reprise de mars installée (Extension 154) ».
+  Retour en arrière d'urgence : `update reglages_reprise set rodage_debut = '2000-01-01', rodage_fin = '2000-01-01', date_reprise = '2000-02-01'`
+  rend tous les mois « normaux » (rien n'est effacé).
+- **Essais** : `scripts/tests-visiteur/test-reprise-mars.js` (assistant, inscriptions, bilan d'ouverture, rodage
+  jamais réclamé, archives Excel/PDF relues, clôture guidée, comptable sans noms, application).

@@ -7,7 +7,7 @@
   const P = window.Portail, C = P.compta;
   const TYPES_DOC = { devis: 'Devis', proforma: 'Proforma', facture: 'Facture', avoir: 'Avoir', recu: 'Reçu' };
   const ETATS_MAT = { en_service: 'En service', en_panne: 'En panne', sorti: 'Sorti' };
-  const cat = (k) => C.RECETTES[k] || C.DEPENSES[k] || (k === 'virement' ? 'Virement' : k);
+  const cat = (k) => C.RECETTES[k] || C.DEPENSES[k] || C.AUTRES[k] || (k === 'virement' ? 'Virement' : k);
 
   // Tout ce qu'il faut pour le mois m (AAAA-MM-01)
   async function rassembler(m) {

@@ -13,7 +13,7 @@ const INTERFACE = ['/admin/', '/css/polices.css', '/css/jetons.css', '/css/insta
   '/js/portail/inactivite.js', '/js/messages-mensualites.js', '/js/portail/noyau.js', '/js/admin/coque.js', '/js/admin/notifications.js', '/js/admin/site.js',
   '/js/portail/espace-paiements.js', '/js/portail/espace-paiements-suivi.js',
   '/js/portail/espace-compta.js', '/js/portail/espace-compta-suivi.js', '/js/portail/compta-pdf.js', '/js/portail/compta-xlsx.js',
-  '/js/cachets-communs.js', '/js/portail/espace-compta-cachets.js', '/js/portail/espace-compta-cachets-rapport.js', '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/vendor/pdf-lib-1.17.1.min.js',
+  '/js/cachets-communs.js', '/js/portail/espace-compta-cachets.js', '/js/portail/espace-compta-cachets-rapport.js', '/js/portail/espace-compta-documents.js', '/js/portail/espace-compta-dossier.js', '/js/portail/espace-reprise.js', '/js/vendor/pdf-lib-1.17.1.min.js',
   '/js/portail/securite.js', '/icons/admin-192.png', '/assets/logo-header.png', '/assets/logo-header-clair.png'];
 
 importScripts('/js/sw-interface.js');

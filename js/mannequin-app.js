@@ -292,13 +292,18 @@
       const courant = moisCourant(), enRetard = mois.some((x) => x.etat === 'non_paye');
       const prochain = mois.find((x) => x.etat === 'a_payer' || x.etat === 'non_paye' || x.etat === 'a_venir');
       const avance = moisPayablesAvance(mois).length > 0;  // (js/app.js)
+      const situation = situationFormation(m);  // (js/app.js)
       haut = '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div></div>' +
         (enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
           : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
-          : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
+          : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>'
+          : situation && situation.ferme ? '<span class="ap-pastille gris">Agence fermée</span>'
+          : situation && situation.termine ? '<span class="ap-pastille gris">Terminée</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
         '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
-        '<p class="doux ap-formation-note">' + total + ' mois de cours en 2 ans. Décembre, janvier et février : congés, pas de mensualité.</p>' +
-        (prochain ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
+        // (Reprise de mars : niveau, mois X sur 9, mois restants, agence fermée — situationFormation, js/app.js)
+        (situation ? '<p class="ap-formation-note"><b>' + esc(situation.titre) + '</b><br><span class="doux">' + situation.lignes.map(esc).join('<br>') + '</span></p>'
+          : '<p class="doux ap-formation-note">' + total + ' mois de cours en 2 ans. Décembre, janvier et février : congés, pas de mensualité.</p>') +
+        (prochain && !situation ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
         // « Payer avec Wave » s'il y a un mois à payer ; à jour, « Payer à l'avance » (avant, le bouton
         // menait à la grille des mois sans rien à payer, relevé par la propriétaire le 26/10/2026)
         (mois.some((x) => x.etat === 'a_payer' || x.etat === 'non_paye')

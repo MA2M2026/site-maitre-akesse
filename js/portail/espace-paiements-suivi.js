@@ -158,7 +158,7 @@
   };
 
   // ---------- Mois figés ----------
-  const ETATS_FIGES = { paye: 'Payé', attente: 'En attente', non_paye: 'Non payé', a_payer: 'À payer', a_venir: 'À venir', conge: 'Congés', termine: 'Formation terminée' };
+  const ETATS_FIGES = { paye: 'Payé', attente: 'En attente', non_paye: 'Non payé', a_payer: 'À payer', a_venir: 'À venir', conge: 'Congés', termine: 'Formation terminée', rodage: 'Rodage (jamais réclamé)' };
   const moisIso = (decalage) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - decalage); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01'; };
   async function figes() {
     let liste;

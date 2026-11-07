@@ -99,7 +99,7 @@ Branche : `phase2-dynamique` (depuis `main` 8250275). Retour en arrière : étiq
 |---|---|---|
 | W0 Tri de départ | PASS(DECISIONS.md) | envois de 1 h et 3 h désactivés ; retour en arrière : dpl_99F9Ue1NvHjsvqzdbJGJY3547yxP → dpl_3Pr6SMGmavSd9uh1AiXHPsr4ykVM |
 | W1 Inventaire des pages | IN_PROGRESS | docs/routes.md écrit ; reste : sitemap généré depuis la base |
-| W2 Pages complètes écrites par le serveur | IN_PROGRESS | EN LIGNE le 02/11 (main ede3766) : 178/180 sur le vrai site (evidence/prod-apres-phase2.txt) ; reste : 2 photos d'ambiance de l'accueil à marquer « au hasard » (corrigé sur la branche), sitemap depuis la base |
+| W2 Pages complètes écrites par le serveur | PASS(evidence/prod-dd63a51.txt) | 180/180 sur le vrai site le 02/11/2026 (main dd63a51) ; reste hors W2 : plan du site généré depuis la base |
 | W3 Cache exact | PASS(evidence/prod-apres-phase2.txt) | en ligne : Cache-Control explicite, x-ma2m-render: ssr, x-ma2m-build, plus de x-vercel-cache/age recopiés ; borne de fraîcheur 180 s documentée |
 | W4 Retirer le code d'administration des pages publiques | PASS(evidence/prod-apres-w4.txt) | EN LIGNE (fdf866b) : 6 pages sans panneau ni bouton ; scripts d'écriture « introuvables » (404) sans la clé de l'agence ; essai test-publications.js |
 | W5 Appareil de confiance (2FA) | UNVERIFIED | accord S2 + compte de test nécessaires |

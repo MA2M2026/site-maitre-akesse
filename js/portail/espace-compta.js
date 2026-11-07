@@ -17,7 +17,9 @@
   const TYPES_COMPTE = { caisse: 'Caisse', wave: 'Wave', banque: 'Banque', mobile_money: 'Autre mobile money', autre: 'Autre' };
   const JUSTIF_MAX = 10 * 1024 * 1024;
   const JUSTIF_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
-  const categorie = (e) => RECETTES[e.categorie] || DEPENSES[e.categorie] || (e.sens === 'virement' ? 'Virement' : e.categorie);
+  // (catégories posées seulement par le site, jamais proposées à la saisie : écart de comptage, supabase-reprise-mars.sql)
+  const AUTRES = { regularisation: 'Régularisation (écart de comptage)' };
+  const categorie = (e) => RECETTES[e.categorie] || DEPENSES[e.categorie] || AUTRES[e.categorie] || (e.sens === 'virement' ? 'Virement' : e.categorie);
 
   // Mois affiché (AAAA-MM-01), gardé d'une page à l'autre
   const moisChoisi = () => P.etat.moisCompta || P.moisCourant();
@@ -75,7 +77,7 @@
     const parCategorie = (sens) => P.sommesParCategorie(liste, sens);
     const barres = (sens, total, rouge) => {
       const l = parCategorie(sens);
-      return l.length ? l.map((c) => P.barre(RECETTES[c[0]] || DEPENSES[c[0]] || c[0], c[1], total, rouge)).join('') : '<p class="doux">Rien pour le moment.</p>';
+      return l.length ? l.map((c) => P.barre(RECETTES[c[0]] || DEPENSES[c[0]] || AUTRES[c[0]] || c[0], c[1], total, rouge)).join('') : '<p class="doux">Rien pour le moment.</p>';
     };
     const sansJustif = liste.filter((e) => e.sens === 'depense' && !e.annule && !e.justificatif).length;
     let legal = false;
@@ -289,7 +291,7 @@
   // sinon sa photo cherchée par son nom ; et la table des cachets pas encore créée
   const nomMannequin = (id, nom) => (id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(id, nom) : '<span data-visage-nom="' + P.esc(nom) + '"></span><b>' + P.esc(nom) + '</b>');
   const cachetsAbsents = (e) => /cachets_mannequins|PGRST205|42P01|does not exist/.test(String((e && (e.code + ' ' + e.message)) || e));
-  P.compta = { nomMannequin, cachetsAbsents, RECETTES, DEPENSES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
+  P.compta = { nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],

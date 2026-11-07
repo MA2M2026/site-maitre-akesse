@@ -17,7 +17,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fcfa = window.CachetsMa2m.fcfa;  // (js/cachets-communs.js, chargé avant)
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
-  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'], conge: ['Congés : pas de mensualité', 'conge'], termine: ['Formation terminée', 'neutre'] };
+  const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'], conge: ['Congés : pas de mensualité', 'conge'], termine: ['Formation terminée', 'neutre'], rodage: ['Rodage : rien à payer', 'neutre'] };
   let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
   const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
@@ -77,8 +77,10 @@
     const ouverts = mois.filter((m) => m.etat === 'a_payer' || m.etat === 'non_paye');
     const courant = mois.find((m) => String(m.mois).slice(0, 7) === new Date().toISOString().slice(0, 7));
     const { payes, total } = bilanFormation(donnees);  // (js/app.js)
+    const situation = situationFormation(donnees);  // (js/app.js : niveau, mois X sur 9, agence fermée)
     const bandeau = !courant ? '' : courant.etat === 'paye' ? '<div class="mp-bandeau vert">À jour pour ' + esc(nomMois(courant.mois)) + '. Merci !</div>'
       : courant.etat === 'attente' ? '<div class="mp-bandeau bleu">Paiement déclaré : l’agence le vérifie. Vous serez prévenu(e) dès qu’il est confirmé.</div>'
+      : courant.etat === 'rodage' || (situation && situation.ferme && courant.etat !== 'conge') ? '<div class="mp-bandeau vert">' + esc(situation ? situation.lignes[0] : 'Rien à payer ce mois-ci.') + '</div>'
       : courant.etat === 'conge' ? '<div class="mp-bandeau vert">Congés : pas de mensualité en ' + esc(MOIS[Number(String(courant.mois).slice(5, 7)) - 1]) + '.</div>'
       : courant.etat === 'non_paye' ? '<div class="mp-bandeau rouge">Votre paiement de ' + esc(MOIS[Number(String(courant.mois).slice(5, 7)) - 1]) + ' n’est pas encore fait.</div>'
       : '<div class="mp-bandeau bleu">À payer avant le 5 : ' + fcfa(donnees.mensualite) + '</div>';
@@ -86,17 +88,20 @@
       (message ? '<div class="mp-bandeau ' + message[1] + '" role="status">' + esc(message[0]) + '</div>' : '') + bandeau +
       ouverts.map(carteAPayer).join('') +
       (moisPayablesAvance(mois).length ? carteAvance(moisPayablesAvance(mois)) : '') +
-      '<h2>Ma formation · ' + total + ' mois de cours</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur ' + total + '. Décembre, janvier et février sont des congés : pas de mensualité.</p>' +
+      // (« agence fermée » est déjà dans le bandeau du haut : pas répété ici)
+      (situation ? '<h2>Ma formation · ' + esc(situation.titre) + '</h2><p class="mp-doux">' + situation.lignes.slice(situation.ferme && courant ? 1 : 0).map(esc).join('<br>') + '</p>'
+        : '<h2>Ma formation · ' + total + ' mois de cours</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur ' + total + '. Décembre, janvier et février sont des congés : pas de mensualité.</p>') +
       '<div class="mp-calendrier" role="list">' + numeroter(mois).map(([m, n]) => {
         const conge = m.conge || m.etat === 'conge';
         const e = conge && m.etat === 'paye' ? ['Payé · compte pour le mois de cours suivant', 'ok'] : conge ? ETATS.conge : ETATS[m.etat] || [m.etat, 'neutre'];
         return '<div class="mp-mois ' + e[1] + '" role="listitem">' + (n ? '<span class="mp-mois-num">' + n + '</span>' : '') + '<b>' + esc(nomMois(m.mois)) + '</b><span>' + esc(e[0]) + '</span></div>';
       }).join('') + '</div>' + historique() + mesCachets();
   }
-  // numéro de chaque mois de cours (1 à 18) ; les congés n'ont pas de numéro
+  // numéro de chaque mois de cours (1 à 18) ; les congés et le rodage n'ont pas de numéro ; à la reprise, la
+  // numérotation suit les mois déjà faits avant (faits_avant, supabase-reprise-mars.sql)
   function numeroter(mois) {
-    let n = 0;
-    return mois.map((m) => [m, m.conge || m.etat === 'conge' ? 0 : ++n]);
+    let n = Number(donnees.faits_avant) || 0;
+    return mois.map((m) => [m, m.conge || m.etat === 'conge' || m.etat === 'rodage' ? 0 : ++n]);
   }
   function historique() {
     if (!recus.length) return '';
