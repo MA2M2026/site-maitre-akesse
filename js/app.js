@@ -913,7 +913,8 @@ function moisPayablesAvance(mois) {
 // mois de cours suivant) n'est pas compté deux fois. Partagé par Mes paiements et l'application.
 function bilanFormation(d) {
   const cours = ((d && d.mois) || []).filter((m) => !m.conge && m.etat !== 'conge' && m.etat !== 'rodage');
-  return { payes: cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
+  // (reprise de mars : les mois déjà faits avant la reprise comptent, faits_avant de mes_mensualites)
+  return { payes: (Number(d && d.faits_avant) || 0) + cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
 }
 // Où en est la mannequin (Reprise de mars, supabase-reprise-mars.sql, mes_mensualites) : « Niveau 1 · mois 3 sur 9 ·
 // il reste 15 mois », la prochaine mensualité, ou « agence fermée jusqu'au 1er mars » (rodage, congés) — en

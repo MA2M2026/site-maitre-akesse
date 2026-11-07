@@ -89,7 +89,7 @@
       ouverts.map(carteAPayer).join('') +
       (moisPayablesAvance(mois).length ? carteAvance(moisPayablesAvance(mois)) : '') +
       // (« agence fermée » est déjà dans le bandeau du haut : pas répété ici)
-      (situation ? '<h2>Ma formation · ' + esc(situation.titre) + '</h2><p class="mp-doux">' + situation.lignes.slice(situation.ferme ? 1 : 0).map(esc).join('<br>') + '</p>'
+      (situation ? '<h2>Ma formation · ' + esc(situation.titre) + '</h2><p class="mp-doux">' + situation.lignes.slice(situation.ferme && courant ? 1 : 0).map(esc).join('<br>') + '</p>'
         : '<h2>Ma formation · ' + total + ' mois de cours</h2><p class="mp-doux">' + payes + ' mois réglé' + (payes > 1 ? 's' : '') + ' sur ' + total + '. Décembre, janvier et février sont des congés : pas de mensualité.</p>') +
       '<div class="mp-calendrier" role="list">' + numeroter(mois).map(([m, n]) => {
         const conge = m.conge || m.etat === 'conge';

@@ -43,7 +43,7 @@ function etatReprise(d, ouvert) {
   return { date_reprise: ouvert ? iso(0) : '2027-03-01', aujourdhui: AUJ, ouverture: null,
     comptes: [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse' }, { id: 'c2', nom: 'Wave Business', type: 'wave' }],
     mannequins: m.map((x, i) => ({ id: x.id, nom: x.full_name, statut: x.statut, niveaux: 2, mois_faits: i === 0 ? 7 : null, vue_le: i === 0 ? '2026-11-07T10:00:00Z' : null,
-      inscription: i === 0 ? 'wave' : null, inscription_due: i === 1 })) };
+      inscription: i === 0 ? 'wave' : null, inscription_reprise: i === 1 ? 'a_recevoir' : null, inscription_due: i === 1 })) };
 }
 const TRESO = [{ compte_id: 'c1', nom: 'Caisse (espèces)', ouvert: true, debut: 0, entrees: 50000, sorties: 20000, fin: 30000 },
   { compte_id: 'c2', nom: 'Wave Business', ouvert: true, debut: 0, entrees: 15000, sorties: 0, fin: 15000 }];
@@ -153,7 +153,8 @@ async function cloture(b) {
     const d = donnees('compta');
     d.tables.compta_comptes = [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', actif: true, date_initiale: '2026-01-01', cree_le: '2026-01-01' }, { id: 'c2', nom: 'Wave Business', type: 'wave', actif: true, date_initiale: '2026-01-01', cree_le: '2026-01-02' }];
     d.tables.compta_clotures = [];
-    d.tables.paiements_mannequins = [{ id: 'pm9', mannequin_id: 'r1', objet: 'mensualite', mois: PASSE, statut: 'declare', declare_le: PASSE.slice(0, 8) + '10T09:00:00Z' }];
+    let enAttente = 1;
+    d.rpc.cloture_en_attente = () => enAttente;
     d.rpc.compta_tresorerie = TRESO;
     d.rpc.compta_cloturer_complet = (x) => { d.tables.compta_clotures.push({ mois: x.p_mois, recettes: 65000, depenses: 20000, nb_ecritures: 3, note: x.p_note, cloture_le: AUJ + 'T10:00:00Z' }); return { mois: x.p_mois }; };
     await brancher(p, d, journal); await photosLocales(p);
@@ -165,7 +166,7 @@ async function cloture(b) {
     let t = await texte(p);
     ok(/1 paiement\(s\) « J’ai payé » à vérifier/.test(t) && await p.isDisabled('form[data-form="cloture-guidee"] button[type=submit]'), n + 'un paiement « J’ai payé » en attente bloque la clôture');
     ok(!/MARIAM|GRÂCE|AYA/.test(t), n + 'le comptable ne voit aucun nom de mannequin');
-    d.tables.paiements_mannequins = [];
+    enAttente = 0;
     await aller(p, 'compta/mois', null); await aller(p, 'compta/cloture-guidee', 'form[data-form="cloture-guidee"]');
     ok(/Aucun paiement en attente/.test(await texte(p)), n + 'plus rien en suspens');
     await p.fill('input[name="montant-c2"]', '14500');

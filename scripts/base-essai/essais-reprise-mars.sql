@@ -45,6 +45,11 @@ select essai(reprise_inscription('00000000-0000-0000-0000-000000154e01', 'encais
 select essai_refuse($$select reprise_inscription('00000000-0000-0000-0000-000000154e01', 'abandonnee')$$, 'une inscription déjà enregistrée ne se reprend pas');
 select essai(reprise_inscription('00000000-0000-0000-0000-000000154e03', 'a_recevoir', 15000) = 'a_recevoir', 'inscription à recevoir : dans « Ce qu''on nous doit »');
 select essai_refuse($$select reprise_inscription('00000000-0000-0000-0000-000000154e03', 'a_recevoir', 15000)$$, 'la même créance deux fois : refusée');
+select essai(reprise_inscription('00000000-0000-0000-0000-000000154e02', 'abandonnee', 0) = 'abandonnee', 'inscription abandonnée : notée');
+select essai((select x ->> 'inscription_reprise' from json_array_elements(reprise_etat() -> 'mannequins') x where x ->> 'id' = '00000000-0000-0000-0000-000000154e02') = 'abandonnee',
+  'inscription abandonnée : elle ne revient plus dans la liste à traiter');
+select essai_refuse($$select reprise_inscription('00000000-0000-0000-0000-000000154e02', 'a_recevoir', 15000)$$, 'une inscription abandonnée ne se reprend pas');
+select essai_refuse($$select cloture_en_attente(current_date)$$, 'nombre de paiements en attente : réservé à la Comptabilité');
 reset role;
 select essai(not exists (select 1 from compta_ecritures where paiement_id in (select id from paiements_mannequins where mannequin_id = '00000000-0000-0000-0000-000000154e01' and objet = 'inscription')),
   'inscription d''avant le système : aucune recette (l''argent n''est pas sur les comptes)');
@@ -90,6 +95,7 @@ set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a3');
 select essai_refuse($$select compta_ouverture('[]'::jsonb)$$, 'bilan d''ouverture : réservé à la Compta');
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai(cloture_en_attente(current_date) >= 0, 'Comptabilité : nombre de paiements en attente lisible (un nombre, sans nom)');
 select essai(json_array_length(compta_ouverture((select json_agg(json_build_object('compte_id', t.compte_id, 'montant', greatest(t.fin, 0) + case when k.type = 'wave' then -1000 else 0 end, 'motif', 'Frais Wave non notés'))
   from compta_tresorerie(date_trunc('month', current_date)::date, current_date + 1) t join compta_comptes k on k.id = t.compte_id where k.actif)::jsonb)) >= 2,
   'bilan d''ouverture : chaque compte compté (Wave 1 000 de moins, raison donnée)');

@@ -48,6 +48,8 @@ $$;
 alter table agence_mannequins add column if not exists formation_niveaux int not null default 2;
 alter table agence_mannequins add column if not exists formation_mois_faits int;
 alter table agence_mannequins add column if not exists reprise_vue_le timestamptz;
+-- choix fait pour l'inscription à la reprise (encaissee | a_recevoir | abandonnee), noté une fois, par mannequin
+alter table agence_mannequins add column if not exists inscription_reprise text check (inscription_reprise in ('encaissee', 'a_recevoir', 'abandonnee'));
 alter table agence_mannequins drop constraint if exists agence_mannequins_formation_niveaux_check;
 alter table agence_mannequins add constraint agence_mannequins_formation_niveaux_check check (formation_niveaux in (1, 2));
 alter table agence_mannequins drop constraint if exists agence_mannequins_formation_mois_faits_check;
@@ -201,7 +203,8 @@ begin
   if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
   select * into a from agence_mannequins where id = p_id;
   if not found then raise exception 'Mannequin introuvable.'; end if;
-  if exists (select 1 from paiements_mannequins where mannequin_id = p_id and objet = 'inscription' and statut <> 'refuse') then
+  if a.inscription_reprise is not null
+     or exists (select 1 from paiements_mannequins where mannequin_id = p_id and objet = 'inscription' and statut <> 'refuse') then
     raise exception 'L''inscription de % est déjà enregistrée.', a.full_name;
   end if;
   if p_choix = 'encaissee' then
@@ -209,10 +212,6 @@ begin
     values (p_id, 'inscription', nullif(p_montant, 0), 'avant_systeme', 'valide', now(), auth.uid(), auth.uid());
   elsif p_choix = 'a_recevoir' then
     if p_montant is null or p_montant <= 0 then raise exception 'Montant de l''inscription à recevoir manquant.'; end if;
-    if exists (select 1 from compta_dettes d join compta_tiers x on x.id = d.tiers_id
-               where d.sens = 'creance' and not d.annule and d.categorie = 'inscription' and x.nom = a.full_name) then
-      raise exception 'L''inscription de % est déjà dans « Ce qu''on nous doit ».', a.full_name;
-    end if;
     select id into t from compta_tiers where nom = a.full_name and type = 'client' order by cree_le limit 1;
     if t is null then
       insert into compta_tiers (nom, type, telephone, email, notes) values (a.full_name, 'client', a.telephone, a.email, 'Mannequin de l''agence (reprise du ' || to_char(reprise_date(), 'DD/MM/YYYY') || ')')
@@ -225,6 +224,7 @@ begin
   else
     raise exception 'Choix inconnu.';
   end if;
+  update agence_mannequins set inscription_reprise = p_choix where id = p_id;
   perform journaliser('Reprise : inscription ' || p_choix, 'agence_mannequins', p_id::text, null, json_build_object('montant', p_montant)::jsonb);
   return p_choix;
 end;
@@ -339,6 +339,17 @@ begin
 end;
 $$;
 
+-- Paiements « J'ai payé » pas encore vérifiés jusqu'à la fin d'un mois (étape 1 de la clôture guidée) : un nombre
+-- seulement, sans aucun nom (le comptable ne lit pas les paiements des mannequins)
+create or replace function cloture_en_attente(p_mois date)
+returns int language plpgsql stable security definer set search_path = public as $$
+begin
+  if not portail_peut('compta') then raise exception 'Accès refusé'; end if;
+  return (select count(*) from paiements_mannequins where statut = 'declare'
+          and declare_le < (date_trunc('month', p_mois) + interval '1 month'));
+end;
+$$;
+
 -- Un mois clôturé est verrouillé : plus aucune écriture saisie, annulée ni modifiée à une date de ce mois (une
 -- correction se fait par une nouvelle écriture dans un mois ouvert). Exceptions : le serveur, et les recettes
 -- automatiques des paiements (déclencheur dans un déclencheur), pour ne jamais bloquer une validation.
@@ -392,7 +403,9 @@ begin
     'paiements', coalesce((select json_agg(json_build_object('nom', a.full_name, 'objet', p.objet, 'mois', p.mois, 'montant', p.montant, 'mode', p.mode,
         'statut', p.statut, 'le', coalesce(p.valide_le, p.declare_le)) order by coalesce(p.valide_le, p.declare_le))
         from paiements_mannequins p join agence_mannequins a on a.id = p.mannequin_id
-        where coalesce(p.valide_le, p.declare_le) >= r.rodage_debut and coalesce(p.valide_le, p.declare_le) < fin), '[]'::json),
+        -- (une mensualité : d'après le mois payé ; une inscription : d'après sa date)
+        where case when p.objet = 'mensualite' then p.mois >= r.rodage_debut and p.mois < fin
+                   else coalesce(p.valide_le, p.declare_le) >= r.rodage_debut and coalesce(p.valide_le, p.declare_le) < fin end), '[]'::json),
     'ecritures', coalesce((select json_agg(json_build_object('date', e.date_op, 'sens', e.sens, 'montant', e.montant, 'compte', c.nom, 'categorie', e.categorie,
         'libelle', e.libelle, 'annule', e.annule) order by e.date_op, e.cree_le)
         from compta_ecritures e join compta_comptes c on c.id = e.compte_id where e.date_op >= r.rodage_debut and e.date_op < fin), '[]'::json),
@@ -411,7 +424,7 @@ begin
     'mannequins', case when not portail_peut('paiements') then '[]'::json else coalesce((select json_agg(json_build_object('id', a.id, 'nom', a.full_name, 'statut', a.statut, 'niveaux', a.formation_niveaux,
         'mois_faits', a.formation_mois_faits, 'vue_le', a.reprise_vue_le,
         'inscription', (select p.mode from paiements_mannequins p where p.mannequin_id = a.id and p.objet = 'inscription' and p.statut <> 'refuse' limit 1),
-        'inscription_due', exists (select 1 from compta_dettes d join compta_tiers x on x.id = d.tiers_id where d.sens = 'creance' and not d.annule and d.categorie = 'inscription' and x.nom = a.full_name))
+        'inscription_reprise', a.inscription_reprise, 'inscription_due', a.inscription_reprise = 'a_recevoir')
         order by a.full_name) from agence_mannequins a), '[]'::json) end);
 end;
 $$;
@@ -423,9 +436,9 @@ revoke execute on function reprise_date(), mois_rodage(date), formation_mois_n(d
 grant execute on function reprise_date(), mois_rodage(date), formation_mois_n(date, int) to authenticated;
 revoke execute on function formation_reste_total(uuid), formation_debut(uuid), formation_fin(uuid), mensualite_etat_regle(uuid, date, date, boolean) from authenticated;
 revoke execute on function mes_mensualites(), mensualites_appeler(date, uuid[]), reprise_mannequin_enregistrer(uuid, text, int, int), reprise_inscription(uuid, text, int),
-  compta_ouverture(jsonb), compta_cloturer_complet(date, jsonb, text), archives_rodage(), reprise_etat() from public, anon;
+  compta_ouverture(jsonb), compta_cloturer_complet(date, jsonb, text), cloture_en_attente(date), archives_rodage(), reprise_etat() from public, anon;
 grant execute on function mes_mensualites(), mensualites_appeler(date, uuid[]), reprise_mannequin_enregistrer(uuid, text, int, int), reprise_inscription(uuid, text, int),
-  compta_ouverture(jsonb), compta_cloturer_complet(date, jsonb, text), archives_rodage(), reprise_etat() to authenticated;
+  compta_ouverture(jsonb), compta_cloturer_complet(date, jsonb, text), cloture_en_attente(date), archives_rodage(), reprise_etat() to authenticated;
 
 NOTIFY pgrst, 'reload schema';
 
@@ -434,8 +447,9 @@ NOTIFY pgrst, 'reload schema';
 -- -----------------------------------------------------------------------------------
 select case when (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
                   and p.proname in ('reprise_date', 'mois_rodage', 'formation_mois_n', 'formation_reste_total', 'reprise_mannequin_enregistrer', 'reprise_inscription',
-                                    'compta_comptage_poser', 'compta_ouverture', 'compta_cloturer_complet', 'compta_mois_verrouille', 'archives_rodage', 'reprise_etat')) = 12
+                                    'compta_comptage_poser', 'compta_ouverture', 'compta_cloturer_complet', 'cloture_en_attente', 'compta_mois_verrouille', 'archives_rodage', 'reprise_etat')) = 13
               and exists (select 1 from reglages_reprise where id and date_reprise = '2027-03-01')
               and exists (select 1 from information_schema.columns where table_name = 'agence_mannequins' and column_name = 'formation_mois_faits')
+              and exists (select 1 from information_schema.columns where table_name = 'agence_mannequins' and column_name = 'inscription_reprise')
               and exists (select 1 from pg_trigger where tgname = 'compta_mois_verrouille')
             then '✅ Reprise de mars installée (Extension 154)' else '❌ Reprise de mars incomplète : recollez tout le fichier' end as controle;

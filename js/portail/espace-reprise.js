@@ -15,7 +15,8 @@
   const STATUTS = { actif: 'Active', suspendu: 'Suspendue', sorti: 'Sortie' };
   const ETATS_ARCHIVE = { paye: 'Payé', attente: 'En attente', rodage: 'Non payé (jamais réclamé)', conge: 'Congés', termine: 'Formation terminée' };
   const NOTE_ABSENT = '<div class="note alerte">Cette partie s’ouvrira quand l’étape d’installation « supabase-reprise-mars.sql » sera faite dans Supabase.</div>';
-  const absent = (e) => /reprise_etat|archives_rodage|compta_cloturer_complet|function|fonction|schema cache/i.test(String(e && (e.message || e)));
+  // (fonction inconnue de la base : fichier SQL pas encore collé ; toute autre erreur est montrée telle quelle)
+  const absent = (e) => /PGRST202|Could not find the function|schema cache/i.test(String(e && (e.code || '')) + ' ' + String(e && (e.message || e)));
   const nombre = (v) => { const n = Number(String(v == null ? '' : v).replace(/\s/g, '')); return Number.isFinite(n) ? Math.round(n) : NaN; };
   const dateLongue = (iso) => { const s = String(iso).slice(0, 10); return (s.slice(8, 10) === '01' ? '1er' : String(Number(s.slice(8, 10)))) + ' ' + P.mois(s).toLowerCase(); };
 
@@ -44,7 +45,7 @@
     try { r = await P.rpc('reprise_etat'); } catch (e) { if (absent(e)) return P.entete('Reprise du 1er mars') + NOTE_ABSENT; throw e; }
     const liste = (r.mannequins || []).filter((m) => m.statut !== 'sorti' || !m.vue_le);
     const vues = liste.filter((m) => m.vue_le).length;
-    const sansInscription = (r.mannequins || []).filter((m) => m.statut !== 'sorti' && !m.inscription && !m.inscription_due);
+    const sansInscription = (r.mannequins || []).filter((m) => m.statut !== 'sorti' && !m.inscription && !m.inscription_reprise);
     const principal = P.moi.role === 'principal', ouvert = String(r.aujourdhui) >= String(r.date_reprise);
     const noms = {};
     (r.comptes || []).forEach((c) => { noms[c.id] = c.nom; });
@@ -199,22 +200,23 @@
     if (m >= P.moisCourant()) {
       return P.entete('Clôture guidée · ' + P.mois(m), C.choixMois()) + '<div class="note info">Ce mois n’est pas terminé. La clôture se fait à partir du 1er du mois suivant : choisissez un mois passé.</div>';
     }
+    // (un nombre seulement : le comptable ne lit pas les paiements des mannequins)
     const [enAttente, lignes] = await Promise.all([
-      P.bd(sb.from('paiements_mannequins').select('id').eq('statut', 'declare').lt('declare_le', fin)),
+      P.rpc('cloture_en_attente', { p_mois: m }).catch((e) => { if (absent(e)) return 0; throw e; }),
       P.rpc('compta_tresorerie', { p_debut: m, p_fin: fin })
     ]);
     const actifs = new Set(comptes.filter((c) => c.actif && String(c.date_initiale || '') < fin).map((c) => c.id));
     P.etat.clotureComptes = (lignes || []).filter((c) => actifs.has(c.compte_id));
     return P.entete('Clôture guidée · ' + P.mois(m), C.choixMois()) +
       '<div class="note info">Quatre étapes : rien en suspens, chaque compte compté, la raison de chaque écart, puis le mois est verrouillé et vous téléchargez le bilan.</div>' +
-      '<div class="carte"><h2>1. Rien en suspens</h2>' + (enAttente.length
-        ? '<p>' + P.pastille(enAttente.length + ' paiement(s) « J’ai payé » à vérifier', 'alerte') + '</p><p>Validez-les ou refusez-les d’abord (espace Paiements, « Paiements à valider »).</p>'
+      '<div class="carte"><h2>1. Rien en suspens</h2>' + (enAttente
+        ? '<p>' + P.pastille(enAttente + ' paiement(s) « J’ai payé » à vérifier', 'alerte') + '</p><p>Validez-les ou refusez-les d’abord (espace Paiements, « Paiements à valider »).</p>'
         : '<p>' + P.pastille('Aucun paiement en attente', 'ok') + '</p>') + '</div>' +
       '<form class="carte f" data-form="cloture-guidee" data-mois="' + m + '"><h2>2. Comptez chaque compte au dernier jour du mois</h2>' +
       '<p class="doux">La caisse : l’argent compté. Wave : le solde affiché dans l’application au dernier jour du mois. Un écart devient une écriture de régularisation, avec sa raison.</p>' +
       champsComptage(P.etat.clotureComptes) +
       '<label class="fl" for="cg-note">Note (facultatif)<input id="cg-note" name="note" maxlength="300"></label>' +
-      '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit"' + (enAttente.length ? ' disabled' : '') + '>Clôturer ' + P.esc(P.mois(m)) + '</button></div></form>';
+      '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit"' + (enAttente ? ' disabled' : '') + '>Clôturer ' + P.esc(P.mois(m)) + '</button></div></form>';
   }
   P.formulaires['cloture-guidee'] = async (f, form) => {
     const m = form.getAttribute('data-mois');
