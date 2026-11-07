@@ -13,7 +13,7 @@ sans son accord ; une étape à la fois ; tests (base d'essai + tests visiteur) 
 | Chaque mois | Les **compteurs du mois** (recettes, dépenses, résultat, à jour / non payé) repartent à zéro le 1er. **L'argent** (caisse, Wave) se **reporte** : solde de fin de mois = solde du début du mois suivant. Un mois passé reste consultable, en lecture seule, une fois clôturé. |
 | Formation | **2 niveaux de 9 mois** (niveau 1 puis niveau 2). On peut s'arrêter après le niveau 1. |
 | Mois déjà faits | La propriétaire les **saisit elle-même** pour chaque mannequin, dans l'assistant de reprise. |
-| Montants | **10 000 FCFA par mois** et **15 000 FCFA d'inscription**, pour toutes. |
+| Montants | **10 000 FCFA par mois** et **15 000 FCFA d'inscription**, pour toutes. À partir de la reprise (mars 2027), **aucune exception**. Seule exception passée : Cherif Mellina payait **20 000 FCFA par mois** pendant le rodage (son paiement de 20 000 du 02/11/2026 = **un seul mois**, novembre ; le registre indique encore 10 000 pour elle, sans importance puisque novembre est archivé). |
 | Fin de formation | La mannequin **reste à l'agence** (Book, application, castings), mais ne paie plus de mensualité. |
 | Règle comptable | On n'efface jamais une écriture (règles OHADA ; pièces gardées 10 ans) : on corrige par une nouvelle écriture. Une recette n'existe que si l'argent est réellement entré (caisse ou Wave), avec un reçu. |
 
