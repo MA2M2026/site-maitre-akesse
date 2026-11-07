@@ -228,6 +228,8 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     // 8. Messages : ce qui est à faire, puis les messages de l'agence (3e voie)
     await p.click('.ap-nav a[href="#alertes"]'); await p.waitForSelector('.ap-alerte');
     const alertes = await p.textContent('#ap-ecran');
+    // (photo du message chargée à la demande : hauteur nulle tant qu'elle n'est pas arrivée)
+    await p.waitForSelector('.ap-message-agence.nouveau .ap-message-image', { state: 'visible', timeout: 5000 }).catch(() => {});
     ok(/Mensualité de/.test(alertes) && /Casting ouvert : CASTING CACAO/.test(alertes) && !/confirmez votre présence/.test(alertes), n + 'Messages › À faire : mensualité, casting ; plus de convocation à confirmer');
     ok(/Messages de l’agence/.test(alertes) && (await p.$$('.ap-message-agence')).length === 2 && await p.isVisible('.ap-message-agence.nouveau .ap-message-image') &&
       (await p.getAttribute('.ap-message-agence.nouveau a[href="https://exemple.ci/fiche.pdf"]', 'target')) === '_blank' && /Veuillez vous préparer/.test(await p.textContent('.ap-message-agence.nouveau')),
