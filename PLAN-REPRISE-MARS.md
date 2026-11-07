@@ -29,6 +29,27 @@ sans son accord ; une étape à la fois ; tests (base d'essai + tests visiteur) 
 - Existe déjà : choix du mois (Compta), clôture mensuelle et « mois figés » (à compléter), accès du comptable en lecture
   seule, reçus numérotés, paiement à l'avance (jusqu'à 3 mois), sorties et suspensions.
 
+### Déjà installé dans la vraie base (vérifié le 07/11/2026) — à RÉUTILISER, ne pas refaire
+- `supabase-formation.sql` (Extension 148, 01/11/2026) : formation 2 × 9 mois = 18 mensualités ; congés décembre,
+  janvier, février sans mensualité ni relance (`mois_conge`) ; `formation_mois`, `formation_debut` (premier mois payé,
+  sinon entrée au registre), `formation_fin`, état « termine » après le 18e mois ; report d'un mois de congé payé
+  (`mensualite_credit`) ; une seule règle pour tous les écrans (`mensualite_etat_regle`, `mensualites_etats`).
+- `compta_tresorerie(p_debut, p_fin)` : pour chaque compte, solde de début, entrées, sorties, solde de fin (les 4 lignes).
+- `compta_cloturer(p_mois, p_note)` : clôture d'un mois terminé (table `compta_clotures`) ; paiement à l'avance (3 mois).
+
+### Donc, ce qui reste vraiment à faire
+1. **Mois déjà faits avant le système** : un nombre par mannequin (saisi par la propriétaire), pris en compte par
+   `formation_debut`/`formation_fin` (le départ recule d'autant de mois de cours) → « il reste N mois » juste.
+2. **Rodage septembre–novembre 2026** : état « rodage » (gris, jamais « non payé », jamais relancé, hors arriérés) ;
+   écran « Archives – période de rodage » en lecture seule + export Excel/PDF.
+3. **Clôture complétée** : comptage réel de la caisse et solde Wave saisis ; écart = écriture de régularisation avec
+   motif ; mois clôturé verrouillé (plus d'écriture dans un mois clôturé) ; bilan PDF + Excel.
+4. **Bilan d'ouverture du 1er mars** : dans l'assistant de reprise (caisse comptée, Wave, écart noté une fois).
+5. **Écrans** : trésorerie en 4 lignes (la fonction existe), arriérés à part, assistant de reprise, application des
+   mannequins (« mois X sur 9, il reste N mois », « agence fermée jusqu'au 1er mars »).
+6. Tests (base d'essai + tests visiteur), `/code-review`, mise en ligne par la conversation de la propriétaire
+   (session_01JAUnTFzB72DnTTj2GbQ7AM, puis la suivante si elle est épuisée), jamais par l'autre conversation.
+
 ## 3. Ce qu'il faut construire (étapes, dans l'ordre)
 
 ### Étape 1 — Base de données (fichier `supabase-reprise-mars.sql`, ajout seulement, rejouable)
