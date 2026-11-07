@@ -12,11 +12,15 @@
     if (!bloc) return;
     fait = true;
     var hrefs = (bloc.textContent || '').match(/href="[^"]+"/g) || [];
+    // (à la place qu'elles avaient dans la page, juste après <noscript> : les styles écrits plus bas dans la page
+    // gardent le dernier mot, comme avant)
+    var ancre = bloc;
     hrefs.forEach(function (h) {
       var l = document.createElement('link');
       l.rel = 'stylesheet';
       l.href = h.slice(6, -1).replace(/&amp;/g, '&');
-      document.head.appendChild(l);
+      ancre.parentNode.insertBefore(l, ancre.nextSibling);
+      ancre = l;
     });
   }
   function grandePhoto() {

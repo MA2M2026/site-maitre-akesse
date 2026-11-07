@@ -3,7 +3,8 @@
 // profil en ligne). Comme une vraie personne, base SIMULÉE, sur un petit téléphone ancien (320 px), un téléphone et une
 // tablette ; et un navigateur ANCIEN simulé (sans grille CSS ni « gap ») :
 //  - les 6 cases sont visibles en entier, 3 par ligne, rien ne dépasse sur le côté ;
-//  - « Voir le récapitulatif et mettre mon profil en ligne » sous chaque étape mène au récapitulatif (« Soumettre »).
+//  - « Enregistrer et voir le récapitulatif (mise en ligne) » sous chaque étape : enregistre l'étape, puis mène au
+//    récapitulatif (« Soumettre ») ; une étape incomplète n'est pas perdue (on y reste).
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const path = require('path');
 const PORT = String(9840 + Math.floor(Math.random() * 30));
@@ -29,9 +30,14 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const lignes = [...new Set(cases.map((c) => c.h))];
     ok(cases.length === 6 && cases.every((c) => c.g >= 0 && c.d <= innerWidthOf(ecran)) && lignes.length === 2, nom + ' : les 6 cases visibles en entier, sur 2 lignes de 3 (« Récapitulatif » compris)');
     ok(await q.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), nom + ' : rien ne dépasse sur le côté');
-    ok(await q.isVisible('.aller-recap button'), nom + ' : « Voir le récapitulatif et mettre mon profil en ligne » sous l’étape');
-    await q.click('.aller-recap button'); await q.waitForTimeout(500);
-    ok(/Récapitulatif/.test(await q.textContent('.panel')) && await q.$('#submitProfile') && !(await q.$('.aller-recap')), nom + ' : le bouton mène au récapitulatif, avec « Soumettre mon profil »');
+    ok(await q.isVisible('#allerRecap'), nom + ' : « Enregistrer et voir le récapitulatif (mise en ligne) » sous l’étape');
+    // étape 1 vide : on n'y perd rien — l'étape est d'abord enregistrée ; incomplète, on y reste, les manques encadrés
+    await q.click('#allerRecap'); await q.waitForTimeout(800);
+    ok(/Étape 1 sur 6/.test(await q.textContent('.panel')) && !(await q.$('#submitProfile')), nom + ' : étape incomplète : rien n’est perdu, on reste sur l’étape pour la compléter');
+    // étape « Photos » : le bouton mène au récapitulatif
+    await q.click('.step-tab[data-goto="5"]'); await q.waitForTimeout(500);
+    await q.click('#allerRecap'); await q.waitForTimeout(600);
+    ok(/Récapitulatif/.test(await q.textContent('.panel')) && await q.$('#submitProfile') && !(await q.$('#allerRecap')), nom + ' : le bouton mène au récapitulatif, avec « Soumettre mon profil »');
     ok(!errs.length, nom + ' : aucune erreur ' + errs.join(' | '));
     await q.close();
   }

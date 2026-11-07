@@ -91,14 +91,17 @@
     if (!confirm(phrase)) return;
     try { await P.sensible(() => P.rpc('reprise_inscription', { p_id: id, p_choix: choix, p_montant: choix === 'abandonnee' ? 0 : montant })); P.message('Inscription notée.'); await P.afficher(); } catch (e) { P.message(P.erreurTexte(e)); }
   };
-  // toutes les inscriptions encore à noter : « déjà payée avant le nouveau système » (15 000 FCFA, aucune recette)
+  // toutes les inscriptions encore à noter : « déjà payée avant le nouveau système » (montant de chaque ligne, aucune recette)
   P.actions['reprise-inscriptions-toutes'] = async (el) => {
     const ids = [...document.querySelectorAll('[data-action="reprise-inscription"][data-choix="encaissee"]')].map((b) => [b.getAttribute('data-id'), b.getAttribute('data-nom')]);
     if (!ids.length || !confirm('Noter l’inscription de ces ' + ids.length + ' mannequins comme réglée avant le nouveau système ? Rien n’entre dans la comptabilité.')) return;
     el.disabled = true;
     const ratees = [];
     for (const [id, nom] of ids) {
-      try { await P.sensible(() => P.rpc('reprise_inscription', { p_id: id, p_choix: 'encaissee', p_montant: 15000 })); } catch (e) { ratees.push(nom + ' (' + P.erreurTexte(e) + ')'); }
+      // (le montant de la ligne, s'il a été changé ; sinon 15 000)
+      const champ = document.getElementById('ri-' + id), montant = nombre(champ && champ.value);
+      if (!Number.isFinite(montant) || montant <= 0) { ratees.push(nom + ' (montant manquant)'); continue; }
+      try { await P.sensible(() => P.rpc('reprise_inscription', { p_id: id, p_choix: 'encaissee', p_montant: montant })); } catch (e) { ratees.push(nom + ' (' + P.erreurTexte(e) + ')'); }
     }
     P.message(ratees.length ? 'Pas notées : ' + ratees.join(', ') : 'Toutes les inscriptions sont notées.');
     await P.afficher();

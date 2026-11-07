@@ -10,7 +10,7 @@ const reponse = () => { const r = { code: 200, entetes: {}, corps: null }; r.set
   global.fetch = async (u, o) => { recu = { u, corps: JSON.parse(o.body) }; return { ok: true, json: async () => false }; };
   let res = reponse();
   ok(await limiteDebit(res, 'r2-presigner', 'compte-1', 600) === true && res.code === 429 && res.entetes['Retry-After'] === '60' && /patientez/.test(res.corps.error), 'trop de demandes : refusé (429), « patientez un instant »');
-  ok(/rpc\/limiter_soumissions_publiques$/.test(recu.u) && recu.corps.p_formulaire === 'api:r2-presigner:compte-1' && recu.corps.p_max_par_minute === 600, 'compteur par accès et par compte (api:r2-presigner:compte-1, 600 par minute)');
+  ok(/rpc\/limiter_soumissions_publiques_ip$/.test(recu.u) && recu.corps.p_formulaire === 'api:r2-presigner:compte-1' && recu.corps.p_max_par_minute === 600 && recu.corps.p_max_par_ip === 600, 'compteur par accès et par compte (api:r2-presigner:compte-1, 600 par minute, aussi par adresse — jamais la limite cachée de 3)');
   global.fetch = async () => ({ ok: true, json: async () => true });
   res = reponse();
   ok(await limiteDebit(res, 'r2-presigner', 'compte-1', 600) === false && res.code === 200, 'sous la limite : on passe');

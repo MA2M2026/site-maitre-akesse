@@ -194,8 +194,8 @@ body.ap-page-profil .greet p { color: var(--sombre-encre-douce); font-size: 14.5
 /* (07/11/2026, plainte : sur certains téléphones anciens, les 6 cases s'alignaient sur une ligne et « Récapitulatif »
    sortait de l'écran) : 3 cases par ligne SANS grille ni « gap » (inconnus de vieux navigateurs), avec des marges et
    des largeurs calculées, que tous les téléphones comprennent ; jamais de défilement sur le côté */
-body.ap-page-profil .stepper { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin: 0 -4px 16px; padding: 0; border: 0; background: none; border-radius: 0; overflow: visible; }
-body.ap-page-profil .step-tab { -webkit-box-flex: 0; -webkit-flex: 0 0 auto; flex: 0 0 auto; width: 31.3%; width: calc(33.333% - 8px); margin: 4px; box-sizing: border-box; min-width: 0; border: 0; border-radius: 14px; background: var(--ap-carte); color: var(--ap-encre); box-shadow: var(--ap-ombre);
+body.ap-page-profil .stepper { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin: 0 -4px 16px; padding: 0; border: 0; background: none; border-radius: 0; overflow: visible; }
+body.ap-page-profil .step-tab { -webkit-flex: 0 0 auto; flex: 0 0 auto; width: 30%; width: calc(33.333% - 8px); margin: 4px; box-sizing: border-box; min-width: 0; border: 0; border-radius: 14px; background: var(--ap-carte); color: var(--ap-encre); box-shadow: var(--ap-ombre);
   padding: 10px 4px; font: 600 12.5px/1.25 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; }
 body.ap-page-profil .step-tab .n { font: 600 20px 'Cormorant Garamond', serif; color: var(--ap-rouge-texte); }
 body.ap-page-profil .step-tab.active { background: var(--ap-rouge); color: var(--blanc-pur); }

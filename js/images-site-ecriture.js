@@ -6,7 +6,7 @@
 // envoyée (0 à 1), utile pour les longues vidéos de l'accueil.
 async function envoyerImageSite(categorie, chemin, fichier, progression) {
   // (photos des pages, actualités, événements, partenaires : lieu GPS et téléphone retirés — sansDonneesCachees, js/app.js)
-  if (typeof sansDonneesCachees === 'function') fichier = await sansDonneesCachees(fichier, 2400, 0.9);
+  if (typeof sansDonneesCachees === 'function') fichier = await sansDonneesCachees(fichier, 4000, 0.92);
   const { data: { session } } = await sbAdmin.auth.getSession();
   if (!session) throw new Error('Session expirée, reconnectez-vous.');
   let derniereErreur;

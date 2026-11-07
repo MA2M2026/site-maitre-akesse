@@ -2,7 +2,7 @@
 -- ===========================================================================
 -- Extension 156 (07/11/2026) : « Sans nom » dans les paiements. La fiche du registre (agence_mannequins) est créée
 -- à la création du compte, souvent AVANT que la mannequin écrive son nom : elle restait « Sans nom » pour toujours.
--- Désormais, quand la mannequin écrit (ou change) son nom sur son profil, une fiche encore « Sans nom » le reprend ;
+-- Désormais, quand la mannequin écrit son nom sur son profil, une fiche encore « Sans nom » le reprend (une seule fois) ;
 -- un nom écrit par l'agence dans le registre n'est jamais remplacé. Rattrapage des fiches existantes. Recollable.
 -- ===========================================================================
 create or replace function registre_reprendre_nom()

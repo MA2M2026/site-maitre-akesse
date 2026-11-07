@@ -760,7 +760,7 @@ function viewWizard(){
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
-  (state.meta.currentStep !== 6 ? '<div class="actions-row aller-recap"><button type="button" class="btn primary" data-goto="6" data-bouton-libre>Voir le récapitulatif et mettre mon profil en ligne →</button></div>' : '');
+  (state.meta.currentStep !== 6 ? '<div class="actions-row aller-recap"><button type="button" class="btn primary" id="allerRecap" data-bouton-libre>Enregistrer et voir le récapitulatif (mise en ligne) →</button></div>' : '');
 }
 
 function stepContent(n){
@@ -1094,6 +1094,10 @@ function stepRecap(){
     '<div class="actions-row"><button class="btn ghost" data-goto="5">← Retour</button><button class="btn primary" id="submitProfile">Soumettre mon profil</button></div>';
 }
 
+// (07/11/2026) « Enregistrer et voir le récapitulatif » : l'étape est d'abord enregistrée par son propre bouton ;
+// s'il réussit, il mène au récapitulatif au lieu de l'étape suivante ; s'il échoue, on reste sur l'étape
+let allerAuRecap = false;
+function suite(n){ if (allerAuRecap) { allerAuRecap = false; return 6; } return n; }
 function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 // Lecture des champs Identité/Physique — mutualisée entre le formulaire du
@@ -1221,12 +1225,16 @@ function bindWizard(){
   // en style="" inline dans le HTML) : le CSP strict de cette page bloque
   // silencieusement les valeurs de style calculées insérées comme texte.
   document.querySelectorAll('.progress-fill[data-largeur]').forEach(function(el){ el.style.width = el.dataset.largeur + '%'; });
-  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ goto(parseInt(b.dataset.goto,10)); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ allerAuRecap = false; goto(parseInt(b.dataset.goto,10)); }); });
   initSelectsAvecAutre();
   brancherTaillesCalculees();
   bindStepIdentite();
   const s = state;
 
+  document.getElementById('allerRecap')?.addEventListener('click', function(){
+    const enregistrer = document.getElementById('save' + state.meta.currentStep);
+    if (enregistrer) { allerAuRecap = true; enregistrer.click(); } else goto(6);
+  });
   document.getElementById('save1')?.addEventListener('click', async function(){
     const btn = this;
     if (!lireCiviliteFormulaire() || !lireInstagramFormulaire() || !lireParentFormulaire()) return;
@@ -1237,7 +1245,7 @@ function bindWizard(){
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null }));
     if (ok) await enregistrerComplementsIdentite();
-    if (ok) { toast('Enregistré'); goto(2); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
+    if (ok) { toast('Enregistré'); goto(suite(2)); } else { allerAuRecap=false; btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
   document.getElementById('save2')?.addEventListener('click', async function(){
@@ -1246,7 +1254,7 @@ function bindWizard(){
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(physiqueToDb(s.physique));
     if (ok) await enregistrerComplementsPhysique(s.physique);
-    if (ok) { toast('Enregistré'); goto(3); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
+    if (ok) { toast('Enregistré'); goto(suite(3)); } else { allerAuRecap=false; btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
   document.getElementById('save3')?.addEventListener('click', async function(){
@@ -1255,7 +1263,7 @@ function bindWizard(){
     s.formation.particuliere = val('f-formPart'); s.formation.mannequin = val('f-formMannequin');
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     const ok = await Store.saveBlock(formationToDb(s.formation));
-    if (ok) { toast('Enregistré'); goto(4); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
+    if (ok) { toast('Enregistré'); goto(suite(4)); } else { allerAuRecap=false; btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 
   document.getElementById('save4')?.addEventListener('click', function(){ goto(5); });
@@ -1339,7 +1347,7 @@ function bindProfilProHandlers(){
     btn.disabled = true; btn.textContent = 'Enregistrement…';
     if (s.profilPro.niveauMannequin) s.profilPro.niveauMannequin = niveauControle(s.profilPro.niveauMannequin, s.experiences, s.profilPro.anneesExperience);
     const ok = await Store.saveBlock(profilProToDb(s.profilPro));
-    if (ok) { toast('Enregistré'); render(); } else { btn.disabled=false; btn.textContent='Enregistrer'; }
+    if (ok) { toast('Enregistré'); render(); } else { allerAuRecap=false; btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 }
 

@@ -574,7 +574,8 @@ async function planDuSite(url) {
   let ajout = '';
   (profils || []).forEach((p) => { if (/^[a-z0-9-]{1,120}$/.test(p.slug || '')) ajout += ligne('/book/' + p.slug, p.created_at, '0.7') + ligne('/en/book/' + p.slug, p.created_at, '0.6'); });
   (actus || []).forEach((a) => { if (ID_VALIDE.test(a.id)) ajout += ligne('/actualites?actu=' + a.id, a.created_at, '0.5') + ligne('/en/actualites?actu=' + a.id, a.created_at, '0.4'); });
-  (evts || []).forEach((e) => { if (ID_VALIDE.test(e.id)) ajout += ligne('/evenements?evenement=' + e.id, e.date_evenement, '0.5') + ligne('/en/evenements?evenement=' + e.id, e.date_evenement, '0.4'); });
+  // (événements sans date : celle de l'événement est souvent dans l'avenir, refusée par Google)
+  (evts || []).forEach((e) => { if (ID_VALIDE.test(e.id)) ajout += ligne('/evenements?evenement=' + e.id, null, '0.5') + ligne('/en/evenements?evenement=' + e.id, null, '0.4'); });
   return new Response(xml.replace('</urlset>', () => ajout + '</urlset>'), { status: 200, headers: { 'content-type': 'application/xml; charset=utf-8',
     'cache-control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400', 'x-ma2m-render': 'ssr', 'x-ma2m-build': VERSION } });
 }

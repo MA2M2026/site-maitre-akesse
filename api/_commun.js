@@ -208,14 +208,15 @@ async function noterAuJournal(message, origine, page) {
 }
 
 // Limite d'envois par personne et par minute (07/11/2026, W6) sur les accès réservés aux comptes connectés
-// (photos, images du site, suppression) : compteur en base (limiter_soumissions_publiques, la même que pour les
-// formulaires publics), clé « api:<accès>:<compte> ». Trop d'appels : répond 429 et renvoie true. Base injoignable :
+// (photos, images du site, suppression) : compteur en base (limiter_soumissions_publiques_ip, la même que pour les
+// formulaires publics — PAS limiter_soumissions_publiques, qui garde en plus 3 appels par minute et par adresse),
+// clé « api:<accès>:<compte> », même limite par compte et par adresse. Trop d'appels : répond 429 et renvoie true. Base injoignable :
 // on laisse passer (une panne du compteur ne bloque jamais l'agence).
 async function limiteDebit(res, acces, compte, maxParMinute) {
   try {
-    const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/limiter_soumissions_publiques', {
+    const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/limiter_soumissions_publiques_ip', {
       method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_formulaire: 'api:' + acces + ':' + compte, p_max_par_minute: maxParMinute })
+      body: JSON.stringify({ p_formulaire: 'api:' + acces + ':' + compte, p_max_par_minute: maxParMinute, p_max_par_ip: maxParMinute })
     });
     if (!rep.ok || (await rep.json()) !== false) return false;
   } catch (e) { return false; }

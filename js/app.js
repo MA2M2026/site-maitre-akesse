@@ -1943,6 +1943,7 @@ function redessinerPhoto(fichier, coteMax, rendu) {
 // avec le LIEU (GPS) où la photo a été prise, le modèle du téléphone et la date. Une photo qui en a est redessinée
 // (comme pour la réduire) : seule l'image part, sans ces informations, et toujours dans le bon sens (le navigateur
 // applique la rotation avant de redessiner). Partagé par tous les envois de photos (Book, site, candidatures).
+// Limite connue : seuls les JPEG sont vérifiés (les photos de téléphone) ; un PNG ou un WebP passe tel quel.
 async function aDesDonneesCachees(fichier) {
   try {
     const o = new Uint8Array(await fichier.slice(0, 262144).arrayBuffer());
@@ -1963,7 +1964,8 @@ async function sansDonneesCachees(fichier, coteMax = 4000, qualite = 0.92) {
   return propre || fichier;
 }
 async function compresserPhotoOrigine(fichier, coteMax = 4000, qualite = 0.92) {
-  fichier = await sansDonneesCachees(fichier, coteMax, qualite);
+  const propre = await sansDonneesCachees(fichier, coteMax, qualite);
+  if (propre !== fichier) return propre;  // (déjà redessinée à 4000 px et 0,92 : pas une seconde fois)
   const compressible = /^image\/(jpeg|jpg|pjpeg|png|webp)$/i.test(fichier.type || '');
   if (!compressible || fichier.size < 900 * 1024) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
@@ -2855,7 +2857,8 @@ const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPe
 async function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,
   // qui deviendrait un fond noir en le convertissant en JPEG (pas de canal alpha).
-  fichier = await sansDonneesCachees(fichier, coteMax, qualite);  // (lieu GPS et téléphone retirés, W6)
+  const propre = await sansDonneesCachees(fichier, coteMax, qualite);  // (lieu GPS et téléphone retirés, W6)
+  if (propre !== fichier) return propre;  // (déjà redessinée : pas une seconde fois)
   if (fichier.type !== 'image/jpeg' || fichier.size < 900 * 1024) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
 }
@@ -2876,7 +2879,8 @@ async function reduireEnJpeg(fichier, coteMax, qualite) {
 // réduite (2400 px, JPEG) ; sinon gardée telle quelle. Partagé le 22/10/2026 (ancien tableau
 // de bord et nouvelle Administration).
 async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
-  fichier = await sansDonneesCachees(fichier, coteMax, qualite);  // (lieu GPS et téléphone retirés, W6)
+  const propre = await sansDonneesCachees(fichier, coteMax, qualite);  // (lieu GPS et téléphone retirés, W6)
+  if (propre !== fichier) return propre;  // (déjà redessinée : pas une seconde fois)
   if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
 }
