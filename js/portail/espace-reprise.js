@@ -2,7 +2,8 @@
 // Trois écrans, en phrases simples :
 //  - Paiements › « Reprise du 1er mars » : chaque mannequin revue une fois (statut, formation en 1 ou 2 niveaux,
 //    mois déjà faits → « il reste N mois »), les inscriptions jamais notées (encaissée avant le système, à recevoir,
-//    abandonnée), puis le bilan d'ouverture (caisse comptée, solde Wave, écart noté une fois avec sa raison).
+//    abandonnée ; un bouton pour toutes). Plus de bilan d'ouverture : la comptabilité est repartie de zéro le 07/11/2026
+//    (décision de la propriétaire ; copie de l'ancienne dans evidence/, hors dépôt).
 //  - Paiements › « Archives – période de rodage » : septembre à novembre 2026 en lecture seule (rien n'est
 //    réclamé), avec une copie Excel et PDF.
 //  - Comptabilité › « Clôture guidée » : rien en suspens, chaque compte compté, écart régularisé avec sa raison,
@@ -46,24 +47,9 @@
     const liste = (r.mannequins || []).filter((m) => m.statut !== 'sorti' || !m.vue_le);
     const vues = liste.filter((m) => m.vue_le).length;
     const sansInscription = (r.mannequins || []).filter((m) => m.statut !== 'sorti' && !m.inscription && !m.inscription_reprise);
-    const principal = P.moi.role === 'principal', ouvert = String(r.aujourdhui) >= String(r.date_reprise);
-    const noms = {};
-    (r.comptes || []).forEach((c) => { noms[c.id] = c.nom; });
-    let ouverture = '';
-    if (r.ouverture && r.ouverture.length) {
-      ouverture = '<p>' + P.pastille('Bilan d’ouverture fait le ' + P.date(r.ouverture[0].compte_le), 'ok') + '</p>' + resumeComptage(r.ouverture, noms);
-    } else if (!P.moi.espaces.compta) {
-      ouverture = '<p class="doux">Le bilan d’ouverture se fait depuis un compte qui a la Comptabilité (administrateur principal).</p>';
-    } else if (!ouvert) {
-      ouverture = '<p class="doux">À faire le ' + P.esc(dateLongue(r.date_reprise)) + ' : vous compterez la caisse et noterez le solde Wave du jour.</p>';
-    } else {
-      const lignes = await P.rpc('compta_tresorerie', { p_debut: r.date_reprise, p_fin: addJour(P.aujourdhui()) });
-      P.etat.repriseComptes = (lignes || []).filter((c) => noms[c.compte_id]);
-      ouverture = '<form class="f" data-form="reprise-ouverture"><p>Comptez l’argent de la caisse et regardez le solde dans l’application Wave, puis notez-les. S’il y a une différence avec le système, écrivez pourquoi : elle sera notée une seule fois.</p>' +
-        champsComptage(P.etat.repriseComptes) + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Enregistrer le bilan d’ouverture</button></div></form>';
-    }
+    const principal = P.moi.role === 'principal';
     return P.entete('Reprise du 1er mars', P.pastille(vues + ' sur ' + liste.length + ' revues', vues === liste.length && liste.length ? 'ok' : 'alerte')) +
-      '<div class="note info">L’agence est fermée jusqu’au ' + P.esc(dateLongue(r.date_reprise)) + '. Septembre à novembre 2026 restent dans les « Archives – période de rodage » : rien n’est effacé, rien n’est réclamé. À partir de mars : 10 000 FCFA par mois et 15 000 FCFA d’inscription, pour toutes.</div>' +
+      '<div class="note info">L’agence est fermée jusqu’au ' + P.esc(dateLongue(r.date_reprise)) + '. Les mensualités de septembre à novembre 2026 ne sont jamais réclamées (« Archives – période de rodage »). La comptabilité est repartie de zéro le 07/11/2026. À partir de mars : 10 000 FCFA par mois et 15 000 FCFA d’inscription, pour toutes.</div>' +
       '<div class="carte"><h2>1. Chaque mannequin, une fois</h2><p class="doux">Pour chacune : son statut, sa formation (1 niveau de 9 mois, ou 2 niveaux), et les mois de cours qu’elle a déjà faits avant la reprise. Le site calcule les mois qui restent.</p>' +
       (liste.length ? P.tableau(['Mannequin', 'Statut', 'Formation', 'Mois déjà faits', ''], liste.map((m) =>
         '<tr><td>' + P.lienFiche(m.id, m.nom) + (m.vue_le ? '<div class="petit-texte doux">revue le ' + P.esc(P.date(m.vue_le)) + (m.mois_faits !== null ? ' · il reste ' + Math.max(0, m.niveaux * 9 - m.mois_faits) + ' mois' : '') + '</div>' : '') + '</td>' +
@@ -76,14 +62,14 @@
       (principal ? '' : '<p class="petit-texte doux">Le statut se change depuis le compte de l’administrateur principal.</p>') + '</div>' +
       '<div class="carte"><h2>2. Inscriptions jamais notées</h2>' +
       (sansInscription.length ? '<p class="doux">Pour chacune : déjà payée avant le nouveau système (rien n’est ajouté aux comptes), à recevoir (elle va dans « Ce qu’on nous doit »), ou abandonnée (rien n’est réclamé).</p>' +
+        // (décision de la propriétaire, 07/11/2026 : toutes les mannequins déjà là sont inscrites, sans rien dans la comptabilité)
+        '<div class="ligne"><button class="btn rouge" type="button" data-action="reprise-inscriptions-toutes">Toutes réglées avant le nouveau système (' + sansInscription.length + ')</button></div>' +
         P.tableau(['Mannequin', '#Montant', ''], sansInscription.map((m) =>
           '<tr><td>' + P.esc(m.nom) + '</td><td><input class="num" id="ri-' + m.id + '" inputmode="numeric" value="15000" aria-label="Montant de l’inscription de ' + P.esc(m.nom) + '"></td><td class="ligne">' +
           [['encaissee', 'Déjà payée'], ['a_recevoir', 'À recevoir'], ['abandonnee', 'Abandonnée']].map((c) =>
             '<button class="btn petit" type="button" data-action="reprise-inscription" data-id="' + m.id + '" data-nom="' + P.esc(m.nom) + '" data-choix="' + c[0] + '">' + c[1] + '</button>').join('') + '</td></tr>'))
-        : '<p>' + P.pastille('Toutes les inscriptions sont notées', 'ok') + '</p>') + '</div>' +
-      '<div class="carte"><h2>3. Bilan d’ouverture (le jour de la reprise)</h2>' + ouverture + '</div>';
+        : '<p>' + P.pastille('Toutes les inscriptions sont notées', 'ok') + '</p>') + '</div>';
   }
-  function addJour(iso) { const d = new Date(String(iso).slice(0, 10) + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); }
   P.formulaires['reprise-mannequin'] = async (f, form) => {
     const id = form.getAttribute('data-id');
     const niveaux = Number(f.get('niveaux')), faits = nombre(f.get('mois_faits'));
@@ -105,14 +91,17 @@
     if (!confirm(phrase)) return;
     try { await P.sensible(() => P.rpc('reprise_inscription', { p_id: id, p_choix: choix, p_montant: choix === 'abandonnee' ? 0 : montant })); P.message('Inscription notée.'); await P.afficher(); } catch (e) { P.message(P.erreurTexte(e)); }
   };
-  P.formulaires['reprise-ouverture'] = async (f) => {
-    try {
-      const comptages = lireComptage(f, P.etat.repriseComptes || []);
-      if (!confirm('Enregistrer le bilan d’ouverture ? Il ne se fait qu’une fois.')) return;
-      await P.sensible(() => P.rpc('compta_ouverture', { p_comptages: comptages }));
-      P.message('Bilan d’ouverture enregistré. Bonne reprise !');
-      await P.afficher();
-    } catch (e) { P.message(P.erreurTexte(e)); }
+  // toutes les inscriptions encore à noter : « déjà payée avant le nouveau système » (15 000 FCFA, aucune recette)
+  P.actions['reprise-inscriptions-toutes'] = async (el) => {
+    const ids = [...document.querySelectorAll('[data-action="reprise-inscription"][data-choix="encaissee"]')].map((b) => [b.getAttribute('data-id'), b.getAttribute('data-nom')]);
+    if (!ids.length || !confirm('Noter l’inscription de ces ' + ids.length + ' mannequins comme réglée avant le nouveau système ? Rien n’entre dans la comptabilité.')) return;
+    el.disabled = true;
+    const ratees = [];
+    for (const [id, nom] of ids) {
+      try { await P.sensible(() => P.rpc('reprise_inscription', { p_id: id, p_choix: 'encaissee', p_montant: 15000 })); } catch (e) { ratees.push(nom + ' (' + P.erreurTexte(e) + ')'); }
+    }
+    P.message(ratees.length ? 'Pas notées : ' + ratees.join(', ') : 'Toutes les inscriptions sont notées.');
+    await P.afficher();
   };
 
   // ---------- Paiements › Archives – période de rodage (lecture seule) ----------
