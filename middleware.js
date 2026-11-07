@@ -173,7 +173,9 @@ async function lireSupabase(chemin, corps, delai) {
 // Sans photo : l'image d'aperçu de la page (assets/apercus/, 14/10/2026), pas le logo seul.
 function imageApercu(url, anglais, page) {
   if (!url) return SITE + '/assets/apercus/' + (anglais ? 'en-' : 'fr-') + page + '.jpg?v=2';
-  const absolue = /^https?:\/\//i.test(url) ? url : SITE + (url.charAt(0) === '/' ? '' : '/') + url;
+  // (07/11/2026 : WhatsApp ne montrait plus d'aperçu — l'outil d'images de Vercel refusait l'adresse directe des photos,
+  // absente de vercel.json, et la copie WebP n'est pas lue partout ; on part toujours du JPEG, qui existe à côté)
+  const absolue = (/^https?:\/\//i.test(url) ? url : SITE + (url.charAt(0) === '/' ? '' : '/') + url).replace(/-w\.webp(\?|$)/i, '-w.jpg$1');
   return SITE + '/_vercel/image?url=' + encodeURIComponent(absolue) + '&w=1080&q=75';
 }
 

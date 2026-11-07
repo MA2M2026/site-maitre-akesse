@@ -58,4 +58,11 @@ for (const chemin of ['/', '/en/', '/book/awa-kone?x=1', '/actualites']) {
   ok(r && r.status === 308 && r.headers.get('location') === 'https://www.maitreakessemodelmanagement.com' + chemin
     && /includeSubDomains; preload/.test(r.headers.get('strict-transport-security') || ''), 'sans www ' + chemin + ' → www (308, HSTS complet)');
 }
+// (07/11/2026) WhatsApp : la photo d'aperçu d'une fiche part du JPEG (jamais de la copie WebP) et l'adresse directe des
+// photos est autorisée par l'outil d'images de Vercel (sinon il répond 400 et WhatsApp ne montre aucun aperçu)
+photo = 'https://photos.maitreakessemodelmanagement.com/' + ID + '/moyennes/17-ab-w.webp';
+html = await texte(await robot('/book/awa-kone'));
+ok(decodeURIComponent(image(html)).includes('/moyennes/17-ab-w.jpg') && !/webp/.test(decodeURIComponent(image(html))), 'WhatsApp : aperçu d’une fiche à partir du JPEG, jamais de la copie WebP');
+const vercel = JSON.parse(fs.readFileSync(path.join(racine, 'vercel.json'), 'utf8'));
+ok(vercel.images.remotePatterns.some((r) => r.hostname === 'photos.maitreakessemodelmanagement.com'), 'l’outil d’images de Vercel accepte l’adresse directe des photos (photos.maitreakessemodelmanagement.com)');
 console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);

@@ -6,6 +6,7 @@
     "minimumCacheTTL": 2678400,
     "remotePatterns": [
       { "protocol": "https", "hostname": "**.r2.dev" },
+      { "protocol": "https", "hostname": "photos.maitreakessemodelmanagement.com" },
       { "protocol": "https", "hostname": "www.maitreakessemodelmanagement.com" },
       { "protocol": "https", "hostname": "maitreakessemodelmanagement.com" },
       { "protocol": "https", "hostname": "dfhghgmwmxiguhtxtsle.supabase.co" }
