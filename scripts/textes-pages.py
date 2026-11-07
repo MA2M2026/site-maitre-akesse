@@ -94,8 +94,14 @@ def repere_existants(html):
 
 def marquer(chemin, page):
     # (seulement les 5 pages prévues, dans le dossier du site : SonarCloud S2083)
-    if page not in PAGES or chemin.resolve() not in (RACINE / (page + '.html'), RACINE / 'en' / (page + '.html')):
+    # (SonarCloud, 07/11/2026) le fichier lu et écrit est TOUJOURS l'un des deux chemins fabriqués ici à partir de la
+    # liste PAGES, jamais celui reçu : aucune autre adresse ne peut être atteinte
+    permis = {str(RACINE / (p_ + '.html')): RACINE / (p_ + '.html') for p_ in PAGES}
+    permis.update({str(RACINE / 'en' / (p_ + '.html')): RACINE / 'en' / (p_ + '.html') for p_ in PAGES})
+    cible = permis.get(str(chemin.resolve()))
+    if page not in PAGES or cible is None or cible.stem != page:
         raise ValueError('page non prévue : %s' % chemin)
+    chemin = cible
     html = chemin.read_text(encoding='utf-8')
     if repere_existants(html):
         return len(repere_existants(html))
