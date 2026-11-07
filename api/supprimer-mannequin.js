@@ -18,7 +18,7 @@
 
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, adminVerifie, creerClientR2, debutRequete } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, adminVerifie, creerClientR2, debutRequete, limiteDebit } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -43,6 +43,9 @@ module.exports = async function handler(req, res) {
     // côté base de données.)
     if (!(await adminVerifie(jeton, utilisateur))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
+      return;
+    }
+    if (await limiteDebit(res, 'supprimer-mannequin', utilisateur.id, 20)) {  // (W6 : 20 suppressions par minute au plus)
       return;
     }
 

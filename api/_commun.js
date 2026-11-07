@@ -207,12 +207,29 @@ async function noterAuJournal(message, origine, page) {
     body: JSON.stringify({ message: String(message).slice(0, 2000), page: page || '/api/portail', user_agent: 'serveur (' + origine + ')' }) }).catch(() => {});
 }
 
+// Limite d'envois par personne et par minute (07/11/2026, W6) sur les accès réservés aux comptes connectés
+// (photos, images du site, suppression) : compteur en base (limiter_soumissions_publiques, la même que pour les
+// formulaires publics), clé « api:<accès>:<compte> ». Trop d'appels : répond 429 et renvoie true. Base injoignable :
+// on laisse passer (une panne du compteur ne bloque jamais l'agence).
+async function limiteDebit(res, acces, compte, maxParMinute) {
+  try {
+    const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/limiter_soumissions_publiques', {
+      method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_formulaire: 'api:' + acces + ':' + compte, p_max_par_minute: maxParMinute })
+    });
+    if (!rep.ok || (await rep.json()) !== false) return false;
+  } catch (e) { return false; }
+  res.setHeader('Retry-After', '60');
+  res.status(429).json({ error: 'Trop de demandes en une minute : patientez un instant puis réessayez.' });
+  return true;
+}
+
 // Adresse e-mail acceptée (une seule façon de lire l'adresse : étiquettes du domaine sans point,
 // séparées par des points — SonarCloud S8786, 26/10/2026). Même règle que js/app.js.
 const EMAIL_VALIDE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 module.exports = {
-  EMAIL_VALIDE, noterAuJournal,
+  EMAIL_VALIDE, noterAuJournal, limiteDebit,
   SUPABASE_URL, cleService, enTetesService, jetonDe, corpsDe,
   verifierUtilisateur, lignesAdmin, estAdmin, adminVerifie, ficheStaff, creerClientR2, cheminSur, extraireIp, nettoyerAppareil,
   debutRequete, chargeJeton, dernierCode, compteurTentatives, cookieAccesTableau, cleAccesTableauValide, COOKIE_ACCES_TABLEAU_EFFACE
