@@ -215,6 +215,14 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/\/app\/mes-paiements\.html#avance$/.test(p.url()) && /Payer à l’avance/.test(await p.textContent('#avance')), n + '« Payer à l’avance » ouvre la carte du paiement à l’avance, dans l’application');
     await capture('4c-paiement-avance');
     await p.goto(BASE + '/app/#paiements'); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
+    // reprise du 1er mars (supabase-reprise-mars.sql) : où elle en est, agence fermée
+    Object.assign(d.rpc.mes_mensualites, { mois: avantMois.map((x) => (x.etat === 'a_payer' ? Object.assign({}, x, { etat: 'rodage' }) : x)),
+      niveaux: 2, niveau: 1, mois_niveau: 7, reste: 11, faits_avant: 7, termine: false, fermee_jusqu_au: '2027-03-01', prochaine: '2027-03-01' });
+    await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
+    const reprise = await p.textContent('#ap-ecran');
+    ok(/Niveau 1 sur 2/.test(reprise) && /Mois 7 sur 9 · il reste 11 mois/.test(reprise) && /Agence fermée jusqu’au 1er mars 2027/.test(reprise) && /Prochaine mensualité : mars 2027/.test(reprise) && /Agence fermée/.test(await p.textContent('.ap-pastille')),
+      n + 'Mes paiements, reprise : « Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois », « Agence fermée jusqu’au 1er mars 2027 »');
+    ['niveaux', 'niveau', 'mois_niveau', 'reste', 'faits_avant', 'termine', 'fermee_jusqu_au', 'prochaine'].forEach((k) => delete d.rpc.mes_mensualites[k]);
     d.rpc.mes_mensualites.mois = avantMois;
     await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     // 8. Messages : ce qui est à faire, puis les messages de l'agence (3e voie)

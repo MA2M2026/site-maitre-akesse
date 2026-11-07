@@ -107,6 +107,9 @@ select essai((archives_rodage() ->> 'debut') = '2026-09-01' and json_array_lengt
   'archives du rodage : chaque mannequin et ses mois (septembre « rodage »)');
 select essai((select x ->> 'mois_faits' from json_array_elements(reprise_etat() -> 'mannequins') x where x ->> 'id' = '00000000-0000-0000-0000-000000154e01') = '7',
   'état de la reprise : la fiche saisie est relue');
+-- (a4 : comptable de l'essai, coupé par les essais de l'administration : refus dans tous les cas)
+select essai_qui('00000000-0000-0000-0000-0000000000a4');
+select essai_refuse($$select archives_rodage()$$, 'comptable : archives du rodage refusées (aucun nom de mannequin)');
 reset role;
 set role anon;
 select essai_refuse($$select archives_rodage()$$, 'visiteur : archives refusées');

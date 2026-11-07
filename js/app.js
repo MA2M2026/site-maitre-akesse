@@ -912,8 +912,29 @@ function moisPayablesAvance(mois) {
 // Mensualités de la formation (01/11/2026) : 18 mois de cours ; un mois de congé payé (reporté sur le
 // mois de cours suivant) n'est pas compté deux fois. Partagé par Mes paiements et l'application.
 function bilanFormation(d) {
-  const cours = ((d && d.mois) || []).filter((m) => !m.conge && m.etat !== 'conge');
+  const cours = ((d && d.mois) || []).filter((m) => !m.conge && m.etat !== 'conge' && m.etat !== 'rodage');
   return { payes: cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
+}
+// Où en est la mannequin (Reprise de mars, supabase-reprise-mars.sql, mes_mensualites) : « Niveau 1 · mois 3 sur 9 ·
+// il reste 15 mois », la prochaine mensualité, ou « agence fermée jusqu'au 1er mars » (rodage, congés) — en
+// phrases simples, sans balises (chaque écran les échappe). null tant que la base n'a pas ces informations.
+// Partagé par Mes paiements (js/mes-paiements.js) et l'application (js/mannequin-app.js).
+const MA2M_NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+function moisEnToutes(iso) { return MA2M_NOMS_MOIS[Number(String(iso).slice(5, 7)) - 1] + ' ' + String(iso).slice(0, 4); }
+function situationFormation(d) {
+  if (!d || d.niveau === undefined || d.niveau === null) return null;
+  const fcfa = (n) => Number(n || 0).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' FCFA';
+  if (d.termine) return { titre: 'Formation terminée', lignes: ['Vous restez à l’agence, sans mensualité à payer.'], ferme: false, termine: true };
+  const reste = Number(d.reste) || 0;
+  const lignes = [(Number(d.mois_niveau) > 0 ? 'Mois ' + d.mois_niveau + ' sur 9' : 'La formation commence bientôt') + ' · il reste ' + reste + ' mois'];
+  let ferme = false;
+  if (d.fermee_jusqu_au) {
+    ferme = true;
+    const j = String(d.fermee_jusqu_au);
+    lignes.unshift('Agence fermée jusqu’au ' + (j.slice(8, 10) === '01' ? '1er' : String(Number(j.slice(8, 10)))) + ' ' + moisEnToutes(j) + ' : aucune mensualité à payer.');
+  }
+  if (d.prochaine) lignes.push('Prochaine mensualité : ' + moisEnToutes(d.prochaine) + ' · ' + fcfa(d.mensualite));
+  return { titre: 'Niveau ' + d.niveau + (Number(d.niveaux) === 1 ? ' (formation en 1 niveau)' : ' sur 2'), lignes, ferme, termine: false };
 }
 
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.

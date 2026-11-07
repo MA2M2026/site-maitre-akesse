@@ -131,7 +131,7 @@ begin
   return json_build_object('inscrit', true, 'nom', a.full_name, 'mensualite', a.mensualite, 'statut', a.statut,
     'mineur', a.date_naissance is not null and extract(year from age(a.date_naissance)) < 18,
     'total', a.formation_niveaux * 9, 'fin', fin,
-    'niveaux', a.formation_niveaux,
+    'niveaux', a.formation_niveaux, 'faits_avant', coalesce(a.formation_mois_faits, 0),
     'niveau', case when position <= 9 then 1 else 2 end,
     'mois_niveau', case when position = 0 then 0 when position <= 9 then position else position - 9 end,
     'reste', greatest(a.formation_niveaux * 9 - faits, 0),
@@ -381,7 +381,8 @@ declare
   r reglages_reprise;
   fin date;
 begin
-  if not (portail_peut('paiements') or portail_peut('compta')) then raise exception 'Accès refusé'; end if;
+  -- (noms des mannequins : espace Paiements seulement ; le comptable ne voit aucun nom de mannequin)
+  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
   select * into r from reglages_reprise where id;
   fin := (r.rodage_fin + interval '1 month')::date;
   return json_build_object('debut', r.rodage_debut, 'fin', r.rodage_fin,
@@ -406,11 +407,12 @@ begin
   return json_build_object('date_reprise', reprise_date(), 'aujourdhui', current_date,
     'ouverture', (select json_agg(row_to_json(t)) from compta_comptages t where nature = 'ouverture'),
     'comptes', (select json_agg(json_build_object('id', c.id, 'nom', c.nom, 'type', c.type) order by c.cree_le) from compta_comptes c where c.actif),
-    'mannequins', coalesce((select json_agg(json_build_object('id', a.id, 'nom', a.full_name, 'statut', a.statut, 'niveaux', a.formation_niveaux,
+    -- (le comptable ne voit aucun nom de mannequin : liste vide pour lui)
+    'mannequins', case when not portail_peut('paiements') then '[]'::json else coalesce((select json_agg(json_build_object('id', a.id, 'nom', a.full_name, 'statut', a.statut, 'niveaux', a.formation_niveaux,
         'mois_faits', a.formation_mois_faits, 'vue_le', a.reprise_vue_le,
         'inscription', (select p.mode from paiements_mannequins p where p.mannequin_id = a.id and p.objet = 'inscription' and p.statut <> 'refuse' limit 1),
         'inscription_due', exists (select 1 from compta_dettes d join compta_tiers x on x.id = d.tiers_id where d.sens = 'creance' and not d.annule and d.categorie = 'inscription' and x.nom = a.full_name))
-        order by a.full_name) from agence_mannequins a), '[]'::json));
+        order by a.full_name) from agence_mannequins a), '[]'::json) end);
 end;
 $$;
 
