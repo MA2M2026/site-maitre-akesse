@@ -4,6 +4,7 @@
 // Le serveur lit la VRAIE base en lecture seule (clé publique, mêmes lectures que le site) ; il n'écrit jamais.
 // Usage : NODE_USE_ENV_PROXY=1 node scripts/serveur-local.mjs [port]
 import http from 'node:http';
+import zlib from 'node:zlib';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -62,8 +63,11 @@ http.createServer(async (req, res) => {
     rep.headers.forEach((v, k) => { if (!/^(content-length|content-encoding|location)$/i.test(k)) entetes[k] = v; });
     const loc = rep.headers.get('location');
     if (loc) entetes.location = loc.replace(SITE, '');
+    let corps = Buffer.from(await rep.arrayBuffer());
+    // (compression comme Vercel, pour des mesures de vitesse réalistes)
+    if (/gzip/.test(req.headers['accept-encoding'] || '') && /text|javascript|json|svg/.test(entetes['content-type'] || '')) { corps = zlib.gzipSync(corps); entetes['content-encoding'] = 'gzip'; }
     res.writeHead(rep.status, entetes);
-    res.end(Buffer.from(await rep.arrayBuffer()));
+    res.end(corps);
   } catch (e) {
     res.writeHead(500, { 'content-type': 'text/plain' }); res.end(String(e));
   }
