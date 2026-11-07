@@ -39,7 +39,8 @@
   }
   const datePublication = (p, o) => (o.sorte === 'evenement' ? dateEvenement(p, o.en) : dateLongue(p.created_at, o.en));
   function une(p, o) {
-    return '<div class="news-une reveal" data-index="0"><img src="' + echapper(o.photo) + '" loading="lazy" alt="' + echapper(p.titre || '') + '">' +
+    // (la photo « à la une » est en haut de page : chargée tout de suite et en premier, jamais « plus tard » — W7)
+    return '<div class="news-une reveal" data-index="0"><img src="' + echapper(o.photo) + '" fetchpriority="high" alt="' + echapper(p.titre || '') + '">' +
       '<div class="news-une-scrim"></div><div class="news-une-corps"><span class="news-une-badge">★ ' + (o.en ? 'Featured' : 'À la une') + '</span>' +
       etiquette(p, o) + '<div class="news-date">' + echapper(datePublication(p, o)) + '</div>' +
       (p.titre ? '<h2>' + echapper(p.titre) + '</h2>' : '') + (o.extrait ? '<p>' + echapper(o.extrait) + '</p>' : '') +

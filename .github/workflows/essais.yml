@@ -1,0 +1,35 @@
+name: Essais automatiques (sans navigateur)
+
+# W9 (07/11/2026) : à chaque demande de mise en ligne et à chaque envoi sur main, sans rien toucher pour de vrai :
+#  - syntaxe de tous les programmes (node --check) ;
+#  - essais du serveur avec une base simulée (aperçus, plan du site, limite d'appels) ;
+#  - TOUS les fichiers SQL sur une base Postgres jetable, avec leurs essais de droits (scripts/base-essai/lancer.sh).
+# La batterie complète dans un vrai navigateur (scripts/tests-visiteur/lancer.sh, ~1 h 30) reste lancée avant chaque
+# mise en ligne, comme le demande CLAUDE.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  essais:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Paquets du serveur
+        run: npm ci --omit=dev --no-audit --no-fund
+      - name: Syntaxe de tous les programmes
+        run: |
+          for f in $(git ls-files '*.js' '*.mjs' | grep -v '^js/vendor/'); do node --check "$f" || exit 1; done
+      - name: Essais du serveur (base simulée)
+        run: |
+          node scripts/tests-visiteur/test-middleware-apercus.mjs
+          node scripts/tests-visiteur/test-plan-du-site.mjs
+          node scripts/tests-visiteur/test-limite-debit.js
+      - name: Fichiers SQL sur une base jetable
+        run: sudo bash scripts/base-essai/lancer.sh

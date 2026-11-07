@@ -15,3 +15,5 @@ Une ligne par décision : décision — pourquoi — autre choix écarté.
 - 02/11/2026 : cache des pages publiques « public, max-age=0, s-maxage=60, stale-while-revalidate=120 » + mémoire du serveur de 3 min : une modification se voit au plus 180 s après (borne documentée) ; purge à la publication écartée pour l'instant (le middleware n'est pas mis en cache par Vercel).
 - 02/11/2026 : éléments tirés au hasard à chaque visite (couverture, mur de photos, diaporamas) marqués data-hasard : comparés en nombre, pas un par un, par le vérificateur.
 - 02/11/2026 : adresses d'essai *.vercel.app bloquées par le réseau de l'espace de travail : versions d'essai vérifiées par l'outil Vercel (web_fetch), le site lui-même par verify-dynamic après la mise en ligne.
+
+- 07/11/2026 — Phase 3, « site vivant » (V4) : une mannequin MINEURE n'apparaît en couverture, « À la une » ou dans la rotation des visiteurs QUE si un parent a donné son accord lui-même (choix B de la propriétaire : lien personnel envoyé par WhatsApp ou e-mail, bouton « J'accepte », date et nom du parent notés, accord retirable à tout moment). Sans accord enregistré : exclue.

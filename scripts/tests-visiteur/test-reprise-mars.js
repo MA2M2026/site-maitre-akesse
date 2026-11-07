@@ -1,7 +1,7 @@
 // Reprise du 1er mars 2027 (PLAN-REPRISE-MARS.md ; supabase-reprise-mars.sql), comme une vraie personne, sur
 // téléphone et ordinateur, base SIMULÉE (rien n'est écrit pour de vrai) :
 //  - Paiements › Reprise du 1er mars : fiche de formation de chaque mannequin (niveaux, mois déjà faits), inscriptions
-//    jamais notées (déjà payée, à recevoir, abandonnée), bilan d'ouverture (attendu avant le 1er mars ; à la reprise,
+//    jamais notées (déjà payée, à recevoir, abandonnée, toutes d'un coup), plus de bilan d'ouverture (07/11/2026 ; avant :
 //    un écart sans raison est refusé, avec raison il part) ;
 //  - Paiements : les mois du rodage « jamais réclamés » (tableau du mois, mois par mois) ;
 //  - Archives – période de rodage : lecture seule, copie Excel (feuilles relues) et PDF (texte relu) ;
@@ -56,7 +56,7 @@ async function paiements(b) {
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('dialog', (dl) => dl.accept());
     const d = donnees('principal');
-    let ouvert = false;
+    const ouvert = false;
     d.tables.compta_comptes = [{ id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', actif: true, date_initiale: '2026-01-01', cree_le: '2026-01-01' }, { id: 'c2', nom: 'Wave Business', type: 'wave', actif: true, date_initiale: '2026-01-01', cree_le: '2026-01-02' }];
     d.rpc.reprise_etat = () => etatReprise(d, ouvert);
     d.rpc.compta_tresorerie = TRESO;
@@ -100,23 +100,16 @@ async function paiements(b) {
     await p.click('button[data-action="reprise-inscription"][data-id="' + ids[3] + '"][data-choix="a_recevoir"]'); await p.waitForTimeout(800);
     const ins = rpc(journal, 'reprise_inscription')[0] || {};
     ok(ins.p_id === ids[3] && ins.p_choix === 'a_recevoir' && ins.p_montant === 15000, n + 'inscription « À recevoir » : 15 000 FCFA envoyés vers « Ce qu’on nous doit »');
-    await aller(p, 'paiements/reprise', 'form[data-form="reprise-mannequin"]');
+    // toutes d'un coup : « réglées avant le nouveau système » (décision du 07/11/2026), sans bilan d'ouverture
+    await aller(p, 'paiements/reprise', 'button[data-action="reprise-inscriptions-toutes"]');
     t = await texte(p);
-    ok(/À faire le 1er mars 2027/.test(t) && !(await p.$('form[data-form="reprise-ouverture"]')), n + 'bilan d’ouverture : pas avant le 1er mars, et c’est dit');
+    ok(!/Bilan d’ouverture/.test(t) && !(await p.$('form[data-form="reprise-ouverture"]')) && /comptabilité est repartie de zéro/.test(t), n + 'plus de bilan d’ouverture : la comptabilité est repartie de zéro, et c’est dit');
+    await p.click('button[data-action="reprise-inscriptions-toutes"]'); await p.waitForTimeout(1500);
+    const toutes = rpc(journal, 'reprise_inscription').slice(1);
+    ok(toutes.length === 4 && toutes.every((x) => x.p_choix === 'encaissee' && x.p_montant === 15000), n + 'un seul bouton : les 4 inscriptions restantes notées « réglées avant le nouveau système » (rien dans la comptabilité)');
     ok(await sansDebord(p), n + 'assistant : rien ne déborde');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'assistant : textes lisibles ' + pales.slice(0, 3).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
-
-    // 2. le jour de la reprise : bilan d'ouverture
-    ouvert = true;
-    await aller(p, 'paiements/reprise', 'form[data-form="reprise-ouverture"]');
-    await p.fill('input[name="montant-c1"]', '28000');
-    await p.click('form[data-form="reprise-ouverture"] button[type=submit]'); await p.waitForTimeout(500);
-    ok(!rpc(journal, 'compta_ouverture').length && /Écart de -2 000 FCFA sur Caisse/.test(await p.textContent('body')), n + 'bilan d’ouverture : un écart sans raison est refusé');
-    await p.fill('input[name="motif-c1"]', 'Monnaie rendue non notée');
-    await p.click('form[data-form="reprise-ouverture"] button[type=submit]'); await p.waitForTimeout(800);
-    const ouv = (rpc(journal, 'compta_ouverture')[0] || {}).p_comptages || [];
-    ok(ouv.length === 2 && ouv[0].montant === 28000 && ouv[0].motif === 'Monnaie rendue non notée' && ouv[1].montant === 15000, n + 'bilan d’ouverture : caisse comptée (écart et raison), solde Wave');
 
     // 3. le rodage n'est jamais réclamé
     await aller(p, 'paiements/tableau', '.tableau');

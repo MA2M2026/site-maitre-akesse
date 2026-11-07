@@ -4263,3 +4263,33 @@ Reprise le 1er mars 2027 : 10 000 FCFA par mois, 15 000 FCFA d'inscription, pour
   rend tous les mois « normaux » (rien n'est effacé).
 - **Essais** : `scripts/tests-visiteur/test-reprise-mars.js` (assistant, inscriptions, bilan d'ouverture, rodage
   jamais réclamé, archives Excel/PDF relues, clôture guidée, comptable sans noms, application).
+
+## Vitesse : styles du haut de l'écran dans la page (07/11/2026, W7, choix B de la propriétaire)
+- `scripts/css-critique.mjs` (avec `scripts/serveur-local.mjs` lancé) : pour chaque page publique (liste `PAGES`, FR et
+  EN, sauf l'accueil), ouvre la page sur téléphone (390 × 844) et ordinateur (1366 × 900), garde les règles des feuilles
+  qui touchent le haut de l'écran (1,3 écran) ET celles des éléments cachés (menu fermé… sinon la page « saute »),
+  les variables `--…` utiles, les `@keyframes` utilisés, et les écrit dans `<style data-critique>` avec leur
+  empreinte dans le CSP de la page (`style-src`). Polices : gardées seulement si le plus grand élément du haut est un
+  texte ; sur une page à grande photo, elles arrivent après la photo.
+- Les feuilles complètes sont listées dans `<noscript id="css-complet">` ; `js/css-differe.js` les ajoute après la
+  grande photo annoncée (au plus tard 1,5 s, ou à `load`). Sans JavaScript, `<noscript>` les lit normalement.
+- **À relancer après toute modification d'un fichier `css/` ou de la structure d'une page publique**, puis
+  `python3 scripts/versionner.py` et `python3 scripts/verifier-csp.py`. Sinon : styles du haut périmés jusqu'à
+  l'arrivée de la feuille complète (pas de panne, un « saut »).
+- Accueil laissé de côté (écran d'entrée animé, couverture au hasard : 4,6 s avant, 5,1 s après), ainsi que
+  Actualités, Événements, Qui sommes-nous et Parcours (aucun gain, ou page qui « saute » un peu). Mesuré le 07/11/2026
+  (Lighthouse mobile, 5 essais, médiane, serveur local) : The Book 4,8 → 2,6 s ; Agenda 4,4 → 2,4 s ; fiche 4,4 → 3,8 s ;
+  Contact 2,7 → 2,4 s ; Services 2,7 → 2,3 s ; décalage (CLS) sous 0,07.
+- `js/rendu-publications.js` : la photo « à la une » des actualités et événements n'est plus « lazy ».
+
+## Sécurité de la base (07/11/2026, W6f)
+- Extension 153 appliquée : chemin de recherche fixé sur les 45 fonctions qui n'en avaient pas.
+- Extension 155 appliquée : `boutique_emettre_billets` et `boutique_prochain_numero` fermées aux visiteurs et aux
+  comptes connectés (un visiteur pouvait créer les billets d'une commande non payée), `boutique_annuler_expirees` et
+  `nettoyer_photos_traitees_anciennes` réservées aux comptes connectés. Rappel : Supabase donne d'office le droit
+  d'appel à `anon` et `authenticated` ; un `revoke … from public` ne suffit jamais, il faut nommer ces deux rôles.
+- Restent signalés par Supabase (revus) : fonctions publiques voulues (agenda, fiche, formulaires, liens personnels),
+  « protection des mots de passe divulgués » (réglage de la propriétaire, Auth).
+- Comptabilité remise à zéro le 07/11/2026 à la demande de la propriétaire (16 écritures fictives, 170 000 FCFA,
+  et un cachet d'essai effacés ; copie Excel/PDF dans evidence/, hors dépôt). L'historique des paiements de l'espace
+  Paiements est gardé.

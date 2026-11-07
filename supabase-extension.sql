@@ -7319,3 +7319,20 @@ begin
 end $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Extension 155 (07/11/2026, W6f — revue des fonctions appelables par un visiteur) : APPLIQUÉE le 07/11/2026.
+-- Supabase donne d'office le droit d'appel aux rôles anon et authenticated : un « revoke … from public » ne
+-- suffit pas. Ces fonctions ne servent qu'à l'intérieur de la base (ou à l'Administration connectée) :
+--  - boutique_emettre_billets : un visiteur pouvait créer les billets d'une commande non payée (avec son numéro
+--    secret) ; seule la validation du paiement (boutique_changer_statut) les crée désormais ;
+--  - boutique_prochain_numero : compteur des numéros de commande et de facture ;
+--  - boutique_annuler_expirees : gardée pour les comptes connectés ; nettoyer_photos_traitees_anciennes :
+--    Administration (js/admin/site-acces.js) seulement.
+-- Extension 153 (fin de ce fichier) appliquée le même jour : 45 fonctions, liste dans evidence/W6f (hors dépôt).
+-- ===========================================================================
+revoke execute on function boutique_emettre_billets(uuid), boutique_prochain_numero(text) from public, anon, authenticated;
+revoke execute on function boutique_annuler_expirees(), nettoyer_photos_traitees_anciennes() from public, anon;
+grant execute on function boutique_annuler_expirees(), nettoyer_photos_traitees_anciennes() to authenticated;
+NOTIFY pgrst, 'reload schema';
+

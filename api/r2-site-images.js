@@ -16,7 +16,7 @@
 // R2_BUCKET_NAME, R2_PUBLIC_URL, SUPABASE_SERVICE_ROLE_KEY.
 
 
-const { verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal } = require('./_commun.js');
+const { verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal, limiteDebit } = require('./_commun.js');
 const { debutR2, repondreR2, TYPES_IMAGES, traiterNoteIntegration } = require('./_r2.js');
 // ('boutique' : photos des produits de la Marketplace, retirée du site le 23/10/2026 ; les photos
 // déjà envoyées restent dans le stockage.)
@@ -90,6 +90,7 @@ module.exports = async function handler(req, res) {
       res.status(403).json({ error: "Réservé aux administrateurs." });
       return;
     }
+    if (await limiteDebit(res, 'r2-site-images', utilisateur.id, 300)) return;  // (W6)
 
     const tailleMax = videoPermise ? (categorie === 'video-accueil' ? TAILLE_MAX_VIDEO_ACCUEIL : TAILLE_MAX_VIDEO) : TAILLE_MAX_IMAGE;
     await repondreR2(res, action, chemin, typeFichier, taille, tailleMax); // api/_r2.js

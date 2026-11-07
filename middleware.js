@@ -53,6 +53,8 @@ export const config = {
     '/politique-confidentialite', '/politique-confidentialite.html', '/en/politique-confidentialite', '/en/politique-confidentialite.html',
     // pages d'un lien personnel écrites par le serveur (étape B, 01/11/2026)
     '/recu', '/places',
+    // plan du site pour Google, fabriqué depuis la base (07/11/2026, W10)
+    '/sitemap.xml',
     // page d'accueil servie déjà remplie (23/10/2026)
     '/', '/index.html', '/en', '/en/', '/en/index.html',
     // scripts réservés de l'Administration (13/10/2026 ; l'ancien tableau de bord est démoli le 23/10/2026)
@@ -171,7 +173,9 @@ async function lireSupabase(chemin, corps, delai) {
 // Sans photo : l'image d'aperçu de la page (assets/apercus/, 14/10/2026), pas le logo seul.
 function imageApercu(url, anglais, page) {
   if (!url) return SITE + '/assets/apercus/' + (anglais ? 'en-' : 'fr-') + page + '.jpg?v=2';
-  const absolue = /^https?:\/\//i.test(url) ? url : SITE + (url.charAt(0) === '/' ? '' : '/') + url;
+  // (07/11/2026 : WhatsApp ne montrait plus d'aperçu — l'outil d'images de Vercel refusait l'adresse directe des photos,
+  // absente de vercel.json, et la copie WebP n'est pas lue partout ; on part toujours du JPEG, qui existe à côté)
+  const absolue = (/^https?:\/\//i.test(url) ? url : SITE + (url.charAt(0) === '/' ? '' : '/') + url).replace(/-w\.webp(\?|$)/i, '-w.jpg$1');
   return SITE + '/_vercel/image?url=' + encodeURIComponent(absolue) + '&w=1080&q=75';
 }
 
@@ -551,6 +555,29 @@ async function pageNue(url, enteteBoucle) {
   const page = await fetch(url.toString(), { headers: entetesInternes(url, enteteBoucle), redirect: 'manual' });
   if (!page.ok || !/text\/html/.test(page.headers.get('content-type') || '')) return undefined;
   return reponseHtml(await page.text(), page, url, /^\/(recu|places)$/.test(url.pathname));
+}
+
+// ================== Plan du site pour Google, fabriqué depuis la base (07/11/2026, W10) ==================
+// Les pages fixes (fichier sitemap.xml du dépôt, lu tel quel) + chaque fiche publiée (/book/nom, FR et EN), chaque
+// actualité (?actu=…) et chaque événement (?evenement=…), lus avec la clé publique (la base ne montre que ce qui est
+// public). Base lente ou en panne : le fichier fixe seul, comme avant. Mis en cache une heure.
+async function planDuSite(url) {
+  const fixe = await fetch(url.toString(), { headers: entetesInternes(url, 'x-ma2m-remplie') });
+  if (!fixe.ok) return;
+  const xml = await fixe.text();
+  const [profils, actus, evts] = await Promise.all([
+    lireSupabase('model_profiles?published=eq.true&slug=not.is.null&select=slug,created_at&order=created_at.desc&limit=1000', null, 3000).catch(() => null),
+    lireSupabase('actualites?select=id,created_at&order=created_at.desc&limit=500', null, 3000).catch(() => null),
+    lireSupabase('evenements?select=id,date_evenement&order=date_evenement.desc&limit=500', null, 3000).catch(() => null)
+  ]);
+  const ligne = (chemin, date, priorite) => '  <url>\n    <loc>' + echapper(SITE + chemin) + '</loc>\n' + (date ? '    <lastmod>' + String(date).slice(0, 10) + '</lastmod>\n' : '') + '    <priority>' + priorite + '</priority>\n  </url>\n';
+  let ajout = '';
+  (profils || []).forEach((p) => { if (/^[a-z0-9-]{1,120}$/.test(p.slug || '')) ajout += ligne('/book/' + p.slug, p.created_at, '0.7') + ligne('/en/book/' + p.slug, p.created_at, '0.6'); });
+  (actus || []).forEach((a) => { if (ID_VALIDE.test(a.id)) ajout += ligne('/actualites?actu=' + a.id, a.created_at, '0.5') + ligne('/en/actualites?actu=' + a.id, a.created_at, '0.4'); });
+  // (événements sans date : celle de l'événement est souvent dans l'avenir, refusée par Google)
+  (evts || []).forEach((e) => { if (ID_VALIDE.test(e.id)) ajout += ligne('/evenements?evenement=' + e.id, null, '0.5') + ligne('/en/evenements?evenement=' + e.id, null, '0.4'); });
+  return new Response(xml.replace('</urlset>', () => ajout + '</urlset>'), { status: 200, headers: { 'content-type': 'application/xml; charset=utf-8',
+    'cache-control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400', 'x-ma2m-render': 'ssr', 'x-ma2m-build': VERSION } });
 }
 
 // ================== Pages préparées par le serveur : outil commun (01/11/2026, site dynamique) ==================
@@ -1118,6 +1145,7 @@ export default async function middleware(requete) {
     }
     if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
     if (requete.headers.get('x-ma2m-remplie')) return;  // (page demandée par pageRemplie elle-même)
+    if (url.pathname === '/sitemap.xml') return await planDuSite(url);
     const agent = requete.headers.get('user-agent') || '';
     const anglais = url.pathname.indexOf('/en/') === 0;
     // Adresse lisible /book/nom : on retrouve le mannequin, puis on sert sa fiche
