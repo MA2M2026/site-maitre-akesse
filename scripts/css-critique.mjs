@@ -24,13 +24,14 @@ const iUrl = process.argv.indexOf('--url');
 const BASE = iUrl > 0 ? process.argv[iUrl + 1] : 'http://127.0.0.1:8787';
 // page publique → adresse à ouvrir (les fiches et le Book sont mesurés sur une vraie fiche)
 export const PAGES = {
+  // (actualités, événements, qui sommes-nous et parcours laissés de côté aussi : aucun gain mesuré ou page qui « saute »
+  // un peu — comparaison du 07/11/2026, 5 mesures par page)
   // (accueil laissé de côté le 07/11/2026 : écran d'entrée animé et couverture au hasard, aucun gain mesuré — 4,6 s
   // avant, 5,1 s après ; à reprendre à part)
   'mannequins.html': '/mannequins', 'en/mannequins.html': '/en/mannequins',
   'mannequin.html': '/book/' + '__FICHE__', 'en/mannequin.html': '/en/book/' + '__FICHE__',
-  'actualites.html': '/actualites', 'en/actualites.html': '/en/actualites', 'evenements.html': '/evenements', 'en/evenements.html': '/en/evenements',
-  'agenda.html': '/agenda', 'en/agenda.html': '/en/agenda', 'parcours.html': '/parcours', 'en/parcours.html': '/en/parcours',
-  'partenaires.html': '/partenaires', 'en/partenaires.html': '/en/partenaires', 'qui-sommes-nous.html': '/qui-sommes-nous', 'en/qui-sommes-nous.html': '/en/qui-sommes-nous',
+  'agenda.html': '/agenda', 'en/agenda.html': '/en/agenda',
+  'partenaires.html': '/partenaires', 'en/partenaires.html': '/en/partenaires',
   'services.html': '/services', 'en/services.html': '/en/services', 'contact.html': '/contact', 'en/contact.html': '/en/contact',
   'candidature.html': '/candidature', 'en/candidature.html': '/en/candidature', 'integrer-agence.html': '/integrer-agence', 'en/integrer-agence.html': '/en/integrer-agence',
   'selection.html': '/selection', 'en/selection.html': '/en/selection',

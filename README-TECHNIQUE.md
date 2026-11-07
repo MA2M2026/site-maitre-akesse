@@ -4276,7 +4276,10 @@ Reprise le 1er mars 2027 : 10 000 FCFA par mois, 15 000 FCFA d'inscription, pour
 - **À relancer après toute modification d'un fichier `css/` ou de la structure d'une page publique**, puis
   `python3 scripts/versionner.py` et `python3 scripts/verifier-csp.py`. Sinon : styles du haut périmés jusqu'à
   l'arrivée de la feuille complète (pas de panne, un « saut »).
-- Accueil laissé de côté (écran d'entrée animé, couverture au hasard : 4,6 s avant, 5,1 s après).
+- Accueil laissé de côté (écran d'entrée animé, couverture au hasard : 4,6 s avant, 5,1 s après), ainsi que
+  Actualités, Événements, Qui sommes-nous et Parcours (aucun gain, ou page qui « saute » un peu). Mesuré le 07/11/2026
+  (Lighthouse mobile, 5 essais, médiane, serveur local) : The Book 4,8 → 2,6 s ; Agenda 4,4 → 2,4 s ; fiche 4,4 → 3,8 s ;
+  Contact 2,7 → 2,4 s ; Services 2,7 → 2,3 s ; décalage (CLS) sous 0,07.
 - `js/rendu-publications.js` : la photo « à la une » des actualités et événements n'est plus « lazy ».
 
 ## Sécurité de la base (07/11/2026, W6f)
