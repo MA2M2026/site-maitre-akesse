@@ -100,10 +100,20 @@ if (PARCOURS === 'projet') {
 function estDebutant() {
   return PARCOURS === 'agence' && document.getElementById('ca-experience').value === 'non';
 }
+// le lien facultatif vers son travail (déjà mannequin) passe en tête du message lu par l'agence
+function messageAvecLien() {
+  const texte = document.getElementById('ca-message').value.trim();
+  const champ = document.getElementById('ca-lien-travail');
+  const lien = champ && !document.getElementById('ca-lien-bloc').classList.contains('u-hidden') ? champ.value.trim() : '';
+  return lien ? T('Lien vers mon travail : ', 'Link to my work: ') + lien + (texte ? '\n\n' + texte : '') : texte;
+}
 function photosMin() { return estDebutant() ? 3 : 4; }
 function majParcours() {
   if (PARCOURS !== 'agence') return;
   const debutant = estDebutant();
+  // lien facultatif vers son travail, pour « déjà mannequin » (page Intégrer l'agence, 08/11/2026)
+  const lienBloc = document.getElementById('ca-lien-bloc');
+  if (lienBloc) lienBloc.classList.toggle('u-hidden', document.getElementById('ca-experience').value !== 'oui');
   document.querySelectorAll('.ca-mensuration-complete').forEach(bloc => {
     bloc.style.display = debutant ? 'none' : '';
     const champ = bloc.querySelector('select, input');
@@ -455,7 +465,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     chest_cm: parseInt(document.getElementById('ca-poitrine').value) || null,
     waist_cm: parseInt(document.getElementById('ca-tourtaille').value) || null,
     hips_cm: parseInt(document.getElementById('ca-hanches').value) || null,
-    message: document.getElementById('ca-message').value.trim(),
+    message: messageAvecLien(),
     parent_nom: mineur ? [document.getElementById('ca-parent-civilite').value, document.getElementById('ca-parent-nom').value.trim()].filter(Boolean).join(' ') : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
     parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,
