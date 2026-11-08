@@ -51,7 +51,7 @@ function extraire() {
   const visible = (el) => { if (racineCachee(el)) return true; const r = el.getBoundingClientRect(); return r.top < limite && r.bottom > -1 && (r.width > 0 || r.height > 0) && voit(el); };
   // (lien « Aller au contenu », ajouté par js/confort.js et caché hors de l'écran : sans sa règle, il poussait toute la
   // page vers le bas le temps que la feuille complète arrive — 08/11/2026, saut mesuré sur presque toutes les pages)
-  const toujours = /^(:root|html|body|\*|::selection|\*,\s*\*::before,\s*\*::after|\.lien-evitement)$/i;
+  const toujours = /^(:root|html|body|\*|::selection|\*,\s*\*::before,\s*\*::after|\.lien-evitement|\.profil-hero-fullbleed\.cadrage-\d+ img)$/i;  // (+ cadrage automatique des grandes photos : toutes les fiches, pas seulement celle mesurée)
   const nettoyer = (s) => s.replace(/::?(before|after|placeholder|selection|marker|first-letter|first-line|-webkit-[\w-]+|-moz-[\w-]+)\b(\([^)]*\))?/gi, '')
     .replace(/:(hover|focus|focus-visible|focus-within|active|visited|link|target|checked|disabled|enabled|empty|invalid|valid|placeholder-shown|autofill|-webkit-autofill)\b/gi, '').trim() || '*';
   // (sélecteurs séparés par les virgules du premier niveau seulement : « :where(.a, .b) » reste entier)

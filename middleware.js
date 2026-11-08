@@ -32,6 +32,7 @@ import './js/formulaire-candidature-champs.js';
 import './js/rendu-agenda.js';
 import './js/parcours.js';
 import './js/tailles.js';
+import './js/cadrages-photos.js';
 import './js/rendu-fiche.js';
 
 export const config = {

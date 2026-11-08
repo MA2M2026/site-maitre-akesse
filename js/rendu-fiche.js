@@ -61,6 +61,9 @@
     }
     const profil = d.profil, photos = d.photos || [], projets = d.projets || [], age = d.age || '';
     const photoHero = o.photoHero, photoAvatar = o.photoAvatar;
+    // (08/11/2026) cadrage automatique de la grande photo : le visage au-dessus du nom (js/cadrages-photos.js,
+    // écrit par scripts/cadrage-visages.py) ; photo inconnue : le haut, comme avant
+    const cadrage = racine.CadragesPhotos ? racine.CadragesPhotos.cadragePhoto(photoHero) : null;
     const libellesDispo = EN
       ? { immediate: 'Available immediately', rdv: 'By appointment', mobile: 'Available to travel' }
       : { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
@@ -124,7 +127,7 @@
   // (même adresse) est gardée telle quelle au lieu d'être rechargée.
   const contenuHtml = `
     <div class="reveal visible">
-      <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
+      <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}${cadrage ? ' cadrage-' + cadrage : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="" fetchpriority="high">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">

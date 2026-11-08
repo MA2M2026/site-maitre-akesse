@@ -335,6 +335,28 @@ section { padding: 5rem 0; }
 }
 .profil-hero-contenu p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
 @media (max-width: 640px) { .profil-hero-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; } }
+/* Cadrage automatique (08/11/2026, demande de la propriétaire) : le visage au-dessus du nom, toujours en plein écran
+   (classe posée par js/rendu-fiche.js d'après js/cadrages-photos.js, écrit par scripts/cadrage-visages.py) */
+.profil-hero-fullbleed.cadrage-5 img { object-position: center 5%; }
+.profil-hero-fullbleed.cadrage-10 img { object-position: center 10%; }
+.profil-hero-fullbleed.cadrage-15 img { object-position: center 15%; }
+.profil-hero-fullbleed.cadrage-20 img { object-position: center 20%; }
+.profil-hero-fullbleed.cadrage-25 img { object-position: center 25%; }
+.profil-hero-fullbleed.cadrage-30 img { object-position: center 30%; }
+.profil-hero-fullbleed.cadrage-35 img { object-position: center 35%; }
+.profil-hero-fullbleed.cadrage-40 img { object-position: center 40%; }
+.profil-hero-fullbleed.cadrage-45 img { object-position: center 45%; }
+.profil-hero-fullbleed.cadrage-50 img { object-position: center 50%; }
+.profil-hero-fullbleed.cadrage-55 img { object-position: center 55%; }
+.profil-hero-fullbleed.cadrage-60 img { object-position: center 60%; }
+.profil-hero-fullbleed.cadrage-65 img { object-position: center 65%; }
+.profil-hero-fullbleed.cadrage-70 img { object-position: center 70%; }
+.profil-hero-fullbleed.cadrage-75 img { object-position: center 75%; }
+.profil-hero-fullbleed.cadrage-80 img { object-position: center 80%; }
+.profil-hero-fullbleed.cadrage-85 img { object-position: center 85%; }
+.profil-hero-fullbleed.cadrage-90 img { object-position: center 90%; }
+.profil-hero-fullbleed.cadrage-95 img { object-position: center 95%; }
+.profil-hero-fullbleed.cadrage-100 img { object-position: center 100%; }
 /* Fiche sur téléphone (08/11/2026, phase 3 V1) : le grand vide rouge sous le menu (5 rem au-dessus de « ← Nos
    mannequins », 2 rem dessous) poussait le nom de la mannequin tout en bas de l'écran, sous la bande de l'application */
 @media (max-width: 640px) {
