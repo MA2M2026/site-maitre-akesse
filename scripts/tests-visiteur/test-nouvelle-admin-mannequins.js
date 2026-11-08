@@ -29,6 +29,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     d.rpc.mensurations_historique_lire = [
       { releve_le: '2026-06-01T10:00:00Z', origine: 'modification', valeurs: { height_cm: 178, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } },
       { releve_le: '2026-01-15T10:00:00Z', origine: 'installation', valeurs: { height_cm: 176, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } }];
+    // accueil du site (site vivant, 08/11/2026) : AYA KOUASSI mineure pour l'essai, sans accord d'un parent
+    d.tables.model_profiles[0].date_naissance = '2011-05-05'; d.rpc.accord_parent_demander = 'jeton-essai';
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 
@@ -59,6 +61,18 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('.mannequin-carte[href$="/m0"]'); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(1000);
     ok(/Mensurations dans le temps/.test(await p.textContent('.mq-mensurations')) && /À revoir/.test(await p.textContent('.mq-mensurations')) && (await p.$$('.mq-mens-table tbody tr')).length === 2 && /178/.test(await p.textContent('.mq-mens-change')),
       n + 'fiche : mensurations dans le temps (2 relevés, la taille changée en gras, « À revoir » après 3 mois)');
+    // accueil du site : mineure sans accord → pas sur l'accueil ; lien d'accord du parent ; exclusion par l'agence
+    const vitrine = () => p.$eval('[data-action="vitrine-exclure"]', (x) => x.closest('section').innerText.replace(/\s+/g, ' '));
+    ok(/Accueil du site/.test(await vitrine()) && /Mineure : pas sur l’accueil sans l’accord d’un parent/.test(await vitrine()), n + 'accueil du site : mineure sans accord signalée, pas sur l’accueil');
+    await p.click('[data-action="vitrine-accord"]'); await p.waitForSelector('.voile input[readonly]');
+    const lienAccord = await p.$eval('.voile input[readonly]', (x) => x.value), wa = await p.$eval('.voile a[href^="https://wa.me/"]', (x) => decodeURIComponent(x.href));
+    ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'accord_parent_demander' && /"p_model":"m0"/.test(j[2])) && lienAccord === 'https://www.maitreakessemodelmanagement.com/accord-parent?j=jeton-essai' && wa.includes(lienAccord) && /AYA/.test(wa),
+      n + 'accueil du site : lien d’accord du parent préparé, à envoyer par WhatsApp');
+    await capture(p, 'accord-parent-admin' + suffixe);
+    await p.click('.voile [data-action="fermer-fenetre"]'); await p.waitForTimeout(300);
+    await p.click('[data-action="vitrine-exclure"]'); await p.waitForTimeout(1200);
+    ok(ecrits(journal, 'PATCH', 'model_profiles').some((j) => /"exclue_vitrine":true/.test(j[3]) && /id=eq\.m0/.test(j[2])) && /Exclue de l’accueil par l’agence/.test(await vitrine()) && /Remettre sur l’accueil/.test(await vitrine()),
+      n + 'accueil du site : exclusion par l’agence (le Book ne change pas)');
     ok(/AYA KOUASSI/.test(await p.textContent('.mannequin-tete')) && (await p.$$('.photo-mannequin')).length === 2 && /Compcard 1/.test(await p.textContent('.photos-mannequin')), n + 'fiche : nom, 2 photos, compcard 1 signalée');
     await capture(p, 'fiche-mannequin' + suffixe);
     await p.selectOption('.photo-mannequin:nth-child(2) select[data-change="mannequin-compcard"]', '2'); await p.waitForTimeout(900);

@@ -123,10 +123,14 @@
       .eq('published', true).order('created_at', { ascending: false }).limit(200);
     if (!profils || !profils.length) return { profils: [], nombre: 0 };
     // une seule demande pour toutes les photos de couverture (la même que le Book)
-    const couvertures = await lirePhotosCouverture(sb, profils.map(p => p.id));
+    // (site vivant, 08/11/2026) en même temps : qui peut paraître en couverture, « À la une » et dans les visages
+    const [couvertures, { data: eligibles, error: sansVitrine }] = await Promise.all([lirePhotosCouverture(sb, profils.map(p => p.id)), sb.rpc('vitrine_eligibles')]);
     const photoDe = {};
     couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
-    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
+    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length,
+      // (fichier pas encore collé : toutes, comme avant ; autre erreur de la base : personne, par prudence pour les mineures)
+      vitrine: sansVitrine ? (sansVitrine.code === 'PGRST202' || /Could not find the function/.test(sansVitrine.message || '') ? undefined : [])
+        : Array.isArray(eligibles) ? eligibles.map((x) => x.model_id) : [] };
   }
   // photo de couverture posée par le serveur, en échec avant l'arrivée de la roue de secours
   // (js/photos.js) : on la redemande par le relais
@@ -137,9 +141,23 @@
     if (estPhotoDirecte(img.getAttribute('src')) && !estPhotoDirecte(secours)) img.dataset.secoursRelais = img.getAttribute('src');
     img.src = secours;
   })();
+  // Témoin « ma2m_v » de l'accueil vivant (ordre de présentation, aucune donnée personnelle, 30 jours) : créé ici à la
+  // première visite, JAMAIS si le visiteur a refusé les cookies (js/analytics-config.js le retire alors) ; le serveur
+  // ne fait que le renouveler (middleware.js, tirageVisiteur)
+  function temoinVitrine(groupe) {
+    let refus = false;
+    try { refus = localStorage.getItem('ma2m_cookies') === 'non'; } catch (e) { /* stockage fermé */ }
+    if (refus || /(?:^|;\s*)ma2m_v=/.test(document.cookie)) return;
+    const g = Number.isInteger(groupe) && groupe >= 0 && groupe <= 5 ? groupe : Math.floor(Math.random() * 6);
+    document.cookie = 'ma2m_v=' + g + '.1; Path=/; Max-Age=2592000; SameSite=Lax; Secure';
+  }
   async function chargerMannequins(depuisLaBase) {
     if (typeof sb === 'undefined' || !sb) return;
-    const { profils: avecPhoto, nombre: total } = await mannequinsAvecPhoto(depuisLaBase);
+    const lues = await mannequinsAvecPhoto(depuisLaBase), total = lues.nombre;
+    // (site vivant) seules les mannequins de la vitrine : majeures, ou mineures avec l'accord d'un parent
+    // (données posées par le serveur : déjà la vitrine seule)
+    const avecPhoto = R.vitrineDe(lues.profils, lues.vitrine);
+    temoinVitrine(lues.groupe);
     // (liste du serveur : 3 minutes d'âge au plus ; plus de question de vérification à la base, 100 % dynamique)
     if (total) {
       document.getElementById('couv-nombre').textContent = R.nombreAccueil(total, EN);
@@ -170,7 +188,9 @@
     credit.hidden = !couv.full_name;
 
     // Les visages : 6 femmes, 3 hommes (les plus récents)
-    const visages = R.visagesAccueil(avecPhoto);
+    // (site vivant) visages dans l'ordre de cette visite, choisi par le serveur ; redessinés ici (petite version sur téléphone)
+    const rang = Array.isArray(lues.ordreVisages) ? new Map(lues.ordreVisages.map((id, i) => [id, i])) : null;
+    const visages = R.visagesAccueil(rang ? avecPhoto.slice().sort((a, b) => (rang.has(a.id) ? rang.get(a.id) : 1e9) - (rang.has(b.id) ? rang.get(b.id) : 1e9)) : avecPhoto);
     const remplir = (page, grille, liste) => {
       const g = document.getElementById(grille);
       g.innerHTML = liste.map(vignette).join('');

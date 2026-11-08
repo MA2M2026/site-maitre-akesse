@@ -58,6 +58,9 @@ function brancher(page, donnees, journal) {
         // photos_couverture_petites (24/10/2026) : mêmes photos que photos_couverture_mannequins
         // quand l'essai ne la décrit pas
         const cle = nom === 'photos_couverture_petites' && donnees.rpc && !(nom in donnees.rpc) && 'photos_couverture_mannequins' in donnees.rpc ? 'photos_couverture_mannequins' : nom;
+        // (site vivant, 08/11/2026) vitrine_eligibles non décrite par l'essai : réponse de la vraie base tant que
+        // supabase-site-vivant.sql n'est pas collé (fonction inconnue), pas une liste vide (qui voudrait dire « personne »)
+        if (nom === 'vitrine_eligibles' && !(donnees.rpc && nom in donnees.rpc)) return json({ code: 'PGRST202', message: 'Could not find the function public.vitrine_eligibles without parameters in the schema cache' }, 404);
         const valeur = donnees.rpc && cle in donnees.rpc ? donnees.rpc[cle] : [];
         if (valeur && valeur.erreur) return json({ message: valeur.erreur, code: 'P0001' }, 400);
         return json(typeof valeur === 'function' ? valeur(JSON.parse(req.postData() || '{}')) : valeur);

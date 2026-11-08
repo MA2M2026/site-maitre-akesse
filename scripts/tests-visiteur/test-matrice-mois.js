@@ -67,8 +67,8 @@ function donnees(role) {
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const e = await ouvrir('caisse', ecran, (d) => {
       d.tables.agence_mannequins = [
-        { id: 'r1', full_name: 'ROXANE OUATTARA', mensualite: 10000, statut: 'actif', date_entree: an + '-01-01' },
-        { id: 'r2', full_name: 'KONÉ AWA', mensualite: 10000, statut: 'actif', date_entree: an + '-01-01' },
+        { id: 'r1', full_name: 'ROXANE OUATTARA', mensualite: 10000, statut: 'actif', date_entree: an + '-01-01', formation_mois_faits: 4, formation_niveaux: 1 },
+        { id: 'r2', full_name: 'KONÉ AWA', mensualite: 10000, statut: 'actif', date_entree: an + '-01-01', formation_mois_faits: null, formation_niveaux: 2 },
         { id: 'r3', full_name: 'NOUVELLE ARRIVÉE', mensualite: 10000, statut: 'actif', date_entree: mm(mc) },
         { id: 'r5', full_name: 'ANCIEN SORTI', mensualite: 10000, statut: 'sorti', date_entree: an + '-01-01' }];
       d.tables.paiements_mannequins = [
@@ -83,7 +83,10 @@ function donnees(role) {
     await p.click('#menu-lateral a.nav[href="#/paiements/matrice"]');
     await p.waitForSelector('table.matrice', { timeout: 8000 }).catch(() => {});
     const t = () => p.evaluate(() => document.querySelector('.contenu').innerText.replace(/\s+/g, ' '));
-    ok((await p.$$('table.matrice thead th')).length === 13, nomEcran + ' : 12 colonnes de mois + la colonne des noms');
+    ok((await p.$$('table.matrice thead th')).length === 14, nomEcran + ' : 12 colonnes de mois + la colonne des noms + « Déjà faits »');
+    // mois de cours déjà faits avant la reprise de mars (08/11/2026) : « 4 / 9 » pour 1 niveau, « — » si pas encore saisi
+    const faits = await p.$$eval('table.matrice tbody tr', (rows) => rows.map((r) => r.querySelector('td.deja-faits').textContent.trim()));
+    ok(/Déjà faits/.test(await p.textContent('table.matrice thead')) && faits.includes('4 / 9') && faits.includes('—'), nomEcran + ' : colonne « Déjà faits » (4 / 9, — si pas encore saisi) ' + faits.join(', '));
     ok((await p.$$('table.matrice tbody tr')).length === 3, nomEcran + ' : 3 mannequins (le sorti n’est pas listé)');
     const cases = (nom) => p.$$eval('table.matrice tbody tr', (rows, x) => { const r = rows.find((y) => y.textContent.includes(x)); return Array.from(r.querySelectorAll('.case-mois .pastille')).map((c) => c.className.replace('pastille ', '')); }, nom);
     const l1 = await cases('ROXANE'), l2 = await cases('KONÉ'), l3 = await cases('NOUVELLE');

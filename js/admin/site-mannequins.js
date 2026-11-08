@@ -121,10 +121,56 @@
       '<div class="ligne"><a class="btn" href="/mannequin.html?id=' + P.esc(id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' +
       '<a class="btn" href="#/site/' + PAGE + '/' + P.esc(id) + '/cv">📄 Voir le CV</a>' +
       '<button type="button" class="btn" data-action="mannequin-sourdine">' + (profil.desactive ? '🔊 Réactiver' : '🔇 Mettre en sourdine') + '</button></div></div></header>' +
-      blocPhotos() + blocMensurations(await P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null)) +
+      blocPhotos() + blocMensurations(await P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null)) + await blocVitrine(id) +
       '<section class="carte zone-danger"><h2>Supprimer définitivement</h2><p class="doux petit-texte">Supprime le profil, le compte de connexion et toutes les photos. Irréversible. Pour la retirer seulement du site, préférez la sourdine.</p>' +
       '<button type="button" class="btn" data-action="mannequin-supprimer">🗑 Supprimer</button></section>';
   }
+  // ---------- Accueil du site, « site vivant » (08/11/2026, phase 3 V4 ; supabase-site-vivant.sql) ----------
+  // Une mannequin paraît sur l'accueil (couverture, « À la une », visages) si elle est majeure, ou mineure avec l'accord
+  // donné par un parent lui-même (lien personnel). L'agence peut aussi l'exclure. Tant que le fichier n'est pas collé :
+  // une note, rien ne casse.
+  async function blocVitrine(id) {
+    let v, accord;
+    try {
+      v = await P.bd(sb.from('model_profiles').select('exclue_vitrine, date_naissance, published, desactive').eq('id', id).maybeSingle());
+      accord = (await P.bd(sb.from('accords_parents').select('jeton, accepte_le, retire_le, parent_nom').eq('model_id', id)))[0] || null;
+    } catch (e) {
+      return '<section class="carte"><h2>Accueil du site</h2><p class="doux">S’ouvrira quand l’étape d’installation « supabase-site-vivant.sql » sera faite.</p></section>';
+    }
+    if (!v) return '';
+    // (mêmes règles que vitrine_eligibles : sans date de naissance, traitée comme une mineure — accord d'un parent requis)
+    const age = P.age(v.date_naissance), sansDate = age === null, mineure = sansDate || age < 18;
+    const accordOk = !!(accord && accord.accepte_le && !accord.retire_le);
+    const etat = !v.published || v.desactive ? P.pastille('Pas sur l’accueil : pas publiée ou en sourdine', 'neutre')
+      : v.exclue_vitrine ? P.pastille('Exclue de l’accueil par l’agence', 'alerte')
+      : mineure && !accordOk ? P.pastille(sansDate ? 'Date de naissance manquante : pas sur l’accueil sans l’accord d’un parent' : 'Mineure : pas sur l’accueil sans l’accord d’un parent', 'alerte')
+      : P.pastille('Sur l’accueil (à tour de rôle)', 'ok');
+    return '<section class="carte"><h2>Accueil du site</h2><div class="ligne">' + etat +
+      (mineure && accordOk ? P.pastille('Accord donné par ' + (accord.parent_nom || 'un parent') + ' le ' + P.date(accord.accepte_le), 'info') : '') + '</div>' +
+      '<div class="ligne" style="margin-top:10px"><button type="button" class="btn" data-action="vitrine-exclure" data-exclue="' + (v.exclue_vitrine ? '1' : '0') + '">' + (v.exclue_vitrine ? '↩︎ Remettre sur l’accueil' : '⛔ Exclure de l’accueil') + '</button>' +
+      (mineure ? '<button type="button" class="btn rouge" data-action="vitrine-accord">' + (accordOk ? '🔗 Lien d’accord du parent' : '✉️ Envoyer le lien d’accord au parent') + '</button>' : '') + '</div>' +
+      '<p class="doux petit-texte">Le Book et la fiche ne changent pas. ' + (mineure ? 'Le parent ouvre son lien, écrit son nom et appuie sur « J’accepte » ; il peut retirer son accord à tout moment.' : '') + '</p></section>';
+  }
+  P.actions['vitrine-exclure'] = async (el) => {
+    const exclure = el.getAttribute('data-exclue') !== '1';
+    if (!confirm(exclure ? 'Retirer cette mannequin de l’accueil du site ? (le Book et sa fiche ne changent pas)' : 'Remettre cette mannequin sur l’accueil ?')) return;
+    el.disabled = true;
+    try { await P.bd(sb.from('model_profiles').update({ exclue_vitrine: exclure }).eq('id', ouverte.id).select('id')); P.message(exclure ? 'Retirée de l’accueil.' : 'Remise sur l’accueil.'); } catch (e) { P.message(P.erreurTexte(e)); }
+    return P.afficher();
+  };
+  P.actions['vitrine-accord'] = async (el) => {
+    el.disabled = true;
+    try {
+      const jeton = await P.rpc('accord_parent_demander', { p_model: ouverte.id });
+      const lien = 'https://www.maitreakessemodelmanagement.com/accord-parent?j=' + encodeURIComponent(jeton);
+      const texte = 'Bonjour, l’agence Maître Akesse Model Management souhaite montrer la photo de ' + (ouverte.profil.full_name || 'votre enfant').split(' ')[0] +
+        ' sur l’accueil de son site. Votre accord est nécessaire : ' + lien;
+      P.fenetre('<h2>Lien d’accord du parent</h2><p>Envoyez ce lien au parent. Il écrit son nom et appuie sur « J’accepte » ; il peut retirer son accord à tout moment.</p>' +
+        '<p><input readonly value="' + P.esc(lien) + '" style="width:100%" aria-label="Lien d’accord"></p>' +
+        '<div class="ligne"><a class="btn rouge" href="https://wa.me/?text=' + encodeURIComponent(texte) + '" target="_blank" rel="noopener">Envoyer par WhatsApp</a>' +
+        '<button type="button" class="btn" data-action="fermer-fenetre">Fermer</button></div>');
+    } catch (e) { P.message(P.erreurTexte(e)); } finally { el.disabled = false; }
+  };
   async function rafraichirPhotos(message) {
     ouverte.photos = await lirePhotos(ouverte.id);
     const zone = document.getElementById('mq-photos');

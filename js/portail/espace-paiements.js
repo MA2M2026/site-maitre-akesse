@@ -636,10 +636,13 @@
       return '<td class="case-mois' + (rang === moisActuel ? ' mois-actuel' : '') + '"><span class="pastille ' + sign[1] + '" title="' + P.MOIS[n - 1] + ' : ' + sign[2] + '"><span aria-hidden="true">' + sign[0] + '</span><span class="sr-only">' + P.esc(P.MOIS[n - 1] + ' : ' + sign[2]) + '</span></span></td>';
     };
     const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    // mois de cours déjà faits avant la reprise de mars (saisis dans « Reprise du 1er mars », 08/11/2026)
+    const dejaFaits = (m) => '<td class="deja-faits">' + (m.formation_mois_faits == null ? '<span class="doux" title="Pas encore saisi dans « Reprise du 1er mars »">—</span>'
+      : P.esc(m.formation_mois_faits + ' / ' + (m.formation_niveaux || 2) * 9)) + '</td>';
     return P.entete('Paiements mois par mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
       '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + P.pastille('○ congés', 'neutre') + P.pastille('◇ formation terminée', 'neutre') + P.pastille('R rodage (jamais réclamé)', 'neutre') + '</div>' +
-      '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin'].concat(colonnes), mannequins.map((m) =>
-        '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td>' + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
+      '<div class="carte">' + (mannequins.length ? P.tableau(['Mannequin', 'Déjà faits (mois)'].concat(colonnes), mannequins.map((m) =>
+        '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td>' + dejaFaits(m) + colonnes.map((c, i) => case_(m, i + 1)).join('') + '</tr>'), 'matrice')
         : '<p class="doux">Aucun mannequin dans le registre.</p>') + '</div>';
   }
   // téléphone : la matrice s'ouvre sur le mois en cours (visite du 22/10/2026)
