@@ -11,7 +11,9 @@ l'autre conversation avant chaque mise en ligne.
 - **Cours en groupe** : chaque dimanche de 15 h à 18 h — **30 000 FCFA pour 4 séances (4 dimanches)**.
 - **Cours privé (séance de 2 h)** : **25 000 FCFA en salle chez nous** ; **30 000 à 35 000 FCFA à l'extérieur** (chez la
   personne ou au lieu de son choix).
-- **À fournir par la propriétaire** : adresse de la salle (quartier + repère) ; lien/numéro Wave pour ces cours.
+- **Salle** : Riviera Faya (Abidjan) — la même salle que les cours de l'agence (repère précis à demander pour la page).
+- **Paiement** : le même Wave que pour les mensualités des mannequins.
+- **Vidéo** : elle doit DONNER ENVIE (« qu'en la regardant, elle ait envie d'apprendre à marcher tout de suite ») : d'abord le rêve et la transformation, les infos pratiques à la fin.
 
 ## La page
 1. Vidéo motion design premium (≈ 80 s) avec **voix off** douce, élégante, bonne diction (voix à régler : gratuite améliorée
