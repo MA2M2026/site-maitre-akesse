@@ -238,7 +238,7 @@ async function lireDonneesAccueil() {
   // qu'elle ne saute pas quand ils arrivent — 24/10/2026 ; s'ils manquent, le navigateur les lit)
   // (100 % dynamique, 01/11/2026 : aussi les partenaires, Instagram, les 3 prochains projets de l'agenda, la vidéo
   // de l'accueil et les versions moyennes des photos ; chacun manquant, la page le lit elle-même comme avant)
-  const [couvertures, mots, castings, partenaires, instagram, agenda, video, moyennes] = await Promise.all([
+  const [couvertures, mots, castings, partenaires, instagram, agenda, video, moyennes, eligibles] = await Promise.all([
     profils.length ? lireCouvertures(profils.map(p => p.id)) : [],
     lireSupabase('mot_responsable?id=eq.principal&select=nom,titre,message,photo_url', null, 3000).catch(() => null),
     lireSupabase('casting_projets?actif=eq.true&select=id&limit=1', null, 3000).catch(() => null),
@@ -246,12 +246,16 @@ async function lireDonneesAccueil() {
     lireSupabase('instagram_posts_cache?id=eq.principal&select=posts', null, 3000).catch(() => null),
     lireSupabase('rpc/agenda_public', { seulement_a_venir: true, limite: 3 }, 3000).catch(() => null),
     lireSupabase('reglages_site?cle=eq.video_accueil&select=valeur', null, 3000).catch(() => null),
-    profils.length ? lireSupabase('model_photos?select=model_id,url_miniature,url_moyenne&url_moyenne=not.is.null&model_id=in.(' + profils.map(p => p.id).join(',') + ')', null, 3000).catch(() => null) : []]);
+    profils.length ? lireSupabase('model_photos?select=model_id,url_miniature,url_moyenne&url_moyenne=not.is.null&model_id=in.(' + profils.map(p => p.id).join(',') + ')', null, 3000).catch(() => null) : [],
+    // (site vivant, 08/11/2026) qui peut paraître en couverture, « À la une » et dans les visages : majeures, ou
+    // mineures avec l'accord donné par un parent (supabase-site-vivant.sql) ; null tant que le fichier n'est pas collé
+    lireSupabase('rpc/vitrine_eligibles', {}, 3000).catch(() => null)]);
   if (!couvertures) throw new Error('base : photos');
   const photoDe = {};
   couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
   const donnees = { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
   if (Array.isArray(mots)) donnees.mot = mots[0] || null;
+  if (Array.isArray(eligibles)) donnees.vitrine = eligibles.map((x) => x.model_id);
   if (Array.isArray(castings)) donnees.castingOuvert = castings.length > 0;
   if (Array.isArray(partenaires)) donnees.partenaires = partenaires;
   if (Array.isArray(instagram)) donnees.instagram = (instagram[0] && Array.isArray(instagram[0].posts)) ? instagram[0].posts : [];
@@ -418,6 +422,25 @@ function donneesAccueil() {
 }
 // JSON posé dans la page : jamais de « < » brut (pas de fin de bloc possible)
 const jsonSur = (x) => JSON.stringify(x).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+// ================== Site vivant (08/11/2026, phase 3 V4 ; décisions de la propriétaire, DECISIONS.md) ==================
+// Groupe et numéro de visite du visiteur : témoin « ma2m_v=<groupe 0-5>.<visite> » (aucune donnée personnelle, 30 jours,
+// déclaré dans la politique de confidentialité). Robots (Google, aperçus WhatsApp / Facebook, outils) et première visite :
+// la page de base (groupe 0, visite 0), identique pour tous.
+const ROBOTS_VITRINE = /bot|crawl|spider|slurp|curl|wget|python|node-fetch|undici|axios|lighthouse|headless/i;
+function tirageVisiteur(requete) {
+  const agent = requete.headers.get('user-agent') || '';
+  if (!agent || ROBOTS_APERCU.test(agent) || ROBOTS_VITRINE.test(agent)) return { groupe: 0, visite: 0, robot: true };
+  const m = String(requete.headers.get('cookie') || '').match(/(?:^|;\s*)ma2m_v=([0-5])\.(\d{1,6})/);
+  if (!m) return { groupe: Math.floor(Math.random() * 6), visite: 0, robot: false };
+  return { groupe: Number(m[1]), visite: Number(m[2]), robot: false };
+}
+const tourner = (liste, n) => { const k = liste.length ? ((n % liste.length) + liste.length) % liste.length : 0; return liste.slice(k).concat(liste.slice(0, k)); };
+// la vitrine : les mannequins éligibles (fichier collé) ; sinon toutes, comme avant
+function vitrineAccueil(donnees) {
+  if (!Array.isArray(donnees.vitrine)) return donnees.profils;
+  const permises = new Set(donnees.vitrine);
+  return donnees.profils.filter((p) => permises.has(p.id));
+}
 async function accueilRempli(requete, url) {
   if (requete.method !== 'GET') return;
   const donnees = await donneesAccueil();
@@ -427,10 +450,16 @@ async function accueilRempli(requete, url) {
   let html = await page.text();
   const marque = '<img id="couv-img" class="visible" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""';
   if (html.indexOf(marque) === -1 || html.indexOf('<main') === -1) return;
-  // couverture : une mannequin au hasard à chaque visite (pas celle « À la une »)
-  const une = donnees.profils.find(p => p.featured) || donnees.profils[0];
-  const autres = donnees.profils.filter(p => p.id !== une.id);
-  const couv = autres.length ? autres[Math.floor(Math.random() * autres.length)] : une;
+  // (site vivant, 08/11/2026) seules les mannequins de la vitrine : couverture, « À la une », visages
+  const vitrine = vitrineAccueil(donnees);
+  if (!vitrine.length) return;  // (personne dans la vitrine : la page de base, sans mannequins)
+  const tirage = tirageVisiteur(requete);
+  // « À la une » : celle que l'agence a épinglée (si elle est dans la vitrine), sinon la première
+  const une = vitrine.find(p => p.featured) || vitrine[0];
+  const autres = vitrine.filter(p => p.id !== une.id);
+  // couverture : au hasard à la première visite (comme avant) ; ensuite, tour à tour d'une visite à l'autre (jamais
+  // deux fois de suite la même, chacune son tour)
+  const couv = !autres.length ? une : tirage.robot ? autres[0] : tirage.visite > 0 ? autres[(tirage.groupe * 7 + tirage.visite) % autres.length] : autres[Math.floor(Math.random() * autres.length)];
   const anglais = /^\/en(\/|$)/.test(url.pathname);
   // (définitif, 02/11/2026) page anglaise : le mot du fondateur et l'agenda TOUJOURS traduits avant l'envoi, même juste
   // après une mise en ligne (la liste gardée en mémoire pouvait encore être sans traduction : la page arrivait en français)
@@ -448,7 +477,8 @@ async function accueilRempli(requete, url) {
   }
   const R = globalThis.RenduBook, telephone = estTelephone(requete);
   const photoDe = (m) => photoLegere(m.petite && telephone ? m.petite : m.photo);
-  const visages = R.visagesAccueil(donnees.profils);
+  // (visages : la vitrine seulement ; ordre qui tourne d'une visite à l'autre, la même page que les robots à la première)
+  const visages = R.visagesAccueil(tirage.visite > 0 ? tourner(vitrine, tirage.groupe * 3 + tirage.visite) : vitrine);
   const grille = (id, liste) => (h) => h.replace('<div class="grille" id="' + id + '"></div>', () => '<div class="grille" id="' + id + '">' + liste.map((m) => R.vignetteAccueil(m, { en: anglais, photo: photoDe(m) })).join('') + '</div>');
   html = grille('grille-hommes', visages.hommes)(grille('grille-femmes', visages.femmes)(html));
   html = texteElement(html, 'une-nom', une.full_name || (anglais ? 'Model' : 'Mannequin'));
@@ -468,7 +498,12 @@ async function accueilRempli(requete, url) {
   html = photoAnnoncee(html, photoLegere(couv.moyenne || couv.photo));
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
-  return reponseHtml(html, page, url);
+  const reponse = reponseHtml(html, page, url);
+  // (site vivant) visite suivante : numéro + 1 ; la page dépend du témoin (Vary), en-tête de contrôle x-ma2m-variant
+  reponse.headers.set('x-ma2m-variant', tirage.groupe + '.' + tirage.visite);
+  reponse.headers.set('Vary', (reponse.headers.get('Vary') || '') + ', Cookie');
+  if (!tirage.robot) reponse.headers.append('Set-Cookie', 'ma2m_v=' + tirage.groupe + '.' + Math.min(tirage.visite + 1, 999999) + '; Path=/; Max-Age=2592000; SameSite=Lax; Secure');
+  return reponse;
 }
 
 // ================== En-tête complet de chaque page (phase 2, 02/11/2026) ==================

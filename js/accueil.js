@@ -126,7 +126,10 @@
     const couvertures = await lirePhotosCouverture(sb, profils.map(p => p.id));
     const photoDe = {};
     couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
-    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
+    // (site vivant, 08/11/2026) qui peut paraître en couverture, « À la une » et dans les visages (supabase-site-vivant.sql)
+    const { data: eligibles, error: sansVitrine } = await sb.rpc('vitrine_eligibles');
+    return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length,
+      vitrine: !sansVitrine && Array.isArray(eligibles) ? eligibles.map((x) => x.model_id) : undefined };
   }
   // photo de couverture posée par le serveur, en échec avant l'arrivée de la roue de secours
   // (js/photos.js) : on la redemande par le relais
@@ -139,7 +142,9 @@
   })();
   async function chargerMannequins(depuisLaBase) {
     if (typeof sb === 'undefined' || !sb) return;
-    const { profils: avecPhoto, nombre: total } = await mannequinsAvecPhoto(depuisLaBase);
+    const lues = await mannequinsAvecPhoto(depuisLaBase), total = lues.nombre;
+    // (site vivant) seules les mannequins de la vitrine : majeures, ou mineures avec l'accord d'un parent
+    const avecPhoto = Array.isArray(lues.vitrine) ? lues.profils.filter((p) => lues.vitrine.includes(p.id)) : lues.profils;
     // (liste du serveur : 3 minutes d'âge au plus ; plus de question de vérification à la base, 100 % dynamique)
     if (total) {
       document.getElementById('couv-nombre').textContent = R.nombreAccueil(total, EN);
@@ -173,7 +178,8 @@
     const visages = R.visagesAccueil(avecPhoto);
     const remplir = (page, grille, liste) => {
       const g = document.getElementById(grille);
-      g.innerHTML = liste.map(vignette).join('');
+      // (site vivant) visages déjà écrits par le serveur, dans l'ordre de cette visite : on les garde
+      if (!(lues.deLaPage && g.children.length)) g.innerHTML = liste.map(vignette).join('');
       document.getElementById(page).hidden = !g.children.length;
     };
     remplir('femmes', 'grille-femmes', visages.femmes);
