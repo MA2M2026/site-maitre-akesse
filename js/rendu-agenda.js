@@ -20,14 +20,14 @@
     vide: 'Our upcoming projects will appear here very soon.',
     videPasses: 'Our completed projects will appear here.',
     erreur: 'The agenda could not be loaded. Please try again later.',
-    precedent: 'Previous month', suivant: 'Next month', aujourdhui: 'Today',
+    precedent: 'Previous month', suivant: 'Next month', aujourdhui: 'Today', vues: 'Calendar view',
     aVenir: 'Upcoming', programmeDu: 'Schedule for ', rienCeJour: 'No project on this day.', jour: 'day', jours: 'days', enCours: 'today'
   } : {
     intervenants: 'Avec', horaires: 'Horaires', voirPlus: 'Voir plus', voirPhotos: 'Voir les photos sur la page Événements →', partenaires: 'Partenaires',
     vide: 'Nos prochains projets seront affichés ici très bientôt.',
     videPasses: 'Nos projets réalisés seront affichés ici.',
     erreur: 'L’agenda n’a pas pu être chargé. Réessayez dans un instant.',
-    precedent: 'Mois précédent', suivant: 'Mois suivant', aujourdhui: 'Aujourd’hui',
+    precedent: 'Mois précédent', suivant: 'Mois suivant', aujourdhui: 'Aujourd’hui', vues: 'Vue du calendrier',
     aVenir: 'À venir', programmeDu: 'Programme du ', rienCeJour: 'Aucun projet ce jour-là.', jour: 'jour', jours: 'jours', enCours: 'aujourd’hui'
   };
   const LANGUE = enAnglais ? 'en-GB' : 'fr-FR';
@@ -393,12 +393,12 @@
       const t = el('h2', 'cal-titre', titre());
       if (annonce.textContent !== t.textContent) annonce.textContent = t.textContent;
       const vues = el('div', 'cal-vues');
-      vues.setAttribute('role', 'tablist');
+      // (08/11/2026, validateur W3C) boutons de vue, pas des onglets : un groupe de boutons, l'actif « enfoncé »
+      vues.setAttribute('role', 'group'); vues.setAttribute('aria-label', T.vues || 'Vue');
       VUES.forEach(([cle, nom]) => {
         const b = el('button', 'cal-vue' + (vue === cle ? ' actif' : ''), nom);
         b.type = 'button';
-        b.setAttribute('role', 'tab');
-        b.setAttribute('aria-selected', vue === cle ? 'true' : 'false');
+        b.setAttribute('aria-pressed', vue === cle ? 'true' : 'false');
         b.dataset.cle = 'vue-' + cle;
         b.addEventListener('click', () => {
           vue = cle;

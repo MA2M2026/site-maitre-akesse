@@ -57,3 +57,17 @@ Lighthouse, téléphone 4G lente (budget LCP ≤ 2,5 s, CLS ≤ 0,1) :
 ## Suite
 
 Corriger 1 → 8 dans cet ordre, mesurer avant / après (même méthode), puis mise en ligne groupée.
+
+## Lenteur signalée par la propriétaire (08/11/2026, vers 11 h) : « menu → 3 à 4 s »
+
+- Trou dans la méthode : les parcours mesuraient l'ouverture d'une page tapée directement, pas le geste réel
+  menu → appui → page affichée. Ajouté : `scripts/visiteur/geste-menu.mjs`.
+- Comparaison même geste, mêmes conditions, version d'hier soir (`ba54b6a`) / version du jour (`7b3ea54`) :
+  0,58 à 0,76 s des deux côtés (écart ≤ 0,05 s) → les mises en ligne du jour n'ont pas ralenti le site.
+- Journal du téléphone de la propriétaire (journal_erreurs) : « Photos directes Cloudflare injoignables → relais
+  Vercel » à 08:51, 09:29, 11:16 ; pages complètes en 16 à 70 s ; base de données injoignable à 11:10.
+- Réglages Cloudflare vérifiés par l'API (clé limitée au domaine, accordée par la propriétaire) : ECH `off`,
+  SSL `full`, TLS min 1.2 → la cause d'octobre n'est pas revenue ; la base aussi était injoignable : coupures de
+  la connexion de la propriétaire à ces moments.
+- Simulation « Cloudflare ne répond pas » sur le site en ligne : après la première page, la roue de secours prend
+  le relais ; pages affichées en 1,2 à 2,3 s.

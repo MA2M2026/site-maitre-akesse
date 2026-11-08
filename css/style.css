@@ -335,6 +335,17 @@ section { padding: 5rem 0; }
 }
 .profil-hero-contenu p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
 @media (max-width: 640px) { .profil-hero-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; } }
+/* Fiche sur ordinateur (08/11/2026, phase 3, revue « directeur artistique ») : la photo, presque toujours en
+   portrait, était recadrée en largeur — on voyait le mur du fond et le visage était coupé sous le nom. Elle est
+   maintenant montrée ENTIÈRE, à droite, sur le fond noir ; le nom et les informations à gauche, alignés sur le
+   reste de la page (et plus sous la bulle WhatsApp). Téléphone et tablette : inchangés. */
+@media (min-width: 900px) {
+  .profil-hero-fullbleed img { object-fit: contain; object-position: 82% center; }
+  /* (la grande photo, posée par-dessus la petite photo d'attente, a son propre fond noir : les deux n'ont pas toujours
+     le même format, la petite dépassait sur le côté) */
+  .profil-hero-fullbleed img:not(.hero-apercu) { background: var(--voile-photo-a100); }
+  .profil-hero-contenu { padding-left: max(clamp(1.6rem, 5vw, 4rem), calc((100vw - 1200px) / 2 + var(--marge, 1.5rem))); max-width: calc(50vw + 140px); }
+}
 /* Fiche sur téléphone (08/11/2026, phase 3 V1) : le grand vide rouge sous le menu (5 rem au-dessus de « ← Nos
    mannequins », 2 rem dessous) poussait le nom de la mannequin tout en bas de l'écran, sous la bande de l'application */
 @media (max-width: 640px) {
@@ -855,7 +866,7 @@ section { padding: 5rem 0; }
 .filtres-ligne { column-gap: 1.6rem; } /* écart entre les deux groupes (pas de trait : propre aussi quand ils passent à la ligne) */
 .filtres-plus { margin-bottom: 1.6rem; }
 .filtres-plus summary, .filtres-mesures-bouton {
-  cursor: pointer; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--texte-corps); padding: 0.6rem 0; list-style: none;
 }
 .filtres-plus summary::-webkit-details-marker { display: none; }
@@ -895,7 +906,7 @@ section { padding: 5rem 0; }
 }
 .filtres-avances .form-champ { margin-bottom: 0; gap: 0.5rem; justify-content: flex-end; } /* cases alignées même si un libellé passe sur 2 lignes */
 .filtres-avances .form-champ label {
-  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.16em; color: var(--texte-doux);
+  font-size: 0.75rem; font-weight: 500; letter-spacing: 0.16em; color: var(--texte-doux);
 }
 .filtres-avances input, .filtres-avances select {
   border: none; border-bottom: 1px solid var(--gris-clair); background: transparent; color: var(--texte-corps);
@@ -1540,7 +1551,7 @@ section { padding: 5rem 0; }
 @media (max-width: 640px) {
   #grille.medaillon-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
   .book-carte-legende { padding: 1.2rem 0.4rem 0.4rem; }
-  #grille .medaillon-nom { font-size: 0.7rem; line-height: 1.15; }
+  #grille .medaillon-nom { font-size: 0.75rem; line-height: 1.15; }  /* (12 px au moins : lisible, Lighthouse) */
   #grille .medaillon-info { display: none; }
 }
 
@@ -2231,8 +2242,10 @@ html.porte-deja-vue #porte-entree { display: none; }
   background: var(--c-rgba-255-255-255-0_025); border: 1px solid var(--c-rgba-255-255-255-0_08);
   border-radius: 14px; padding: clamp(1.1rem, 3vw, 1.6rem); min-width: 0;
 }
+/* (08/11/2026, phase 3 : titres des cartes passés de h3 à h2 — ordre des titres pour les lecteurs d'écran, Lighthouse —
+   même allure qu'avant : interligne fixé ici, la règle générale des h2 ne s'applique pas) */
 .fiche-carte-titre {
-  display: flex; align-items: center; gap: 0.5rem; margin: 0 0 1rem;
+  display: flex; align-items: center; gap: 0.5rem; margin: 0 0 1rem; line-height: 1.15;
   font-family: var(--texte); font-weight: 500; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--titre-clair);
 }
 .fiche-carte-titre > span:not(.fiche-ico) { margin-left: auto; color: var(--texte-doux); letter-spacing: 0.06em; text-transform: none; font-size: 0.78rem; font-weight: 400; }

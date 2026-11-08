@@ -78,7 +78,7 @@
 
   const blocProjets = (projets && projets.length) ? `
     <section class="fiche-carte fiche-ancre" id="fiche-parcours">
-      <h3 class="fiche-carte-titre">${T('Parcours', 'Career')} <span>${projets.length} ${T('projet', 'project')}${projets.length > 1 ? 's' : ''}</span></h3>
+      <h2 class="fiche-carte-titre">${T('Parcours', 'Career')} <span>${projets.length} ${T('projet', 'project')}${projets.length > 1 ? 's' : ''}</span></h2>
       <ol class="fiche-projets">
         ${projets.slice(0, NB_PROJETS_APERCU).map(ligneProjetHtml).join('')}
       </ol>
@@ -96,7 +96,7 @@
   const urlVideoSure = /^https?:\/\//i.test(texteVideo) ? urlHttpSure(texteVideo) : /^www\.[^\s]+\.[a-z]{2,}/i.test(texteVideo) ? urlHttpSure('https://' + texteVideo) : null;
   const blocVideo = (urlVideo || urlVideoSure) ? `
     <section class="fiche-carte">
-      <h3 class="fiche-carte-titre">${T('Vidéo', 'Video')}</h3>
+      <h2 class="fiche-carte-titre">${T('Vidéo', 'Video')}</h2>
       ${urlVideo
         ? `<div class="video-embed-wrap fiche-video"><iframe src="${echapperHtml(urlVideo)}" title="${T('Vidéo de présentation', 'Introduction video')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
         : `<a href="${echapperHtml(urlVideoSure)}" target="_blank" rel="noopener" class="${EN ? 'enmq-6' : 'mq-6'}">▶ ${T('Voir la vidéo de présentation', 'Watch Introduction Video')}</a>`}
@@ -104,7 +104,7 @@
 
   const blocProfil = (profil.bio || (profil.model_types && profil.model_types.length) || profil.languages || profil.availability) ? `
     <section class="fiche-carte fiche-ancre" id="fiche-apropos">
-      <h3 class="fiche-carte-titre">${T('À propos', 'About')}</h3>
+      <h2 class="fiche-carte-titre">${T('À propos', 'About')}</h2>
       ${profil.bio ? `<p class="mannequin-bio fiche-bio">${echapperHtml(profil.bio)}</p>` : ''}
       <ul class="fiche-infos">
         ${profil.availability && libellesDispo[profil.availability] ? `<li><span class="fiche-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>${libellesDispo[profil.availability]}</li>` : ''}

@@ -83,12 +83,41 @@ function reconstruire(gardees) {
   const garde = new Map(gardees);
   const sortie = [];
   const animations = new Set();
+  // (08/11/2026) un raccourci écrit avec une variable (« background: linear-gradient(… var(--x) …) ») n'est pas recopié
+  // par le navigateur dans le texte de la règle (ses morceaux restent vides) : il est remis tel qu'écrit, en tête, et les
+  // morceaux vides (« background-image: ; ») sont retirés — avant, le reflet du logo et d'autres fonds manquaient
+  // jusqu'à l'arrivée de la feuille complète, et le validateur W3C comptait des erreurs
+  const RACCOURCIS = ['background', 'mask', '-webkit-mask', 'font', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'outline',
+    'animation', 'transition', 'margin', 'padding', 'inset', 'gap', 'grid-template', 'grid-area', 'flex', 'list-style', 'text-decoration', 'border-radius',
+    'columns', 'place-items', 'place-content', 'overflow', 'border-color', 'border-width', 'border-style'];
+  // (texte d'origine des feuilles, pour retrouver un raccourci que le navigateur ne rend pas du tout)
+  const sources = window.__sourcesCss || {};
+  const depuisSource = (r, sh) => {
+    const src = sources[r.parentStyleSheet && r.parentStyleSheet.href] || '';
+    const sel = r.selectorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*');
+    const bloc = (src.match(new RegExp('(?:^|[}\\s])' + sel + '\\s*\\{([^}]*)\\}')) || [])[1] || '';
+    const v = (bloc.match(new RegExp('(?:^|[;\\s])' + sh.replace(/-/g, '\\-') + '\\s*:\\s*([^;]+)')) || [])[1];
+    return v ? v.trim().replace(/url\((['"]?)\.\.\//g, 'url($1/') : '';
+  };
+  const complet = (st, r) => {
+    const vides = (st.cssText.match(/(?<=^|;)\s*([\w-]+):\s*;/g) || []).map((x) => x.replace(/[:;\s]/g, ''));
+    let t = st.cssText.replace(/(?<=^|;)\s*[\w-]+:\s*;/g, '').trim();
+    // (« animation: none » réécrit par le navigateur en « auto ease 0s 1 normal none running none », refusé par le
+    // validateur W3C : remis sous sa forme courte, identique)
+    t = t.replace(/animation:\s*auto ease 0s 1 normal none running none(\s*!important)?;/g, 'animation: none$1;');
+    // raccourci que le navigateur ne rend pas (ni dans le texte, ni par getPropertyValue) : pris dans la feuille d'origine
+    const perdus = RACCOURCIS.filter((sh) => vides.some((v) => v.indexOf(sh + '-') === 0) && !st.getPropertyValue(sh));
+    const repris = perdus.map((sh) => [sh, depuisSource(r, sh)]).filter((x) => x[1]).map(([sh, v]) => sh + ': ' + v + ';');
+    const ajouts = RACCOURCIS.filter((sh) => { const v = st.getPropertyValue(sh); return v && /var\(/.test(v) && !new RegExp('(^|[;\\s])' + sh.replace(/-/g, '\\-') + '\\s*:').test(t); })
+      .map((sh) => sh + ': ' + st.getPropertyValue(sh) + (st.getPropertyPriority(sh) ? ' !important' : '') + ';');
+    return (repris.concat(ajouts).join(' ') + (repris.length || ajouts.length ? ' ' : '') + t).trim();
+  };
   const parcourir = (regles) => regles.map((r) => {
     if (r instanceof CSSStyleRule || r instanceof CSSFontFaceRule) {
       if (!garde.has(r.cssText)) return '';
       (r.style && (r.style.animationName || r.style.animation) ? (r.style.animationName || r.style.animation).split(/[\s,]+/) : []).forEach((n) => animations.add(n));
       const sels = garde.get(r.cssText);
-      return r instanceof CSSStyleRule && sels.length ? sels.join(', ') + ' { ' + r.style.cssText + ' }' : r.cssText;
+      return r instanceof CSSStyleRule && sels.length ? sels.join(', ') + ' { ' + complet(r.style, r) + ' }' : r.cssText;
     }
     if (r instanceof CSSMediaRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@media ' + r.conditionText + '{' + d + '}' : ''; }
     if (r instanceof CSSSupportsRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@supports ' + r.conditionText + '{' + d + '}' : ''; }
@@ -107,11 +136,13 @@ function reconstruire(gardees) {
   let texte = sortie.join('') + images.join('');
   // variables (--nom) : seulement celles dont le texte gardé se sert (de proche en proche)
   const declarees = {};
-  texte.replace(/(--[\w-]+)\s*:\s*([^;}]*)/g, (m, n, v) => { declarees[n] = (declarees[n] || '') + v; return m; });
+  // (08/11/2026 : « .btn--principal:hover { … » était lu comme la variable « --principal » et effacé, cassant la règle)
+  const DECL = /(?<=[{;]\s*)(--[\w-]+)\s*:\s*([^;}]*)/g;
+  texte.replace(DECL, (m, n, v) => { declarees[n] = (declarees[n] || '') + v; return m; });
   const utiles = new Set();
   const suivre = (t) => t.replace(/var\((--[\w-]+)/g, (m, n) => { if (!utiles.has(n)) { utiles.add(n); suivre(declarees[n] || ''); } return m; });
-  suivre(texte.replace(/(--[\w-]+)\s*:\s*[^;}]*/g, ''));
-  texte = texte.replace(/(--[\w-]+)\s*:\s*[^;}]*;?\s*/g, (m, n) => (utiles.has(n) ? m : '')).replace(/[^{}]+\{\s*\}/g, '');
+  suivre(texte.replace(DECL, ''));
+  texte = texte.replace(/(?<=[{;]\s*)(--[\w-]+)\s*:\s*[^;}]*;?\s*/g, (m, n) => (utiles.has(n) ? m : '')).replace(/[^{}]+\{\s*\}/g, '');
   // (adresses relatives des feuilles css/… : rendues absolues depuis la racine, la page peut être /en/ ou /book/…)
   return texte.replace(/url\((['"]?)(?!data:|https?:|\/)([^'")]+)\1\)/g, (m, q, u) => 'url(' + q + '/css/' + u.replace(/^\.\//, '') + q + ')')
     .replace(/url\((['"]?)\/css\/\.\.\//g, 'url($1/');
@@ -147,7 +178,10 @@ async function main() {
       if (ecran === ECRANS[0]) lcpTexte = await p.evaluate(() => new Promise((ok) => new PerformanceObserver((l) => { const e = l.getEntries().pop(); ok(!!(e && e.element && !e.url)); }).observe({ type: 'largest-contentful-paint', buffered: true })));
       await p.evaluate((t) => { window.__lcpTexte = t; }, lcpTexte);
       (await p.evaluate(extraire)).forEach(([r, sels]) => { const deja = gardees.get(r) || []; gardees.set(r, deja.concat(sels.filter((x) => !deja.includes(x)))); });
-      if (ecran === ECRANS[ECRANS.length - 1] && etat === etats[etats.length - 1]) texte = await p.evaluate(reconstruire, [...gardees]);
+      if (ecran === ECRANS[ECRANS.length - 1] && etat === etats[etats.length - 1]) {
+        await p.evaluate(async () => { window.__sourcesCss = {}; for (const f of document.styleSheets) { if (f.href && new URL(f.href).origin === location.origin && !window.__sourcesCss[f.href]) window.__sourcesCss[f.href] = await (await fetch(f.href)).text(); } });
+        texte = await p.evaluate(reconstruire, [...gardees]);
+      }
       await ctx.close();
     }
     const f = path.join(RACINE, fichier);
