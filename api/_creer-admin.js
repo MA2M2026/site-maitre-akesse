@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 2. Ce compte figure-t-il dans la table admins ?
-    if (!(await adminVerifie(jeton, utilisateur))) {
+    if (!(await adminVerifie(jeton, utilisateur, req.headers['x-appareil']))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
       return;
     }

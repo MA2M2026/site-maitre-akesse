@@ -66,8 +66,8 @@
     const session = (await sb.auth.getSession()).data.session;
     if (!session) throw new Error('Session expirée : reconnectez-vous.');
     const rep = await fetch('/api/connexion-admin', corps
-      ? { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify(corps) }
-      : { headers: { Authorization: 'Bearer ' + session.access_token } });
+      ? { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, enTeteAppareil()), body: JSON.stringify(corps) }
+      : { headers: Object.assign({ Authorization: 'Bearer ' + session.access_token }, enTeteAppareil()) });
     if (!rep.ok) throw new Error('Le serveur a refusé la demande (' + rep.status + ').');
     return rep.json();
   }

@@ -24,6 +24,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
     p.on('dialog', (dl) => dl.accept());
+    // (Extension 158, 08/11/2026) chaque action d'administration envoyée au serveur porte l'identifiant de l'appareil
+    const appelsApi = []; p.on('request', (r) => { if (/\/api\//.test(r.url())) appelsApi.push([r.url().replace(/^.*\/api\//, ''), r.headers()['x-appareil'] || '']); });
     const d = donnees('principal');
     // mensurations dans le temps (chantier 14) : le dernier relevé date de plus de 3 mois, la taille a changé
     d.rpc.mensurations_historique_lire = [
@@ -124,6 +126,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(!journal.some((j) => j[0] === 'API' && j[1] === '/api/supprimer-mannequin'), n + 'suppression refusée si le mot n’est pas exactement SUPPRIMER');
     await p.click('[data-action="mannequin-supprimer"]').catch(() => {}); await p.fill('#mq-confirmer', 'SUPPRIMER'); await p.click('form[data-form="mannequin-supprimer"] [type=submit]'); await p.waitForTimeout(1200);
     ok(journal.some((j) => j[0] === 'API' && j[1] === '/api/supprimer-mannequin' && /"modelId":"m0"/.test(j[2])) && /b2-mannequins-publies$/.test(p.url()), n + 'suppression définitive envoyée au serveur, retour à la galerie');
+    const sansAppareil = appelsApi.filter((x) => /^(supprimer-mannequin|r2-presigner|r2-site-images|connexion-admin)/.test(x[0]) && !/^[a-z0-9-]{16,64}$/.test(x[1]));
+    ok(appelsApi.some((x) => /^supprimer-mannequin/.test(x[0])) && appelsApi.some((x) => /^r2-presigner/.test(x[0])) && !sansAppareil.length, n + 'actions d’administration envoyées au serveur avec l’identifiant de l’appareil (' + appelsApi.length + ' ; ' + (sansAppareil.map((x) => x[0]).join(', ') || 'aucune sans') + ')');
 
     // 6. Validations
     await p.goto(URL_ADMIN + '#/site/b2-validations'); await p.waitForSelector('.entete'); await p.waitForTimeout(1200);

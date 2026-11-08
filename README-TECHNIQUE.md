@@ -4329,3 +4329,21 @@ Reprise le 1er mars 2027 : 10 000 FCFA par mois, 15 000 FCFA d'inscription, pour
 Le fichier `supabase-paiements-zero.sql` (effacement complet de l'espace Paiements, collé une fois par la
 propriétaire le 08/11/2026) a été retiré du dépôt après usage, pour qu'il ne soit jamais recollé par erreur ; il
 reste dans l'historique git (commit du 08/11/2026). Copie des données d'avant : Excel et PDF du 07/11 (hors dépôt).
+
+## Verrous des téléphones partout dans l'Administration (08/11/2026, Extension 158)
+
+- Constat (examen demandé par la propriétaire) : les espaces récents (Paiements, Compta, Équipe) suivaient déjà les
+  verrous de l'appareil (révoqué, session de 8 heures / 30 jours, code à 4 chiffres après 15 minutes, mot de passe
+  après 24 heures) ; les parties anciennes (règles fondées sur la table `admins`, fonctions qui lisent `admins`) et
+  les actions du serveur (`api/` : photos, images du site, suppression d'une mannequin, accès bloqués, création de
+  compte) ne vérifiaient que les deux facteurs.
+- Base (`supabase-securite-appareils.sql`) : `portail_admin_ok()` = deux facteurs ET `portail_appareil_ok()` ; mis à la
+  place de `portail_mfa_ok()` dans la règle de lecture de `admins` (dont dépendent toutes les règles anciennes), dans
+  les règles des cartes et des défilés, dans les fonctions qui lisent `admins`, et dans `accord_parent_demander`.
+  L'écran de verrouillage (`portail_code_appareil_*`) et `portail_role` ne changent pas.
+- Serveur : `adminVerifie(jeton, utilisateur, appareil)` interroge `rpc/portail_admin_ok` avec le jeton de la personne
+  et l'en-tête `x-appareil` (fichier SQL pas encore collé : 404 → comme avant ; base injoignable → refusé).
+- Navigateur : `enTeteAppareil()` (`js/supabase-config.js`) ajoute `x-appareil` aux appels `api/` depuis
+  l'Administration seulement.
+- Essais : `scripts/base-essai/essais-securite-appareils.sql`, `test-admin-appareil-serveur.js`,
+  `test-nouvelle-admin-mannequins.js` (identifiant de l'appareil sur chaque action envoyée au serveur).
