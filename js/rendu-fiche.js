@@ -198,7 +198,11 @@
         </div>
       </section>`;
 
-    const galerieHtml = photos.map((p) => `<div class="book-photo-carte cliquable"><img src="${echapperHtml(urlLegere(p.url_miniature || p.url))}" loading="lazy" alt="${T('Photo du book', 'Book photo')}"></div>`).join('');
+    // (08/11/2026, vitesse) sur téléphone, la petite version (480 px) quand elle existe : la galerie est juste sous la
+    // grande photo et lui prenait la connexion ; sur grand écran, la miniature (800 px) comme avant
+    const galerieHtml = photos.map((p) => `<div class="book-photo-carte cliquable"><img src="${echapperHtml(urlLegere(p.url_miniature || p.url))}"` +
+      (p.url_petite && p.url_miniature ? ` srcset="${echapperHtml(urlLegere(p.url_petite))} 480w, ${echapperHtml(urlLegere(p.url_miniature))} 800w" sizes="(max-width: 700px) 50vw, 25vw"` : '') +
+      ` loading="lazy" decoding="async" alt="${T('Photo du book', 'Book photo')}"></div>`).join('');
     return { contenu: contenuHtml.replace('<button id="btn-select-fiche" class="btn btn--principal"></button>', '<button id="btn-select-fiche" class="btn btn--principal">' + (o.selectionne ? T('✓ Dans ma sélection', '✓ In My Selection') : T('+ Sélectionner ce mannequin', '+ Select This Model')) + '</button>'),
       contact: contactHtml, galerie: galerieHtml };
   }
