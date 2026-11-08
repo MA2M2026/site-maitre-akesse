@@ -132,7 +132,9 @@
   async function blocVitrine(id) {
     let v, accord;
     try {
-      v = await P.bd(sb.from('model_profiles').select('exclue_vitrine, date_naissance, published, desactive').eq('id', id).maybeSingle());
+      // (la date de naissance est privée : lue par la fonction sécurisée profils_prives, comme partout ailleurs)
+      v = await P.bd(sb.from('model_profiles').select('id, exclue_vitrine, published, desactive').eq('id', id).maybeSingle());
+      if (v) await completerProfilsPrives(v);
       accord = (await P.bd(sb.from('accords_parents').select('jeton, accepte_le, retire_le, parent_nom').eq('model_id', id)))[0] || null;
     } catch (e) {
       return '<section class="carte"><h2>Accueil du site</h2><p class="doux">S’ouvrira quand l’étape d’installation « supabase-site-vivant.sql » sera faite.</p></section>';
