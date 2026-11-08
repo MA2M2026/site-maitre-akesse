@@ -70,9 +70,9 @@ for (const [nom, ua] of [['Google', 'Mozilla/5.0 (compatible; Googlebot/2.1; +ht
 // première visite d'un navigateur : visages dans l'ordre de base (comme les robots)
 const base = grilles((await visite('WhatsApp/2.23.20.0 A')).h);
 ok(grilles((await visite(NAV)).h) === base, 'première visite : les visages dans le même ordre que pour les robots');
-// caches honnêtes : la page d'un visiteur lui est propre (jamais gardée par un cache partagé) ; robots : page commune
+// caches : copies séparées par valeur du témoin (Vary: Cookie)
 const cacheVisiteur = (await visite(NAV, 'ma2m_v=1.2')).r.headers.get('cache-control'), cacheRobot = (await visite('WhatsApp/2.23.20.0 A')).r.headers.get('cache-control');
-ok(/private/.test(cacheVisiteur) && /public/.test(cacheRobot) && /Cookie/.test((await visite(NAV)).r.headers.get('vary')), 'caches : page du visiteur « private », page des robots « public », Vary: Cookie (' + cacheVisiteur + ' / ' + cacheRobot + ')');
+ok(/s-maxage=\d+/.test(cacheVisiteur) && /public/.test(cacheRobot) && /Cookie/.test((await visite(NAV)).r.headers.get('vary')), 'caches : même règle que les autres pages (contrôle W3-CACHE), copies séparées par témoin (Vary: Cookie) (' + cacheVisiteur + ' / ' + cacheRobot + ')');
 ok(grilles((await visite(NAV, 'ma2m_v=3.4')).h) !== base, 'visite suivante : l’ordre des visages change');
 // premières couvertures des 6 groupes : différentes même quand le nombre de mannequins est un multiple de 7 ou de 3
 const R = globalThis.RenduBook;
