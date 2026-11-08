@@ -4348,6 +4348,15 @@ reste dans l'historique git (commit du 08/11/2026). Copie des données d'avant :
 - Essais : `scripts/base-essai/essais-securite-appareils.sql`, `test-admin-appareil-serveur.js`,
   `test-nouvelle-admin-mannequins.js` (identifiant de l'appareil sur chaque action envoyée au serveur).
 
+
+**Incident du 08/11/2026 (soir), corrigé :** la première version du fichier retirait aux visiteurs (anon) le droit d'appeler
+`portail_admin_ok()`. Or la règle de lecture de `admins` l'appelle, et les règles publiques (fiches, photos publiées)
+lisent `admins` : la base refusait tout aux visiteurs, le site n'affichait plus aucune mannequin ni photo (de la pose
+du fichier jusqu'à la ligne `grant execute on function public.portail_admin_ok() to anon;`, collée le soir même).
+Corrigé dans le fichier (droit donné à anon ; la fonction répond toujours « non » pour un visiteur), vérifié par son
+contrôle final et par un essai « visiteur » de `scripts/base-essai/essais-securite-appareils.sql`. **Règle : toute
+fonction appelée dans une règle (politique) lue par les visiteurs doit rester appelable par anon.**
+
 ## Cours de talons : Atelier Talons & Élégance (08/11/2026, Extension 160 ; décisions de la propriétaire)
 
 Une page publique pour les personnes qui veulent seulement **apprendre à marcher en talons** (concours de Miss ou

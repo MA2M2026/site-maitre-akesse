@@ -69,6 +69,7 @@ end $$;
 NOTIFY pgrst, 'reload schema';
 
 select case when to_regprocedure('portail_admin_ok()') is not null
+             and has_function_privilege('anon', 'portail_admin_ok()', 'EXECUTE')  -- (sinon le site public n'affiche plus rien)
              and not exists (select 1 from pg_policies where schemaname = 'public' and (qual ~ 'portail_mfa_ok\(\)' or with_check ~ 'portail_mfa_ok\(\)'))
              and not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                              where n.nspname = 'public' and p.prosecdef and p.proname not like 'portail\_%' and p.proname not like 'staff\_%'
