@@ -71,7 +71,12 @@ ok(grilles((await visite(NAV)).h) === base, 'première visite : les visages dans
 ok(grilles((await visite(NAV, 'ma2m_v=3.4')).h) !== base, 'visite suivante : l’ordre des visages change');
 // fichier pas collé : comme avant (toutes)
 vitrine = null;
-const vuesAvant = new Set(); for (let i = 0; i < 40; i++) vuesAvant.add(couv((await visite(NAV, 'ma2m_v=2.' + (i + 1))).h));
+// (nouvelle copie du programme : la liste gardée en mémoire 3 minutes par la première est ignorée)
+const copie2 = path.join(racine, 'mw-vivant2-' + process.pid + '.mjs'); fs.copyFileSync(path.join(racine, 'middleware.js'), copie2);
+process.on('exit', () => { try { fs.unlinkSync(copie2); } catch (e) { /* déjà retirée */ } });
+const mw2 = (await import(pathToFileURL(copie2).href)).default;
+const vuesAvant = new Set();
+for (let i = 0; i < 40; i++) { const r = await mw2(new Request('https://www.maitreakessemodelmanagement.com/', { headers: { 'user-agent': NAV, cookie: 'ma2m_v=2.' + (i + 1) } })); vuesAvant.add(couv(await r.text())); }
 ok(vuesAvant.has('m1'), 'fichier SQL pas encore collé : toutes les mannequins, comme avant');
 console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
 process.exit(ko ? 1 : 0);

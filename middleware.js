@@ -457,9 +457,9 @@ async function accueilRempli(requete, url) {
   // « À la une » : celle que l'agence a épinglée (si elle est dans la vitrine), sinon la première
   const une = vitrine.find(p => p.featured) || vitrine[0];
   const autres = vitrine.filter(p => p.id !== une.id);
-  // couverture : au hasard à la première visite (comme avant) ; ensuite, tour à tour d'une visite à l'autre (jamais
-  // deux fois de suite la même, chacune son tour)
-  const couv = !autres.length ? une : tirage.robot ? autres[0] : tirage.visite > 0 ? autres[(tirage.groupe * 7 + tirage.visite) % autres.length] : autres[Math.floor(Math.random() * autres.length)];
+  // couverture : selon le groupe tiré au hasard à la première visite, puis tour à tour d'une visite à l'autre (jamais
+  // deux fois de suite la même, chacune son tour) ; robots : toujours la même
+  const couv = !autres.length ? une : tirage.robot ? autres[0] : autres[(tirage.groupe * 7 + tirage.visite) % autres.length];
   const anglais = /^\/en(\/|$)/.test(url.pathname);
   // (définitif, 02/11/2026) page anglaise : le mot du fondateur et l'agenda TOUJOURS traduits avant l'envoi, même juste
   // après une mise en ligne (la liste gardée en mémoire pouvait encore être sans traduction : la page arrivait en français)
