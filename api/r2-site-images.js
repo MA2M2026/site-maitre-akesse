@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
     try {
       const utilisateur = await verifierUtilisateur(jeton);
       if (!utilisateur) { res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' }); return; }
-      if (!(await adminVerifie(jeton, utilisateur))) { res.status(403).json({ error: 'Réservé aux administrateurs.' }); return; }
+      if (!(await adminVerifie(jeton, utilisateur, req.headers['x-appareil']))) { res.status(403).json({ error: 'Réservé aux administrateurs.' }); return; }
       await traiterNoteIntegration(res, debut.corps);
     } catch (e) {
       console.error('r2-site-images (note) :', e);
@@ -86,7 +86,7 @@ module.exports = async function handler(req, res) {
       res.status(401).json({ error: 'Session invalide ou expirée, reconnectez-vous.' });
       return;
     }
-    if (!(await adminVerifie(jeton, utilisateur))) {
+    if (!(await adminVerifie(jeton, utilisateur, req.headers['x-appareil']))) {
       res.status(403).json({ error: "Réservé aux administrateurs." });
       return;
     }

@@ -1,7 +1,7 @@
 // « Site en relief » sur The Book (js/relief.js, css/relief.css ; 08/11/2026, phase 3 V3), comme un vrai visiteur
 // sur téléphone et ordinateur, FR et EN, base SIMULÉE :
 //  - animations permises : le relief démarre APRÈS l'affichage complet ; les photos penchent au défilement, se
-//    tournent vers la souris (ordinateur) ; les photos à l'écran respirent, les autres sont en pause ;
+//    tournent vers la souris (ordinateur) ; mur courbé ; sur téléphone, les photos à l'écran respirent, les autres sont en pause ;
 //  - aucun saut d'affichage (score de stabilité) ; défilement fluide (images par seconde, processeur ralenti) ;
 //  - coupé si : moins d'animations demandé, économie de données, connexion lente, peu de mémoire ;
 //  - sans JavaScript : les cartes sont là quand même (page écrite pour tous).
@@ -45,10 +45,15 @@ async function ouvrir(b, page, o) {
     const avant = await p.$eval('#grille .medaillon-photo', (x) => getComputedStyle(x).transform);
     await p.mouse.wheel(0, 500); await p.waitForTimeout(700);
     const angles = await p.$$eval('#grille .medaillon-photo.relief-vue', (l) => l.map((x) => x.style.getPropertyValue('--relief-sx')));
-    ok(angles.length > 0 && new Set(angles).size > 1 && angles.every((a) => Math.abs(parseFloat(a)) <= 8.5), n + 'au défilement, les photos penchent selon leur place dans l’écran (' + angles.slice(0, 4).join(', ') + ')');
+    ok(angles.length > 0 && new Set(angles).size > 1 && angles.every((a) => Math.abs(parseFloat(a)) <= 20.5), n + 'au défilement, les photos penchent selon leur place dans l’écran (20° au plus, version 2) (' + angles.slice(0, 4).join(', ') + ')');
     const anim = await p.evaluate(() => { const vues = [...document.querySelectorAll('#grille .medaillon-photo')]; const a = (x) => getComputedStyle(x.querySelector('img')).animationPlayState;
       return { vue: vues.filter((x) => x.classList.contains('relief-vue')).map(a), hors: vues.filter((x) => !x.classList.contains('relief-vue')).map(a) }; });
-    ok(anim.vue.length && anim.vue.every((s) => s === 'running') && anim.hors.every((s) => s === 'paused'), n + 'les photos à l’écran respirent, les autres sont en pause (' + anim.vue.length + ' / ' + anim.hors.length + ')');
+    if (tel) ok(anim.vue.length && anim.vue.every((s) => s === 'running') && anim.hors.every((s) => s === 'paused'), n + 'les photos à l’écran respirent, les autres sont en pause (' + anim.vue.length + ' / ' + anim.hors.length + ')');
+    // (ordinateur : pas de zoom lent, trop coûteux avec le filtre noir et blanc des photos — version 2 du 08/11/2026)
+    else ok(await p.$$eval('#grille .medaillon-photo img', (l) => l.every((i) => getComputedStyle(i).animationName === 'none')), n + 'pas de zoom lent sur ordinateur (fluidité)');
+    // (version 2) mur courbé : les cartes à gauche et à droite se tournent vers le centre
+    const tours = await p.$$eval('#grille .medaillon-photo.relief-vue', (l) => l.map((x) => parseFloat(x.style.getPropertyValue('--relief-sy'))));
+    ok(tours.some((a) => a < -3) && tours.some((a) => a > 3), n + 'mur courbé : les cartes des bords se tournent vers le centre (' + Math.min(...tours).toFixed(1) + '° à ' + Math.max(...tours).toFixed(1) + '°)');
     if (!tel) {
       const c = await p.$('#grille .medaillon-photo.relief-vue'); const r = await c.boundingBox();
       await p.mouse.move(r.x + r.width * 0.9, r.y + r.height * 0.2); await p.waitForTimeout(500);

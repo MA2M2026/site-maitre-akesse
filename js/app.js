@@ -1793,7 +1793,7 @@ async function jetonSessionCourante() {
 // Après chaque envoi vers R2 (lot 3, 01/11/2026) : le serveur lit le début du fichier déposé et le supprime si ce
 // n'est pas une vraie photo / vidéo / PDF (api/_r2.js, verifierContenuR2). Erreur « refuse » : définitive.
 async function verifierEnvoiR2(adresse, jeton, corps) {
-  const rep = await fetch(adresse, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
+  const rep = await fetch(adresse, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}), body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
   if (rep.ok) return;
   // (01/11/2026, panne) seul un refus explicite (422 : le fichier n'est pas une vraie photo) bloque l'envoi ;
   // une vérification qui n'a pas pu se faire laisse passer la photo (elle est déjà déposée)
@@ -1878,7 +1878,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = tru
     try {
       const reponse = await fetch('/api/r2-presigner', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+        headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}),
         body: JSON.stringify({ modelId, chemin, contentType: contentType || 'image/jpeg', taille: blob.size })
       });
       const resultat = await reponse.json().catch(() => ({}));
@@ -1905,7 +1905,7 @@ async function supprimerDeR2(modelId, chemin) {
     if (!jeton) return;
     await fetch('/api/r2-presigner', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton },
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}),
       body: JSON.stringify({ action: 'suppression', modelId, chemin })
     });
   } catch (e) { console.warn('Suppression R2 non confirmée :', e); }
@@ -3128,10 +3128,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       new MutationObserver((l, obs) => { if (!cookies.isConnected) { obs.disconnect(); afficher(); } }).observe(document.body, { childList: true });
       return;
     }
+    // (08/11/2026, phase 3 V1 ; décision de la propriétaire : la bande reste, mais ne cache plus rien) sur le site public :
+    // bande compacte à droite, à côté de la bulle WhatsApp (elle cachait le nom de la mannequin sur sa fiche et des
+    // champs des formulaires) ; elle s'efface le temps d'écrire dans un champ, puis revient
+    const surLeSite = !pageAdministration() && !pageApplicationMannequin();
     const b = document.createElement('div');
     b.id = 'ma2m-installer'; b.className = 'ma2m-installer';
+    if (surLeSite) b.classList.add('ma2m-installer--site');
     b.innerHTML = '<button type="button" data-bouton-libre class="ma2m-installer-ouvrir"><img src="' + appli.icone + '" alt="" width="44" height="44">' +
-      '<span class="ma2m-installer-texte"><b>' + T('Télécharger l’application', 'Download the app') + '</b><small>' + echapperHtml(appli.nom) + ' · ' + T('gratuit', 'free') + '</small></span>' +
+      // (site public, bande compacte : texte court)
+      '<span class="ma2m-installer-texte"><b>' + (surLeSite ? T('Appli MA2M', 'MA2M app') : T('Télécharger l’application', 'Download the app')) + '</b><small>' +
+      (surLeSite ? T('gratuite · à installer', 'free · install') : echapperHtml(appli.nom) + ' · ' + T('gratuit', 'free')) + '</small></span>' +
       '<span class="ma2m-installer-fleche" aria-hidden="true">⬇</span></button>' +
       '<button type="button" data-bouton-libre class="ma2m-installer-fermer" aria-label="' + T('Fermer', 'Close') + '">✕</button>';
     b.querySelector('.ma2m-installer-ouvrir').addEventListener('click', installer);
@@ -3141,6 +3148,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     document.body.appendChild(b);
     document.body.classList.add('ma2m-installer-visible');
+    if (surLeSite && !afficher.saisie) {
+      afficher.saisie = true;
+      const champ = (e) => e.target && e.target.matches && e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select');
+      document.addEventListener('focusin', (e) => { if (champ(e)) document.body.classList.add('ma2m-saisie'); });
+      document.addEventListener('focusout', (e) => { if (champ(e)) document.body.classList.remove('ma2m-saisie'); });
+    }
   }
   // fenêtre d'aide en images. Pas de flèche : sur le nouveau Safari le bouton Partager n'est plus
   // toujours au même endroit, une flèche fixe pointait dans le vide. La barre rouge est cachée

@@ -14,7 +14,7 @@ async function envoyerImageSite(categorie, chemin, fichier, progression) {
     try {
       const reponsePresign = await fetch('/api/r2-site-images', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }, enTeteAppareil()),
         body: JSON.stringify({ categorie, chemin, contentType: fichier.type || 'image/jpeg', taille: fichier.size })
       });
       const resultat = await reponsePresign.json().catch(() => ({}));
@@ -39,7 +39,7 @@ async function actionImageSite(corps) {
   if (!session) throw new Error('Session expirée, reconnectez-vous.');
   const rep = await fetch('/api/r2-site-images', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }, enTeteAppareil()),
     body: JSON.stringify(corps)
   });
   const resultat = await rep.json().catch(() => ({}));

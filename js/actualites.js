@@ -47,11 +47,14 @@ async function chargerActualites() {
   const une = data[0];
   // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
   const R = window.RenduPublications;
-  uneZone.innerHTML = R.une(une, { en: EN, sorte: 'actualite', photo: urlLegere(une.image_url), extrait: une.commentaire ? extraitTexte(texteBrutDepuis(une.commentaire), 180) : '' });
+  // (08/11/2026, phase 3 V1) grande carte déjà écrite par le serveur avec les mêmes données : gardée telle quelle (la
+  // redessiner faisait réafficher sa photo quand les programmes arrivaient — 7 s sur un téléphone en 4G lente)
+  if (!(serveur && uneZone.querySelector('.news-une'))) uneZone.innerHTML = R.une(une, { en: EN, sorte: 'actualite', photo: urlLegere(une.image_url), extrait: une.commentaire ? extraitTexte(texteBrutDepuis(une.commentaire), 180) : '' });
   uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirActuModal(0));
 
   const reste = data.slice(1);
-  grille.innerHTML = reste.map((a, i) => R.carte(a, i + 1, { en: EN, sorte: 'actualite', photo: urlLegere(a.image_url), nbPhotos: compteurParActu[a.id] || (a.image_url ? 1 : 0),
+  // (08/11/2026) cartes déjà écrites par le serveur : gardées (sinon leur apparition et leurs photos recommençaient)
+  if (!(serveur && grille.children.length === reste.length)) grille.innerHTML = reste.map((a, i) => R.carte(a, i + 1, { en: EN, sorte: 'actualite', photo: urlLegere(a.image_url), nbPhotos: compteurParActu[a.id] || (a.image_url ? 1 : 0),
     extrait: a.commentaire ? extraitTexte(texteBrutDepuis(a.commentaire), 110) : '' })).join('');
 
   grille.querySelectorAll('.news-carte').forEach(carte => {

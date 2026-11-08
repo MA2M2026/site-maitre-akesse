@@ -169,9 +169,13 @@ async function chargerProfilInterne() {
         const ratioCadre = cadreCouverture.clientWidth / cadreCouverture.clientHeight;
         const pleinPied = ratioPhoto > 0 && ratioPhoto < ratioCadre;
         cadreCouverture.classList.toggle('plein-pied', pleinPied);
-        imgCouverture.style.objectPosition = pleinPied ? '50% 0%' : positionChoisie;
+        // (08/11/2026) cadrage automatique sur le visage quand il est connu (js/cadrages-photos.js), sinon le haut
+        const auto = window.CadragesPhotos ? window.CadragesPhotos.cadragePhoto(imgCouverture.getAttribute('src')) : null;
+        imgCouverture.style.objectPosition = pleinPied ? '50% ' + (auto || 0) + '%' : positionChoisie;
       };
-      imgCouverture.style.objectPosition = positionChoisie;
+      // (08/11/2026) cadrage automatique sur le visage dès le départ quand il est connu
+      const autoDepart = window.CadragesPhotos ? window.CadragesPhotos.cadragePhoto(imgCouverture.getAttribute('src')) : null;
+      imgCouverture.style.objectPosition = autoDepart ? '50% ' + autoDepart + '%' : positionChoisie;
       if (imgCouverture.complete && imgCouverture.naturalWidth) ajusterCouverture();
       else imgCouverture.addEventListener('load', ajusterCouverture);
       window.addEventListener('resize', ajusterCouverture);

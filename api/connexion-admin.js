@@ -8,9 +8,9 @@
 const { SUPABASE_URL, enTetesService, jetonDe, corpsDe, verifierUtilisateur, adminVerifie } = require('./_commun.js');
 
 // Compte connecté ET administrateur, avec le code de l'application d'authentification, sinon null.
-async function verifierAdmin(jeton) {
+async function verifierAdmin(jeton, appareil) {
   const utilisateur = await verifierUtilisateur(jeton);
-  return utilisateur && (await adminVerifie(jeton, utilisateur)) ? utilisateur : null;
+  return utilisateur && (await adminVerifie(jeton, utilisateur, appareil)) ? utilisateur : null;
 }
 
 module.exports = async function handler(req, res) {
@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
 
   const entetes = { ...enTetesService(), 'Content-Type': 'application/json' };
 
-  const utilisateur = await verifierAdmin(jeton);
+  const utilisateur = await verifierAdmin(jeton, req.headers['x-appareil']);
   if (!utilisateur) { res.status(403).json({ error: "Ce compte n'est pas administrateur." }); return; }
 
   try {

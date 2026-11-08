@@ -61,8 +61,9 @@ const proposer = (p) => p.evaluate(() => {
   const bande = (p) => p.$('#ma2m-installer');
 
   for (const [chemin, nom, icone, texte, menuBas] of [
-    ['/qui-sommes-nous.html', 'site', '/icons/icon-192.png', /Télécharger l’application/, null],
-    ['/en/services.html', 'site anglais', '/icons/icon-192.png', /Download the app/, null],
+    // (08/11/2026) sur le site public : bande compacte, texte court « Appli MA2M » (décision de la propriétaire : elle reste, sans rien cacher)
+    ['/qui-sommes-nous.html', 'site', '/icons/icon-192.png', /Appli MA2M/, null],
+    ['/en/services.html', 'site anglais', '/icons/icon-192.png', /MA2M app/, null],
     ['/admin/', 'Administration', '/icons/admin-192.png', /Télécharger l’application[\s\S]*Administration MA2M/, null],
     ['/app/', 'application des mannequins', '/icons/mannequin-192.png', /Télécharger l’application[\s\S]*MA2M Mannequin/, null]]) {
     // 1. Android : la bande tout de suite

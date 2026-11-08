@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     // 2. Ce compte figure-t-il dans la table admins ? (même contrôle que
     // celui déjà appliqué par le déclencheur gerer_validation_publication()
     // côté base de données.)
-    if (!(await adminVerifie(jeton, utilisateur))) {
+    if (!(await adminVerifie(jeton, utilisateur, req.headers['x-appareil']))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
       return;
     }
