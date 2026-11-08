@@ -1,0 +1,75 @@
+/* Page « Cours de talons » (Atelier Talons & Élégance, 08/11/2026) : couleurs de la charte seulement
+   (rouge mat, rouge profond, blanc ; vert pour l'accord). */
+.ct-haut { padding-bottom: 2rem; }
+.ct-haut-grille { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
+@media (min-width: 900px) { .ct-haut-grille { grid-template-columns: 1.15fr 0.85fr; gap: 3.5rem; } }
+.ct-chapeau { max-width: 60ch; margin-top: 1.2rem; font-size: 1.08rem; line-height: 1.65; }
+.ct-avertissement { margin: 1.6rem 0; padding: 1.2rem 1.4rem; border: 2px solid var(--rouge, #7C2128); border-radius: 14px; background: #fff; color: #5A141B; max-width: 60ch; }
+.ct-avertissement strong { display: block; font-size: 1.08rem; color: #7C2128; }
+.ct-avertissement p { margin: 0.45rem 0 0.7rem; }
+.ct-lien-agence { font-weight: 600; color: #7C2128; text-decoration: underline; text-underline-offset: 3px; }
+.ct-video { justify-self: center; width: 100%; max-width: 380px; }
+.ct-video video { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; border-radius: 22px; background: #5A141B; box-shadow: 0 24px 60px -20px rgba(90, 20, 27, 0.55); }
+
+.ct-formules h2, .ct-inscription h2, .ct-faq h2 { margin-bottom: 1.4rem; }
+.ct-cartes { display: grid; grid-template-columns: 1fr; gap: 1.4rem; }
+@media (min-width: 800px) { .ct-cartes { grid-template-columns: 1fr 1fr; } }
+.ct-carte { position: relative; padding: 2rem 1.8rem 1.6rem; border-radius: 18px; background: #fff; color: #5A141B; border: 1.5px solid rgba(124, 33, 40, 0.3); }
+.ct-carte--rouge { background: #5A141B; color: #fff; border-color: #5A141B; }
+.ct-carte-num { font-size: 0.72rem; letter-spacing: 0.24em; text-transform: uppercase; font-weight: 600; opacity: 0.85; }
+.ct-carte h3 { margin: 0.4rem 0 0.3rem; font-size: 2rem; }
+.ct-carte-quand { font-weight: 500; }
+.ct-prix { margin: 1rem 0 0; font-weight: 600; }
+.ct-prix span { font-family: var(--mag-titre, inherit); font-size: 2.6rem; font-weight: 800; line-height: 1; }
+.ct-prix--petit span { font-size: 1.9rem; }
+.ct-prix-detail { margin: 0.1rem 0 0.4rem; font-style: italic; }
+.ct-apprendre { list-style: none; display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.6rem 0 0; padding: 0; }
+.ct-apprendre li { padding: 0.55rem 1.1rem; border-radius: 999px; background: #5A141B; color: #fff; font-weight: 500; font-size: 0.92rem; }
+
+.ct-form-boite { max-width: 760px; }
+.ct-progression { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin: 0 0 1.6rem; padding: 0; counter-reset: etape; }
+.ct-progression li { counter-increment: etape; padding-top: 0.7rem; border-top: 4px solid rgba(124, 33, 40, 0.2); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.7; }
+.ct-progression li::before { content: counter(etape) ". "; }
+.ct-progression li.actif, .ct-progression li.fait { border-top-color: #7C2128; opacity: 1; }
+.ct-etape { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ct-etape-titre { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.2rem; }
+.ct-etape-titre span { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: #7C2128; color: #fff; font-weight: 700; flex: none; }
+.ct-etape-titre h3 { margin: 0; font-size: 1.45rem; }
+.ct-choix { display: block; margin-bottom: 0.8rem; cursor: pointer; }
+.ct-choix input { position: absolute; opacity: 0; pointer-events: none; }
+.ct-choix > span { display: grid; gap: 0.2rem; padding: 1rem 1.2rem; border: 2px solid rgba(124, 33, 40, 0.28); border-radius: 14px; background: #fff; color: #5A141B; transition: border-color 0.2s, box-shadow 0.2s; }
+.ct-choix em { font-style: normal; font-size: 0.92rem; }
+.ct-choix b { color: #7C2128; }
+.ct-choix input:checked + span { border-color: #7C2128; box-shadow: 0 0 0 3px rgba(124, 33, 40, 0.18); }
+.ct-choix input:focus-visible + span { outline: 3px solid #7C2128; outline-offset: 2px; }
+.ct-total { margin: 0.8rem 0 0; font-weight: 600; }
+.ct-total--grand { font-size: 1.25rem; margin-bottom: 1rem; }
+.ct-indicatif { margin-bottom: 0.5rem; }
+.ct-label { font-size: 0.74rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em; }
+.ct-niveaux { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ct-pastille { cursor: pointer; }
+.ct-pastille input { position: absolute; opacity: 0; pointer-events: none; }
+.ct-pastille span { display: inline-block; padding: 0.6rem 1rem; border-radius: 999px; border: 2px solid rgba(124, 33, 40, 0.3); background: #fff; color: #5A141B; font-size: 0.92rem; }
+.ct-pastille input:checked + span { background: #7C2128; border-color: #7C2128; color: #fff; }
+.ct-pastille input:focus-visible + span { outline: 3px solid #7C2128; outline-offset: 2px; }
+.ct-parent { margin: 0.6rem 0 1rem; padding: 1rem 1.2rem; border-radius: 14px; border: 2px dashed rgba(124, 33, 40, 0.4); }
+.ct-aide { margin-bottom: 1.2rem; line-height: 1.6; }
+.ct-vignettes { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.ct-vignettes figure { position: relative; margin: 0; width: 96px; height: 128px; border-radius: 10px; overflow: hidden; background: #5A141B; }
+.ct-vignettes img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ct-vignettes button { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #fff; color: #7C2128; font-weight: 700; cursor: pointer; }
+.ct-info { font-size: 0.9rem; margin: 0.3rem 0 0; }
+.ct-info.err { color: #7C2128; font-weight: 600; }
+.ct-wave { margin: -0.2rem 0 1rem; padding: 1rem 1.2rem; border-radius: 14px; background: rgba(124, 33, 40, 0.06); }
+.ct-wave .btn { margin-bottom: 1rem; }
+.ct-boutons { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.8rem; margin-top: 1.4rem; }
+.ct-boutons .btn--principal { margin-left: auto; }
+.ct-merci { margin-top: 1.4rem; padding: 1.4rem; border-radius: 16px; background: #1E7A45; color: #fff; line-height: 1.6; }
+.ct-merci a { color: #fff; font-weight: 600; text-decoration: underline; }
+.ct-faq details { border-top: 1px solid rgba(124, 33, 40, 0.25); padding: 1rem 0; }
+.ct-faq summary { cursor: pointer; font-weight: 600; }
+.ct-faq details p { margin: 0.6rem 0 0; line-height: 1.6; }
+/* (les textes des blocs blancs gardent le rouge profond : le site écrit les paragraphes en clair sur fond rouge) */
+.ct-avertissement p, .ct-avertissement strong, .ct-carte:not(.ct-carte--rouge) h3, .ct-carte:not(.ct-carte--rouge) p, .ct-carte:not(.ct-carte--rouge) .ct-carte-num { color: #5A141B; }
+.ct-carte:not(.ct-carte--rouge) .ct-prix span { color: #7C2128; }
+.ct-carte--rouge h3, .ct-carte--rouge p { color: #fff; }

@@ -10,7 +10,7 @@
   'use strict';
   const P = window.Portail;
   const RECETTES = { inscription: 'Inscriptions', formation: 'Mensualités de formation', casting: 'Castings', prestation: 'Prestations',
-    masterclass: 'Masterclass', autre_recette: 'Autre recette' };
+    masterclass: 'Masterclass', cours_talons: 'Cours de talons', autre_recette: 'Autre recette' };
   const DEPENSES = { loyer: 'Loyer', materiel: 'Matériel', transport: 'Transport', communication: 'Communication', frais_wave: 'Frais Wave',
     honoraires: 'Honoraires', personnel: 'Personnel et prestataires', cachets: 'Cachets reversés aux mannequins', impots: 'Impôts et taxes',
     autre_depense: 'Autre dépense' };

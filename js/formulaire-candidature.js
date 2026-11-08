@@ -41,14 +41,8 @@ if (EN) [...document.getElementById('ca-commune').options].forEach(o => {
   if (o.value === 'Autre') o.text = 'Other';
 });
 
-// redimensionnerImage, fichierEnBase64 et URL_SCRIPT_PHOTOS_CASTING : js/app.js.
-function afficherMsg(el, texte, type) {
-  el.className = 'form-msg ' + type;
-  el.textContent = texte;
-  // le message ramené à l'écran : sur un petit téléphone, il restait hors de vue et le visiteur
-  // tapait « Envoyer » encore et encore sans savoir pourquoi rien ne partait (journal du 19/10/2026)
-  if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-}
+// redimensionnerImage, fichierEnBase64, URL_SCRIPT_PHOTOS_CASTING, afficherMsg, majJauge, jaugeEnErreur, cacherJauge,
+// enMo et dureeVideo : js/app.js (partagés avec les cours de talons, 08/11/2026).
 
 // --- Projet/casting concerné : liste des castings actifs. S'il n'y en a aucun,
 // la page reste accessible (C-8/C-9 du cahier des charges) mais le formulaire
@@ -165,43 +159,6 @@ const VIDEO_MAX_SECONDES = 65; // 1 minute annoncée (décision du 30/09), petit
 let videoChoisie = null;
 let videoEnPreparation = null; // promesse tant que l'allègement n'est pas fini
 let numeroVideo = 0;           // pour ignorer une ancienne vidéo remplacée entre-temps
-// Durée lue directement dans le fichier (boîte « mvhd » des vidéos MP4/MOV/3GP de
-// téléphone) : l'ancienne méthode passait par un lecteur vidéo que la sécurité du
-// site bloque (journal du 30/09 : « media-src → blob »). null si illisible.
-async function dureeVideo(fichier) {
-  try {
-    const octets = new Uint8Array(await fichier.arrayBuffer());
-    const vue = new DataView(octets.buffer);
-    for (let i = 4; i < octets.length - 32; i++) {
-      if (octets[i] !== 0x6d || octets[i + 1] !== 0x76 || octets[i + 2] !== 0x68 || octets[i + 3] !== 0x64) continue; // "mvhd"
-      const version = octets[i + 4];
-      const echelle = vue.getUint32(i + (version === 1 ? 24 : 16));
-      const duree = version === 1
-        ? vue.getUint32(i + 28) * 4294967296 + vue.getUint32(i + 32)
-        : vue.getUint32(i + 20);
-      return echelle ? duree / echelle : null;
-    }
-  } catch (e) {}
-  return null;
-}
-function majJauge(id, pc, titre) {
-  const j = document.getElementById(id);
-  if (!j) return;
-  pc = Math.max(0, Math.min(100, Math.round(pc)));
-  j.classList.remove('u-hidden', 'en-erreur');
-  j.classList.toggle('terminee', pc >= 100);
-  j.querySelector('.jauge-remplie').style.width = pc + '%';
-  j.querySelector('.jauge-pc').textContent = pc + ' %';
-  j.setAttribute('aria-valuenow', pc);
-  if (titre) j.querySelector('.jauge-titre').textContent = titre;
-}
-function jaugeEnErreur(id, titre) {
-  const j = document.getElementById(id);
-  if (!j) return;
-  j.classList.add('en-erreur'); j.classList.remove('terminee');
-  if (titre) j.querySelector('.jauge-titre').textContent = titre;
-}
-function cacherJauge(id) { const j = document.getElementById(id); if (j) j.classList.add('u-hidden'); }
 function montrerApercuVideo(adresseImage, texte) {
   const bloc = document.getElementById('ca-video-apercu');
   const img = bloc.querySelector('img');
@@ -209,7 +166,6 @@ function montrerApercuVideo(adresseImage, texte) {
   bloc.querySelector('.video-apercu-texte').textContent = texte || '';
   bloc.classList.toggle('u-hidden', !adresseImage && !texte);
 }
-const enMo = (octets) => EN ? (octets / 1048576).toFixed(1) + ' MB' : (octets / 1048576).toFixed(1).replace('.', ',') + ' Mo';
 function videoPrete(fichier, duree, origine) {
   videoChoisie = fichier;
   const info = document.getElementById('ca-video-info');

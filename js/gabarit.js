@@ -33,12 +33,14 @@
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
     // (l'inscription et l'espace mannequin sont dans l'application des mannequins, 26/10/2026)
     ['inscription-mannequin', "Inscription nouveau mannequin de l'agence", 'Registration', 'Inscription', 'Registration', APP_G + 'inscription-mannequin.html'],
+    // (cours de talons, 08/11/2026 : ouverts à toutes, sans intégrer l'agence ; 7e case = petite étiquette du menu)
+    ['cours-talons', 'Cours de talons', 'Heel Classes', 'Cours de talons', 'Heel Classes', null, ['Ouvert à toutes', 'Open to all']],
     ['contact', 'Contact', 'Contact', null, null],
     ['integrer-agence', "Intégrer l'agence", 'Join the Agency', "Intégrer l'agence", 'Join the Agency']
   ];
   // Le bas de page garde son ordre d'avant le menu « Modèle A » (seul le menu a changé).
   var ORDRE_PIED = ['index', 'qui-sommes-nous', 'services', 'mannequins', 'actualites', 'evenements', 'parcours',
-    'partenaires', 'integrer-agence', 'candidature', 'inscription-mannequin'];
+    'partenaires', 'integrer-agence', 'candidature', 'cours-talons', 'inscription-mannequin'];
   var RESEAUX = [
     '<a href="https://www.instagram.com/maitreakessemodelmanagement" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg viewBox="0 0 24 24"><defs><linearGradient id="ig-grad-pied" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFC107"/><stop offset="50%" stop-color="#F44336"/><stop offset="100%" stop-color="#9C27B0"/></linearGradient></defs><path fill="url(#ig-grad-pied)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98C.014 8.333 0 8.741 0 12s.014 3.667.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.667-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>',
     '<a href="https://www.tiktok.com/@agencemaitreakessemodel" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok"><svg viewBox="0 0 24 24"><path fill="#25F4EE" transform="translate(-0.9,-0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#FE2C55" transform="translate(0.9,0.9)" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/><path fill="#000000" d="M16.6 5.82c-1.36-1.57-3.24-1.48-3.24-1.48h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg></a>',
@@ -68,7 +70,8 @@
   function menu(page, en) {
     var actif = page === 'mannequin' ? 'mannequins' : page;
     var liens = PAGES.filter(function (p) { return visible(page, en, p, true); }).map(function (p) {
-      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + lienPage(p) + '"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (en ? p[2] : p[1]) + '</a></li>';
+      return '    <li' + (p[0] === 'integrer-agence' ? ' class="menu-rejoindre"' : '') + '><a href="' + lienPage(p) + '"' + (p[0] === actif ? ' class="actif"' : '') + '>' + (en ? p[2] : p[1]) +
+        (p[6] ? ' <span class="menu-etiquette">' + (en ? p[6][1] : p[6][0]) + '</span>' : '') + '</a></li>';
     });
     // (plus de bouton « Espace mannequin » : les mannequins entrent par l'application, 26/10/2026)
     return '\n  <button class="close-menu" id="closeMenuBtn">' + (en ? 'Close ✕' : 'Fermer ✕') + '</button>\n  <ul class="nav-links">\n' + liens.join('\n') + '\n  </ul>\n';
