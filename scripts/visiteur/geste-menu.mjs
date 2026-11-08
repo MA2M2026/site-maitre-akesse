@@ -34,4 +34,4 @@ const { chromium, devices } = createRequire(import.meta.url)('playwright');
   const med = (l) => { const s = l.filter((x) => x != null).sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
   for (const [k, l] of Object.entries(res)) console.log(k.padEnd(32), 'médiane', String(med(l)).padStart(5), 'ms', JSON.stringify(l));
   await b.close();
-})();
+})().catch((e) => { console.error(e); process.exit(1); });
