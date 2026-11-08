@@ -5,7 +5,7 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const fs = require('fs');
 const PORT = String(9100 + Math.floor(Math.random() * 90));
 const PAGES = ['index.html', 'agenda.html', 'parcours.html', 'qui-sommes-nous.html', 'services.html', 'mannequins.html', 'actualites.html',
-  'evenements.html', 'partenaires.html', 'candidature.html', 'integrer-agence.html', 'contact.html', 'mentions-legales.html', 'politique-confidentialite.html'];
+  'evenements.html', 'partenaires.html', 'candidature.html', 'integrer-agence.html', 'cours-talons.html', 'contact.html', 'mentions-legales.html', 'politique-confidentialite.html'];
 let srv = null, b = null;
 (async () => {
   // axe-core : celui du projet s'il est installé, sinon celui livré avec Lighthouse

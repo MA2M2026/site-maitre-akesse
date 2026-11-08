@@ -71,6 +71,7 @@ async function navigateur() {
     await p.click('#ct-suivant');
     ok(/formule|option/i.test(await p.textContent('#ct-msg')), n + 'étape 1 : sans formule, un message demande de choisir');
     await p.click('label.ct-choix:has(input[value="prive_salle"])');
+    ok(/Touchez|Tap/.test(await p.textContent('.ct-etape[data-etape="1"] .ct-consigne')) && await p.evaluate(() => getComputedStyle(document.querySelector('input[value="prive_salle"] + span'), '::after').content.includes('✓')), n + 'consigne « Touchez la formule », le bloc choisi porte une coche');
     await p.selectOption('#ct-nb', '10');
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
     await p.click('#ct-suivant');

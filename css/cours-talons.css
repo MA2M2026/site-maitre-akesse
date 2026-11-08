@@ -73,3 +73,12 @@
 .ct-avertissement p, .ct-avertissement strong, .ct-carte:not(.ct-carte--rouge) h3, .ct-carte:not(.ct-carte--rouge) p, .ct-carte:not(.ct-carte--rouge) .ct-carte-num { color: #5A141B; }
 .ct-carte:not(.ct-carte--rouge) .ct-prix span { color: #7C2128; }
 .ct-carte--rouge h3, .ct-carte--rouge p { color: #fff; }
+/* (08/11/2026, remarque de la propriétaire : on ne devinait pas qu'il fallait toucher les blocs) un rond à cocher à
+   droite de chaque bloc, une consigne au-dessus, et le bloc choisi passe en rouge avec une coche */
+.ct-consigne { margin: -0.4rem 0 0.9rem; font-weight: 600; }
+.ct-choix > span { position: relative; padding-right: 4.2rem; cursor: pointer; }
+.ct-choix > span::after { content: ""; position: absolute; right: 1.2rem; top: 50%; width: 1.7rem; height: 1.7rem; margin-top: -0.85rem; border-radius: 50%; border: 2px solid #7C2128; background: #fff; box-sizing: border-box; }
+.ct-choix:hover > span { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5); }
+.ct-choix input:checked + span { background: #5A141B; border-color: #fff; color: #fff; box-shadow: 0 0 0 3px #fff; }
+.ct-choix input:checked + span b, .ct-choix input:checked + span strong, .ct-choix input:checked + span em { color: #fff; }
+.ct-choix input:checked + span::after { content: "✓"; display: grid; place-items: center; background: #fff; border-color: #fff; color: #5A141B; font-weight: 800; font-size: 1rem; }
