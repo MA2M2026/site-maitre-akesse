@@ -2,8 +2,9 @@
 //  - une mannequin hors vitrine (mineure sans accord d'un parent) n'apparaît JAMAIS : couverture, « À la une », visages ;
 //  - « À la une » épinglée par l'agence ; chaque mannequin de la vitrine a son tour en couverture (aucune à 0, aucune
 //    à plus de 2 fois sa part) ; jamais deux fois de suite la même pour un visiteur ;
-//  - robots (Google, WhatsApp) et première visite : la même page, 20 fois de suite ; témoin ma2m_v posé aux visiteurs,
-//    jamais aux robots ; en-tête x-ma2m-variant ;
+//  - robots (Google, WhatsApp) et première visite : la même page, 20 fois de suite ; témoin ma2m_v créé par la page
+//    (groupe donné par le serveur), seulement renouvelé par le serveur, jamais aux robots ; en-tête x-ma2m-variant ;
+//  - données posées dans la page (JSON) : la vitrine seule (jamais la mineure sans accord) ;
 //  - fichier SQL pas collé : toutes les mannequins, comme avant.
 import { fileURLToPath, pathToFileURL } from 'url'; import path from 'path'; import fs from 'fs';
 const racine = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -43,22 +44,23 @@ for (let g = 0; g < 6; g++) {
   for (let n = 0; n < 100; n++) {
     const { r, h } = await visite(NAV, temoin);
     const pose = (r.headers.get('set-cookie') || '').match(/ma2m_v=([0-5]\.\d+)/);
-    if (!pose || !/Max-Age=2592000/.test(r.headers.get('set-cookie')) || !/SameSite=Lax/.test(r.headers.get('set-cookie'))) temoinsOk = false;
-    temoin = 'ma2m_v=' + (pose ? pose[1] : '0.1');
+    // première visite : pas de témoin du serveur (la page le crée avec le groupe donné, sauf refus des cookies)
+    if (n === 0) { const g = (h.match(/"groupe":([0-5])/) || [])[1]; if (pose || g === undefined) temoinsOk = false; temoin = 'ma2m_v=' + g + '.1'; }
+    else { if (!pose || !/Max-Age=2592000/.test(r.headers.get('set-cookie')) || !/SameSite=Lax/.test(r.headers.get('set-cookie'))) temoinsOk = false; temoin = 'ma2m_v=' + (pose ? pose[1] : '0.1'); }
     variantes.add(r.headers.get('x-ma2m-variant'));
     const c = couv(h); vues[c] = (vues[c] || 0) + 1;
-    if (/SANSACCORD/.test(h.replace(/<script type="application\/json"[\s\S]*?<\/script>/g, ''))) mineure = true;
+    if (/SANSACCORD|"m1"/.test(h)) mineure = true;
     if (n > 0 && c === avant) deuxFois = true;
     if (une(h) !== 'AWA EPINGLEE') epingle = false;
     avant = c;
   }
 }
 const autres = ['v2', 'v3', 'v4', 'v5', 'v6'], part = 600 / autres.length;
-ok(!mineure, '600 visites : la mineure sans accord d’un parent n’apparaît JAMAIS (couverture, À la une, visages)');
+ok(!mineure, '600 visites : la mineure sans accord d’un parent n’apparaît JAMAIS (couverture, À la une, visages, photos d’ambiance, données de la page)');
 ok(epingle, '« À la une » : toujours celle que l’agence a épinglée');
 ok(autres.every((id) => vues[id] > 0 && vues[id] <= 2 * part), 'chacune son tour en couverture : ' + autres.map((id) => id + '=' + (vues[id] || 0)).join(' ') + ' (part attendue ' + part + ')');
 ok(!deuxFois, 'jamais deux fois de suite la même couverture pour un même visiteur');
-ok(temoinsOk && variantes.size > 6, 'témoin ma2m_v posé (30 jours, SameSite=Lax) ; ' + variantes.size + ' variantes (en-tête x-ma2m-variant)');
+ok(temoinsOk && variantes.size > 6, 'témoin ma2m_v : créé par la page à la première visite (groupe donné), puis renouvelé (30 jours, SameSite=Lax) ; ' + variantes.size + ' variantes (en-tête x-ma2m-variant)');
 // robots : la même page 20 fois, sans témoin
 for (const [nom, ua] of [['Google', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'], ['WhatsApp', 'WhatsApp/2.23.20.0 A']]) {
   const pages = new Set(); let temoin = false;
@@ -72,6 +74,10 @@ ok(grilles((await visite(NAV)).h) === base, 'première visite : les visages dans
 const cacheVisiteur = (await visite(NAV, 'ma2m_v=1.2')).r.headers.get('cache-control'), cacheRobot = (await visite('WhatsApp/2.23.20.0 A')).r.headers.get('cache-control');
 ok(/private/.test(cacheVisiteur) && /public/.test(cacheRobot) && /Cookie/.test((await visite(NAV)).r.headers.get('vary')), 'caches : page du visiteur « private », page des robots « public », Vary: Cookie (' + cacheVisiteur + ' / ' + cacheRobot + ')');
 ok(grilles((await visite(NAV, 'ma2m_v=3.4')).h) !== base, 'visite suivante : l’ordre des visages change');
+// premières couvertures des 6 groupes : différentes même quand le nombre de mannequins est un multiple de 7 ou de 3
+const R = globalThis.RenduBook;
+const repartition = [7, 3, 6, 12].every((n) => new Set([0, 1, 2, 3, 4, 5].map((g) => R.decalageGroupe(g, n) % n)).size === Math.min(6, n));
+ok(repartition, 'les 6 groupes de visiteurs commencent chacun ailleurs dans la liste (7, 3, 6, 12 mannequins)');
 // fichier pas collé : comme avant (toutes)
 vitrine = null;
 // (nouvelle copie du programme : la liste gardée en mémoire 3 minutes par la première est ignorée)
@@ -87,7 +93,7 @@ const copie3 = path.join(racine, 'mw-vivant3-' + process.pid + '.mjs'); fs.copyF
 process.on('exit', () => { try { fs.unlinkSync(copie3); } catch (e) { /* déjà retirée */ } });
 const mw3 = (await import(pathToFileURL(copie3).href)).default;
 let enPanne = false;
-for (let i = 0; i < 20; i++) { const r = await mw3(new Request('https://www.maitreakessemodelmanagement.com/', { headers: { 'user-agent': NAV, cookie: 'ma2m_v=4.' + (i + 1) } })); if (r && /SANSACCORD/.test((await r.text()).replace(/<script type="application\/json"[\s\S]*?<\/script>/g, ''))) enPanne = true; }
+for (let i = 0; i < 20; i++) { const r = await mw3(new Request('https://www.maitreakessemodelmanagement.com/', { headers: { 'user-agent': NAV, cookie: 'ma2m_v=4.' + (i + 1) } })); if (r && /SANSACCORD|"m1"/.test(await r.text())) enPanne = true; }
 ok(!enPanne, 'base en panne au moment de lire la vitrine : la mineure sans accord n’apparaît pas (prudence)');
 console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
 process.exit(ko ? 1 : 0);

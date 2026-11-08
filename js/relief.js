@@ -75,7 +75,7 @@
       document.documentElement.classList.add('relief');
       suivre();
       // cartes redessinées par les filtres (js/mannequins.js) : suivies aussi
-      new MutationObserver(function () { visibles.clear(); suivre(); }).observe(grille, { childList: true });
+      new MutationObserver(function () { vue.disconnect(); visibles.clear(); suivre(); }).observe(grille, { childList: true });
       window.addEventListener('scroll', prevoir, { passive: true });
       window.addEventListener('resize', prevoir, { passive: true });
       if (fin) { grille.addEventListener('pointermove', pointer, { passive: true }); grille.addEventListener('pointerleave', relacher, { passive: true }); }

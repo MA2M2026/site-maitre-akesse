@@ -60,5 +60,10 @@
     document.addEventListener('pointerdown', preparer, { passive: true });
     document.addEventListener('mouseover', preparer, { passive: true });
   }
-  racine.RenduBook = { echapper, lienFiche, bandeauMdm, ordonner, carte, compte, vignetteAccueil, categorieAccueil, infoUne, nombreAccueil, visagesAccueil };
+  // Site vivant (08/11/2026) : les mannequins qui peuvent paraître sur l'accueil (couverture, « À la une », visages, photos
+  // d'ambiance). ids = liste de vitrine_eligibles (supabase-site-vivant.sql) ; undefined = fichier pas encore collé : toutes.
+  const vitrineDe = (profils, ids) => { if (!Array.isArray(ids)) return profils; const permises = new Set(ids); return profils.filter((p) => permises.has(p.id)); };
+  // décalage de chaque groupe de visiteurs (0 à 5), réparti sur toute la liste quelle que soit sa longueur
+  const decalageGroupe = (groupe, n) => (n ? Math.floor((groupe * n) / 6) : 0);
+  racine.RenduBook = { vitrineDe, decalageGroupe, echapper, lienFiche, bandeauMdm, ordonner, carte, compte, vignetteAccueil, categorieAccueil, infoUne, nombreAccueil, visagesAccueil };
 })(typeof window !== 'undefined' ? window : globalThis);

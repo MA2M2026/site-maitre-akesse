@@ -18,6 +18,8 @@ function gtag(){dataLayer.push(arguments);}
 
   function enregistrer(valeur) {
     try { localStorage.setItem(CLE, valeur); } catch (e) {}
+    // (refus : le témoin « ma2m_v » de l'accueil vivant est retiré aussi, et n'est plus créé — js/accueil.js)
+    if (valeur === 'non') document.cookie = 'ma2m_v=; Path=/; Max-Age=0; SameSite=Lax; Secure';
     gtag('consent', 'update', { analytics_storage: valeur === 'oui' ? 'granted' : 'denied' });
   }
 

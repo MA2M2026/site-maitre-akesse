@@ -251,13 +251,15 @@ async function lireDonneesAccueil() {
     // (site vivant, 08/11/2026) qui peut paraître en couverture, « À la une » et dans les visages : majeures, ou
     // mineures avec l'accord donné par un parent (supabase-site-vivant.sql) ; null tant que le fichier n'est pas collé
     // (prudence : base en panne ou trop lente → personne plutôt qu'une mineure sans accord ; fichier pas collé → null)
-    lireSupabase('rpc/vitrine_eligibles', {}, 3000, true).catch(() => [])]);
+    lireSupabase('rpc/vitrine_eligibles', {}, 3000, true).catch(() => 'panne')]);
   if (!couvertures) throw new Error('base : photos');
   const photoDe = {};
   couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
   const donnees = { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length };
   if (Array.isArray(mots)) donnees.mot = mots[0] || null;
   if (Array.isArray(eligibles)) donnees.vitrine = eligibles.map((x) => x.model_id);
+  // (base en panne pour la vitrine : la liste précédente si on l'a, sinon personne ; relue au bout de 30 s)
+  else if (eligibles === 'panne') { const avant = memoireAccueil && memoireAccueil.donnees && memoireAccueil.donnees.vitrine; donnees.vitrine = Array.isArray(avant) ? avant : []; donnees.vitrineIncertaine = true; }
   if (Array.isArray(castings)) donnees.castingOuvert = castings.length > 0;
   if (Array.isArray(partenaires)) donnees.partenaires = partenaires;
   if (Array.isArray(instagram)) donnees.instagram = (instagram[0] && Array.isArray(instagram[0].posts)) ? instagram[0].posts : [];
@@ -412,7 +414,7 @@ function donneesAccueil() {
   if (fraiche) return Promise.resolve(memoireAccueil.donnees);
   if (!lectureAccueil) {
     lectureAccueil = lireDonneesAccueil()
-      .then(donnees => { memoireAccueil = { quand: Date.now(), donnees }; return donnees; })
+      .then(donnees => { memoireAccueil = { quand: Date.now() - (donnees.vitrineIncertaine ? DUREE_ACCUEIL - 30 * 1000 : 0), donnees }; return donnees; })
       // base lente ou en panne : on ne réessaie pas avant 1 minute (liste précédente gardée)
       .catch(() => { memoireAccueil = { quand: Date.now() - DUREE_ACCUEIL + 60 * 1000, donnees: memoireAccueil ? memoireAccueil.donnees : null }; return null; })
       .finally(() => { lectureAccueil = null; });
@@ -433,16 +435,10 @@ function tirageVisiteur(requete) {
   const agent = requete.headers.get('user-agent') || '';
   if (!agent || ROBOTS_APERCU.test(agent) || ROBOTS_VITRINE.test(agent)) return { groupe: 0, visite: 0, robot: true };
   const m = String(requete.headers.get('cookie') || '').match(/(?:^|;\s*)ma2m_v=([0-5])\.(\d{1,6})/);
-  if (!m) return { groupe: Math.floor(Math.random() * 6), visite: 0, robot: false };
+  if (!m) return { groupe: Math.floor(Math.random() * 6), visite: 0, robot: false, nouveau: true };
   return { groupe: Number(m[1]), visite: Number(m[2]), robot: false };
 }
 const tourner = (liste, n) => { const k = liste.length ? ((n % liste.length) + liste.length) % liste.length : 0; return liste.slice(k).concat(liste.slice(0, k)); };
-// la vitrine : les mannequins éligibles (fichier collé) ; sinon toutes, comme avant
-function vitrineAccueil(donnees) {
-  if (!Array.isArray(donnees.vitrine)) return donnees.profils;
-  const permises = new Set(donnees.vitrine);
-  return donnees.profils.filter((p) => permises.has(p.id));
-}
 async function accueilRempli(requete, url) {
   if (requete.method !== 'GET') return;
   const donnees = await donneesAccueil();
@@ -453,7 +449,7 @@ async function accueilRempli(requete, url) {
   const marque = '<img id="couv-img" class="visible" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt=""';
   if (html.indexOf(marque) === -1 || html.indexOf('<main') === -1) return;
   // (site vivant, 08/11/2026) seules les mannequins de la vitrine : couverture, « À la une », visages
-  const vitrine = vitrineAccueil(donnees);
+  const vitrine = globalThis.RenduBook.vitrineDe(donnees.profils, donnees.vitrine);
   if (!vitrine.length) return;  // (personne dans la vitrine : la page de base, sans mannequins)
   const tirage = tirageVisiteur(requete);
   // « À la une » : celle que l'agence a épinglée (si elle est dans la vitrine), sinon la première
@@ -461,7 +457,7 @@ async function accueilRempli(requete, url) {
   const autres = vitrine.filter(p => p.id !== une.id);
   // couverture : selon le groupe tiré au hasard à la première visite, puis tour à tour d'une visite à l'autre (jamais
   // deux fois de suite la même, chacune son tour) ; robots : toujours la même
-  const couv = !autres.length ? une : tirage.robot ? autres[0] : autres[(tirage.groupe * 7 + tirage.visite) % autres.length];
+  const couv = !autres.length ? une : tirage.robot ? autres[0] : autres[(globalThis.RenduBook.decalageGroupe(tirage.groupe, autres.length) + tirage.visite) % autres.length];
   const anglais = /^\/en(\/|$)/.test(url.pathname);
   // (définitif, 02/11/2026) page anglaise : le mot du fondateur et l'agenda TOUJOURS traduits avant l'envoi, même juste
   // après une mise en ligne (la liste gardée en mémoire pouvait encore être sans traduction : la page arrivait en français)
@@ -480,7 +476,7 @@ async function accueilRempli(requete, url) {
   const R = globalThis.RenduBook, telephone = estTelephone(requete);
   const photoDe = (m) => photoLegere(m.petite && telephone ? m.petite : m.photo);
   // (visages : la vitrine seulement ; ordre qui tourne d'une visite à l'autre, la même page que les robots à la première)
-  const visages = R.visagesAccueil(tirage.visite > 0 ? tourner(vitrine, tirage.groupe * 3 + tirage.visite) : vitrine);
+  const visages = R.visagesAccueil(tirage.visite > 0 ? tourner(vitrine, R.decalageGroupe(tirage.groupe, vitrine.length) + tirage.visite) : vitrine);
   const grille = (id, liste) => (h) => h.replace('<div class="grille" id="' + id + '"></div>', () => '<div class="grille" id="' + id + '">' + liste.map((m) => R.vignetteAccueil(m, { en: anglais, photo: photoDe(m) })).join('') + '</div>');
   html = grille('grille-hommes', visages.hommes)(grille('grille-femmes', visages.femmes)(html));
   html = texteElement(html, 'une-nom', une.full_name || (anglais ? 'Model' : 'Mannequin'));
@@ -493,20 +489,22 @@ async function accueilRempli(requete, url) {
   // (08/11/2026) la version nette directement, quand elle est connue : avant, la miniature partait d'abord puis la page
   // la remplaçait par la version nette — deux photos, et la grande arrivait tard (mesuré par Lighthouse)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.moyenne || couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
-    .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
-  html = magazineComplet(html, donnees, anglais, une, couv, photoDe);
+    .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(Object.assign({}, donnees, { profils: vitrine, vitrine: undefined, vitrineIncertaine: undefined, groupe: tirage.robot ? undefined : tirage.groupe })) + '</script>\n<main');
+  // (photos d'ambiance : la vitrine seulement, jamais une mineure sans accord)
+  html = magazineComplet(html, Object.assign({}, donnees, { profils: vitrine }), anglais, une, couv, photoDe);
   // (W7, 02/11/2026) la photo de couverture annoncée tout en haut de l'en-tête : le téléphone la demande dès la
   // première seconde, avant les styles et les programmes (c'est la plus grande image de la page, mesurée par Lighthouse)
   html = photoAnnoncee(html, photoLegere(couv.moyenne || couv.photo));
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
   const reponse = reponseHtml(html, page, url);
-  // (site vivant) visite suivante : numéro + 1 ; la page dépend du témoin (Vary), en-tête de contrôle x-ma2m-variant
+  // (site vivant) visite suivante : numéro + 1 ; la page dépend du témoin (Vary), en-tête de contrôle x-ma2m-variant ;
+  // témoin seulement RENOUVELÉ par le serveur : la page le crée (js/accueil.js), sauf si le visiteur a refusé les cookies
   reponse.headers.set('x-ma2m-variant', tirage.groupe + '.' + tirage.visite);
   reponse.headers.set('Vary', (reponse.headers.get('Vary') || '') + ', Cookie');
   // (page propre à ce visiteur : jamais gardée par un cache partagé ; robots : la page commune, gardée comme avant)
   if (!tirage.robot) reponse.headers.set('Cache-Control', 'private, no-cache');
-  if (!tirage.robot) reponse.headers.append('Set-Cookie', 'ma2m_v=' + tirage.groupe + '.' + Math.min(tirage.visite + 1, 999999) + '; Path=/; Max-Age=2592000; SameSite=Lax; Secure');
+  if (!tirage.robot && !tirage.nouveau) reponse.headers.append('Set-Cookie', 'ma2m_v=' + tirage.groupe + '.' + Math.min(tirage.visite + 1, 999999) + '; Path=/; Max-Age=2592000; SameSite=Lax; Secure');
   return reponse;
 }
 

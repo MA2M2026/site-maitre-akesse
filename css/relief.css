@@ -1,10 +1,9 @@
 /* « Site en relief » (08/11/2026, phase 3 V3) : échantillon sur The Book (#grille), chargé par js/relief.js après
    l'affichage de la page, seulement quand les animations sont permises. Tout est sous html.relief : sans cette
    classe, rien ne change. Uniquement des transformations (jamais de déplacement dans la page : aucun saut). */
-html.relief #grille { perspective: 1100px; }
 html.relief #grille .medaillon-photo {
   --relief-sx: 0deg; --relief-rx: 0deg; --relief-ry: 0deg; --relief-gx: 50%; --relief-gy: 30%;
-  transform: rotateX(calc(var(--relief-sx) + var(--relief-rx))) rotateY(var(--relief-ry));
+  transform: perspective(900px) rotateX(calc(var(--relief-sx) + var(--relief-rx))) rotateY(var(--relief-ry));
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: transform;
 }
@@ -23,7 +22,7 @@ html.relief #grille .medaillon-carte:nth-child(2n) img { animation-duration: 17s
 html.relief #grille .medaillon-carte:nth-child(3n) img { animation-duration: 15s; animation-delay: -9s; }
 @keyframes relief-respirer { from { scale: 1; } to { scale: 1.07; } }
 /* apparition : la carte se redresse depuis la profondeur */
-html.relief #grille .medaillon-carte.reveal:not(.visible) { transform: translateY(46px) rotateX(24deg) scale(0.9); transform-origin: 50% 100%; }
+html.relief #grille .medaillon-carte.reveal:not(.visible) { transform: perspective(900px) translateY(46px) rotateX(24deg) scale(0.9); transform-origin: 50% 100%; }
 /* le titre s'éloigne en profondeur au défilement */
 html.relief main h1.reveal.visible { transform: translateY(var(--relief-ty, 0)); opacity: var(--relief-to, 1); transition: none; will-change: transform, opacity; }
 @media (prefers-reduced-motion: reduce) {

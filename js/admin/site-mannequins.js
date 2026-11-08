@@ -132,16 +132,18 @@
   async function blocVitrine(id) {
     let v, accord;
     try {
-      v = await P.bd(sb.from('model_profiles').select('exclue_vitrine, date_naissance').eq('id', id).maybeSingle());
+      v = await P.bd(sb.from('model_profiles').select('exclue_vitrine, date_naissance, published, desactive').eq('id', id).maybeSingle());
       accord = (await P.bd(sb.from('accords_parents').select('jeton, accepte_le, retire_le, parent_nom').eq('model_id', id)))[0] || null;
     } catch (e) {
       return '<section class="carte"><h2>Accueil du site</h2><p class="doux">S’ouvrira quand l’étape d’installation « supabase-site-vivant.sql » sera faite.</p></section>';
     }
     if (!v) return '';
-    const age = P.age(v.date_naissance), mineure = age !== null && age < 18;
+    // (mêmes règles que vitrine_eligibles : sans date de naissance, traitée comme une mineure — accord d'un parent requis)
+    const age = P.age(v.date_naissance), sansDate = age === null, mineure = sansDate || age < 18;
     const accordOk = !!(accord && accord.accepte_le && !accord.retire_le);
-    const etat = v.exclue_vitrine ? P.pastille('Exclue de l’accueil par l’agence', 'alerte')
-      : mineure && !accordOk ? P.pastille('Mineure : pas sur l’accueil sans l’accord d’un parent', 'alerte')
+    const etat = !v.published || v.desactive ? P.pastille('Pas sur l’accueil : pas publiée ou en sourdine', 'neutre')
+      : v.exclue_vitrine ? P.pastille('Exclue de l’accueil par l’agence', 'alerte')
+      : mineure && !accordOk ? P.pastille(sansDate ? 'Date de naissance manquante : pas sur l’accueil sans l’accord d’un parent' : 'Mineure : pas sur l’accueil sans l’accord d’un parent', 'alerte')
       : P.pastille('Sur l’accueil (à tour de rôle)', 'ok');
     return '<section class="carte"><h2>Accueil du site</h2><div class="ligne">' + etat +
       (mineure && accordOk ? P.pastille('Accord donné par ' + (accord.parent_nom || 'un parent') + ' le ' + P.date(accord.accepte_le), 'info') : '') + '</div>' +
