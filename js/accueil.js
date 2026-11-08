@@ -188,11 +188,12 @@
     credit.hidden = !couv.full_name;
 
     // Les visages : 6 femmes, 3 hommes (les plus récents)
-    const visages = R.visagesAccueil(avecPhoto);
+    // (site vivant) visages dans l'ordre de cette visite, choisi par le serveur ; redessinés ici (petite version sur téléphone)
+    const rang = Array.isArray(lues.ordreVisages) ? new Map(lues.ordreVisages.map((id, i) => [id, i])) : null;
+    const visages = R.visagesAccueil(rang ? avecPhoto.slice().sort((a, b) => (rang.has(a.id) ? rang.get(a.id) : 1e9) - (rang.has(b.id) ? rang.get(b.id) : 1e9)) : avecPhoto);
     const remplir = (page, grille, liste) => {
       const g = document.getElementById(grille);
-      // (site vivant) visages déjà écrits par le serveur, dans l'ordre de cette visite : on les garde
-      if (!(lues.deLaPage && g.children.length)) g.innerHTML = liste.map(vignette).join('');
+      g.innerHTML = liste.map(vignette).join('');
       document.getElementById(page).hidden = !g.children.length;
     };
     remplir('femmes', 'grille-femmes', visages.femmes);

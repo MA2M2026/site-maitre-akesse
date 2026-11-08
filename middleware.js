@@ -476,7 +476,8 @@ async function accueilRempli(requete, url) {
   const R = globalThis.RenduBook, telephone = estTelephone(requete);
   const photoDe = (m) => photoLegere(m.petite && telephone ? m.petite : m.photo);
   // (visages : la vitrine seulement ; ordre qui tourne d'une visite à l'autre, la même page que les robots à la première)
-  const visages = R.visagesAccueil(tirage.visite > 0 ? tourner(vitrine, R.decalageGroupe(tirage.groupe, vitrine.length) + tirage.visite) : vitrine);
+  const ordreVisages = tirage.visite > 0 ? tourner(vitrine, R.decalageGroupe(tirage.groupe, vitrine.length) + tirage.visite) : vitrine;
+  const visages = R.visagesAccueil(ordreVisages);
   const grille = (id, liste) => (h) => h.replace('<div class="grille" id="' + id + '"></div>', () => '<div class="grille" id="' + id + '">' + liste.map((m) => R.vignetteAccueil(m, { en: anglais, photo: photoDe(m) })).join('') + '</div>');
   html = grille('grille-hommes', visages.hommes)(grille('grille-femmes', visages.femmes)(html));
   html = texteElement(html, 'une-nom', une.full_name || (anglais ? 'Model' : 'Mannequin'));
@@ -489,7 +490,7 @@ async function accueilRempli(requete, url) {
   // (08/11/2026) la version nette directement, quand elle est connue : avant, la miniature partait d'abord puis la page
   // la remplaçait par la version nette — deux photos, et la grande arrivait tard (mesuré par Lighthouse)
   html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.moyenne || couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
-    .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(Object.assign({}, donnees, { profils: vitrine, vitrine: undefined, vitrineIncertaine: undefined, groupe: tirage.robot ? undefined : tirage.groupe })) + '</script>\n<main');
+    .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(Object.assign({}, donnees, { profils: vitrine, vitrine: undefined, vitrineIncertaine: undefined, groupe: tirage.robot ? undefined : tirage.groupe, ordreVisages: ordreVisages.map((m) => m.id) })) + '</script>\n<main');
   // (photos d'ambiance : la vitrine seulement, jamais une mineure sans accord)
   html = magazineComplet(html, Object.assign({}, donnees, { profils: vitrine }), anglais, une, couv, photoDe);
   // (W7, 02/11/2026) la photo de couverture annoncée tout en haut de l'en-tête : le téléphone la demande dès la
