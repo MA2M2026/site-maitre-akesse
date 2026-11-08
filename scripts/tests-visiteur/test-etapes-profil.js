@@ -31,6 +31,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(cases.length === 6 && cases.every((c) => c.g >= 0 && c.d <= innerWidthOf(ecran)) && lignes.length === 2, nom + ' : les 6 cases visibles en entier, sur 2 lignes de 3 (« Récapitulatif » compris)');
     ok(await q.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), nom + ' : rien ne dépasse sur le côté');
     ok(await q.isVisible('#allerRecap'), nom + ' : « Enregistrer et voir le récapitulatif (mise en ligne) » sous l’étape');
+    // (08/11/2026) lisible : texte et fond différents (il était blanc sur blanc)
+    ok(await q.$eval('#allerRecap', (x) => { const c = getComputedStyle(x); return c.color !== c.backgroundColor && c.backgroundColor !== 'rgb(255, 255, 255)'; }), nom + ' : le bouton est lisible (texte blanc sur fond rouge)');
     // étape 1 vide : on n'y perd rien — l'étape est d'abord enregistrée ; incomplète, on y reste, les manques encadrés
     await q.click('#allerRecap'); await q.waitForTimeout(800);
     ok(/Étape 1 sur 6/.test(await q.textContent('.panel')) && !(await q.$('#submitProfile')), nom + ' : étape incomplète : rien n’est perdu, on reste sur l’étape pour la compléter');
