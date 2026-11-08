@@ -920,11 +920,15 @@ function bilanFormation(d) {
 // il reste 15 mois », la prochaine mensualité, ou « agence fermée jusqu'au 1er mars » (rodage, congés) — en
 // phrases simples, sans balises (chaque écran les échappe). null tant que la base n'a pas ces informations.
 // Partagé par Mes paiements (js/mes-paiements.js) et l'application (js/mannequin-app.js).
+// Lien Wave marchand de l'agence (le montant se met à la fin) et montant écrit « 30 000 FCFA » : partagés le
+// 08/11/2026 (Mes paiements, cours de talons sur le site et dans l'Administration).
+const LIEN_WAVE_AGENCE = 'https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=';
+function enFcfa(n) { return Number(n || 0).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' FCFA'; }
 const MA2M_NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 function moisEnToutes(iso) { return MA2M_NOMS_MOIS[Number(String(iso).slice(5, 7)) - 1] + ' ' + String(iso).slice(0, 4); }
 function situationFormation(d) {
   if (!d || d.niveau === undefined || d.niveau === null) return null;
-  const fcfa = (n) => Number(n || 0).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' FCFA';
+  const fcfa = enFcfa;
   if (d.termine) return { titre: 'Formation terminée', lignes: ['Vous restez à l’agence, sans mensualité à payer.'], ferme: false, termine: true };
   const reste = Number(d.reste) || 0;
   const lignes = [(Number(d.mois_niveau) > 0 ? 'Mois ' + d.mois_niveau + ' sur 9' : 'La formation commence bientôt') + ' · il reste ' + reste + ' mois'];
@@ -2784,7 +2788,7 @@ function avecDelai(promesse, ms) {
 // qui vérifie le jeton Turnstile. Le contrôle est invisible pour la plupart des visiteurs ; une case à cocher
 // n'apparaît (en bas de l'écran) que si Cloudflare a un doute.
 const CLE_SITE_TURNSTILE = '0x4AAAAAAFvunC6ncjwuy5if';  // (clé publique ; la clé secrète est seulement sur le serveur)
-const TABLES_ANTI_ROBOTS = ['casting_applications', 'messages_contact', 'recruiter_requests'];
+const TABLES_ANTI_ROBOTS = ['casting_applications', 'messages_contact', 'recruiter_requests', 'cours_talons'];
 let chargementTurnstile = null;
 function chargerTurnstile() {
   if (window.turnstile) return Promise.resolve(window.turnstile);
@@ -2825,7 +2829,7 @@ async function envoyerFormulairePublic(table, ligne) {
   const r = await rep.json().catch(() => ({}));
   if (rep.ok) return { error: null };
   // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
-  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.' } };
+  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret } };
 }
 async function insererAvecPatience(table, ligne, surAttente) {
   const attentes = [15, 25, 35];
@@ -2853,6 +2857,57 @@ function texteAttenteEnvoi(secondes) {
 // Les photos (parfois des milliers lors d'un gros casting) vont vers Drive plutôt que vers
 // Supabase, pour ne pas charger son stockage gratuit ; seul le lien est enregistré.
 const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec';
+
+// Message sous un formulaire, jauges d'envoi, taille en Mo et durée d'une vidéo : partagés le 08/11/2026 entre la
+// candidature (js/formulaire-candidature.js) et l'inscription aux cours de talons (js/cours-talons.js).
+function afficherMsg(el, texte, type) {
+  el.className = 'form-msg ' + type;
+  el.textContent = texte;
+  // le message ramené à l'écran : sur un petit téléphone, il restait hors de vue et le visiteur
+  // tapait « Envoyer » encore et encore sans savoir pourquoi rien ne partait (journal du 19/10/2026)
+  if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// Durée lue directement dans le fichier (boîte « mvhd » des vidéos MP4/MOV/3GP de
+// téléphone) : l'ancienne méthode passait par un lecteur vidéo que la sécurité du
+// site bloque (journal du 30/09 : « media-src → blob »). null si illisible.
+async function dureeVideo(fichier) {
+  try {
+    const octets = new Uint8Array(await fichier.arrayBuffer());
+    const vue = new DataView(octets.buffer);
+    for (let i = 4; i < octets.length - 32; i++) {
+      if (octets[i] !== 0x6d || octets[i + 1] !== 0x76 || octets[i + 2] !== 0x68 || octets[i + 3] !== 0x64) continue; // "mvhd"
+      const version = octets[i + 4];
+      const echelle = vue.getUint32(i + (version === 1 ? 24 : 16));
+      const duree = version === 1
+        ? vue.getUint32(i + 28) * 4294967296 + vue.getUint32(i + 32)
+        : vue.getUint32(i + 20);
+      return echelle ? duree / echelle : null;
+    }
+  } catch (e) {}
+  return null;
+}
+
+function majJauge(id, pc, titre) {
+  const j = document.getElementById(id);
+  if (!j) return;
+  pc = Math.max(0, Math.min(100, Math.round(pc)));
+  j.classList.remove('u-hidden', 'en-erreur');
+  j.classList.toggle('terminee', pc >= 100);
+  j.querySelector('.jauge-remplie').style.width = pc + '%';
+  j.querySelector('.jauge-pc').textContent = pc + ' %';
+  j.setAttribute('aria-valuenow', pc);
+  if (titre) j.querySelector('.jauge-titre').textContent = titre;
+}
+function jaugeEnErreur(id, titre) {
+  const j = document.getElementById(id);
+  if (!j) return;
+  j.classList.add('en-erreur'); j.classList.remove('terminee');
+  if (titre) j.querySelector('.jauge-titre').textContent = titre;
+}
+function cacherJauge(id) { const j = document.getElementById(id); if (j) j.classList.add('u-hidden'); }
+
+const enMo = (octets) => EN ? (octets / 1048576).toFixed(1) + ' MB' : (octets / 1048576).toFixed(1).replace('.', ',') + ' Mo';
 
 async function redimensionnerImage(fichier, coteMax = 2800, qualite = 0.88) {
   // On ne retouche que les JPEG : un PNG/GIF/WebP peut avoir de la transparence,

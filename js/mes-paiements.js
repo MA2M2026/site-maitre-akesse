@@ -12,7 +12,7 @@
   'use strict';
   const zone = document.getElementById('mp-zone');
   if (!zone) return;
-  const LIEN_WAVE = 'https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=';
+  const LIEN_WAVE = LIEN_WAVE_AGENCE;  // (js/app.js)
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fcfa = window.CachetsMa2m.fcfa;  // (js/cachets-communs.js, chargé avant)

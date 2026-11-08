@@ -14,7 +14,7 @@
     // (24/10/2026, demande de la propriétaire : un compartiment par sujet — tout ce qui sert à un
     // projet, de l'agenda aux convocations, est au même endroit)
     [null, 'Castings et demandes'],
-    ['b2-candidatures', 'Candidatures casting'], ['b2-projets', 'Projets et castings'], ['b2-recruteurs', 'Demandes recruteurs'], ['b2-contacts', 'Messages de contact'],
+    ['b2-candidatures', 'Candidatures casting'], ['b2-projets', 'Projets et castings'], ['b2-recruteurs', 'Demandes recruteurs'], ['b2-contacts', 'Messages de contact'], ['b2-cours-talons', 'Cours de talons'],
     [null, 'Projets et convocations'],
     ['b3c-agenda', 'Agenda des projets'], ['b2-selection', 'Annoncer la sélection'], ['b2-convocations', 'Convocations'], ['b2-rappel', 'Rappeler l’information'],
     ['b2-places', 'Places limitées'], ['b2-defiles', 'Programmation défilé'], ['b2-cartes', 'Cartes d’événement'], ['b2-infos', 'Informations agence'], ['b2-messages-groupes', 'Messages groupés'], ['b2-fiches-evenement', 'Fiches événement'],
@@ -42,7 +42,7 @@
   const PIECES = ['/js/images-site-ecriture.js', '/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
     '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js',
     '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js',
-    '/js/admin/photos-choisies.js', '/js/presences-calcul.js', '/js/admin/site-presences.js', '/js/admin/site-bulletins.js', '/js/documents-communs.js', '/js/admin/site-documents.js', '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-places.js', '/js/defile-repartition.js', '/js/admin/site-defiles.js', '/js/cartes-acces.js', '/js/admin/site-exterieures.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-infos.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',
+    '/js/admin/photos-choisies.js', '/js/presences-calcul.js', '/js/admin/site-presences.js', '/js/admin/site-bulletins.js', '/js/documents-communs.js', '/js/admin/site-documents.js', '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-places.js', '/js/defile-repartition.js', '/js/admin/site-defiles.js', '/js/cartes-acces.js', '/js/admin/site-exterieures.js', '/js/admin/site-cours-talons.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-infos.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',
     '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/admin/site-outils-mannequins.js', '/js/admin/site-pilotage.js',
     '/js/rendu-publications.js', '/js/publications-lecture.js', '/js/publications-ecriture.js', '/js/partenaires-communs.js', '/js/admin/brouillons.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js', '/js/admin/site-traductions.js', '/js/admin/site-textes.js',

@@ -222,7 +222,7 @@ async function envoisConvocations(req, res) {
 // Candidature, Contact, Demande d'un recruteur : le navigateur envoie la ligne et le jeton Cloudflare Turnstile ;
 // le serveur vérifie le jeton (clé secrète TURNSTILE_SECRET_KEY, jamais dans le navigateur), puis enregistre par
 // formulaire_public_enregistrer (mêmes limites qu'avant : par minute, par adresse, casting ouvert).
-const TABLES_FORMULAIRES = ['casting_applications', 'messages_contact', 'recruiter_requests'];
+const TABLES_FORMULAIRES = ['casting_applications', 'messages_contact', 'recruiter_requests', 'cours_talons'];
 // Renvoie { ok, raison } (raison : codes d'erreur de Cloudflare, ou ce que le navigateur a signalé)
 async function jetonAntiRobotValide(jeton, ip, raisonNavigateur) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
@@ -257,6 +257,11 @@ async function formulairePublic(req, corps, res) {
     if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
     if (/duplicate key|23505/.test(m) && ligne.id) return res.status(200).json({ ok: true, id: ligne.id });  // (déjà enregistré : réponse perdue)
     if (/Aucun casting ouvert/.test(m)) return res.status(403).json({ error: 'Aucun casting n’est ouvert en ce moment.' });
+    // (cours de talons : SQL de l'Extension 160 pas encore collé ; la page propose alors d'envoyer l'inscription par WhatsApp)
+    if (table === 'cours_talons' && /Formulaire inconnu|PGRST202|Could not find the function|relation "(public\.)?cours_talons" does not exist/.test(m)) {
+      await noterAuJournal('[Cours de talons] inscription reçue avant l’installation de supabase-cours-talons.sql (envoyée par WhatsApp)', 'portail', '/api/portail').catch(() => {});
+      return res.status(503).json({ error: 'Inscriptions en ligne bientôt ouvertes.', pasPret: true });
+    }
     // (SQL de l'Extension 152 pas encore collé : la fonction n'existe pas ; l'envoi passe quand même, comme avant,
     // pour que la mise en ligne du code avant le SQL ne bloque jamais les candidats)
     if (/Could not find the function|PGRST202|does not exist/.test(m)) {

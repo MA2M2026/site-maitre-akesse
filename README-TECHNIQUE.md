@@ -4347,3 +4347,39 @@ reste dans l'historique git (commit du 08/11/2026). Copie des données d'avant :
   l'Administration seulement.
 - Essais : `scripts/base-essai/essais-securite-appareils.sql`, `test-admin-appareil-serveur.js`,
   `test-nouvelle-admin-mannequins.js` (identifiant de l'appareil sur chaque action envoyée au serveur).
+
+## Cours de talons : Atelier Talons & Élégance (08/11/2026, Extension 160 ; décisions de la propriétaire)
+
+Une page publique pour les personnes qui veulent seulement **apprendre à marcher en talons** (concours de Miss ou
+de beauté, élégance, prestance), **sans intégrer l'agence** (c'est écrit en haut de la page, avec un lien vers
+« Intégrer l'agence »). Menu : « Cours de talons » avec la petite étiquette « Ouvert à toutes » (7e case de la ligne
+dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
+
+- **Prix** : en groupe, chaque dimanche de 15 h à 18 h, **30 000 FCFA les 4 séances** (forfait) ; en privé, **à la
+  séance de 2 h** : 25 000 FCFA dans la salle de la Riviera Faya, 30 000 à 35 000 FCFA chez la personne ou au lieu de
+  son choix (la personne choisit son nombre de séances ; 10 séances en salle = 250 000). Seule la base décide du
+  montant enregistré (`cours_talons_montant`) ; la page n'affiche qu'un total indicatif.
+- **Pages** : `cours-talons.html`, `en/cours-talons.html`, `css/cours-talons.css`, `js/cours-talons.js` ; vidéo
+  `assets/cours-talons/atelier-talons-elegance.mp4` (720 × 1280, ~5 Mo, musique et voix originales) et son
+  affiche `assets/cours-talons/affiche.jpg` (aussi image d'aperçu des liens partagés).
+- **Inscription en 4 étapes** : formule (et nombre de séances, lieu pour le privé à l'extérieur) → la personne
+  (moins de 18 ans : nom et téléphone d'un parent obligatoires, aussi contrôlé par la base) → 2 ou 3 photos et une
+  vidéo de sa marche (1 minute maximum, allégée sur l'appareil par `js/video-allegee.js`) → Wave maintenant (lien
+  marchand des mensualités, avec le montant) ou plus tard. Photos et vidéo partent vers Google Drive (sous-dossier
+  « Cours de talons », même programme que les candidatures, type `projet`), puis la ligne passe par le serveur
+  (`api/portail.js`, action `formulaire`, anti-robots) → `formulaire_public_enregistrer`, qui retire tout ce que le
+  visiteur ne doit pas choisir (statut, montant, notes…) et impose le statut (`paiement_envoye` ou `plus_tard`).
+- **SQL pas encore collé** : le serveur répond `pasPret` (503) et la page propose d'envoyer l'inscription sur
+  WhatsApp (message déjà rempli) ; rien n'est perdu.
+- **Administration** : « Administration du site » › Castings et demandes › **Cours de talons**
+  (`js/admin/site-cours-talons.js`) : liste « À traiter / Inscrites / Terminées / Annulées », photos et vidéo,
+  WhatsApp (et parent), « Envoyer le lien Wave » (message prêt avec le montant), date de séance, montant ajusté,
+  notes, « Paiement reçu (Wave) » ou « Payé en espèces » → `cours_talons_valider` (statut « inscrite » et UNE recette
+  « Cours de talons » en Comptabilité, catégorie `cours_talons`), « Cours terminés », « Annuler » (rien n'est
+  effacé ; « Rouvrir »). Droits : l'équipe du site (`portail_peut('site')`), lecture et suivi seulement.
+- **Base** : `supabase-cours-talons.sql` (à coller par la propriétaire ; rejouable) ; essais
+  `scripts/base-essai/essais-cours-talons.sql`.
+- **Tests** : `scripts/tests-visiteur/test-cours-talons.js` (page, FR/EN, téléphone/ordinateur, SQL pas collé) et
+  `test-admin-cours-talons.js` (Administration).
+- Outils partagés déplacés dans `js/app.js` à cette occasion (avant, seulement dans la candidature) : `afficherMsg`,
+  `majJauge`, `jaugeEnErreur`, `cacherJauge`, `enMo`, `dureeVideo`.

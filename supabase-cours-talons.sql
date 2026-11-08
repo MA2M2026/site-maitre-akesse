@@ -84,8 +84,16 @@ begin
     if not limiter_soumissions_publiques_ip_de('recruteur', 30, 3, p_ip) then raise exception 'LIMITE_ATTEINTE'; end if;
   elsif p_table = 'cours_talons' then
     -- le visiteur choisit seulement : payer maintenant (paiement envoyé, à valider) ou plus tard ; le reste est
-    -- décidé par l'agence (montant, date, validation)
-    ligne := ligne - array['id', 'cree_le', 'statut', 'montant', 'date_seance', 'notes', 'valide_le', 'valide_par', 'ecriture_id'];
+    -- décidé par l'agence (montant, date, validation). L'identifiant tiré par la page est gardé : un nouvel essai
+    -- après une coupure ne double pas l'inscription (le serveur répond « déjà enregistrée »).
+    if nullif(ligne->>'age', '') is null then raise exception 'Formulaire invalide.'; end if;
+    -- photos et vidéo : seulement des adresses https (liens Google Drive envoyés par la page)
+    if jsonb_typeof(coalesce(ligne->'photos', '[]'::jsonb)) <> 'array'
+       or exists (select 1 from jsonb_array_elements(coalesce(ligne->'photos', '[]'::jsonb)) e where jsonb_typeof(e) <> 'string' or (e #>> '{}') !~ '^https://[^\s"<>]+$')
+       or (nullif(ligne->>'video', '') is not null and (ligne->>'video') !~ '^https://[^\s"<>]+$') then
+      raise exception 'Formulaire invalide.';
+    end if;
+    ligne := ligne - array['cree_le', 'statut', 'montant', 'date_seance', 'notes', 'valide_le', 'valide_par', 'ecriture_id'];
     ligne := ligne || jsonb_build_object(
       'statut', case when ligne->>'decision' = 'maintenant' then 'paiement_envoye' else 'plus_tard' end,
       'nb_seances', case when ligne->>'formule' = 'groupe' then 4 else coalesce((ligne->>'nb_seances')::int, 1) end,
@@ -119,7 +127,9 @@ begin
   if not portail_peut('site') then raise exception 'Accès refusé.'; end if;
   select * into d from cours_talons where id = p_id for update;
   if d.id is null then raise exception 'Inscription introuvable.'; end if;
-  if d.statut in ('inscrite', 'terminee') and d.ecriture_id is not null then return d; end if;
+  -- une seule recette par inscription, quel que soit son statut ; jamais pour une inscription annulée
+  if d.ecriture_id is not null or d.valide_le is not null then return d; end if;
+  if d.statut = 'annulee' then raise exception 'Inscription annulée : rouvrez-la d''abord.'; end if;
   if coalesce(p_montant, d.montant, 0) <= 0 then raise exception 'Montant manquant.'; end if;
   select id into compte from compta_comptes where type = case when p_especes then 'caisse' else 'wave' end order by actif desc, cree_le limit 1;
   libelle_formule := case d.formule when 'groupe' then 'en groupe (4 dimanches)'

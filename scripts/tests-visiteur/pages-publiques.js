@@ -12,7 +12,7 @@ const rpc = { photos_couverture_mannequins: [{ model_id: 'a1', url: 'https://x/1
 // Toutes les pages publiques (l'Administration est essayée à part : test-nouvelle-admin*.js…)
 const pages = [
   'index', 'qui-sommes-nous', 'mannequins', 'mannequin.html?id=a1', 'actualites', 'evenements', 'agenda', 'parcours',
-  'partenaires', 'services', 'selection', 'contact', 'integrer-agence', 'candidature',
+  'partenaires', 'services', 'selection', 'contact', 'integrer-agence', 'candidature', 'cours-talons',
   'mentions-legales', 'politique-confidentialite'
 ].flatMap(n => [n, 'en/' + n]).concat(['reinitialiser-mot-de-passe', '404'])
   .map(n => (n.includes('.html') ? n : n + '.html'));

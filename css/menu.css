@@ -136,3 +136,5 @@ html body .menu-overlay .menu-reseaux { justify-content: flex-start !important; 
 }
 html body .menu-overlay .nav-links li.item-cta a::before,
 html body .menu-overlay .nav-links li.menu-rejoindre a::before { content: none !important; }
+/* Petite étiquette à côté d'un lien du menu (« Ouvert à toutes » des cours de talons, 08/11/2026) */
+html body .menu-overlay .nav-links li a .menu-etiquette { display: inline-block; vertical-align: middle; margin-left: 0.6em; padding: 0.3em 0.75em; border: 1px solid currentColor; border-radius: 999px; font-family: var(--police-texte, 'Jost', sans-serif); font-weight: 600; font-size: 0.32em; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1; white-space: nowrap; }
