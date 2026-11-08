@@ -92,11 +92,13 @@
         <button id="btn-voir-tous-projets" class="fiche-lien-plus" type="button">${T('Voir tous les projets', 'View All Projects')} (${projets.length})</button>` : ''}
     </section>` : '';
 
-  const urlVideo = urlEmbedVideo(profil.video_url);
+  const texteVideoBrut = String(profil.video_url || '').trim();
+  const adresseVideo = /^https?:\/\//i.test(texteVideoBrut) ? texteVideoBrut
+    : /^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+\/\S*$/i.test(texteVideoBrut) ? 'https://' + texteVideoBrut : '';
+  const urlVideo = adresseVideo ? urlEmbedVideo(adresseVideo) : null;
   // (08/11/2026, phase 3 V1 : une phrase écrite dans la case « lien vidéo » devenait un lien cassé vers le site) : seule
   // une vraie adresse web (http(s)://… ou www.…) devient un lien
-  const texteVideo = String(profil.video_url || '').trim();
-  const urlVideoSure = /^https?:\/\//i.test(texteVideo) ? urlHttpSure(texteVideo) : /^www\.[^\s]+\.[a-z]{2,}/i.test(texteVideo) ? urlHttpSure('https://' + texteVideo) : null;
+  const urlVideoSure = adresseVideo ? urlHttpSure(adresseVideo) : null;
   const blocVideo = (urlVideo || urlVideoSure) ? `
     <section class="fiche-carte">
       <h2 class="fiche-carte-titre">${T('Vidéo', 'Video')}</h2>

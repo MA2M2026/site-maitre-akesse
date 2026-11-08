@@ -141,7 +141,10 @@ async function appareilAdminOk(jeton, appareil) {
   return rep.ok && (await rep.json().catch(() => false)) === true;
 }
 async function adminVerifie(jeton, utilisateur, appareil) {
-  return chargeJeton(jeton).aal === 'aal2' && (await estAdmin(utilisateur.id)) && (await appareilAdminOk(jeton, appareil));
+  if (chargeJeton(jeton).aal !== 'aal2') return false;
+  // (les deux lectures en même temps : un aller-retour de moins par action — relecture du 08/11/2026)
+  const [admin, appareilOk] = await Promise.all([estAdmin(utilisateur.id), appareilAdminOk(jeton, appareil)]);
+  return admin && appareilOk;
 }
 // Heure (en secondes) du dernier code de l'application d'authentification saisi pour ce jeton
 function dernierCode(jeton) {

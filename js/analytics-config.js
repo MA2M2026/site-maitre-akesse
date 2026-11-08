@@ -51,6 +51,7 @@ function gtag(){dataLayer.push(arguments);}
   function quandCorps(f) { if (document.body) f(); else requestAnimationFrame(function () { quandCorps(f); }); }
   if (choix !== 'oui' && choix !== 'non') quandCorps(afficherBandeau);
   function demarrer() {
+    if (choix !== 'oui' && choix !== 'non') afficherBandeau();  // (déjà là : rien ; onglet en arrière-plan : affiché ici)
     // Page Confidentialité : bouton pour revenir sur son choix.
     document.querySelectorAll('[data-cookies-modifier]').forEach(function (b) {
       b.addEventListener('click', function () {

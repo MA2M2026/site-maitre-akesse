@@ -43,7 +43,11 @@ declare r record; d text;
 begin
   for r in select p.oid from pg_proc p join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.prosecdef and p.proname not like 'portail\_%' and p.proname not like 'staff\_%'
-             and pg_get_functiondef(p.oid) ~* 'from\s+admins' and pg_get_functiondef(p.oid) ~ 'portail_mfa_ok\(\)' loop
+             -- (ancien code de validation de l'Administration : appelé par le serveur — api/acces-tableau.js,
+             -- api/code-validation-protege.js — avec le jeton de la personne mais SANS l'en-tête de l'appareil ; il garde
+             -- sa règle d'avant, sinon chaque code juste compterait comme faux — relecture du 08/11/2026)
+             and p.proname not like '%code\_validation%' and p.proname <> 'definir_code_portail'
+             and pg_get_functiondef(p.oid) ~* 'from\s+(public\.)?admins' and pg_get_functiondef(p.oid) ~ 'portail_mfa_ok\(\)' loop
     d := replace(pg_get_functiondef(r.oid), 'portail_mfa_ok()', 'portail_admin_ok()');
     execute d;
   end loop;
@@ -65,5 +69,8 @@ select case when to_regprocedure('portail_admin_ok()') is not null
              and not exists (select 1 from pg_policies where schemaname = 'public' and (qual ~ 'portail_mfa_ok\(\)' or with_check ~ 'portail_mfa_ok\(\)'))
              and not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                              where n.nspname = 'public' and p.prosecdef and p.proname not like 'portail\_%' and p.proname not like 'staff\_%'
-                               and pg_get_functiondef(p.oid) ~* 'from\s+admins' and pg_get_functiondef(p.oid) ~ 'portail_mfa_ok\(\)')
+                               and p.proname not like '%code\_validation%' and p.proname <> 'definir_code_portail'
+                               and pg_get_functiondef(p.oid) ~* 'from\s+(public\.)?admins' and pg_get_functiondef(p.oid) ~ 'portail_mfa_ok\(\)')
+             and (to_regprocedure('accord_parent_demander(uuid)') is null
+                  or pg_get_functiondef('accord_parent_demander(uuid)'::regprocedure) ~ 'portail_admin_ok')
             then '✅ Verrous des téléphones partout (Extension 158)' else '❌ Extension 158 incomplète : recollez tout le fichier' end as controle;

@@ -75,8 +75,9 @@
   // téléphone Android : les photos suivent l'inclinaison du téléphone (sans autorisation à demander ; sur iPhone, il
   // faudrait une fenêtre d'autorisation : pas utilisé)
   var base = null, penche = 0;
+  window.addEventListener('orientationchange', function () { base = null; }, { passive: true });
   function orientation(e) {
-    if (e.beta == null || e.gamma == null) return;
+    if (e.beta == null || e.gamma == null || !visibles.size) return;
     if (!base) base = { b: e.beta, g: e.gamma };
     var ox = Math.max(-12, Math.min(12, (e.beta - base.b) * -0.5)), oy = Math.max(-12, Math.min(12, (e.gamma - base.g) * 0.6));
     if (!penche) penche = requestAnimationFrame(function () {

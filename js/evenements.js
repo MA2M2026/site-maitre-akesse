@@ -38,7 +38,8 @@ async function chargerEvenements() {
   uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirEvenementModal(0));
 
   const reste = data.slice(1);
-  grille.innerHTML = reste.map((e, i) => R.carte(e, i + 1, { en: EN, sorte: 'evenement', photo: urlLegere(e.image_url || ''), nbPhotos: compteurParEvenement[e.id] || (e.image_url ? 1 : 0),
+  // (08/11/2026) cartes déjà écrites par le serveur : gardées (sinon leur apparition et leurs photos recommençaient)
+  if (!(serveur && grille.children.length === reste.length)) grille.innerHTML = reste.map((e, i) => R.carte(e, i + 1, { en: EN, sorte: 'evenement', photo: urlLegere(e.image_url || ''), nbPhotos: compteurParEvenement[e.id] || (e.image_url ? 1 : 0),
     extrait: e.description ? extraitTexte(texteBrutDepuis(e.description), 110) : '' })).join('');
 
   grille.querySelectorAll('.news-carte').forEach(carte => {

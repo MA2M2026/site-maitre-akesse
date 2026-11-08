@@ -20,6 +20,8 @@ alter table staff_devices disable trigger user;
 update staff_devices set revoque = true where appareil = 'appareil-revoque-0158';
 alter table staff_devices enable trigger user;
 select essai(not (select pg_get_functiondef('contacts_mannequins_admin()'::regprocedure)) ~ 'portail_mfa_ok\(\)', 'fonctions anciennes : la règle complète remplace la seule double authentification');
+-- (relecture du 08/11/2026) l'ancien code de validation, appelé par le serveur sans l'en-tête de l'appareil, garde sa règle
+select essai(to_regprocedure('verifier_code_validation(text)') is null or pg_get_functiondef('verifier_code_validation(text)'::regprocedure) !~ 'portail_admin_ok', 'ancien code de validation : inchangé (le serveur l''appelle sans identifiant d''appareil)');
 
 set role authenticated;
 -- appareil en règle : tout s'ouvre comme avant

@@ -11,6 +11,7 @@ ok(!/Voir la vidéo/.test(html('Trois édition/du festival abidjan pagne, Shooti
 ok(/href="https:\/\/vimeo\.example\/123"/.test(html('https://vimeo.example/123')), 'une adresse http(s) : lien « Voir la vidéo »');
 ok(/href="https:\/\/www\.exemple\.ci\/film"/.test(html('www.exemple.ci/film')), 'une adresse www.… : lien en https');
 ok(/youtube\.com\/embed\/abc123/.test(html('https://www.youtube.com/watch?v=abc123')), 'YouTube : vidéo intégrée');
+ok(/youtube\.com\/embed\/xyz789/.test(html('youtube.com/watch?v=xyz789')) && /href="https:\/\/instagram\.com\/reel\/abc"/.test(html('instagram.com/reel/abc')), 'adresse sans « www » (youtube.com/…, instagram.com/…) : reconnue (relecture du 08/11/2026)');
 ok(!/Voir la vidéo|<iframe/.test(html('')) && !/Voir la vidéo/.test(html('javascript:alert(1)')), 'vide ou « javascript: » : rien');
 console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
 process.exit(ko ? 1 : 0);
