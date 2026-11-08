@@ -17,7 +17,7 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
     await p.addInitScript(() => { try { localStorage.setItem('ma2m_cookies', 'non'); sessionStorage.setItem('ma2m_entree_vue', '1'); } catch (e) { /* */ } });
     await brancher(p, { tables: {}, rpc: {} }, []);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
-    ok(await p.locator('.ia-video video source[src*="assets/integrer-agence/integrer-agence.mp4"]').count() === 1, n + 'vidéo de présentation en haut de la page');
+    ok(await p.locator('.video-pleine video source[src*="assets/integrer-agence/integrer-agence.mp4"]').count() === 1, n + 'vidéo de présentation en haut de la page');
     const crit = await p.textContent('.ia-criteres');
     ok(crit.includes('1,75 m') && crit.includes('1,85 m') && crit.includes('14+') && crit.includes('14 – 17'), n + 'critères : 1,75 m, 1,85 m, 14 ans et plus, accord parental');
     ok(!/FCFA|25 000/.test(await p.textContent('main')), n + 'aucun prix sur la page (décision de la propriétaire)');

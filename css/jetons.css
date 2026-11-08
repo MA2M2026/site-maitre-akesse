@@ -216,7 +216,7 @@
    css/charte-ma2m.css) : elles suivent donc d'elles-mêmes. */
 :where(
   /* site public */
-  .contexte-clair, .carte, .card, .bandeau-cookies, input, select, textarea, .ql-editor, .ql-toolbar,
+  .contexte-clair, .carte, .card, .ia-parcours-carte:not(.choisie), .ia-etapes li, .bandeau-cookies, input, select, textarea, .ql-editor, .ql-toolbar,
   .contact-bloc, .fiche-contact-bas, .fiche-contact-tuile, .valeur-item, .cal-panneau, .p-sommaire .vignette,
   .cv-sheet, .compcard-sheet, .recu-feuille,
   /* Administration (css/admin-vivante.css) */

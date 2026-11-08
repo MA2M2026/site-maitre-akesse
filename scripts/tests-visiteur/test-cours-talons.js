@@ -39,7 +39,7 @@ async function navigateur() {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();
-  const cas = [['cours-talons.html', { width: 390, height: 844 }, false], ['en/cours-talons.html', { width: 1280, height: 900 }, false], ['cours-talons.html', { width: 1280, height: 900 }, true], ['cours-talons.html', { width: 390, height: 844 }, 'coupure']];
+  const cas = [['cours-talons.html', { width: 390, height: 844 }, false], ['en/cours-talons.html', { width: 1280, height: 900 }, false], ['cours-talons.html', { width: 1280, height: 900 }, true], ['cours-talons.html', { width: 390, height: 844 }, 'coupure'], ['cours-talons.html', { width: 820, height: 1180 }, false]];  // (tablette : bug du 08/11/2026)
   for (const [page, ecran, pasPret] of cas) {
     const en = page.startsWith('en/');
     const n = page + ' ' + ecran.width + 'px' + (pasPret === 'coupure' ? ' (connexion coupée au 1er envoi)' : pasPret ? ' (SQL pas encore collé)' : '') + ' : ';
@@ -63,7 +63,7 @@ async function navigateur() {
     ok(menu.includes(en ? 'Heel Classes' : 'Cours de talons') && menu.includes(en ? 'Open to all' : 'Ouvert à toutes'), n + 'menu : « ' + (en ? 'Heel Classes · Open to all' : 'Cours de talons · Ouvert à toutes') + ' »');
     const avert = await p.textContent('.ct-avertissement');
     ok(/intégrer l'agence|member of the agency/i.test(avert) && await p.locator('.ct-avertissement a[href="integrer-agence.html"]').count() === 1, n + 'avertissement « pas pour intégrer l’agence », avec le lien vers « Intégrer l’agence »');
-    ok(await p.locator('.ct-video video source[src*="assets/cours-talons/atelier-talons-elegance.mp4"]').count() === 1, n + 'vidéo de présentation sur la page');
+    ok(await p.locator('.video-pleine video source[src*="assets/cours-talons/atelier-talons-elegance.mp4"]').count() === 1, n + 'vidéo de présentation sur la page');
     const prix = await p.textContent('.ct-formules');
     ok(prix.includes('30 000') && prix.includes('25 000') && /4 séances|4 sessions/.test(prix) && /la séance|per session/.test(prix), n + 'prix : groupe 30 000 les 4 séances, privé à la séance');
 
@@ -75,6 +75,8 @@ async function navigateur() {
     await p.selectOption('#ct-nb', '10');
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
     await p.click('#ct-suivant');
+    const debEtape2 = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+    ok(debEtape2 <= 1, n + 'passage à l’étape 2 : la page ne devient pas plus large que l’écran (' + debEtape2 + ' px)');
     // étape 2 : mineure → parent obligatoire
     await p.fill('#ct-nom', 'Kouassi Marie'); await p.fill('#ct-telephone', '07 01 02 03 04'); await p.fill('#ct-age', '16');
     ok(await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : le bloc du parent apparaît');

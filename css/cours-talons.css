@@ -2,7 +2,6 @@
    (rouge mat, rouge profond, blanc ; vert pour l'accord). */
 .ct-haut { padding-bottom: 2rem; }
 .ct-haut-grille { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
-@media (min-width: 900px) { .ct-haut-grille { grid-template-columns: 1.15fr 0.85fr; gap: 3.5rem; } }
 .ct-chapeau { max-width: 60ch; margin-top: 1.2rem; font-size: 1.08rem; line-height: 1.65; }
 .ct-avertissement { margin: 1.6rem 0; padding: 1.2rem 1.4rem; border: 2px solid var(--rouge, #7C2128); border-radius: 14px; background: #fff; color: #5A141B; max-width: 60ch; }
 .ct-avertissement strong { display: block; font-size: 1.08rem; color: #7C2128; }
@@ -82,3 +81,7 @@
 .ct-choix input:checked + span { background: #5A141B; border-color: #fff; color: #fff; box-shadow: 0 0 0 3px #fff; }
 .ct-choix input:checked + span b, .ct-choix input:checked + span strong, .ct-choix input:checked + span em { color: #fff; }
 .ct-choix input:checked + span::after { content: "✓"; display: grid; place-items: center; background: #fff; border-color: #fff; color: #5A141B; font-weight: 800; font-size: 1rem; }
+/* (08/11/2026, bug vu sur tablette par la propriétaire) les cases cachées derrière les blocs à toucher restent DANS leur
+   bloc : sans position, elles se plaçaient au bout de la ligne, hors de l'écran, et la page devenait plus large */
+.ct-choix, .ct-pastille { position: relative; }
+.ct-choix input, .ct-pastille input { left: 0; top: 0; width: 1px; height: 1px; margin: 0; }

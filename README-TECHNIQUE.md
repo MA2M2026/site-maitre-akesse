@@ -4392,3 +4392,22 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
   `test-admin-cours-talons.js` (Administration).
 - Outils partagés déplacés dans `js/app.js` à cette occasion (avant, seulement dans la candidature) : `afficherMsg`,
   `majJauge`, `jaugeEnErreur`, `cacherJauge`, `enMo`, `dureeVideo`.
+
+## Intégrer l'agence réorganisée (08/11/2026, décisions de la propriétaire)
+
+La page garde son formulaire de candidature (js/formulaire-candidature-champs.js, js/formulaire-candidature.js), mais
+le haut est réorganisé en style « motion design » :
+- **vidéo** `assets/integrer-agence/integrer-agence.mp4` (720 × 1280, ~6 Mo, voix et musique originales, sous-titres
+  incrustés ; texte validé par la propriétaire, **aucun prix**) et son affiche `assets/integrer-agence/affiche.jpg` ;
+  ne jamais y mettre de photo de mannequin mineure (décision du 08/11/2026) ;
+- **étapes** (casting en ligne → casting en présentiel → bienvenue), **critères** (1,75 m, 1,85 m, 14 ans et plus,
+  accord parental de 14 à 17 ans), **deux parcours** à toucher, **avantages** (formation, recommandation auprès des
+  partenaires, castings privés et professionnels, espace gratuit sur le site) ;
+- les parcours (`js/integrer-agence.js`) règlent tout seuls la liste « Avez-vous déjà été mannequin ? » du formulaire :
+  débutant·e = Académie 9 mois puis agence 9 mois ; déjà mannequin = agence directement si le casting en présentiel le
+  confirme, avec 9 mois de perfectionnement. Les frais (inscription) ne sont annoncés qu'aux personnes retenues
+  (note d'intégration protégée par le code) ;
+- « déjà mannequin » : champ facultatif **lien vers son travail** (`#ca-lien-travail`), mis en tête du message de la
+  candidature (`messageAvecLien`, js/formulaire-candidature.js) : aucune colonne nouvelle dans la base ;
+- styles : `css/integrer-agence.css` ; styles du haut de l'écran régénérés pour cette page seulement
+  (`scripts/css-critique.mjs`) ; test : `scripts/tests-visiteur/test-integrer-parcours.js`.

@@ -3154,3 +3154,15 @@ body.zone-admin > .site-footer { margin-top: auto; }
 .mannequin-du-mois .mdm-titre { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
 .mannequin-du-mois b { font-size: 20px; }
 .mannequin-du-mois .mdm-lien { margin-left: auto; text-decoration: underline; }
+
+/* Vidéo de présentation en pleine largeur (cours de talons, intégrer l'agence, 08/11/2026, demande de la propriétaire) :
+   la version verticale sur téléphone, la version horizontale (vidéo au centre sur son propre fond flouté) sur tablette
+   et ordinateur. preload="none" : seule la vidéo affichée est téléchargée, et seulement quand on la lance. */
+.video-pleine { width: 100%; margin: 0 0 2rem; background: var(--rouge-profond); }
+.video-pleine video { display: block; width: 100%; height: auto; }
+.video-pleine .vp-verticale { aspect-ratio: 9 / 16; }
+.video-pleine .vp-horizontale { display: none; aspect-ratio: 16 / 9; }
+@media (min-width: 700px) {
+  .video-pleine .vp-verticale { display: none; }
+  .video-pleine .vp-horizontale { display: block; }
+}
