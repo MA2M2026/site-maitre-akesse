@@ -19,7 +19,8 @@ import cv2, numpy as np
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = 'https://www.maitreakessemodelmanagement.com'
-MODELE = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'yunet-2023mar.onnx')
+# (modèle gardé dans un dossier du projet ignoré par git, pas dans un dossier temporaire partagé — SonarCloud)
+MODELE = os.path.join(RACINE, '.cache', 'yunet-2023mar.onnx')
 URL_MODELE = 'https://huggingface.co/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx'
 UA = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) Chrome/126 MA2M-cadrage'}
 # écrans d'ordinateur de référence (largeur, hauteur de la grande photo : 86 % de l'écran, 820 px au plus)
@@ -57,6 +58,7 @@ def cadrage(fy, w, h):
 
 
 def main():
+    os.makedirs(os.path.dirname(MODELE), exist_ok=True)
     if not os.path.exists(MODELE):
         open(MODELE, 'wb').write(lire(URL_MODELE, True))
     det = cv2.FaceDetectorYN.create(MODELE, '', (320, 320), 0.6, 0.3, 5000)

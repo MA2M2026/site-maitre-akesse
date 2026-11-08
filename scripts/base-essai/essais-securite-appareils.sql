@@ -58,6 +58,18 @@ set role authenticated;
 select essai_refuse($$select accord_parent_demander('00000000-0000-0000-0000-00000000c158')$$, 'écran verrouillé : pas de lien d''accord du parent');
 select essai_qui('00000000-0000-0000-0000-0000000000a1', 'aal2', 30, 'appareil-essai-0158');
 select essai(accord_parent_demander('00000000-0000-0000-0000-00000000c158') is not null, 'appareil en règle : lien d''accord du parent préparé');
+-- (correction du 08/11/2026) un simple visiteur : le site public se lit toujours (fiches et photos publiées), il n'est
+-- jamais administratrice. Le droit manquait : plus aucune mannequin ni photo sur le site en ligne.
+reset role;
+update model_profiles set published = true where id = '00000000-0000-0000-0000-00000000c158';
+select set_config('request.jwt.claims', '', false);
+set role anon;
+select essai(exists (select 1 from model_profiles where published), 'visiteur : les fiches publiées se lisent');
+select essai((select count(*) >= 0 from model_photos), 'visiteur : les photos se lisent (aucun refus)');
+select essai(not portail_admin_ok(), 'visiteur : jamais administratrice');
+reset role;
+update model_profiles set published = false where id = '00000000-0000-0000-0000-00000000c158';
+set role authenticated;
 -- une mannequin (sans rôle d'équipe) : rien ne change pour elle
 select essai_qui('00000000-0000-0000-0000-00000000c158', 'aal1', 30, '');
 select essai(not portail_admin_ok() and not exists (select 1 from contacts_mannequins_admin()), 'une mannequin : jamais administratrice');

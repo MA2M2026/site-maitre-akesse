@@ -32,7 +32,9 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       { releve_le: '2026-06-01T10:00:00Z', origine: 'modification', valeurs: { height_cm: 178, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } },
       { releve_le: '2026-01-15T10:00:00Z', origine: 'installation', valeurs: { height_cm: 176, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } }];
     // accueil du site (site vivant, 08/11/2026) : AYA KOUASSI mineure pour l'essai, sans accord d'un parent
+    // (la date de naissance est privée : la vraie base ne la donne que par profils_prives, le faux serveur aussi)
     d.tables.model_profiles[0].date_naissance = '2011-05-05'; d.rpc.accord_parent_demander = 'jeton-essai';
+    d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'm0' || id === 'v1' ? '2011-05-05' : '2000-01-01' }));
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 

@@ -104,6 +104,15 @@ function brancher(page, donnees, journal) {
           }
           return route.fulfill({ status: 204, body: '' });
         }
+        // (08/11/2026) colonnes privées de model_profiles : la vraie base refuse de les lire directement (Extension 131 ;
+        // on passe par profils_prives / contacts_mannequins_admin). Le bloc « Accueil du site » les lisait : erreur trouvée
+        // en vrai par la propriétaire, pas par les essais. Désormais refusées ici aussi.
+        if (table === 'model_profiles' && (m === 'GET' || m === 'HEAD')) {
+          const fermees = ['phone', 'contact_email', 'date_naissance', 'ville_naissance', 'lieu_naissance', 'nationalite', 'quartier', 'raison_refus', 'etablissement', 'desactive_par'];
+          const demandees = (url.searchParams.get('select') || '*').split(',').map((c) => c.trim().split(':').pop());
+          const interdite = demandees.find((c) => c === '*' || fermees.includes(c));
+          if (interdite && !donnees.colonnesOuvertes) return json({ code: '42501', message: 'permission denied for table model_profiles', details: null, hint: null }, 401);
+        }
         let lignes = (donnees.tables[table] || []).slice();
         for (const [k, v] of url.searchParams) { if (/^neq\./.test(v)) lignes = lignes.filter(l => String(l[k]) !== v.slice(4)); if (/^eq\./.test(v)) lignes = lignes.filter(l => (k === 'suivi' && !(k in l)) || String(l[k]) === v.slice(3)); if (/^(gte|lte)\./.test(v)) { const borne = v.slice(4), haut = v[0] === 'g'; lignes = lignes.filter(l => l[k] != null && (haut ? String(l[k]) >= borne : String(l[k]) <= borne)); } const dans = v.match(/^in\.\((.*)\)$/); if (dans) { const liste = dans[1].split(',').map(x => x.replace(/^"|"$/g, '')); lignes = lignes.filter(l => liste.includes(String(l[k]))); } }
         // is.null / not.is.null : colonne vide ou remplie (mannequins extérieures, 23/10/2026)
