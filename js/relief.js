@@ -27,12 +27,19 @@
   // inclinaison au défilement : la carte penche selon sa hauteur dans l'écran (lectures, puis écritures)
   function image() {
     demande = 0;
-    var h = window.innerHeight, mesures = [];
-    visibles.forEach(function (c) { var r = c.getBoundingClientRect(); mesures.push([c, (r.top + r.height / 2) / h - 0.5]); });
-    mesures.forEach(function (m) { m[0].style.setProperty('--relief-sx', (Math.max(-0.6, Math.min(0.6, m[1])) * -14).toFixed(2) + 'deg'); });
+    var h = window.innerHeight, l = window.innerWidth, mesures = [];
+    // (version 2) mur courbé : la carte penche selon sa hauteur dans l'écran (jusqu'à 20°) et se tourne selon sa
+    // colonne (jusqu'à 14°)
+    visibles.forEach(function (c) { var r = c.getBoundingClientRect(); mesures.push([c, (r.top + r.height / 2) / h - 0.5, (r.left + r.width / 2) / l - 0.5]); });
+    mesures.forEach(function (m) {
+      var v = Math.max(-0.6, Math.min(0.6, m[1])), x = Math.max(-0.5, Math.min(0.5, m[2]));
+      m[0].style.setProperty('--relief-sx', (v * -34).toFixed(2) + 'deg');
+      m[0].style.setProperty('--relief-sy', (x * 28).toFixed(2) + 'deg');
+    });
     if (titre) {
       var y = Math.min(window.scrollY, h);
-      titre.style.setProperty('--relief-ty', (y * 0.35).toFixed(1) + 'px');
+      titre.style.setProperty('--relief-ty', (y * 0.45).toFixed(1) + 'px');
+      titre.style.setProperty('--relief-ts', (1 - y / h * 0.25).toFixed(3));
       titre.style.setProperty('--relief-to', Math.max(0, 1 - y / (h * 0.7)).toFixed(3));
     }
   }
@@ -54,8 +61,8 @@
     if (!p) return;
     survol = p;
     var r = p.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-    p.style.setProperty('--relief-rx', ((0.5 - y) * 12).toFixed(2) + 'deg');
-    p.style.setProperty('--relief-ry', ((x - 0.5) * 14).toFixed(2) + 'deg');
+    p.style.setProperty('--relief-rx', ((0.5 - y) * 20).toFixed(2) + 'deg');
+    p.style.setProperty('--relief-ry', ((x - 0.5) * 24).toFixed(2) + 'deg');
     p.style.setProperty('--relief-gx', (x * 100).toFixed(1) + '%');
     p.style.setProperty('--relief-gy', (y * 100).toFixed(1) + '%');
   }
@@ -65,6 +72,20 @@
     survol = null;
   }
 
+  // téléphone Android : les photos suivent l'inclinaison du téléphone (sans autorisation à demander ; sur iPhone, il
+  // faudrait une fenêtre d'autorisation : pas utilisé)
+  var base = null, penche = 0;
+  function orientation(e) {
+    if (e.beta == null || e.gamma == null) return;
+    if (!base) base = { b: e.beta, g: e.gamma };
+    var ox = Math.max(-12, Math.min(12, (e.beta - base.b) * -0.5)), oy = Math.max(-12, Math.min(12, (e.gamma - base.g) * 0.6));
+    if (!penche) penche = requestAnimationFrame(function () {
+      penche = 0;
+      grille.style.setProperty('--relief-ox', ox.toFixed(2) + 'deg');
+      grille.style.setProperty('--relief-oy', oy.toFixed(2) + 'deg');
+      grille.style.setProperty('--relief-gx', (50 + oy * 3).toFixed(1) + '%');
+    });
+  }
   function demarrer() {
     grille = document.getElementById('grille');
     if (!grille) return;
@@ -79,6 +100,7 @@
       window.addEventListener('scroll', prevoir, { passive: true });
       window.addEventListener('resize', prevoir, { passive: true });
       if (fin) { grille.addEventListener('pointermove', pointer, { passive: true }); grille.addEventListener('pointerleave', relacher, { passive: true }); }
+      else if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') window.addEventListener('deviceorientation', orientation, { passive: true });
       // l'utilisateur change d'avis en cours de visite (moins d'animations) : tout s'arrête
       if (window.matchMedia) window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', function (e) { if (e.matches) document.documentElement.classList.remove('relief'); });
     };
