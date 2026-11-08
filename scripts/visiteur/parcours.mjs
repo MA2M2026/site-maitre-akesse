@@ -29,6 +29,9 @@ const APPAREILS = [
 ];
 
 // ---- parcours : étapes [nom, adresse, vérification(page) → true/texte d'échec] ----
+// (adresses d'un article, d'un événement et d'une fiche avec parcours : prises dans le plan du site)
+const PLAN = await (await fetch(BASE + '/sitemap.xml')).text();
+const duPlan = (motif) => { const m = PLAN.match(new RegExp('<loc>https?://[^/]+(' + motif + ')</loc>')); return m ? m[1] : null; };
 const premiereFiche = async (p) => p.$eval('#grille .medaillon-carte a[href]', (a) => a.getAttribute('href'));
 const PARCOURS = {
   styliste: (en) => [
@@ -59,6 +62,20 @@ const PARCOURS = {
     ['services', en ? '/en/services' : '/services', async (p) => (await p.textContent('main')).length > 300 || 'page vide'],
     ['partenaires', en ? '/en/partenaires' : '/partenaires', async (p) => (await p.textContent('main')).length > 100 || 'page vide'],
     ['message (sans l’envoyer)', en ? '/en/contact' : '/contact', async (p) => { await p.fill('#nom', 'Essai Lecture Seule'); await p.fill('#email', 'essai@exemple.invalid'); await p.fill('#message', 'Essai automatique, jamais envoyé.'); return (await p.$('#form-contact [type=submit], #form-contact button')) ? true : 'bouton d’envoi absent'; }]
+  ],
+  // (ajoutés le 08/11/2026, demande de la propriétaire)
+  journaliste: (en) => [
+    ['actualités', en ? '/en/actualites' : '/actualites', async (p) => (await p.$$('[data-index]')).length >= 3 || 'moins de 3 actualités'],
+    ['un article', () => duPlan((en ? '/en' : '') + '/actualites\\?actu=[^<]+'), async (p) => (await p.textContent('main')).length > 300 || 'article vide'],
+    ['un événement', () => duPlan((en ? '/en' : '') + '/evenements\\?evenement=[^<]+'), async (p) => (await p.textContent('main')).length > 200 || 'événement vide'],
+    ['l’agence', en ? '/en/qui-sommes-nous' : '/qui-sommes-nous', async (p) => (await p.textContent('main')).length > 500 || 'page vide'],
+    ['contact presse', en ? '/en/contact' : '/contact', async (p) => (await p.$$('a[href^="mailto:"], a[href^="tel:"]')).length >= 2 || 'pas d’e-mail ni de téléphone visibles']
+  ],
+  'éditeur / magazine': (en) => [
+    ['The Book', en ? '/en/mannequins' : '/mannequins', async (p) => (await p.$$('#grille .medaillon-carte')).length >= 10 || 'moins de 10 profils'],
+    ['fiche avec parcours', () => duPlan((en ? '/en' : '') + '/book/assoa-marie-france') || (en ? '/en/mannequins' : '/mannequins'), async (p) => (await p.$('#fiche-parcours')) ? true : 'parcours absent de la fiche'],
+    ['réseaux sociaux', en ? '/en/' : '/', async (p) => (await p.$$('a[href*="instagram.com"], a[href*="tiktok.com"], a[href*="facebook.com"]')).length >= 3 || 'liens vers les réseaux absents'],
+    ['contact', en ? '/en/contact' : '/contact', async (p) => (await p.$('a[href^="mailto:"]')) ? true : 'pas d’e-mail visible']
   ],
   'directeur artistique': (en) => [
     ['The Book (photos)', en ? '/en/mannequins' : '/mannequins', async (p) => { await p.waitForTimeout(1500); const n = await p.$$eval('#grille .medaillon-carte img', (l) => l.slice(0, 6).filter((i) => i.complete && i.naturalWidth > 0).length); return n >= 6 || 'photos du haut pas affichées (' + n + '/6)'; }],

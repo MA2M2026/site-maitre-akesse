@@ -50,7 +50,7 @@
   }
   /* moins d'animations demandé : les blocs qui « apparaissent » au défilement sont visibles d'emblée
      (20/10/2026 : ils restaient transparents le temps d'être repérés à l'écran) */
-  .reveal { opacity: 1 !important; transform: none !important; }
+  .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
 }
 
 * { box-sizing: border-box; }
@@ -178,6 +178,19 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 .reveal-delay-1.visible { transition-delay: 0.1s; }
 .reveal-delay-2.visible { transition-delay: 0.2s; }
+/* Haut de page (08/11/2026, phase 3 V1 : sur téléphone lent, le titre et la phrase d'introduction restaient cachés
+   jusqu'à l'arrivée des programmes — 8 s sur les Actualités, mesuré) : leur apparition est faite par la feuille de
+   style seule, tout de suite, avec le même effet. Idem pour la grande carte « À la une » des actualités et événements.
+   (départ à 0,01 d'opacité, pas 0 : le navigateur compte l'élément comme affiché dès la première image) */
+main > section:first-of-type .reveal, main > .agenda-ouverture .reveal, .une-reservee > .reveal {
+  opacity: 1; transform: none; animation: ma2m-entree 0.9s var(--transition-douce) both;
+}
+main > section:first-of-type .reveal-delay-1, main > .agenda-ouverture .reveal-delay-1 { animation-delay: 0.1s; }
+main > section:first-of-type .reveal-delay-2, main > .agenda-ouverture .reveal-delay-2 { animation-delay: 0.2s; }
+@keyframes ma2m-entree { from { opacity: 0.01; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+/* (et les 4 premières cartes des grilles : la page des partenaires attendait 5 s le texte de la première) */
+.news-grille > .reveal:nth-child(-n+4) { opacity: 1; transform: none; animation: ma2m-entree 0.9s var(--transition-douce) both; }
+.news-grille > .reveal:nth-child(2) { animation-delay: 0.08s; } .news-grille > .reveal:nth-child(3) { animation-delay: 0.16s; } .news-grille > .reveal:nth-child(4) { animation-delay: 0.24s; }
 
 /* ---------- Sections génériques ---------- */
 
@@ -808,6 +821,8 @@ section { padding: 5rem 0; }
 }
 
 .selection-liste { display: grid; gap: 1px; background: var(--gris-clair); margin-bottom: 2.5rem; }
+/* place réservée pour les profils choisis (--selection-n posé par js/selection-etat.js ; une ligne = 116 px) */
+.selection-liste:empty { min-height: calc(var(--selection-n, 0) * 117px - 1px); background: transparent; }
 .selection-item { background: var(--creme); color: var(--rouge-profond); display: grid; grid-template-columns: 70px 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem; }
 .selection-item img { width: 70px; height: 90px; object-fit: cover; }
 /* min-width: 0 nécessaire — voir l'explication donnée pour .form-champ plus haut :

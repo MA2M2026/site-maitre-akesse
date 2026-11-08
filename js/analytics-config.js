@@ -45,8 +45,12 @@ function gtag(){dataLayer.push(arguments);}
     document.body.appendChild(bandeau);
   }
 
+  // (08/11/2026, phase 3 V1) bandeau affiché dès que la page commence à s'afficher, sans attendre la fin du chargement de
+  // tous les programmes : sur un téléphone lent, il arrivait à 5 s et retardait la mesure d'affichage de toute la page
+  // (Partenaires, Book anglais). Le bouton « Modifier mon choix » de la page Confidentialité attend toujours la page entière.
+  function quandCorps(f) { if (document.body) f(); else requestAnimationFrame(function () { quandCorps(f); }); }
+  if (choix !== 'oui' && choix !== 'non') quandCorps(afficherBandeau);
   function demarrer() {
-    if (choix !== 'oui' && choix !== 'non') afficherBandeau();
     // Page Confidentialité : bouton pour revenir sur son choix.
     document.querySelectorAll('[data-cookies-modifier]').forEach(function (b) {
       b.addEventListener('click', function () {

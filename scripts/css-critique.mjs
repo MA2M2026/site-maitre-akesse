@@ -49,7 +49,9 @@ function extraire() {
   // en plein milieu de la page tant que la feuille complète n'est pas là, et la page « saute » à son arrivée)
   const racineCachee = (el) => !voit(el) && (!el.parentElement || voit(el.parentElement));
   const visible = (el) => { if (racineCachee(el)) return true; const r = el.getBoundingClientRect(); return r.top < limite && r.bottom > -1 && (r.width > 0 || r.height > 0) && voit(el); };
-  const toujours = /^(:root|html|body|\*|::selection|\*,\s*\*::before,\s*\*::after)$/i;
+  // (lien « Aller au contenu », ajouté par js/confort.js et caché hors de l'écran : sans sa règle, il poussait toute la
+  // page vers le bas le temps que la feuille complète arrive — 08/11/2026, saut mesuré sur presque toutes les pages)
+  const toujours = /^(:root|html|body|\*|::selection|\*,\s*\*::before,\s*\*::after|\.lien-evitement)$/i;
   const nettoyer = (s) => s.replace(/::?(before|after|placeholder|selection|marker|first-letter|first-line|-webkit-[\w-]+|-moz-[\w-]+)\b(\([^)]*\))?/gi, '')
     .replace(/:(hover|focus|focus-visible|focus-within|active|visited|link|target|checked|disabled|enabled|empty|invalid|valid|placeholder-shown|autofill|-webkit-autofill)\b/gi, '').trim() || '*';
   // (sélecteurs séparés par les virgules du premier niveau seulement : « :where(.a, .b) » reste entier)
@@ -123,14 +125,19 @@ async function main() {
   const html = await (await fetch(BASE + '/mannequins')).text();
   const fiche = (html.match(/href="\/book\/([^"]+)"/) || [])[1];
   if (!fiche) throw new Error('aucune fiche trouvée dans /mannequins');
+  // (08/11/2026, phase 3 V1) « Ma sélection » mesurée VIDE et REMPLIE (2 profils) : préparée seulement vide, la page
+  // d'un recruteur avec des profils choisis arrivait sans la mise en forme du formulaire et sautait (CLS 1,3 mesuré)
+  const choisis = [...html.matchAll(/class="btn-selection[^"]*" data-id="([0-9a-f-]{36})"/g)].slice(0, 2).map((m) => m[1]);
   const seules = process.argv.slice(2).filter((a) => /\.html$/.test(a));
   let total = 0;
   for (const [fichier, adresse] of Object.entries(PAGES)) {
     if (seules.length && !seules.includes(fichier)) continue;
     const gardees = new Map();  // texte de la règle → sélecteurs utiles (réunis sur téléphone et ordinateur)
     let texte = '', lcpTexte = false;
-    for (const ecran of ECRANS) {
+    const etats = /selection\.html$/.test(fichier) ? [[], choisis] : [null];
+    for (const ecran of ECRANS) for (const etat of etats) {
       const ctx = await navigateur.newContext({ viewport: { width: ecran.width, height: ecran.height }, isMobile: !!ecran.isMobile, hasTouch: !!ecran.hasTouch, serviceWorkers: 'block' });
+      if (etat) await ctx.addInitScript((ids) => { try { localStorage.setItem('ma2m_selection', JSON.stringify(ids)); } catch (e) { /* */ } }, etat);
       const p = await ctx.newPage();
       // (page ouverte SANS le bloc déjà écrit : on repart des seules feuilles)
       await p.goto(BASE + adresse.replace('__FICHE__', fiche), { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
@@ -140,7 +147,7 @@ async function main() {
       if (ecran === ECRANS[0]) lcpTexte = await p.evaluate(() => new Promise((ok) => new PerformanceObserver((l) => { const e = l.getEntries().pop(); ok(!!(e && e.element && !e.url)); }).observe({ type: 'largest-contentful-paint', buffered: true })));
       await p.evaluate((t) => { window.__lcpTexte = t; }, lcpTexte);
       (await p.evaluate(extraire)).forEach(([r, sels]) => { const deja = gardees.get(r) || []; gardees.set(r, deja.concat(sels.filter((x) => !deja.includes(x)))); });
-      if (ecran === ECRANS[ECRANS.length - 1]) texte = await p.evaluate(reconstruire, [...gardees]);
+      if (ecran === ECRANS[ECRANS.length - 1] && etat === etats[etats.length - 1]) texte = await p.evaluate(reconstruire, [...gardees]);
       await ctx.close();
     }
     const f = path.join(RACINE, fichier);

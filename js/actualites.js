@@ -47,7 +47,9 @@ async function chargerActualites() {
   const une = data[0];
   // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
   const R = window.RenduPublications;
-  uneZone.innerHTML = R.une(une, { en: EN, sorte: 'actualite', photo: urlLegere(une.image_url), extrait: une.commentaire ? extraitTexte(texteBrutDepuis(une.commentaire), 180) : '' });
+  // (08/11/2026, phase 3 V1) grande carte déjà écrite par le serveur avec les mêmes données : gardée telle quelle (la
+  // redessiner faisait réafficher sa photo quand les programmes arrivaient — 7 s sur un téléphone en 4G lente)
+  if (!(serveur && uneZone.querySelector('.news-une'))) uneZone.innerHTML = R.une(une, { en: EN, sorte: 'actualite', photo: urlLegere(une.image_url), extrait: une.commentaire ? extraitTexte(texteBrutDepuis(une.commentaire), 180) : '' });
   uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirActuModal(0));
 
   const reste = data.slice(1);
