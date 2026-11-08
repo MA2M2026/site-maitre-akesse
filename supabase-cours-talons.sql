@@ -57,7 +57,7 @@ create policy "Cours de talons : l'équipe du site suit" on cours_talons for upd
 -- 30 000 la séance au départ ; l'agence l'ajuste jusqu'à 35 000 selon le lieu)
 drop function if exists cours_talons_montant(text);
 create or replace function cours_talons_montant(p_formule text, p_nb int default 1)
-returns int language sql immutable as $$
+returns int language sql immutable set search_path = public as $$
   select case p_formule when 'groupe' then 30000
     when 'prive_salle' then 25000 * greatest(1, least(30, coalesce(p_nb, 1)))
     when 'prive_exterieur' then 30000 * greatest(1, least(30, coalesce(p_nb, 1))) end;
