@@ -92,16 +92,13 @@ def repere_existants(html):
     return REPERE.findall(html)
 
 
-def marquer(chemin, page):
-    # (seulement les 5 pages prévues, dans le dossier du site : SonarCloud S2083)
-    # (SonarCloud, 07/11/2026) le fichier lu et écrit est TOUJOURS l'un des deux chemins fabriqués ici à partir de la
-    # liste PAGES, jamais celui reçu : aucune autre adresse ne peut être atteinte
-    permis = {str(RACINE / (p_ + '.html')): RACINE / (p_ + '.html') for p_ in PAGES}
-    permis.update({str(RACINE / 'en' / (p_ + '.html')): RACINE / 'en' / (p_ + '.html') for p_ in PAGES})
-    cible = permis.get(str(chemin.resolve()))
-    if page not in PAGES or cible is None or cible.stem != page:
-        raise ValueError('page non prévue : %s' % chemin)
-    chemin = cible
+def marquer(page, anglais):
+    # (SonarCloud S2083, 08/11/2026) aucun chemin n'est reçu : seulement le nom d'une des 5 pages prévues (PAGES) et la
+    # langue ; le chemin est fabriqué ici, dans le dossier du site, à partir de la liste. Aucune autre adresse possible.
+    if page not in PAGES:
+        raise ValueError('page non prévue : %s' % page)
+    nom = PAGES[PAGES.index(page)] + '.html'
+    chemin = (RACINE / 'en' / nom) if anglais else (RACINE / nom)
     html = chemin.read_text(encoding='utf-8')
     if repere_existants(html):
         return len(repere_existants(html))
@@ -149,6 +146,6 @@ def verifier():
 if __name__ == '__main__':
     if '--marquer' in sys.argv:
         for page in PAGES:
-            for chemin in (RACINE / (page + '.html'), RACINE / 'en' / (page + '.html')):
-                print('%s : %d repères' % (chemin.relative_to(RACINE), marquer(chemin, page)))
+            for anglais in (False, True):
+                print('%s%s.html : %d repères' % ('en/' if anglais else '', page, marquer(page, anglais)))
     sys.exit(1 if verifier() else 0)

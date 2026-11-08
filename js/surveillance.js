@@ -124,12 +124,18 @@
         headers: { 'Content-Type': 'application/json', apikey: CLE_ANON, Authorization: 'Bearer ' + CLE_ANON, Prefer: 'return=minimal' },
         body: JSON.stringify({
           message: texte,
-          page: (location.pathname + location.search).slice(0, 200),
+          // (08/11/2026) avec la rubrique de l'Administration (#/site/…) ; les identifiants retirés : rien de personnel
+          page: (location.pathname + location.search + rubrique()).slice(0, 200),
           pile: pile,
           user_agent: (navigator.userAgent || '').slice(0, 300)
         })
       }).catch(function () {});
     } catch (e) { /* la surveillance ne doit jamais casser la page */ }
+  }
+  // rubrique ouverte (Administration, application) sans les identifiants (mannequin, candidature…) ni les recherches
+  function rubrique() {
+    const h = String(location.hash || '').split('?')[0];
+    return /^#\/[\w\/-]*$/.test(h) ? h.replace(/\/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, '/…').replace(/\/[^\/]*\d{3,}[^\/]*/g, '/…').slice(0, 80) : '';
   }
   window.signalerErreur = signaler;
 
