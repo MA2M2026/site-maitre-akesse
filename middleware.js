@@ -503,8 +503,8 @@ async function accueilRempli(requete, url) {
   // témoin seulement RENOUVELÉ par le serveur : la page le crée (js/accueil.js), sauf si le visiteur a refusé les cookies
   reponse.headers.set('x-ma2m-variant', tirage.groupe + '.' + tirage.visite);
   reponse.headers.set('Vary', (reponse.headers.get('Vary') || '') + ', Cookie');
-  // (page propre à ce visiteur : jamais gardée par un cache partagé ; robots : la page commune, gardée comme avant)
-  if (!tirage.robot) reponse.headers.set('Cache-Control', 'private, no-cache');
+  // (cache : même règle que les autres pages ; une copie gardée l'est par valeur du témoin — Vary: Cookie — et une
+  // réponse qui pose un témoin n'est pas gardée par le réseau de Vercel)
   if (!tirage.robot && !tirage.nouveau) reponse.headers.append('Set-Cookie', 'ma2m_v=' + tirage.groupe + '.' + Math.min(tirage.visite + 1, 999999) + '; Path=/; Max-Age=2592000; SameSite=Lax; Secure');
   return reponse;
 }
