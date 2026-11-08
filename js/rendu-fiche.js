@@ -90,7 +90,10 @@
     </section>` : '';
 
   const urlVideo = urlEmbedVideo(profil.video_url);
-  const urlVideoSure = urlHttpSure(profil.video_url);
+  // (08/11/2026, phase 3 V1 : une phrase écrite dans la case « lien vidéo » devenait un lien cassé vers le site) : seule
+  // une vraie adresse web (http(s)://… ou www.…) devient un lien
+  const texteVideo = String(profil.video_url || '').trim();
+  const urlVideoSure = /^https?:\/\//i.test(texteVideo) ? urlHttpSure(texteVideo) : /^www\.[^\s]+\.[a-z]{2,}/i.test(texteVideo) ? urlHttpSure('https://' + texteVideo) : null;
   const blocVideo = (urlVideo || urlVideoSure) ? `
     <section class="fiche-carte">
       <h3 class="fiche-carte-titre">${T('Vidéo', 'Video')}</h3>
