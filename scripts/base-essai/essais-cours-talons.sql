@@ -19,6 +19,14 @@ select essai((select statut = 'paiement_envoye' and montant = 30000 and referenc
 select essai(not exists (select 1 from cours_talons where id = '00000000-0000-0000-0000-0000000c0001'), 'serveur : l''identifiant envoyé par le visiteur est ignoré');
 select essai((select statut = 'plus_tard' and montant = 25000 from cours_talons where nom = 'Bintou'), 'serveur : plus tard → statut plus tard, 25 000 en salle');
 set role service_role;
+-- privé = prix PAR SÉANCE (décision du 08/11/2026) ; le groupe reste un forfait de 4 séances
+select formulaire_public_enregistrer('cours_talons', '{"formule":"prive_salle","nom":"Dix séances","telephone":"+2250700000011","age":25,"nb_seances":10}'::jsonb, '3.3.4.1');
+select essai((select montant = 250000 and nb_seances = 10 from cours_talons where nom = 'Dix séances'), 'privé en salle, 10 séances : 250 000');
+select formulaire_public_enregistrer('cours_talons', '{"formule":"prive_exterieur","nom":"Deux dehors","telephone":"+2250700000012","age":25,"nb_seances":2}'::jsonb, '3.3.4.2');
+select essai((select montant = 60000 from cours_talons where nom = 'Deux dehors'), 'privé à l''extérieur, 2 séances : 60 000 (au départ)');
+select formulaire_public_enregistrer('cours_talons', '{"formule":"groupe","nom":"Groupe neuf","telephone":"+2250700000013","age":25,"nb_seances":9}'::jsonb, '3.3.4.3');
+select essai((select montant = 30000 and nb_seances = 4 from cours_talons where nom = 'Groupe neuf'), 'groupe : toujours 30 000 les 4 séances, quel que soit le nombre envoyé');
+select essai_refuse($$select formulaire_public_enregistrer('cours_talons', '{"formule":"prive_salle","nom":"Trop","telephone":"+2250700000014","age":25,"nb_seances":40}'::jsonb, '3.3.4.4')$$, 'privé : plus de 30 séances refusé');
 select essai_refuse($$select formulaire_public_enregistrer('cours_talons', '{"formule":"groupe","nom":"Mineure","telephone":"+2250700000003","age":15}'::jsonb, '3.3.3.5')$$, 'mineure sans téléphone d''un parent : refusée');
 select essai(formulaire_public_enregistrer('cours_talons', '{"formule":"groupe","nom":"Mineure","telephone":"+2250700000003","age":15,"parent_nom":"Mme Yao","parent_telephone":"+2250700000004"}'::jsonb, '3.3.3.5') is not null, 'mineure avec un parent : acceptée');
 select essai_refuse($$select formulaire_public_enregistrer('cours_talons', '{"formule":"vip","nom":"X","telephone":"0700000000"}'::jsonb, '3.3.3.6')$$, 'formule inconnue : refusée');

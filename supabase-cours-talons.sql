@@ -3,8 +3,8 @@
 -- =====================================================================================
 -- Une page publique pour les personnes qui veulent seulement apprendre à marcher en talons (concours de Miss
 -- ou de beauté, élégance, prestance), SANS intégrer l'agence. Deux formules : en groupe (chaque dimanche de
--- 15 h à 18 h, 30 000 FCFA les 4 séances) ou privé (séance de 2 h : 25 000 FCFA en salle à Riviera Faya,
--- 30 000 à 35 000 FCFA ailleurs). La personne envoie 2 ou 3 photos et une vidéo de sa marche (seulement pour
+-- 15 h à 18 h, 30 000 FCFA les 4 séances) ou privé, payé PAR SÉANCE de 2 h (25 000 FCFA la séance en salle à
+-- Riviera Faya, 30 000 à 35 000 FCFA la séance ailleurs ; la personne choisit son nombre de séances). La personne envoie 2 ou 3 photos et une vidéo de sa marche (seulement pour
 -- évaluer son niveau), puis paie par Wave maintenant ou plus tard.
 -- Les visiteurs n'écrivent JAMAIS directement dans la table : l'inscription passe par le serveur du site
 -- (api/portail.js, action « formulaire », anti-robots Turnstile) → formulaire_public_enregistrer (étendue
@@ -15,6 +15,7 @@ create table if not exists cours_talons (
   id uuid primary key default gen_random_uuid(),
   cree_le timestamptz not null default now(),
   formule text not null check (formule in ('groupe', 'prive_salle', 'prive_exterieur')),
+  nb_seances int not null default 1 check (nb_seances between 1 and 30),
   nom text not null check (length(trim(nom)) between 2 and 120),
   telephone text not null check (length(telephone) between 6 and 30),
   age int check (age between 8 and 90),
@@ -40,21 +41,26 @@ create table if not exists cours_talons (
   ecriture_id uuid references compta_ecritures(id) on delete set null,
   check (age is null or age >= 18 or parent_telephone is not null)
 );
+alter table cours_talons add column if not exists nb_seances int not null default 1 check (nb_seances between 1 and 30);
 create index if not exists cours_talons_statut on cours_talons (statut, cree_le desc);
 
 alter table cours_talons enable row level security;
 revoke all on cours_talons from anon, authenticated;
 grant select on cours_talons to authenticated;
-grant update (statut, montant, date_seance, notes) on cours_talons to authenticated;
+grant update (statut, montant, nb_seances, date_seance, notes) on cours_talons to authenticated;
 drop policy if exists "Cours de talons : l'équipe du site lit" on cours_talons;
 create policy "Cours de talons : l'équipe du site lit" on cours_talons for select using (portail_peut('site'));
 drop policy if exists "Cours de talons : l'équipe du site suit" on cours_talons;
 create policy "Cours de talons : l'équipe du site suit" on cours_talons for update using (portail_peut('site')) with check (portail_peut('site'));
 
--- Montant d'une formule (le privé à l'extérieur part de 30 000 ; l'agence l'ajuste jusqu'à 35 000 selon le lieu)
-create or replace function cours_talons_montant(p_formule text)
+-- Montant d'une inscription : le groupe est un forfait (4 séances) ; le privé se paie à la séance (à l'extérieur,
+-- 30 000 la séance au départ ; l'agence l'ajuste jusqu'à 35 000 selon le lieu)
+drop function if exists cours_talons_montant(text);
+create or replace function cours_talons_montant(p_formule text, p_nb int default 1)
 returns int language sql immutable as $$
-  select case p_formule when 'groupe' then 30000 when 'prive_salle' then 25000 when 'prive_exterieur' then 30000 end;
+  select case p_formule when 'groupe' then 30000
+    when 'prive_salle' then 25000 * greatest(1, least(30, coalesce(p_nb, 1)))
+    when 'prive_exterieur' then 30000 * greatest(1, least(30, coalesce(p_nb, 1))) end;
 $$;
 
 -- Enregistrement des formulaires publics (supabase-anti-robots.sql), avec les cours de talons en plus.
@@ -82,7 +88,8 @@ begin
     ligne := ligne - array['id', 'cree_le', 'statut', 'montant', 'date_seance', 'notes', 'valide_le', 'valide_par', 'ecriture_id'];
     ligne := ligne || jsonb_build_object(
       'statut', case when ligne->>'decision' = 'maintenant' then 'paiement_envoye' else 'plus_tard' end,
-      'montant', cours_talons_montant(ligne->>'formule'));
+      'nb_seances', case when ligne->>'formule' = 'groupe' then 4 else coalesce((ligne->>'nb_seances')::int, 1) end,
+      'montant', cours_talons_montant(ligne->>'formule', case when ligne->>'formule' = 'groupe' then 1 else coalesce((ligne->>'nb_seances')::int, 1) end));
     if not limiter_soumissions_publiques_ip_de('cours_talons', 30, 3, p_ip) then raise exception 'LIMITE_ATTEINTE'; end if;
   else
     if not limiter_soumissions_publiques_ip_de('contact', 30, 3, p_ip) then raise exception 'LIMITE_ATTEINTE'; end if;
@@ -115,7 +122,9 @@ begin
   if d.statut in ('inscrite', 'terminee') and d.ecriture_id is not null then return d; end if;
   if coalesce(p_montant, d.montant, 0) <= 0 then raise exception 'Montant manquant.'; end if;
   select id into compte from compta_comptes where type = case when p_especes then 'caisse' else 'wave' end order by actif desc, cree_le limit 1;
-  libelle_formule := case d.formule when 'groupe' then 'en groupe (4 dimanches)' when 'prive_salle' then 'privé en salle' else 'privé à l''extérieur' end;
+  libelle_formule := case d.formule when 'groupe' then 'en groupe (4 dimanches)'
+    when 'prive_salle' then 'privé en salle, ' || d.nb_seances || ' séance' || case when d.nb_seances > 1 then 's' else '' end
+    else 'privé à l''extérieur, ' || d.nb_seances || ' séance' || case when d.nb_seances > 1 then 's' else '' end end;
   if compte is not null then
     insert into compta_ecritures (sens, date_op, montant, compte_id, categorie, libelle, tiers)
     values ('recette', current_date, coalesce(p_montant, d.montant), compte, 'cours_talons', 'Cours de talons ' || libelle_formule, d.nom)
