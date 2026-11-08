@@ -151,7 +151,8 @@ function texteSimple(html, max) {
 }
 
 // corps : envoi (POST, fonctions « rpc/… ») ; null si la base répond une erreur
-async function lireSupabase(chemin, corps, delai) {
+// (strict : une erreur de la base autre que « n'existe pas encore » (404) est une erreur, pas un « rien »)
+async function lireSupabase(chemin, corps, delai, strict) {
   const controleur = new AbortController();
   const minuteur = setTimeout(() => controleur.abort(), delai || 2500);
   try {
@@ -161,7 +162,7 @@ async function lireSupabase(chemin, corps, delai) {
       body: corps ? JSON.stringify(corps) : undefined,
       signal: controleur.signal
     });
-    if (!rep.ok) return null;
+    if (!rep.ok) { if (strict && rep.status !== 404) throw new Error('base ' + rep.status); return null; }
     return await rep.json();
   } finally {
     clearTimeout(minuteur);
@@ -249,7 +250,8 @@ async function lireDonneesAccueil() {
     profils.length ? lireSupabase('model_photos?select=model_id,url_miniature,url_moyenne&url_moyenne=not.is.null&model_id=in.(' + profils.map(p => p.id).join(',') + ')', null, 3000).catch(() => null) : [],
     // (site vivant, 08/11/2026) qui peut paraître en couverture, « À la une » et dans les visages : majeures, ou
     // mineures avec l'accord donné par un parent (supabase-site-vivant.sql) ; null tant que le fichier n'est pas collé
-    lireSupabase('rpc/vitrine_eligibles', {}, 3000).catch(() => null)]);
+    // (prudence : base en panne ou trop lente → personne plutôt qu'une mineure sans accord ; fichier pas collé → null)
+    lireSupabase('rpc/vitrine_eligibles', {}, 3000, true).catch(() => [])]);
   if (!couvertures) throw new Error('base : photos');
   const photoDe = {};
   couvertures.forEach(c => { if (c.url) photoDe[c.model_id] = c; });
@@ -502,6 +504,8 @@ async function accueilRempli(requete, url) {
   // (site vivant) visite suivante : numéro + 1 ; la page dépend du témoin (Vary), en-tête de contrôle x-ma2m-variant
   reponse.headers.set('x-ma2m-variant', tirage.groupe + '.' + tirage.visite);
   reponse.headers.set('Vary', (reponse.headers.get('Vary') || '') + ', Cookie');
+  // (page propre à ce visiteur : jamais gardée par un cache partagé ; robots : la page commune, gardée comme avant)
+  if (!tirage.robot) reponse.headers.set('Cache-Control', 'private, no-cache');
   if (!tirage.robot) reponse.headers.append('Set-Cookie', 'ma2m_v=' + tirage.groupe + '.' + Math.min(tirage.visite + 1, 999999) + '; Path=/; Max-Age=2592000; SameSite=Lax; Secure');
   return reponse;
 }

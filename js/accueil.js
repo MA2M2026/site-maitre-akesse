@@ -129,7 +129,9 @@
     // (site vivant, 08/11/2026) qui peut paraître en couverture, « À la une » et dans les visages (supabase-site-vivant.sql)
     const { data: eligibles, error: sansVitrine } = await sb.rpc('vitrine_eligibles');
     return { profils: profils.filter(p => photoDe[p.id]).map(p => Object.assign({ photo: photoDe[p.id].url, petite: photoDe[p.id].url_petite || null }, p)), nombre: profils.length,
-      vitrine: !sansVitrine && Array.isArray(eligibles) ? eligibles.map((x) => x.model_id) : undefined };
+      // (fichier pas encore collé : toutes, comme avant ; autre erreur de la base : personne, par prudence pour les mineures)
+      vitrine: sansVitrine ? (sansVitrine.code === 'PGRST202' || /Could not find the function/.test(sansVitrine.message || '') ? undefined : [])
+        : Array.isArray(eligibles) ? eligibles.map((x) => x.model_id) : [] };
   }
   // photo de couverture posée par le serveur, en échec avant l'arrivée de la roue de secours
   // (js/photos.js) : on la redemande par le relais

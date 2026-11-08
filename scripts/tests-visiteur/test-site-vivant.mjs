@@ -18,7 +18,7 @@ let vitrine = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6'];
 globalThis.fetch = async (u) => {
   u = String(u); const json = (o) => new Response(JSON.stringify(o), { headers: { 'content-type': 'application/json' } });
   if (u.includes('supabase.co')) {
-    if (u.includes('rpc/vitrine_eligibles')) return vitrine ? json(vitrine.map((id) => ({ model_id: id }))) : new Response('{"code":"PGRST202"}', { status: 404 });
+    if (u.includes('rpc/vitrine_eligibles')) return vitrine === 'panne' ? new Response('{"message":"erreur"}', { status: 503 }) : vitrine ? json(vitrine.map((id) => ({ model_id: id }))) : new Response('{"code":"PGRST202"}', { status: 404 });
     if (/mot_responsable|casting_projets|partenaires|instagram_posts_cache|agenda_public|reglages_site|model_photos\?|traductions_en/.test(u)) return json([]);
     if (u.includes('model_profiles')) return json(profils);
     return json(profils.map((p) => ({ model_id: p.id, url: CF + p.id + '/miniatures/1-a-w.jpg', url_petite: null })));
@@ -68,6 +68,9 @@ for (const [nom, ua] of [['Google', 'Mozilla/5.0 (compatible; Googlebot/2.1; +ht
 // première visite d'un navigateur : visages dans l'ordre de base (comme les robots)
 const base = grilles((await visite('WhatsApp/2.23.20.0 A')).h);
 ok(grilles((await visite(NAV)).h) === base, 'première visite : les visages dans le même ordre que pour les robots');
+// caches honnêtes : la page d'un visiteur lui est propre (jamais gardée par un cache partagé) ; robots : page commune
+const cacheVisiteur = (await visite(NAV, 'ma2m_v=1.2')).r.headers.get('cache-control'), cacheRobot = (await visite('WhatsApp/2.23.20.0 A')).r.headers.get('cache-control');
+ok(/private/.test(cacheVisiteur) && /public/.test(cacheRobot) && /Cookie/.test((await visite(NAV)).r.headers.get('vary')), 'caches : page du visiteur « private », page des robots « public », Vary: Cookie (' + cacheVisiteur + ' / ' + cacheRobot + ')');
 ok(grilles((await visite(NAV, 'ma2m_v=3.4')).h) !== base, 'visite suivante : l’ordre des visages change');
 // fichier pas collé : comme avant (toutes)
 vitrine = null;
@@ -78,5 +81,13 @@ const mw2 = (await import(pathToFileURL(copie2).href)).default;
 const vuesAvant = new Set();
 for (let i = 0; i < 40; i++) { const r = await mw2(new Request('https://www.maitreakessemodelmanagement.com/', { headers: { 'user-agent': NAV, cookie: 'ma2m_v=2.' + (i + 1) } })); vuesAvant.add(couv(await r.text())); }
 ok(vuesAvant.has('m1'), 'fichier SQL pas encore collé : toutes les mannequins, comme avant');
+// base en panne au moment de lire la vitrine : par prudence, personne (jamais la mineure sans accord)
+vitrine = 'panne';
+const copie3 = path.join(racine, 'mw-vivant3-' + process.pid + '.mjs'); fs.copyFileSync(path.join(racine, 'middleware.js'), copie3);
+process.on('exit', () => { try { fs.unlinkSync(copie3); } catch (e) { /* déjà retirée */ } });
+const mw3 = (await import(pathToFileURL(copie3).href)).default;
+let enPanne = false;
+for (let i = 0; i < 20; i++) { const r = await mw3(new Request('https://www.maitreakessemodelmanagement.com/', { headers: { 'user-agent': NAV, cookie: 'ma2m_v=4.' + (i + 1) } })); if (r && /SANSACCORD/.test((await r.text()).replace(/<script type="application\/json"[\s\S]*?<\/script>/g, ''))) enPanne = true; }
+ok(!enPanne, 'base en panne au moment de lire la vitrine : la mineure sans accord n’apparaît pas (prudence)');
 console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
 process.exit(ko ? 1 : 0);
