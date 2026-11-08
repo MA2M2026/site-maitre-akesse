@@ -968,7 +968,9 @@ async function quiSommesNousRempli(url, anglais) {
     // (ouverture : 640 px sur téléphone, 1080 px sur grand écran ; cartes du bas : toutes « lazy », même la première)
     const imgs = (urls, alt, largeur, basDePage) => urls.map((u, i) => '<img src="' + echapper(photoReduite(u, largeur)) + '"' +
       (largeur === 1080 ? ' srcset="' + echapper(photoReduite(u, 640)) + ' 640w, ' + echapper(photoReduite(u, 1080)) + ' 1080w" sizes="100vw"' : '') +
-      ' alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : (basDePage ? ' loading="lazy"' : '') + ' class="actif"') + '>').join('');
+      ' alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : (basDePage ? ' loading="lazy"' : '') + ' class="actif"') +
+      // (la suivante préparée et la dernière déjà là pour le fondu, comme quand la page s'anime : mêmes photos avec ou sans programme)
+      (i === 1 ? ' class="suivant"' : i > 1 && i === urls.length - 1 ? ' class="precedent"' : '') + '>').join('');
     const toutes = []; evenements.forEach((e) => urlsDe(e).forEach((u) => toutes.push(u)));
     if (toutes.length) {
       html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(melanger(toutes).slice(0, 8), '', 1080) + '</div>')
