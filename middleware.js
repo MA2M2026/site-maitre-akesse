@@ -458,12 +458,14 @@ async function accueilRempli(requete, url) {
     .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.moyenne || une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy">');
   if (donnees.nombre) html = texteElement(html, 'couv-nombre', R.nombreAccueil(donnees.nombre, anglais));
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
-  html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
+  // (08/11/2026) la version nette directement, quand elle est connue : avant, la miniature partait d'abord puis la page
+  // la remplaçait par la version nette — deux photos, et la grande arrivait tard (mesuré par Lighthouse)
+  html = html.replace(marque, () => '<img id="couv-img" class="visible" src="' + echapper(photoLegere(couv.moyenne || couv.photo)) + '" alt="' + echapper(couv.full_name || '') + '" data-modele="' + echapper(couv.id) + '"')
     .replace('<main', () => '<script type="application/json" id="accueil-donnees">' + jsonSur(donnees) + '</script>\n<main');
   html = magazineComplet(html, donnees, anglais, une, couv, photoDe);
   // (W7, 02/11/2026) la photo de couverture annoncée tout en haut de l'en-tête : le téléphone la demande dès la
   // première seconde, avant les styles et les programmes (c'est la plus grande image de la page, mesurée par Lighthouse)
-  html = photoAnnoncee(html, photoLegere(couv.photo));
+  html = photoAnnoncee(html, photoLegere(couv.moyenne || couv.photo));
   const blocEn = await blocTraductions(url);
   if (blocEn) html = html.replace('<main', () => blocEn.trim() + '\n<main');
   return reponseHtml(html, page, url);
