@@ -394,3 +394,7 @@
   .qsn-bandeau-piste, .qsn-valeurs-liste li > * { transform: none; }
   .qsn-visages-inverse { display: none; }
 }
+/* (07/11/2026, vitesse) dans un diaporama, seules la photo affichée, la précédente (fondu) et la suivante (préparée)
+   existent pour le navigateur : les autres, « lazy » et cachées, ne sont téléchargées qu'à leur tour */
+.qsn-diaporama img:not(.actif):not(.precedent):not(.suivant),
+.qsn-evenement-photo img:not(.actif):not(.precedent):not(.suivant) { display: none; }

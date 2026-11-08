@@ -45,6 +45,9 @@
       });
       // image suivante : l'effet de volet et de zoom repart de zéro
       requestAnimationFrame(() => img.classList.add('actif'));
+      // (07/11/2026) la photo d'après est préparée (chargée) pendant que celle-ci s'affiche ; les autres attendent
+      presentes.forEach((x) => x.classList.remove('suivant'));
+      if (presentes.length > 1) presentes[(n + 1) % presentes.length].classList.add('suivant');
       n++;
     };
     // On démarre avec la première photo qui arrive (une photo en erreur ne bloque rien).
@@ -138,7 +141,9 @@
     const fig = img && img.closest('.qsn-portrait');
     if (!img || !fig) return;
     img.addEventListener('load', () => { img.hidden = false; fig.classList.add('avec-photo'); }, { once: true });
-    img.src = urlLegere(data.photo_url);
+    // (07/11/2026) photo déjà posée par le serveur, à la taille de l'écran : on ne la retélécharge pas en grand
+    if (/\/_vercel\/image/.test(img.getAttribute('src') || '')) { if (img.complete && img.naturalWidth) { img.hidden = false; fig.classList.add('avec-photo'); } }
+    else img.src = urlLegere(data.photo_url);
     if (data.nom) document.getElementById('qsn-portrait-nom').textContent = data.nom;
   }
 

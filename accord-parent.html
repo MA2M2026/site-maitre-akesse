@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<!-- « Accord du parent » (08/11/2026, site vivant, décision de la propriétaire) : ouverte depuis le lien personnel envoyé
+     au parent d'une mannequin mineure (?j=…), sans compte. Le parent accepte (avec son nom) que la photo de sa fille
+     paraisse sur l'accueil du site, ou retire son accord. js/accord-parent.js, supabase-site-vivant.sql -->
+<script src="/js/surveillance.js?v=e030b7f1"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accord du parent | Maître Akesse Model Management</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Accord d'un parent pour la photo d'une mannequin mineure sur l'accueil du site.">
+<link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="/css/menu.css?v=c97a207f">
+<link rel="stylesheet" href="/css/style.css?v=296e46ec">
+<link rel="stylesheet" href="/css/jetons.css?v=60171933">
+<link rel="stylesheet" href="/css/charte-ma2m.css?v=2be99f74">
+<link rel="stylesheet" href="/css/bouton-ma2m.css?v=c65b8b41">
+<link rel="stylesheet" href="/css/places.css?v=fa55678c">
+<script src="/js/bouton-appui.js?v=bedca56e" defer></script>
+<script src="/js/supabase-config.js?v=16708773" defer></script>
+<script src="/js/lien-public.js?v=cb582da9" defer></script>
+<script src="/js/accord-parent.js?v=e760ffba" defer></script>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<meta name="theme-color" content="#7C2128">
+</head>
+<body class="page-introuvable">
+<main class="introuvable places">
+  <a href="/" class="introuvable-logo"><img src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="220" height="67"></a>
+  <p class="eyebrow">Accord du parent</p>
+  <h1 id="ap-titre">Votre accord<span class="oeil">.</span></h1>
+  <p class="introuvable-texte" id="ap-texte" role="status">Chargement…</p>
+  <div class="pl-etat" id="ap-etat" role="status" aria-live="polite" hidden></div>
+  <form id="ap-form" class="ap-form" hidden>
+    <label for="ap-nom">Votre nom complet (parent)</label>
+    <input id="ap-nom" name="nom" autocomplete="name" maxlength="120" required>
+    <div class="introuvable-liens"><button type="submit" class="btn btn--principal" id="ap-accepter">✅ J’accepte</button></div>
+  </form>
+  <div class="introuvable-liens" id="ap-retirer-bloc" hidden><button type="button" class="btn" id="ap-retirer">Retirer mon accord</button></div>
+  <p class="introuvable-texte">Une question ? WhatsApp <a href="https://wa.me/2250545656687">+225 05 45 65 66 87</a></p>
+</main>
+</body>
+</html>

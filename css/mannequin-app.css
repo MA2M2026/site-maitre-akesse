@@ -279,4 +279,6 @@ body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; bo
 body.ap-page-paiements .mp-mois.conge { background: #FFFFFF; color: #595959; box-shadow: none; border: 1px dashed #B9B9B9; }
 /* (07/11/2026) bouton toujours visible vers le récapitulatif (js/espace-mannequin.js, viewWizard) */
 body.ap-page-profil .aller-recap { margin: 14px 0 6px; }
-body.ap-page-profil .aller-recap .btn { width: 100%; white-space: normal; line-height: 1.3; padding: 14px 16px; }
+body.ap-page-profil .aller-recap .btn { width: 100%; white-space: normal; line-height: 1.3; padding: 14px 16px;
+  /* (08/11/2026, batterie : blanc sur blanc à cause d'une règle plus générale) rouge, texte blanc, bien lisible */
+  background: var(--rouge-mat); color: #FFFFFF; border: 2px solid #FFFFFF; }

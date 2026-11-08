@@ -15,3 +15,7 @@
 .pl-case.nouvelle { animation: pl-arrivee 0.6s ease-out; }
 @keyframes pl-arrivee { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pl-case.nouvelle { animation: none; } }
+/* page « Accord du parent » (accord-parent.html, 08/11/2026) : même présentation que « Places limitées » */
+.ap-form { width: 100%; max-width: 420px; margin: 18px auto 0; text-align: left; }
+.ap-form label { display: block; font-weight: 600; margin-bottom: 6px; }
+.ap-form input { width: 100%; box-sizing: border-box; font-size: 16px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--rouge-profond-a10, #ccc); }
