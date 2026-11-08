@@ -335,17 +335,6 @@ section { padding: 5rem 0; }
 }
 .profil-hero-contenu p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
 @media (max-width: 640px) { .profil-hero-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; } }
-/* Fiche sur ordinateur (08/11/2026, phase 3, revue « directeur artistique ») : la photo, presque toujours en
-   portrait, était recadrée en largeur — on voyait le mur du fond et le visage était coupé sous le nom. Elle est
-   maintenant montrée ENTIÈRE, à droite, sur le fond noir ; le nom et les informations à gauche, alignés sur le
-   reste de la page (et plus sous la bulle WhatsApp). Téléphone et tablette : inchangés. */
-@media (min-width: 900px) {
-  .profil-hero-fullbleed img { object-fit: contain; object-position: 82% center; }
-  /* (la grande photo, posée par-dessus la petite photo d'attente, a son propre fond noir : les deux n'ont pas toujours
-     le même format, la petite dépassait sur le côté) */
-  .profil-hero-fullbleed img:not(.hero-apercu) { background: var(--voile-photo-a100); }
-  .profil-hero-contenu { padding-left: max(clamp(1.6rem, 5vw, 4rem), calc((100vw - 1200px) / 2 + var(--marge, 1.5rem))); max-width: calc(50vw + 140px); }
-}
 /* Fiche sur téléphone (08/11/2026, phase 3 V1) : le grand vide rouge sous le menu (5 rem au-dessus de « ← Nos
    mannequins », 2 rem dessous) poussait le nom de la mannequin tout en bas de l'écran, sous la bande de l'application */
 @media (max-width: 640px) {
