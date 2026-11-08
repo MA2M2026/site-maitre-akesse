@@ -46,3 +46,24 @@ l'autre conversation avant chaque mise en ligne.
 | 50–62 s | « Ou les cours privés, de deux heures : vingt-cinq mille francs dans notre salle… ou de trente à trente-cinq mille francs, chez vous ou à l'endroit de votre choix. » | Carte « Cours privé » en deux options |
 | 62–75 s | « Pour vous inscrire, c'est simple : choisissez votre formule, envoyez-nous deux ou trois photos et une courte vidéo de votre marche… puis réglez votre participation par Wave. » | 3 étapes, barre de progression, logo Wave |
 | 75–82 s | « Votre élégance commence ici. Cliquez sur « Je m'inscris ». » | Mannequin en pied, bouton « Je m'inscris » |
+
+## Conception technique (08/11/2026) — branche de travail `cours-talons`
+- **Base** (`supabase-cours-talons.sql`, ajout seulement, rejouable) : table `cours_talons` (formule groupe / prive_salle /
+  prive_exterieur ; nom, téléphone, âge, quartier, objectif, concours + date, niveau, disponibilités, adresse ; parent si
+  mineure ; photos (liens Drive) + vidéo ; `decision` maintenant / plus_tard ; `reference_wave` ; `statut` nouvelle ·
+  plus_tard · paiement_envoye · inscrite · terminee · annulee ; montant ; notes ; validée le / par). RLS : lecture et
+  modification réservées à l'équipe du site (`portail_peut('site')`) ; AUCUNE écriture directe des visiteurs : l'inscription
+  passe par `/api/portail` action `formulaire` (anti-robots Turnstile) → `formulaire_public_enregistrer` étendue à
+  `cours_talons` (limite par minute et par adresse, statut imposé nouvelle / plus_tard / paiement_envoye).
+  Validation du paiement : RPC `cours_talons_valider` (statut inscrite + recette « Cours de talons » en Compta).
+- **Photos et vidéo** : même chemin que la candidature (`envoyerPhotosVersDrive` / `envoyerVideoVersDrive`, js/app.js).
+- **Paiement** : lien Wave de l'agence `https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=<montant>` (le même que les
+  mensualités) ; groupe 30 000 ; privé salle 25 000 ; privé extérieur 30 000 (35 000 selon la distance, ajusté par l'agence).
+- **Pages** : `cours-talons.html` (+ `en/cours-talons.html`), menu « Cours de talons » + étiquette « Ouvert à toutes »
+  (js/gabarit.js), vidéo verticale en haut (assets/cours-talons/atelier-talons.mp4), cartes, questions fréquentes,
+  encadré « Vous voulez intégrer l'agence ? », formulaire en 4 étapes.
+- **Administration** : nouvelle pièce `js/admin/site-cours-talons.js` (menu « Cours de talons ») : liste par état, fiche
+  (photos, vidéo), boutons Valider le paiement / Envoyer le lien de paiement (WhatsApp prérempli) / Terminée / Annuler.
+- **Tests** : `essais-cours-talons.sql`, `test-cours-talons.js` (visiteur : 4 étapes, photos, vidéo, maintenant / plus
+  tard, mineure ; administration : liste, validation), batterie complète, /code-review, mise en ligne par la conversation
+  de la propriétaire (prévenir l'autre conversation avant).
