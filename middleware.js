@@ -209,7 +209,9 @@ const ATTENTE_ACCUEIL = 800;
 let memoireAccueil = null;  // { quand, donnees }
 let lectureAccueil = null;  // lecture de la base en cours (partagée par les visites simultanées)
 // Photo envoyée à la taille de l'écran par l'outil d'images de Vercel (07/11/2026, vitesse de « Qui sommes-nous » :
-// les photos d'événements sont les originaux, 300 à 650 Ko chacune) ; largeurs permises : vercel.json (640, 1080)
+// les photos d'événements sont les originaux, 300 à 650 Ko chacune) ; largeurs permises : vercel.json (640, 1080).
+// Seulement pour les photos SANS version réduite (événements, portrait) : l'offre gratuite de Vercel limite le nombre
+// de photos différentes transformées par mois ; les photos des mannequins ont déjà leurs versions (miniature, moyenne).
 function photoReduite(url, largeur) {
   const p = photoLegere(url);
   if (!p) return '';
@@ -932,7 +934,7 @@ async function quiSommesNousRempli(url, anglais) {
     lireSupabase('evenements?select=id,titre,lieu,image_url&order=date_evenement.desc', null, reste()),
     lireToutesSupabase('evenement_photos?select=id,evenement_id,url&order=id.asc', reste),
     lireSupabase('mot_responsable?id=eq.principal&select=nom,photo_url', null, reste()),
-    lireToutesSupabase('model_photos?select=id,url,url_moyenne,model_id,model_profiles!inner(published)&model_profiles.published=eq.true&order=id.asc', reste)
+    lireToutesSupabase('model_photos?select=id,url,url_moyenne,url_miniature,model_id,model_profiles!inner(published)&model_profiles.published=eq.true&order=id.asc', reste)
   ]).then(([evenements, photos, mots, photosMannequins]) => {
     if (![evenements, photos, mots, photosMannequins].every(Array.isArray)) return null;
     const parMannequin = new Map();
@@ -973,7 +975,7 @@ async function quiSommesNousRempli(url, anglais) {
     // visages : une photo par mannequin (tirée par la lecture), 16 au hasard, deux rangées (la 2e à l'envers)
     const visages = melanger(d.visages.filter((v) => v && (v.url || v.url_moyenne))).slice(0, 16);
     if (visages.length >= 4) {
-      const lien = (v, cache) => '<a href="mannequin.html?id=' + encodeURIComponent(v.model_id) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '><img src="' + echapper(photoReduite(v.url_moyenne || v.url, 640)) + '" alt="' + (anglais ? 'Model of the agency' : 'Mannequin de l\'agence') + '" decoding="async" loading="lazy"></a>';
+      const lien = (v, cache) => '<a href="mannequin.html?id=' + encodeURIComponent(v.model_id) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '><img src="' + echapper(photoLegere(v.url_miniature || v.url_moyenne || v.url)) + '" alt="' + (anglais ? 'Model of the agency' : 'Mannequin de l\'agence') + '" decoding="async" loading="lazy"></a>';
       const rangee = visages.map((v) => lien(v, false)).join('') + visages.map((v) => lien(v, true)).join('');
       const inverse = [...visages, ...visages].reverse().map((v) => lien(v, true)).join('');
       html = html.replace('<section class="qsn-visages" aria-label="Nos mannequins" hidden>', () => '<section class="qsn-visages" aria-label="Nos mannequins">')
