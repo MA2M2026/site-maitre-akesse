@@ -335,6 +335,12 @@ section { padding: 5rem 0; }
 }
 .profil-hero-contenu p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
 @media (max-width: 640px) { .profil-hero-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; } }
+/* Fiche sur téléphone (08/11/2026, phase 3 V1) : le grand vide rouge sous le menu (5 rem au-dessus de « ← Nos
+   mannequins », 2 rem dessous) poussait le nom de la mannequin tout en bas de l'écran, sous la bande de l'application */
+@media (max-width: 640px) {
+  section:has(> .container > a.mq-1) { padding-top: 1.1rem; }
+  section > .container > a.mq-1 + #contenu.u-mt-2 { margin-top: 0.9rem; }
+}
 /* Couverture cliquable : ouvre la galerie du Book. Pas de bouton/pastille en plus —
    essayé puis retiré à la demande de la propriétaire (inutile, on scrolle vers le Book). */
 .profil-hero-fullbleed.cliquable { cursor: zoom-in; }

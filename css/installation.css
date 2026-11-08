@@ -21,6 +21,18 @@
 .ma2m-installer-texte small { font-size: 12.5px; font-weight: 500; opacity: .92; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ma2m-installer-fleche { font-size: 20px; animation: ma2m-installer-saut 1.4s ease-in-out infinite; }
 .ma2m-installer-fermer { flex: none; width: 44px; font-size: 16px !important; padding: 0; }
+/* Site public (08/11/2026, phase 3 V1) : bande compacte à droite, à côté de la bulle WhatsApp (à gauche) ; elle ne
+   cache plus le nom de la mannequin ni les champs ; effacée le temps d'écrire dans un champ (clavier ouvert) */
+.ma2m-installer--site { left: auto; right: 12px; max-width: min(250px, calc(100vw - 96px)); margin: 0; gap: 4px; }
+.ma2m-installer--site button { border-radius: 14px; border-width: 1.5px; }
+.ma2m-installer--site .ma2m-installer-ouvrir { gap: 8px; padding: 6px 10px 6px 6px; }
+.ma2m-installer--site .ma2m-installer-ouvrir img { width: 32px; height: 32px; border-radius: 8px; }
+.ma2m-installer--site .ma2m-installer-texte b { font-size: 13.5px; }
+.ma2m-installer--site .ma2m-installer-texte small { font-size: 11px; }
+.ma2m-installer--site .ma2m-installer-fleche { font-size: 15px; }
+.ma2m-installer--site .ma2m-installer-fermer { width: 34px; font-size: 13px !important; }
+body.ma2m-saisie .ma2m-installer--site { opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity .2s, transform .2s, visibility .2s; }
+body.ma2m-installer-visible:has(.ma2m-installer--site)::after { height: 64px; }
 /* une place gardée en bas de la page : le bas du contenu n'est pas caché sous la bande */
 body.ma2m-installer-visible::after { content: ""; display: block; height: 96px; }
 @keyframes ma2m-installer-arrivee { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
