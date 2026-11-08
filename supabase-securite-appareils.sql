@@ -21,8 +21,11 @@ create or replace function portail_admin_ok()
 returns boolean language sql stable security definer set search_path = public, extensions, pg_temp as $$
   select portail_mfa_ok() and portail_appareil_ok();
 $$;
-revoke execute on function portail_admin_ok() from public, anon;
-grant execute on function portail_admin_ok() to authenticated;
+-- (correction du 08/11/2026) les VISITEURS (anon) doivent pouvoir l'appeler : la règle de lecture de « admins » l'appelle,
+-- et les règles publiques (fiches, photos publiées) lisent « admins ». Sans ce droit, le site n'affichait plus aucune
+-- mannequin ni photo. Pour un visiteur, elle répond toujours « non ».
+revoke execute on function portail_admin_ok() from public;
+grant execute on function portail_admin_ok() to anon, authenticated;
 
 -- 1 et 2. Règles (politiques) qui appellent portail_mfa_ok() : portail_admin_ok() à la place
 do $$
@@ -66,6 +69,7 @@ end $$;
 NOTIFY pgrst, 'reload schema';
 
 select case when to_regprocedure('portail_admin_ok()') is not null
+             and has_function_privilege('anon', 'portail_admin_ok()', 'EXECUTE')  -- (sinon le site public n'affiche plus rien)
              and not exists (select 1 from pg_policies where schemaname = 'public' and (qual ~ 'portail_mfa_ok\(\)' or with_check ~ 'portail_mfa_ok\(\)'))
              and not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                              where n.nspname = 'public' and p.prosecdef and p.proname not like 'portail\_%' and p.proname not like 'staff\_%'

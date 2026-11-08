@@ -8,6 +8,9 @@
 
 -- 1. Exclusion par l'agence
 alter table model_profiles add column if not exists exclue_vitrine boolean not null default false;
+-- (relecture du 08/11/2026) les colonnes de model_profiles sont ouvertes une par une à la lecture (Extension 131) :
+-- l'agence doit pouvoir lire celle-ci (bloc « Accueil du site » de l'Administration). Rien de personnel.
+grant select (exclue_vitrine) on model_profiles to authenticated;
 
 -- 2. Accord des parents (une ligne par mannequin mineure ; le lien personnel porte le jeton)
 create table if not exists accords_parents (
@@ -94,5 +97,5 @@ NOTIFY pgrst, 'reload schema';
 
 select case when (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
                   and p.proname in ('accord_parent_valide', 'vitrine_eligibles', 'accord_parent_demander', 'accord_parent_lire', 'accord_parent_repondre')) = 5
-              and exists (select 1 from information_schema.columns where table_name = 'model_profiles' and column_name = 'exclue_vitrine')
+              and has_column_privilege('authenticated', 'public.model_profiles', 'exclue_vitrine', 'SELECT')
             then '✅ Site vivant installé (Extension 157)' else '❌ Site vivant incomplet : recollez tout le fichier' end as controle;
