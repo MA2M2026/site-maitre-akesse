@@ -26,6 +26,11 @@ function identifiantAppareilPortail() {
   }
   return id;
 }
+// En-tête de l'appareil pour les fonctions du serveur (api/) : seulement dans l'Administration (08/11/2026,
+// Extension 158 : le serveur vérifie aussi les verrous de l'appareil pour les actions d'administration)
+function enTeteAppareil() {
+  return document.documentElement.hasAttribute('data-portail') ? { 'x-appareil': identifiantAppareilPortail() } : {};
+}
 const optionsAuthSupabase = document.documentElement.hasAttribute('data-portail')
   ? { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
       global: { headers: { 'x-appareil': identifiantAppareilPortail() } } }

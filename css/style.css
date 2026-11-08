@@ -50,7 +50,7 @@
   }
   /* moins d'animations demandé : les blocs qui « apparaissent » au défilement sont visibles d'emblée
      (20/10/2026 : ils restaient transparents le temps d'être repérés à l'écran) */
-  .reveal { opacity: 1 !important; transform: none !important; }
+  .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
 }
 
 * { box-sizing: border-box; }
@@ -178,6 +178,19 @@ p { max-width: 62ch; color: var(--texte-corps); }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 .reveal-delay-1.visible { transition-delay: 0.1s; }
 .reveal-delay-2.visible { transition-delay: 0.2s; }
+/* Haut de page (08/11/2026, phase 3 V1 : sur téléphone lent, le titre et la phrase d'introduction restaient cachés
+   jusqu'à l'arrivée des programmes — 8 s sur les Actualités, mesuré) : leur apparition est faite par la feuille de
+   style seule, tout de suite, avec le même effet. Idem pour la grande carte « À la une » des actualités et événements.
+   (départ à 0,01 d'opacité, pas 0 : le navigateur compte l'élément comme affiché dès la première image) */
+main > section:first-of-type .reveal, main > .agenda-ouverture .reveal, .une-reservee > .reveal {
+  opacity: 1; transform: none; animation: ma2m-entree 0.9s var(--transition-douce) both;
+}
+main > section:first-of-type .reveal-delay-1, main > .agenda-ouverture .reveal-delay-1 { animation-delay: 0.1s; }
+main > section:first-of-type .reveal-delay-2, main > .agenda-ouverture .reveal-delay-2 { animation-delay: 0.2s; }
+@keyframes ma2m-entree { from { opacity: 0.01; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+/* (et les 4 premières cartes des grilles : la page des partenaires attendait 5 s le texte de la première) */
+.news-grille > .reveal:nth-child(-n+4) { opacity: 1; transform: none; animation: ma2m-entree 0.9s var(--transition-douce) both; }
+.news-grille > .reveal:nth-child(2) { animation-delay: 0.08s; } .news-grille > .reveal:nth-child(3) { animation-delay: 0.16s; } .news-grille > .reveal:nth-child(4) { animation-delay: 0.24s; }
 
 /* ---------- Sections génériques ---------- */
 
@@ -322,6 +335,34 @@ section { padding: 5rem 0; }
 }
 .profil-hero-contenu p { color: var(--texte-corps); margin-top: 0.6rem; font-size: 1.02rem; letter-spacing: 0.04em; }
 @media (max-width: 640px) { .profil-hero-fullbleed { height: 78vh; height: 78dvh; min-height: 460px; } }
+/* Cadrage automatique (08/11/2026, demande de la propriétaire) : le visage au-dessus du nom, toujours en plein écran
+   (classe posée par js/rendu-fiche.js d'après js/cadrages-photos.js, écrit par scripts/cadrage-visages.py) */
+.profil-hero-fullbleed.cadrage-5 img { object-position: center 5%; }
+.profil-hero-fullbleed.cadrage-10 img { object-position: center 10%; }
+.profil-hero-fullbleed.cadrage-15 img { object-position: center 15%; }
+.profil-hero-fullbleed.cadrage-20 img { object-position: center 20%; }
+.profil-hero-fullbleed.cadrage-25 img { object-position: center 25%; }
+.profil-hero-fullbleed.cadrage-30 img { object-position: center 30%; }
+.profil-hero-fullbleed.cadrage-35 img { object-position: center 35%; }
+.profil-hero-fullbleed.cadrage-40 img { object-position: center 40%; }
+.profil-hero-fullbleed.cadrage-45 img { object-position: center 45%; }
+.profil-hero-fullbleed.cadrage-50 img { object-position: center 50%; }
+.profil-hero-fullbleed.cadrage-55 img { object-position: center 55%; }
+.profil-hero-fullbleed.cadrage-60 img { object-position: center 60%; }
+.profil-hero-fullbleed.cadrage-65 img { object-position: center 65%; }
+.profil-hero-fullbleed.cadrage-70 img { object-position: center 70%; }
+.profil-hero-fullbleed.cadrage-75 img { object-position: center 75%; }
+.profil-hero-fullbleed.cadrage-80 img { object-position: center 80%; }
+.profil-hero-fullbleed.cadrage-85 img { object-position: center 85%; }
+.profil-hero-fullbleed.cadrage-90 img { object-position: center 90%; }
+.profil-hero-fullbleed.cadrage-95 img { object-position: center 95%; }
+.profil-hero-fullbleed.cadrage-100 img { object-position: center 100%; }
+/* Fiche sur téléphone (08/11/2026, phase 3 V1) : le grand vide rouge sous le menu (5 rem au-dessus de « ← Nos
+   mannequins », 2 rem dessous) poussait le nom de la mannequin tout en bas de l'écran, sous la bande de l'application */
+@media (max-width: 640px) {
+  section:has(> .container > a.mq-1) { padding-top: 1.1rem; }
+  section > .container > a.mq-1 + #contenu.u-mt-2 { margin-top: 0.9rem; }
+}
 /* Couverture cliquable : ouvre la galerie du Book. Pas de bouton/pastille en plus —
    essayé puis retiré à la demande de la propriétaire (inutile, on scrolle vers le Book). */
 .profil-hero-fullbleed.cliquable { cursor: zoom-in; }
@@ -808,6 +849,8 @@ section { padding: 5rem 0; }
 }
 
 .selection-liste { display: grid; gap: 1px; background: var(--gris-clair); margin-bottom: 2.5rem; }
+/* place réservée pour les profils choisis (--selection-n posé par js/selection-etat.js ; une ligne = 116 px) */
+.selection-liste:empty { min-height: calc(var(--selection-n, 0) * 117px - 1px); background: transparent; }
 .selection-item { background: var(--creme); color: var(--rouge-profond); display: grid; grid-template-columns: 70px 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem; }
 .selection-item img { width: 70px; height: 90px; object-fit: cover; }
 /* min-width: 0 nécessaire — voir l'explication donnée pour .form-champ plus haut :
@@ -834,7 +877,7 @@ section { padding: 5rem 0; }
 .filtres-ligne { column-gap: 1.6rem; } /* écart entre les deux groupes (pas de trait : propre aussi quand ils passent à la ligne) */
 .filtres-plus { margin-bottom: 1.6rem; }
 .filtres-plus summary, .filtres-mesures-bouton {
-  cursor: pointer; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--texte-corps); padding: 0.6rem 0; list-style: none;
 }
 .filtres-plus summary::-webkit-details-marker { display: none; }
@@ -874,7 +917,7 @@ section { padding: 5rem 0; }
 }
 .filtres-avances .form-champ { margin-bottom: 0; gap: 0.5rem; justify-content: flex-end; } /* cases alignées même si un libellé passe sur 2 lignes */
 .filtres-avances .form-champ label {
-  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.16em; color: var(--texte-doux);
+  font-size: 0.75rem; font-weight: 500; letter-spacing: 0.16em; color: var(--texte-doux);
 }
 .filtres-avances input, .filtres-avances select {
   border: none; border-bottom: 1px solid var(--gris-clair); background: transparent; color: var(--texte-corps);
@@ -1519,7 +1562,7 @@ section { padding: 5rem 0; }
 @media (max-width: 640px) {
   #grille.medaillon-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
   .book-carte-legende { padding: 1.2rem 0.4rem 0.4rem; }
-  #grille .medaillon-nom { font-size: 0.7rem; line-height: 1.15; }
+  #grille .medaillon-nom { font-size: 0.75rem; line-height: 1.15; }  /* (12 px au moins : lisible, Lighthouse) */
   #grille .medaillon-info { display: none; }
 }
 
@@ -2210,8 +2253,10 @@ html.porte-deja-vue #porte-entree { display: none; }
   background: var(--c-rgba-255-255-255-0_025); border: 1px solid var(--c-rgba-255-255-255-0_08);
   border-radius: 14px; padding: clamp(1.1rem, 3vw, 1.6rem); min-width: 0;
 }
+/* (08/11/2026, phase 3 : titres des cartes passés de h3 à h2 — ordre des titres pour les lecteurs d'écran, Lighthouse —
+   même allure qu'avant : interligne fixé ici, la règle générale des h2 ne s'applique pas) */
 .fiche-carte-titre {
-  display: flex; align-items: center; gap: 0.5rem; margin: 0 0 1rem;
+  display: flex; align-items: center; gap: 0.5rem; margin: 0 0 1rem; line-height: 1.15;
   font-family: var(--texte); font-weight: 500; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--titre-clair);
 }
 .fiche-carte-titre > span:not(.fiche-ico) { margin-left: auto; color: var(--texte-doux); letter-spacing: 0.06em; text-transform: none; font-size: 0.78rem; font-weight: 400; }

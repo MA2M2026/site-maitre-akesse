@@ -46,6 +46,8 @@ async function serveur() {
     if (/rpc\/verifier_code_inscription/.test(u)) return json(corps.code_input === 'BON');
     if (/auth\/v1\/user/.test(u)) return json({ id: 'u1' });
     if (/rest\/v1\/admins/.test(u)) return json(admin ? [{ user_id: 'u1' }] : []);
+    // (Extension 158) appareil en règle selon la base
+    if (/rpc\/portail_admin_ok/.test(u)) return json(true);
     return json({});
   };
   const codeProtege = require(path.join(RACINE, 'api/code-protege.js'));

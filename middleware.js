@@ -32,6 +32,7 @@ import './js/formulaire-candidature-champs.js';
 import './js/rendu-agenda.js';
 import './js/parcours.js';
 import './js/tailles.js';
+import './js/cadrages-photos.js';
 import './js/rendu-fiche.js';
 
 export const config = {
@@ -484,7 +485,7 @@ async function accueilRempli(requete, url) {
   html = texteElement(html, 'une-info', R.infoUne(une, anglais));
   html = html.replace('<a href="mannequins.html" id="une-lien">', () => '<a href="' + echapper(R.lienFiche(une, anglais)) + '" id="une-lien">')
     // (version moyenne, la même que la page pose ensuite : pas de seconde photo à télécharger)
-    .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.moyenne || une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy">');
+    .replace(/<img id="une-img" src="data:image\/gif;base64,[^"]*" alt="" loading="lazy">/, () => '<img id="une-img" src="' + echapper(photoLegere(une.moyenne || une.photo)) + '" alt="' + echapper(une.full_name || '') + '" loading="lazy" fetchpriority="low">');
   if (donnees.nombre) html = texteElement(html, 'couv-nombre', R.nombreAccueil(donnees.nombre, anglais));
   // (remplacements par fonction : un « $ » venu de la base n'est jamais lu comme motif de remplacement)
   // (08/11/2026) la version nette directement, quand elle est connue : avant, la miniature partait d'abord puis la page
@@ -1007,11 +1008,20 @@ async function quiSommesNousRempli(url, anglais) {
     const imgs = (urls, alt, largeur, basDePage) => urls.map((u, i) => '<img src="' + echapper(photoReduite(u, largeur)) + '"' +
       (largeur === 1080 ? ' srcset="' + echapper(photoReduite(u, 640)) + ' 640w, ' + echapper(photoReduite(u, 1080)) + ' 1080w" sizes="100vw"' : '') +
       ' alt="' + echapper(alt || '') + '" decoding="async"' + (i ? ' loading="lazy"' : (basDePage ? ' loading="lazy"' : '') + ' class="actif"') +
+      // (08/11/2026, phase 3 V1) ouverture : la photo visible passe d'abord, les suivantes attendent (les 3 se partageaient
+      // la connexion : 4 s pour la première en 4G lente, mesuré)
+      (largeur === 1080 ? (i ? ' fetchpriority="low"' : ' fetchpriority="high"') : '') +
       // (la suivante préparée et la dernière déjà là pour le fondu, comme quand la page s'anime : mêmes photos avec ou sans programme)
       (i === 1 ? ' class="suivant"' : i > 1 && i === urls.length - 1 ? ' class="precedent"' : '') + '>').join('');
     const toutes = []; evenements.forEach((e) => urlsDe(e).forEach((u) => toutes.push(u)));
     if (toutes.length) {
-      html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(melanger(toutes).slice(0, 8), '', 1080) + '</div>')
+      const ouverture = melanger(toutes).slice(0, 8);
+      // (08/11/2026, phase 3 V1) la première photo de l'ouverture annoncée tout en haut de la page, à la taille de l'écran
+      // (comme la couverture de l'accueil et la photo des fiches) : elle était découverte tard (2,3 s d'attente mesurée)
+      const annonce = '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(photoReduite(ouverture[0], 1080)) + '" imagesrcset="' +
+        echapper(photoReduite(ouverture[0], 640)) + ' 640w, ' + echapper(photoReduite(ouverture[0], 1080)) + ' 1080w" imagesizes="100vw">';
+      html = /<head>/i.test(html) ? html.replace(/<head>/i, (m) => m + '\n' + annonce) : html;
+      html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(ouverture, '', 1080) + '</div>')
         .replace('<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>', () => '<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true" data-hasard><img src="' + echapper(photoReduite(melanger(toutes)[0], 1080)) + '" alt="" decoding="async" loading="lazy"></div>');
     }
     // visages : une photo par mannequin (tirée par la lecture), 16 au hasard, deux rangées (la 2e à l'envers)

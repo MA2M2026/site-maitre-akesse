@@ -128,8 +128,23 @@ function chargeJeton(jeton) {
 // Administrateur connecté AVEC le code de l'application d'authentification (jeton « aal2 ») :
 // un mot de passe volé seul ne suffit plus (24/10/2026). Pour toute action d'administration ;
 // les étapes de connexion (avant le code) gardent estAdmin. Toujours après verifierUtilisateur.
-async function adminVerifie(jeton, utilisateur) {
-  return chargeJeton(jeton).aal === 'aal2' && (await estAdmin(utilisateur.id));
+// (08/11/2026, Extension 158) ET appareil en règle pour la base (portail_admin_ok : pas révoqué, écran pas verrouillé,
+// session de l'appareil valable) — appareil = en-tête « x-appareil » envoyé par l'Administration. Fichier SQL pas
+// encore collé (fonction inconnue, 404) : comme avant.
+async function appareilAdminOk(jeton, appareil) {
+  const app = nettoyerAppareil(appareil);
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/rpc/portail_admin_ok', {
+    method: 'POST', headers: Object.assign({ apikey: enTetesService().apikey, Authorization: 'Bearer ' + jeton, 'Content-Type': 'application/json' }, app ? { 'x-appareil': app } : {}), body: '{}'
+  }).catch(() => null);
+  if (!rep) return false;
+  if (rep.status === 404) return true;
+  return rep.ok && (await rep.json().catch(() => false)) === true;
+}
+async function adminVerifie(jeton, utilisateur, appareil) {
+  if (chargeJeton(jeton).aal !== 'aal2') return false;
+  // (les deux lectures en même temps : un aller-retour de moins par action — relecture du 08/11/2026)
+  const [admin, appareilOk] = await Promise.all([estAdmin(utilisateur.id), appareilAdminOk(jeton, appareil)]);
+  return admin && appareilOk;
 }
 // Heure (en secondes) du dernier code de l'application d'authentification saisi pour ce jeton
 function dernierCode(jeton) {

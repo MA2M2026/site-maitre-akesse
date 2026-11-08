@@ -32,11 +32,14 @@ async function chargerEvenements() {
   const une = data[0];
   // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
   const R = window.RenduPublications;
-  uneZone.innerHTML = R.une(une, { en: EN, sorte: 'evenement', photo: urlLegere(une.image_url || ''), extrait: une.description ? extraitTexte(texteBrutDepuis(une.description), 180) : '' });
+  // (08/11/2026, phase 3 V1) grande carte déjà écrite par le serveur avec les mêmes données : gardée telle quelle (la
+  // redessiner faisait réafficher sa photo quand les programmes arrivaient — 7 s sur un téléphone en 4G lente)
+  if (!(serveur && uneZone.querySelector('.news-une'))) uneZone.innerHTML = R.une(une, { en: EN, sorte: 'evenement', photo: urlLegere(une.image_url || ''), extrait: une.description ? extraitTexte(texteBrutDepuis(une.description), 180) : '' });
   uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirEvenementModal(0));
 
   const reste = data.slice(1);
-  grille.innerHTML = reste.map((e, i) => R.carte(e, i + 1, { en: EN, sorte: 'evenement', photo: urlLegere(e.image_url || ''), nbPhotos: compteurParEvenement[e.id] || (e.image_url ? 1 : 0),
+  // (08/11/2026) cartes déjà écrites par le serveur : gardées (sinon leur apparition et leurs photos recommençaient)
+  if (!(serveur && grille.children.length === reste.length)) grille.innerHTML = reste.map((e, i) => R.carte(e, i + 1, { en: EN, sorte: 'evenement', photo: urlLegere(e.image_url || ''), nbPhotos: compteurParEvenement[e.id] || (e.image_url ? 1 : 0),
     extrait: e.description ? extraitTexte(texteBrutDepuis(e.description), 110) : '' })).join('');
 
   grille.querySelectorAll('.news-carte').forEach(carte => {

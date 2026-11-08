@@ -21,7 +21,8 @@
     return '<div class="medaillon-carte reveal">' +
       '<button class="btn-selection' + (o.selectionne ? ' est-selectionne' : '') + '" data-id="' + echapper(profil.id) + '" title="' + echapper(o.libelle) + '" aria-label="' + echapper(o.libelle) + '">' + (o.selectionne ? '✓' : '+') + '</button>' +
       '<a href="' + echapper(lienFiche(profil, o.en)) + '" class="u-flex-col-centre"><div class="medaillon-photo">' +
-      '<img src="' + echapper(o.photo) + '" alt="' + echapper(nom) + '"' + (rang < 5 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"') + '>' +
+      // (08/11/2026 : alt vide, le nom est écrit juste dessous dans le même lien — lu une seule fois)
+      '<img src="' + echapper(o.photo) + '" alt=""' + (rang < 5 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"') + '>' +
       '<div class="book-carte-legende"><div class="medaillon-nom">' + echapper(nom) + '</div>' +
       '<div class="medaillon-info">' + echapper(profil.city || '') + (profil.height_cm ? ' · ' + echapper(profil.height_cm) + ' cm' : '') + '</div></div>' +
       '</div></a></div>';

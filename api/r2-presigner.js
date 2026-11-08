@@ -17,11 +17,11 @@ const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
 // propre model_id) OU un admin — même règle que le déclencheur SQL
 // proteger_proprietaire_photo() qu'on remplace ici pour les photos R2.
-async function autoriser(jeton, modelId) {
+async function autoriser(jeton, modelId, appareil) {
   const utilisateur = await verifierUtilisateur(jeton);
   if (!utilisateur) return { ok: false, code: 401, message: 'Session invalide ou expirée, reconnectez-vous.' };
   if (utilisateur.id === modelId) return { ok: true, utilisateur };
-  if (await adminVerifie(jeton, utilisateur)) return { ok: true, utilisateur };
+  if (await adminVerifie(jeton, utilisateur, appareil)) return { ok: true, utilisateur };
   return { ok: false, code: 403, message: "Vous n'avez pas le droit d'agir sur ces photos." };
 }
 
@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
   // ce seul bloc try/catch pour ne jamais laisser Vercel renvoyer sa propre
   // page d'erreur générique (non-JSON), que le navigateur ne peut pas lire.
   try {
-    const autorisation = await autoriser(jeton, modelId);
+    const autorisation = await autoriser(jeton, modelId, req.headers['x-appareil']);
     if (!autorisation.ok) {
       res.status(autorisation.code).json({ error: autorisation.message });
       return;
