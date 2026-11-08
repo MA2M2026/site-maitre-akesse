@@ -1,0 +1,32 @@
+/* « Site en relief » (08/11/2026, phase 3 V3) : échantillon sur The Book (#grille), chargé par js/relief.js après
+   l'affichage de la page, seulement quand les animations sont permises. Tout est sous html.relief : sans cette
+   classe, rien ne change. Uniquement des transformations (jamais de déplacement dans la page : aucun saut). */
+html.relief #grille { perspective: 1100px; }
+html.relief #grille .medaillon-photo {
+  --relief-sx: 0deg; --relief-rx: 0deg; --relief-ry: 0deg; --relief-gx: 50%; --relief-gy: 30%;
+  transform: rotateX(calc(var(--relief-sx) + var(--relief-rx))) rotateY(var(--relief-ry));
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+/* reflet de lumière : suit le pointeur sur ordinateur, très discret au repos */
+html.relief #grille .medaillon-photo::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(circle at var(--relief-gx) var(--relief-gy), rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 55%);
+  opacity: 0; transition: opacity 0.4s ease;
+}
+html.relief #grille .medaillon-carte:hover .medaillon-photo::after { opacity: 1; }
+html.relief #grille .book-carte-legende { z-index: 2; }
+/* les photos « respirent » : zoom très lent (propriété « scale », à part du zoom au survol), seulement à l'écran */
+html.relief #grille .medaillon-photo img { animation: relief-respirer 14s ease-in-out infinite alternate; animation-play-state: paused; }
+html.relief #grille .medaillon-photo.relief-vue img { animation-play-state: running; }
+html.relief #grille .medaillon-carte:nth-child(2n) img { animation-duration: 17s; animation-delay: -5s; }
+html.relief #grille .medaillon-carte:nth-child(3n) img { animation-duration: 15s; animation-delay: -9s; }
+@keyframes relief-respirer { from { scale: 1; } to { scale: 1.07; } }
+/* apparition : la carte se redresse depuis la profondeur */
+html.relief #grille .medaillon-carte.reveal:not(.visible) { transform: translateY(46px) rotateX(24deg) scale(0.9); transform-origin: 50% 100%; }
+/* le titre s'éloigne en profondeur au défilement */
+html.relief main h1.reveal.visible { transform: translateY(var(--relief-ty, 0)); opacity: var(--relief-to, 1); transition: none; will-change: transform, opacity; }
+@media (prefers-reduced-motion: reduce) {
+  html.relief #grille .medaillon-photo, html.relief main h1.reveal.visible { transform: none !important; opacity: 1 !important; }
+  html.relief #grille .medaillon-photo img { animation: none !important; }
+}

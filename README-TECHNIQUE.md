@@ -4293,3 +4293,34 @@ Reprise le 1er mars 2027 : 10 000 FCFA par mois, 15 000 FCFA d'inscription, pour
 - Comptabilité remise à zéro le 07/11/2026 à la demande de la propriétaire (16 écritures fictives, 170 000 FCFA,
   et un cachet d'essai effacés ; copie Excel/PDF dans evidence/, hors dépôt). L'historique des paiements de l'espace
   Paiements est gardé.
+
+## Site vivant : l'accueil change à chaque visite (08/11/2026, phase 3 V4 ; Extension 157)
+
+- **Qui peut paraître** (couverture, « À la une », visages) : fonction `vitrine_eligibles()` de
+  `supabase-site-vivant.sql` — publiée, pas en sourdine, pas exclue par l'agence (`exclue_vitrine`), et
+  MAJEURE ou MINEURE dont un parent a donné lui-même son accord (`accords_parents`, lien personnel
+  `/accord-parent?j=…`, page `accord-parent.html` + `js/accord-parent.js`, accord retirable). Le Book et les
+  fiches ne changent pas. Tant que le fichier SQL n'est pas collé, l'accueil reste celui d'avant.
+- **Rotation** (`middleware.js`, `tirageVisiteur`, `vitrineAccueil`, `tourner`) : témoin `ma2m_v=groupe.visite`
+  (6 groupes, 30 jours, SameSite=Lax, aucune donnée personnelle, déclaré dans la page « confidentialité »).
+  Couverture = groupe × visite, jamais deux fois de suite la même ; « À la une » épinglée par l'agence passe
+  avant tout. Robots (Google, aperçus WhatsApp/Facebook, curl, sans nom) : toujours la même page (groupe 0),
+  pas de témoin. En-têtes : `x-ma2m-variant`, `Vary: Cookie`.
+- **Administration** (fiche d'une mannequin, bloc « Accueil du site », `js/admin/site-mannequins.js`) :
+  « Exclure de l'accueil » / « Remettre », et pour une mineure « Envoyer le lien d'accord au parent »
+  (`accord_parent_demander`, réservé aux administrateurs ; lien partagé par WhatsApp).
+- **Essais** : `test-site-vivant.mjs` (600 visites : chaque mannequin 120 fois en couverture, mineure sans
+  accord jamais montrée, robots identiques), `test-accord-parent.js`, `test-nouvelle-admin-mannequins.js`,
+  base : `scripts/base-essai/essais-site-vivant.sql`.
+
+## Site en relief : échantillon sur The Book (08/11/2026, phase 3 V3)
+
+- `js/relief.js` (chargé seulement par `mannequins.html` et `en/mannequins.html`) + `css/relief.css` (chargé
+  par le script, sans `?v=`). Photos qui penchent au défilement, se tournent vers la souris avec un reflet
+  (ordinateur), « respirent » (zoom très lent, seulement à l'écran), cartes qui se redressent en apparaissant,
+  titre qui s'éloigne. Jamais de mannequins en 3D.
+- Démarre APRÈS l'affichage complet (`load` + moment libre) ; seulement des transformations (aucun saut) ;
+  tout est sous `html.relief`. Coupé si « moins d'animations », économie de données, connexion 2G, mémoire
+  ≤ 2 Go. Sans JavaScript : la page écrite par le serveur, inchangée.
+- Essai : `test-relief.js` (téléphone, ordinateur, EN ; fluidité processeur ralenti ×4 ; cas coupés).
+- À étendre au reste du site seulement après validation de la propriétaire.
