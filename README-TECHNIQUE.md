@@ -4324,3 +4324,8 @@ Reprise le 1er mars 2027 : 10 000 FCFA par mois, 15 000 FCFA d'inscription, pour
   ≤ 2 Go. Sans JavaScript : la page écrite par le serveur, inchangée.
 - Essai : `test-relief.js` (téléphone, ordinateur, EN ; fluidité processeur ralenti ×4 ; cas coupés).
 - À étendre au reste du site seulement après validation de la propriétaire.
+
+### Remise à zéro des paiements (08/11/2026)
+Le fichier `supabase-paiements-zero.sql` (effacement complet de l'espace Paiements, collé une fois par la
+propriétaire le 08/11/2026) a été retiré du dépôt après usage, pour qu'il ne soit jamais recollé par erreur ; il
+reste dans l'historique git (commit du 08/11/2026). Copie des données d'avant : Excel et PDF du 07/11 (hors dépôt).
