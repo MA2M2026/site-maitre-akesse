@@ -16,6 +16,8 @@ global.fetch = async (url) => {
   if (/\/rest\/v1\/admins\?user_id=eq\.admin-1/.test(url)) return { ok: true, json: async () => [{ user_id: 'admin-1' }] };
   if (/\/rest\/v1\/admins/.test(url)) return { ok: true, json: async () => [] };
   if (/\/rest\/v1\/staff_profiles/.test(url)) return { ok: true, json: async () => [{ role: 'site', actif: true }] };
+  // (Extension 158) appareil en règle selon la base
+  if (/\/rpc\/portail_admin_ok/.test(url)) return { ok: true, status: 200, json: async () => true };
   return { ok: false, status: 599, json: async () => ({}), text: async () => '' };
 };
 function appel(fichier, aal, corps) {
