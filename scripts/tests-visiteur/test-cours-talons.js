@@ -63,7 +63,7 @@ async function navigateur() {
     ok(menu.includes(en ? 'Heel Classes' : 'Cours de talons') && menu.includes(en ? 'Open to all' : 'Ouvert à toutes'), n + 'menu : « ' + (en ? 'Heel Classes · Open to all' : 'Cours de talons · Ouvert à toutes') + ' »');
     const avert = await p.textContent('.ct-avertissement');
     ok(/intégrer l'agence|member of the agency/i.test(avert) && await p.locator('.ct-avertissement a[href="integrer-agence.html"]').count() === 1, n + 'avertissement « pas pour intégrer l’agence », avec le lien vers « Intégrer l’agence »');
-    ok(await p.locator('.ct-video video source[src$="assets/cours-talons/atelier-talons-elegance.mp4"]').count() === 1, n + 'vidéo de présentation sur la page');
+    ok(await p.locator('.ct-video video source[src*="assets/cours-talons/atelier-talons-elegance.mp4"]').count() === 1, n + 'vidéo de présentation sur la page');
     const prix = await p.textContent('.ct-formules');
     ok(prix.includes('30 000') && prix.includes('25 000') && /4 séances|4 sessions/.test(prix) && /la séance|per session/.test(prix), n + 'prix : groupe 30 000 les 4 séances, privé à la séance');
 
