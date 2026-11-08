@@ -165,6 +165,21 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));
+    // (08/11/2026) erreurs de l'Administration notées au journal (js/surveillance.js), avec la rubrique ouverte et sans
+    // identifiant. La surveillance se tait devant un robot : navigateur d'essai présenté comme un vrai téléphone/ordinateur.
+    {
+      const ctx2 = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block', userAgent: tel ? 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36' });
+      await ctx2.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+      const p2 = await ctx2.newPage(), journal2 = [];
+      await brancher(p2, donnees('principal'), journal2); await photosLocales(p2);
+      await seConnecter(p2, URL_ADMIN); await p2.waitForSelector('.accueil-tete');
+      await p2.goto(URL_ADMIN + '#/site/b2-mannequins-publies/0a1b2c3d-1111-2222-3333-444455556666'); await p2.waitForTimeout(800);
+      await p2.evaluate(() => setTimeout(() => { throw new Error('essai surveillance admin'); }));
+      await p2.waitForTimeout(1200);
+      const note = ecrits(journal2, 'POST', 'journal_erreurs').map((j) => j[3] || '').find((x) => /essai surveillance admin/.test(x)) || '';
+      ok(/"page":"\/admin\/#\/site\/b2-mannequins-publies\/…"/.test(note) && !/0a1b2c3d/.test(note), n + 'erreur de l’Administration notée au journal, avec la rubrique, sans identifiant');
+      await ctx2.close();
+    }
     await ctx.close();
   }
   await b.close();
