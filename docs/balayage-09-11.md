@@ -35,7 +35,21 @@ corrections, sans changer ce que voient les visiteurs.
 
 ## 3. Mise en ligne et vérification
 
-(complété après la mise en ligne)
+- Mise en ligne le 09/11/2026 vers 9h15 GMT (version d3dea6f), après :
+  - la batterie complète d'essais : tous verts ;
+  - la base d'essai ;
+  - la relecture ;
+  - le contrôle de SonarCloud sur la demande de mise en ligne : 2 fautes de prudence trouvées par lui, corrigées avant.
+- **Vérifié en ligne :**
+  - contrôle complet du site : 180 vérifications sur 180 ;
+  - photos présentes sur l'accueil (FR/EN), le Book, une fiche, Actualités, Événements et Contact ;
+  - Cours de talons et Intégrer l'agence : les pages répondent ;
+  - Administration : elle répond.
+- **Actualités et Événements, dans un vrai navigateur** (FR et EN, téléphone et ordinateur) :
+  - cartes affichées ;
+  - fiche ouverte au toucher ;
+  - lien direct vers une publication : la fiche s'ouvre ;
+  - 0 erreur.
 
 ## 4. À décider par la propriétaire
 
@@ -55,6 +69,18 @@ corrections, sans changer ce que voient les visiteurs.
 - **Intégrité des scripts extérieurs (Mozilla Observatory, −5 points)** : Google Analytics et Sentry changent leurs
   fichiers sans prévenir ; leur imposer une empreinte casserait la mesure des visites. La note reste A+.
 
-## 6. Notes des contrôles extérieurs
+## 6. Notes des contrôles extérieurs (après la mise en ligne)
 
-(complété après la mise en ligne)
+| Contrôle | Note |
+|---|---|
+| Mozilla Observatory (sécurité des en-têtes) | **A+** (130 points) |
+| SSL Labs (connexion sécurisée) | **A+** sur le 1er serveur, A sur le 2e (serveur de Vercel, réglage hors de notre portée) |
+| SonarCloud (qualité du code) | **A / A / A** : 0 bug, 0 faille, doublons 1,8 % → **1,7 %** |
+| Lighthouse, ordinateur (accueil, Book, fiche, contact) | rapidité **94 à 98**, accessibilité **100**, référencement **100** |
+| Lighthouse, téléphone (mêmes pages) | rapidité **89 à 98**, accessibilité **100**, référencement **100** |
+| Lighthouse « bonnes pratiques » | 96 mesuré ici, **100 en réalité** : les 4 points perdus viennent de la machine de contrôle, dont le réseau bloque Google Analytics et Sentry |
+| Validateur W3C | 0 erreur sur l'accueil (FR/EN) ; une seule fausse alerte connue ailleurs (« mask ») ; la balise d'en-tête des fiches est corrigée. Les autres pages n'ont pas pu être revérifiées : le validateur a limité le nombre de vérifications depuis cette machine |
+
+**À savoir** : le réglage qui devait empêcher SonarCloud de compter deux fois les remarques des styles copiés n'a pas été
+pris en compte (l'analyse automatique de SonarCloud ne lit pas ce réglage dans le fichier). Cela ne change pas la note
+(A). Pour l'appliquer, il faut cocher ce réglage dans le site de SonarCloud (Administration → Analysis Scope).
