@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   observerAjouts.observe(document.body, { childList: true, subtree: true });
 });
 // Outils partagés avec le serveur (js/partage.js, phase 2, 02/11/2026)
-const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure } = window.Partage;
+const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure, rognerBlancs, empreinteTexte } = window.Partage;
 
 
 // Sécurité : neutralise tout HTML dans un texte avant de l'insérer dans la page
@@ -566,8 +566,7 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
 // par l'empreinte du texte français (la même qu'en base : traduction_cle) ; sans traduction, le
 // français reste. versAnglais remplace les champs des lignes lues, avant leur affichage.
-// rognerBlancs et empreinteTexte : js/partage.js (partagées avec le serveur, middleware.js)
-const { rognerBlancs, empreinteTexte } = window.Partage;
+// (rognerBlancs et empreinteTexte : js/partage.js, partagées avec le serveur, middleware.js — lues en haut du fichier)
 // textes → Map(texte français → anglais), pour ceux qui ont une traduction (lecture par paquets,
 // en même temps) ; aussi utilisé par l'Administration (js/admin/site-traductions.js)
 async function traductionsDe(textes) {
