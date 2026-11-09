@@ -21,56 +21,15 @@ function afficherFiltresCategories(data) {
   });
 }
 
-async function chargerActualites() {
-  const grille = document.getElementById('actus-grille');
-  const uneZone = document.getElementById('actus-une');
-  const vide = document.getElementById('actus-vide');
-  const serveur = publicationsServeur();  // (js/publications-lecture.js)
-  if (!serveur && !sb) {
-    // "sb" peut valoir null sur une connexion instable (échec de chargement de
-    // la bibliothèque Supabase, servie depuis un CDN) — on l'affiche clairement
-    // plutôt que de laisser croire qu'il n'y a simplement aucune actualité.
-    vide.textContent = T('Le chargement des actualités a échoué (connexion instable ?). Rechargez la page.', 'Failed to load news (unstable connection?). Reload the page.');
-    vide.style.display = 'block';
-    return;
-  }
-  const { data, error } = serveur ? { data: serveur.liste, error: null } : await sb.from('actualites').select('id, titre, image_url, commentaire, created_at, video_url, featured, categorie').order('created_at', { ascending: false });
-  if (error || !data || !data.length) { vide.style.display = 'block'; return; }
-  await versAnglais(data, ['titre', 'commentaire']);  // (page anglaise, js/app.js)
-  window.actualitesData = data;
-
-  const { data: toutesLesPhotos } = serveur ? { data: serveur.photos } : await sb.from('actualite_photos').select('actualite_id');
-  const compteurParActu = {};
-  (toutesLesPhotos || []).forEach(p => { compteurParActu[p.actualite_id] = (compteurParActu[p.actualite_id] || 0) + 1; });
-
-  // Le dernier article publié est mis en avant séparément, dans un grand bloc "À la une".
-  const une = data[0];
-  // cartes dessinées comme par le serveur (js/rendu-publications.js), après la traduction anglaise
-  const R = window.RenduPublications;
-  // (08/11/2026, phase 3 V1) grande carte déjà écrite par le serveur avec les mêmes données : gardée telle quelle (la
-  // redessiner faisait réafficher sa photo quand les programmes arrivaient — 7 s sur un téléphone en 4G lente)
-  if (!(serveur && uneZone.querySelector('.news-une'))) uneZone.innerHTML = R.une(une, { en: EN, sorte: 'actualite', photo: urlLegere(une.image_url), extrait: une.commentaire ? extraitTexte(texteBrutDepuis(une.commentaire), 180) : '' });
-  uneZone.querySelector('.news-une').addEventListener('click', () => ouvrirActuModal(0));
-
-  const reste = data.slice(1);
-  // (08/11/2026) cartes déjà écrites par le serveur : gardées (sinon leur apparition et leurs photos recommençaient)
-  if (!(serveur && grille.children.length === reste.length)) grille.innerHTML = reste.map((a, i) => R.carte(a, i + 1, { en: EN, sorte: 'actualite', photo: urlLegere(a.image_url), nbPhotos: compteurParActu[a.id] || (a.image_url ? 1 : 0),
-    extrait: a.commentaire ? extraitTexte(texteBrutDepuis(a.commentaire), 110) : '' })).join('');
-
-  grille.querySelectorAll('.news-carte').forEach(carte => {
-    carte.addEventListener('click', () => ouvrirActuModal(parseInt(carte.dataset.index)));
-  });
-
-  afficherFiltresCategories(data);
-
-  // Ouvre directement une actualité précise si on arrive via un lien ?actu=ID (ex: depuis la page d'accueil)
-  const idDepuisUrl = new URLSearchParams(window.location.search).get('actu');
-  if (idDepuisUrl) {
-    const index = data.findIndex(a => a.id === idDepuisUrl);
-    if (index > -1) void ouvrirActuModal(index);
-  }
-}
-void chargerActualites();
+// Chargement : déroulement commun avec les Événements (chargerPublicationsPage, js/publications-lecture.js)
+void chargerPublicationsPage({
+  zone: 'actus', table: 'actualites', tablePhotos: 'actualite_photos', clePhotos: 'actualite_id',
+  colonnes: 'id, titre, image_url, commentaire, created_at, video_url, featured, categorie',
+  trier: (q) => q.order('created_at', { ascending: false }),
+  champsEn: ['titre', 'commentaire'], champTexte: 'commentaire', sorte: 'actualite', parametre: 'actu', global: 'actualitesData',
+  photo: (a) => urlLegere(a.image_url), ouvrir: ouvrirActuModal, apres: afficherFiltresCategories,
+  echec: ['Le chargement des actualités a échoué (connexion instable ?). Rechargez la page.', 'Failed to load news (unstable connection?). Reload the page.']
+});
 
 async function ouvrirActuModal(index) {
   const a = window.actualitesData[index];

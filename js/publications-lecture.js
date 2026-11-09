@@ -69,6 +69,60 @@ function publicationsServeur() {
   return d && Array.isArray(d.liste) && Array.isArray(d.photos) ? d : null;
 }
 
+// Chargement d'une page de publications (Actualités, Événements) : le même déroulement pour les deux pages
+// (09/11/2026, grand balayage : il était recopié dans js/actualites.js et js/evenements.js). Seuls changent la
+// table, les champs et la fenêtre de lecture, donnés par c :
+//  c.zone ('actus' | 'evenements' : ids <zone>-grille, <zone>-une, <zone>-vide), c.table, c.tablePhotos, c.clePhotos,
+//  c.colonnes, c.trier(requête), c.champsEn, c.champTexte, c.sorte, c.photo(ligne), c.ouvrir(index),
+//  c.parametre (lien ?<parametre>=ID), c.global (window[c.global] : la liste, lue par la fenêtre de lecture),
+//  c.echec [français, anglais], c.apres(data) (facultatif).
+async function chargerPublicationsPage(c) {
+  const grille = document.getElementById(c.zone + '-grille');
+  const uneZone = document.getElementById(c.zone + '-une');
+  const vide = document.getElementById(c.zone + '-vide');
+  const serveur = publicationsServeur();
+  if (!serveur && !sb) {
+    // "sb" peut valoir null sur une connexion instable (échec de chargement de la bibliothèque Supabase) : on
+    // l'affiche clairement plutôt que de laisser croire qu'il n'y a simplement aucune publication.
+    vide.textContent = T(c.echec[0], c.echec[1]);
+    vide.style.display = 'block';
+    return;
+  }
+  const { data, error } = serveur ? { data: serveur.liste, error: null } : await c.trier(sb.from(c.table).select(c.colonnes));
+  if (error || !data || !data.length) { vide.style.display = 'block'; return; }
+  await versAnglais(data, c.champsEn);  // (page anglaise, js/app.js)
+  window[c.global] = data;
+
+  const { data: toutesLesPhotos } = serveur ? { data: serveur.photos } : await sb.from(c.tablePhotos).select(c.clePhotos);
+  const compteur = {};
+  (toutesLesPhotos || []).forEach((p) => { compteur[p[c.clePhotos]] = (compteur[p[c.clePhotos]] || 0) + 1; });
+  const extrait = (x, n) => (x[c.champTexte] ? extraitTexte(texteBrutDepuis(x[c.champTexte]), n) : '');
+
+  // La dernière publication est mise en avant séparément, dans un grand bloc « À la une ». Cartes dessinées comme par
+  // le serveur (js/rendu-publications.js), après la traduction anglaise.
+  const une = data[0], R = window.RenduPublications;
+  // (08/11/2026, phase 3 V1) grande carte déjà écrite par le serveur avec les mêmes données : gardée telle quelle (la
+  // redessiner faisait réafficher sa photo quand les programmes arrivaient — 7 s sur un téléphone en 4G lente)
+  if (!(serveur && uneZone.querySelector('.news-une'))) uneZone.innerHTML = R.une(une, { en: EN, sorte: c.sorte, photo: c.photo(une), extrait: extrait(une, 180) });
+  uneZone.querySelector('.news-une').addEventListener('click', () => c.ouvrir(0));
+
+  const reste = data.slice(1);
+  // (08/11/2026) cartes déjà écrites par le serveur : gardées (sinon leur apparition et leurs photos recommençaient)
+  if (!(serveur && grille.children.length === reste.length)) grille.innerHTML = reste.map((x, i) => R.carte(x, i + 1, { en: EN, sorte: c.sorte, photo: c.photo(x), nbPhotos: compteur[x.id] || (x.image_url ? 1 : 0),
+    extrait: extrait(x, 110) })).join('');
+  grille.querySelectorAll('.news-carte').forEach((carte) => {
+    carte.addEventListener('click', () => c.ouvrir(Number.parseInt(carte.dataset.index, 10)));
+  });
+  if (c.apres) c.apres(data);
+
+  // Ouvre directement une publication précise si on arrive par un lien ?<parametre>=ID (ex. : depuis l'accueil)
+  const idDepuisUrl = new URLSearchParams(window.location.search).get(c.parametre);
+  if (idDepuisUrl) {
+    const index = data.findIndex((x) => x.id === idDepuisUrl);
+    if (index > -1) void c.ouvrir(index);
+  }
+}
+
 // Fenêtre de lecture d'une publication (type : 'actu' ou 'evenement', pour le suivi des fiches)
 function montrerFichePublication(type, p) {
   ouvrirNewsModal();
