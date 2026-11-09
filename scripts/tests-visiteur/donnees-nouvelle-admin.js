@@ -36,7 +36,7 @@ function donnees(role) {
         { id: 'ph3', application_id: 'c1', chemin: null, url: 'https://drive.google.com/uc?id=photo-awa-1' }],
       codes_inscription: [], contacts_externes: [],
       casting_projets: [
-        { id: 'cp-a', nom: 'CASTING CACAO', description: 'Défilé de la maison Cacao.', actif: true, created_at: '2026-10-01T10:00:00Z', date_casting: '2026-11-08', lieu: 'Studio MA2M', ordre_affichage: 0 },
+        { id: 'cp-a', nom: 'CASTING CACAO', description: 'Défilé de la maison Cacao.', actif: true, created_at: '2026-10-01T10:00:00Z', date_casting: new Date(Date.now() + 10 * 864e5).toISOString().slice(0, 10), lieu: 'Studio MA2M'  /* (09/11/2026) toujours à venir : la date fixe du 08/11 était devenue passée */, ordre_affichage: 0 },
         { id: 'cp-b', nom: 'SHOOTING LAGUNE', description: null, actif: false, created_at: '2026-09-01T10:00:00Z', date_casting: null, lieu: null, ordre_affichage: 1 }],
       recruiter_requests: [
         { id: 'r-1', contact_name: 'Koffi Marc', company: 'Maison Ivoire', email: 'marc@maison.ci', phone: '0505050505', whatsapp: '0505050505', city: 'Abidjan', project_type: 'Défilé', event_date: '2026-12-05', status: 'nouvelle', created_at: '2026-10-21T12:00:00Z', message: 'Trois mannequins pour un défilé.' }],

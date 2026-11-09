@@ -120,7 +120,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // 7. Projets et castings : liste, ajout, modification, ordre
     await p.goto(URL_ADMIN + '#/site/b2-projets'); await p.waitForSelector('.projets-liste'); await p.waitForTimeout(800);
     const projets = await p.$$eval('.projet-carte', (cs) => cs.map((c) => c.innerText.replace(/\s+/g, ' ')));
-    ok(projets.length === 2 && /CASTING CACAO.*Actif.*08\/11\/2026.*Studio MA2M.*7 candidatures/.test(projets[0]) && /SHOOTING LAGUNE.*Inactif/.test(projets[1]), n + 'castings listés, actif / inactif, candidatures reçues');
+    ok(projets.length === 2 && /CASTING CACAO.*Actif.*\d\d\/\d\d\/20\d\d.*Studio MA2M.*7 candidatures/.test(projets[0]) && /SHOOTING LAGUNE.*Inactif/.test(projets[1]), n + 'castings listés, actif / inactif, candidatures reçues');
     await p.click('[data-action="projet-nouveau"]'); await p.waitForSelector('.voile #pj-nom');
     await p.fill('#pj-nom', 'CASTING NOËL'); await p.fill('#pj-lieu', 'Hôtel Ivoire');
     await p.click('form[data-form="projet-ajouter"] [type=submit]'); await p.waitForTimeout(900);
