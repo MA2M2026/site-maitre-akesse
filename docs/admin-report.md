@@ -27,7 +27,10 @@ conseiller de sécurité Supabase, essai réel de la propriétaire après l'Exte
    Une fonction neuve (cours_talons_montant) sans chemin fixe : signalée à la conversation « Cours de talons ».
 
 ## Corrections proposées, une à la fois
-1. Mettre la surveillance des erreurs dans l'Administration (sans envoyer d'information personnelle : seulement la
+1. ✅ (en ligne le 08/11/2026) Mettre la surveillance des erreurs dans l'Administration (sans envoyer d'information personnelle : seulement la
    rubrique, le message et l'appareil).
-2. Activer la vérification des mots de passe compromis (réglage Supabase, par la propriétaire).
+2. ~~Vérification des mots de passe compromis~~ : réservée à l'offre payante de Supabase (« Only available on Pro plan »).
+   À la place (08/11/2026, par la propriétaire) : longueur minimale des mots de passe passée de 6 à 8 dans Supabase
+   (Authentication → Sign In / Providers → Email), comme les formulaires du site (8 au moins, 12 pour l'équipe).
+   Ne PAS allumer « Captcha protection » dans Supabase : la connexion et la création de compte seraient bloquées.
 3. Plus tard : alléger le démarrage (charger les scripts Paiements/Compta seulement à l'ouverture de ces rubriques).

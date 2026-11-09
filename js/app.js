@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   observerAjouts.observe(document.body, { childList: true, subtree: true });
 });
 // Outils partagés avec le serveur (js/partage.js, phase 2, 02/11/2026)
-const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure } = window.Partage;
+const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure, rognerBlancs, empreinteTexte } = window.Partage;
 
 
 // Sécurité : neutralise tout HTML dans un texte avant de l'insérer dans la page
@@ -566,25 +566,12 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
 // par l'empreinte du texte français (la même qu'en base : traduction_cle) ; sans traduction, le
 // français reste. versAnglais remplace les champs des lignes lues, avant leur affichage.
-// Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
-// insécables : même règle que traduction_cle en base). Sans expression régulière (SonarCloud
-// S8786, 26/10/2026 : une expression « ^…+|…+$ » peut devenir très lente sur un long texte).
-function rognerBlancs(s) {
-  let debut = 0, fin = s.length;
-  while (debut < fin && ' \t\r\n'.includes(s[debut])) debut++;
-  while (fin > debut && ' \t\r\n'.includes(s[fin - 1])) fin--;
-  return s.slice(debut, fin);
-}
-async function empreinteTexte(t) {
-  const propre = rognerBlancs(String(t == null ? '' : t));
-  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
-  return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
-}
+// (rognerBlancs et empreinteTexte : js/partage.js, partagées avec le serveur, middleware.js — lues en haut du fichier)
 // textes → Map(texte français → anglais), pour ceux qui ont une traduction (lecture par paquets,
 // en même temps) ; aussi utilisé par l'Administration (js/admin/site-traductions.js)
 async function traductionsDe(textes) {
   const uniques = [...new Set(textes.filter((t) => typeof t === 'string' && t.trim()))];
-  const cles = await Promise.all(uniques.map(empreinteTexte)), en = {}, paquets = [];
+  const cles = await Promise.all(uniques.map((t) => empreinteTexte(t))), en = {}, paquets = [];
   // (pages anglaises préparées par le serveur : toutes les traductions sont déjà dans la page, 100 % dynamique)
   const serveur = typeof donneesServeur === 'function' ? donneesServeur('traductions-donnees') : null;
   if (serveur && typeof serveur === 'object') return new Map(uniques.map((t, i) => [t, serveur[cles[i]]]).filter((x) => x[1]));
@@ -912,7 +899,7 @@ function moisPayablesAvance(mois) {
 // Mensualités de la formation (01/11/2026) : 18 mois de cours ; un mois de congé payé (reporté sur le
 // mois de cours suivant) n'est pas compté deux fois. Partagé par Mes paiements et l'application.
 function bilanFormation(d) {
-  const cours = ((d && d.mois) || []).filter((m) => !m.conge && m.etat !== 'conge' && m.etat !== 'rodage');
+  const cours = (d?.mois || []).filter((m) => !m.conge && m.etat !== 'conge' && m.etat !== 'rodage');
   // (reprise de mars : les mois déjà faits avant la reprise comptent, faits_avant de mes_mensualites)
   return { payes: (Number(d && d.faits_avant) || 0) + cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
 }
@@ -1797,7 +1784,7 @@ async function jetonSessionCourante() {
 // Après chaque envoi vers R2 (lot 3, 01/11/2026) : le serveur lit le début du fichier déposé et le supprime si ce
 // n'est pas une vraie photo / vidéo / PDF (api/_r2.js, verifierContenuR2). Erreur « refuse » : définitive.
 async function verifierEnvoiR2(adresse, jeton, corps) {
-  const rep = await fetch(adresse, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}), body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
+  const rep = await fetch(adresse, { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify({ action: 'verifier', ...corps }) });
   if (rep.ok) return;
   // (01/11/2026, panne) seul un refus explicite (422 : le fichier n'est pas une vraie photo) bloque l'envoi ;
   // une vérification qui n'a pas pu se faire laisse passer la photo (elle est déjà déposée)
@@ -1882,7 +1869,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = tru
     try {
       const reponse = await fetch('/api/r2-presigner', {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}),
+        headers: enTetesServeur(jeton),
         body: JSON.stringify({ modelId, chemin, contentType: contentType || 'image/jpeg', taille: blob.size })
       });
       const resultat = await reponse.json().catch(() => ({}));
@@ -1909,7 +1896,7 @@ async function supprimerDeR2(modelId, chemin) {
     if (!jeton) return;
     await fetch('/api/r2-presigner', {
       method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}),
+      headers: enTetesServeur(jeton),
       body: JSON.stringify({ action: 'suppression', modelId, chemin })
     });
   } catch (e) { console.warn('Suppression R2 non confirmée :', e); }

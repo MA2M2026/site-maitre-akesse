@@ -57,6 +57,17 @@ const INTERDITS_JS = ['verifierAdmin', 'api/r2-site-images', 'sbAdmin.from', 'sb
       await p.context().close();
     }
   }
+  // (09/11/2026, grand balayage : chargement commun js/publications-lecture.js) lien direct vers une publication
+  // (?actu=ID, ?evenement=ID, depuis l'accueil ou un partage) : la fiche s'ouvre toute seule, avec son titre
+  for (const [page, lien, titre] of [['actualites', '?actu=n1', 'Casting Orange'], ['evenements', '?evenement=e1', 'Défilé Abidjan'], ['en/actualites', '?actu=n1', 'Casting Orange'], ['en/evenements', '?evenement=e1', 'Défilé Abidjan']]) {
+    const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' })).newPage(); const errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await brancher(p, { tables, rpc: {} }, []);
+    await p.goto('http://127.0.0.1:' + PORT + '/' + page + '.html' + lien);
+    const ouverte = await p.waitForSelector('#news-modal.active', { timeout: 10000 }).then(() => true, () => false);
+    ok(ouverte && (await p.textContent('#news-modal-titre')) === titre && !errs.length, page + lien + ' : la fiche s’ouvre toute seule (' + titre + ')' + (errs.length ? ' ' + errs.join(' | ') : ''));
+    await p.context().close();
+  }
   await b.close(); srv.kill();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.'); process.exit(ko ? 1 : 0);
 })().catch((e) => { console.log('❌ ÉCHEC ' + e.message); process.exit(1); });

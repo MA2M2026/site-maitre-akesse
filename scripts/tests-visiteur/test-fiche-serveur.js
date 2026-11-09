@@ -156,6 +156,9 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     const ordinateur = await (await mw2(new Request('https://www.maitreakessemodelmanagement.com/book/awa-kone', { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0)' } }))).text();
     ok(/<img class="hero-apercu" src="https:\/\/x\/1-petite\.jpg"[^>]*>\s*<img data-couv-img src="https:\/\/x\/1-moy\.jpg"/.test(telephone) && /<img class="hero-apercu" src="https:\/\/x\/1-mini\.jpg"/.test(ordinateur),
       'la photo de la carte du Book (petite sur téléphone) est posée sous la grande photo, dans le HTML');
+    // (09/11/2026, validateur W3C) <base href> avant tout lien ou script (la photo annoncée passait devant)
+    const tete = telephone.slice(0, telephone.indexOf('</head>')), iBase = tete.search(/<base /i);
+    ok(iBase > 0 && !/<link|<script/i.test(tete.slice(0, iBase)), 'page conforme (W3C) : <base> avant les liens et les scripts');
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage(); const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await brancher(p, { tables, rpc }, []);

@@ -267,7 +267,7 @@
     if (String(f.get('mot')) !== 'SUPPRIMER') { P.message('Suppression annulée : il faut taper exactement SUPPRIMER.'); return; }
     const session = (await sb.auth.getSession()).data.session;
     if (!session) { P.message('Session expirée : reconnectez-vous puis réessayez.'); return; }
-    const rep = await fetch('/api/supprimer-mannequin', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, enTeteAppareil()), body: JSON.stringify({ modelId: ouverte.id }) });
+    const rep = await fetch('/api/supprimer-mannequin', { method: 'POST', headers: enTetesServeur(session.access_token), body: JSON.stringify({ modelId: ouverte.id }) });
     const corps = await rep.json().catch(() => ({}));
     if (!rep.ok) { P.message('Échec de la suppression : ' + (corps.error || 'erreur inconnue.')); return; }
     P.fenetre('');
