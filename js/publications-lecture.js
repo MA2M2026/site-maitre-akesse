@@ -89,7 +89,7 @@ async function chargerPublicationsPage(c) {
     return;
   }
   const { data, error } = serveur ? { data: serveur.liste, error: null } : await c.trier(sb.from(c.table).select(c.colonnes));
-  if (error || !data || !data.length) { vide.style.display = 'block'; return; }
+  if (error || !data?.length) { vide.style.display = 'block'; return; }
   await versAnglais(data, c.champsEn);  // (page anglaise, js/app.js)
   window[c.global] = data;
 

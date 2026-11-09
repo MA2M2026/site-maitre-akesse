@@ -571,7 +571,7 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // en même temps) ; aussi utilisé par l'Administration (js/admin/site-traductions.js)
 async function traductionsDe(textes) {
   const uniques = [...new Set(textes.filter((t) => typeof t === 'string' && t.trim()))];
-  const cles = await Promise.all(uniques.map(empreinteTexte)), en = {}, paquets = [];
+  const cles = await Promise.all(uniques.map((t) => empreinteTexte(t))), en = {}, paquets = [];
   // (pages anglaises préparées par le serveur : toutes les traductions sont déjà dans la page, 100 % dynamique)
   const serveur = typeof donneesServeur === 'function' ? donneesServeur('traductions-donnees') : null;
   if (serveur && typeof serveur === 'object') return new Map(uniques.map((t, i) => [t, serveur[cles[i]]]).filter((x) => x[1]));
@@ -899,7 +899,7 @@ function moisPayablesAvance(mois) {
 // Mensualités de la formation (01/11/2026) : 18 mois de cours ; un mois de congé payé (reporté sur le
 // mois de cours suivant) n'est pas compté deux fois. Partagé par Mes paiements et l'application.
 function bilanFormation(d) {
-  const cours = ((d && d.mois) || []).filter((m) => !m.conge && m.etat !== 'conge' && m.etat !== 'rodage');
+  const cours = (d?.mois || []).filter((m) => !m.conge && m.etat !== 'conge' && m.etat !== 'rodage');
   // (reprise de mars : les mois déjà faits avant la reprise comptent, faits_avant de mes_mensualites)
   return { payes: (Number(d && d.faits_avant) || 0) + cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
 }
@@ -1784,7 +1784,7 @@ async function jetonSessionCourante() {
 // Après chaque envoi vers R2 (lot 3, 01/11/2026) : le serveur lit le début du fichier déposé et le supprime si ce
 // n'est pas une vraie photo / vidéo / PDF (api/_r2.js, verifierContenuR2). Erreur « refuse » : définitive.
 async function verifierEnvoiR2(adresse, jeton, corps) {
-  const rep = await fetch(adresse, { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
+  const rep = await fetch(adresse, { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify({ action: 'verifier', ...corps }) });
   if (rep.ok) return;
   // (01/11/2026, panne) seul un refus explicite (422 : le fichier n'est pas une vraie photo) bloque l'envoi ;
   // une vérification qui n'a pas pu se faire laisse passer la photo (elle est déjà déposée)

@@ -294,7 +294,7 @@ async function versAnglaisServeur(lignes, champs, delai = 800) {
   const frais = (t) => { const m = memoireTraductions.get(t); return m && Date.now() - m.quand < DUREE_MEMOIRE && !globalThis.MA2M_SANS_MEMOIRE; };
   const manquants = textes.filter((t) => !frais(t));
   if (manquants.length) {
-    const cles = await Promise.all(manquants.map(empreinteTexte));
+    const cles = await Promise.all(manquants.map((t) => empreinteTexte(t)));
     const parCle = new Map(), paquets = [];
     for (let i = 0; i < cles.length; i += 80) paquets.push(cles.slice(i, i + 80));
     const lus = await Promise.all(paquets.map((p) => lireSupabase('traductions_en?select=cle,en&cle=in.(' + p.join(',') + ')', null, delai).catch(() => null)));

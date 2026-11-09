@@ -35,7 +35,7 @@ function enTeteAppareil() {
 // (09/11/2026, grand balayage : cette ligne était recopiée 7 fois — js/app.js, js/images-site-ecriture.js,
 // js/admin/site-acces.js, js/admin/site-mannequins.js)
 function enTetesServeur(jeton) {
-  return Object.assign({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + jeton }, enTeteAppareil());
+  return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jeton, ...enTeteAppareil() };
 }
 const optionsAuthSupabase = document.documentElement.hasAttribute('data-portail')
   ? { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },

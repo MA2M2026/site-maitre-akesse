@@ -379,7 +379,7 @@
   function afficher() {
     // (09/11/2026, journal des erreurs : « etat.profil is null ») compte sans fiche de mannequin : l'écran « Ce compte
     // n'est pas un compte mannequin » reste affiché, même si un autre événement (changement d'onglet…) redemande l'affichage
-    if (!etat || !etat.profil) return;
+    if (!etat?.profil) return;
     const o = ongletCourant();
     if (o === 'alertes') marquerLus();
     else etat.messages.forEach((x) => { delete x.nouveau; });
