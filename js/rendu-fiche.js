@@ -129,8 +129,8 @@
   // (même adresse) est gardée telle quelle au lieu d'être rechargée.
   const contenuHtml = `
     <div class="reveal visible">
-      <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}${cadrage ? ' cadrage-' + cadrage : ''}" id="couverture-clic">
-        <img data-couv-img src="${echapperHtml(photoHero)}"${(photos && photos.length) ? ' role="button" tabindex="0" alt="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ' alt=""'} fetchpriority="high">
+      <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}${cadrage ? ' cadrage-' + cadrage : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
+        <img data-couv-img src="${echapperHtml(photoHero)}" alt="" fetchpriority="high">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
           <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? T('Homme', 'Man') : profil.category === 'femme' ? T('Femme', 'Woman') : 'New Face'}</div>
