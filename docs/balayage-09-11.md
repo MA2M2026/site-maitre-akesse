@@ -24,9 +24,9 @@ corrections, sans changer ce que voient les visiteurs.
    ou un partage) ouvre bien la fiche.
 3. **Appels au serveur** : la ligne d'en-têtes (session + appareil) était recopiée 7 fois (envoi des photos, images du
    site, suppression d'une mannequin…). Une seule fonction maintenant (js/supabase-config.js).
-4. **Fiches des mannequins (W3C)** : la photo annoncée en avance passait devant une balise qui doit être la première ;
-   et le nom (titre) était à l'intérieur d'un « bouton ». C'est maintenant la grande photo elle-même qui est le bouton
-   de la galerie : même aspect, même geste (toucher, clic ou clavier), vérifié dans un vrai navigateur.
+4. **Fiches des mannequins (W3C)** : la photo annoncée en avance passait devant une balise qui doit être la première
+   de la page. Corrigé (invisible pour les visiteurs). La 2e remarque du validateur (le nom de la mannequin est dans
+   la zone qui ouvre la galerie) n'a PAS été changée : voir « À décider par la propriétaire ».
 5. **Application des mannequins** : un compte sans fiche de mannequin pouvait provoquer une erreur (trouvée dans le
    journal). Corrigé : l'écran « Ce compte n'est pas un compte mannequin » reste affiché.
 6. **SonarCloud** : les styles du haut de chaque page sont des copies générées automatiquement des fichiers de styles ;
@@ -37,7 +37,15 @@ corrections, sans changer ce que voient les visiteurs.
 
 (complété après la mise en ligne)
 
-## 4. Ce qui n'a PAS été fait, volontairement
+## 4. À décider par la propriétaire
+
+- **Le mot « Femme » / « Homme » sur la grande photo des fiches** : en essayant de corriger la 2e remarque du
+  validateur, l'essai de lisibilité a mesuré ce petit mot pour la première fois (il était caché à l'essai). Sur une
+  photo très claire à cet endroit, il se lit mal (contraste 2,5 à 3,6 ; il faut 4,5). Proposition : un léger fond sombre
+  derrière ce mot seulement, ou un voile un peu plus foncé en bas de la photo. Cela change un peu l'aspect des fiches :
+  rien n'a été fait sans votre accord, la fiche est restée exactement comme avant.
+
+## 5. Ce qui n'a PAS été fait, volontairement
 
 - **Rapidité de la base (conseiller Supabase)** : 89 règles de sécurité « pourraient être plus rapides » et 85 index
   manquent. Les tables sont petites (à l'échelle de l'agence) : le gain serait invisible, et réécrire 89 règles de
@@ -47,6 +55,6 @@ corrections, sans changer ce que voient les visiteurs.
 - **Intégrité des scripts extérieurs (Mozilla Observatory, −5 points)** : Google Analytics et Sentry changent leurs
   fichiers sans prévenir ; leur imposer une empreinte casserait la mesure des visites. La note reste A+.
 
-## 5. Notes des contrôles extérieurs
+## 6. Notes des contrôles extérieurs
 
 (complété après la mise en ligne)
