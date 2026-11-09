@@ -1785,7 +1785,7 @@ async function jetonSessionCourante() {
 // Après chaque envoi vers R2 (lot 3, 01/11/2026) : le serveur lit le début du fichier déposé et le supprime si ce
 // n'est pas une vraie photo / vidéo / PDF (api/_r2.js, verifierContenuR2). Erreur « refuse » : définitive.
 async function verifierEnvoiR2(adresse, jeton, corps) {
-  const rep = await fetch(adresse, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}), body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
+  const rep = await fetch(adresse, { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify(Object.assign({ action: 'verifier' }, corps)) });
   if (rep.ok) return;
   // (01/11/2026, panne) seul un refus explicite (422 : le fichier n'est pas une vraie photo) bloque l'envoi ;
   // une vérification qui n'a pas pu se faire laisse passer la photo (elle est déjà déposée)
@@ -1870,7 +1870,7 @@ async function uploaderVersR2(modelId, chemin, blob, contentType, verifier = tru
     try {
       const reponse = await fetch('/api/r2-presigner', {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}),
+        headers: enTetesServeur(jeton),
         body: JSON.stringify({ modelId, chemin, contentType: contentType || 'image/jpeg', taille: blob.size })
       });
       const resultat = await reponse.json().catch(() => ({}));
@@ -1897,7 +1897,7 @@ async function supprimerDeR2(modelId, chemin) {
     if (!jeton) return;
     await fetch('/api/r2-presigner', {
       method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jeton }, typeof enTeteAppareil === 'function' ? enTeteAppareil() : {}),
+      headers: enTetesServeur(jeton),
       body: JSON.stringify({ action: 'suppression', modelId, chemin })
     });
   } catch (e) { console.warn('Suppression R2 non confirmée :', e); }

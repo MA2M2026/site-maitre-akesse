@@ -156,6 +156,13 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     const ordinateur = await (await mw2(new Request('https://www.maitreakessemodelmanagement.com/book/awa-kone', { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0)' } }))).text();
     ok(/<img class="hero-apercu" src="https:\/\/x\/1-petite\.jpg"[^>]*>\s*<img data-couv-img src="https:\/\/x\/1-moy\.jpg"/.test(telephone) && /<img class="hero-apercu" src="https:\/\/x\/1-mini\.jpg"/.test(ordinateur),
       'la photo de la carte du Book (petite sur téléphone) est posée sous la grande photo, dans le HTML');
+    // (09/11/2026, validateur W3C) <base href> avant tout lien ou script (la photo annoncée passait devant) ; le titre (h1)
+    // n'est plus dans un élément « bouton » : c'est la grande photo elle-même qui ouvre la galerie
+    const tete = telephone.slice(0, telephone.indexOf('</head>')), iBase = tete.search(/<base /i);
+    const avantBase = iBase < 0 ? '' : tete.slice(0, iBase);
+    const heroTel = telephone.slice(telephone.indexOf('id="couverture-clic"') - 200, telephone.indexOf('<h1'));
+    ok(iBase > 0 && !/<link|<script/i.test(avantBase) && /<img data-couv-img src="[^"]*" role="button" tabindex="0" alt="Ouvrir la galerie photo"/.test(telephone) && !/role="button"[^>]*id="couverture-clic"|id="couverture-clic"[^>]*role="button"/.test(heroTel),
+      'page conforme (W3C) : <base> avant les liens, la grande photo est le bouton de la galerie (pas le bloc du titre)');
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage(); const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await brancher(p, { tables, rpc }, []);

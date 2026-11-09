@@ -676,7 +676,12 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
 const photoAnnoncee = (html, adresse) => {
   if (!adresse) return html;
   const balise = '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(adresse) + '">';
-  // (W7 : juste après <head>, AVANT les scripts de surveillance et de mesure qui bloquent la lecture de la page)
+  return enHautDeLaPage(html, balise);
+};
+// (W7) une annonce tout en haut de l'en-tête, AVANT les scripts de surveillance et de mesure qui bloquent la lecture de
+// la page ; (09/11/2026, validateur W3C) mais après <base href> s'il y en a un : <base> doit précéder tout lien
+const enHautDeLaPage = (html, balise) => {
+  if (/<base [^>]*>/i.test(html)) return html.replace(/<base [^>]*>/i, (m) => m + '\n' + balise);
   return /<head>/i.test(html) ? html.replace(/<head>/i, (m) => m + '\n' + balise) : html.replace('</head>', () => balise + '\n</head>');
 };
 
@@ -1008,7 +1013,7 @@ async function quiSommesNousRempli(url, anglais) {
       // (comme la couverture de l'accueil et la photo des fiches) : elle était découverte tard (2,3 s d'attente mesurée)
       const annonce = '<link rel="preload" as="image" fetchpriority="high" href="' + echapper(photoReduite(ouverture[0], 1080)) + '" imagesrcset="' +
         echapper(photoReduite(ouverture[0], 640)) + ' 640w, ' + echapper(photoReduite(ouverture[0], 1080)) + ' 1080w" imagesizes="100vw">';
-      html = /<head>/i.test(html) ? html.replace(/<head>/i, (m) => m + '\n' + annonce) : html;
+      html = /<head>/i.test(html) ? enHautDeLaPage(html, annonce) : html;
       html = html.replace('<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true"></div>', () => '<div class="qsn-diaporama" id="qsn-diaporama" aria-hidden="true" data-hasard>' + imgs(ouverture, '', 1080) + '</div>')
         .replace('<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true"></div>', () => '<div class="qsn-marques-fond" id="qsn-marques-fond" aria-hidden="true" data-hasard><img src="' + echapper(photoReduite(melanger(toutes)[0], 1080)) + '" alt="" decoding="async" loading="lazy"></div>');
     }
