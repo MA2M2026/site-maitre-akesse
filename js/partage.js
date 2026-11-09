@@ -468,7 +468,22 @@
       return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
     } catch (e) { return null; }
   }
-  racine.Partage = { urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
+  // Empreinte d'un texte français (traductions anglaises, table traductions_en ; même règle que traduction_cle en
+  // base) : partagée par les pages (js/app.js, versAnglais) et le serveur (middleware.js) — 09/11/2026, avant recopiée.
+  // Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces insécables). Sans expression
+  // régulière (SonarCloud S8786, 26/10/2026 : une expression « ^…+|…+$ » peut devenir très lente sur un long texte).
+  function rognerBlancs(s) {
+    let debut = 0, fin = s.length;
+    while (debut < fin && ' \t\r\n'.includes(s[debut])) debut++;
+    while (fin > debut && ' \t\r\n'.includes(s[fin - 1])) fin--;
+    return s.slice(debut, fin);
+  }
+  async function empreinteTexte(t) {
+    const propre = rognerBlancs(String(t == null ? '' : t));
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
+    return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
+  }
+  racine.Partage = { rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
     Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
     lienFicheMannequin, lieuProjet, dateLieuProjet, ma2mCompteParType, nombreTypeAgenda, projetsAvecNoms };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };

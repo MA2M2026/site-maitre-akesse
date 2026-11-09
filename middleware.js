@@ -275,20 +275,8 @@ async function lireDonneesAccueil() {
   if (Array.isArray(donnees.agenda) && donnees.agenda.length) donnees.agendaEn = await versAnglaisServeur(donnees.agenda, ['titre', 'lieu', 'description'], 3000).catch(() => null);
   return donnees;
 }
-// Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
-// insécables : même règle que js/app.js et traduction_cle en base). Sans expression régulière (SonarCloud
-// S8786, 26/10/2026 : une expression « ^…+|…+$ » peut devenir très lente sur un long texte).
-function rognerBlancs(s) {
-  let debut = 0, fin = s.length;
-  while (debut < fin && ' \t\r\n'.includes(s[debut])) debut++;
-  while (fin > debut && ' \t\r\n'.includes(s[fin - 1])) fin--;
-  return s.slice(debut, fin);
-}
-async function empreinteTexte(t) {
-  const propre = rognerBlancs(String(t == null ? '' : t));
-  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
-  return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
-}
+// rognerBlancs et empreinteTexte : js/partage.js (partagées avec les pages, js/app.js)
+const { rognerBlancs, empreinteTexte } = globalThis.Partage;
 async function motEnAnglais(mot) {
   const [en] = await versAnglaisServeur([{ titre: mot.titre, message: mot.message }], ['titre', 'message'], 3000);
   const champs = ['titre', 'message'].filter((c) => mot[c] && en[c] !== mot[c]);

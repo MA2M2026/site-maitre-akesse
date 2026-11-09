@@ -566,20 +566,8 @@ function dessinerIconeReseau(ctx, cle, cx, cy, taille, couleurGlyphe) {
 // supabase-traductions.sql ; écrite dans Administration › Traductions anglaises). Elle est retrouvée
 // par l'empreinte du texte français (la même qu'en base : traduction_cle) ; sans traduction, le
 // français reste. versAnglais remplace les champs des lignes lues, avant leur affichage.
-// Retire espaces, tabulations et retours à la ligne en début et en fin (pas les espaces
-// insécables : même règle que traduction_cle en base). Sans expression régulière (SonarCloud
-// S8786, 26/10/2026 : une expression « ^…+|…+$ » peut devenir très lente sur un long texte).
-function rognerBlancs(s) {
-  let debut = 0, fin = s.length;
-  while (debut < fin && ' \t\r\n'.includes(s[debut])) debut++;
-  while (fin > debut && ' \t\r\n'.includes(s[fin - 1])) fin--;
-  return s.slice(debut, fin);
-}
-async function empreinteTexte(t) {
-  const propre = rognerBlancs(String(t == null ? '' : t));
-  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
-  return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
-}
+// rognerBlancs et empreinteTexte : js/partage.js (partagées avec le serveur, middleware.js)
+const { rognerBlancs, empreinteTexte } = window.Partage;
 // textes → Map(texte français → anglais), pour ceux qui ont une traduction (lecture par paquets,
 // en même temps) ; aussi utilisé par l'Administration (js/admin/site-traductions.js)
 async function traductionsDe(textes) {
