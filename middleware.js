@@ -653,7 +653,10 @@ async function pageRemplie(url, cheminPage, idBloc, lecture, retoucher) {
   // 100 % dynamique (01/11/2026) : les visages du mur de photos derrière le titre (js/app.js, murDeTitre) écrits dans
   // chaque page qui en a un (js/gabarit.js, poserMur) ; pas sur l'accueil, Qui sommes-nous ni la fiche (grande photo)
   const poserLeMur = async (h) => {
-    const avecMur = /<h1[\s>]/.test(h) && h.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(h);
+    // (10/11/2026) cherché dans le CORPS de la page seulement : les styles du haut de l'écran écrits dans <head>
+    // (scripts/css-critique.mjs) peuvent nommer ces classes sans que la page les ait (candidature, sans mur ce jour-là)
+    const corps = h.slice(Math.max(0, h.indexOf('<body')));
+    const avecMur = /<h1[\s>]/.test(corps) && corps.includes('site-header-v2') && !/id="couverture"|qsn-ouverture|profil-hero-fullbleed/.test(corps);
     const mur = avecMur ? await murPromesse : null;
     if (!mur || !mur.length) return h;
     h = globalThis.RenduGabarit.poserMur(h, mur);
