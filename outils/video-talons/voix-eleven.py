@@ -28,6 +28,10 @@ PARAGRAPHES = [(['intro'], 1.0), (['questions', 'endroit', 'demarche', 'p1', 'p2
                (['niveau', 'groupe', 'prive', 'domicile', 'nombre'], 1.1), (['inscrire', 'e1', 'e2', 'e3', 'e4'], 1.1),
                (['toutes', 'but', 'agence'], 1.2), (['fin1', 'fin2'], 0.0)]
 DEBUT = 1.2  # la voix commence après l'ouverture
+# débit : le réglage « speed » d'ElevenLabs n'agit presque pas sur v3 ; on ralentit donc ici, sans changer le timbre
+# (RALENTI=0.9 → 10 % plus lent, filtre atempo) et on laisse respirer entre deux phrases (PAUSE_PHRASE secondes)
+RALENTI = float(os.environ.get('RALENTI', '1'))
+PAUSE_PHRASE = float(os.environ.get('PAUSE_PHRASE', '0'))
 os.makedirs(SORTIE, exist_ok=True)
 textes = dict(json.load(open(os.path.join(ICI, 'voix-talons.json'), encoding='utf-8')))
 phrases, mots, morceaux, t0 = {}, {}, [], DEBUT
@@ -49,16 +53,30 @@ for n, (cles, pause) in enumerate(PARAGRAPHES):
     car, deb, fin = a['characters'], a['character_start_times_seconds'], a['character_end_times_seconds']
     lu = ''.join(car)
     duree = float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', mp3]))
-    # chaque phrase : retrouvée dans le texte lu (indices de lettres) → instants
-    pos = 0
+    # chaque phrase : retrouvée dans le texte lu (indices de lettres)
+    pos, bornes = 0, []
     for c in cles:
         i = lu.find(textes[c], pos)
         if i < 0: sys.exit('phrase introuvable dans la lecture : ' + c)
         j = i + len(textes[c]) - 1
-        phrases[c] = [round(t0 + deb[i], 3), round(t0 + fin[j], 3)]
-        mots[c] = [[m.group(0), round(t0 + deb[i + m.start()], 3), round(t0 + fin[i + m.end() - 1], 3)]
+        bornes.append((c, i, j)); pos = j + 1
+    # coupures entre phrases (au milieu du silence) ; instant d'origine → instant après ralenti et respirations
+    coupes = [(fin[bornes[k][2]] + deb[bornes[k + 1][1]]) / 2 for k in range(len(bornes) - 1)]
+    place = lambda x: t0 + x / RALENTI + PAUSE_PHRASE * sum(1 for cp in coupes if x > cp)
+    for c, i, j in bornes:
+        phrases[c] = [round(place(deb[i]), 3), round(place(fin[j]), 3)]
+        mots[c] = [[m.group(0), round(place(deb[i + m.start()]), 3), round(place(fin[i + m.end() - 1]), 3)]
                    for m in re.finditer(r"[\wÀ-ÿ'’-]+", textes[c])]
-        pos = j + 1
+    if RALENTI != 1 or PAUSE_PHRASE:
+        lent = os.path.join(SORTIE, 'p%d-lent.wav' % n)
+        bouts = [0] + coupes + [duree]
+        ent = ''.join('[0:a]atrim=%.3f:%.3f,asetpts=PTS-STARTPTS,atempo=%.4f%s[b%d];' % (bouts[k], bouts[k + 1], RALENTI,
+                      ',apad=pad_dur=%.3f' % PAUSE_PHRASE if k < len(coupes) else '', k) for k in range(len(bouts) - 1))
+        subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', mp3, '-filter_complex',
+                        ent + ''.join('[b%d]' % k for k in range(len(bouts) - 1)) + 'concat=n=%d:v=0:a=1[s]' % (len(bouts) - 1),
+                        '-map', '[s]', '-ar', '48000', lent], check=True)
+        mp3 = lent
+        duree = duree / RALENTI + PAUSE_PHRASE * len(coupes)
     morceaux.append((mp3, t0))
     print('✓ paragraphe', n + 1, round(duree, 1), 's')
     t0 += duree + pause
