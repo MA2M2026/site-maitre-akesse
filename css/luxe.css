@@ -1,0 +1,127 @@
+/* Univers « luxe » partagé (10/11/2026, demande de la propriétaire : pages « très luxe », qu'une femme de 40 à 60 ans
+   se dise « c'est sérieux ») : pages « Cours de talons » et « Intégrer l'agence ». Couleurs de la charte seulement
+   (rouges et blanc, règle du 28/10/2026 ; pas de doré). Titres en Cormorant Garamond (lettres à empattements des
+   magazines de mode), filets fins, ornements, chiffres romains, photos de mannequins, beaucoup d'espace.
+   Les boutons gardent les couleurs du bouton unique du site (css/bouton-ma2m.css, maître des couleurs) ; dans ces
+   pages ils sont seulement arrondis (--bouton-rayon) avec un reflet (accord de la propriétaire, 10/11/2026). */
+
+:root { --lx-verre: rgba(255, 255, 255, 0.07); --lx-verre-fort: rgba(255, 255, 255, 0.11); --lx-lisere: rgba(255, 255, 255, 0.22); }
+.lx-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+/* ---------- couverture : photo de mannequin, voile rouge, cadre fin, titre */
+.lx-hero { position: relative; overflow: hidden; isolation: isolate; display: flex; align-items: flex-end; padding: 58vh 0 3rem; }
+.lx-hero > .container { width: 100%; }
+.lx-hero-photo { position: absolute; top: 0; left: 0; z-index: -2; width: 100%; height: 75vh; object-fit: cover; object-position: 30% 12%; animation: lx-zoom 18s ease-out both; }
+.lx-hero-voile { position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, rgba(90, 20, 27, 0.2) 0%, rgba(90, 20, 27, 0.1) 30%, rgba(90, 20, 27, 0.75) 52%, rgba(90, 20, 27, 1) 72%, rgba(90, 20, 27, 1) 100%); }
+@keyframes lx-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+.lx-hero-cadre { position: absolute; inset: 14px; z-index: -1; border: 1px solid rgba(255, 255, 255, 0.28); pointer-events: none; }
+.lx-hero-lieu { display: none; }
+.lx-hero .eyebrow { color: #fff; letter-spacing: 0.32em; font-size: 0.72rem; }
+.lx-hero h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; color: #fff;
+  font-size: clamp(3rem, 11vw, 6.4rem); line-height: 0.92; text-shadow: 0 6px 30px rgba(90, 20, 27, 0.6); }
+.lx-hero h1 .oeil { display: none; }
+.lx-chapeau { max-width: 56ch; margin-top: 1.2rem; font-size: 1.08rem; line-height: 1.7; color: #fff; }
+.lx-hero-boutons { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; }
+@media (min-width: 900px) {
+  .lx-hero { align-items: center; min-height: 88vh; padding: 7rem 0 4rem; }
+  .lx-hero-photo { left: auto; right: 0; width: 52%; height: 100%; object-position: 30% 20%; }
+  .lx-hero-voile { background: linear-gradient(90deg, rgba(90, 20, 27, 1) 0%, rgba(90, 20, 27, 0.97) 40%, rgba(90, 20, 27, 0.55) 58%, rgba(90, 20, 27, 0.05) 80%),
+    linear-gradient(0deg, rgba(90, 20, 27, 0.7) 0%, rgba(90, 20, 27, 0) 30%); }
+  .lx-hero-texte { max-width: 540px; }
+  .lx-hero-cadre { inset: 22px; }
+  .lx-hero-lieu { display: block; position: absolute; right: 44px; bottom: 60px; margin: 0; writing-mode: vertical-rl; transform: rotate(180deg);
+    color: #fff; font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.85; }
+}
+
+/* ---------- boutons arrondis avec un reflet (dans .lx-hero et .lx-boutons) */
+.lx-hero, .lx-boutons { --bouton-rayon: 999px; }
+:is(.lx-hero, .lx-boutons) .btn--principal {
+  position: relative; overflow: hidden; border-radius: 999px; padding: 1.05rem 2.2rem; background: #fff; color: var(--rouge-profond);
+  border: 1px solid #fff; font-weight: 700; letter-spacing: 0.08em;
+  box-shadow: 0 14px 34px -12px rgba(90, 20, 27, 0.9), 0 0 0 4px rgba(255, 255, 255, 0.12); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+:is(.lx-hero, .lx-boutons) .btn--principal::after {
+  content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; pointer-events: none;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(124, 33, 40, 0.18) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: lx-reflet 3.8s ease-in-out infinite; }
+@keyframes lx-reflet { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+:is(.lx-hero, .lx-boutons) .btn--principal:hover {
+  background: #fff; color: var(--rouge-mat); border-color: #fff; transform: translateY(-3px);
+  box-shadow: 0 20px 40px -12px rgba(90, 20, 27, 0.95), 0 0 0 6px rgba(255, 255, 255, 0.18); }
+.lx-btn-voile { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; padding: 1rem 1.8rem;
+  color: #fff; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.45); font-weight: 600; letter-spacing: 0.06em;
+  text-decoration: none; transition: background 0.25s ease, transform 0.25s ease; }
+.lx-btn-voile:hover { background: rgba(255, 255, 255, 0.14); transform: translateY(-2px); color: #fff; }
+
+/* ---------- titres : surtitre espacé, grand titre, titre de partie centré en italique avec un filet, ornement */
+.lx-surtitre { margin: 0 0 0.8rem; text-align: center; color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.38em; text-transform: uppercase; opacity: 0.85; }
+.lx-grand-titre, .lx-titre-section, .lx-piliers h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; color: #fff; }
+.lx-grand-titre { margin: 0 auto; max-width: 18em; text-align: center; font-size: clamp(2.1rem, 6vw, 3.4rem); line-height: 1.1; }
+.lx-grand-titre em { font-style: italic; }
+.lx-titre-section { font-size: clamp(2.4rem, 6vw, 3.6rem); font-style: italic; text-align: center; margin-bottom: 2.4rem; }
+.lx-titre-section::after { content: ""; display: block; width: 90px; height: 1px; margin: 1.1rem auto 0; background: rgba(255, 255, 255, 0.5); }
+.lx-ornement { position: relative; display: block; width: 160px; height: 1px; margin: 1.6rem auto 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)); }
+.lx-ornement::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; transform: rotate(45deg); border: 1px solid #fff; background: var(--rouge-mat); }
+
+/* ---------- trois points numérotés en chiffres romains */
+.lx-promesse { padding: 6rem 0 5rem; background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 60%); }
+.lx-piliers { list-style: none; margin: 3rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
+@media (min-width: 860px) { .lx-piliers { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
+.lx-piliers li { position: relative; padding: 2rem 1.6rem 1.6rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.35); }
+.lx-chiffre { display: block; margin-bottom: 0.6rem; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 2.8rem; line-height: 1; color: #fff; opacity: 0.9; }
+.lx-piliers h3 { margin: 0 0 0.6rem; font-size: 1.7rem; }
+.lx-piliers p { margin: 0 auto; max-width: 30ch; line-height: 1.7; color: #fff; opacity: 0.88; }
+
+/* ---------- galerie de mannequins : portraits encadrés d'un filet, celui du milieu décalé, léger zoom au survol */
+.lx-galerie { padding: 6rem 0 2rem; }
+.lx-galerie .lx-grand-titre { font-style: italic; max-width: 22em; font-size: clamp(1.7rem, 4.6vw, 2.6rem); }
+.lx-galerie-grille { display: flex; gap: 1rem; margin-top: 3rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 1rem; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.lx-galerie-grille::-webkit-scrollbar { display: none; }
+.lx-galerie-photo { position: relative; flex: 0 0 76%; margin: 0; scroll-snap-align: center; overflow: hidden; border-radius: 4px; aspect-ratio: 4 / 5;
+  box-shadow: 0 40px 70px -35px rgba(90, 20, 27, 1); }
+.lx-galerie-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.lx-galerie-photo::after { content: ""; position: absolute; inset: 10px; border: 1px solid rgba(255, 255, 255, 0.45); pointer-events: none; }
+.lx-galerie-photo:hover img { transform: scale(1.06); }
+@media (min-width: 860px) {
+  .lx-galerie-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6rem; overflow: visible; padding-bottom: 3rem; }
+  .lx-galerie-photo:nth-child(2) { transform: translateY(3rem); }
+}
+
+/* ---------- bande « défilé » : photo de podium et citation */
+.lx-defile { position: relative; overflow: hidden; isolation: isolate; min-height: 70vh; display: flex; align-items: flex-end; margin-top: 2rem; padding: 4rem 0; }
+.lx-defile > .container { width: 100%; }
+.lx-defile-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+.lx-defile-voile { position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, rgba(124, 33, 40, 1) 0%, rgba(90, 20, 27, 0.25) 22%, rgba(90, 20, 27, 0.3) 45%, rgba(90, 20, 27, 0.88) 75%, rgba(124, 33, 40, 1) 100%); }
+.lx-citation { margin: 0; color: #fff; font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(2.2rem, 7vw, 4.4rem); line-height: 1.05; font-weight: 500; text-shadow: 0 6px 30px rgba(90, 20, 27, 0.8); }
+.lx-citation em { font-style: italic; }
+.lx-citation-sous { margin: 1rem 0 0; color: #fff; letter-spacing: 0.22em; text-transform: uppercase; font-size: 0.78rem; font-weight: 600; }
+@media (min-width: 900px) {
+  .lx-defile { min-height: 82vh; align-items: center; }
+  .lx-defile-photo { left: auto; right: 0; width: 60%; object-position: 50% 0%; }
+  .lx-defile-voile { background: linear-gradient(90deg, rgba(124, 33, 40, 1) 0%, rgba(124, 33, 40, 1) 38%, rgba(90, 20, 27, 0.4) 55%, rgba(90, 20, 27, 0.05) 75%),
+    linear-gradient(180deg, rgba(124, 33, 40, 1) 0%, rgba(124, 33, 40, 0) 18%, rgba(124, 33, 40, 0) 80%, rgba(124, 33, 40, 1) 100%); }
+  .lx-defile-texte { max-width: 1200px; }
+  .lx-citation { max-width: 9em; }
+}
+
+/* ---------- carte de verre dépoli à liseré blanc (formules, étapes, avantages…) */
+.lx-verre { position: relative; overflow: hidden; border-radius: 8px; color: #fff;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 45%, rgba(90, 20, 27, 0.55) 100%);
+  border: 1px solid var(--lx-lisere); box-shadow: 0 30px 60px -30px rgba(90, 20, 27, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform 0.35s ease, box-shadow 0.35s ease; }
+.lx-verre::before { content: ""; position: absolute; inset: 10px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); pointer-events: none; }
+.lx-verre:hover { transform: translateY(-6px); box-shadow: 0 40px 70px -30px rgba(90, 20, 27, 1), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.lx-verre :is(h3, p, li, span, b) { color: #fff; }
+
+/* ---------- écrin du formulaire */
+.lx-ecrin { padding: 2rem 1.4rem 1.6rem; border-radius: 10px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(90, 20, 27, 0.6) 100%);
+  border: 1px solid var(--lx-lisere); box-shadow: 0 40px 80px -40px rgba(90, 20, 27, 1), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
+@media (min-width: 700px) { .lx-ecrin { padding: 2.6rem 2.6rem 2rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lx-hero-photo { animation: none; }
+  :is(.lx-hero, .lx-boutons) .btn--principal::after { animation: none; display: none; }
+  .lx-galerie-photo img { transition: none; }
+}

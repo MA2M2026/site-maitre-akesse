@@ -1,57 +1,73 @@
 /* Page « Intégrer l'agence » réorganisée (08/11/2026) : vidéo, étapes, critères, deux parcours à toucher, avantages.
-   Couleurs de la charte seulement (rouge mat, rouge profond, blanc). Les apparitions utilisent .reveal du site. */
-.ia-haut { padding-bottom: 1.5rem; }
+   Couleurs de la charte seulement (rouge mat, rouge profond, blanc). Les apparitions utilisent .reveal du site.
+   Présentation « luxe » (10/11/2026, demande de la propriétaire, comme les cours de talons) : couverture photo,
+   titres, ornements, galerie, bande « défilé », cartes de verre, écrin du formulaire et boutons arrondis viennent de
+   css/luxe.css ; ici, seulement ce qui est propre à la page. */
 .ia-haut-grille { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
-.ia-choix-rapide { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 1.4rem 0 0.4rem; }
-.ia-video { justify-self: center; width: 100%; max-width: 380px; }
-.ia-video video { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; border-radius: 22px; background: var(--rouge-profond); box-shadow: 0 24px 60px -20px rgba(58, 11, 16, 0.6); }
+.ia-haut .lien-marche { color: #fff; }
+.ia-choix-rapide { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 1.6rem 0 0.6rem; }
 
-.ia-section { padding: 2.2rem 0; }
-.ia-section h2 { margin-bottom: 1.4rem; }
-.ia-section--criteres { background: var(--rouge-profond); }
+.ia-section { padding: 5rem 0 2rem; }
+.ia-section--criteres { background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 65%); }
 
-/* étapes : trois cartes numérotées */
-.ia-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 1.2rem; position: relative; }
+/* étapes : trois cartes de verre, chiffres romains */
+.ia-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 1.4rem; position: relative; }
 @media (min-width: 800px) { .ia-etapes { grid-template-columns: repeat(3, 1fr); } }
-.ia-etapes li { position: relative; padding: 1.6rem 1.4rem; border-radius: 18px; background: var(--blanc-pur); color: var(--rouge-profond); }
-.ia-etapes h3 { margin: 0.6rem 0 0.4rem; font-size: 1.35rem; color: var(--rouge-profond); }
-.ia-etapes p { margin: 0; color: var(--rouge-profond); }
-.ia-num { display: inline-grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: var(--rouge-mat); color: var(--blanc-pur); font-weight: 700; font-size: 1.1rem; }
+.ia-etapes li { padding: 2.2rem 1.8rem 2rem; text-align: center; }
+.ia-num { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 500; font-size: 2.8rem; line-height: 1; }
+.ia-etapes h3, .ia-avantage h3, .ia-parcours-tete h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.ia-etapes h3 { margin: 0.8rem 0 0.5rem; font-size: 1.7rem; }
+.ia-etapes p { margin: 0 auto; max-width: 30ch; line-height: 1.65; opacity: 0.9; }
 
-/* critères : grands chiffres */
+/* critères : grands chiffres fins */
 .ia-criteres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-@media (min-width: 800px) { .ia-criteres { grid-template-columns: repeat(4, 1fr); } }
-.ia-critere { padding: 1.4rem 1.2rem; border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 18px; display: flex; flex-direction: column; gap: 0.3rem; }
-.ia-grand { font-family: var(--mag-titre, inherit); font-weight: 800; font-size: 2.4rem; line-height: 1; }
-.ia-note { margin-top: 1rem; font-style: italic; }
+@media (min-width: 800px) { .ia-criteres { grid-template-columns: repeat(4, 1fr); gap: 1.4rem; } }
+.ia-critere { padding: 1.8rem 1.2rem 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
+.ia-grand { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(2.2rem, 7vw, 3.2rem); line-height: 1; }
+.ia-critere span:not(.ia-grand) { font-size: 0.88rem; line-height: 1.45; opacity: 0.9; }
+.ia-note { margin-top: 1.6rem; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; }
 
-/* deux parcours à toucher (rond à cocher, carte choisie en rouge profond avec une coche, comme les cours de talons) */
-.ia-consigne { margin: -0.6rem 0 1.2rem; font-weight: 600; }
-.ia-parcours { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+/* deux parcours à toucher : carte de verre ; la carte choisie devient blanche, avec une coche rouge */
+.ia-consigne { margin: -1rem 0 1.6rem; text-align: center; font-weight: 500; opacity: 0.9; }
+.ia-parcours { display: grid; grid-template-columns: 1fr; gap: 1.4rem; }
 @media (min-width: 800px) { .ia-parcours { grid-template-columns: 1fr 1fr; } }
-.ia-parcours-carte { position: relative; padding: 1.6rem 1.4rem 1.4rem; border-radius: 20px; background: var(--blanc-pur); color: var(--rouge-profond); border: 2px solid rgba(124, 33, 40, 0.3); cursor: pointer; transition: box-shadow 0.25s, background 0.25s; }
-.ia-parcours-carte:hover { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55); }
+.ia-parcours-carte { --bouton-rayon: 999px; padding: 2rem 1.8rem 1.8rem; cursor: pointer; transition: transform 0.35s ease, box-shadow 0.35s ease, background 0.35s ease; }
 .ia-parcours-tete { display: flex; gap: 1rem; align-items: flex-start; }
-.ia-parcours-tete h3 { margin: 0; font-size: 1.5rem; color: inherit; }
-.ia-parcours-tete p { margin: 0.2rem 0 0; color: inherit; }
-.ia-rond { flex: none; width: 1.8rem; height: 1.8rem; margin-top: 0.2rem; border-radius: 50%; border: 2px solid var(--rouge-mat); background: var(--blanc-pur); display: grid; place-items: center; font-weight: 800; }
-.ia-ligne { list-style: none; margin: 1.2rem 0; padding: 0 0 0 1.4rem; border-left: 3px solid var(--rouge-mat); display: grid; gap: 0.9rem; }
+.ia-parcours-tete h3 { margin: 0; font-size: 2rem; color: inherit; }
+.ia-parcours-tete p { margin: 0.3rem 0 0; color: inherit; opacity: 0.9; }
+.ia-rond { flex: none; width: 1.9rem; height: 1.9rem; margin-top: 0.45rem; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.75); background: rgba(255, 255, 255, 0.04);
+  display: grid; place-items: center; font-weight: 800; font-size: 0.95rem; transition: all 0.25s ease; }
+.ia-ligne { list-style: none; margin: 1.4rem 0 1.6rem; padding: 0 0 0 1.4rem; border-left: 1px solid rgba(255, 255, 255, 0.5); display: grid; gap: 1rem; }
 .ia-ligne li { display: grid; gap: 0.15rem; position: relative; }
-.ia-ligne li::before { content: ""; position: absolute; left: -1.95rem; top: 0.35rem; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--rouge-mat); }
-.ia-ligne b { font-family: var(--mag-titre, inherit); font-size: 1.5rem; color: var(--rouge-mat); }
-.ia-ligne span { color: inherit; }
-.ia-parcours-carte.choisie { background: var(--rouge-profond); color: var(--blanc-pur); border-color: var(--blanc-pur); box-shadow: 0 0 0 3px var(--blanc-pur); }
-.ia-parcours-carte.choisie .ia-rond { background: var(--blanc-pur); border-color: var(--blanc-pur); color: var(--rouge-profond); }
-.ia-parcours-carte.choisie .ia-rond::after { content: "✓"; }
-.ia-parcours-carte.choisie .ia-ligne { border-left-color: var(--blanc-pur); }
-.ia-parcours-carte.choisie .ia-ligne li::before { background: var(--blanc-pur); }
-.ia-parcours-carte.choisie .ia-ligne b { color: var(--blanc-pur); }
+.ia-ligne li::before { content: ""; position: absolute; left: -1.72rem; top: 0.55rem; width: 0.6rem; height: 0.6rem; transform: rotate(45deg); background: var(--rouge-mat); border: 1px solid #fff; }
+.ia-ligne b { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 600; font-size: 1.6rem; }
+.ia-ligne span { color: inherit; opacity: 0.9; }
+.ia-parcours-carte .btn { border-radius: 999px; }
+.ia-parcours-carte.choisie { background: #fff; border-color: #fff; transform: translateY(-4px);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18), 0 30px 60px -28px rgba(90, 20, 27, 1); }
+.ia-parcours-carte.choisie :is(h3, p, li, span, b) { color: var(--rouge-profond); }
+.ia-parcours-carte.choisie .ia-ligne b { color: var(--rouge-mat); }
+.ia-parcours-carte.choisie .ia-ligne { border-left-color: rgba(124, 33, 40, 0.4); }
+.ia-parcours-carte.choisie .ia-rond { background: var(--rouge-mat); border-color: var(--rouge-mat); color: #fff; animation: ia-coche 0.35s ease; }
+.ia-parcours-carte.choisie .ia-rond::after { content: "✓"; color: #fff; }
+.ia-parcours-carte.choisie::before { border-color: rgba(124, 33, 40, 0.15); }
+@keyframes ia-coche { 0% { transform: scale(0.4); } 70% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
-/* avantages */
-.ia-avantages { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+/* avantages : cartes de verre, un ornement à la place des petits dessins */
+.ia-avantages { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
 @media (min-width: 700px) { .ia-avantages { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1100px) { .ia-avantages { grid-template-columns: repeat(4, 1fr); } }
-.ia-avantage { padding: 1.4rem; border-radius: 18px; border: 2px solid rgba(255, 255, 255, 0.6); }
-.ia-icone { font-size: 2rem; }
-.ia-avantage h3 { margin: 0.5rem 0 0.4rem; font-size: 1.2rem; }
-.ia-avantage p { margin: 0; }
+.ia-avantage { padding: 2rem 1.5rem 1.7rem; text-align: center; }
+.ia-icone { display: none; }
+.ia-avantage::after { content: ""; position: absolute; top: 1.6rem; left: 50%; width: 8px; height: 8px; margin-left: -4px; transform: rotate(45deg); border: 1px solid #fff; }
+.ia-avantage h3 { margin: 1.4rem 0 0.5rem; font-size: 1.55rem; line-height: 1.15; }
+.ia-avantage p { margin: 0; line-height: 1.6; opacity: 0.9; }
+
+/* formulaire de candidature : écrin (css/luxe.css, .lx-ecrin) */
+.ia-formulaire { padding-top: 5rem; }
+.ia-formulaire .ca-1 { max-width: 760px; }
+.ia-formulaire .ca-2 { border-left: 0; border-radius: 8px; background: var(--lx-verre); border: 1px solid var(--lx-lisere); }
+.ia-formulaire #btn-envoyer { width: 100%; margin-top: 0.6rem; }
+.ia-formulaire .envoi-jauges { border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .ia-parcours-carte.choisie .ia-rond { animation: none; } }
