@@ -4370,13 +4370,14 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
   montant enregistré (`cours_talons_montant`) ; la page n'affiche qu'un total indicatif.
 - **Pages** : `cours-talons.html`, `en/cours-talons.html`, `css/cours-talons.css`, `js/cours-talons.js` ; vidéo
   `assets/cours-talons/atelier-talons-elegance.mp4` (vertical 720 × 1280) et `atelier-talons-elegance-large.mp4`
-  (horizontal 1280 × 720), ~8,5 Mo chacune, chargées seulement au clic (`preload="none"`), avec leurs affiches
+  (horizontal 1280 × 720), ~7,4 Mo chacune, chargées seulement au clic (`preload="none"`), avec leurs affiches
   `affiche.jpg` / `affiche-large.jpg` (le `?v=` des pages change à chaque nouvelle version : fichiers en cache 1 an).
   **Version du 10/11/2026** (motion design « noir profond ») fabriquée par `outils/video-talons/` (jamais publié) :
-  voix ElevenLabs « Charlotte » v3 (`voix-eleven.py`, texte `voix-talons.json`, prononciations guidées « Akessé »,
-  « céfa », « Faïa », « Mannèdjmeunt » ; clé jamais écrite : secret réseau de l'environnement), musique originale
+  voix « Nicolas – Narrator » enregistrée par la propriétaire sur ElevenLabs et calée mot à mot par
+  `aligner-voix.py` (reconnaissance locale faster-whisper : la clé de la session n'a pas les droits speech_to_text ni
+  forced_alignment ; l'ancienne voix générée reste possible avec `voix-eleven.py`), texte `voix-talons.json`, musique originale
   (`musique-talons.py`), film `film-talons.html` rendu image par image (`fabrique-talons.js`, chaque élément calé
-  sur le mot de la voix), médaillons et vignettes = photos du book du site recadrées (`medaillons/`, `vignettes/`).
+  sur le mot de la voix ; moteur d'animation commun à tous les films : `moteur-film.css` / `moteur-film.js`), médaillons et vignettes = photos du book du site recadrées (`medaillons/`, `vignettes/`).
   **Jamais de photos de KAPO Ainhoa ni d'AKASSOU** (consigne de la propriétaire), jamais d'homme dans cette vidéo.
   Rendu final allégé : `ffmpeg … -crf 27 -preset veryslow -movflags +faststart` depuis les images du film.
 - **Inscription en 4 étapes** : formule (et nombre de séances, lieu pour le privé à l'extérieur) → la personne
