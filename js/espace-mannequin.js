@@ -140,6 +140,17 @@ function viewAuthGate(){
   '</div>';
 }
 
+// Écran « Choisissez votre mot de passe » après un mot de passe provisoire (10/11/2026) : seulement ce panneau,
+// sans lien vers l'inscription ni la connexion (la personne est déjà connectée).
+function afficherMdpObligatoire(){
+  renderAuthGate();
+  afficherPanneauAuth('auth-panneau-nouveau-mdp');
+  const p = document.getElementById('auth-panneau-nouveau-mdp');
+  const titre = p && p.querySelector('h2'), sous = p && p.querySelector('.sub');
+  if (titre) titre.textContent = 'Choisissez votre mot de passe';
+  if (sous) sous.textContent = 'Vous vous êtes connecté(e) avec un mot de passe provisoire donné par l’agence. Choisissez maintenant votre propre mot de passe (8 caractères minimum), que vous seul(e) connaîtrez.';
+}
+
 function afficherPanneauAuth(id){
   // 'block' explicite (jamais '') : plusieurs de ces panneaux portent une
   // classe utilitaire display:none (ex. p20-9) — un style inline vide ne
@@ -253,8 +264,12 @@ function bindAuthGate(){
   document.getElementById('au-nm-valider')?.addEventListener('click', async function(){
     const nouveauMdp = val('au-nm-mdp'); const msg = document.getElementById('au-nm-msg');
     if (nouveauMdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
-    const { error } = await sb.auth.updateUser({ password: nouveauMdp });
-    if (error) { msg.textContent = 'Erreur : ' + error.message; return; }
+    // (10/11/2026) après un mot de passe provisoire donné par l'agence : il ne peut pas être gardé tel quel
+    if (/^MA2M-\d{4}-[A-Z]{3}$/.test(nouveauMdp)) { msg.textContent = 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.'; return; }
+    this.disabled = true;
+    const { error } = await sb.auth.updateUser({ password: nouveauMdp, data: { mdp_provisoire: false } });
+    this.disabled = false;
+    if (error) { msg.textContent = /different|same/i.test(error.message) ? 'Choisissez un mot de passe différent de l’ancien.' : 'Erreur : ' + error.message; return; }
     recuperationMdpEnCours = false;
     await demarrerApresConnexion();
   });
@@ -1915,6 +1930,9 @@ function showOverlay(){
 async function demarrerApresConnexion(){
   const { data: { user } } = await sb.auth.getUser();
   if (!user) { renderAuthGate(); return; }
+  // (10/11/2026) mot de passe provisoire donné par l'agence (Administration › fiche de la mannequin) : choisir le sien
+  // d'abord, avant tout le reste (api/portail.js, mannequin_mdp_provisoire)
+  if (user.user_metadata && user.user_metadata.mdp_provisoire) { afficherMdpObligatoire(); return; }
   currentUser = user;
   await Store.ensureProfileRow();
   state = await Store.load();

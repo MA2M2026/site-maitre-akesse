@@ -450,6 +450,9 @@
   async function ouvrir() {
     const { data } = await avecDelai(sb.auth.getSession(), 12000);
     if (!data || !data.session) { ecranConnexion(); return; }
+    // (10/11/2026) mot de passe provisoire donné par l'agence : le choisir d'abord, dans l'Espace mannequin
+    const meta = data.session.user && data.session.user.user_metadata;
+    if (meta && meta.mdp_provisoire) { location.replace('/app/espace-mannequin.html'); return; }
     racine.innerHTML = '<div class="ap-chargement"><img src="/icons/mannequin-192.png" alt="" width="96" height="96"><span>Chargement de votre espace…</span></div>';
     try {
       etat = await avecDelai(charger(data.session.user.id), 20000);

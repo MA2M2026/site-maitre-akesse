@@ -1152,3 +1152,5 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .ct-infos dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 520px) { .ct-infos { grid-template-columns: 1fr; } .ct-infos dd { margin-bottom: 6px; } }
 .ct-suivi { margin-top: 12px; }
+/* mot de passe provisoire d'une mannequin (10/11/2026, js/admin/site-mannequins.js) : gros, lisible, à recopier */
+.mdp-provisoire { margin: 0; padding: 14px 16px; border-radius: 12px; text-align: center; font: 700 26px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.08em; background: var(--av-fond, #F2F2F2); user-select: all; }

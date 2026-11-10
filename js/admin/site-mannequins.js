@@ -121,10 +121,68 @@
       '<div class="ligne"><a class="btn" href="/mannequin.html?id=' + P.esc(id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' +
       '<a class="btn" href="#/site/' + PAGE + '/' + P.esc(id) + '/cv">📄 Voir le CV</a>' +
       '<button type="button" class="btn" data-action="mannequin-sourdine">' + (profil.desactive ? '🔊 Réactiver' : '🔇 Mettre en sourdine') + '</button></div></div></header>' +
-      blocPhotos() + blocMensurations(await P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null)) + await blocVitrine(id) +
+      blocPhotos() + blocMensurations(await P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null)) + await blocVitrine(id) + await blocCompte(id) +
       '<section class="carte zone-danger"><h2>Supprimer définitivement</h2><p class="doux petit-texte">Supprime le profil, le compte de connexion et toutes les photos. Irréversible. Pour la retirer seulement du site, préférez la sourdine.</p>' +
       '<button type="button" class="btn" data-action="mannequin-supprimer">🗑 Supprimer</button></section>';
   }
+  // ---------- Compte de connexion (10/11/2026, demande de la propriétaire) ----------
+  // Mannequin qui a perdu l'accès à son e-mail, ou oublié son mot de passe : l'administratrice PRINCIPALE seule voit
+  // l'e-mail de connexion, le remplace, ou crée un mot de passe provisoire à lui envoyer (WhatsApp). À sa connexion,
+  // l'Espace mannequin l'oblige à choisir son propre mot de passe. Serveur : api/portail.js (mannequin_compte,
+  // mannequin_email, mannequin_mdp_provisoire), code de double authentification récent demandé (P.sensible).
+  const ADRESSE_ESPACE = 'https://mannequin.maitreakessemodelmanagement.com/app/';
+  async function blocCompte(id) {
+    if (!P.moi || P.moi.role !== 'principal') return '';
+    let compte = null;
+    try { compte = await P.serveur('mannequin_compte', { model_id: id }); } catch (e) { compte = { erreur: e.message }; }
+    ouverte.compte = compte && !compte.erreur ? compte : null;
+    return '<section class="carte" id="mq-compte"><h2>Compte de connexion</h2>' +
+      (compte && compte.erreur ? '<p class="doux">' + P.esc(compte.erreur) + '</p>' :
+        '<p>E-mail de connexion : <b>' + P.esc(compte.email || '—') + '</b></p>' +
+        (compte.provisoire ? '<p>' + P.pastille('Mot de passe provisoire : pas encore changé par la mannequin', 'alerte') + '</p>' : '') +
+        '<p class="doux petit-texte">Si elle n’a plus accès à cette adresse, remplacez-la. Si elle a oublié son mot de passe, créez-en un provisoire et envoyez-le-lui : à sa connexion, elle devra choisir le sien. Réservé à l’administratrice principale ; votre code d’authentification peut être demandé.</p>' +
+        '<div class="ligne"><button type="button" class="btn" data-action="mannequin-email">✉️ Changer l’e-mail de connexion</button>' +
+        '<button type="button" class="btn" data-action="mannequin-mdp">🔑 Créer un mot de passe provisoire</button></div>') +
+      '</section>';
+  }
+  P.actions['mannequin-email'] = () => {
+    P.fenetre('<form class="grille" data-form="mannequin-email"><h2>Changer l’e-mail de connexion</h2>' +
+      '<p>Nouvelle adresse pour « ' + P.esc(ouverte.profil.full_name || '') + ' ». Elle se connectera avec cette adresse et son mot de passe actuel (ou un mot de passe provisoire). Son profil, ses photos et ses paiements ne changent pas.</p>' +
+      '<label class="fl" for="mq-email">Nouvelle adresse e-mail<input id="mq-email" name="email" type="email" autocomplete="off" required></label>' +
+      '<div class="ligne"><button class="btn rouge" type="submit">Enregistrer la nouvelle adresse</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
+    document.getElementById('mq-email').focus();
+  };
+  P.formulaires['mannequin-email'] = async (f) => {
+    const email = String(f.get('email') || '').trim();
+    const r = await P.sensible(() => P.serveur('mannequin_email', { model_id: ouverte.id, email }));
+    P.fenetre('');
+    P.message('E-mail de connexion changé : ' + r.email);
+    return P.afficher();
+  };
+  P.actions['mannequin-mdp'] = async (el) => {
+    const nom = ouverte.profil.full_name || 'cette mannequin';
+    if (!confirm('Créer un mot de passe provisoire pour « ' + nom + ' » ?\n\nSon mot de passe actuel ne marchera plus. Vous lui enverrez le provisoire ; à sa connexion, elle devra choisir le sien.')) return;
+    el.disabled = true;
+    try {
+      const r = await P.sensible(() => P.serveur('mannequin_mdp_provisoire', { model_id: ouverte.id }));
+      const email = (ouverte.compte && ouverte.compte.email) || '';
+      const texte = 'Bonjour ' + (nom.split(' ')[0] || '') + ', voici votre mot de passe provisoire pour votre Espace mannequin MA2M : ' + r.motdepasse +
+        '\nConnectez-vous ' + (email ? 'avec votre e-mail ' + email + ' ' : '') + 'sur ' + ADRESSE_ESPACE + ' ; on vous demandera ensuite de choisir votre propre mot de passe.';
+      ouverte.texteMdp = texte;
+      P.fenetre('<h2>Mot de passe provisoire</h2><p>Pour « ' + P.esc(nom) + ' » :</p>' +
+        '<p class="mdp-provisoire"><b>' + P.esc(r.motdepasse) + '</b></p>' +
+        '<p class="doux petit-texte">Il ne sera plus affiché après fermeture : envoyez-le maintenant. À sa connexion, elle devra choisir son propre mot de passe.</p>' +
+        '<div class="ligne"><a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(texte) + '">💬 Envoyer par WhatsApp</a>' +
+        '<button type="button" class="btn" data-action="mannequin-mdp-copier">📋 Copier le message</button>' +
+        '<button type="button" class="btn" data-action="fermer-fenetre-recharger">Fermer</button></div>');
+    } finally { el.disabled = false; }
+  };
+  P.actions['mannequin-mdp-copier'] = async () => {
+    try { await navigator.clipboard.writeText(ouverte.texteMdp || ''); P.message('Message copié : collez-le dans WhatsApp ou un SMS.'); }
+    catch (e) { P.message('Copie impossible sur cet appareil : utilisez le bouton WhatsApp.'); }
+  };
+  P.actions['fermer-fenetre-recharger'] = () => { P.fenetre(''); ouverte.texteMdp = ''; return P.afficher(); };
+
   // ---------- Accueil du site, « site vivant » (08/11/2026, phase 3 V4 ; supabase-site-vivant.sql) ----------
   // Une mannequin paraît sur l'accueil (couverture, « À la une », visages) si elle est majeure, ou mineure avec l'accord
   // donné par un parent lui-même (lien personnel). L'agence peut aussi l'exclure. Tant que le fichier n'est pas collé :

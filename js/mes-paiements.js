@@ -24,6 +24,8 @@
   async function charger() {
     const { data: s } = await sb.auth.getSession();
     if (!s.session) return { connexion: true };
+    // (10/11/2026) mot de passe provisoire donné par l'agence : le choisir d'abord, dans l'Espace mannequin
+    if (s.session.user && s.session.user.user_metadata && s.session.user.user_metadata.mdp_provisoire) { location.replace('/app/espace-mannequin.html'); return new Promise(() => {}); }
     const { data, error } = await sb.rpc('mes_mensualites');
     if (error) throw error;
     if (data && data.inscrit) await complements(data);

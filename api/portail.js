@@ -3,7 +3,8 @@
 // fonctions à 12 (11 déjà utilisées). La clé secrète Supabase ne quitte jamais le serveur.
 //
 // Actions réservées à l'administrateur principal (code de double authentification récent) :
-//   inviter, reinitialiser_mfa, acces
+//   inviter, reinitialiser_mfa, acces ; compte d'une mannequin (10/11/2026) : mannequin_email,
+//   mannequin_mdp_provisoire (et mannequin_compte, lecture de l'e-mail de connexion, sans code récent)
 // Actions de la personne connectée : codes_secours_creer (après activation de la double
 //   authentification), code_secours_utiliser (téléphone perdu)
 // (Les actions de l'inscription par code et des paiements viendront avec l'espace 2.)
@@ -370,6 +371,47 @@ module.exports = async function handler(req, res) {
       // accès coupé : toutes les sessions de ce compte sont fermées (bannissement levé au rétablissement)
       await adminAuth('admin/users/' + cible, 'PUT', { ban_duration: corps.actif ? 'none' : '876000h' });
       return res.status(200).json({ ok: true });
+    }
+
+    // ---------- compte de connexion d'une mannequin (10/11/2026, demande de la propriétaire) ----------
+    // Mannequin qui a perdu l'accès à son e-mail, ou oublié son mot de passe : l'administratrice PRINCIPALE seule (code
+    // de double authentification récent pour changer quoi que ce soit) lit l'e-mail de connexion, le remplace, ou pose
+    // un mot de passe provisoire. Le provisoire est marqué (mdp_provisoire) : à sa connexion, l'Espace mannequin oblige
+    // à choisir un nouveau mot de passe (js/espace-mannequin.js). Jamais sur un compte de l'équipe. Noté au journal.
+    if (['mannequin_compte', 'mannequin_email', 'mannequin_mdp_provisoire'].includes(action)) {
+      const appareil = String(req.headers['x-appareil'] || '');
+      const moi = jeton && /^[a-z0-9-]{16,64}$/.test(appareil) && await moiPortail(jeton, appareil);
+      if (!moi || moi.role !== 'principal') return res.status(403).json({ error: 'Réservé à l’administrateur principal.' });
+      if (action !== 'mannequin_compte' && !authRecente(jeton)) return res.status(403).json({ error: 'AUTH_RECENTE: confirmez votre code.' });
+      const auteur = await verifierUtilisateur(jeton);
+      const cible = String(corps.model_id || '');
+      if (!auteur || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cible) || cible === auteur.id) return res.status(400).json({ error: 'Compte invalide.' });
+      const lire = async (chemin) => {
+        const r = await fetch(SUPABASE_URL + '/rest/v1/' + chemin, { headers: enTetesService() });
+        if (!r.ok) throw new Error('Vérification impossible pour le moment.');
+        return r.json();
+      };
+      const [mannequin, equipe, admin] = await Promise.all([lire('model_profiles?select=id&id=eq.' + cible), lire('staff_profiles?select=user_id&user_id=eq.' + cible), lire('admins?select=user_id&user_id=eq.' + cible)]);
+      if (!mannequin.length || equipe.length || admin.length) return res.status(400).json({ error: 'Ce compte n’est pas celui d’une mannequin.' });
+      const compte = await adminAuth('admin/users/' + cible, 'GET');
+      if (action === 'mannequin_compte') return res.status(200).json({ email: compte.email || '', provisoire: !!(compte.user_metadata && compte.user_metadata.mdp_provisoire) });
+      if (action === 'mannequin_email') {
+        const email = String(corps.email || '').trim().toLowerCase();
+        if (!EMAIL_VALIDE.test(email) || email.length > 200) return res.status(400).json({ error: 'Adresse e-mail invalide.' });
+        if (email === String(compte.email || '').toLowerCase()) return res.status(400).json({ error: 'C’est déjà son adresse de connexion.' });
+        const deja = await rpcService('portail_utilisateur_par_email', { p_email: email });
+        if (deja && deja !== cible) return res.status(400).json({ error: 'Cette adresse est déjà utilisée par un autre compte.' });
+        await adminAuth('admin/users/' + cible, 'PUT', { email, email_confirm: true });
+        await noterAuJournal('Compte mannequin : e-mail de connexion changé par l’administratrice principale (' + cible + ')', 'mannequin_email');
+        return res.status(200).json({ ok: true, email });
+      }
+      // mot de passe provisoire : facile à dicter ou à envoyer (ni 0/O ni 1/I), 4 chiffres et 3 lettres
+      const lettres = 'ABCDEFGHJKLMNPQRSTUVWXYZ', chiffres = '23456789';
+      const tirer = (alphabet, n) => Array.from(crypto.randomBytes(n), (o) => alphabet[o % alphabet.length]).join('');
+      const motdepasse = 'MA2M-' + tirer(chiffres, 4) + '-' + tirer(lettres, 3);
+      await adminAuth('admin/users/' + cible, 'PUT', { password: motdepasse, user_metadata: { mdp_provisoire: true } });
+      await noterAuJournal('Compte mannequin : mot de passe provisoire posé par l’administratrice principale (' + cible + ')', 'mannequin_mdp_provisoire');
+      return res.status(200).json({ ok: true, motdepasse });
     }
 
     // ---------- la personne connectée ----------

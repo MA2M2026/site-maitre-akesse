@@ -27,6 +27,9 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // (Extension 158, 08/11/2026) chaque action d'administration envoyée au serveur porte l'identifiant de l'appareil
     const appelsApi = []; p.on('request', (r) => { if (/\/api\//.test(r.url())) appelsApi.push([r.url().replace(/^.*\/api\//, ''), r.headers()['x-appareil'] || '']); });
     const d = donnees('principal');
+    // (10/11/2026) compte de connexion d'une mannequin : réponses du serveur imitées
+    d.api['/api/portail'] = (c) => (c.action === 'mannequin_compte' ? { email: 'awa@test.ci', provisoire: false }
+      : c.action === 'mannequin_email' ? { ok: true, email: c.email } : c.action === 'mannequin_mdp_provisoire' ? { ok: true, motdepasse: 'MA2M-2345-ABC' } : { ok: true });
     // mensurations dans le temps (chantier 14) : le dernier relevé date de plus de 3 mois, la taille a changé
     d.rpc.mensurations_historique_lire = [
       { releve_le: '2026-06-01T10:00:00Z', origine: 'modification', valeurs: { height_cm: 178, weight_kg: 55, chest_cm: 84, waist_cm: 61, hips_cm: 90, inseam_cm: null, shoe_size: 40 } },
@@ -123,6 +126,17 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     });
     ok(/^1\|1\|1 photo\(s\) de faible qualité.*photos originales/.test(faibles), n + 'CV / compcard : grande case de 130 mm trop grande pour 1200 px, même photo placée deux fois comptée une fois (' + faibles.slice(0, 40) + ')');
     await p.goBack(); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(600);
+    // 4 bis. (10/11/2026) Compte de connexion : e-mail lu, changé ; mot de passe provisoire à envoyer par WhatsApp
+    ok(/Compte de connexion/.test(await p.textContent('#mq-compte').catch(() => '')) && /awa@test\.ci/.test(await p.textContent('#mq-compte')), n + 'fiche : « Compte de connexion » avec l’e-mail de connexion actuel');
+    await p.click('[data-action="mannequin-email"]'); await p.fill('#mq-email', 'nouvelle@test.ci'); await p.click('form[data-form="mannequin-email"] [type=submit]'); await p.waitForTimeout(900);
+    ok(journal.some((j) => j[0] === 'API' && j[1] === '/api/portail' && /"action":"mannequin_email"/.test(j[2]) && /nouvelle@test\.ci/.test(j[2]) && /"model_id":"m0"/.test(j[2])), n + 'changer l’e-mail de connexion : envoyé au serveur pour cette mannequin');
+    await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(400);
+    await p.click('[data-action="mannequin-mdp"]'); await p.waitForSelector('.mdp-provisoire', { timeout: 5000 }).catch(() => {});
+    const lienWa = await p.getAttribute('.boite a[href^="https://wa.me/"]', 'href').catch(() => '');
+    ok(/MA2M-2345-ABC/.test(await p.textContent('.mdp-provisoire').catch(() => '')) && /MA2M-2345-ABC/.test(decodeURIComponent(lienWa || '')) && /awa@test\.ci/.test(decodeURIComponent(lienWa || '')),
+      n + 'mot de passe provisoire affiché, message WhatsApp prêt (mot de passe, e-mail de connexion, adresse de l’espace)');
+    await capture(p, 'compte-mannequin' + suffixe);
+    await p.click('[data-action="fermer-fenetre-recharger"]'); await p.waitForSelector('.mannequin-tete'); await p.waitForTimeout(400);
     // 5. Suppression définitive : il faut taper SUPPRIMER
     await p.click('[data-action="mannequin-supprimer"]'); await p.fill('#mq-confirmer', 'supprimer'); await p.click('form[data-form="mannequin-supprimer"] [type=submit]'); await p.waitForTimeout(500);
     ok(!journal.some((j) => j[0] === 'API' && j[1] === '/api/supprimer-mannequin'), n + 'suppression refusée si le mot n’est pas exactement SUPPRIMER');
