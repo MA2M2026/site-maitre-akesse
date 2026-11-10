@@ -14,7 +14,7 @@ if (SUR_WWW) {
     .then(() => self.registration.unregister())));
 } else {
 importScripts('/service-worker.js', '/js/sw-interface.js');
-const VERSION = 'mannequin-app-v10';  // (07/11/2026 : cases des étapes du profil, bouton vers le récapitulatif)
+const VERSION = 'mannequin-app-v11';  // (10/11/2026 : les 6 étapes du profil sur une ligne, collée en haut)
 const INTERFACE = ['/app/', '/app/manifest.webmanifest', '/css/polices.css', '/css/jetons.css', '/css/installation.css', '/css/mannequin-app.css', '/js/surveillance.js',
   '/js/vendor/supabase-js-2.110.6.js', '/js/supabase-config.js', '/js/photos.js', '/js/partage.js', '/js/app.js', '/js/tailles.js',
   '/js/analyse-profil.js', '/js/session-requise.js', '/js/app-coque.js', '/js/presences-calcul.js', '/js/mannequin-app.js', '/icons/mannequin-192.png', '/assets/logo-header-clair.png',

@@ -282,3 +282,34 @@ body.ap-page-profil .aller-recap { margin: 14px 0 6px; }
 body.ap-page-profil .aller-recap .btn { width: 100%; white-space: normal; line-height: 1.3; padding: 14px 16px;
   /* (08/11/2026, batterie : blanc sur blanc à cause d'une règle plus générale) rouge, texte blanc, bien lisible */
   background: var(--rouge-mat); color: #FFFFFF; border: 2px solid #FFFFFF; }
+
+/* (10/11/2026, demande de la propriétaire : sur certains téléphones les étapes descendaient l'une sous l'autre et l'on
+   ne voyait pas « Récapitulatif ») : les 6 étapes sur UNE SEULE LIGNE, toujours en haut de l'écran (collées quand on
+   fait défiler), en pastilles numérotées reliées par un fil. Sans grille ni « flex » : des blocs côte à côte de 1/6 de
+   la largeur chacun, que tous les téléphones comprennent, même anciens. Nom court sur les petits écrans. */
+body.ap-page-profil .stepper { display: block; position: -webkit-sticky; position: sticky; top: 0; z-index: 30; margin: 0 -18px 14px; padding: 10px 6px 8px;
+  white-space: nowrap; font-size: 0; text-align: center; overflow: hidden;
+  background: var(--fond, #7C2128); box-shadow: 0 10px 18px -14px rgba(40, 8, 12, 0.7); }
+body.ap-page-profil .step-tab { display: inline-block; vertical-align: top; position: relative; float: none; width: 16.66%; margin: 0; padding: 0 1px;
+  background: none !important; box-shadow: none !important; outline: 0 !important; border: 0; border-radius: 0; white-space: normal; text-align: center;
+  color: #FFFFFF !important; font: 600 10.5px/1.15 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; }
+body.ap-page-profil .step-tab .n { display: block; width: 34px; height: 34px; margin: 0 auto 5px; border-radius: 50%; position: relative; z-index: 1;
+  font: 700 15px/32px 'Work Sans', sans-serif; box-sizing: border-box;
+  background: var(--rouge-profond, #5A141B); color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.55); }
+/* fil entre les pastilles */
+body.ap-page-profil .step-tab + .step-tab::before { content: ""; position: absolute; top: 17px; right: 50%; width: 100%; height: 1px; background: rgba(255, 255, 255, 0.35); }
+body.ap-page-profil .step-tab.done .n { background: #FFFFFF; color: var(--rouge-mat, #7C2128) !important; border-color: #FFFFFF; }
+body.ap-page-profil .step-tab.done .n::after { content: none; }
+body.ap-page-profil .step-tab.active .n { background: #FFFFFF; color: var(--rouge-mat, #7C2128) !important; border: 2px solid #FFFFFF; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.28); }
+body.ap-page-profil .step-tab.active { font-weight: 700; }
+body.ap-page-profil .step-tab.active::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: -6px; height: 2px; border-radius: 2px; background: #FFFFFF; }
+body.ap-page-profil .step-tab .l-court { display: none; }
+body.ap-page-profil .step-tab .pastille-rouge { position: absolute; top: -5px; left: 50%; margin: 0 0 0 8px; min-width: 18px; height: 18px; padding: 0 4px; font-size: 10.5px; z-index: 2;
+  background: #FFFFFF; color: var(--rouge-mat, #7C2128); box-shadow: 0 0 0 2px var(--rouge-mat, #7C2128); }
+@media (max-width: 420px) {
+  body.ap-page-profil .step-tab .l-long { display: none; }
+  body.ap-page-profil .step-tab .l-court { display: inline; }
+  body.ap-page-profil .step-tab { font-size: 10px; }
+  body.ap-page-profil .step-tab .n { width: 30px; height: 30px; font-size: 14px; line-height: 28px; }
+  body.ap-page-profil .step-tab + .step-tab::before { top: 15px; }
+}

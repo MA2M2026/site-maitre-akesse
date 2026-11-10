@@ -2,7 +2,7 @@
 // téléphones les cases s'alignaient sur une ligne et « Récapitulatif » sortait de l'écran ; impossible de mettre son
 // profil en ligne). Comme une vraie personne, base SIMULÉE, sur un petit téléphone ancien (320 px), un téléphone et une
 // tablette ; et un navigateur ANCIEN simulé (sans grille CSS ni « gap ») :
-//  - les 6 cases sont visibles en entier, 3 par ligne, rien ne dépasse sur le côté ;
+//  - les 6 étapes sont visibles en entier, sur UNE ligne (10/11/2026), collée en haut ; rien ne dépasse sur le côté ;
 //  - « Enregistrer et voir le récapitulatif (mise en ligne) » sous chaque étape : enregistre l'étape, puis mène au
 //    récapitulatif (« Soumettre ») ; une étape incomplète n'est pas perdue (on y reste).
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
@@ -28,7 +28,13 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await q.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await q.waitForSelector('.stepper .step-tab', { timeout: 10000 }).catch(() => {});
     const cases = await q.$$eval('.stepper .step-tab', (l) => l.map((x) => { const r = x.getBoundingClientRect(); return { g: r.left, d: r.right, h: Math.round(r.top) }; }));
     const lignes = [...new Set(cases.map((c) => c.h))];
-    ok(cases.length === 6 && cases.every((c) => c.g >= 0 && c.d <= innerWidthOf(ecran)) && lignes.length === 2, nom + ' : les 6 cases visibles en entier, sur 2 lignes de 3 (« Récapitulatif » compris)');
+    ok(cases.length === 6 && cases.every((c) => c.g >= 0 && c.d <= innerWidthOf(ecran)) && lignes.length === 1, nom + ' : les 6 étapes visibles en entier, sur UNE ligne (« Récapitulatif » compris, 10/11/2026)');
+    // (10/11/2026) la ligne des étapes reste en haut de l'écran quand on fait défiler
+    await q.evaluate(() => scrollTo(0, 900)); await q.waitForTimeout(200);
+    const haut = await q.$eval('.stepper', (x) => Math.round(x.getBoundingClientRect().top));
+    ok(ancien || (haut >= -1 && haut <= 2), nom + ' : la ligne des étapes reste visible en haut quand on descend (' + haut + ' px)');
+    await q.screenshot({ path: path.join(__dirname, 'captures', 'etapes-' + ecran.width + (ancien ? '-ancien' : '') + '.png') });
+    await q.evaluate(() => scrollTo(0, 0));
     ok(await q.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), nom + ' : rien ne dépasse sur le côté');
     ok(await q.isVisible('#allerRecap'), nom + ' : « Enregistrer et voir le récapitulatif (mise en ligne) » sous l’étape');
     // (08/11/2026) lisible : texte et fond différents (il était blanc sur blanc)

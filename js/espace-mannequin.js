@@ -690,6 +690,7 @@ const Store = {
 // appel échoue, le tableau de bord rattrape la photo plus tard.
 /* ------------------------------------------------------------- UTILS UI --- */
 const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
+const STEP_COURTS = ['Identité','Physique','Formation','Expér.','Photos','Récap.'];
 const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];
 // MOIS_FR / formaterPeriode : partagés dans js/app.js (aussi utilisés par le CV).
 
@@ -756,7 +757,8 @@ function viewWizard(){
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre><span class="n">'+['①','②','③','④','⑤','⑥'][i]+'</span>'+l+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
+    // (10/11/2026) nom court pour les petits écrans (application : les 6 étapes sur UNE ligne, css/mannequin-app.css)
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
