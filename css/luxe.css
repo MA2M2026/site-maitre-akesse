@@ -30,8 +30,9 @@
     linear-gradient(0deg, rgba(90, 20, 27, 0.7) 0%, rgba(90, 20, 27, 0) 30%); }
   .lx-hero-texte { max-width: 540px; }
   .lx-hero-cadre { inset: 22px; }
-  .lx-hero-lieu { display: block; position: absolute; right: 44px; bottom: 60px; margin: 0; writing-mode: vertical-rl; transform: rotate(180deg);
-    color: #fff; font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.85; }
+  /* (fond rouge discret : lisible sur toutes les photos, contraste vérifié par test-lisibilite-photos.js) */
+  .lx-hero-lieu { display: block; position: absolute; right: 40px; bottom: 60px; margin: 0; padding: 14px 6px; writing-mode: vertical-rl; transform: rotate(180deg);
+    color: #fff; font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; border-radius: 999px; background: rgba(90, 20, 27, 0.78); }
 }
 
 /* ---------- boutons arrondis avec un reflet (dans .lx-hero et .lx-boutons) */
@@ -48,10 +49,6 @@
 :is(.lx-hero, .lx-boutons, .lx-formulaire) .btn--principal:hover {
   background: #fff; color: var(--rouge-mat); border-color: #fff; transform: translateY(-3px);
   box-shadow: 0 20px 40px -12px rgba(90, 20, 27, 0.95), 0 0 0 6px rgba(255, 255, 255, 0.18); }
-.lx-btn-voile { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; padding: 1rem 1.8rem;
-  color: #fff; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.45); font-weight: 600; letter-spacing: 0.06em;
-  text-decoration: none; transition: background 0.25s ease, transform 0.25s ease; }
-.lx-btn-voile:hover { background: rgba(255, 255, 255, 0.14); transform: translateY(-2px); color: #fff; }
 
 /* ---------- titres : surtitre espacé, grand titre, titre de partie centré en italique avec un filet, ornement */
 .lx-surtitre { margin: 0 0 0.8rem; text-align: center; color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.38em; text-transform: uppercase; opacity: 0.85; }
