@@ -4414,9 +4414,13 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
 
 La page garde son formulaire de candidature (js/formulaire-candidature-champs.js, js/formulaire-candidature.js), mais
 le haut est réorganisé en style « motion design » :
-- **vidéo** `assets/integrer-agence/integrer-agence.mp4` (720 × 1280, ~6 Mo, voix et musique originales, sous-titres
-  incrustés ; texte validé par la propriétaire, **aucun prix**) et son affiche `assets/integrer-agence/affiche.jpg` ;
-  ne jamais y mettre de photo de mannequin mineure (décision du 08/11/2026) ;
+- **vidéo** `assets/integrer-agence/integrer-agence.mp4` (vertical 720 × 1280) et `integrer-agence-large.mp4`
+  (horizontal 1280 × 720), ~6 Mo chacune, affiches `affiche.jpg` / `affiche-large.jpg` ; **version du 11/11/2026**
+  validée par la propriétaire : voix « Nicolas » enregistrée par elle (ElevenLabs), musique de défilé ElevenLabs Music,
+  rouge mat du site uni, boutons au modèle du site ; fabriquée par `outils/video-talons/film-agence.html` (même moteur
+  que la vidéo du cours de talons : `moteur-film.css/js`, `fabrique-talons.js` avec FILM=film-agence.html
+  NOM=integrer-agence, `aligner-voix.py` avec voix-agence.json) ; **aucun prix** ; ne jamais y mettre de photo de
+  mannequin mineure (décision du 08/11/2026) ni de KAPO Ainhoa ou d'AKASSOU ;
 - **étapes** (casting en ligne → casting en présentiel → bienvenue), **critères** (1,75 m, 1,85 m, 14 ans et plus,
   accord parental de 14 à 17 ans), **deux parcours** à toucher, **avantages** (formation, recommandation auprès des
   partenaires, castings privés et professionnels, espace gratuit sur le site) ;
