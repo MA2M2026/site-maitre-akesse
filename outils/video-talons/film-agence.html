@@ -1,128 +1,331 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8">
-<!-- Vidéo « Intégrer l'agence » (10/11/2026, demande de la propriétaire : « même style » que la vidéo du cours de
-     talons). Voix « Nicolas » fournie par elle (calée mot à mot par aligner-voix.py, texte voix-agence.json).
-     Même moteur que film-talons.html (moteur-film.css / moteur-film.js : voir l'en-tête de film-talons.html pour les
-     attributs data-*). Rendu par : FILM=film-agence.html NOM=integrer-agence node fabrique-talons.js [vertical|large]
+<!-- Vidéo « Intégrer l'agence », 2e version (10/11/2026) : demande de la propriétaire, reconstruire sur le MODÈLE de
+     la vidéo qui était en ligne (scènes qui illustrent vraiment ce que dit la voix : nuage de photos, portes MA | 2M,
+     grand « 2 », téléphone de candidature, invitation et calendrier, toise avec une mannequin en pied, « 14+ »,
+     chemin des 9 mois, bande de défilé et tampon « CONFIRMÉ », réseau de l'agence et de ses projets, page de profil
+     « GRATUIT », mur de photos « Votre histoire commence ici »), en noir profond, avec peu de médaillons.
+     Voix « Nicolas » fournie par la propriétaire (aligner-voix.py, texte voix-agence.json), musique de défilé
+     ElevenLabs. Moteur commun : moteur-film.css / moteur-film.js (attributs data-* : voir film-talons.html).
+     Rendu : FILM=film-agence.html NOM=integrer-agence node fabrique-talons.js [vertical|large]
      Photos : book du site, jamais KAPO Ainhoa ni AKASSOU, jamais de mineur(e) à l'image. -->
 <title>Film Intégrer l'agence</title>
 <script src="timing-agence.js"></script>
 <link rel="stylesheet" href="moteur-film.css">
 <style>
-.espace-coin { margin-bottom: 200px; }
-body.large .espace-coin { margin-bottom: 150px; }
-.critere b { font: 500 64px/1 'Cormorant Garamond'; }
-body.large .etapes.criteres-l li { font-size: 50px; }
+@font-face { font-family: 'Big Shoulders Display'; font-weight: 800; src: url('../../assets/polices/big-shoulders-display-latin-800-normal.woff2'); }
+@font-face { font-family: 'Big Shoulders Display'; font-weight: 800; src: url('../../assets/polices/big-shoulders-display-latin-ext-800-normal.woff2'); unicode-range: U+0100-024F; }
+.gras { font: 800 240px/0.9 'Big Shoulders Display'; text-transform: uppercase; letter-spacing: 0.01em; }
+.abs { position: absolute; z-index: 6; }
+.centre-x { left: 0; right: 0; text-align: center; }
+.petitev { padding: 8px; }
+.voile-centre { position: absolute; inset: 0; z-index: 5; background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0,0,0,0.85), rgba(0,0,0,0) 75%); }
+/* 1. mots géants */
+.geant { top: 50%; transform: translateY(-50%); }
+body:not(.large) .geant { font-size: 260px; }
+body.large .geant { font-size: 300px; }
+/* 2. portes MA | 2M */
+.porte { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 8; background: linear-gradient(180deg, #141417, #050506); display: flex; align-items: center; }
+.porte.g { left: 0; justify-content: flex-end; border-right: 2px solid rgba(255,255,255,0.6); }
+.porte.d { right: 0; justify-content: flex-start; border-left: 2px solid rgba(255,255,255,0.6); }
+.porte span { font: 800 230px/1 'Big Shoulders Display'; padding: 0 40px; }
+.logo-centre { display: block; margin: 0 auto 30px; width: 640px; filter: brightness(0) invert(1); }
+body.large .logo-centre { width: 560px; }
+/* 3. grand 2 */
+.deux { font: 800 1100px/0.8 'Big Shoulders Display'; color: transparent; -webkit-text-stroke: 4px rgba(255,255,255,0.9); left: 0; right: 0; text-align: center; top: 300px; }
+body.large .deux { font-size: 860px; top: 90px; left: 0; right: auto; width: 1000px; }
+.carte-etape { width: 400px; padding: 34px 36px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.4); background: linear-gradient(155deg, rgba(255,255,255,0.12), rgba(0,0,0,0.85)); box-shadow: 0 50px 90px -40px #000; }
+.carte-etape small { font: 600 22px 'Work Sans'; letter-spacing: 0.3em; opacity: 0.8; }
+.carte-etape b { display: block; font: 500 64px/1.05 'Cormorant Garamond'; margin: 10px 0 8px; }
+.carte-etape span { font: 400 28px 'Work Sans'; opacity: 0.85; }
+.carte-etape.blanche { background: #fff; color: #08080a; }
+/* 4–5. téléphone */
+.tel { width: 560px; height: 1120px; border-radius: 70px; background: #050506; border: 3px solid rgba(255,255,255,0.75); padding: 22px; box-shadow: 0 80px 140px -40px #000, 0 0 0 14px rgba(255,255,255,0.06); transform-origin: 50% 100%; }
+body:not(.large) .tel { left: 260px; top: 520px; }
+body.large .tel { left: 230px; top: 110px; width: 430px; height: 860px; border-radius: 56px; padding: 18px; }
+.ecran { width: 100%; height: 100%; border-radius: 50px; background: #f4f4f5; color: #0c0c0e; overflow: hidden; position: relative; font-family: 'Work Sans'; }
+body.large .ecran { border-radius: 40px; }
+.ecran .barre { background: #0c0c0e; color: #fff; padding: 70px 34px 26px; font: 600 30px 'Work Sans'; }
+body.large .ecran .barre { padding: 54px 26px 20px; font-size: 24px; }
+.ecran h4 { font: 600 22px 'Work Sans'; letter-spacing: 0.2em; text-transform: uppercase; color: #6b6b70; margin: 30px 34px 14px; }
+body.large .ecran h4 { font-size: 18px; margin: 22px 26px 10px; }
+.grille { display: flex; gap: 12px; padding: 0 34px; }
+body.large .grille { padding: 0 26px; gap: 10px; }
+.grille div { flex: 1; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; }
+.grille img, .tuile-video img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.tuile-video { margin: 0 34px; height: 210px; border-radius: 12px; overflow: hidden; position: relative; }
+body.large .tuile-video { margin: 0 26px; height: 160px; }
+.tuile-video::after { content: ""; position: absolute; left: 50%; top: 50%; margin: -34px 0 0 -24px; border-left: 60px solid #fff; border-top: 36px solid transparent; border-bottom: 36px solid transparent; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
+.champ { margin: 0 34px 14px; }
+body.large .champ { margin: 0 26px 10px; }
+.champ small { font: 500 22px 'Work Sans'; color: #6b6b70; }
+body.large .champ small { font-size: 17px; }
+.champ i { display: block; height: 46px; border-radius: 10px; background: #fff; border: 2px solid #d4d4d8; margin-top: 6px; position: relative; overflow: hidden; }
+body.large .champ i { height: 36px; }
+.champ i::after { content: attr(data-texte); position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font: 500 24px 'Work Sans'; color: #0c0c0e; }
+body.large .champ i::after { font-size: 19px; }
+.envoyer { display: block; margin: 22px 34px 0; padding: 22px; border-radius: 999px; background: #0c0c0e; color: #fff; text-align: center; font: 700 26px 'Work Sans'; }
+body.large .envoyer { margin: 16px 26px 0; padding: 16px; font-size: 20px; }
+.bulle { margin: 28px 30px 0; padding: 26px 28px; border-radius: 22px 22px 22px 6px; background: #fff; box-shadow: 0 10px 30px -14px rgba(0,0,0,0.3); font: 400 27px/1.4 'Work Sans'; }
+body.large .bulle { margin: 20px 22px 0; padding: 20px 22px; font-size: 21px; }
+.bulle b { font-weight: 700; }
+.calendrier { width: 230px; margin: 26px auto 0; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 20px 40px -18px rgba(0,0,0,0.5); text-align: center; }
+body.large .calendrier { width: 180px; margin-top: 18px; }
+.calendrier b { display: block; background: #0c0c0e; color: #fff; font: 700 26px 'Work Sans'; letter-spacing: 0.2em; padding: 12px; }
+.calendrier span { display: block; font: 800 150px/1.05 'Big Shoulders Display'; }
+body.large .calendrier span { font-size: 116px; }
+.canaux { display: flex; gap: 12px; justify-content: center; margin-top: 22px; }
+.canaux span { padding: 12px 22px; border-radius: 999px; background: #0c0c0e; color: #fff; font: 600 22px 'Work Sans'; }
+body.large .canaux span { font-size: 17px; padding: 10px 16px; }
+.legende-tel { z-index: 6; }
+body:not(.large) .legende-tel { left: 90px; right: 90px; top: 210px; }
+body.large .legende-tel { left: 780px; right: 150px; top: 330px; }
+/* 6. toise */
+.toise { z-index: 5; }
+body:not(.large) .toise { left: 100px; top: 430px; width: 120px; height: 1200px; --pas: 133.3px; }
+body.large .toise { left: 150px; top: 180px; width: 100px; height: 800px; --pas: 88.9px; }
+.toise::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.8); }
+.grad { position: absolute; left: 0; bottom: calc(var(--k) * var(--pas)); width: 100%; }
+.grad i { position: absolute; left: 0; width: 34px; height: 2px; background: #fff; }
+.grad b { position: absolute; left: 44px; top: -14px; font: 600 24px 'Work Sans'; opacity: 0.75; }
+body.large .grad b { font-size: 19px; top: -11px; }
+.pied { position: absolute; z-index: 4; overflow: hidden; }
+.pied img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+.repere { position: absolute; z-index: 7; height: 3px; background: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.6); }
+.repere b { position: absolute; right: -10px; bottom: 12px; transform: translateX(100%); font: 800 150px/0.9 'Big Shoulders Display'; white-space: nowrap; }
+body.large .repere b { font-size: 120px; }
+.repere small { position: absolute; right: -10px; top: 14px; transform: translateX(100%); font: 600 26px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; white-space: nowrap; }
+body.large .legende-tel.lh { left: 150px; right: 150px; top: 165px; }
+body.large .legende-tel.lc { left: 720px; top: 165px; }
+body:not(.large) .pied.femme { left: 240px; width: 380px; top: 943px; height: 707px; }
+body:not(.large) .pied.homme { left: 240px; width: 440px; top: 677px; height: 973px; }
+body.large .pied.femme { left: 270px; width: 270px; top: 522px; height: 478px; }
+body.large .pied.homme { left: 270px; width: 330px; top: 344px; height: 656px; }
+body:not(.large) .repere { left: 100px; width: 540px; top: 1630px; }
+body.large .repere { left: 150px; width: 470px; top: 980px; }
+body.large .deux { left: auto; right: 60px; width: 820px; }
+/* 7. 14+ */
+.quatorze { font: 800 560px/0.85 'Big Shoulders Display'; }
+body.large .quatorze { font-size: 420px; }
+.quatorze sup { font-size: 0.42em; vertical-align: 0.95em; }
+/* 8. chemin des 9 mois */
+.etape-chemin { z-index: 6; }
+.etape-chemin .cadre-photo { width: 300px; height: 380px; border: 10px solid #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 40px 80px -30px #000; }
+body.large .etape-chemin .cadre-photo { width: 230px; height: 290px; }
+.etape-chemin .cadre-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.chiffre-chemin { font: 800 190px/0.85 'Big Shoulders Display'; }
+body.large .chiffre-chemin { font-size: 150px; }
+.chiffre-chemin small { display: block; font: 600 24px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; margin-top: 10px; }
+.chemin { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 0; }
+.chemin path { stroke-linecap: round; }
+body:not(.large) .chemin.l, body.large .chemin.v { display: none; }
+.pc1 { display: flex; flex-wrap: wrap; gap: 14px; z-index: 6; }
+body:not(.large) .ec1 { left: 140px; top: 480px; } body:not(.large) .cc1 { left: 500px; top: 560px; }
+body:not(.large) .pc1 { left: 90px; right: 90px; top: 900px; }
+body:not(.large) .ec2 { left: 620px; top: 1360px; } body:not(.large) .cc2 { left: 280px; top: 1450px; }
+body.large .ec1 { left: 150px; top: 330px; } body.large .cc1 { left: 420px; top: 390px; }
+body.large .pc1 { left: 150px; width: 760px; top: 690px; }
+body.large .ec2 { left: 1350px; top: 400px; } body.large .cc2 { left: 1620px; top: 460px; }
+/* 9. bande de défilé */
+.bande { display: flex; gap: 18px; z-index: 4; }
+body:not(.large) .bande { left: 60px; top: 640px; }
+body.large .bande { left: 80px; top: 318px; }
+.bande div { flex: none; width: 380px; height: 600px; overflow: hidden; border-radius: 4px; }
+body.large .bande div { width: 270px; height: 385px; }
+.bande img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; filter: brightness(0.85); }
+.tampon { padding: 18px 40px; border: 7px solid #fff; border-radius: 10px; font: 800 120px/1 'Big Shoulders Display'; letter-spacing: 0.06em; background: rgba(0,0,0,0.35); }
+body.large .tampon { font-size: 96px; }
+.tampon small { display: block; font: 600 20px 'Work Sans'; letter-spacing: 0.3em; text-align: center; margin-top: 4px; }
+body:not(.large) .exp-compte { top: 1290px; } body:not(.large) .tampon { left: 470px; top: 820px; } body:not(.large) .exp-direct { top: 1420px; }
+body.large .exp-compte { top: 710px; } body.large .tampon { left: 1180px; top: 380px; } body.large .exp-direct { top: 800px; }
+/* 10. réseau */
+.reseau-svg { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,0.7); stroke-width: 2.5; }
+body:not(.large) .reseau-svg.l, body.large .reseau-svg.v { display: none; }
+.coeur-reseau { width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2a2a30, #050506); border: 3px solid #fff; box-shadow: 0 0 0 16px rgba(255,255,255,0.08), 0 40px 90px -20px #000; display: grid; place-items: center; z-index: 7; }
+body:not(.large) .coeur-reseau { left: 390px; top: 860px; }
+body.large .coeur-reseau { left: 830px; top: 430px; width: 260px; height: 260px; }
+.coeur-reseau img { width: 74%; filter: brightness(0) invert(1); }
+.noeud { position: absolute; z-index: 7; width: 260px; margin-left: -130px; margin-top: -80px; text-align: center; left: var(--xv); top: var(--yv); }
+body.large .noeud { left: var(--xl); top: var(--yl); margin-top: -70px; }
+.noeud .medaillon { position: relative; display: block; margin: 0 auto 10px; width: 130px; height: 130px; }
+body.large .noeud .medaillon { width: 110px; height: 110px; }
+.noeud b { font: 600 28px 'Work Sans'; }
+body.large .noeud b { font-size: 23px; }
+/* 11. page de profil */
+.navigateur { z-index: 6; border-radius: 18px; overflow: hidden; background: #f4f4f5; color: #0c0c0e; box-shadow: 0 80px 140px -40px #000, 0 0 0 1px rgba(255,255,255,0.5); transform-origin: 50% 100%; }
+body:not(.large) .navigateur { left: 110px; top: 470px; width: 860px; height: 1220px; }
+body.large .navigateur { left: 560px; top: 290px; width: 1000px; height: 690px; }
+.navigateur .url { display: flex; align-items: center; gap: 12px; padding: 18px 24px; background: #e4e4e7; font: 500 22px 'Work Sans'; color: #52525b; }
+.navigateur .url i { width: 16px; height: 16px; border-radius: 50%; background: #a1a1aa; }
+.navigateur .url span { margin-left: 16px; padding: 8px 18px; border-radius: 999px; background: #fff; }
+.profil { position: relative; height: 760px; overflow: hidden; }
+body.large .profil { position: absolute; left: 0; top: 62px; bottom: 0; width: 470px; height: auto; }
+.profil img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.infos-profil { padding: 26px 36px; }
+body.large .infos-profil { position: absolute; left: 500px; top: 100px; right: 30px; padding: 0; }
+.infos-profil b { display: block; font: 800 110px/0.9 'Big Shoulders Display'; }
+.infos-profil > span { display: block; font: 500 26px 'Work Sans'; color: #52525b; margin: 10px 0 20px; }
+.miniatures { display: flex; gap: 12px; }
+.miniatures div { flex: 1; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden; }
+.miniatures img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.gratuit { width: 240px; height: 240px; border-radius: 50%; background: #fff; color: #0c0c0e; display: grid; place-items: center; text-align: center; font: 800 64px/0.9 'Big Shoulders Display'; box-shadow: 0 30px 60px -20px #000, 0 0 0 10px rgba(255,255,255,0.25); z-index: 9; }
+.gratuit small { display: block; font: 600 16px 'Work Sans'; letter-spacing: 0.2em; }
+body:not(.large) .gratuit { left: 760px; top: 380px; }
+body.large .gratuit { left: 1440px; top: 120px; }
+/* 12. mur de photos */
+.mosaique.mur { gap: 6px; padding: 6px; }
+body:not(.large) .mosaique.mur { grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(9, 1fr); }
+body.large .mosaique.mur { grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(5, 1fr); }
+.mosaique.mur::after { background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(0,0,0,0.9), rgba(0,0,0,0.55) 90%); }
+.commence { font: 800 150px/0.9 'Big Shoulders Display'; text-transform: uppercase; }
+body.large .commence { font-size: 170px; }
+.boutons-fin { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 40px; }
+body.large .boutons-fin { flex-direction: row; justify-content: center; }
+.btn { padding: 24px 50px; border-radius: 999px; font: 700 34px 'Work Sans'; border: 2px solid #fff; }
+.btn.plein { background: #fff; color: #08080a; }
 .logo-fin { display: block; height: 120px; margin: 0 auto 40px; filter: brightness(0) invert(1); }
-body.large .logo-fin { height: 100px; margin-bottom: 26px; }
 </style>
 </head>
 <body>
 <div id="film">
 
   <section class="scene" data-de="a1" data-transition="fondu">
-    <div class="photo" data-mouvement="recule"><img src="vignettes/089.jpg"></div>
-    <div class="medaillon" data-photo="p-149" data-voix="a1" data-mot="défiler" data-anim="medaillon" data-pos="870,880" data-posl="1180,280"></div>
-    <div class="medaillon moyen-m" data-symbole="photo" data-voix="a1" data-mot="objectifs" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
-    <div class="texte"><p class="surtitre" data-voix="a1" data-anim="glisse">Intégrer l’agence</p>
-      <h1 class="titre"><span data-voix="a1" data-mot="devenir" data-anim="lettres">Devenir</span><br><em data-voix="a1" data-mot="mannequin" data-anim="lettres">mannequin</em></h1>
-      <span class="trait losange" data-voix="a1" data-mot="mannequin" data-anim="trait"></span>
-      <p class="ligne" data-voix="a1" data-mot="poser" data-anim="bloc">Défiler · Poser · Briller</p></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.90" data-anim="nuage" data-dx="859" data-dy="265" data-rot="6" data-pos="882,1168" data-posl="1615,653" data-l="210" data-h="280"><div><img src="vignettes/089.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.78" data-anim="nuage" data-dx="659" data-dy="612" data-rot="3" data-pos="832,1448" data-posl="1533,793" data-l="210" data-h="280"><div><img src="vignettes/146.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.66" data-anim="nuage" data-dx="328" data-dy="838" data-rot="1" data-pos="670,1685" data-posl="1216,917" data-l="210" data-h="280"><div><img src="vignettes/h067.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.54" data-anim="nuage" data-dx="-67" data-dy="897" data-rot="2" data-pos="511,1715" data-posl="910,882" data-l="210" data-h="280"><div><img src="vignettes/027.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.42" data-anim="nuage" data-dx="-450" data-dy="779" data-rot="4" data-pos="351,1498" data-posl="579,838" data-l="210" data-h="280"><div><img src="vignettes/033.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.30" data-anim="nuage" data-dx="-744" data-dy="506" data-rot="5" data-pos="262,1379" data-posl="324,739" data-l="210" data-h="280"><div><img src="vignettes/h059.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.18" data-anim="nuage" data-dx="-890" data-dy="133" data-rot="-2" data-pos="128,1072" data-posl="219,601" data-l="210" data-h="280"><div><img src="vignettes/043.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="-0.06" data-anim="nuage" data-dx="-859" data-dy="-265" data-rot="-3" data-pos="141,749" data-posl="201,438" data-l="210" data-h="280"><div><img src="vignettes/131.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="0.06" data-anim="nuage" data-dx="-659" data-dy="-612" data-rot="-1" data-pos="289,523" data-posl="477,256" data-l="210" data-h="280"><div><img src="vignettes/h101.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="0.18" data-anim="nuage" data-dx="-328" data-dy="-838" data-rot="4" data-pos="385,255" data-posl="706,162" data-l="210" data-h="280"><div><img src="vignettes/014.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="0.30" data-anim="nuage" data-dx="67" data-dy="-897" data-rot="7" data-pos="568,248" data-posl="1014,129" data-l="210" data-h="280"><div><img src="vignettes/059.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="0.42" data-anim="nuage" data-dx="450" data-dy="-779" data-rot="8" data-pos="760,419" data-posl="1295,207" data-l="210" data-h="280"><div><img src="vignettes/096.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="0.54" data-anim="nuage" data-dx="744" data-dy="-506" data-rot="4" data-pos="828,533" data-posl="1616,308" data-l="210" data-h="280"><div><img src="vignettes/h000.jpg"></div></div>
+<div class="vignette petitev" data-voix="a1" data-retard="0.66" data-anim="nuage" data-dx="890" data-dy="-133" data-rot="-6" data-pos="878,852" data-posl="1685,477" data-l="210" data-h="280"><div><img src="vignettes/149.jpg"></div></div>
+    <div class="voile-centre"></div>
+    <div class="abs centre-x geant gras" data-voix="a1" data-mot="défiler" data-anim="pop" data-finvoix="a1" data-finmot="poser">Défiler</div>
+    <div class="abs centre-x geant gras" data-voix="a1" data-mot="poser" data-anim="pop" data-finvoix="a1" data-finmot="devenir">Poser</div>
+    <div class="texte centre milieu"><p class="surtitre" data-voix="a1" data-mot="devenir" data-anim="glisse">Intégrer l’agence</p>
+      <h1 class="titre"><span data-voix="a1" data-mot="devenir" data-anim="lettres">Devenir</span><br><em data-voix="a1" data-mot="mannequin" data-anim="lettres">mannequin ?</em></h1></div>
   </section>
 
-  <section class="scene" data-de="a2" data-transition="barres">
-    <div class="photo plein" data-mouvement="avance"><img src="vignettes/106.jpg"></div>
-    <div class="vignette" data-voix="a2" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="vignettes/027.jpg"></div></div>
-    <div class="vignette" data-voix="a2" data-mot="ouvre" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="vignettes/h067.jpg"></div></div>
-    <div class="texte centre milieu"><p class="surtitre" data-voix="a2" data-anim="glisse">Maître Akesse Model Management</p>
-      <p class="grand"><span data-voix="a2" data-mot="ouvre" data-anim="lettres">Vous ouvre</span><br><em data-voix="a2" data-mot="portes" data-anim="lettres">ses portes</em></p></div>
+  <section class="scene" data-de="a2" data-transition="fondu">
+    <div class="photo plein" data-mouvement="avance"><img src="vignettes/061.jpg"></div>
+    <div class="texte centre milieu"><img class="logo-centre" data-voix="a2" data-mot="ouvre" data-retard="0.4" data-anim="pop" src="../../assets/logo-intro.png" alt="">
+      <p class="grand"><em data-voix="a2" data-mot="portes" data-anim="mots">vous ouvre ses portes</em></p></div>
+    <div class="porte g" data-voix="a2" data-mot="ouvre" data-anim="ouvre" data-sens="-1"><span>MA</span></div>
+    <div class="porte d" data-voix="a2" data-mot="ouvre" data-anim="ouvre" data-sens="1"><span>2M</span></div>
   </section>
 
   <section class="scene" data-de="casting" data-transition="cercle">
-    <div class="photo" data-mouvement="panorama"><img src="vignettes/005.jpg"></div>
+    <div class="abs deux" data-voix="casting" data-mot="deux" data-anim="zoom">2</div>
     <div class="texte"><p class="surtitre" data-voix="casting" data-anim="glisse">Le casting</p>
-      <p class="moyen" style="margin-bottom:40px"><span data-voix="casting" data-mot="deux" data-anim="mots">En deux</span> <em data-voix="casting" data-mot="étapes" data-anim="mots">étapes</em></p>
-      <div class="carte" data-voix="etape1" data-anim="leve"><div class="medaillon coin" data-symbole="camera" data-voix="etape1" data-mot="ligne" data-anim="medaillon"></div><span class="etiquette">Étape 1</span><h3>En ligne</h3>
-        <div class="pastilles"><span class="pastille" data-voix="ligne" data-mot="photos" data-anim="pop">Photos</span><span class="pastille" data-voix="ligne" data-mot="vidéo" data-anim="pop">Vidéo</span><span class="pastille" data-voix="ligne" data-mot="informations" data-anim="pop">Informations</span></div>
-        <p class="detail" style="margin-top:26px" data-voix="ligne" data-mot="déposer" data-anim="bloc">pour déposer votre candidature</p></div></div>
+      <p class="moyen" style="margin-bottom:34px"><span data-voix="casting" data-mot="deux" data-anim="mots">En deux</span> <em data-voix="casting" data-mot="étapes" data-anim="mots">étapes</em></p>
+      <div style="display:flex;gap:20px"><div class="carte-etape blanche" data-voix="casting" data-mot="étapes" data-anim="leve"><small>01</small><b>En ligne</b><span>depuis votre téléphone</span></div>
+      <div class="carte-etape" data-voix="casting" data-mot="étapes" data-retard="0.25" data-anim="leve"><small>02</small><b>En présentiel</b><span>à l’agence</span></div></div></div>
+  </section>
+
+  <section class="scene" data-de="etape1" data-transition="rideau">
+    <div class="abs legende-tel"><p class="surtitre" data-voix="etape1" data-anim="glisse">Casting n° 1</p><p class="grand"><span data-voix="etape1" data-mot="ligne" data-anim="lettres">En ligne</span></p></div>
+    <div class="abs tel" data-voix="etape1" data-anim="leve"><div class="ecran">
+      <div class="barre">Ma candidature</div>
+      <h4>Mes photos</h4>
+      <div class="grille"><div data-voix="ligne" data-mot="photos" data-anim="pop"><img src="vignettes/027.jpg"></div><div data-voix="ligne" data-mot="photos" data-retard="0.15" data-anim="pop"><img src="vignettes/h000.jpg"></div><div data-voix="ligne" data-mot="photos" data-retard="0.3" data-anim="pop"><img src="vignettes/146.jpg"></div></div>
+      <h4>Ma vidéo</h4>
+      <div class="tuile-video" data-voix="ligne" data-mot="vidéo" data-anim="pop"><img src="vignettes/138.jpg"></div>
+      <h4>Mes informations</h4>
+      <div class="champ" data-voix="ligne" data-mot="informations" data-anim="monte"><small>Nom</small><i data-texte="Votre nom"></i></div>
+      <div class="champ" data-voix="ligne" data-mot="informations" data-retard="0.2" data-anim="monte"><small>Taille</small><i data-texte="1,78 m"></i></div>
+      <span class="envoyer" data-voix="ligne" data-mot="déposer" data-anim="pop">Envoyer ma candidature</span>
+    </div></div>
   </section>
 
   <section class="scene" data-de="etape2" data-transition="volet">
-    <div class="photo" data-mouvement="recule"><img src="vignettes/093.jpg"></div>
-    <div class="medaillon moyen-m" data-symbole="paiement" data-voix="infos" data-mot="whatsapp" data-anim="medaillon" data-pos="880,330" data-posl="1640,340"></div>
-    <div class="texte"><div class="carte" data-voix="etape2" data-anim="leve"><div class="medaillon coin" data-photo="p-014" data-voix="etape2" data-mot="présentiel" data-anim="medaillon"></div><span class="etiquette">Étape 2</span><h3>En présentiel</h3>
-      <p class="detail" data-voix="etape2" data-mot="retenu" data-anim="bloc">Si votre profil est retenu</p>
-      <div class="pastilles"><span class="pastille" data-voix="infos" data-mot="date" data-anim="pop">La date</span><span class="pastille" data-voix="infos" data-mot="dress" data-anim="pop">Le dress code</span><span class="pastille blanche" data-voix="infos" data-mot="whatsapp" data-anim="pop">WhatsApp · E-mail</span></div></div></div>
+    <div class="abs legende-tel"><p class="surtitre" data-voix="etape2" data-mot="deuxième" data-anim="glisse">Casting n° 2</p><p class="grand"><span data-voix="etape2" data-mot="présentiel" data-anim="lettres">En présentiel</span></p></div>
+    <div class="abs tel" data-voix="etape2" data-anim="leve"><div class="ecran">
+      <div class="barre">Maître Akesse Model Management</div>
+      <div class="bulle" data-voix="etape2" data-mot="retenu" data-anim="pop"><b>Félicitations !</b> Votre candidature est retenue.</div>
+      <div class="bulle" data-voix="etape2" data-mot="présentiel" data-anim="pop"><b>Casting en présentiel</b><br>Samedi · 10 h · à l’agence</div>
+      <div class="calendrier" data-voix="infos" data-mot="date" data-anim="pop"><b>SAMEDI</b><span>15</span></div>
+      <div class="bulle" data-voix="infos" data-mot="dress" data-anim="pop"><b>Dress code :</b> tout en noir</div>
+      <div class="canaux" data-voix="infos" data-mot="whatsapp" data-anim="pop"><span>WhatsApp</span><span>E-mail</span></div>
+    </div></div>
   </section>
 
-  <section class="scene" data-de="criteres" data-transition="rideau">
-    <div class="vignette" data-voix="criteres" data-anim="vignette" data-pos="300,380" data-posl="1380,330" data-l="250" data-h="330" data-rot="-7"><div><img src="vignettes/043.jpg"></div></div>
-    <div class="vignette" data-voix="criteres" data-retard="0.2" data-anim="vignette" data-pos="780,400" data-posl="1630,640" data-l="250" data-h="330" data-rot="6"><div><img src="vignettes/h059.jpg"></div></div>
-    <div class="texte milieu decale"><p class="surtitre" data-voix="criteres" data-anim="glisse">Nos critères</p>
-      <ol class="etapes criteres-l">
-        <li><span class="medaillon petit" data-photo="p-027" data-voix="tailles" data-mot="femmes" data-anim="medaillon"></span><div data-voix="tailles" data-mot="femmes" data-anim="bloc">1,75 m minimum<small>pour les femmes</small></div></li>
-        <li><span class="medaillon petit" data-photo="h-130" data-voix="tailles" data-mot="hommes" data-anim="medaillon"></span><div data-voix="tailles" data-mot="hommes" data-anim="bloc">1,85 m minimum<small>pour les hommes</small></div></li>
-        <li><span class="medaillon petit" data-symbole="personne" data-voix="tailles" data-mot="âge" data-anim="medaillon"></span><div data-voix="tailles" data-mot="âge" data-anim="bloc">14 ans<small>âge minimum</small></div></li></ol>
-      <div class="note" style="margin-top:30px" data-voix="mineurs" data-anim="leve"><b>De 14 à 17 ans</b>l’autorisation d’un parent ou d’un tuteur est obligatoire.</div></div>
+  <section class="scene" data-de="criteres" data-transition="cercle">
+    <div class="abs legende-tel lh lc"><p class="surtitre" data-voix="criteres" data-anim="glisse">Nos critères</p></div>
+    <div class="abs toise" data-voix="criteres" data-anim="monte"><div class="grad" style="--k:0"><i></i><b>1,50</b></div><div class="grad" style="--k:1"><i></i><b>1,55</b></div><div class="grad" style="--k:2"><i></i><b>1,60</b></div><div class="grad" style="--k:3"><i></i><b>1,65</b></div><div class="grad" style="--k:4"><i></i><b>1,70</b></div><div class="grad" style="--k:5"><i></i><b>1,75</b></div><div class="grad" style="--k:6"><i></i><b>1,80</b></div><div class="grad" style="--k:7"><i></i><b>1,85</b></div><div class="grad" style="--k:8"><i></i><b>1,90</b></div><div class="grad" style="--k:9"><i></i><b>1,95</b></div></div>
+    <div class="pied femme" data-voix="tailles" data-anim="monte" data-finvoix="tailles" data-finmot="hommes" data-finretard="-0.2"><img src="vignettes/146.jpg"></div>
+    <div class="pied homme" data-voix="tailles" data-mot="hommes" data-anim="monte"><img src="vignettes/h000.jpg"></div>
+    <div class="repere femme" data-voix="tailles" data-mot="minimum" data-anim="deplace" data-y1="-667" data-y1l="-444" data-finvoix="tailles" data-finmot="hommes" data-finretard="-0.2"><b><span data-voix="tailles" data-mot="minimum" data-anim="compteur" data-depart="1.5" data-valeur="1.75" data-decimales="2">1,75</span> m</b><small>Femmes</small></div>
+    <div class="repere homme" data-voix="tailles" data-mot="hommes" data-anim="deplace" data-y1="-933" data-y1l="-622"><b><span data-voix="tailles" data-mot="hommes" data-anim="compteur" data-depart="1.5" data-valeur="1.85" data-decimales="2">1,85</span> m</b><small>Hommes</small></div>
   </section>
 
-  <section class="scene" data-de="debutez" data-transition="cercle">
-    <div class="photo" data-mouvement="panorama"><img src="vignettes/004.jpg"></div>
-    <div class="grand-chiffre" data-voix="formation" data-mot="neuf" data-anim="zoom">9</div>
-    <div class="medaillon" data-photo="p-063" data-voix="formation" data-mot="formation" data-anim="medaillon" data-pos="860,880" data-posl="1250,300"></div>
-    <div class="texte"><p class="surtitre" data-voix="debutez" data-anim="glisse">Vous débutez ?</p>
-      <p class="grand"><span data-voix="formation" data-mot="neuf" data-anim="compteur" data-valeur="9">9</span> <span data-voix="formation" data-mot="mois" data-anim="mots">mois</span><br><em data-voix="formation" data-mot="formation" data-anim="lettres">de formation</em></p>
-      <div class="pastilles"><span class="pastille" data-voix="travail" data-mot="posture" data-anim="pop">Posture</span><span class="pastille" data-voix="travail" data-mot="démarche" data-anim="pop">Démarche</span><span class="pastille" data-voix="travail" data-mot="expression" data-anim="pop">Expression</span><span class="pastille" data-voix="travail" data-mot="image" data-anim="pop">Image</span><span class="pastille blanche" data-voix="travail" data-mot="confiance" data-anim="pop">Confiance en soi</span></div>
-      <p class="ligne" style="margin-top:30px" data-voix="potentiel" data-mot="révéler" data-anim="bloc">Révéler votre potentiel</p></div>
+  <section class="scene" data-de="mineurs" data-transition="fondu">
+    <div class="texte centre milieu"><p class="surtitre" data-voix="mineurs" data-anim="glisse">Âge minimum</p>
+      <div class="quatorze" data-voix="mineurs" data-anim="zoom">14<sup>+</sup></div>
+      <p class="moyen"><em data-voix="mineurs" data-mot="candidats" data-anim="mots">ans minimum</em></p>
+      <div class="pastilles"><span class="pastille blanche" data-voix="mineurs" data-mot="autorisation" data-anim="pop">14 – 17 ans : avec l’accord d’un parent ou d’un tuteur</span></div></div>
   </section>
 
-  <section class="scene" data-de="issue" data-transition="barres">
-    <div class="vignette" data-voix="issue" data-mot="mannequins" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/096.jpg"></div></div>
-    <div class="vignette" data-voix="issue" data-mot="mannequins" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/h101.jpg"></div></div>
-    <div class="vignette" data-voix="issue" data-mot="mannequins" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/131.jpg"></div></div>
-    <div class="texte milieu decale"><p class="surtitre" data-voix="issue" data-anim="glisse">Et ensuite</p>
-      <p class="grand"><span data-voix="issue" data-mot="neuf" data-anim="mots">+ 9 mois</span><br><em data-voix="issue" data-mot="intégrez" data-anim="lettres">dans l’agence</em></p>
-      <span class="trait losange" data-voix="issue" data-mot="perfectionner" data-anim="trait"></span>
-      <p class="ligne" data-voix="issue" data-mot="côtés" data-anim="bloc">aux côtés de nos mannequins</p></div>
+  <section class="scene" data-de="debutez" data-transition="barres">
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="debutez" data-anim="glisse">Parcours 1</p><p class="grand"><span data-voix="debutez" data-mot="débutez" data-anim="lettres">Vous débutez ?</span></p></div>
+    <div class="abs etape-chemin ec1" data-voix="formation" data-anim="leve"><div class="cadre-photo"><img src="vignettes/104.jpg"></div></div>
+    <div class="abs chiffre-chemin cc1" data-voix="formation" data-mot="neuf" data-anim="pop">9<small>mois · Académie</small></div>
+    <div class="abs pastilles pc1"><span class="pastille" data-voix="travail" data-mot="posture" data-anim="pop">Posture</span><span class="pastille" data-voix="travail" data-mot="démarche" data-anim="pop">Démarche</span><span class="pastille" data-voix="travail" data-mot="expression" data-anim="pop">Expression</span><span class="pastille" data-voix="travail" data-mot="image" data-anim="pop">Image</span><span class="pastille blanche" data-voix="travail" data-mot="confiance" data-anim="pop">Confiance en soi</span></div>
+    <svg class="chemin v" viewBox="0 0 1080 1920"><path d="M290 1110 C 80 1290, 980 1220, 770 1370" data-voix="issue" data-anim="trace" data-duree="1.8"/></svg>
+    <svg class="chemin l" viewBox="0 0 1920 1080"><path d="M600 540 C 900 260, 1080 860, 1340 560" data-voix="issue" data-anim="trace" data-duree="1.8"/></svg>
+    <div class="abs etape-chemin ec2" data-voix="issue" data-mot="neuf" data-anim="leve"><div class="cadre-photo"><img src="vignettes/182.jpg"></div></div>
+    <div class="abs chiffre-chemin cc2" data-voix="issue" data-mot="supplémentaires" data-anim="pop">+9<small>mois · Agence</small></div>
   </section>
 
   <section class="scene" data-de="experience" data-transition="rideau">
-    <div class="photo gauche" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="texte droite"><p class="surtitre" data-voix="experience" data-anim="glisse">Déjà de l’expérience ?</p>
-      <p class="grand espace-coin"><span data-voix="compte" data-mot="parcours" data-anim="lettres">Votre parcours</span> <em data-voix="compte" data-mot="compte" data-anim="lettres">compte</em></p>
-      <div class="carte" data-voix="confirmee" data-mot="confirmée" data-anim="leve"><div class="medaillon coin" data-photo="p-089" data-voix="confirmee" data-mot="directement" data-anim="medaillon"></div><span class="etiquette">Expérience confirmée</span><h3>Intégration directe</h3>
-        <p class="detail" data-voix="confirmee" data-mot="perfectionnement" data-anim="bloc">+ 9 mois de perfectionnement</p></div></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="experience" data-anim="glisse">Parcours 2</p><p class="grand"><span data-voix="experience" data-mot="déjà" data-anim="lettres">Déjà mannequin ?</span></p></div>
+    <div class="abs bande" data-voix="experience" data-anim="defile" data-vitesse="70"><div><img src="vignettes/138.jpg"></div><div><img src="vignettes/148.jpg"></div><div><img src="vignettes/149.jpg"></div><div><img src="vignettes/063.jpg"></div><div><img src="vignettes/042.jpg"></div><div><img src="vignettes/151.jpg"></div><div><img src="vignettes/182.jpg"></div><div><img src="vignettes/h085.jpg"></div><div><img src="vignettes/138.jpg"></div><div><img src="vignettes/148.jpg"></div></div>
+    <div class="abs centre-x exp-compte"><p class="moyen"><em data-voix="compte" data-anim="mots">Votre expérience compte.</em></p></div>
+    <div class="abs tampon" data-voix="confirmee" data-mot="confirmée" data-anim="tampon">CONFIRMÉ<small>CASTING EN PRÉSENTIEL</small></div>
+    <div class="abs centre-x exp-direct"><p class="gras" style="font-size:100px" data-voix="confirmee" data-mot="directement" data-anim="pop">Directement à l’agence</p>
+      <p class="ligne" data-voix="confirmee" data-mot="perfectionnement" data-anim="bloc">+ 9 mois de perfectionnement à nos côtés</p></div>
   </section>
 
   <section class="scene" data-de="apres" data-transition="cercle">
-    <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div>
-    <div class="texte"><p class="surtitre" data-voix="apres" data-anim="glisse">Et après ?</p>
-      <ul class="liste">
-        <li><span data-voix="castings" data-mot="castings" data-anim="bloc"><span class="n">—</span>Des castings</span><span class="medaillon petit" data-photo="p-146" data-voix="castings" data-mot="professionnels" data-anim="medaillon"></span><span class="filet" data-voix="castings" data-mot="castings" data-anim="trait"></span></li>
-        <li><span data-voix="castings" data-mot="opportunités" data-anim="bloc"><span class="n">—</span>Des opportunités</span><span class="medaillon petit" data-symbole="etoile" data-voix="castings" data-mot="opportunités" data-anim="medaillon"></span><span class="filet" data-voix="castings" data-mot="opportunités" data-anim="trait"></span></li>
-        <li><span data-voix="castings" data-mot="recommande" data-anim="bloc"><span class="n">—</span>Nos partenaires</span><span class="medaillon petit" data-photo="h-088" data-voix="castings" data-mot="partenaires" data-anim="medaillon"></span><span class="filet" data-voix="castings" data-mot="recommande" data-anim="trait"></span></li></ul></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="apres" data-anim="glisse">Et après ?</p><p class="moyen"><em data-voix="castings" data-mot="castings" data-anim="mots">Castings et partenaires</em></p></div>
+    <svg class="reseau-svg v" viewBox="0 0 1080 1920"><path d="M540 1010 L540 590" data-voix="castings" data-mot="présente" data-anim="trace" data-duree="0.6"/><path d="M540 1010 L869 800" data-voix="castings" data-mot="agence" data-anim="trace" data-duree="0.6"/><path d="M540 1010 L869 1220" data-voix="castings" data-mot="opportunités" data-anim="trace" data-duree="0.6"/><path d="M540 1010 L540 1430" data-voix="castings" data-mot="privés" data-anim="trace" data-duree="0.6"/><path d="M540 1010 L210 1220" data-voix="castings" data-mot="professionnels" data-anim="trace" data-duree="0.6"/><path d="M540 1010 L210 800" data-voix="castings" data-mot="partenaires" data-anim="trace" data-duree="0.6"/></svg>
+    <svg class="reseau-svg l" viewBox="0 0 1920 1080"><path d="M960 560 L960 230" data-voix="castings" data-mot="présente" data-anim="trace" data-duree="0.6"/><path d="M960 560 L1410 395" data-voix="castings" data-mot="agence" data-anim="trace" data-duree="0.6"/><path d="M960 560 L1410 725" data-voix="castings" data-mot="opportunités" data-anim="trace" data-duree="0.6"/><path d="M960 560 L960 890" data-voix="castings" data-mot="privés" data-anim="trace" data-duree="0.6"/><path d="M960 560 L509 725" data-voix="castings" data-mot="professionnels" data-anim="trace" data-duree="0.6"/><path d="M960 560 L509 395" data-voix="castings" data-mot="partenaires" data-anim="trace" data-duree="0.6"/></svg>
+    <div class="abs coeur-reseau" data-voix="apres" data-anim="pop"><img src="../../assets/logo-header.png" alt=""></div>
+<div class="noeud" data-voix="castings" data-mot="présente" data-anim="pop" style="--xv:540px;--yv:590px;--xl:960px;--yl:230px"><span class="medaillon petit" data-symbole="photo"></span><b>Shootings</b></div>
+<div class="noeud" data-voix="castings" data-mot="agence" data-anim="pop" style="--xv:869px;--yv:800px;--xl:1410px;--yl:395px"><span class="medaillon petit" data-symbole="talon"></span><b>Défilés</b></div>
+<div class="noeud" data-voix="castings" data-mot="opportunités" data-anim="pop" style="--xv:869px;--yv:1220px;--xl:1410px;--yl:725px"><span class="medaillon petit" data-symbole="etoile"></span><b>Opportunités</b></div>
+<div class="noeud" data-voix="castings" data-mot="privés" data-anim="pop" style="--xv:540px;--yv:1430px;--xl:960px;--yl:890px"><span class="medaillon petit" data-symbole="personne"></span><b>Castings privés</b></div>
+<div class="noeud" data-voix="castings" data-mot="professionnels" data-anim="pop" style="--xv:210px;--yv:1220px;--xl:509px;--yl:725px"><span class="medaillon petit" data-symbole="groupe"></span><b>Castings pros</b></div>
+<div class="noeud" data-voix="castings" data-mot="partenaires" data-anim="pop" style="--xv:210px;--yv:800px;--xl:509px;--yl:395px"><span class="medaillon petit" data-symbole="diamant"></span><b>Marques partenaires</b></div>
   </section>
 
   <section class="scene" data-de="espace" data-transition="volet">
-    <div class="vignette" data-voix="espace" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/014.jpg"></div></div>
-    <div class="vignette" data-voix="espace" data-mot="book" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/146.jpg"></div></div>
-    <div class="vignette" data-voix="espace" data-mot="valeur" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/149.jpg"></div></div>
-    <div class="texte milieu decale"><p class="surtitre" data-voix="espace" data-anim="glisse">Votre espace mannequin</p>
-      <p class="moyen"><span data-voix="espace" data-mot="book" data-anim="mots">Votre book</span><br><em data-voix="espace" data-mot="valeur" data-anim="mots">mis en valeur</em></p>
-      <div class="pastilles"><span class="pastille blanche" data-voix="espace" data-mot="gratuit" data-anim="pop">Gratuit</span><span class="pastille" data-voix="espace" data-mot="site" data-anim="pop">Sur notre site</span><span class="pastille" data-voix="espace" data-mot="profil" data-anim="pop">Votre profil</span></div></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="espace" data-anim="glisse">Votre espace</p><p class="moyen"><em data-voix="espace" data-mot="mannequin" data-anim="mots">sur notre site</em></p></div>
+    <div class="abs navigateur" data-voix="espace" data-mot="propre" data-anim="leve">
+      <div class="url"><i></i><i></i><i></i><span>maitreakessemodelmanagement.com/book/votre-nom</span></div>
+      <div class="profil"><img src="vignettes/h019.jpg"></div>
+      <div class="infos-profil"><b data-voix="espace" data-mot="profil" data-anim="bloc">Votre nom</b><span>Taille 1,86 m · Book · Vidéo · Mensurations</span>
+        <div class="miniatures"><div data-voix="espace" data-mot="book" data-anim="pop"><img src="vignettes/h024.jpg"></div><div data-voix="espace" data-mot="book" data-retard="0.12" data-anim="pop"><img src="vignettes/h081.jpg"></div><div data-voix="espace" data-mot="book" data-retard="0.24" data-anim="pop"><img src="vignettes/h103.jpg"></div><div data-voix="espace" data-mot="valeur" data-anim="pop"><img src="vignettes/h076.jpg"></div></div></div>
+    </div>
+    <div class="abs gratuit" data-voix="espace" data-mot="gratuit" data-anim="tampon" data-rot="12"><div>GRATUIT<small>VOTRE ESPACE</small></div></div>
   </section>
 
   <section class="scene" data-de="quel" data-transition="barres">
-    <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div>
-    <div class="medaillon" data-photo="p-043" data-voix="histoire" data-mot="histoire" data-anim="medaillon" data-pos="860,880" data-posl="1250,300"></div>
-    <div class="texte"><p class="surtitre" data-voix="quel" data-anim="glisse">Alors…</p>
-      <p class="grand"><span data-voix="quel" data-mot="quel" data-anim="lettres">Quel sera</span><br><em data-voix="quel" data-mot="parcours" data-anim="lettres">votre parcours ?</em></p>
-      <div class="pastilles"><span class="pastille" data-voix="histoire" data-mot="débutant" data-anim="pop">Débutant·e</span><span class="pastille" data-voix="histoire" data-mot="expérimenté" data-anim="pop">Expérimenté·e</span></div>
+    <div class="mosaique mur"><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/h059.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/h101.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/h000.jpg"></div><div class="photo-m"><img src="vignettes/149.jpg"></div><div class="photo-m"><img src="vignettes/061.jpg"></div><div class="photo-m"><img src="vignettes/104.jpg"></div><div class="photo-m"><img src="vignettes/182.jpg"></div><div class="photo-m"><img src="vignettes/148.jpg"></div><div class="photo-m"><img src="vignettes/138.jpg"></div><div class="photo-m"><img src="vignettes/063.jpg"></div><div class="photo-m"><img src="vignettes/042.jpg"></div><div class="photo-m"><img src="vignettes/151.jpg"></div><div class="photo-m"><img src="vignettes/016.jpg"></div><div class="photo-m"><img src="vignettes/088.jpg"></div><div class="photo-m"><img src="vignettes/113.jpg"></div><div class="photo-m"><img src="vignettes/162.jpg"></div><div class="photo-m"><img src="vignettes/179.jpg"></div><div class="photo-m"><img src="vignettes/051.jpg"></div><div class="photo-m"><img src="vignettes/084.jpg"></div><div class="photo-m"><img src="vignettes/h019.jpg"></div><div class="photo-m"><img src="vignettes/h024.jpg"></div><div class="photo-m"><img src="vignettes/h081.jpg"></div><div class="photo-m"><img src="vignettes/h076.jpg"></div><div class="photo-m"><img src="vignettes/h088.jpg"></div><div class="photo-m"><img src="vignettes/h103.jpg"></div><div class="photo-m"><img src="vignettes/h085.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div><div class="photo-m"><img src="vignettes/050.jpg"></div><div class="photo-m"><img src="vignettes/017.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/037.jpg"></div><div class="photo-m"><img src="vignettes/053.jpg"></div><div class="photo-m"><img src="vignettes/005.jpg"></div><div class="photo-m"><img src="vignettes/106.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m"><img src="vignettes/004.jpg"></div><div class="photo-m"><img src="vignettes/135.jpg"></div><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/h059.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div></div>
+    <div class="texte centre milieu"><div data-voix="quel" data-anim="monte" data-finvoix="histoire" data-finmot="histoire"><p class="surtitre">Alors…</p>
+      <p class="grand"><span data-voix="quel" data-mot="quel" data-anim="lettres">Quel sera</span><br><em data-voix="quel" data-mot="parcours" data-anim="lettres">votre parcours ?</em></p></div></div>
+    <div class="texte centre milieu"><p class="grand"><em data-voix="histoire" data-mot="histoire" data-anim="lettres">Votre histoire</em></p>
+      <p class="commence" data-voix="histoire" data-mot="commencer" data-anim="pop">Commence ici</p>
+      <div class="boutons-fin"><span class="btn plein" data-voix="histoire" data-mot="débutant" data-anim="pop">Je débute</span><span class="btn" data-voix="histoire" data-mot="expérimenté" data-anim="pop">J’ai déjà été mannequin</span></div>
       <span class="bouton" data-voix="choisissez" data-mot="envoyez" data-anim="pop">Envoyer ma candidature<i></i></span></div>
   </section>
 
-  <section class="scene" data-de="fin" data-transition="cercle">
-    <div class="mosaique"><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="vignettes/014.jpg"></div></div>
+  <section class="scene" data-de="fin" data-transition="fondu">
+    <div class="mosaique mur"><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/h059.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/h101.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/h000.jpg"></div><div class="photo-m"><img src="vignettes/149.jpg"></div><div class="photo-m"><img src="vignettes/061.jpg"></div><div class="photo-m"><img src="vignettes/104.jpg"></div><div class="photo-m"><img src="vignettes/182.jpg"></div><div class="photo-m"><img src="vignettes/148.jpg"></div><div class="photo-m"><img src="vignettes/138.jpg"></div><div class="photo-m"><img src="vignettes/063.jpg"></div><div class="photo-m"><img src="vignettes/042.jpg"></div><div class="photo-m"><img src="vignettes/151.jpg"></div><div class="photo-m"><img src="vignettes/016.jpg"></div><div class="photo-m"><img src="vignettes/088.jpg"></div><div class="photo-m"><img src="vignettes/113.jpg"></div><div class="photo-m"><img src="vignettes/162.jpg"></div><div class="photo-m"><img src="vignettes/179.jpg"></div><div class="photo-m"><img src="vignettes/051.jpg"></div><div class="photo-m"><img src="vignettes/084.jpg"></div><div class="photo-m"><img src="vignettes/h019.jpg"></div><div class="photo-m"><img src="vignettes/h024.jpg"></div><div class="photo-m"><img src="vignettes/h081.jpg"></div><div class="photo-m"><img src="vignettes/h076.jpg"></div><div class="photo-m"><img src="vignettes/h088.jpg"></div><div class="photo-m"><img src="vignettes/h103.jpg"></div><div class="photo-m"><img src="vignettes/h085.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div><div class="photo-m"><img src="vignettes/050.jpg"></div><div class="photo-m"><img src="vignettes/017.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/037.jpg"></div><div class="photo-m"><img src="vignettes/053.jpg"></div><div class="photo-m"><img src="vignettes/005.jpg"></div><div class="photo-m"><img src="vignettes/106.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m"><img src="vignettes/004.jpg"></div><div class="photo-m"><img src="vignettes/135.jpg"></div><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/h059.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/h101.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/h000.jpg"></div></div>
     <div class="texte centre milieu"><img class="logo-fin" data-voix="fin" data-anim="pop" src="../../assets/logo-intro.png" alt="">
       <p class="titre"><span data-voix="fin" data-mot="formé" data-anim="lettres">Formé.</span> <span data-voix="fin" data-mot="révélé" data-anim="lettres">Révélé.</span><br><em data-voix="fin" data-mot="valorisé" data-anim="lettres">Valorisé.</em></p></div>
   </section>

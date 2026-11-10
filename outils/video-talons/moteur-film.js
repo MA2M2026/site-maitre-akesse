@@ -98,7 +98,9 @@ const scenes = [...document.querySelectorAll('.scene')].map((el, i) => {
     photos: [...el.querySelectorAll('.photo, .photo-m')],
     elements: [...el.querySelectorAll('[data-voix]')].map((x) => ({ x, t: instant(x), anim: x.dataset.anim || 'monte',
       mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
-      onde: x.querySelector(':scope > .onde'), anneau: x.querySelector(':scope > .anneau'), ph: (x.dataset.symbole || x.textContent).length })) };
+      onde: x.querySelector(':scope > .onde'), anneau: x.querySelector(':scope > .anneau'), ph: (x.dataset.symbole || x.textContent).length,
+      // data-finvoix (+ data-finmot) : l'élément s'efface quand la voix dit ce mot (deux images à la même place, l'une après l'autre)
+      tf: x.dataset.finvoix ? instant({ dataset: { voix: x.dataset.finvoix, mot: x.dataset.finmot || '', retard: x.dataset.finretard || 0 } }) : null })) };
 });
 scenes.forEach((s, i) => { s.fin = i + 1 < scenes.length ? scenes[i + 1].debut + 1.0 : T.duree + 10; });
 scenes.forEach((s) => s.photos.forEach((p) => { const img = p.querySelector('img'); if (p.dataset.cadrage && img) img.style.objectPosition = p.dataset.cadrage; }));
@@ -123,7 +125,9 @@ function animer(e, t) {
     case 'masque': { const k = sortie(q * 1.1); s.display = 'inline-block'; s.clipPath = 'inset(0 ' + (100 * (1 - k)) + '% 0 0)'; s.opacity = Math.min(1, k * 3); s.transform = 'translateX(' + (24 * (1 - k)) + 'px)'; break; }
     case 'trait': { const k = sortie(q); s.transform = 'scaleX(' + k + ')'; s.opacity = k > 0 ? 1 : 0; break; }
     case 'pop': { const k = ressort(q * 1.15); s.opacity = Math.min(1, Math.max(0, q * 3)); s.transform = 'translateY(' + (60 * (1 - k)) + 'px) rotate(' + (-10 * (1 - k)) + 'deg) scale(' + (0.4 + 0.6 * k) + ')'; break; }
-    case 'compteur': { const k = sortie((t - e.t) / 1.3); x.textContent = fmt(Number(x.dataset.valeur) * k); x.style.display = 'inline-block'; x.style.transform = 'scale(' + (1 + 0.12 * Math.sin(Math.PI * lisse((t - e.t - 1.2) / 0.5))) + ')'; break; }
+    case 'compteur': { // data-depart (0), data-decimales (0, virgule française), data-duree (1,3 s)
+      const k = sortie((t - e.t) / Number(x.dataset.duree || 1.3)), dep = Number(x.dataset.depart || 0), dec = Number(x.dataset.decimales || 0);
+      const v = dep + (Number(x.dataset.valeur) - dep) * k; x.textContent = dec ? v.toFixed(dec).replace('.', ',') : fmt(v); x.style.display = 'inline-block'; x.style.transform = 'scale(' + (1 + 0.12 * Math.sin(Math.PI * lisse((t - e.t - 1.2) / 0.5))) + ')'; break; }
     case 'mots': { s.opacity = 1; e.mots.forEach((m, i) => { const k = sortie((t - e.t - i * 0.16) / 0.75); m.style.opacity = k; m.style.transform = 'perspective(800px) translateY(' + (60 * (1 - k)) + 'px) rotateX(' + (-70 * (1 - k)) + 'deg)'; m.style.filter = k < 1 ? 'blur(' + (8 * (1 - k)) + 'px)' : ''; }); break; }
     case 'lettres': { s.opacity = 1; e.mots.forEach((m, i) => { const k = sortie((t - e.t - i * 0.035) / 0.7); m.style.opacity = Math.min(1, k * 1.6); m.style.transform = 'perspective(600px) translateY(' + (70 * (1 - k)) + 'px) rotateX(' + (-95 * (1 - k)) + 'deg) scale(' + (1.3 - 0.3 * k) + ')'; }); break; }
     case 'medaillon': { // arrive en tournant avec un rebond, onde de choc, puis flotte ; l'anneau tourne sans cesse
@@ -135,14 +139,32 @@ function animer(e, t) {
       const d = t - e.t, k = sortie(d / 1.2), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
       s.transform = 'perspective(1400px) translateY(' + (260 * (1 - k) + 10 * Math.sin(d * 0.9 + rot)) + 'px) rotateX(' + (55 * (1 - k)) + 'deg) rotate(' + (rot * (2 - k) + 1.5 * Math.sin(d * 0.7)) + 'deg) scale(' + (0.7 + 0.3 * k) + ')';
       const img = x.querySelector('img'); img.style.transform = 'scale(' + (1.25 - 0.15 * Math.min(1, d / 8)) + ')'; break; }
+    case 'nuage': { // photo lancée de loin (data-dx, data-dy) en tournant, qui se pose à sa place puis flotte
+      const d = t - e.t, k = sortie(d / 1.4), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
+      s.transform = 'translate(' + (Number(x.dataset.dx || 0) * (1 - k)) + 'px,' + (Number(x.dataset.dy || 0) * (1 - k) + 8 * Math.sin(d + rot)) + 'px) rotate(' + (rot + 40 * (1 - k)) + 'deg) scale(' + (0.4 + 0.6 * k) + ')'; break; }
+    case 'ouvre': { // porte : glisse sur le côté (data-sens = -1 gauche, 1 droite)
+      const k = lisse((t - e.t) / 1.1); s.opacity = 1; s.transform = 'translateX(' + (Number(x.dataset.sens || 1) * 105 * k) + '%)'; break; }
+    case 'trace': { // tracé SVG qui se dessine (data-duree, 1,6 s)
+      const L = x.getTotalLength(), k = lisse((t - e.t) / Number(x.dataset.duree || 1.6)); s.opacity = 1; s.strokeDasharray = L; s.strokeDashoffset = L * (1 - k); break; }
+    case 'defile': { // bande de photos qui défile sans fin (data-vitesse px/s)
+      const d = t - e.t; s.opacity = Math.min(1, d * 2); s.transform = 'translateX(' + (-Number(x.dataset.vitesse || 120) * d) + 'px)'; break; }
+    case 'tampon': { // tampon frappé : arrive grand, se plaque avec un petit choc
+      const d = t - e.t, k = sortie(d / 0.35); s.opacity = Math.min(1, d * 6);
+      s.transform = 'rotate(' + (Number(x.dataset.rot || -12)) + 'deg) scale(' + (2.6 - 1.6 * k + 0.06 * Math.sin(Math.min(1, d / 0.6) * Math.PI * 3) * (1 - Math.min(1, d / 0.6))) + ')'; break; }
+    case 'deplace': { // va de (data-x0, data-y0) à (data-x1, data-y1) en data-duree secondes
+      const k = lisse((t - e.t) / Number(x.dataset.duree || 1.3)), g = (a) => Number((LARGE && x.dataset[a + 'l'] !== undefined ? x.dataset[a + 'l'] : x.dataset[a]) || 0); s.opacity = 1;  // (data-y1l… : valeur du format horizontal)
+      s.transform = 'translate(' + (g('x0') + (g('x1') - g('x0')) * k) + 'px,' + (g('y0') + (g('y1') - g('y0')) * k) + 'px)'; break; }
     default: { const k = sortie(q); s.opacity = k; s.transform = 'translateY(' + (50 * (1 - k)) + 'px)'; }
   }
+  if (e.tf !== null && t > e.tf) s.opacity = (s.opacity === '' ? 1 : Number(s.opacity)) * (1 - lisse((t - e.tf) / 0.35));
 }
 function avant(e) {
   const s = e.x.style;
-  if (e.anim === 'compteur') { e.x.textContent = '0'; return; }
+  if (e.anim === 'compteur') { const dec = Number(e.x.dataset.decimales || 0), dep = Number(e.x.dataset.depart || 0); e.x.textContent = dec ? dep.toFixed(dec).replace('.', ',') : fmt(dep); return; }
   if (e.anim === 'mots' || e.anim === 'lettres') { s.opacity = 1; e.mots.forEach((m) => { m.style.opacity = 0; }); return; }
   if (e.anim === 'bloc') { s.opacity = 1; e.contenu.style.opacity = 0; e.balai.style.transform = 'scaleX(0)'; return; }
+  if (e.anim === 'ouvre') { s.opacity = 1; s.transform = ''; return; }
+  if (e.anim === 'trace') { const L = e.x.getTotalLength(); s.strokeDasharray = L; s.strokeDashoffset = L; return; }
   s.opacity = 0;
 }
 function entree(s, t, premier) {
