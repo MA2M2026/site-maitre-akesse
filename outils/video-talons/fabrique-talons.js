@@ -33,7 +33,7 @@ function faireSon() {
     ? '[0:a]aresample=48000,apad,atrim=0:' + DUREE + ',asplit=2[voix][cle];[1:a]aresample=48000,aloop=loop=-1:size=2e9,atrim=0:' + DUREE + ',volume=' + VOLUME + ',afade=t=in:d=2,afade=t=out:st=' + (DUREE - 3.5) + ':d=3.5[mus];' +
       '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix]volume=' + VOLUME_VOIX + '[voixf];[voixf][musd]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.2:LRA=9,alimiter=limit=0.95[a]'
     : '[0:a]aresample=48000,apad,atrim=0:' + DUREE + '[a]';
-  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : []), '-filter_complex', filtre, '-map', '[a]', '-c:a', 'aac', '-b:a', '160k', son]);
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : []), '-filter_complex', filtre, '-map', '[a]', '-c:a', 'aac', '-b:a', '128k', son]);
   return son;
 }
 // --son : seulement la piste son (son.m4a dans IMAGES), sans refaire les images (ex. volume de la musique changé)
@@ -66,7 +66,9 @@ if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.ex
   const son = faireSon();
   const sortie = path.join(IMAGES, NOM + (FORMAT === 'large' ? '-large' : '') + '.mp4');
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-framerate', String(IPS), '-i', path.join(IMAGES, 'f%05d.jpg'), '-i', son,
-    '-vf', 'scale=' + (FORMAT === 'large' ? '1280:720' : '720:1280') + ':flags=lanczos,format=yuv420p', '-c:v', 'libx264', '-preset', 'slow', '-crf', '22',
-    '-c:a', 'copy', '-shortest', '-movflags', '+faststart', sortie]);
+    // version publiée : légère (crf 27) et couleurs étiquetées BT.709 (sans étiquette, certains téléphones délavent le rouge)
+    '-vf', 'scale=' + (FORMAT === 'large' ? '1280:720' : '720:1280') + ':flags=lanczos:out_color_matrix=bt709,format=yuv420p',
+    '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv',
+    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', '27', '-tune', 'film', '-c:a', 'copy', '-shortest', '-movflags', '+faststart', sortie]);
   console.log('✓', sortie, (fs.statSync(sortie).size / 1048576).toFixed(1), 'Mo');
 })();
