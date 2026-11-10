@@ -62,8 +62,14 @@
 
   // Renvoie un nouveau fichier allégé, ou null si l'allègement est inutile ou
   // impossible sur cet appareil. surProgres(0..100) pendant la préparation.
-  async function allegerVideo(fichier, surProgres) {
-    if (!fichier || fichier.size <= DEJA_LEGERE) return null;
+  // options (facultatif, page « Cours de talons », 10/11/2026) : { coteLong, debit,
+  // dejaLegere } — vidéo plus petite pour un envoi plus rapide.
+  async function allegerVideo(fichier, surProgres, options) {
+    const o = options || {};
+    const coteLong = o.coteLong || COTE_LONG;
+    const dejaLegere = o.dejaLegere != null ? o.dejaLegere : DEJA_LEGERE;
+    const debit = o.debit || DEBIT_VIDEO;
+    if (!fichier || fichier.size <= dejaLegere) return null;
     if (typeof VideoEncoder === 'undefined' || typeof VideoDecoder === 'undefined') return null;
     const MB = await chargerOutil();
     const entree = new MB.Input({ source: new MB.BlobSource(fichier), formats: MB.ALL_FORMATS });
@@ -71,13 +77,13 @@
     if (!piste || !(await piste.canDecode())) return null;
 
     let l = piste.displayWidth, h = piste.displayHeight;
-    const echelle = Math.min(1, COTE_LONG / Math.max(l, h));
+    const echelle = Math.min(1, coteLong / Math.max(l, h));
     l = pair(l * echelle); h = pair(h * echelle);
 
     // H.264 dans un MP4 (lisible partout, y compris dans Google Drive) ; sinon VP9.
     let codec = null;
     for (const c of ['avc', 'vp9', 'vp8']) {
-      try { if (await MB.canEncodeVideo(c, { width: l, height: h, bitrate: DEBIT_VIDEO })) { codec = c; break; } } catch (e) {}
+      try { if (await MB.canEncodeVideo(c, { width: l, height: h, bitrate: debit })) { codec = c; break; } } catch (e) {}
     }
     if (!codec) return null;
     const enMp4 = codec !== 'vp8';
@@ -87,7 +93,7 @@
     });
     const conversion = await MB.Conversion.init({
       input: entree, output: sortie, tracks: 'primary',
-      video: { width: l, height: h, fit: 'contain', codec, bitrate: DEBIT_VIDEO, frameRate: IMAGES_SECONDE },
+      video: { width: l, height: h, fit: 'contain', codec, bitrate: debit, frameRate: IMAGES_SECONDE },
       audio: { numberOfChannels: 2 }
     });
     // Le son ne doit jamais disparaître : si la piste son est écartée, on n'allège pas.

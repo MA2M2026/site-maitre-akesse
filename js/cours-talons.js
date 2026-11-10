@@ -1,7 +1,9 @@
 // Page « Cours de talons » (Atelier Talons & Élégance, cours-talons.html et en/cours-talons.html, 08/11/2026).
-// Inscription en 4 étapes : formule → la personne → 2 ou 3 photos + une vidéo de sa marche → paiement Wave
-// maintenant ou plus tard. Les photos et la vidéo partent d'abord vers Google Drive (sous-dossier « Cours de
-// talons », même programme que les candidatures) ; puis la ligne est enregistrée par le serveur du site
+// Inscription en 4 étapes : formule → la personne → 2 à 4 photos + une vidéo de sa marche → paiement Wave
+// maintenant ou plus tard. Les photos et la vidéo partent vers Google Drive (sous-dossier « Cours de
+// talons », même programme que les candidatures) au clic sur « Envoyer », sous les yeux de la personne (jauges),
+// ALLÉGÉES (10/11/2026 : l'envoi faisait attendre plusieurs minutes et décourageait les élèves ; photos 1600 px,
+// vidéo 480p, 3 minutes au plus) ; puis la ligne est enregistrée par le serveur du site
 // (anti-robots, table cours_talons, supabase-cours-talons.sql) : le statut et le montant sont décidés par la base.
 // Si le SQL n'est pas encore installé, l'inscription est proposée par WhatsApp (rien n'est perdu).
 // Outils partagés (js/app.js) : insererAvecPatience, envoyerPhotosVersDrive, envoyerVideoVersDrive, majJauge,
@@ -16,7 +18,12 @@
   // cours_talons_montant() dans la base, qui reste seule juge du montant enregistré.
   const PRIX = { groupe: 30000, prive_salle: 25000, prive_exterieur: 30000 };
   const WHATSAPP_AGENCE = '2250545656687';
-  const VIDEO_MAX_SECONDES = 65, VIDEO_MAX_OCTETS = 60 * 1024 * 1024, VIDEO_MAX_ORIGINAL = 2 * 1024 * 1024 * 1024;
+  // Vidéo : 3 minutes au plus (décision de la propriétaire, 10/11/2026). Le programme Google Drive refuse plus de
+  // 60 Mo : la vidéo est allégée en 480p (environ 8 Mo la minute) et son poids final est vérifié.
+  const PHOTOS_MAX = 4, PHOTOS_MIN = 2;
+  const VIDEO_MAX_SECONDES = 185;
+  const VIDEO_MAX_OCTETS = 60 * 1024 * 1024, VIDEO_MAX_ORIGINAL = 4 * 1024 * 1024 * 1024;
+  const ALLEGEMENT = { coteLong: 854, debit: 900000, dejaLegere: 6 * 1024 * 1024 };
   const fcfa = enFcfa;  // (js/app.js, comme LIEN_WAVE_AGENCE : le lien Wave des mensualités)
 
   remplirIndicatifs($('ct-indicatif'));
@@ -29,7 +36,10 @@
   // nouvel essai après une coupure : même identifiant (la base ne double pas l'inscription) et photos / vidéo déjà
   // envoyées vers Drive gardées (oubliées dès qu'on change les photos ou la vidéo)
   const idInscription = crypto.randomUUID();
-  let dejaEnvoye = null;
+  // Ce qui est déjà arrivé sur Drive { liens, dossier, video } : gardé pour un nouvel essai (rien n'est renvoyé en
+  // double), oublié dès qu'on change les photos ou la vidéo. envoiEnCours : jauges de l'envoi affichées.
+  let dejaEnvoye = { liens: [], dossier: null, video: null }, envoiEnCours = false;
+  function mediasChanges() { dejaEnvoye = { liens: [], dossier: null, video: null }; }
 
   const formule = () => (form.querySelector('input[name="formule"]:checked') || {}).value || '';
   const decision = () => (form.querySelector('input[name="decision"]:checked') || {}).value || '';
@@ -68,6 +78,7 @@
     form.querySelectorAll('.ct-etape').forEach((f) => f.classList.toggle('u-hidden', Number(f.dataset.etape) !== n));
     document.querySelectorAll('.ct-progression li').forEach((li, i) => { li.classList.toggle('actif', i === n - 1); li.classList.toggle('fait', i < n - 1); });
     $('ct-retour').classList.toggle('u-hidden', n === 1);
+    $('ct-envoi-jauges').classList.toggle('u-hidden', n !== 4 || !envoiEnCours);
     $('ct-suivant').classList.toggle('u-hidden', n === 4);
     $('ct-envoyer').classList.toggle('u-hidden', n !== 4);
     msg.className = 'form-msg'; msg.textContent = '';
@@ -93,15 +104,17 @@
       }
     }
     if (n === 3) {
-      if (photos.length < 2) return erreur(T('Ajoutez 2 ou 3 photos.', 'Please add 2 or 3 photos.'), $('ct-photos'));
+      if (photos.length < PHOTOS_MIN) return erreur(T('Ajoutez 2 à 4 photos.', 'Please add 2 to 4 photos.'), $('ct-photos'));
       if (!video && !videoEnPreparation) return erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video'));
     }
     return true;
   }
-  $('ct-suivant').addEventListener('click', () => { if (etapeValide(etape)) montrer(etape + 1); });
+  $('ct-suivant').addEventListener('click', () => {
+    if (etapeValide(etape)) montrer(etape + 1);
+  });
   $('ct-retour').addEventListener('click', () => montrer(Math.max(1, etape - 1)));
 
-  // ---------- photos (2 ou 3)
+  // ---------- photos (2 à 4)
   function rafraichirPhotos() {
     const boite = $('ct-photos-apercu');
     boite.querySelectorAll('img').forEach((im) => URL.revokeObjectURL(im.src));
@@ -110,53 +123,95 @@
       const fig = document.createElement('figure');
       const img = document.createElement('img'); img.src = URL.createObjectURL(f); img.alt = 'Photo ' + (i + 1);
       const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.setAttribute('aria-label', T('Retirer la photo ', 'Remove photo ') + (i + 1));
-      b.addEventListener('click', () => { photos.splice(i, 1); dejaEnvoye = null; rafraichirPhotos(); });
+      b.addEventListener('click', () => { photos.splice(i, 1); mediasChanges(); rafraichirPhotos(); });
       fig.append(img, b); boite.appendChild(fig);
     });
     const info = $('ct-photos-info');
-    info.className = 'ct-info' + (photos.length && photos.length < 2 ? ' err' : '');
-    info.textContent = photos.length ? T(`${photos.length} photo${photos.length > 1 ? 's' : ''} sur 3.`, `${photos.length} photo${photos.length > 1 ? 's' : ''} out of 3.`) : '';
+    info.className = 'ct-info' + (photos.length && photos.length < PHOTOS_MIN ? ' err' : '');
+    info.textContent = photos.length ? T(`${photos.length} photo${photos.length > 1 ? 's' : ''} sur ${PHOTOS_MAX}.`, `${photos.length} photo${photos.length > 1 ? 's' : ''} out of ${PHOTOS_MAX}.`) : '';
   }
   $('ct-photos').addEventListener('change', (e) => {
     const nouvelles = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type || '') || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name || ''));
-    photos = photos.concat(nouvelles).slice(0, 3);
-    dejaEnvoye = null;
+    photos = photos.concat(nouvelles).slice(0, PHOTOS_MAX);
+    mediasChanges();
     e.target.value = '';
     rafraichirPhotos();
   });
 
-  // ---------- vidéo (1 minute maximum, allégée sur l'appareil si elle est lourde)
+  // ---------- vidéo (3 minutes au plus, allégée sur l'appareil si elle est lourde)
   $('ct-video').addEventListener('change', async (e) => {
     const info = $('ct-video-info');
     const fichier = e.target.files && e.target.files[0];
     const numero = ++numeroVideo;
-    video = null; videoEnPreparation = null; dejaEnvoye = null;
+    video = null; videoEnPreparation = null; mediasChanges();
     cacherJauge('ct-video-jauge');
     info.className = 'ct-info';
     if (!fichier) { info.textContent = ''; return; }
     const refuser = (t) => { info.className = 'ct-info err'; info.textContent = t; e.target.value = ''; };
     if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) return refuser(T("Ce fichier n'est pas une vidéo.", 'This file is not a video.'));
-    if (fichier.size > VIDEO_MAX_ORIGINAL) return refuser(T(`Vidéo beaucoup trop lourde (${enMo(fichier.size)}). Filmez 1 minute maximum.`, `Video far too large (${enMo(fichier.size)}). Please film 1 minute maximum.`));
+    if (fichier.size > VIDEO_MAX_ORIGINAL) return refuser(T(`Vidéo beaucoup trop lourde (${enMo(fichier.size)}). Choisissez une vidéo plus courte.`, `Video far too large (${enMo(fichier.size)}). Please choose a shorter video.`));
     info.textContent = T('Lecture de la vidéo…', 'Reading the video…');
     const examen = window.examinerVideo ? await window.examinerVideo(fichier) : { duree: null };
     if (numero !== numeroVideo) return;
     const duree = examen.duree || (fichier.size <= 300 * 1048576 ? await dureeVideo(fichier) : null);
     if (numero !== numeroVideo) return;
-    if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) return refuser(T(`Vidéo trop longue (${Math.round(duree)} s) : 1 minute maximum.`, `Video too long (${Math.round(duree)} s): 1 minute maximum.`));
+    if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) return refuser(T(`Vidéo trop longue (${dureeLisible(duree)}) : 3 minutes maximum.`, `Video too long (${dureeLisible(duree)}): 3 minutes maximum.`));
     info.textContent = '';
     videoEnPreparation = (async () => {
       let allegee = null;
       try {
-        if (window.allegerVideo) allegee = await window.allegerVideo(fichier, (pc) => { if (numero === numeroVideo) majJauge('ct-video-jauge', pc, T('Préparation de votre vidéo…', 'Preparing your video…')); });
+        if (window.allegerVideo) allegee = await window.allegerVideo(fichier, (pc) => {
+          if (numero !== numeroVideo) return;
+          majJauge('ct-video-jauge', pc, T('Préparation de votre vidéo…', 'Preparing your video…'));
+          if (envoiEnCours) majJauge('ct-jauge-video', pc, T('Vidéo : préparation…', 'Video: preparing…'));
+        }, ALLEGEMENT);
       } catch (err) { allegee = null; }
       if (numero !== numeroVideo) return;
       cacherJauge('ct-video-jauge');
-      const choisie = allegee || (fichier.size <= VIDEO_MAX_OCTETS ? fichier : null);
-      if (!choisie) { refuser(T(`Vidéo trop lourde (${enMo(fichier.size)}) : filmez 1 minute maximum, ou baissez la qualité de la caméra.`, `Video too large (${enMo(fichier.size)}): film 1 minute maximum, or lower the camera quality.`)); }
-      else { video = choisie; info.textContent = '✓ ' + T('Vidéo prête', 'Video ready') + ' (' + (duree ? Math.round(duree) + ' s, ' : '') + enMo(choisie.size) + ').'; }
+      const choisie = [allegee, fichier].find((f) => f && f.size <= VIDEO_MAX_OCTETS) || null;
+      if (!choisie) { refuser(T(`Vidéo trop lourde pour ce téléphone (${enMo(fichier.size)}) : choisissez une vidéo plus courte, ou envoyez-la à l’agence sur WhatsApp.`, `Video too large for this phone (${enMo(fichier.size)}): choose a shorter video, or send it to the agency on WhatsApp.`)); }
+      else { video = choisie; info.textContent = '✓ ' + T('Vidéo prête', 'Video ready') + ' (' + (duree ? dureeLisible(duree) + ', ' : '') + enMo(choisie.size) + ').'; }
       videoEnPreparation = null;
     })();
   });
+
+  const dureeLisible = (d) => { const t = Math.round(d); return t < 90 ? t + ' s' : Math.floor(t / 60) + ' min ' + String(t % 60).padStart(2, '0'); };
+
+  // ---------- envoi des photos et de la vidéo vers Drive (au clic sur « Envoyer », jauges visibles)
+  // Attend d'abord la fin de la préparation de la vidéo (rien ne part si elle est refusée) ; ne renvoie pas ce qui
+  // est déjà arrivé. Renvoie false si la vidéo manque, sinon met à jour dejaEnvoye.
+  async function envoyerMedias() {
+    envoiEnCours = true;
+    $('ct-envoi-jauges').classList.remove('u-hidden');
+    const d = dejaEnvoye;
+    if (d.liens.length) majJauge('ct-jauge-photos', 100, T(`Photos (${d.liens.length}) : envoyées ✓`, `Photos (${d.liens.length}): sent ✓`));
+    else majJauge('ct-jauge-photos', 0, T('Photos : en attente…', 'Photos: waiting…'));
+    if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
+    if (videoEnPreparation) await videoEnPreparation;
+    if (!video) return false;
+    const nom = $('ct-nom').value.trim(), tel = composerTelephone($('ct-indicatif'), $('ct-telephone'));
+    const infosDrive = { nom, email: '', phone: tel, type: 'projet', projet: 'Cours de talons' };
+    if (!d.liens.length) {
+      const base64 = [];
+      for (const f of photos) {
+        try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(f), 1600, 0.82))); } catch (err) { /* photo illisible : ignorée */ }
+        majJauge('ct-jauge-photos', base64.length / photos.length * 40, T('Photos : préparation…', 'Photos: preparing…'));
+      }
+      majJauge('ct-jauge-photos', 50, T('Photos : envoi…', 'Photos: sending…'));
+      const r = base64.length ? await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, photos: base64 }) : { liens: [], dossier: null };
+      d.liens = r.liens || []; d.dossier = r.dossier || null;
+      if (d.liens.length) majJauge('ct-jauge-photos', 100, T(`Photos (${d.liens.length}) : envoyées ✓`, `Photos (${d.liens.length}): sent ✓`));
+      else jaugeEnErreur('ct-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
+    }
+    if (!d.video) {
+      const fichierVideo = video;
+      d.video = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, fichierVideo,
+        (pc) => majJauge('ct-jauge-video', pc, T(`Vidéo (${enMo(fichierVideo.size)}) : envoi…`, `Video (${enMo(fichierVideo.size)}): sending…`))).catch(() => null);
+    }
+    if (d.video) majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
+    else jaugeEnErreur('ct-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));
+    return true;
+  }
 
   // ---------- envoi
   function ligneInscription(liensPhotos, lienVideo) {
@@ -199,32 +254,12 @@
     if (!$('ct-consentement').checked) return erreur(T('Cochez la case pour accepter la politique de confidentialité.', 'Please tick the box to accept the privacy policy.'), $('ct-consentement'));
     const btn = $('ct-envoyer'); btn.disabled = true; $('ct-retour').disabled = true;
     try {
-      if (videoEnPreparation) { afficherMsg(msg, T('Préparation de votre vidéo…', 'Preparing your video…'), 'ok'); await videoEnPreparation; }
-      if (!video) { montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
-      const nom = $('ct-nom').value.trim(), tel = composerTelephone($('ct-indicatif'), $('ct-telephone'));
-      const infosDrive = { nom, email: '', phone: tel, type: 'projet', projet: 'Cours de talons' };
-      // 1) photos puis vidéo vers Drive (même dossier) ; gardées pour un nouvel essai
-      $('ct-envoi-jauges').classList.remove('u-hidden');
+      if (!video && !videoEnPreparation) { montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      // 1) photos puis vidéo vers Drive, sous les yeux de la personne (ce qui est déjà arrivé n'est pas renvoyé)
       afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… gardez la page ouverte.', 'Sending your photos and video… please keep this page open.'), 'ok');
-      if (!dejaEnvoye || !dejaEnvoye.liens.length || !dejaEnvoye.video) {
-        majJauge('ct-jauge-photos', 0, T('Photos : préparation…', 'Photos: preparing…'));
-        majJauge('ct-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
-        const base64 = [];
-        for (const f of photos) {
-          try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(f)))); } catch (err) { /* photo illisible : ignorée */ }
-          majJauge('ct-jauge-photos', base64.length / photos.length * 50, T('Photos : préparation…', 'Photos: preparing…'));
-        }
-        majJauge('ct-jauge-photos', 60, T('Photos : envoi…', 'Photos: sending…'));
-        const envoiPhotos = base64.length ? await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, photos: base64 }) : { liens: [], echec: true, dossier: null };
-        const lienVideoDrive = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: envoiPhotos.dossier }, video,
-          (pc) => majJauge('ct-jauge-video', pc, T(`Vidéo (${enMo(video.size)}) : envoi…`, `Video (${enMo(video.size)}): sending…`))).catch(() => null);
-        dejaEnvoye = { liens: envoiPhotos.liens || [], video: lienVideoDrive };
-      }
-      if (dejaEnvoye.liens.length) majJauge('ct-jauge-photos', 100, T(`Photos (${dejaEnvoye.liens.length}) : envoyées ✓`, `Photos (${dejaEnvoye.liens.length}): sent ✓`));
-      else jaugeEnErreur('ct-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
-      if (dejaEnvoye.video) majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
-      else jaugeEnErreur('ct-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));
-      const envoi = { liens: dejaEnvoye.liens }, lienVideo = dejaEnvoye.video;
+      if (!(await envoyerMedias())) { envoiEnCours = false; montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
+      const envoi = { liens: dejaEnvoye.liens.slice() }, lienVideo = dejaEnvoye.video;
       // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
       const ligne = Object.assign({ id: idInscription }, ligneInscription(envoi.liens, lienVideo));
       const { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
@@ -247,6 +282,13 @@
           ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement Wave, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your Wave payment, it confirms your place on WhatsApp.')
           : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
       merci.appendChild(p1);
+      if (envoi.liens.length && lienVideo) {
+        const pOk = document.createElement('p');
+        const nb = envoi.liens.length, manque = photos.length - nb;
+        pOk.textContent = '✓ ' + T(`${nb > 1 ? 'Vos ' + nb + ' photos' : 'Votre photo'} et votre vidéo sont bien arrivées à l’agence.`, `Your ${nb > 1 ? nb + ' photos' : 'photo'} and your video have reached the agency.`)
+          + (manque > 0 ? ' ' + T(`(${manque} photo${manque > 1 ? 's' : ''} illisible${manque > 1 ? 's' : ''} : envoyez-la${manque > 1 ? 's' : ''} sur WhatsApp si besoin.)`, `(${manque} unreadable photo${manque > 1 ? 's' : ''}: send ${manque > 1 ? 'them' : 'it'} on WhatsApp if needed.)`) : '');
+        merci.appendChild(pOk);
+      }
       if (error) { const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.className = 'btn btn--principal'; a.textContent = T('Envoyer sur WhatsApp', 'Send on WhatsApp'); merci.appendChild(a); }
       if (!envoi.liens.length || !lienVideo) {
         const p2 = document.createElement('p');

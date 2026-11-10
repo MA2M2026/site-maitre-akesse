@@ -4372,12 +4372,18 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
   `assets/cours-talons/atelier-talons-elegance.mp4` (720 × 1280, ~5 Mo, musique et voix originales) et son
   affiche `assets/cours-talons/affiche.jpg` (aussi image d'aperçu des liens partagés).
 - **Inscription en 4 étapes** : formule (et nombre de séances, lieu pour le privé à l'extérieur) → la personne
-  (moins de 18 ans : nom et téléphone d'un parent obligatoires, aussi contrôlé par la base) → 2 ou 3 photos et une
-  vidéo de sa marche (1 minute maximum, allégée sur l'appareil par `js/video-allegee.js`) → Wave maintenant (lien
-  marchand des mensualités, avec le montant) ou plus tard. Photos et vidéo partent vers Google Drive (sous-dossier
-  « Cours de talons », même programme que les candidatures, type `projet`), puis la ligne passe par le serveur
+  (moins de 18 ans : nom et téléphone d'un parent obligatoires, aussi contrôlé par la base) → 2 à 4 photos et une
+  vidéo de sa marche (3 minutes maximum depuis le 10/11/2026, allégée sur l'appareil par `js/video-allegee.js`) →
+  Wave maintenant (lien marchand des mensualités, avec le montant) ou plus tard. Au clic sur « Envoyer », sous les
+  yeux de la personne (jauges), photos et vidéo partent vers Google Drive (sous-dossier « Cours de talons », même
+  programme que les candidatures, type `projet`), puis la ligne passe par le serveur
   (`api/portail.js`, action `formulaire`, anti-robots) → `formulaire_public_enregistrer`, qui retire tout ce que le
   visiteur ne doit pas choisir (statut, montant, notes…) et impose le statut (`paiement_envoye` ou `plus_tard`).
+- **Envoi allégé (10/11/2026, l'envoi prenait plusieurs minutes et décourageait les élèves)** : photos réduites à
+  1600 px (JPEG 0,82, environ 4 fois plus légères qu'avant) ; vidéo réduite à 480p, 0,9 Mbit/s (option
+  `ALLEGEMENT` passée à `allegerVideo`, environ 8 Mo la minute au lieu de 14) ; la vidéo finale doit peser 60 Mo au
+  plus (limite du programme Google Drive). Ce qui est déjà arrivé sur Drive (`dejaEnvoye`) n'est jamais renvoyé lors
+  d'un nouvel essai. Le message de remerciement confirme « vos photos et votre vidéo sont bien arrivées ».
 - **SQL pas encore collé** : le serveur répond `pasPret` (503) et la page propose d'envoyer l'inscription sur
   WhatsApp (message déjà rempli) ; rien n'est perdu.
 - **Administration** : « Administration du site » › Castings et demandes › **Cours de talons**
