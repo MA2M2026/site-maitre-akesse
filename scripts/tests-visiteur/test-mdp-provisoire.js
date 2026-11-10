@@ -21,15 +21,21 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       const exp = Math.floor(Date.now() / 1000) + 36000;
       const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
       localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x',
-        user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci', user_metadata: { mdp_provisoire: prov } } }));
+        user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci', app_metadata: { mdp_provisoire: prov }, user_metadata: {} } }));
     }, provisoire);
     await brancher(q, { tables: { model_profiles: [{ id: 'admin-1', full_name: 'AWA KONÉ', published: false, desactive: false }], model_photos: [] }, rpc: {} }, journal);
-    // compte de connexion imité : la marque « provisoire » tant que le nouveau mot de passe n'est pas enregistré
+    // compte de connexion imité : la marque « provisoire » (app_metadata, posée et retirée par le SERVEUR seulement)
     const meta = { mdp_provisoire: provisoire };
     await q.route(/\/auth\/v1\/user/, async (route) => {
       const req = route.request();
-      if (req.method() === 'PUT') { const c = JSON.parse(req.postData() || '{}'); envois.push(c); Object.assign(meta, (c && c.data) || {}); }
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci', user_metadata: meta }) });
+      if (req.method() === 'PUT') envois.push(['navigateur', JSON.parse(req.postData() || '{}')]);
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'awa@test.ci', app_metadata: meta, user_metadata: {} }) });
+    });
+    await q.route(/127\.0\.0\.1:\d+\/api\/portail/, async (route) => {
+      const c = JSON.parse(route.request().postData() || '{}');
+      envois.push(['serveur', c]);
+      if (c.action === 'mdp_provisoire_changer') meta.mdp_provisoire = false;
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
     });
     await q.goto('http://127.0.0.1:' + PORT + adresse); await q.waitForTimeout(2500);
     return { q, errs };
@@ -40,14 +46,15 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   let { q, errs } = await ouvrir('/app/espace-mannequin.html', true, envois);
   const titre = await q.textContent('#auth-panneau-nouveau-mdp h2').catch(() => '');
   ok(await q.isVisible('#auth-panneau-nouveau-mdp') && /Choisissez votre mot de passe/.test(titre) && !(await q.$('.stepper')), 'connectée avec le provisoire : seul « Choisissez votre mot de passe » s’affiche, pas le profil');
-  ok(!(await q.isVisible('#auth-panneau-connexion')) && !(await q.isVisible('#auth-panneau-inscription')), 'ni connexion ni inscription proposées à côté');
+  ok(!(await q.isVisible('#auth-panneau-connexion')) && !(await q.isVisible('#auth-panneau-inscription')) && !(await q.isVisible('#auth-onglets')) && await q.isVisible('#au-nm-deconnexion'),
+    'ni connexion ni inscription proposées à côté ; « Se déconnecter » disponible');
   await q.fill('#au-nm-mdp', 'court'); await q.click('#au-nm-valider'); await q.waitForTimeout(300);
   ok(/8 caractères/.test(await q.textContent('#au-nm-msg')) && !envois.length, 'mot de passe trop court : refusé, rien n’est envoyé');
-  await q.fill('#au-nm-mdp', 'MA2M-2345-ABC'); await q.click('#au-nm-valider'); await q.waitForTimeout(300);
+  await q.fill('#au-nm-mdp', 'MA2M-2345-ABCD'); await q.click('#au-nm-valider'); await q.waitForTimeout(300);
   ok(/différent du mot de passe provisoire/.test(await q.textContent('#au-nm-msg')) && !envois.length, 'le provisoire recopié : refusé');
   await q.fill('#au-nm-mdp', 'MonSecret2026!'); await q.click('#au-nm-valider');
   await q.waitForSelector('.stepper', { timeout: 10000 }).catch(() => {});
-  ok(envois.length === 1 && envois[0].password === 'MonSecret2026!' && envois[0].data && envois[0].data.mdp_provisoire === false, 'nouveau mot de passe enregistré, marque « provisoire » retirée');
+  ok(envois.length === 1 && envois[0][0] === 'serveur' && envois[0][1].action === 'mdp_provisoire_changer' && envois[0][1].motdepasse === 'MonSecret2026!', 'nouveau mot de passe envoyé AU SERVEUR (qui seul retire la marque « provisoire »)');
   ok(await q.isVisible('.stepper'), 'ensuite, le profil s’ouvre normalement');
   ok(!errs.length, 'aucune erreur dans la page ' + errs.join(' | '));
   await q.context().close();

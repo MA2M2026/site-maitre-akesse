@@ -4451,3 +4451,25 @@ carré » → « très luxe », qu'une femme de 40 à 60 ans se dise que c'est s
   Cours de talons : 2 à 5 photos ; candidatures : inchangé (3 à 12 selon le parcours).
 - **Aperçus de partage** (WhatsApp, Facebook) : `assets/apercus/<fr|en>-<page>-luxe.jpg` (1200 × 630), faits par
   `node scripts/apercus/generer-luxe.js` ; og:description et og:image:alt réécrits ; test-apercus.js les vérifie.
+
+## Comptes des mannequins : e-mail perdu, mot de passe provisoire ; étapes du profil sur une ligne (10/11/2026)
+
+Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de leur compte, ou ont oublié leur mot de passe.
+- **Administration › Mannequins › fiche › « Compte de connexion »** (js/admin/site-mannequins.js, `blocCompte`) : visible
+  pour l'**administratrice principale seule**. Montre l'e-mail de connexion ; « Changer l'e-mail de connexion » ;
+  « Créer un mot de passe provisoire » (affiché une fois, message WhatsApp prêt : mot de passe, e-mail, adresse de
+  l'application). Code de double authentification récent demandé (`P.sensible`).
+- **Serveur (api/portail.js)** : `mannequin_compte` (lecture), `mannequin_email`, `mannequin_mdp_provisoire` — garde
+  commune `principaleVerifiee` (rôle principal, appareil en règle, code récent) ; jamais sur un compte de l'équipe
+  (staff_profiles, admins) ni sur soi ; e-mail déjà utilisé refusé ; enregistré confirmé. Provisoire : `MA2M-XXXX-XXXX`
+  (8 signes parmi 31, sans biais, ~40 bits), marque `app_metadata.mdp_provisoire` (le navigateur ne peut pas l'écrire),
+  **toutes les sessions du compte fermées** (`deconnecterPartout`). Chaque action au journal des actions (`audit_log`,
+  `noterAction` : qui, sur quel compte ; jamais le mot de passe).
+- **La mannequin** (js/supabase-config.js : `mdpProvisoireEnCours`, `allerChoisirMdpSiProvisoire`,
+  `remplacerMdpProvisoire`) : avec un provisoire, l'Espace mannequin n'ouvre que « Choisissez votre mot de passe »
+  (sans onglets, avec « Se déconnecter ») ; l'accueil de l'application et Mes paiements y renvoient. Le nouveau mot de
+  passe passe par le serveur (`mdp_provisoire_changer`), qui seul retire la marque ; le format du provisoire est refusé.
+  La page « Mot de passe oublié » retire aussi la marque.
+- **Étapes du profil (application)** : les 6 étapes sur UNE ligne, en pastilles numérotées reliées, collées en haut
+  de l'écran (css/mannequin-app.css ; blocs de 1/6 sans grille ni flex, noms courts sous 420 px) ; app/sw.js v11.
+- Essais : test-compte-mannequin-serveur.js, test-mdp-provisoire.js, test-etapes-profil.js, test-nouvelle-admin-mannequins.js.

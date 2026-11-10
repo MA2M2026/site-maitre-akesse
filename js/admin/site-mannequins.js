@@ -121,7 +121,7 @@
       '<div class="ligne"><a class="btn" href="/mannequin.html?id=' + P.esc(id) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>' +
       '<a class="btn" href="#/site/' + PAGE + '/' + P.esc(id) + '/cv">📄 Voir le CV</a>' +
       '<button type="button" class="btn" data-action="mannequin-sourdine">' + (profil.desactive ? '🔊 Réactiver' : '🔇 Mettre en sourdine') + '</button></div></div></header>' +
-      blocPhotos() + blocMensurations(await P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null)) + await blocVitrine(id) + await blocCompte(id) +
+      blocPhotos() + (await Promise.all([P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null).then(blocMensurations), blocVitrine(id), blocCompte(id)])).join('') +
       '<section class="carte zone-danger"><h2>Supprimer définitivement</h2><p class="doux petit-texte">Supprime le profil, le compte de connexion et toutes les photos. Irréversible. Pour la retirer seulement du site, préférez la sourdine.</p>' +
       '<button type="button" class="btn" data-action="mannequin-supprimer">🗑 Supprimer</button></section>';
   }

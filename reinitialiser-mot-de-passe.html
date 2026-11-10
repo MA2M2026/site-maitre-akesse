@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-aDsq11xPPO7O1ScX6DQh9KtdnvHU6UEeMvLSeJFqbok='; style-src 'self' https://fonts.googleapis.com 'sha256-DMFUS9PHoqdPefpoxYYv9XwLjgIP96vvxGSR7XV59vY=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com 'sha256-KI/RL/fiDoVW9pCbe4X9SKgSY/WzBxWAeFE4z53H/Ws=' 'sha256-ybNrrENdao+FvOivN8dNKUMjt1AJB88L+ThzEB2evWw='; style-src 'self' https://fonts.googleapis.com 'sha256-DMFUS9PHoqdPefpoxYYv9XwLjgIP96vvxGSR7XV59vY=';">
 <script async src="https://js-de.sentry-cdn.com/9213fdda0531f437e2c1abd310598a77.min.js" crossorigin="anonymous"></script>
 <script src="js/surveillance.js?v=33f7b49b"></script>
 <script src="js/analytics-config.js?v=a6d58b5f"></script>
@@ -79,7 +79,7 @@
 
 <script src="js/copyright-annee.js?v=a398c3bf"></script>
 <script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
-<script src="js/supabase-config.js?v=0a4891d1"></script>
+<script src="js/supabase-config.js?v=5b51fc48"></script>
 <script src="js/confort.js?v=cad83e86"></script>
 <script>
 // Page dédiée, volontairement séparée de tableau-de-bord.html et
@@ -136,6 +136,8 @@ form.addEventListener('submit', async (e) => {
   }
 
   const { error } = await sb.auth.updateUser({ password: mdp });
+  // (10/11/2026) un mot de passe provisoire de l'agence était en cours : sa marque est retirée par le serveur
+  if (!error) { const { data: { user: u } } = await sb.auth.getUser(); if (mdpProvisoireEnCours(u)) await remplacerMdpProvisoire(mdp).catch(function () {}); }
   bouton.disabled = false;
 
   if (error) {

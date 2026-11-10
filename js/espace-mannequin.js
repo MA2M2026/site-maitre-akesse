@@ -141,11 +141,17 @@ function viewAuthGate(){
 }
 
 // Écran « Choisissez votre mot de passe » après un mot de passe provisoire (10/11/2026) : seulement ce panneau,
-// sans lien vers l'inscription ni la connexion (la personne est déjà connectée).
+// sans onglets de connexion ni d'inscription (la personne est déjà connectée), avec « Se déconnecter » (téléphone prêté).
 function afficherMdpObligatoire(){
   renderAuthGate();
   afficherPanneauAuth('auth-panneau-nouveau-mdp');
+  ['auth-onglets'].forEach(function(id){ const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  document.querySelector('#authPanel .em-vers-candidature')?.remove();
   const p = document.getElementById('auth-panneau-nouveau-mdp');
+  if (p && !document.getElementById('au-nm-deconnexion')) {
+    p.insertAdjacentHTML('beforeend', '<p class="p20-15"><a href="#" id="au-nm-deconnexion" class="p20-7">Se déconnecter</a></p>');
+    document.getElementById('au-nm-deconnexion').addEventListener('click', async function(e){ e.preventDefault(); await sb.auth.signOut().catch(function(){}); renderAuthGate(); });
+  }
   const titre = p && p.querySelector('h2'), sous = p && p.querySelector('.sub');
   if (titre) titre.textContent = 'Choisissez votre mot de passe';
   if (sous) sous.textContent = 'Vous vous êtes connecté(e) avec un mot de passe provisoire donné par l’agence. Choisissez maintenant votre propre mot de passe (8 caractères minimum), que vous seul(e) connaîtrez.';
@@ -264,11 +270,15 @@ function bindAuthGate(){
   document.getElementById('au-nm-valider')?.addEventListener('click', async function(){
     const nouveauMdp = val('au-nm-mdp'); const msg = document.getElementById('au-nm-msg');
     if (nouveauMdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
-    // (10/11/2026) après un mot de passe provisoire donné par l'agence : il ne peut pas être gardé tel quel
-    if (/^MA2M-\d{4}-[A-Z]{3}$/.test(nouveauMdp)) { msg.textContent = 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.'; return; }
-    this.disabled = true;
-    const { error } = await sb.auth.updateUser({ password: nouveauMdp, data: { mdp_provisoire: false } });
-    this.disabled = false;
+    // (10/11/2026) après un mot de passe provisoire donné par l'agence : il ne peut pas être gardé tel quel, et le
+    // nouveau passe par le serveur (qui seul retire la marque « provisoire » ; js/supabase-config.js)
+    if (/^MA2M-[2-9A-Z]{4}-[2-9A-Z]{4}$/i.test(nouveauMdp.trim())) { msg.textContent = 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.'; return; }
+    const bouton = this; bouton.disabled = true;
+    const { data: { user: actuel } } = await sb.auth.getUser();
+    let error = null;
+    if (mdpProvisoireEnCours(actuel)) { try { await remplacerMdpProvisoire(nouveauMdp); } catch (e) { error = e; } }
+    else ({ error } = await sb.auth.updateUser({ password: nouveauMdp }));
+    bouton.disabled = false;
     if (error) { msg.textContent = /different|same/i.test(error.message) ? 'Choisissez un mot de passe différent de l’ancien.' : 'Erreur : ' + error.message; return; }
     recuperationMdpEnCours = false;
     await demarrerApresConnexion();
@@ -773,7 +783,8 @@ function viewWizard(){
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
     // (10/11/2026) nom court pour les petits écrans (application : les 6 étapes sur UNE ligne, css/mannequin-app.css)
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
+    const manque = pts && BLOCS_ETAPES[i] ? pts.nb[BLOCS_ETAPES[i]] : 0;
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
@@ -1932,7 +1943,7 @@ async function demarrerApresConnexion(){
   if (!user) { renderAuthGate(); return; }
   // (10/11/2026) mot de passe provisoire donné par l'agence (Administration › fiche de la mannequin) : choisir le sien
   // d'abord, avant tout le reste (api/portail.js, mannequin_mdp_provisoire)
-  if (user.user_metadata && user.user_metadata.mdp_provisoire) { afficherMdpObligatoire(); return; }
+  if (mdpProvisoireEnCours(user)) { afficherMdpObligatoire(); return; }  // (js/supabase-config.js)
   currentUser = user;
   await Store.ensureProfileRow();
   state = await Store.load();

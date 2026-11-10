@@ -5,7 +5,9 @@
 //  - changer quelque chose exige un code d'authentification récent (AUTH_RECENTE sinon) ;
 //  - jamais sur un compte de l'équipe (table staff_profiles ou admins), ni sur soi-même ;
 //  - nouvel e-mail : validé, déjà utilisé par un autre compte → refusé ; enregistré confirmé (email_confirm) ;
-//  - mot de passe provisoire : forme MA2M-0000-XXX, marqué mdp_provisoire ; noté au journal.
+//  - mot de passe provisoire : forme MA2M-XXXX-XXXX, marqué mdp_provisoire dans app_metadata (que seul le serveur
+//    écrit), toutes les sessions du compte fermées ; noté au journal des actions (audit_log), sans le mot de passe ;
+//  - la mannequin remplace le provisoire PAR LE SERVEUR (mdp_provisoire_changer), qui seul retire la marque.
 const path = require('path');
 const RACINE = path.join(__dirname, '..', '..');
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
@@ -14,13 +16,18 @@ const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const maintenant = Math.floor(Date.now() / 1000);
 const jeton = (recent) => b64({ alg: 'HS256' }) + '.' + b64({ sub: 'principale-1', aal: 'aal2', amr: [{ method: 'totp', timestamp: recent ? maintenant - 30 : maintenant - 3600 }] }) + '.c2ln';
 const MANNEQUIN = '11111111-2222-3333-4444-555555555555', EQUIPE = '99999999-2222-3333-4444-555555555555';
-let role = 'principal', emailPris = null;
-const ecrits = [], journal = [];
+let role = 'principal', emailPris = null, provisoire = false;
+const ecrits = [], journal = [], deconnexions = [];
 global.fetch = async (url, o = {}) => {
   url = String(url);
   const json = (x, ok = true, status = 200) => ({ ok, status, json: async () => x, text: async () => JSON.stringify(x) });
   if (/\/rpc\/portail_moi/.test(url)) return json({ role });
-  if (/\/auth\/v1\/user$/.test(url)) return json({ id: 'principale-1' });
+  if (/\/auth\/v1\/user$/.test(url)) return json(/mannequin-session/.test((o.headers || {}).Authorization || '') ? { id: MANNEQUIN, app_metadata: { mdp_provisoire: provisoire } } : { id: 'principale-1' });
+  if (/\/auth\/v1\/token\?grant_type=password/.test(url)) return json({ access_token: 'jeton-du-serveur' });
+  if (/\/auth\/v1\/logout\?scope=global/.test(url)) { deconnexions.push((o.headers || {}).Authorization); return json({}); }
+  if (/limiter_soumissions_publiques_ip/.test(url)) return json(true);
+  if (/staff_profiles\?select=nom/.test(url)) return json([{ nom: 'Propriétaire' }]);
+  if (/\/rest\/v1\/audit_log/.test(url)) { journal.push(JSON.parse(o.body)); return json({}); }
   if (/model_profiles\?select=id&id=eq\./.test(url)) return json(url.includes(MANNEQUIN) || url.includes(EQUIPE) ? [{ id: 'x' }] : []);
   if (/staff_profiles\?select=user_id&user_id=eq\./.test(url)) return json(url.includes(EQUIPE) ? [{ user_id: EQUIPE }] : []);
   if (/admins\?select=user_id&user_id=eq\./.test(url)) return json([]);
@@ -29,14 +36,14 @@ global.fetch = async (url, o = {}) => {
     if ((o.method || 'GET') === 'GET') return json({ id: MANNEQUIN, email: 'ancienne@test.ci', user_metadata: {} });
     ecrits.push(JSON.parse(o.body)); return json({ id: MANNEQUIN });
   }
-  if (/journal_erreurs/.test(url)) { journal.push(JSON.parse(o.body).message); return json({}); }
+  if (/journal_erreurs/.test(url)) { journal.push({ action: 'PANNE ' + JSON.parse(o.body).message }); return json({}); }
   return json({}, false, 599);
 };
 const portail = require(path.join(RACINE, 'api', 'portail.js'));
-function appel(corps, recent = true) {
+function appel(corps, recent = true, jetonMannequin) {
   return new Promise((fin) => {
     const res = { code: 200, setHeader() {}, status(c) { this.code = c; return this; }, json(x) { fin({ code: this.code, corps: x }); return this; } };
-    portail({ method: 'POST', headers: { authorization: 'Bearer ' + jeton(recent), 'x-appareil': 'appareil-essai-123456' }, body: corps }, res);
+    portail({ method: 'POST', headers: { authorization: 'Bearer ' + (jetonMannequin || jeton(recent)), 'x-appareil': 'appareil-essai-123456' }, body: corps }, res);
   });
 }
 (async () => {
@@ -60,12 +67,28 @@ function appel(corps, recent = true) {
   emailPris = null;
   r = await appel({ action: 'mannequin_email', model_id: MANNEQUIN, email: ' Nouvelle@Test.ci ' });
   ok(r.code === 200 && ecrits.length === 1 && ecrits[0].email === 'nouvelle@test.ci' && ecrits[0].email_confirm === true, 'nouvel e-mail enregistré, en minuscules, confirmé d’office');
-  ok(journal.some((m) => /e-mail de connexion changé/.test(m)), 'changement d’e-mail noté au journal');
+  ok(journal.some((l) => /E-mail de connexion/.test(l.action) && l.acteur === 'principale-1' && l.objet_id === MANNEQUIN && l.acteur_nom === 'Propriétaire'), 'changement d’e-mail noté au journal des actions (qui, sur quel compte)');
   r = await appel({ action: 'mannequin_mdp_provisoire', model_id: MANNEQUIN });
   const pose = ecrits[1] || {};
-  ok(r.code === 200 && /^MA2M-[2-9]{4}-[A-HJ-NP-Z]{3}$/.test(r.corps.motdepasse) && pose.password === r.corps.motdepasse && pose.user_metadata && pose.user_metadata.mdp_provisoire === true,
-    'mot de passe provisoire : forme MA2M-0000-XXX, posé et marqué « provisoire » (' + r.corps.motdepasse + ')');
-  ok(journal.some((m) => /mot de passe provisoire/.test(m)) && !journal.some((m) => m.includes(r.corps.motdepasse)), 'noté au journal, sans jamais y écrire le mot de passe');
+  ok(r.code === 200 && /^MA2M-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/.test(r.corps.motdepasse) && pose.password === r.corps.motdepasse && pose.app_metadata && pose.app_metadata.mdp_provisoire === true && !pose.user_metadata,
+    'mot de passe provisoire : forme MA2M-XXXX-XXXX, posé et marqué « provisoire » dans app_metadata (' + r.corps.motdepasse + ')');
+  ok(r.corps.deconnecte === true && deconnexions.length === 1, 'toutes les sessions du compte fermées (tous ses appareils)');
+  ok(journal.some((l) => /Mot de passe provisoire/.test(l.action)) && !JSON.stringify(journal).includes(r.corps.motdepasse), 'noté au journal des actions, sans jamais y écrire le mot de passe');
+  ok(!journal.some((l) => /^PANNE/.test(l.action)), 'rien n’est noté comme une panne du serveur (pas de fausse alerte de surveillance)');
+  const tirages = new Set(); for (let i = 0; i < 20; i++) tirages.add((await appel({ action: 'mannequin_mdp_provisoire', model_id: MANNEQUIN })).corps.motdepasse);
+  ok(tirages.size === 20, 'mots de passe provisoires tous différents (20 tirages)');
+  // la mannequin remplace son mot de passe provisoire
+  const jm = 'mannequin-session';
+  provisoire = false; r = await appel({ action: 'mdp_provisoire_changer', motdepasse: 'MonSecret2026!' }, true, jm);
+  ok(r.code === 400, 'sans mot de passe provisoire en cours : refusé');
+  provisoire = true; const avant = ecrits.length;
+  r = await appel({ action: 'mdp_provisoire_changer', motdepasse: 'court' }, true, jm);
+  ok(r.code === 400 && ecrits.length === avant, 'trop court : refusé');
+  r = await appel({ action: 'mdp_provisoire_changer', motdepasse: 'ma2m-ab2c-de3f' }, true, jm);
+  ok(r.code === 400 && ecrits.length === avant, 'le format du provisoire (même en minuscules) : refusé');
+  r = await appel({ action: 'mdp_provisoire_changer', motdepasse: 'MonSecret2026!' }, true, jm);
+  const fin = ecrits[ecrits.length - 1] || {};
+  ok(r.code === 200 && fin.password === 'MonSecret2026!' && fin.app_metadata && fin.app_metadata.mdp_provisoire === false, 'nouveau mot de passe enregistré par le serveur, marque « provisoire » retirée');
   console.log(ko ? '❌ ' + ko + ' échec(s)' : 'Tout est bon.');
   process.exit(ko ? 1 : 0);
 })();

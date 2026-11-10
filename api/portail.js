@@ -4,13 +4,14 @@
 //
 // Actions réservées à l'administrateur principal (code de double authentification récent) :
 //   inviter, reinitialiser_mfa, acces ; compte d'une mannequin (10/11/2026) : mannequin_email,
-//   mannequin_mdp_provisoire (et mannequin_compte, lecture de l'e-mail de connexion, sans code récent)
+//   mannequin_mdp_provisoire (et mannequin_compte, lecture de l'e-mail de connexion, sans code récent) ;
+//   la mannequin elle-même : mdp_provisoire_changer (remplace le mot de passe provisoire)
 // Actions de la personne connectée : codes_secours_creer (après activation de la double
 //   authentification), code_secours_utiliser (téléphone perdu)
 // (Les actions de l'inscription par code et des paiements viendront avec l'espace 2.)
 
 const crypto = require('crypto');
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives, EMAIL_VALIDE, noterAuJournal } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, extraireIp, debutRequete, chargeJeton, dernierCode, compteurTentatives, EMAIL_VALIDE, noterAuJournal, limiteDebit } = require('./_commun.js');
 
 // adresse séparée de l'Administration (v2.4) : le lien d'invitation y mène
 const ADMINISTRATION = 'https://admin.maitreakessemodelmanagement.com';
@@ -53,6 +54,56 @@ async function supprimerFacteurs(userId) {
   for (const f of (Array.isArray(r) ? r : r.factors || [])) await adminAuth('admin/users/' + userId + '/factors/' + f.id, 'DELETE');
 }
 const ROLES = ['site', 'caisse', 'compta'];
+
+// Administratrice PRINCIPALE connectée, sur un appareil en règle (et, si codeExige, code de double authentification
+// saisi il y a moins de 10 minutes). Répond elle-même le refus et renvoie null ; sinon { moi, auteur }.
+// (10/11/2026 : partagée par les actions de l'équipe et celles des comptes des mannequins, au lieu d'être recopiée)
+async function principaleVerifiee(req, jeton, res, codeExige) {
+  const appareil = String(req.headers['x-appareil'] || '');
+  const moi = jeton && /^[a-z0-9-]{16,64}$/.test(appareil) && await moiPortail(jeton, appareil);
+  if (!moi || moi.role !== 'principal') { res.status(403).json({ error: 'Réservé à l’administrateur principal.' }); return null; }
+  if (codeExige && !authRecente(jeton)) { res.status(403).json({ error: 'AUTH_RECENTE: confirmez votre code.' }); return null; }
+  const auteur = await verifierUtilisateur(jeton);
+  if (!auteur) { res.status(401).json({ error: 'Session expirée : reconnectez-vous.' }); return null; }
+  return { moi, auteur };
+}
+// Journal des actions de l'Administration (audit_log, supabase-administration.sql) : qui, quoi, sur quel compte.
+// Jamais de mot de passe dedans. Une panne du journal ne bloque pas l'action (elle a déjà eu lieu).
+async function noterAction(acteurId, role, action, objetId, apres) {
+  const nom = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=nom&user_id=eq.' + encodeURIComponent(acteurId), { headers: enTetesService() })
+    .then((r) => (r.ok ? r.json() : [])).then((l) => (l[0] && l[0].nom) || null).catch(() => null);
+  await fetch(SUPABASE_URL + '/rest/v1/audit_log', {
+    method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ acteur: acteurId, acteur_nom: nom, acteur_role: role, action, objet: 'compte_mannequin', objet_id: objetId, apres: apres || null })
+  }).catch(() => {});
+}
+// Mot de passe provisoire d'une mannequin : « MA2M-XXXX-XXXX », 8 signes tirés au hasard parmi 31 (chiffres et
+// lettres sans 0/O ni 1/I/L), sans biais (tirage rejeté au-delà du dernier multiple de 31) : ~40 bits.
+const SIGNES_PROVISOIRE = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+function tirerSignes(n) {
+  const sortie = [];
+  while (sortie.length < n) {
+    for (const o of crypto.randomBytes(n * 2)) {
+      if (o < 256 - (256 % SIGNES_PROVISOIRE.length)) sortie.push(SIGNES_PROVISOIRE[o % SIGNES_PROVISOIRE.length]);
+      if (sortie.length === n) break;
+    }
+  }
+  return sortie.join('');
+}
+const MDP_PROVISOIRE = /^MA2M-[2-9A-Z]{4}-[2-9A-Z]{4}$/;
+// Ferme TOUTES les sessions d'un compte (tous ses appareils) : connexion du serveur avec le mot de passe qu'il vient
+// de poser, puis « déconnexion partout ». Renvoie true si c'est fait.
+async function deconnecterPartout(email, motdepasse) {
+  try {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST', headers: { apikey: enTetesService().apikey, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: motdepasse })
+    });
+    const s = await r.json().catch(() => ({}));
+    if (!r.ok || !s.access_token) return false;
+    const fin = await fetch(SUPABASE_URL + '/auth/v1/logout?scope=global', { method: 'POST', headers: { apikey: enTetesService().apikey, Authorization: 'Bearer ' + s.access_token } });
+    return fin.ok;
+  } catch (e) { return false; }
+}
 
 // Relances automatiques des mensualités, le 3 et le 5 du mois (cahier v2.4, 5.6 ; choix du
 // 19/10/2026) : appelées par la tâche planifiée de Vercel (vercel.json, « crons » ; réglage Vercel
@@ -330,11 +381,9 @@ module.exports = async function handler(req, res) {
     if (action === 'formulaire') return await formulairePublic(req, corps, res);
     // ---------- administrateur principal ----------
     if (['inviter', 'reinitialiser_mfa', 'acces'].includes(action)) {
-      const appareil = String(req.headers['x-appareil'] || '');
-      const moi = jeton && /^[a-z0-9-]{16,64}$/.test(appareil) && await moiPortail(jeton, appareil);
-      if (!moi || moi.role !== 'principal') return res.status(403).json({ error: 'Réservé à l’administrateur principal.' });
-      if (!authRecente(jeton)) return res.status(403).json({ error: 'AUTH_RECENTE: confirmez votre code.' });
-      const auteur = await verifierUtilisateur(jeton);
+      const garde = await principaleVerifiee(req, jeton, res, true);
+      if (!garde) return;
+      const { auteur } = garde;
 
       if (action === 'inviter') {
         const email = String(corps.email || '').trim().toLowerCase(), nom = String(corps.nom || '').trim(), role = String(corps.role || '');
@@ -379,13 +428,11 @@ module.exports = async function handler(req, res) {
     // un mot de passe provisoire. Le provisoire est marqué (mdp_provisoire) : à sa connexion, l'Espace mannequin oblige
     // à choisir un nouveau mot de passe (js/espace-mannequin.js). Jamais sur un compte de l'équipe. Noté au journal.
     if (['mannequin_compte', 'mannequin_email', 'mannequin_mdp_provisoire'].includes(action)) {
-      const appareil = String(req.headers['x-appareil'] || '');
-      const moi = jeton && /^[a-z0-9-]{16,64}$/.test(appareil) && await moiPortail(jeton, appareil);
-      if (!moi || moi.role !== 'principal') return res.status(403).json({ error: 'Réservé à l’administrateur principal.' });
-      if (action !== 'mannequin_compte' && !authRecente(jeton)) return res.status(403).json({ error: 'AUTH_RECENTE: confirmez votre code.' });
-      const auteur = await verifierUtilisateur(jeton);
+      const garde = await principaleVerifiee(req, jeton, res, action !== 'mannequin_compte');
+      if (!garde) return;
+      const { auteur } = garde;
       const cible = String(corps.model_id || '');
-      if (!auteur || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cible) || cible === auteur.id) return res.status(400).json({ error: 'Compte invalide.' });
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cible) || cible === auteur.id) return res.status(400).json({ error: 'Compte invalide.' });
       const lire = async (chemin) => {
         const r = await fetch(SUPABASE_URL + '/rest/v1/' + chemin, { headers: enTetesService() });
         if (!r.ok) throw new Error('Vérification impossible pour le moment.');
@@ -394,7 +441,7 @@ module.exports = async function handler(req, res) {
       const [mannequin, equipe, admin] = await Promise.all([lire('model_profiles?select=id&id=eq.' + cible), lire('staff_profiles?select=user_id&user_id=eq.' + cible), lire('admins?select=user_id&user_id=eq.' + cible)]);
       if (!mannequin.length || equipe.length || admin.length) return res.status(400).json({ error: 'Ce compte n’est pas celui d’une mannequin.' });
       const compte = await adminAuth('admin/users/' + cible, 'GET');
-      if (action === 'mannequin_compte') return res.status(200).json({ email: compte.email || '', provisoire: !!(compte.user_metadata && compte.user_metadata.mdp_provisoire) });
+      if (action === 'mannequin_compte') return res.status(200).json({ email: compte.email || '', provisoire: !!(compte.app_metadata && compte.app_metadata.mdp_provisoire) });
       if (action === 'mannequin_email') {
         const email = String(corps.email || '').trim().toLowerCase();
         if (!EMAIL_VALIDE.test(email) || email.length > 200) return res.status(400).json({ error: 'Adresse e-mail invalide.' });
@@ -402,16 +449,30 @@ module.exports = async function handler(req, res) {
         const deja = await rpcService('portail_utilisateur_par_email', { p_email: email });
         if (deja && deja !== cible) return res.status(400).json({ error: 'Cette adresse est déjà utilisée par un autre compte.' });
         await adminAuth('admin/users/' + cible, 'PUT', { email, email_confirm: true });
-        await noterAuJournal('Compte mannequin : e-mail de connexion changé par l’administratrice principale (' + cible + ')', 'mannequin_email');
+        await noterAction(auteur.id, 'principal', 'E-mail de connexion d’une mannequin changé', cible, { avant: compte.email || null, apres: email });
         return res.status(200).json({ ok: true, email });
       }
-      // mot de passe provisoire : facile à dicter ou à envoyer (ni 0/O ni 1/I), 4 chiffres et 3 lettres
-      const lettres = 'ABCDEFGHJKLMNPQRSTUVWXYZ', chiffres = '23456789';
-      const tirer = (alphabet, n) => Array.from(crypto.randomBytes(n), (o) => alphabet[o % alphabet.length]).join('');
-      const motdepasse = 'MA2M-' + tirer(chiffres, 4) + '-' + tirer(lettres, 3);
-      await adminAuth('admin/users/' + cible, 'PUT', { password: motdepasse, user_metadata: { mdp_provisoire: true } });
-      await noterAuJournal('Compte mannequin : mot de passe provisoire posé par l’administratrice principale (' + cible + ')', 'mannequin_mdp_provisoire');
-      return res.status(200).json({ ok: true, motdepasse });
+      // mot de passe provisoire : marqué dans app_metadata (que seul le serveur peut écrire) ; toutes les sessions du
+      // compte sont fermées (un appareil volé ou resté connecté ne garde pas l'accès)
+      const motdepasse = 'MA2M-' + tirerSignes(4) + '-' + tirerSignes(4);
+      await adminAuth('admin/users/' + cible, 'PUT', { password: motdepasse, app_metadata: { mdp_provisoire: true } });
+      const deconnecte = compte.email ? await deconnecterPartout(compte.email, motdepasse) : false;
+      await noterAction(auteur.id, 'principal', 'Mot de passe provisoire d’une mannequin créé', cible, { deconnectee_partout: deconnecte });
+      return res.status(200).json({ ok: true, motdepasse, deconnecte });
+    }
+    // ---------- la mannequin remplace son mot de passe provisoire (10/11/2026) ----------
+    // Par le serveur seulement : la marque « provisoire » (app_metadata) ne s'efface qu'ici, avec le nouveau mot de passe.
+    if (action === 'mdp_provisoire_changer') {
+      const u = jeton && await verifierUtilisateur(jeton);
+      if (!u) return res.status(401).json({ error: 'Session expirée : reconnectez-vous.' });
+      if (await limiteDebit(res, 'mdp-provisoire', u.id, 10)) return;
+      if (!(u.app_metadata && u.app_metadata.mdp_provisoire)) return res.status(400).json({ error: 'Aucun mot de passe provisoire à remplacer.' });
+      const motdepasse = String(corps.motdepasse || '');
+      if (motdepasse.length < 8 || motdepasse.length > 72) return res.status(400).json({ error: 'Le mot de passe doit contenir entre 8 et 72 caractères.' });
+      if (MDP_PROVISOIRE.test(motdepasse.trim().toUpperCase())) return res.status(400).json({ error: 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.' });
+      await adminAuth('admin/users/' + u.id, 'PUT', { password: motdepasse, app_metadata: { mdp_provisoire: false } });
+      await noterAction(u.id, 'mannequin', 'Mot de passe provisoire remplacé par la mannequin', u.id, null);
+      return res.status(200).json({ ok: true });
     }
 
     // ---------- la personne connectée ----------

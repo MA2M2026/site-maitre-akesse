@@ -37,6 +37,25 @@ function enTeteAppareil() {
 function enTetesServeur(jeton) {
   return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jeton, ...enTeteAppareil() };
 }
+// Mot de passe PROVISOIRE donné par l'agence (10/11/2026, Administration › fiche de la mannequin) : marque posée par
+// le serveur dans app_metadata (la mannequin ne peut pas l'effacer elle-même). Tant qu'il n'est pas remplacé,
+// l'Espace mannequin n'ouvre que « Choisissez votre mot de passe » ; les autres pages de l'application y renvoient.
+function mdpProvisoireEnCours(user) { return !!(user && user.app_metadata && user.app_metadata.mdp_provisoire); }
+function allerChoisirMdpSiProvisoire(user) {
+  if (!mdpProvisoireEnCours(user)) return false;
+  location.replace('/app/espace-mannequin.html');
+  return true;
+}
+// Remplace le mot de passe provisoire par le serveur (api/portail.js, mdp_provisoire_changer), qui retire la marque ;
+// puis la session est rafraîchie (nouvelle marque). Lève une erreur avec le message du serveur.
+async function remplacerMdpProvisoire(motdepasse) {
+  const session = sb && (await sb.auth.getSession()).data.session;
+  if (!session) throw new Error('Session expirée : reconnectez-vous.');
+  const rep = await fetch('/api/portail', { method: 'POST', headers: enTetesServeur(session.access_token), body: JSON.stringify({ action: 'mdp_provisoire_changer', motdepasse }) });
+  const corps = await rep.json().catch(() => ({}));
+  if (!rep.ok) throw new Error(corps.error || 'Enregistrement impossible pour le moment, réessayez.');
+  await sb.auth.refreshSession().catch(() => null);
+}
 const optionsAuthSupabase = document.documentElement.hasAttribute('data-portail')
   ? { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
       global: { headers: { 'x-appareil': identifiantAppareilPortail() } } }
