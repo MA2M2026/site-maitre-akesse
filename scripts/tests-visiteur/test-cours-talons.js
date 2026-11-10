@@ -4,7 +4,7 @@
 //     « pas prêt » (la page propose alors WhatsApp) ;
 //  2. page : menu « Cours de talons · Ouvert à toutes », avertissement « pas pour intégrer l'agence », vidéo,
 //     4 étapes (formule et total par séance, mineure → parent obligatoire, 2 à 5 photos + vidéo de
-//     2 minutes au plus, envoi au clic avec une jauge par photo, Wave ou plus tard),
+//     3 minutes au plus, envoi au clic avec une jauge par photo, Wave ou plus tard),
 //     inscription envoyée par le serveur avec les liens Drive ; sans débordement sur téléphone.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const chemin = require('path');
@@ -93,7 +93,7 @@ async function navigateur() {
     await p.setInputFiles('#ct-photos', [1, 2, 3, 4, 0, 1].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
     ok(await p.locator('#ct-photos-apercu img').count() === 5 && /sur 5|out of 5/.test(await p.textContent('#ct-photos-info')), n + '6 photos choisies : 5 gardées au maximum');
     for (const k of [5, 4, 3]) await p.click('#ct-photos-apercu figure:nth-child(' + k + ') button');
-    ok(/2 minutes/.test(await p.textContent('.ct-etape[data-etape="3"]')), n + 'vidéo : « 2 minutes maximum » annoncé');
+    ok(/3 minutes/.test(await p.textContent('.ct-etape[data-etape="3"]')), n + 'vidéo : « 3 minutes maximum » annoncé');
     await p.setInputFiles('#ct-video', chemin.join(MEDIAS, 'video.mp4'));
     await p.waitForFunction(() => /✓/.test(document.getElementById('ct-video-info').textContent), null, { timeout: 30000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 2 && /✓/.test(await p.textContent('#ct-video-info')), n + '2 photos en aperçu, vidéo prête');

@@ -4373,7 +4373,7 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
   affiche `assets/cours-talons/affiche.jpg` (aussi image d'aperçu des liens partagés).
 - **Inscription en 4 étapes** : formule (et nombre de séances, lieu pour le privé à l'extérieur) → la personne
   (moins de 18 ans : nom et téléphone d'un parent obligatoires, aussi contrôlé par la base) → 2 à 5 photos et une
-  vidéo de sa marche (2 minutes maximum depuis le 10/11/2026, allégée sur l'appareil par `js/video-allegee.js`) →
+  vidéo de sa marche (3 minutes maximum depuis le 10/11/2026, allégée sur l'appareil par `js/video-allegee.js`) →
   Wave maintenant (lien marchand des mensualités, avec le montant) ou plus tard. Au clic sur « Envoyer », sous les
   yeux de la personne (une jauge par photo et une pour la vidéo, vertes une fois arrivées), photos et vidéo partent vers Google Drive (sous-dossier « Cours de talons », même
   programme que les candidatures, type `projet`), puis la ligne passe par le serveur

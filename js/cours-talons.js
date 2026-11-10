@@ -3,7 +3,7 @@
 // maintenant ou plus tard. Les photos et la vidéo partent vers Google Drive (sous-dossier « Cours de
 // talons », même programme que les candidatures) au clic sur « Envoyer », sous les yeux de la personne (jauges),
 // ALLÉGÉES (10/11/2026 : l'envoi faisait attendre plusieurs minutes et décourageait les élèves ; photos 1600 px,
-// vidéo 480p, 2 minutes au plus), avec une jauge par photo et une pour la vidéo, qui passent au vert une fois
+// vidéo 480p, 3 minutes au plus), avec une jauge par photo et une pour la vidéo, qui passent au vert une fois
 // arrivées ; puis la ligne est enregistrée par le serveur du site
 // (anti-robots, table cours_talons, supabase-cours-talons.sql) : le statut et le montant sont décidés par la base.
 // Si le SQL n'est pas encore installé, l'inscription est proposée par WhatsApp (rien n'est perdu).
@@ -19,10 +19,10 @@
   // cours_talons_montant() dans la base, qui reste seule juge du montant enregistré.
   const PRIX = { groupe: 30000, prive_salle: 25000, prive_exterieur: 30000 };
   const WHATSAPP_AGENCE = '2250545656687';
-  // 2 à 5 photos ; vidéo de 2 minutes au plus (décisions de la propriétaire, 10/11/2026). Le programme Google Drive
+  // 2 à 5 photos ; vidéo de 3 minutes au plus (décisions de la propriétaire, 10/11/2026). Le programme Google Drive
   // refuse plus de 60 Mo : la vidéo est allégée en 480p (environ 6 Mo la minute) et son poids final est vérifié.
   const PHOTOS_MAX = 5, PHOTOS_MIN = 2;
-  const VIDEO_MAX_SECONDES = 125;
+  const VIDEO_MAX_SECONDES = 185;
   const VIDEO_MAX_OCTETS = 60 * 1024 * 1024, VIDEO_MAX_ORIGINAL = 4 * 1024 * 1024 * 1024;
   const ALLEGEMENT = { coteLong: 854, debit: 700000, audioDebit: 64000, dejaLegere: 5 * 1024 * 1024 };
   const fcfa = enFcfa;  // (js/app.js, comme LIEN_WAVE_AGENCE : le lien Wave des mensualités)
@@ -140,7 +140,7 @@
     rafraichirPhotos();
   });
 
-  // ---------- vidéo (2 minutes au plus, allégée sur l'appareil si elle est lourde)
+  // ---------- vidéo (3 minutes au plus, allégée sur l'appareil si elle est lourde)
   $('ct-video').addEventListener('change', async (e) => {
     const info = $('ct-video-info');
     const fichier = e.target.files && e.target.files[0];
@@ -157,7 +157,7 @@
     if (numero !== numeroVideo) return;
     const duree = examen.duree || (fichier.size <= 300 * 1048576 ? await dureeVideo(fichier) : null);
     if (numero !== numeroVideo) return;
-    if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) return refuser(T(`Vidéo trop longue (${dureeLisible(duree)}) : 2 minutes maximum.`, `Video too long (${dureeLisible(duree)}): 2 minutes maximum.`));
+    if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) return refuser(T(`Vidéo trop longue (${dureeLisible(duree)}) : 3 minutes maximum.`, `Video too long (${dureeLisible(duree)}): 3 minutes maximum.`));
     info.textContent = '';
     videoEnPreparation = (async () => {
       let allegee = null;
