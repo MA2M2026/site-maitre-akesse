@@ -110,17 +110,19 @@ body.large .texte.decale { margin-top: 40px; }
 body:not(.large) .grand-chiffre { right: 60px; bottom: 120px; }
 body.large .grand-chiffre { left: 930px; bottom: 40px; }
 /* médaillon : disque blanc, symbole rouge, anneau en pointillé qui tourne, onde à l'arrivée */
-.medaillon { position: absolute; width: 330px; height: 330px; z-index: 6; flex: none; }
+.medaillon { position: absolute; width: 400px; height: 400px; z-index: 6; flex: none; }
 .medaillon.petit { position: relative; width: 120px; height: 120px; }
-.medaillon.moyen-m { width: 270px; height: 270px; }
-.medaillon.coin { right: -70px; top: -150px; width: 250px; height: 250px; }
+.medaillon.moyen-m { width: 340px; height: 340px; }
+.medaillon.coin { right: -60px; top: -190px; width: 310px; height: 310px; }
 .medaillon .disque { position: absolute; inset: 13%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff 0%, #fff 55%, #E6E6E9 100%); display: grid; place-items: center;
   box-shadow: 0 24px 50px -12px rgba(0,0,0,0.85), 0 0 0 7px rgba(255,255,255,0.16); }
 .medaillon.photo-med .disque { inset: 7%; overflow: hidden; background: #111; box-shadow: 0 30px 60px -14px rgba(0,0,0,0.9), 0 0 0 6px rgba(255,255,255,0.9), 0 0 0 14px rgba(255,255,255,0.12); }
 .medaillon.photo-med img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.liste .medaillon.petit { width: 180px; height: 180px; }
+.liste .medaillon.petit { width: 200px; height: 200px; }
+body:not(.large) .liste li { font-size: 56px; }
 body.large .liste li { font-size: 54px; }
-body.large .liste .medaillon.petit { width: 150px; height: 150px; }
+body.large .liste .medaillon.petit { width: 170px; height: 170px; }
+body.large .liste li { padding: 6px 0; }
 .medaillon svg { width: 60%; height: 60%; fill: none; stroke: var(--rouge); stroke-width: 4.6; stroke-linecap: round; stroke-linejoin: round; }
 .medaillon .anneau { position: absolute; inset: 0; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.75); }
 .medaillon .onde { position: absolute; inset: 13%; border-radius: 50%; border: 3px solid #fff; opacity: 0; }
@@ -150,8 +152,8 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
 
   <section class="scene" data-de="intro" data-transition="fondu">
     <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
-    <div class="medaillon" data-photo="talons-bolli" data-voix="intro" data-mot="Talons" data-anim="medaillon" data-pos="870,880" data-posl="1060,300"></div>
-    <div class="medaillon moyen-m" data-photo="divine-tama" data-voix="intro" data-mot="Élégance" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
+    <div class="medaillon" data-photo="t-145" data-voix="intro" data-mot="Talons" data-anim="medaillon" data-pos="870,880" data-posl="1180,280"></div>
+    <div class="medaillon moyen-m" data-photo="p-096" data-voix="intro" data-mot="Élégance" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
     <div class="texte"><p class="surtitre" data-voix="intro" data-anim="glisse">Ouvert à toutes · Abidjan</p>
       <h1 class="titre"><span data-voix="intro" data-mot="Atelier" data-anim="lettres">Atelier</span><br><em data-voix="intro" data-mot="Talons" data-anim="lettres">Talons &amp; Élégance</em></h1>
       <span class="trait losange" data-voix="intro" data-mot="Élégance" data-anim="trait"></span>
@@ -162,16 +164,16 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
     <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div>
     <div class="texte"><p class="surtitre" data-voix="questions" data-anim="glisse">Vous souhaitez…</p>
       <ul class="liste">
-        <li><span data-voix="questions" data-mot="concours" data-anim="bloc"><span class="n">—</span>Un concours de beauté</span><span class="medaillon petit" data-photo="ndri-concours" data-voix="questions" data-mot="beauté" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="concours" data-anim="trait"></span></li>
-        <li><span data-voix="questions" data-mot="élégance" data-anim="bloc"><span class="n">—</span>Élégance &amp; prestance</span><span class="medaillon petit" data-photo="mida-ophelia" data-voix="questions" data-mot="prestance" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="élégance" data-anim="trait"></span></li>
-        <li><span data-voix="questions" data-mot="marcher" data-anim="bloc"><span class="n">—</span>Marcher avec assurance</span><span class="medaillon petit" data-photo="talons-mina" data-voix="questions" data-mot="talons" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="marcher" data-anim="trait"></span></li></ul></div>
+        <li><span data-voix="questions" data-mot="concours" data-anim="bloc"><span class="n">—</span>Un concours de beauté</span><span class="medaillon petit" data-photo="p-084" data-voix="questions" data-mot="beauté" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="concours" data-anim="trait"></span></li>
+        <li><span data-voix="questions" data-mot="élégance" data-anim="bloc"><span class="n">—</span>Élégance &amp; prestance</span><span class="medaillon petit" data-photo="p-162" data-voix="questions" data-mot="prestance" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="élégance" data-anim="trait"></span></li>
+        <li><span data-voix="questions" data-mot="marcher" data-anim="bloc"><span class="n">—</span>Marcher avec assurance</span><span class="medaillon petit" data-photo="t-048" data-voix="questions" data-mot="talons" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="marcher" data-anim="trait"></span></li></ul></div>
   </section>
 
   <section class="scene" data-de="endroit" data-transition="cercle">
-    <div class="photo plein" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-blanc.jpg"></div>
-    <div class="vignette" data-voix="endroit" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="vignettes/elvira-dumas.jpg"></div></div>
-    <div class="vignette" data-voix="endroit" data-mot="bon" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="vignettes/sensuella-kante.jpg"></div></div>
-    <div class="medaillon moyen-m" data-photo="rosemonde-dan" data-voix="endroit" data-mot="bon" data-anim="medaillon" data-pos="540,640" data-posl="960,250"></div>
+    <div class="photo plein" data-mouvement="avance"><img src="vignettes/106.jpg"></div>
+    <div class="vignette" data-voix="endroit" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="vignettes/027.jpg"></div></div>
+    <div class="vignette" data-voix="endroit" data-mot="bon" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="vignettes/107.jpg"></div></div>
+    <div class="medaillon moyen-m" data-photo="p-016" data-voix="endroit" data-mot="bon" data-anim="medaillon" data-pos="540,640" data-posl="960,250"></div>
     <div class="texte centre milieu"><p class="grand"><span data-voix="endroit" data-mot="vous" data-anim="lettres">Vous êtes</span><br><em data-voix="endroit" data-mot="bon" data-anim="lettres">au bon endroit.</em></p>
       <span class="trait losange" data-voix="demarche" data-anim="trait"></span>
       <p class="moyen"><span data-voix="demarche" data-mot="bien" data-anim="mots">Bien plus qu’une</span><br><em data-voix="demarche" data-mot="simple" data-anim="mots">simple démarche</em></p></div>
@@ -181,50 +183,50 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
     <div class="photo" data-mouvement="recule" data-cadrage="50% 80%"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
     <div class="texte"><p class="surtitre" data-voix="p1" data-anim="glisse">L’Atelier</p>
       <ul class="liste">
-        <li><span class="n" data-voix="p1" data-anim="pop">I</span><span data-voix="p1" data-anim="bloc">La posture</span><span class="medaillon petit" data-photo="kouame-mina" data-voix="p1" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p1" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p2" data-anim="pop">II</span><span data-voix="p2" data-anim="bloc">Le port de tête</span><span class="medaillon petit" data-photo="traore-maria" data-voix="p2" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p2" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p3" data-anim="pop">III</span><span data-voix="p3" data-anim="bloc">L’équilibre</span><span class="medaillon petit" data-photo="talons-podium" data-voix="p3" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p3" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p4" data-anim="pop">IV</span><span data-voix="p4" data-anim="bloc">La fluidité</span><span class="medaillon petit" data-photo="diomande-roxane" data-voix="p4" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p4" data-anim="trait"></span></li></ul></div>
+        <li><span class="n" data-voix="p1" data-anim="pop">I</span><span data-voix="p1" data-anim="bloc">La posture</span><span class="medaillon petit" data-photo="p-103" data-voix="p1" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p1" data-anim="trait"></span></li>
+        <li><span class="n" data-voix="p2" data-anim="pop">II</span><span data-voix="p2" data-anim="bloc">Le port de tête</span><span class="medaillon petit" data-photo="p-119" data-voix="p2" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p2" data-anim="trait"></span></li>
+        <li><span class="n" data-voix="p3" data-anim="pop">III</span><span data-voix="p3" data-anim="bloc">L’équilibre</span><span class="medaillon petit" data-photo="t-135" data-voix="p3" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p3" data-anim="trait"></span></li>
+        <li><span class="n" data-voix="p4" data-anim="pop">IV</span><span data-voix="p4" data-anim="bloc">La fluidité</span><span class="medaillon petit" data-photo="p-107" data-voix="p4" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p4" data-anim="trait"></span></li></ul></div>
   </section>
 
   <section class="scene" data-de="confiance" data-transition="rideau">
     <div class="photo gauche" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="medaillon" data-photo="tossou" data-voix="confiance" data-mot="confiance" data-anim="medaillon" data-pos="840,1000" data-posl="1660,250"></div>
+    <div class="medaillon" data-photo="p-088" data-voix="confiance" data-mot="confiance" data-anim="medaillon" data-pos="840,1000" data-posl="1660,250"></div>
     <div class="texte droite"><p class="surtitre" data-voix="confiance" data-mot="surtout" data-anim="glisse">Et surtout</p>
       <p class="grand"><span data-voix="confiance" data-mot="confiance" data-anim="lettres">La confiance,</span><br><em data-voix="confiance" data-mot="remarque" data-anim="lettres">dès le premier pas.</em></p></div>
   </section>
 
   <section class="scene" data-de="niveau" data-transition="cercle">
     <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div>
-    <div class="medaillon" data-photo="talons-defile" data-voix="niveau" data-mot="débutante" data-anim="medaillon" data-pos="850,1060" data-posl="1060,300"></div>
+    <div class="medaillon" data-photo="t-104" data-voix="niveau" data-mot="débutante" data-anim="medaillon" data-pos="850,1060" data-posl="1060,300"></div>
     <div class="texte"><p class="surtitre" data-voix="niveau" data-anim="glisse">Tous les niveaux</p>
       <div class="pastilles"><span class="pastille" data-voix="niveau" data-mot="débutante" data-anim="pop">Débutante</span><span class="pastille" data-voix="niveau" data-mot="aise" data-anim="pop">Déjà à l’aise</span></div>
       <p class="moyen" style="margin-top:36px"><span data-voix="niveau" data-mot="formule" data-anim="mots">Une formule</span> <em data-voix="niveau" data-mot="adaptée" data-anim="mots">pour vous</em></p></div>
   </section>
 
   <section class="scene" data-de="groupe" data-transition="barres">
-    <div class="photo" data-mouvement="recule"><img src="vignettes/divine-tama.jpg"></div>
+    <div class="photo" data-mouvement="recule"><img src="vignettes/093.jpg"></div>
     <div class="grand-chiffre" data-voix="groupe" data-anim="zoom">1</div>
-    <div class="texte"><div class="carte" data-voix="groupe" data-anim="leve"><div class="medaillon coin" data-photo="sensuella-kante" data-voix="groupe" data-mot="groupe" data-anim="medaillon"></div><span class="etiquette">Formule n° 1</span><h3>En groupe</h3>
+    <div class="texte"><div class="carte" data-voix="groupe" data-anim="leve"><div class="medaillon coin" data-photo="p-091" data-voix="groupe" data-mot="groupe" data-anim="medaillon"></div><span class="etiquette">Formule n° 1</span><h3>En groupe</h3>
       <p class="detail" data-voix="groupe" data-mot="dimanche" data-anim="bloc">Chaque dimanche, de 15 h à 18 h</p>
       <p class="prix" data-voix="groupe" data-mot="trente" data-anim="monte"><span data-voix="groupe" data-mot="trente" data-anim="compteur" data-valeur="30000">30 000</span><small>FCFA</small></p>
       <p class="detail" data-voix="groupe" data-mot="quatre" data-anim="monte">les 4 séances</p></div></div>
-    <div class="medaillon moyen-m" data-photo="elvira-dumas" data-voix="groupe" data-mot="dimanche" data-anim="medaillon" data-pos="880,330" data-posl="1700,250"></div>
+    <div class="medaillon moyen-m" data-photo="t-138" data-voix="groupe" data-mot="dimanche" data-anim="medaillon" data-pos="880,330" data-posl="1640,340"></div>
   </section>
 
   <section class="scene" data-de="prive" data-transition="rideau">
-    <div class="photo" data-mouvement="avance"><img src="vignettes/tossou.jpg"></div>
+    <div class="photo" data-mouvement="avance"><img src="vignettes/005.jpg"></div>
     <div class="grand-chiffre" data-voix="prive" data-anim="zoom">2</div>
-    <div class="texte"><div class="carte" data-voix="prive" data-mot="privé" data-anim="leve"><div class="medaillon coin" data-photo="ori-kotchi" data-voix="prive" data-mot="personnalisé" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>En privé</h3>
+    <div class="texte"><div class="carte" data-voix="prive" data-mot="privé" data-anim="leve"><div class="medaillon coin" data-photo="p-081" data-voix="prive" data-mot="personnalisé" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>En privé</h3>
       <p class="detail" data-voix="prive" data-mot="accompagnement" data-anim="bloc">Un accompagnement entièrement personnalisé</p>
       <p class="prix" data-voix="prive" data-mot="vingt" data-anim="monte"><span data-voix="prive" data-mot="vingt" data-anim="compteur" data-valeur="25000">25 000</span><small>FCFA</small></p>
       <p class="detail" data-voix="prive" data-mot="salle" data-anim="monte">la séance de 2 h · notre salle à la Riviera Faya</p></div></div>
-    <div class="medaillon moyen-m" data-photo="visage-tailleur" data-voix="prive" data-mot="salle" data-anim="medaillon" data-pos="880,330" data-posl="1700,250"></div>
+    <div class="medaillon moyen-m" data-photo="p-179" data-voix="prive" data-mot="salle" data-anim="medaillon" data-pos="880,330" data-posl="1640,340"></div>
   </section>
 
   <section class="scene" data-de="domicile" data-transition="cercle">
     <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="texte"><div class="carte" data-voix="domicile" data-anim="leve"><div class="medaillon coin" data-photo="roxane-ouattara" data-voix="domicile" data-mot="chez" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>Chez vous</h3>
+    <div class="texte"><div class="carte" data-voix="domicile" data-anim="leve"><div class="medaillon coin" data-photo="p-077" data-voix="domicile" data-mot="chez" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>Chez vous</h3>
       <p class="detail" data-voix="domicile" data-mot="lieu" data-anim="bloc">ou au lieu de votre choix</p>
       <p class="prix" data-voix="domicile" data-mot="entre" data-anim="monte"><span data-voix="domicile" data-mot="entre" data-anim="compteur" data-valeur="30000">30 000</span> – <span data-voix="domicile" data-mot="trente-cinq" data-anim="compteur" data-valeur="35000">35 000</span><small>FCFA</small></p>
       <p class="detail" data-voix="nombre" data-anim="monte">la séance</p></div>
@@ -232,9 +234,9 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
   </section>
 
   <section class="scene" data-de="inscrire" data-transition="barres">
-    <div class="vignette" data-voix="inscrire" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/divine-tama.jpg"></div></div>
-    <div class="vignette" data-voix="inscrire" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/kouame-mina.jpg"></div></div>
-    <div class="vignette" data-voix="inscrire" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/tossou.jpg"></div></div>
+    <div class="vignette" data-voix="inscrire" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/043.jpg"></div></div>
+    <div class="vignette" data-voix="inscrire" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/131.jpg"></div></div>
+    <div class="vignette" data-voix="inscrire" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/146.jpg"></div></div>
     <div class="texte milieu decale"><p class="surtitre" data-voix="inscrire" data-anim="glisse">S’inscrire</p>
       <p class="moyen"><span data-voix="inscrire" data-mot="rien" data-anim="mots">Rien de</span> <em data-voix="inscrire" data-mot="compliqué" data-anim="mots">compliqué</em></p>
       <span class="trait losange" data-voix="inscrire" data-mot="compliqué" data-anim="trait"></span>
@@ -246,8 +248,8 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
   </section>
 
   <section class="scene" data-de="toutes" data-transition="cercle">
-    <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
-    <div class="medaillon" data-photo="visage-drapeau" data-voix="toutes" data-mot="toutes" data-anim="medaillon" data-pos="850,1000" data-posl="1060,300"></div>
+    <div class="photo" data-mouvement="recule"><img src="vignettes/004.jpg"></div>
+    <div class="medaillon" data-photo="p-051" data-voix="toutes" data-mot="toutes" data-anim="medaillon" data-pos="850,1000" data-posl="1060,300"></div>
     <div class="texte"><p class="surtitre" data-voix="toutes" data-mot="précision" data-anim="glisse">Une précision</p>
       <p class="grand"><span data-voix="toutes" data-mot="ouvert" data-anim="lettres">Ouvert</span> <em data-voix="toutes" data-mot="toutes" data-anim="lettres">à toutes</em></p>
       <div class="pastilles"><span class="pastille" data-voix="but" data-mot="marcher" data-anim="pop">Marcher en talons</span><span class="pastille" data-voix="but" data-mot="posture" data-anim="pop">Posture</span><span class="pastille" data-voix="but" data-mot="élégance" data-anim="pop">Élégance</span><span class="pastille" data-voix="but" data-mot="assurance" data-anim="pop">Assurance</span></div></div>
@@ -261,8 +263,8 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
   </section>
 
   <section class="scene" data-de="fin1" data-transition="barres">
-    <div class="mosaique"><div class="photo-m"><img src="vignettes/divine-tama.jpg"></div><div class="photo-m"><img src="vignettes/sensuella-kante.jpg"></div><div class="photo-m"><img src="vignettes/ndri-concours.jpg"></div><div class="photo-m"><img src="vignettes/mida-ophelia.jpg"></div><div class="photo-m"><img src="vignettes/tossou.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="vignettes/elvira-dumas.jpg"></div></div>
-    <div class="texte centre milieu"><div class="medaillon petit" data-photo="talons-bolli" data-voix="fin1" data-anim="medaillon" style="width:270px;height:270px;margin:0 auto 30px"></div>
+    <div class="mosaique"><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="vignettes/017.jpg"></div></div>
+    <div class="texte centre milieu"><div class="medaillon petit" data-photo="t-168" data-voix="fin1" data-anim="medaillon" style="width:340px;height:340px;margin:0 auto 30px"></div>
       <p class="surtitre" data-voix="fin1" data-anim="glisse">Atelier Talons &amp; Élégance</p>
       <p class="titre"><span data-voix="fin1" data-mot="votre" data-anim="lettres">Votre élégance</span><br><em data-voix="fin1" data-mot="commence" data-anim="lettres">commence ici</em></p>
       <span class="bouton" data-voix="fin2" data-mot="inscris" data-anim="pop">Je m’inscris<i></i></span></div>
