@@ -1,0 +1,128 @@
+/* Moteur commun des films en motion design (cours de talons, Intégrer l'agence) : styles. Voir moteur-film.js. */
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-ext-500-normal.woff2'); unicode-range: U+0100-024F; }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url('../../assets/polices/cormorant-garamond-latin-400-italic.woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 600; src: url('../../assets/polices/cormorant-garamond-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 400; src: url('../../assets/polices/work-sans-latin-400-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 500; src: url('../../assets/polices/work-sans-latin-500-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 600; src: url('../../assets/polices/work-sans-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 700; src: url('../../assets/polices/work-sans-latin-700-normal.woff2'); }
+:root { --rouge: #111114; --profond: #060607; --vif: #1E1E22; --W: 1080px; --H: 1920px; }
+body.large { --W: 1920px; --H: 1080px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: var(--W); height: var(--H); overflow: hidden; background: var(--profond); }
+body { font-family: 'Work Sans', sans-serif; color: #fff; }
+#film { position: relative; width: var(--W); height: var(--H); overflow: hidden; background: var(--profond); }
+.scene { position: absolute; inset: 0; visibility: hidden; overflow: hidden;
+  background: radial-gradient(ellipse at 28% 22%, #222226 0%, #0B0B0D 42%, #000 100%); }
+/* noir brillant : reflet laqué en diagonale */
+.scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; background: linear-gradient(118deg, rgba(255,255,255,0) 34%, rgba(255,255,255,0.035) 45%, rgba(255,255,255,0) 56%); }
+.plateau, .fond-blocs { position: absolute; inset: 0; }
+.photo { position: absolute; overflow: hidden; }
+.photo img { filter: brightness(0.8) contrast(1.12); position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; object-fit: cover; object-position: 50% 20%; }
+body:not(.large) .photo { left: 0; right: 0; top: 0; height: 66%; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 50%, transparent 98%); mask-image: linear-gradient(180deg, #000 0%, #000 50%, transparent 98%); }
+body.large .photo { top: 0; bottom: 0; right: 0; width: 58%; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 36%); mask-image: linear-gradient(90deg, transparent 0%, #000 36%); }
+body.large .photo.gauche { right: auto; left: 0; -webkit-mask-image: linear-gradient(270deg, transparent 0%, #000 36%); mask-image: linear-gradient(270deg, transparent 0%, #000 36%); }
+.photo:not(.plein)::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 85% at 55% 40%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.65) 100%); }
+.photo.plein { inset: 0 !important; width: auto !important; height: auto !important; -webkit-mask-image: none !important; mask-image: none !important; }
+.photo.plein::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, rgba(6,6,8,0.72), rgba(6,6,8,0.96) 72%); }
+/* blocs du fond : translucides (au-dessus de la photo) ou rouges pleins (derrière) */
+.forme { position: absolute; border-radius: 8px; }
+.forme.voile { background: linear-gradient(150deg, rgba(255,255,255,0.07), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 40px 80px -40px rgba(0,0,0,0.8); }
+.forme.contour { border: 1.5px solid rgba(255,255,255,0.28); }
+.forme.plein { background: linear-gradient(160deg, #3A3A42, #0E0E11); border-top: 1px solid rgba(255,255,255,0.28); box-shadow: 0 50px 90px -30px rgba(0,0,0,0.9); }
+.forme.rond { border-radius: 50%; }
+.forme.lame { height: 2px !important; border-radius: 0; background: linear-gradient(90deg, rgba(255,255,255,0), #fff, rgba(255,255,255,0)); }
+.texte { position: absolute; z-index: 5; }
+body:not(.large) .texte { left: 90px; right: 90px; bottom: 250px; }
+body.large .texte { left: 150px; width: 820px; top: 50%; transform: translateY(-50%); }
+body.large .texte.droite { left: auto; right: 150px; }
+.texte.centre { text-align: center; }
+body.large .texte.centre { left: 240px; right: 240px; width: auto; }
+body:not(.large) .texte.milieu { top: 50%; bottom: auto; transform: translateY(-50%); }
+body:not(.large) .texte.decale { margin-top: 170px; }
+.surtitre { font: 600 26px 'Work Sans'; letter-spacing: 0.42em; text-transform: uppercase; margin-bottom: 28px; display: inline-flex; align-items: center; gap: 22px; white-space: nowrap; }
+.surtitre::before { content: ""; width: 60px; height: 1px; background: #fff; }
+.centre .surtitre::after { content: ""; width: 60px; height: 1px; background: #fff; }
+.titre { font: 500 124px/0.98 'Cormorant Garamond', serif; }
+.grand { font: 500 100px/1.04 'Cormorant Garamond', serif; }
+.moyen { font: 500 72px/1.1 'Cormorant Garamond', serif; }
+em { font-style: italic; font-weight: 400; }
+.ligne { font: 400 38px/1.45 'Work Sans'; }
+.mot { display: inline-block; white-space: pre; }
+.lettre { display: inline-block; white-space: pre; transform-origin: 50% 100%; }
+.trait { display: block; height: 1px; background: #fff; transform-origin: 0 50%; margin: 34px 0; width: 260px; }
+.centre .trait { margin: 34px auto; transform-origin: 50% 50%; }
+.losange { position: relative; }
+.losange::after { content: ""; position: absolute; left: -2px; top: -6px; width: 12px; height: 12px; transform: rotate(45deg); border: 1px solid #fff; background: var(--rouge); }
+.centre .losange::after { left: 50%; margin-left: -6px; }
+.liste { list-style: none; }
+.liste li { position: relative; font: 500 64px/1.2 'Cormorant Garamond', serif; display: flex; align-items: center; gap: 30px; padding: 16px 0; }
+.liste li .filet { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: rgba(255,255,255,0.45); transform-origin: 0 50%; }
+.liste .n { font-style: italic; font-weight: 400; width: 80px; display: inline-block; }
+.liste .medaillon { margin-left: auto; }
+/* volet blanc qui balaie le texte puis le révèle */
+[data-anim="bloc"] { position: relative; display: inline-block; }
+.balai { position: absolute; left: -10px; right: -10px; top: 6%; bottom: 6%; background: #fff; transform: scaleX(0); z-index: 2; }
+.carte { position: relative; padding: 56px 60px 52px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.38);
+  background: linear-gradient(155deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02) 45%, rgba(0,0,0,0.9)); box-shadow: 0 70px 130px -50px rgba(0,0,0,0.95); transform-origin: 50% 100%; }
+.carte::before { content: ""; position: absolute; inset: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); }
+.etiquette { display: inline-block; padding: 10px 22px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.5); font: 600 22px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; }
+.carte h3 { font: 500 94px/1 'Cormorant Garamond'; margin: 26px 0 14px; }
+.prix { font: italic 400 116px/1 'Cormorant Garamond'; margin: 22px 0 6px; white-space: nowrap; }
+.prix small { font: 600 34px 'Work Sans'; font-style: normal; letter-spacing: 0.08em; margin-left: 14px; }
+.detail { font: 400 36px/1.45 'Work Sans'; }
+.pastilles { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 34px; }
+.centre .pastilles { justify-content: center; }
+.pastille { padding: 18px 34px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.55); background: rgba(255,255,255,0.1); font: 500 34px 'Work Sans'; display: inline-block; box-shadow: 0 24px 40px -24px rgba(0,0,0,0.9); }
+.pastille.blanche { background: #fff; color: var(--profond); font-weight: 600; }
+.etapes { list-style: none; }
+.etapes li { display: flex; align-items: center; gap: 38px; padding: 16px 0; font: 500 54px/1.1 'Cormorant Garamond'; }
+body.large .etapes li { padding: 6px 0; font-size: 48px; gap: 30px; }
+body.large .etapes .medaillon.petit { width: 104px; height: 104px; }
+body.large .texte.decale { margin-top: 40px; }
+.etapes small { display: block; font: 400 30px 'Work Sans'; margin-top: 6px; opacity: 0.85; }
+.bouton { display: inline-block; margin-top: 50px; padding: 32px 80px; border-radius: 999px; background: #fff; color: var(--profond); font: 700 42px 'Work Sans'; letter-spacing: 0.08em; position: relative; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.9), 0 0 0 12px rgba(255,255,255,0.14); }
+.bouton i { position: absolute; top: 0; bottom: 0; width: 35%; background: linear-gradient(105deg, rgba(255,255,255,0), rgba(0,0,0,0.16), rgba(255,255,255,0)); }
+.note { position: relative; padding: 36px 42px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.42); background: rgba(255,255,255,0.1); font: 400 36px/1.45 'Work Sans'; box-shadow: 0 60px 110px -50px rgba(0,0,0,0.95); transform-origin: 50% 100%; }
+.note b { display: block; font: 600 40px 'Work Sans'; margin-bottom: 10px; padding-right: 110px; }
+.grand-chiffre { position: absolute; font: italic 400 520px/0.8 'Cormorant Garamond'; color: rgba(255,255,255,0.1); z-index: 2; }
+body:not(.large) .grand-chiffre { right: 60px; bottom: 120px; }
+body.large .grand-chiffre { left: 930px; bottom: 40px; }
+/* médaillon : disque blanc, symbole rouge, anneau en pointillé qui tourne, onde à l'arrivée */
+.medaillon { position: absolute; width: 400px; height: 400px; z-index: 6; flex: none; }
+.medaillon.petit { position: relative; width: 120px; height: 120px; }
+.medaillon.moyen-m { width: 340px; height: 340px; }
+.medaillon.coin { right: -60px; top: -190px; width: 310px; height: 310px; }
+.medaillon .disque { position: absolute; inset: 13%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff 0%, #fff 55%, #E6E6E9 100%); display: grid; place-items: center;
+  box-shadow: 0 24px 50px -12px rgba(0,0,0,0.85), 0 0 0 7px rgba(255,255,255,0.16); }
+.medaillon.photo-med .disque { inset: 7%; overflow: hidden; background: #111; box-shadow: 0 30px 60px -14px rgba(0,0,0,0.9), 0 0 0 6px rgba(255,255,255,0.9), 0 0 0 14px rgba(255,255,255,0.12); }
+.medaillon.photo-med img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.liste .medaillon.petit { width: 200px; height: 200px; }
+body:not(.large) .liste li { font-size: 56px; }
+body.large .liste li { font-size: 54px; }
+body.large .liste .medaillon.petit { width: 170px; height: 170px; }
+body.large .liste li { padding: 6px 0; }
+.medaillon svg { width: 60%; height: 60%; fill: none; stroke: var(--rouge); stroke-width: 4.6; stroke-linecap: round; stroke-linejoin: round; }
+.medaillon .anneau { position: absolute; inset: 0; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.75); }
+.medaillon .onde { position: absolute; inset: 13%; border-radius: 50%; border: 3px solid #fff; opacity: 0; }
+.medaillon .num { position: absolute; right: -2px; top: -2px; width: 46px; height: 46px; border-radius: 50%; background: var(--vif); border: 2px solid #fff; display: grid; place-items: center; font: 700 24px 'Work Sans'; color: #fff; }
+/* vignette : photo encadrée qui arrive et flotte */
+.vignette { position: absolute; z-index: 4; padding: 12px; background: #fff; border-radius: 6px; box-shadow: 0 50px 90px -30px rgba(0,0,0,0.95); }
+.vignette div { width: 100%; height: 100%; overflow: hidden; border-radius: 2px; }
+.vignette img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+.mosaique { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 10px; }
+body:not(.large) .mosaique { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+.mosaique div { overflow: hidden; position: relative; border-radius: 6px; }
+.mosaique img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.mosaique::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(6,6,8,0.55), rgba(6,6,8,0.96) 82%); }
+#barres { position: absolute; inset: 0; z-index: 47; display: flex; pointer-events: none; }
+#barres i { flex: 1; background: linear-gradient(180deg, #2C2C33, #070708); border-right: 1px solid rgba(255,255,255,0.35); visibility: hidden; }
+#poussiere i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 12px 3px rgba(255,255,255,0.5); z-index: 46; }
+#lueur { position: absolute; inset: -20%; z-index: 45; pointer-events: none; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), rgba(255,255,255,0) 40%); }
+#cadre { position: absolute; inset: 30px; border: 1px solid rgba(255,255,255,0.35); z-index: 50; }
+#marque { position: absolute; top: 72px; left: 90px; right: 90px; display: flex; justify-content: space-between; align-items: center; z-index: 51; font: 600 22px 'Work Sans'; letter-spacing: 0.34em; text-transform: uppercase; }
+#marque img { height: 56px; filter: brightness(0) invert(1); }
+body.large #marque { left: 150px; right: 150px; top: 70px; }
+#site { position: absolute; bottom: 72px; left: 0; right: 0; text-align: center; z-index: 51; font: 600 22px 'Work Sans'; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.85; }
+#eclat { position: absolute; top: -20%; bottom: -20%; width: 28%; z-index: 49; background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.045) 50%, rgba(255,255,255,0) 100%); }

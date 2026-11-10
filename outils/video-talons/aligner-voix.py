@@ -6,7 +6,8 @@ faite ici par faster-whisper (pip install faster-whisper ; modèle « medium »,
 puis chaque mot du texte (voix-talons.json) est apparié au mot entendu ; les mots non reconnus tels quels (chiffres :
 « 15h », « 30 000 »…) prennent un instant interpolé entre leurs voisins appariés.
 
-  python3 aligner-voix.py <enregistrement .mp3/.wav> <dossier de sortie>
+  python3 aligner-voix.py <enregistrement .mp3/.wav> <dossier de sortie> [texte .json, voix-talons.json par défaut]
+  (aussi pour la vidéo « Intégrer l'agence » : texte voix-agence.json)
 → <sortie>/voix.wav (1,2 s de silence d'ouverture + l'enregistrement) et <sortie>/mots.json (même forme que
   voix-eleven.py : { "phrases": {clé: [début, fin]}, "mots": {clé: [[mot, début, fin], …]}, "duree": s })."""
 import difflib, json, os, re, subprocess, sys, unicodedata, wave
@@ -33,7 +34,7 @@ def normal(m):
     m = re.sub(r"^(?:[ldjmnstc]|qu)['’]", '', m.replace('’', "'"))
     return re.sub(r'[^a-z0-9]', '', m)
 
-textes = json.load(open(os.path.join(ICI, 'voix-talons.json'), encoding='utf-8'))
+textes = json.load(open(sys.argv[3] if len(sys.argv) > 3 else os.path.join(ICI, 'voix-talons.json'), encoding='utf-8'))
 ecrits = [(cle, m.group(0)) for cle, t in textes for m in re.finditer(r"[\wÀ-ÿ'’-]+", t)]
 a = [normal(m) for _, m in ecrits]
 b = [normal(m) for m, _, _ in entendu]

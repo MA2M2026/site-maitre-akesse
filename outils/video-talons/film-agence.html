@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<!-- Vidéo « Intégrer l'agence » (10/11/2026, demande de la propriétaire : « même style » que la vidéo du cours de
+     talons). Voix « Nicolas » fournie par elle (calée mot à mot par aligner-voix.py, texte voix-agence.json).
+     Même moteur que film-talons.html (moteur-film.css / moteur-film.js : voir l'en-tête de film-talons.html pour les
+     attributs data-*). Rendu par : FILM=film-agence.html NOM=integrer-agence node fabrique-talons.js [vertical|large]
+     Photos : book du site, jamais KAPO Ainhoa ni AKASSOU, jamais de mineur(e) à l'image. -->
+<title>Film Intégrer l'agence</title>
+<script src="timing-agence.js"></script>
+<link rel="stylesheet" href="moteur-film.css">
+<style>
+.espace-coin { margin-bottom: 200px; }
+body.large .espace-coin { margin-bottom: 150px; }
+.critere b { font: 500 64px/1 'Cormorant Garamond'; }
+body.large .etapes.criteres-l li { font-size: 50px; }
+.logo-fin { display: block; height: 120px; margin: 0 auto 40px; filter: brightness(0) invert(1); }
+body.large .logo-fin { height: 100px; margin-bottom: 26px; }
+</style>
+</head>
+<body>
+<div id="film">
+
+  <section class="scene" data-de="a1" data-transition="fondu">
+    <div class="photo" data-mouvement="recule"><img src="vignettes/089.jpg"></div>
+    <div class="medaillon" data-photo="p-149" data-voix="a1" data-mot="défiler" data-anim="medaillon" data-pos="870,880" data-posl="1180,280"></div>
+    <div class="medaillon moyen-m" data-symbole="photo" data-voix="a1" data-mot="objectifs" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
+    <div class="texte"><p class="surtitre" data-voix="a1" data-anim="glisse">Intégrer l’agence</p>
+      <h1 class="titre"><span data-voix="a1" data-mot="devenir" data-anim="lettres">Devenir</span><br><em data-voix="a1" data-mot="mannequin" data-anim="lettres">mannequin</em></h1>
+      <span class="trait losange" data-voix="a1" data-mot="mannequin" data-anim="trait"></span>
+      <p class="ligne" data-voix="a1" data-mot="poser" data-anim="bloc">Défiler · Poser · Briller</p></div>
+  </section>
+
+  <section class="scene" data-de="a2" data-transition="barres">
+    <div class="photo plein" data-mouvement="avance"><img src="vignettes/106.jpg"></div>
+    <div class="vignette" data-voix="a2" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="vignettes/027.jpg"></div></div>
+    <div class="vignette" data-voix="a2" data-mot="ouvre" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="vignettes/h067.jpg"></div></div>
+    <div class="texte centre milieu"><p class="surtitre" data-voix="a2" data-anim="glisse">Maître Akesse Model Management</p>
+      <p class="grand"><span data-voix="a2" data-mot="ouvre" data-anim="lettres">Vous ouvre</span><br><em data-voix="a2" data-mot="portes" data-anim="lettres">ses portes</em></p></div>
+  </section>
+
+  <section class="scene" data-de="casting" data-transition="cercle">
+    <div class="photo" data-mouvement="panorama"><img src="vignettes/005.jpg"></div>
+    <div class="texte"><p class="surtitre" data-voix="casting" data-anim="glisse">Le casting</p>
+      <p class="moyen" style="margin-bottom:40px"><span data-voix="casting" data-mot="deux" data-anim="mots">En deux</span> <em data-voix="casting" data-mot="étapes" data-anim="mots">étapes</em></p>
+      <div class="carte" data-voix="etape1" data-anim="leve"><div class="medaillon coin" data-symbole="camera" data-voix="etape1" data-mot="ligne" data-anim="medaillon"></div><span class="etiquette">Étape 1</span><h3>En ligne</h3>
+        <div class="pastilles"><span class="pastille" data-voix="ligne" data-mot="photos" data-anim="pop">Photos</span><span class="pastille" data-voix="ligne" data-mot="vidéo" data-anim="pop">Vidéo</span><span class="pastille" data-voix="ligne" data-mot="informations" data-anim="pop">Informations</span></div>
+        <p class="detail" style="margin-top:26px" data-voix="ligne" data-mot="déposer" data-anim="bloc">pour déposer votre candidature</p></div></div>
+  </section>
+
+  <section class="scene" data-de="etape2" data-transition="volet">
+    <div class="photo" data-mouvement="recule"><img src="vignettes/093.jpg"></div>
+    <div class="medaillon moyen-m" data-symbole="paiement" data-voix="infos" data-mot="whatsapp" data-anim="medaillon" data-pos="880,330" data-posl="1640,340"></div>
+    <div class="texte"><div class="carte" data-voix="etape2" data-anim="leve"><div class="medaillon coin" data-photo="p-014" data-voix="etape2" data-mot="présentiel" data-anim="medaillon"></div><span class="etiquette">Étape 2</span><h3>En présentiel</h3>
+      <p class="detail" data-voix="etape2" data-mot="retenu" data-anim="bloc">Si votre profil est retenu</p>
+      <div class="pastilles"><span class="pastille" data-voix="infos" data-mot="date" data-anim="pop">La date</span><span class="pastille" data-voix="infos" data-mot="dress" data-anim="pop">Le dress code</span><span class="pastille blanche" data-voix="infos" data-mot="whatsapp" data-anim="pop">WhatsApp · E-mail</span></div></div></div>
+  </section>
+
+  <section class="scene" data-de="criteres" data-transition="rideau">
+    <div class="vignette" data-voix="criteres" data-anim="vignette" data-pos="300,380" data-posl="1380,330" data-l="250" data-h="330" data-rot="-7"><div><img src="vignettes/043.jpg"></div></div>
+    <div class="vignette" data-voix="criteres" data-retard="0.2" data-anim="vignette" data-pos="780,400" data-posl="1630,640" data-l="250" data-h="330" data-rot="6"><div><img src="vignettes/h059.jpg"></div></div>
+    <div class="texte milieu decale"><p class="surtitre" data-voix="criteres" data-anim="glisse">Nos critères</p>
+      <ol class="etapes criteres-l">
+        <li><span class="medaillon petit" data-photo="p-027" data-voix="tailles" data-mot="femmes" data-anim="medaillon"></span><div data-voix="tailles" data-mot="femmes" data-anim="bloc">1,75 m minimum<small>pour les femmes</small></div></li>
+        <li><span class="medaillon petit" data-photo="h-130" data-voix="tailles" data-mot="hommes" data-anim="medaillon"></span><div data-voix="tailles" data-mot="hommes" data-anim="bloc">1,85 m minimum<small>pour les hommes</small></div></li>
+        <li><span class="medaillon petit" data-symbole="personne" data-voix="tailles" data-mot="âge" data-anim="medaillon"></span><div data-voix="tailles" data-mot="âge" data-anim="bloc">14 ans<small>âge minimum</small></div></li></ol>
+      <div class="note" style="margin-top:30px" data-voix="mineurs" data-anim="leve"><b>De 14 à 17 ans</b>l’autorisation d’un parent ou d’un tuteur est obligatoire.</div></div>
+  </section>
+
+  <section class="scene" data-de="debutez" data-transition="cercle">
+    <div class="photo" data-mouvement="panorama"><img src="vignettes/004.jpg"></div>
+    <div class="grand-chiffre" data-voix="formation" data-mot="neuf" data-anim="zoom">9</div>
+    <div class="medaillon" data-photo="p-063" data-voix="formation" data-mot="formation" data-anim="medaillon" data-pos="860,880" data-posl="1250,300"></div>
+    <div class="texte"><p class="surtitre" data-voix="debutez" data-anim="glisse">Vous débutez ?</p>
+      <p class="grand"><span data-voix="formation" data-mot="neuf" data-anim="compteur" data-valeur="9">9</span> <span data-voix="formation" data-mot="mois" data-anim="mots">mois</span><br><em data-voix="formation" data-mot="formation" data-anim="lettres">de formation</em></p>
+      <div class="pastilles"><span class="pastille" data-voix="travail" data-mot="posture" data-anim="pop">Posture</span><span class="pastille" data-voix="travail" data-mot="démarche" data-anim="pop">Démarche</span><span class="pastille" data-voix="travail" data-mot="expression" data-anim="pop">Expression</span><span class="pastille" data-voix="travail" data-mot="image" data-anim="pop">Image</span><span class="pastille blanche" data-voix="travail" data-mot="confiance" data-anim="pop">Confiance en soi</span></div>
+      <p class="ligne" style="margin-top:30px" data-voix="potentiel" data-mot="révéler" data-anim="bloc">Révéler votre potentiel</p></div>
+  </section>
+
+  <section class="scene" data-de="issue" data-transition="barres">
+    <div class="vignette" data-voix="issue" data-mot="mannequins" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/096.jpg"></div></div>
+    <div class="vignette" data-voix="issue" data-mot="mannequins" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/h101.jpg"></div></div>
+    <div class="vignette" data-voix="issue" data-mot="mannequins" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/131.jpg"></div></div>
+    <div class="texte milieu decale"><p class="surtitre" data-voix="issue" data-anim="glisse">Et ensuite</p>
+      <p class="grand"><span data-voix="issue" data-mot="neuf" data-anim="mots">+ 9 mois</span><br><em data-voix="issue" data-mot="intégrez" data-anim="lettres">dans l’agence</em></p>
+      <span class="trait losange" data-voix="issue" data-mot="perfectionner" data-anim="trait"></span>
+      <p class="ligne" data-voix="issue" data-mot="côtés" data-anim="bloc">aux côtés de nos mannequins</p></div>
+  </section>
+
+  <section class="scene" data-de="experience" data-transition="rideau">
+    <div class="photo gauche" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
+    <div class="texte droite"><p class="surtitre" data-voix="experience" data-anim="glisse">Déjà de l’expérience ?</p>
+      <p class="grand espace-coin"><span data-voix="compte" data-mot="parcours" data-anim="lettres">Votre parcours</span> <em data-voix="compte" data-mot="compte" data-anim="lettres">compte</em></p>
+      <div class="carte" data-voix="confirmee" data-mot="confirmée" data-anim="leve"><div class="medaillon coin" data-photo="p-089" data-voix="confirmee" data-mot="directement" data-anim="medaillon"></div><span class="etiquette">Expérience confirmée</span><h3>Intégration directe</h3>
+        <p class="detail" data-voix="confirmee" data-mot="perfectionnement" data-anim="bloc">+ 9 mois de perfectionnement</p></div></div>
+  </section>
+
+  <section class="scene" data-de="apres" data-transition="cercle">
+    <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div>
+    <div class="texte"><p class="surtitre" data-voix="apres" data-anim="glisse">Et après ?</p>
+      <ul class="liste">
+        <li><span data-voix="castings" data-mot="castings" data-anim="bloc"><span class="n">—</span>Des castings</span><span class="medaillon petit" data-photo="p-146" data-voix="castings" data-mot="professionnels" data-anim="medaillon"></span><span class="filet" data-voix="castings" data-mot="castings" data-anim="trait"></span></li>
+        <li><span data-voix="castings" data-mot="opportunités" data-anim="bloc"><span class="n">—</span>Des opportunités</span><span class="medaillon petit" data-symbole="etoile" data-voix="castings" data-mot="opportunités" data-anim="medaillon"></span><span class="filet" data-voix="castings" data-mot="opportunités" data-anim="trait"></span></li>
+        <li><span data-voix="castings" data-mot="recommande" data-anim="bloc"><span class="n">—</span>Nos partenaires</span><span class="medaillon petit" data-photo="h-088" data-voix="castings" data-mot="partenaires" data-anim="medaillon"></span><span class="filet" data-voix="castings" data-mot="recommande" data-anim="trait"></span></li></ul></div>
+  </section>
+
+  <section class="scene" data-de="espace" data-transition="volet">
+    <div class="vignette" data-voix="espace" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/014.jpg"></div></div>
+    <div class="vignette" data-voix="espace" data-mot="book" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/146.jpg"></div></div>
+    <div class="vignette" data-voix="espace" data-mot="valeur" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/149.jpg"></div></div>
+    <div class="texte milieu decale"><p class="surtitre" data-voix="espace" data-anim="glisse">Votre espace mannequin</p>
+      <p class="moyen"><span data-voix="espace" data-mot="book" data-anim="mots">Votre book</span><br><em data-voix="espace" data-mot="valeur" data-anim="mots">mis en valeur</em></p>
+      <div class="pastilles"><span class="pastille blanche" data-voix="espace" data-mot="gratuit" data-anim="pop">Gratuit</span><span class="pastille" data-voix="espace" data-mot="site" data-anim="pop">Sur notre site</span><span class="pastille" data-voix="espace" data-mot="profil" data-anim="pop">Votre profil</span></div></div>
+  </section>
+
+  <section class="scene" data-de="quel" data-transition="barres">
+    <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div>
+    <div class="medaillon" data-photo="p-043" data-voix="histoire" data-mot="histoire" data-anim="medaillon" data-pos="860,880" data-posl="1250,300"></div>
+    <div class="texte"><p class="surtitre" data-voix="quel" data-anim="glisse">Alors…</p>
+      <p class="grand"><span data-voix="quel" data-mot="quel" data-anim="lettres">Quel sera</span><br><em data-voix="quel" data-mot="parcours" data-anim="lettres">votre parcours ?</em></p>
+      <div class="pastilles"><span class="pastille" data-voix="histoire" data-mot="débutant" data-anim="pop">Débutant·e</span><span class="pastille" data-voix="histoire" data-mot="expérimenté" data-anim="pop">Expérimenté·e</span></div>
+      <span class="bouton" data-voix="choisissez" data-mot="envoyez" data-anim="pop">Envoyer ma candidature<i></i></span></div>
+  </section>
+
+  <section class="scene" data-de="fin" data-transition="cercle">
+    <div class="mosaique"><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="vignettes/014.jpg"></div></div>
+    <div class="texte centre milieu"><img class="logo-fin" data-voix="fin" data-anim="pop" src="../../assets/logo-intro.png" alt="">
+      <p class="titre"><span data-voix="fin" data-mot="formé" data-anim="lettres">Formé.</span> <span data-voix="fin" data-mot="révélé" data-anim="lettres">Révélé.</span><br><em data-voix="fin" data-mot="valorisé" data-anim="lettres">Valorisé.</em></p></div>
+  </section>
+
+  <div id="poussiere"></div>
+  <div id="lueur"></div>
+  <div id="barres"></div>
+  <div id="eclat"></div>
+  <div id="cadre"></div>
+  <div id="marque"><img src="../../assets/logo-header.png" alt=""><span>Casting</span></div>
+  <p id="site">maitreakessemodelmanagement.com</p>
+</div>
+<script src="moteur-film.js"></script>
+</body></html>
