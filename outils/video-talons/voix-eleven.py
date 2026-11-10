@@ -18,7 +18,10 @@ import base64, json, os, re, subprocess, sys, urllib.request
 ICI = os.path.dirname(os.path.abspath(__file__))
 SORTIE = sys.argv[1] if len(sys.argv) > 1 else sys.exit(__doc__)
 VOIX = 'XB0fDUnXU5powFXDhCwa'  # Charlotte
-REGLAGES = {'stability': 0.5, 'similarity_boost': 0.8, 'style': 0.0, 'use_speaker_boost': True, 'speed': 1.0}
+# TON (facultatif) : indication de jeu placée en tête de chaque paragraphe (balise v3 entre crochets, non lue à voix
+# haute), et STABILITE (0.0 = la plus expressive, 0.5 = naturelle) : variables d'environnement
+TON = os.environ.get('TON', '')
+REGLAGES = {'stability': float(os.environ.get('STABILITE', '0.5')), 'similarity_boost': 0.8, 'style': 0.0, 'use_speaker_boost': True, 'speed': 1.0}
 CLE = os.environ.get('ELEVENLABS_API_KEY', 'proxy-injected')
 # paragraphes (clés de voix-talons.json lues d'un trait) et respiration après chacun (secondes)
 PARAGRAPHES = [(['intro'], 1.0), (['questions', 'endroit', 'demarche', 'p1', 'p2', 'p3', 'p4', 'confiance'], 1.1),
@@ -35,7 +38,7 @@ for n, (cles, pause) in enumerate(PARAGRAPHES):
     if REFAIRE is not None and n not in REFAIRE and os.path.exists(mp3) and os.path.exists(jsn):
         a = json.load(open(jsn))   # paragraphe validé : repris tel quel
     else:
-        corps = {'text': texte, 'model_id': 'eleven_v3', 'language_code': 'fr', 'voice_settings': REGLAGES}
+        corps = {'text': ('[' + TON + '] ' if TON else '') + texte, 'model_id': 'eleven_v3', 'language_code': 'fr', 'voice_settings': REGLAGES}
         req = urllib.request.Request('https://api.elevenlabs.io/v1/text-to-speech/' + VOIX + '/with-timestamps?output_format=mp3_44100_128',
                                      data=json.dumps(corps).encode(), headers={'xi-api-key': CLE, 'Content-Type': 'application/json'})
         with urllib.request.urlopen(req, timeout=300) as r:
