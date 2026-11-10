@@ -5,7 +5,10 @@ const fs = require('fs'); const path = require('path');
 const racine = path.resolve(__dirname, '../..');
 let ko = 0; const ok = (c, m) => { if (!c) { ko++; console.log('❌ ÉCHEC ' + m); } };
 const { PAGES } = require('../apercus/generer.js'); // même liste que le programme qui fait les images
-const fichiers = PAGES.flatMap(([page, fr, en]) => [fr && page + '.html', en && 'en/' + page + '.html']).filter(Boolean);
+// (10/11/2026) les 3 pages de la présentation « luxe » ont leur image <langue>-<page>-luxe.jpg (scripts/apercus/generer-luxe.js)
+const LUXE = new Set(require('../apercus/generer-luxe.js').PAGES.map(([page]) => page));
+const fichiers = [...new Set(PAGES.flatMap(([page, fr, en]) => [fr && page + '.html', en && 'en/' + page + '.html']).filter(Boolean)
+  .concat([...LUXE].flatMap((page) => [page + '.html', 'en/' + page + '.html'])))];
 const vues = new Set();
 // dimensions d'un JPEG (marqueur SOF)
 function taille(buf) {
@@ -21,7 +24,7 @@ for (const f of fichiers) {
   const image = (html.match(/<meta property="og:image" content="https:\/\/www\.maitreakessemodelmanagement\.com\/(assets\/apercus\/[a-z-]+\.jpg)\?v=\d+">/) || [])[1];
   ok(image, f + ' : image d’aperçu propre à la page');
   if (!image) continue;
-  const attendu = (f.startsWith('en/') ? 'en-' : 'fr-') + path.basename(f, '.html') + '.jpg';
+  const attendu = (f.startsWith('en/') ? 'en-' : 'fr-') + path.basename(f, '.html') + (LUXE.has(path.basename(f, '.html')) ? '-luxe' : '') + '.jpg';
   ok(path.basename(image) === attendu, f + ' : image ' + image + ' (attendu ' + attendu + ')');
   ok(!vues.has(image), f + ' : image déjà utilisée par une autre page'); vues.add(image);
   const chemin = path.join(racine, image);

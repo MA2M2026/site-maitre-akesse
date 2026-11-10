@@ -4419,3 +4419,35 @@ le haut est réorganisé en style « motion design » :
   candidature (`messageAvecLien`, js/formulaire-candidature.js) : aucune colonne nouvelle dans la base ;
 - styles : `css/integrer-agence.css` ; styles du haut de l'écran régénérés pour cette page seulement
   (`scripts/css-critique.mjs`) ; test : `scripts/tests-visiteur/test-integrer-parcours.js`.
+
+## Présentation « luxe » de 3 pages, envoi rapide et aperçus de partage (10/11/2026, demandes de la propriétaire)
+
+Pages : **Cours de talons**, **Intégrer l'agence**, **Postuler à un casting** (FR/EN). Demande : « trop plat, trop
+carré » → « très luxe », qu'une femme de 40 à 60 ans se dise que c'est sérieux ; séduire et impressionner.
+- **Styles communs : `css/luxe.css`** (chargé par les 3 pages) : couverture photo (`.lx-hero`, photo + voile rouge + cadre
+  fin + lieu à la verticale) ou couverture avec le **mur de visages dynamique** (`.lx-hero--mur`, candidature : le mur
+  est posé par le serveur, `js/gabarit.js` poserMur — la section garde « section > div.container > h1 ») ; titres en
+  Cormorant Garamond (`.lx-titre-section`, `.lx-grand-titre`, `.lx-surtitre`, `.lx-ornement`) ; trois points en chiffres
+  romains (`.lx-promesse`, `.lx-piliers`) ; galerie de mannequins (`.lx-galerie`, défilement au doigt sur téléphone) ;
+  bande « défilé » (`.lx-defile`, `.lx-citation`) ; cartes de verre (`.lx-verre`) ; écrin du formulaire (`.lx-ecrin`, ou
+  `.lx-formulaire #form-casting` : la balise `<form>` de la candidature reste telle quelle car le serveur la retouche,
+  middleware.js formulairesRemplis). **Rouges et blanc seulement** (règle du 28/10/2026, pas de doré).
+- **Boutons** : couleurs du bouton unique (css/bouton-ma2m.css, inchangé) ; dans ces pages seulement, arrondis
+  (`--bouton-rayon: 999px`) avec un reflet (accord de la propriétaire, 10/11/2026).
+- **Photos** (adultes, accord de la propriétaire) : `assets/cours-talons/mannequin-podium.jpg`, `mannequin-defile.jpg`,
+  `galerie-tailleur.jpg`, `galerie-blanc.jpg`, `galerie-drapeau.jpg` (tirées de assets/reseaux/ma2m-book-*.jpg ; petit
+  code QR et marque « 1/2 » effacés, petites marques en coin recadrées). Pas de garçon sur la page des talons.
+- **Pages propres** : `css/cours-talons.css`, `css/integrer-agence.css` ; les styles du haut de l'écran d'Intégrer
+  l'agence et de la candidature sont régénérés par `scripts/css-critique.mjs` (à relancer après tout changement).
+- **Textes modifiables (site dynamique)** : tous les textes simples d'Intégrer l'agence portent un repère data-texte
+  (31 au lieu de 3) : `python3 scripts/textes-pages.py --completer integrer-agence` ajoute les repères manquants à la
+  suite des anciens. Cours de talons et candidature ne sont pas (encore) dans « Textes des pages » : il faudrait
+  ajouter ces pages à la liste de la base (supabase-textes-pages.sql), de l'Administration et de middleware.js.
+- **Envoi rapide** (cours de talons ET candidatures, même système) : une jauge PAR PHOTO et une pour la vidéo, vertes
+  à l'arrivée (`creerJauge`, `avancerDoucement`, `envoyerVideoAvecJauge` dans js/app.js) ; vidéo de **3 minutes au plus**
+  (`VIDEO_DUREE_MAX_SECONDES`), allégée en 480p (`VIDEO_ALLEGEMENT_RAPIDE` : 0,7 Mbit/s, son 64 kbit/s, ~6 Mo la minute ;
+  option `audioDebit` de js/video-allegee.js) ; photos 1600 px (`PHOTO_COTE_ENVOI`). Tout passe toujours par le
+  programme Google Drive (60 Mo au plus par vidéo ; un dossier par envoi de photos, d'où un seul envoi pour toutes).
+  Cours de talons : 2 à 5 photos ; candidatures : inchangé (3 à 12 selon le parcours).
+- **Aperçus de partage** (WhatsApp, Facebook) : `assets/apercus/<fr|en>-<page>-luxe.jpg` (1200 × 630), faits par
+  `node scripts/apercus/generer-luxe.js` ; og:description et og:image:alt réécrits ; test-apercus.js les vérifie.

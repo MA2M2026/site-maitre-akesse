@@ -35,17 +35,17 @@
 }
 
 /* ---------- boutons arrondis avec un reflet (dans .lx-hero et .lx-boutons) */
-.lx-hero, .lx-boutons { --bouton-rayon: 999px; }
-:is(.lx-hero, .lx-boutons) .btn--principal {
+.lx-hero, .lx-boutons, .lx-formulaire { --bouton-rayon: 999px; }
+:is(.lx-hero, .lx-boutons, .lx-formulaire) .btn--principal {
   position: relative; overflow: hidden; border-radius: 999px; padding: 1.05rem 2.2rem; background: #fff; color: var(--rouge-profond);
   border: 1px solid #fff; font-weight: 700; letter-spacing: 0.08em;
   box-shadow: 0 14px 34px -12px rgba(90, 20, 27, 0.9), 0 0 0 4px rgba(255, 255, 255, 0.12); transition: transform 0.25s ease, box-shadow 0.25s ease; }
-:is(.lx-hero, .lx-boutons) .btn--principal::after {
+:is(.lx-hero, .lx-boutons, .lx-formulaire) .btn--principal::after {
   content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; pointer-events: none;
   background: linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(124, 33, 40, 0.18) 50%, rgba(255, 255, 255, 0) 100%);
   animation: lx-reflet 3.8s ease-in-out infinite; }
 @keyframes lx-reflet { 0%, 55% { left: -60%; } 100% { left: 130%; } }
-:is(.lx-hero, .lx-boutons) .btn--principal:hover {
+:is(.lx-hero, .lx-boutons, .lx-formulaire) .btn--principal:hover {
   background: #fff; color: var(--rouge-mat); border-color: #fff; transform: translateY(-3px);
   box-shadow: 0 20px 40px -12px rgba(90, 20, 27, 0.95), 0 0 0 6px rgba(255, 255, 255, 0.18); }
 .lx-btn-voile { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 999px; padding: 1rem 1.8rem;
@@ -114,14 +114,32 @@
 .lx-verre:hover { transform: translateY(-6px); box-shadow: 0 40px 70px -30px rgba(90, 20, 27, 1), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
 .lx-verre :is(h3, p, li, span, b) { color: #fff; }
 
-/* ---------- écrin du formulaire */
-.lx-ecrin { padding: 2rem 1.4rem 1.6rem; border-radius: 10px;
+/* ---------- écrin du formulaire (.lx-ecrin, ou le formulaire de candidature d'une section .lx-formulaire : sa balise
+   <form> reste telle quelle, le serveur la retouche — middleware.js, formulairesRemplis) */
+.lx-ecrin, .lx-formulaire #form-casting { padding: 2rem 1.4rem 1.6rem; border-radius: 10px;
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(90, 20, 27, 0.6) 100%);
   border: 1px solid var(--lx-lisere); box-shadow: 0 40px 80px -40px rgba(90, 20, 27, 1), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
-@media (min-width: 700px) { .lx-ecrin { padding: 2.6rem 2.6rem 2rem; } }
+@media (min-width: 700px) { .lx-ecrin, .lx-formulaire #form-casting { padding: 2.6rem 2.6rem 2rem; } }
+.lx-formulaire { padding-top: 5rem; }
+.lx-formulaire .ca-1 { max-width: 760px; }
+.lx-formulaire :is(.ca-2, .ca-24) { border-left: 0; border-radius: 8px; background: var(--lx-verre); border: 1px solid var(--lx-lisere); }
+.lx-formulaire #btn-envoyer { width: 100%; margin-top: 0.6rem; }
+.lx-formulaire .envoi-jauges { border-radius: 8px; }
+
+/* ---------- couverture avec le mur de visages des mannequins (posé par le serveur depuis la base : js/gabarit.js
+   poserMur ; sinon par js/app.js murDeTitre) au lieu d'une photo : « Postuler à un casting » */
+.lx-hero--mur { padding: 9rem 0 4rem; min-height: 78vh; }
+.lx-hero--mur > .container > * { max-width: 620px; }
+.lx-hero--mur .mur-titre img { opacity: 0.62; }
+.lx-hero--mur .mur-titre::after { background: linear-gradient(180deg, rgba(90, 20, 27, 0.35) 0%, rgba(90, 20, 27, 0.7) 45%, rgba(90, 20, 27, 0.98) 85%); }
+.lx-hero--mur .lien-marche { color: #fff; }
+@media (min-width: 900px) {
+  .lx-hero--mur { padding: 8rem 0 5rem; }
+  .lx-hero--mur .mur-titre::after { background: linear-gradient(90deg, rgba(90, 20, 27, 0.98) 0%, rgba(90, 20, 27, 0.85) 45%, rgba(90, 20, 27, 0.35) 100%); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .lx-hero-photo { animation: none; }
-  :is(.lx-hero, .lx-boutons) .btn--principal::after { animation: none; display: none; }
+  :is(.lx-hero, .lx-boutons, .lx-formulaire) .btn--principal::after { animation: none; display: none; }
   .lx-galerie-photo img { transition: none; }
 }

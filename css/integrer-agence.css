@@ -63,11 +63,6 @@
 .ia-avantage h3 { margin: 1.4rem 0 0.5rem; font-size: 1.55rem; line-height: 1.15; }
 .ia-avantage p { margin: 0; line-height: 1.6; opacity: 0.9; }
 
-/* formulaire de candidature : écrin (css/luxe.css, .lx-ecrin) */
-.ia-formulaire { padding-top: 5rem; }
-.ia-formulaire .ca-1 { max-width: 760px; }
-.ia-formulaire .ca-2 { border-left: 0; border-radius: 8px; background: var(--lx-verre); border: 1px solid var(--lx-lisere); }
-.ia-formulaire #btn-envoyer { width: 100%; margin-top: 0.6rem; }
-.ia-formulaire .envoi-jauges { border-radius: 8px; }
+/* formulaire de candidature : écrin et boutons (css/luxe.css, .lx-formulaire) */
 
 @media (prefers-reduced-motion: reduce) { .ia-parcours-carte.choisie .ia-rond { animation: none; } }

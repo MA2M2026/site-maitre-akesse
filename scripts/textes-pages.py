@@ -14,6 +14,8 @@ d'événements, formulaires, parties cachées).
 
   python3 scripts/textes-pages.py --marquer    pose les repères manquants (FR et EN)
   python3 scripts/textes-pages.py --verifier   vérifie que FR et EN ont les mêmes repères
+  python3 scripts/textes-pages.py --completer integrer-agence
+                                               ajoute les repères manquants (nouveaux textes), après les anciens
 """
 import re
 import sys
@@ -118,6 +120,32 @@ def marquer(page, anglais):
     return len(repere_existants(''.join(morceaux)))
 
 
+def completer(page, anglais):
+    """Ajoute un repère aux textes simples qui n'en ont pas encore, à la suite des repères existants (numéros
+    suivants), sans toucher aux anciens (10/11/2026 : nouveaux textes d'« Intégrer l'agence »). Mêmes règles que
+    marquer() ; le français et l'anglais ayant la même structure, ils reçoivent les mêmes repères."""
+    if page not in PAGES:
+        raise ValueError('page non prévue : %s' % page)
+    nom = PAGES[PAGES.index(page)] + '.html'
+    chemin = (RACINE / 'en' / nom) if anglais else (RACINE / nom)
+    html = chemin.read_text(encoding='utf-8')
+    suivant = max([int(c.rsplit('-', 1)[1]) for c in repere_existants(html)] or [0]) + 1
+    morceaux, dernier = [], 0
+    for balise, debut, fin, fin_texte, oeil in zones(html):
+        cle = '%s-%d' % (page, suivant)
+        suivant += 1
+        if oeil:
+            morceaux += [html[dernier:fin], '<span data-texte="%s">' % cle, html[fin:fin_texte], '</span>']
+            dernier = fin_texte
+        else:
+            ouvrante = html[debut:fin]
+            morceaux += [html[dernier:debut], ouvrante[:-1] + ' data-texte="%s">' % cle]
+            dernier = fin
+    morceaux.append(html[dernier:])
+    chemin.write_text(''.join(morceaux), encoding='utf-8')
+    return len(repere_existants(''.join(morceaux)))
+
+
 def balises_reperees(html):
     """Pour chaque repère : la balise qui le porte (pour comparer FR et EN)."""
     return [(m.group(2), m.group(1)) for m in re.finditer(r'<(\w+)[^>]*? data-texte="([a-z-]+-\d+)"', html)]
@@ -144,6 +172,10 @@ def verifier():
 
 
 if __name__ == '__main__':
+    if '--completer' in sys.argv:
+        page = sys.argv[sys.argv.index('--completer') + 1]
+        for anglais in (False, True):
+            print('%s%s.html : %d repères' % ('en/' if anglais else '', page, completer(page, anglais)))
     if '--marquer' in sys.argv:
         for page in PAGES:
             for anglais in (False, True):
