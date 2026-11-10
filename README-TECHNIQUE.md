@@ -4369,8 +4369,16 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
   son choix (la personne choisit son nombre de séances ; 10 séances en salle = 250 000). Seule la base décide du
   montant enregistré (`cours_talons_montant`) ; la page n'affiche qu'un total indicatif.
 - **Pages** : `cours-talons.html`, `en/cours-talons.html`, `css/cours-talons.css`, `js/cours-talons.js` ; vidéo
-  `assets/cours-talons/atelier-talons-elegance.mp4` (720 × 1280, ~5 Mo, musique et voix originales) et son
-  affiche `assets/cours-talons/affiche.jpg` (aussi image d'aperçu des liens partagés).
+  `assets/cours-talons/atelier-talons-elegance.mp4` (vertical 720 × 1280) et `atelier-talons-elegance-large.mp4`
+  (horizontal 1280 × 720), ~8,5 Mo chacune, chargées seulement au clic (`preload="none"`), avec leurs affiches
+  `affiche.jpg` / `affiche-large.jpg` (le `?v=` des pages change à chaque nouvelle version : fichiers en cache 1 an).
+  **Version du 10/11/2026** (motion design « noir profond ») fabriquée par `outils/video-talons/` (jamais publié) :
+  voix ElevenLabs « Charlotte » v3 (`voix-eleven.py`, texte `voix-talons.json`, prononciations guidées « Akessé »,
+  « céfa », « Faïa », « Mannèdjmeunt » ; clé jamais écrite : secret réseau de l'environnement), musique originale
+  (`musique-talons.py`), film `film-talons.html` rendu image par image (`fabrique-talons.js`, chaque élément calé
+  sur le mot de la voix), médaillons et vignettes = photos du book du site recadrées (`medaillons/`, `vignettes/`).
+  **Jamais de photos de KAPO Ainhoa ni d'AKASSOU** (consigne de la propriétaire), jamais d'homme dans cette vidéo.
+  Rendu final allégé : `ffmpeg … -crf 27 -preset veryslow -movflags +faststart` depuis les images du film.
 - **Inscription en 4 étapes** : formule (et nombre de séances, lieu pour le privé à l'extérieur) → la personne
   (moins de 18 ans : nom et téléphone d'un parent obligatoires, aussi contrôlé par la base) → 2 à 5 photos et une
   vidéo de sa marche (3 minutes maximum depuis le 10/11/2026, allégée sur l'appareil par `js/video-allegee.js`) →
