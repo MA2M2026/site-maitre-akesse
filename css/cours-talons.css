@@ -195,3 +195,69 @@
 
 /* (la couverture et la bande « défilé » sont des boîtes souples : leur contenu reprend toute la largeur de la page) */
 .ct-hero > .container, .ct-defile > .container { width: 100%; }
+
+/* ===== Version « luxe » (10/11/2026, demande de la propriétaire : « très luxe », qu'une femme de 40 à 60 ans se dise
+   « c'est sérieux ») : titres en Cormorant Garamond (lettres à empattements des magazines de mode), filets fins,
+   ornements, chiffres romains, galerie de mannequins, beaucoup d'espace. */
+.ct-hero h1, .ct-formules h2, .ct-inscription h2, .ct-faq h2, .ct-grand-titre, .ct-carte h3, .ct-etape-titre h3, .ct-piliers h3 {
+  font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; color: #fff; }
+.ct-hero h1 { font-size: clamp(3rem, 11vw, 6.4rem); line-height: 0.92; font-weight: 500; }
+.ct-hero h1 .oeil { display: none; }
+.ct-formules h2, .ct-inscription h2, .ct-faq h2 { font-size: clamp(2.4rem, 6vw, 3.6rem); font-style: italic; text-align: center; }
+.ct-formules h2::after, .ct-inscription h2::after, .ct-faq h2::after { content: ""; display: block; width: 90px; height: 1px; margin: 1.1rem auto 0; background: rgba(255, 255, 255, 0.5); }
+.ct-carte h3 { font-size: 2.5rem; }
+.ct-etape-titre h3 { font-size: 1.75rem; }
+.ct-hero .eyebrow { font-size: 0.72rem; }
+
+/* couverture : cadre fin et lieu écrit à la verticale */
+.ct-hero-cadre { position: absolute; inset: 14px; z-index: -1; border: 1px solid rgba(255, 255, 255, 0.28); pointer-events: none; }
+.ct-hero-lieu { display: none; }
+@media (min-width: 900px) {
+  .ct-hero-cadre { inset: 22px; }
+  .ct-hero-lieu { display: block; position: absolute; right: 44px; bottom: 60px; margin: 0; writing-mode: vertical-rl; transform: rotate(180deg);
+    color: #fff; font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.85; }
+}
+
+/* surtitre, grand titre et ornement (filet avec un losange) */
+.ct-surtitre { margin: 0 0 0.8rem; text-align: center; color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.38em; text-transform: uppercase; opacity: 0.85; }
+.ct-grand-titre { margin: 0 auto; max-width: 18em; text-align: center; font-size: clamp(2.1rem, 6vw, 3.4rem); line-height: 1.1; }
+.ct-grand-titre em { font-style: italic; }
+.ct-ornement { position: relative; display: block; width: 160px; height: 1px; margin: 1.6rem auto 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)); }
+.ct-ornement::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; transform: rotate(45deg); border: 1px solid #fff; background: var(--rouge-mat); }
+
+/* l'Atelier en trois points (chiffres romains) */
+.ct-promesse { padding: 6rem 0 5rem; background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 60%); }
+.ct-piliers { list-style: none; margin: 3rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
+@media (min-width: 860px) { .ct-piliers { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
+.ct-piliers li { position: relative; padding: 2rem 1.6rem 1.6rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.35); }
+.ct-chiffre { display: block; margin-bottom: 0.6rem; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 2.8rem; line-height: 1; color: #fff; opacity: 0.9; }
+.ct-piliers h3 { margin: 0 0 0.6rem; font-size: 1.7rem; }
+.ct-piliers p { margin: 0 auto; max-width: 30ch; line-height: 1.7; color: #fff; opacity: 0.88; }
+
+/* galerie de mannequins : portraits encadrés d'un filet, celui du milieu décalé, léger zoom au survol */
+.ct-galerie { padding: 6rem 0 2rem; }
+.ct-galerie .ct-grand-titre { font-style: italic; max-width: 22em; font-size: clamp(1.7rem, 4.6vw, 2.6rem); }
+.ct-galerie-grille { display: flex; gap: 1rem; margin-top: 3rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 1rem; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.ct-galerie-grille::-webkit-scrollbar { display: none; }
+.ct-galerie-photo { position: relative; flex: 0 0 76%; margin: 0; scroll-snap-align: center; overflow: hidden; border-radius: 4px; aspect-ratio: 4 / 5;
+  box-shadow: 0 40px 70px -35px rgba(90, 20, 27, 1); }
+.ct-galerie-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.ct-galerie-photo::after { content: ""; position: absolute; inset: 10px; border: 1px solid rgba(255, 255, 255, 0.45); pointer-events: none; }
+.ct-galerie-photo:hover img { transform: scale(1.06); }
+@media (min-width: 860px) {
+  .ct-galerie-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6rem; overflow: visible; padding-bottom: 3rem; }
+  .ct-galerie-photo:nth-child(2) { transform: translateY(3rem); }
+}
+.ct-defile { margin-top: 2rem; }
+
+/* cartes de formules : coins plus fins, plus d'air */
+.ct-carte { border-radius: 8px; padding: 2.6rem 2.2rem 2.2rem; }
+.ct-carte::before { border-radius: 4px; }
+.ct-inscription #form-talons { border-radius: 10px; }
+.ct-choix > span { border-radius: 8px; }
+.ct-faq details { border-radius: 6px; }
+.ct-formules { padding-top: 6rem; }
+.ct-formules h2, .ct-inscription h2 { margin-bottom: 2.6rem; }
+.ct-inscription h2 { margin-bottom: 2.2rem; }
+
+@media (prefers-reduced-motion: reduce) { .ct-galerie-photo img { transition: none; } }
