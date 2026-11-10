@@ -5,7 +5,9 @@ comme une vraie voix off ; ElevenLabs renvoie l'instant de chaque lettre (with-t
 phrase et de chaque mot : les animations du film apparaissent pile quand la voix les dit.
 Prononciation guidée dans voix-talons.json : « Akessé », « Faïa », « céfa » (CFA en un seul mot).
 
-  python3 voix-eleven.py <dossier de sortie>
+  python3 voix-eleven.py <dossier de sortie> [--refaire 0,2]
+  (--refaire : seulement ces paragraphes, numérotés à partir de 0 ; les autres sont repris tels qu'enregistrés,
+   avec leurs instants, depuis <sortie>/p<n>.mp3 et <sortie>/p<n>.json)
 → <sortie>/voix.wav (toute la voix, paragraphes séparés par une respiration) et <sortie>/mots.json :
   { "phrases": { clé: [début, fin] }, "mots": { clé: [[mot, début, fin], …] }, "duree": secondes }
 
@@ -26,16 +28,21 @@ DEBUT = 1.2  # la voix commence après l'ouverture
 os.makedirs(SORTIE, exist_ok=True)
 textes = dict(json.load(open(os.path.join(ICI, 'voix-talons.json'), encoding='utf-8')))
 phrases, mots, morceaux, t0 = {}, {}, [], DEBUT
+REFAIRE = [int(x) for x in sys.argv[sys.argv.index('--refaire') + 1].split(',')] if '--refaire' in sys.argv else None
 for n, (cles, pause) in enumerate(PARAGRAPHES):
     texte = ' '.join(textes[c] for c in cles)
-    corps = {'text': texte, 'model_id': 'eleven_v3', 'language_code': 'fr', 'voice_settings': REGLAGES}
-    req = urllib.request.Request('https://api.elevenlabs.io/v1/text-to-speech/' + VOIX + '/with-timestamps?output_format=mp3_44100_128',
-                                 data=json.dumps(corps).encode(), headers={'xi-api-key': CLE, 'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req, timeout=300) as r:
-        d = json.load(r)
-    mp3 = os.path.join(SORTIE, 'p%d.mp3' % n)
-    open(mp3, 'wb').write(base64.b64decode(d['audio_base64']))
-    a = d.get('normalized_alignment') if d.get('alignment') is None else d['alignment']
+    mp3, jsn = os.path.join(SORTIE, 'p%d.mp3' % n), os.path.join(SORTIE, 'p%d.json' % n)
+    if REFAIRE is not None and n not in REFAIRE and os.path.exists(mp3) and os.path.exists(jsn):
+        a = json.load(open(jsn))   # paragraphe validé : repris tel quel
+    else:
+        corps = {'text': texte, 'model_id': 'eleven_v3', 'language_code': 'fr', 'voice_settings': REGLAGES}
+        req = urllib.request.Request('https://api.elevenlabs.io/v1/text-to-speech/' + VOIX + '/with-timestamps?output_format=mp3_44100_128',
+                                     data=json.dumps(corps).encode(), headers={'xi-api-key': CLE, 'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=300) as r:
+            d = json.load(r)
+        open(mp3, 'wb').write(base64.b64decode(d['audio_base64']))
+        a = d.get('normalized_alignment') if d.get('alignment') is None else d['alignment']
+        json.dump(a, open(jsn, 'w'), ensure_ascii=False)
     car, deb, fin = a['characters'], a['character_start_times_seconds'], a['character_end_times_seconds']
     lu = ''.join(car)
     duree = float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', mp3]))
