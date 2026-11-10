@@ -19,13 +19,13 @@
 .abs { position: absolute; z-index: 6; }
 .centre-x { left: 0; right: 0; text-align: center; }
 .petitev { padding: 8px; }
-.voile-centre { position: absolute; inset: 0; z-index: 5; background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0,0,0,0.85), rgba(0,0,0,0) 75%); }
+.voile-centre { position: absolute; inset: 0; z-index: 5; background: rgba(124,33,40,0.6); }
 /* 1. mots géants */
 .geant { top: 50%; transform: translateY(-50%); }
 body:not(.large) .geant { font-size: 260px; }
 body.large .geant { font-size: 300px; }
 /* 2. portes MA | 2M */
-.porte { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 8; background: linear-gradient(180deg, #141417, #050506); display: flex; align-items: center; }
+.porte { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 8; background: #7C2128; display: flex; align-items: center; }
 .porte.g { left: 0; justify-content: flex-end; border-right: 2px solid rgba(255,255,255,0.6); }
 .porte.d { right: 0; justify-content: flex-start; border-left: 2px solid rgba(255,255,255,0.6); }
 .porte span { font: 800 230px/1 'Big Shoulders Display'; padding: 0 40px; }
@@ -34,18 +34,18 @@ body.large .logo-centre { width: 560px; }
 /* 3. grand 2 */
 .deux { font: 800 1100px/0.8 'Big Shoulders Display'; color: transparent; -webkit-text-stroke: 4px rgba(255,255,255,0.9); left: 0; right: 0; text-align: center; top: 300px; }
 body.large .deux { font-size: 860px; top: 90px; left: 0; right: auto; width: 1000px; }
-.carte-etape { width: 400px; padding: 34px 36px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.4); background: linear-gradient(155deg, rgba(255,255,255,0.12), rgba(0,0,0,0.85)); box-shadow: 0 50px 90px -40px #000; }
+.carte-etape { width: 400px; padding: 34px 36px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.4); background: #7C2128; box-shadow: 0 50px 90px -40px rgba(40,6,10,0.9); }
 .carte-etape small { font: 600 22px 'Work Sans'; letter-spacing: 0.3em; opacity: 0.8; }
 .carte-etape b { display: block; font: 500 64px/1.05 'Cormorant Garamond'; margin: 10px 0 8px; }
 .carte-etape span { font: 400 28px 'Work Sans'; opacity: 0.85; }
-.carte-etape.blanche { background: #fff; color: #08080a; }
+.carte-etape.blanche { background: #fff; color: #7C2128; }
 /* 4–5. téléphone */
-.tel { width: 560px; height: 1120px; border-radius: 70px; background: #050506; border: 3px solid rgba(255,255,255,0.75); padding: 22px; box-shadow: 0 80px 140px -40px #000, 0 0 0 14px rgba(255,255,255,0.06); transform-origin: 50% 100%; }
+.tel { width: 560px; height: 1120px; border-radius: 70px; background: #1a1a1c; border: 3px solid rgba(255,255,255,0.75); padding: 22px; box-shadow: 0 80px 140px -40px #000, 0 0 0 14px rgba(255,255,255,0.06); transform-origin: 50% 100%; }
 body:not(.large) .tel { left: 260px; top: 520px; }
 body.large .tel { left: 230px; top: 110px; width: 430px; height: 860px; border-radius: 56px; padding: 18px; }
-.ecran { width: 100%; height: 100%; border-radius: 50px; background: #f4f4f5; color: #0c0c0e; overflow: hidden; position: relative; font-family: 'Work Sans'; }
+.ecran { width: 100%; height: 100%; border-radius: 50px; background: #f4f4f5; color: #7C2128; overflow: hidden; position: relative; font-family: 'Work Sans'; }
 body.large .ecran { border-radius: 40px; }
-.ecran .barre { background: #0c0c0e; color: #fff; padding: 70px 34px 26px; font: 600 30px 'Work Sans'; }
+.ecran .barre { background: #7C2128; color: #fff; padding: 70px 34px 26px; font: 600 30px 'Work Sans'; }
 body.large .ecran .barre { padding: 54px 26px 20px; font-size: 24px; }
 .ecran h4 { font: 600 22px 'Work Sans'; letter-spacing: 0.2em; text-transform: uppercase; color: #6b6b70; margin: 30px 34px 14px; }
 body.large .ecran h4 { font-size: 18px; margin: 22px 26px 10px; }
@@ -62,20 +62,20 @@ body.large .champ { margin: 0 26px 10px; }
 body.large .champ small { font-size: 17px; }
 .champ i { display: block; height: 46px; border-radius: 10px; background: #fff; border: 2px solid #d4d4d8; margin-top: 6px; position: relative; overflow: hidden; }
 body.large .champ i { height: 36px; }
-.champ i::after { content: attr(data-texte); position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font: 500 24px 'Work Sans'; color: #0c0c0e; }
+.champ i::after { content: attr(data-texte); position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font: 500 24px 'Work Sans'; color: #7C2128; }
 body.large .champ i::after { font-size: 19px; }
-.envoyer { display: block; margin: 22px 34px 0; padding: 22px; border-radius: 999px; background: #0c0c0e; color: #fff; text-align: center; font: 700 26px 'Work Sans'; }
+.envoyer { display: block; margin: 22px 34px 0; padding: 22px; border-radius: 999px; background: #7C2128; color: #fff; text-align: center; font: 700 26px 'Work Sans'; }
 body.large .envoyer { margin: 16px 26px 0; padding: 16px; font-size: 20px; }
 .bulle { margin: 28px 30px 0; padding: 26px 28px; border-radius: 22px 22px 22px 6px; background: #fff; box-shadow: 0 10px 30px -14px rgba(0,0,0,0.3); font: 400 27px/1.4 'Work Sans'; }
 body.large .bulle { margin: 20px 22px 0; padding: 20px 22px; font-size: 21px; }
 .bulle b { font-weight: 700; }
 .calendrier { width: 230px; margin: 26px auto 0; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 20px 40px -18px rgba(0,0,0,0.5); text-align: center; }
 body.large .calendrier { width: 180px; margin-top: 18px; }
-.calendrier b { display: block; background: #0c0c0e; color: #fff; font: 700 26px 'Work Sans'; letter-spacing: 0.2em; padding: 12px; }
+.calendrier b { display: block; background: #7C2128; color: #fff; font: 700 26px 'Work Sans'; letter-spacing: 0.2em; padding: 12px; }
 .calendrier span { display: block; font: 800 150px/1.05 'Big Shoulders Display'; }
 body.large .calendrier span { font-size: 116px; }
 .canaux { display: flex; gap: 12px; justify-content: center; margin-top: 22px; }
-.canaux span { padding: 12px 22px; border-radius: 999px; background: #0c0c0e; color: #fff; font: 600 22px 'Work Sans'; }
+.canaux span { padding: 12px 22px; border-radius: 999px; background: #7C2128; color: #fff; font: 600 22px 'Work Sans'; }
 body.large .canaux span { font-size: 17px; padding: 10px 16px; }
 .legende-tel { z-index: 6; }
 body:not(.large) .legende-tel { left: 90px; right: 90px; top: 210px; }
@@ -133,7 +133,7 @@ body.large .bande { left: 80px; top: 318px; }
 .bande div { flex: none; width: 380px; height: 600px; overflow: hidden; border-radius: 4px; }
 body.large .bande div { width: 270px; height: 385px; }
 .bande img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; filter: brightness(0.85); }
-.tampon { padding: 18px 40px; border: 7px solid #fff; border-radius: 10px; font: 800 120px/1 'Big Shoulders Display'; letter-spacing: 0.06em; background: rgba(0,0,0,0.35); }
+.tampon { padding: 18px 40px; border: 7px solid #fff; border-radius: 10px; font: 800 120px/1 'Big Shoulders Display'; letter-spacing: 0.06em; background: #7C2128; }
 body.large .tampon { font-size: 96px; }
 .tampon small { display: block; font: 600 20px 'Work Sans'; letter-spacing: 0.3em; text-align: center; margin-top: 4px; }
 body:not(.large) .exp-compte { top: 1290px; } body:not(.large) .tampon { left: 470px; top: 820px; } body:not(.large) .exp-direct { top: 1420px; }
@@ -141,7 +141,7 @@ body.large .exp-compte { top: 710px; } body.large .tampon { left: 1180px; top: 3
 /* 10. réseau */
 .reseau-svg { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,0.7); stroke-width: 2.5; }
 body:not(.large) .reseau-svg.l, body.large .reseau-svg.v { display: none; }
-.coeur-reseau { width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2a2a30, #050506); border: 3px solid #fff; box-shadow: 0 0 0 16px rgba(255,255,255,0.08), 0 40px 90px -20px #000; display: grid; place-items: center; z-index: 7; }
+.coeur-reseau { width: 300px; height: 300px; border-radius: 50%; background: #7C2128; border: 3px solid #fff; box-shadow: 0 0 0 16px rgba(255,255,255,0.08), 0 40px 90px -20px #000; display: grid; place-items: center; z-index: 7; }
 body:not(.large) .coeur-reseau { left: 390px; top: 860px; }
 body.large .coeur-reseau { left: 830px; top: 430px; width: 260px; height: 260px; }
 .coeur-reseau img { width: 74%; filter: brightness(0) invert(1); }
@@ -152,7 +152,7 @@ body.large .noeud .medaillon { width: 110px; height: 110px; }
 .noeud b { font: 600 28px 'Work Sans'; }
 body.large .noeud b { font-size: 23px; }
 /* 11. page de profil */
-.navigateur { z-index: 6; border-radius: 18px; overflow: hidden; background: #f4f4f5; color: #0c0c0e; box-shadow: 0 80px 140px -40px #000, 0 0 0 1px rgba(255,255,255,0.5); transform-origin: 50% 100%; }
+.navigateur { z-index: 6; border-radius: 18px; overflow: hidden; background: #f4f4f5; color: #7C2128; box-shadow: 0 80px 140px -40px #000, 0 0 0 1px rgba(255,255,255,0.5); transform-origin: 50% 100%; }
 body:not(.large) .navigateur { left: 110px; top: 470px; width: 860px; height: 1220px; }
 body.large .navigateur { left: 560px; top: 290px; width: 1000px; height: 690px; }
 .navigateur .url { display: flex; align-items: center; gap: 12px; padding: 18px 24px; background: #e4e4e7; font: 500 22px 'Work Sans'; color: #52525b; }
@@ -168,7 +168,7 @@ body.large .infos-profil { position: absolute; left: 500px; top: 100px; right: 3
 .miniatures { display: flex; gap: 12px; }
 .miniatures div { flex: 1; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden; }
 .miniatures img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
-.gratuit { width: 240px; height: 240px; border-radius: 50%; background: #fff; color: #0c0c0e; display: grid; place-items: center; text-align: center; font: 800 64px/0.9 'Big Shoulders Display'; box-shadow: 0 30px 60px -20px #000, 0 0 0 10px rgba(255,255,255,0.25); z-index: 9; }
+.gratuit { width: 240px; height: 240px; border-radius: 50%; background: #fff; color: #7C2128; display: grid; place-items: center; text-align: center; font: 800 64px/0.9 'Big Shoulders Display'; box-shadow: 0 30px 60px -20px #000, 0 0 0 10px rgba(255,255,255,0.25); z-index: 9; }
 .gratuit small { display: block; font: 600 16px 'Work Sans'; letter-spacing: 0.2em; }
 body:not(.large) .gratuit { left: 760px; top: 380px; }
 body.large .gratuit { left: 1440px; top: 120px; }
@@ -176,17 +176,17 @@ body.large .gratuit { left: 1440px; top: 120px; }
 .mosaique.mur { gap: 6px; padding: 6px; }
 body:not(.large) .mosaique.mur { grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(9, 1fr); }
 body.large .mosaique.mur { grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(5, 1fr); }
-.mosaique.mur::after { background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(0,0,0,0.9), rgba(0,0,0,0.55) 90%); }
+.mosaique.mur::after { background: rgba(124,33,40,0.72); }
 .commence { font: 800 150px/0.9 'Big Shoulders Display'; text-transform: uppercase; }
 body.large .commence { font-size: 170px; }
 .boutons-fin { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 40px; }
 body.large .boutons-fin { flex-direction: row; justify-content: center; }
 .btn { padding: 24px 50px; border-radius: 999px; font: 700 34px 'Work Sans'; border: 2px solid #fff; }
-.btn.plein { background: #fff; color: #08080a; }
+.btn.plein { background: #fff; color: #7C2128; }
 .logo-fin { display: block; height: 120px; margin: 0 auto 40px; filter: brightness(0) invert(1); }
 </style>
 </head>
-<body>
+<body class="mat">
 <div id="film">
 
   <section class="scene" data-de="a1" data-transition="fondu">
