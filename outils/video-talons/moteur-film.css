@@ -142,3 +142,13 @@ body.mat .carte, body.mat .note { background: #7C2128; box-shadow: 0 50px 100px 
 body.mat #barres i { background: #6E1C23; }
 body.mat .medaillon .disque { background: #fff; }
 body.mat .medaillon .num { background: #7C2128; }
+/* Boutons du thème mat = LE bouton du site (css/bouton-ma2m.css et css/luxe.css) : sur le rouge, blanc à écriture
+   rouge mat, arrondi, Montserrat 700 ; dans un bloc blanc, rouge mat à écriture blanche. */
+@font-face { font-family: 'Montserrat'; font-weight: 700; src: url('../../assets/polices/montserrat-latin-700-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 700; src: url('../../assets/polices/montserrat-latin-ext-700-normal.woff2'); unicode-range: U+0100-024F; }
+body.mat .bouton, body.mat .btn { background: #fff !important; color: #7C2128 !important; border: 1px solid #fff !important; border-radius: 999px;
+  font-family: 'Montserrat', sans-serif !important; font-weight: 700 !important; letter-spacing: 0.08em;
+  box-shadow: 0 14px 34px -12px rgba(90,20,27,0.9), 0 0 0 4px rgba(255,255,255,0.12) !important; }
+body.mat .bouton i { background: linear-gradient(105deg, rgba(255,255,255,0) 0%, rgba(124,33,40,0.18) 50%, rgba(255,255,255,0) 100%); }
+body.mat .bouton-dans-blanc { background: #7C2128 !important; color: #fff !important; border-color: #7C2128 !important;
+  font-family: 'Montserrat', sans-serif !important; font-weight: 700 !important; letter-spacing: 0.04em; border-radius: 999px; }

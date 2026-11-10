@@ -75,7 +75,7 @@ body.large .calendrier { width: 180px; margin-top: 18px; }
 .calendrier span { display: block; font: 800 150px/1.05 'Big Shoulders Display'; }
 body.large .calendrier span { font-size: 116px; }
 .canaux { display: flex; gap: 12px; justify-content: center; margin-top: 22px; }
-.canaux span { padding: 12px 22px; border-radius: 999px; background: #7C2128; color: #fff; font: 600 22px 'Work Sans'; }
+.canaux span { padding: 12px 22px; border-radius: 999px; background: #7C2128; color: #fff; font: 700 22px 'Montserrat'; letter-spacing: 0.04em; }
 body.large .canaux span { font-size: 17px; padding: 10px 16px; }
 .legende-tel { z-index: 6; }
 body:not(.large) .legende-tel { left: 90px; right: 90px; top: 210px; }
@@ -238,7 +238,7 @@ body.large .boutons-fin { flex-direction: row; justify-content: center; }
       <h4>Mes informations</h4>
       <div class="champ" data-voix="ligne" data-mot="informations" data-anim="monte"><small>Nom</small><i data-texte="Votre nom"></i></div>
       <div class="champ" data-voix="ligne" data-mot="informations" data-retard="0.2" data-anim="monte"><small>Taille</small><i data-texte="1,78 m"></i></div>
-      <span class="envoyer" data-voix="ligne" data-mot="déposer" data-anim="pop">Envoyer ma candidature</span>
+      <span class="envoyer bouton-dans-blanc" data-voix="ligne" data-mot="déposer" data-anim="pop">Envoyer ma candidature</span>
     </div></div>
   </section>
 
@@ -263,10 +263,10 @@ body.large .boutons-fin { flex-direction: row; justify-content: center; }
     <div class="repere homme" data-voix="tailles" data-mot="hommes" data-anim="deplace" data-y1="-933" data-y1l="-622"><b><span data-voix="tailles" data-mot="hommes" data-anim="compteur" data-depart="1.5" data-valeur="1.85" data-decimales="2">1,85</span> m</b><small>Hommes</small></div>
   </section>
 
-  <section class="scene" data-de="mineurs" data-transition="fondu">
-    <div class="texte centre milieu"><p class="surtitre" data-voix="mineurs" data-anim="glisse">Âge minimum</p>
-      <div class="quatorze" data-voix="mineurs" data-anim="zoom">14<sup>+</sup></div>
-      <p class="moyen"><em data-voix="mineurs" data-mot="candidats" data-anim="mots">ans minimum</em></p>
+  <section class="scene" data-de="tailles" data-demot="âge" data-transition="fondu">
+    <div class="texte centre milieu"><p class="surtitre" data-voix="tailles" data-mot="âge" data-anim="glisse">Âge minimum</p>
+      <div class="quatorze" data-voix="tailles" data-mot="14" data-anim="zoom">14<sup>+</sup></div>
+      <p class="moyen"><em data-voix="tailles" data-mot="ans" data-anim="mots">ans minimum</em></p>
       <div class="pastilles"><span class="pastille blanche" data-voix="mineurs" data-mot="autorisation" data-anim="pop">14 – 17 ans : avec l’accord d’un parent ou d’un tuteur</span></div></div>
   </section>
 
@@ -320,11 +320,11 @@ body.large .boutons-fin { flex-direction: row; justify-content: center; }
       <p class="grand"><span data-voix="quel" data-mot="quel" data-anim="lettres">Quel sera</span><br><em data-voix="quel" data-mot="parcours" data-anim="lettres">votre parcours ?</em></p></div></div>
     <div class="texte centre milieu"><p class="grand"><em data-voix="histoire" data-mot="histoire" data-anim="lettres">Votre histoire</em></p>
       <p class="commence" data-voix="histoire" data-mot="commencer" data-anim="pop">Commence ici</p>
-      <div class="boutons-fin"><span class="btn plein" data-voix="histoire" data-mot="débutant" data-anim="pop">Je débute</span><span class="btn" data-voix="histoire" data-mot="expérimenté" data-anim="pop">J’ai déjà été mannequin</span></div>
+      <div class="boutons-fin"><span class="btn" data-voix="histoire" data-mot="débutant" data-anim="pop">Je débute</span><span class="btn" data-voix="histoire" data-mot="expérimenté" data-anim="pop">J’ai déjà été mannequin</span></div>
       <span class="bouton" data-voix="choisissez" data-mot="envoyez" data-anim="pop">Envoyer ma candidature<i></i></span></div>
   </section>
 
-  <section class="scene" data-de="fin" data-transition="fondu">
+  <section class="scene" data-de="fin" data-transition="cercle">
     <div class="mosaique mur" data-pas="0.025"><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/h059.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/h101.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/h000.jpg"></div><div class="photo-m"><img src="vignettes/149.jpg"></div><div class="photo-m"><img src="vignettes/061.jpg"></div><div class="photo-m"><img src="vignettes/104.jpg"></div><div class="photo-m"><img src="vignettes/182.jpg"></div><div class="photo-m"><img src="vignettes/148.jpg"></div><div class="photo-m"><img src="vignettes/138.jpg"></div><div class="photo-m"><img src="vignettes/063.jpg"></div><div class="photo-m"><img src="vignettes/042.jpg"></div><div class="photo-m"><img src="vignettes/151.jpg"></div><div class="photo-m"><img src="vignettes/016.jpg"></div><div class="photo-m"><img src="vignettes/088.jpg"></div><div class="photo-m"><img src="vignettes/113.jpg"></div><div class="photo-m"><img src="vignettes/162.jpg"></div><div class="photo-m"><img src="vignettes/179.jpg"></div><div class="photo-m"><img src="vignettes/051.jpg"></div><div class="photo-m"><img src="vignettes/084.jpg"></div><div class="photo-m"><img src="vignettes/h019.jpg"></div><div class="photo-m"><img src="vignettes/h024.jpg"></div><div class="photo-m"><img src="vignettes/h081.jpg"></div><div class="photo-m"><img src="vignettes/h076.jpg"></div><div class="photo-m"><img src="vignettes/h088.jpg"></div><div class="photo-m"><img src="vignettes/h103.jpg"></div><div class="photo-m"><img src="vignettes/h085.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div><div class="photo-m"><img src="vignettes/050.jpg"></div><div class="photo-m"><img src="vignettes/017.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/037.jpg"></div><div class="photo-m"><img src="vignettes/053.jpg"></div><div class="photo-m"><img src="vignettes/005.jpg"></div><div class="photo-m"><img src="vignettes/106.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m"><img src="vignettes/004.jpg"></div><div class="photo-m"><img src="vignettes/135.jpg"></div><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/h067.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/h059.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/h101.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/h000.jpg"></div></div>
     <div class="texte centre milieu"><img class="logo-fin" data-voix="fin" data-anim="pop" src="../../assets/logo-intro.png" alt="">
       <p class="titre"><span data-voix="fin" data-mot="formé" data-anim="lettres">Formé.</span> <span data-voix="fin" data-mot="révélé" data-anim="lettres">Révélé.</span><br><em data-voix="fin" data-mot="valorisé" data-anim="lettres">Valorisé.</em></p></div>

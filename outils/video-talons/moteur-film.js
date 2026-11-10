@@ -41,7 +41,9 @@ window.MANQUES = [];
 // début d'une scène : un peu avant sa première phrase, mais jamais avant la fin de la phrase précédente (une voix
 // qui enchaîne sans pause ne doit pas voir la transition couper la fin de la scène d'avant)
 const CLES = Object.keys(T.phrases);
-function debutScene(cle) {
+function debutScene(cle, mot) {
+  // data-demot : la scène commence sur un MOT de la phrase (ex. « âge » : le « 14+ » arrive quand la voix le dit)
+  if (mot) { const m = (T.mots[cle] || []).find((x) => normal(x[0]).startsWith(normal(mot))); if (m) return Math.max(0, m[1] - 0.3); window.MANQUES.push('scène ' + cle + ' : ' + mot); }
   const i = CLES.indexOf(cle), d = T.phrases[cle][0];
   const finAvant = i > 0 ? T.phrases[CLES[i - 1]][1] - 0.05 : 0;
   return Math.max(0, Math.min(d, Math.max(d - 0.55, finAvant)));
@@ -94,7 +96,7 @@ const scenes = [...document.querySelectorAll('.scene')].map((el, i) => {
     formes.push({ f, retard: 0.15 + k * 0.11, rot: (r() - 0.5) * 30, vit: 0.25 + r() * 0.4, amp: 18 + r() * 34, ph: r() * 6.28 });
   });
   el.insertBefore(arriere, el.firstChild); el.appendChild(avant); el.appendChild(plateau);
-  return { el, plateau, formes, debut: debutScene(el.dataset.de), transition: el.dataset.transition || 'fondu',
+  return { el, plateau, formes, debut: debutScene(el.dataset.de, el.dataset.demot), transition: el.dataset.transition || 'fondu',
     photos: [...el.querySelectorAll('.photo, .photo-m')],
     elements: [...el.querySelectorAll('[data-voix]')].map((x) => ({ x, t: instant(x), anim: x.dataset.anim || 'monte',
       mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
