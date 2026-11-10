@@ -164,13 +164,12 @@ function niveauEtudesChoisi() {
 // (4K, 60 images/s…) est d'abord ALLÉGÉE par l'appareil du candidat (js/video-allegee.js,
 // 30/09) ; si l'appareil ne sait pas le faire, la vidéo d'origine part telle quelle,
 // à condition de ne pas dépasser 60 Mo (au-delà, l'envoi échoue sur mobile). ---
-const VIDEO_MAX_OCTETS = 60 * 1024 * 1024;
-const VIDEO_MAX_ORIGINAL = 2 * 1024 * 1024 * 1024; // avant allègement
+const VIDEO_MAX_OCTETS = VIDEO_ENVOI_MAX_OCTETS;          // (js/app.js : limite du programme Google Drive)
+const VIDEO_MAX_ORIGINAL = VIDEO_ORIGINALE_MAX_OCTETS;    // avant allègement (js/app.js)
 const VIDEO_MAX_SECONDES = VIDEO_DUREE_MAX_SECONDES; // 3 minutes annoncées (js/app.js), petite marge
 let videoChoisie = null;
 let videoEnPreparation = null; // promesse tant que l'allègement n'est pas fini
 let numeroVideo = 0;           // pour ignorer une ancienne vidéo remplacée entre-temps
-let envoiCommence = false;     // jauges de l'envoi affichées (la préparation de la vidéo y est aussi montrée)
 function montrerApercuVideo(adresseImage, texte) {
   const bloc = document.getElementById('ca-video-apercu');
   const img = bloc.querySelector('img');
@@ -207,7 +206,7 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   if (numero !== numeroVideo) return;
   if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) {
     info.style.color = 'var(--rouge)';
-    info.textContent = T(`Vidéo trop longue (${Math.floor(Math.round(duree) / 60)} min ${String(Math.round(duree) % 60).padStart(2, '0')}) : 3 minutes maximum.`, `Video too long (${Math.floor(Math.round(duree) / 60)} min ${String(Math.round(duree) % 60).padStart(2, '0')}): 3 minutes maximum.`);
+    info.textContent = T(`Vidéo trop longue (${dureeLisible(duree)}) : 3 minutes maximum.`, `Video too long (${dureeLisible(duree)}): 3 minutes maximum.`);
     e.target.value = ''; return;
   }
   montrerApercuVideo(examen.apercu, examen.apercu ? T('Votre vidéo : vérifiez que c\'est bien la bonne.', 'Your video: please check it is the right one.') : '');
@@ -223,7 +222,6 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
     try {
       if (window.allegerVideo) allegee = await window.allegerVideo(fichier, (pc) => {
         if (numero === numeroVideo) majJauge('ca-video-jauge', pc, T('Préparation de votre vidéo (allègement pour un envoi rapide)…', 'Preparing your video (reducing it for a faster upload)…'));
-        if (numero === numeroVideo && envoiCommence) majJauge('ca-jauge-video', pc, T('Vidéo : préparation…', 'Video: preparing…'));
       }, VIDEO_ALLEGEMENT_RAPIDE);
     } catch (err) {
       allegee = null;
@@ -496,7 +494,6 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   // Jauges (10/11/2026) : UNE PAR PHOTO, préparée (0 → 25 %), puis envoyées ensemble (un seul envoi : le programme
   // Google crée un dossier par envoi) ; pendant l'envoi les jauges avancent selon le temps estimé, sans dépasser
   // 95 % avant la réponse de Google, puis passent au vert. Photos réduites à 1600 px (PHOTO_COTE_ENVOI, js/app.js).
-  envoiCommence = true;
   document.getElementById('ca-envoi-jauges').classList.remove('u-hidden');
   const boiteJauges = document.getElementById('ca-jauges-photos');
   boiteJauges.textContent = '';
@@ -537,11 +534,9 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     });
 
     arreterPhotos();
-    // (les liens reviennent dans l'ordre des photos envoyées ; une photo refusée par Google est en fin de liste)
-    rangsEnvoyes.forEach((i, k) => {
-      if (!echec && k < liens.length) majJauge(idsPhotos[i], 100, nomPhoto(i) + T(' : envoyée ✓', ': sent ✓'));
-      else jaugeEnErreur(idsPhotos[i], nomPhoto(i) + T(' : non envoyée', ': not sent'));
-    });
+    // (Google peut écarter une photo sans dire laquelle : comptée comme manquante, jauges selon jaugesPhotosArrivees)
+    const manquantes = jaugesPhotosArrivees(idsPhotos, rangsEnvoyes, echec ? 0 : liens.length, nomPhoto);
+    if (!echec) nbPhotosEchouees = Math.max(nbPhotosEchouees, manquantes);
     dossierDrive = dossier || null;
     if (!echec) {
       for (const lien of liens) {
@@ -576,7 +571,11 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
       type: PARCOURS, projet: projetNom || '', dossier: dossierDrive
     }, videoChoisie, 'ca-jauge-video');
-    if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
+    if (lienVideo) {
+      const { error: erreurVideo } = await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
+      // (la vidéo est sur Drive et son lien part dans l'e-mail à l'agence ; on note seulement l'échec de l'ajout au dossier)
+      if (erreurVideo && window.signalerErreur) window.signalerErreur('Vidéo non ajoutée au dossier de candidature', erreurVideo.message || String(erreurVideo), lienVideo);
+    }
   } catch (e) {
     lienVideo = null;
     jaugeEnErreur('ca-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));
@@ -602,7 +601,6 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   if (PARCOURS === 'projet') document.getElementById('ca-bloc-projet-autre').style.display = 'none';
   videoChoisie = null;
   numeroVideo++;
-  envoiCommence = false;
   document.getElementById('ca-video-info').textContent = '';
   cacherJauge('ca-video-jauge');
   montrerApercuVideo(null, '');

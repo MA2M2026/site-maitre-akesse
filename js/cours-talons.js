@@ -23,7 +23,7 @@
   // refuse plus de 60 Mo : la vidéo est allégée en 480p (environ 6 Mo la minute) et son poids final est vérifié.
   const PHOTOS_MAX = 5, PHOTOS_MIN = 2;
   const VIDEO_MAX_SECONDES = VIDEO_DUREE_MAX_SECONDES;  // (js/app.js)
-  const VIDEO_MAX_OCTETS = 60 * 1024 * 1024, VIDEO_MAX_ORIGINAL = 4 * 1024 * 1024 * 1024;
+  const VIDEO_MAX_OCTETS = VIDEO_ENVOI_MAX_OCTETS, VIDEO_MAX_ORIGINAL = VIDEO_ORIGINALE_MAX_OCTETS;  // (js/app.js)
   const ALLEGEMENT = VIDEO_ALLEGEMENT_RAPIDE;  // (js/app.js : 480p, ~6 Mo la minute)
   const fcfa = enFcfa;  // (js/app.js, comme LIEN_WAVE_AGENCE : le lien Wave des mensualités)
 
@@ -177,7 +177,6 @@
     })();
   });
 
-  const dureeLisible = (d) => { const t = Math.round(d); return t < 90 ? t + ' s' : Math.floor(t / 60) + ' min ' + String(t % 60).padStart(2, '0'); };
 
   // (jauges : creerJauge et avancerDoucement, js/app.js)
 
@@ -191,10 +190,7 @@
     const boite = $('ct-jauges-photos'); boite.textContent = '';
     const ids = photos.map((f, i) => { boite.appendChild(creerJauge('ct-jauge-photo-' + (i + 1))); return 'ct-jauge-photo-' + (i + 1); });
     const nomPhoto = (i) => T('Photo ', 'Photo ') + (i + 1);
-    const photosArrivees = () => ids.forEach((id, i) => {
-      if (d.rangs.indexOf(i) !== -1 && d.rangs.indexOf(i) < d.liens.length) majJauge(id, 100, nomPhoto(i) + T(' : envoyée ✓', ': sent ✓'));
-      else jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent'));
-    });
+    const photosArrivees = () => jaugesPhotosArrivees(ids, d.rangs, d.liens.length, nomPhoto);  // (js/app.js)
     if (d.liens.length) photosArrivees();
     else ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
@@ -206,13 +202,17 @@
       const base64 = [], rangs = [];
       for (let i = 0; i < photos.length; i++) {
         majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
-        try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(photos[i]), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI))); rangs.push(i); } catch (err) { /* photo illisible : ignorée */ }
-        majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
+        try {
+          base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(photos[i]), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI)));
+          rangs.push(i);
+          majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
+        } catch (err) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : illisible', ': unreadable')); }
       }
       // ~150 Ko/s : un débit mobile modeste ; la jauge ralentit d'elle-même si c'est plus long
       const octets = base64.reduce((t, x) => t + x.length, 0);
-      const arreter = avancerDoucement(ids, 25, 95, Math.max(2500, octets / 150), null);
-      ids.forEach((id, i) => majJauge(id, 25, nomPhoto(i) + T(' : envoi…', ': sending…')));
+      const idsEnvoyes = rangs.map((i) => ids[i]);
+      const arreter = avancerDoucement(idsEnvoyes, 25, 95, Math.max(2500, octets / 150), null);
+      rangs.forEach((i) => majJauge(ids[i], 25, nomPhoto(i) + T(' : envoi…', ': sending…')));
       const r = base64.length ? await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, photos: base64 }) : { liens: [], dossier: null };
       arreter();
       d.liens = r.liens || []; d.rangs = rangs; d.dossier = r.dossier || null;

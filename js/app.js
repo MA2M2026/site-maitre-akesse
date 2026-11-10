@@ -2920,6 +2920,24 @@ function avancerDoucement(ids, depart, plafond, dureeEstimeeMs, titre) {
 // allégée en 480p (~6 Mo la minute, son compris) ; photos réduites à 1600 px. Le programme Google Drive refuse plus
 // de 60 Mo par vidéo (VIDEO_MAX_OCTETS des pages).
 const VIDEO_DUREE_MAX_SECONDES = 185;
+const VIDEO_ENVOI_MAX_OCTETS = 60 * 1024 * 1024;           // limite du programme Google Drive
+const VIDEO_ORIGINALE_MAX_OCTETS = 4 * 1024 * 1024 * 1024; // vidéo choisie, avant allègement (3 min en 4K)
+// Durée lisible : « 45 s », « 2 min 05 ».
+function dureeLisible(d) { const t = Math.round(d); return t < 90 ? t + ' s' : Math.floor(t / 60) + ' min ' + String(t % 60).padStart(2, '0'); }
+// Jauges des photos après la réponse de Google : ids = une jauge par photo choisie ; rangs = numéros des photos
+// réellement envoyées (une photo illisible est laissée de côté) ; recues = nombre de liens rendus par Google.
+// Google rend la liste des photos reçues sans dire laquelle manque : si toutes sont arrivées, toutes passent au vert ;
+// sinon aucune n'est donnée pour sûre (jamais une jauge verte pour une photo peut-être perdue). Renvoie le nombre de
+// photos manquantes (illisibles comprises).
+function jaugesPhotosArrivees(ids, rangs, recues, nomPhoto) {
+  ids.forEach((id, i) => {
+    if (rangs.indexOf(i) === -1) jaugeEnErreur(id, nomPhoto(i) + T(' : illisible', ': unreadable'));
+    else if (recues >= rangs.length) majJauge(id, 100, nomPhoto(i) + T(' : envoyée ✓', ': sent ✓'));
+    else if (!recues) jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent'));
+    else jaugeEnErreur(id, nomPhoto(i) + T(` : envoi incomplet (${recues} sur ${rangs.length} reçues)`, `: incomplete (${recues} of ${rangs.length} received)`));
+  });
+  return ids.length - Math.min(recues, rangs.length);
+}
 const VIDEO_ALLEGEMENT_RAPIDE = { coteLong: 854, debit: 700000, audioDebit: 64000, dejaLegere: 5 * 1024 * 1024 };
 const PHOTO_COTE_ENVOI = 1600, PHOTO_QUALITE_ENVOI = 0.82;
 
@@ -3074,7 +3092,11 @@ async function envoyerVideoAvecJauge(urlScript, infos, fichier, idJauge) {
   const lien = await envoyerVideoVersDrive(urlScript, infos, fichier, (pc) => {
     arreter();
     if (pc < 100) arreter = avancerDoucement([idJauge], pc, Math.min(98, pc + part), duree, titre);
-  }).catch(() => null);
+  }).catch((e) => {
+    // (envoyerVideoVersDrive note déjà ses propres échecs ; ici, seulement l'imprévu)
+    if (window.signalerErreur) window.signalerErreur('Vidéo non envoyée (erreur imprévue)', (e && e.message) || String(e), enMo(fichier.size) + ', ' + (fichier.type || 'type inconnu'));
+    return null;
+  });
   arreter();
   if (lien) majJauge(idJauge, 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
   else jaugeEnErreur(idJauge, T('Vidéo : non envoyée', 'Video: not sent'));
