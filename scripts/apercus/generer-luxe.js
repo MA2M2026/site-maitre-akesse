@@ -70,4 +70,4 @@ if (require.main === module) (async () => {
     }
   }
   await navigateur.close();
-})();
+})().catch((e) => { console.error('Images d’aperçu non faites :', e); process.exitCode = 1; });
