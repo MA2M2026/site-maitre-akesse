@@ -208,7 +208,7 @@ window.rendre = (t) => {
       const m = ph.dataset.mouvement || (ph.classList.contains('photo-m') ? 'mosaique' : 'recule');
       const px = -1.6 * dx, py = -1.6 * dy;
       if (m === 'mosaique') { // les cases se soulèvent une à une
-        const e2 = sortie((t - s.debut - 0.12 * k) / 1.0);
+        const e2 = sortie((t - s.debut - Number(ph.parentElement.dataset.pas || 0.12) * k) / 1.0);  // data-pas : écart entre deux cases
         ph.style.transform = 'perspective(1200px) translateY(' + (200 * (1 - e2)) + 'px) rotateX(' + (80 * (1 - e2)) + 'deg)'; ph.style.opacity = e2;
         img.style.transform = 'scale(' + (1.3 - 0.2 * lisse(d / 6)) + ')'; img.style.opacity = 0.75; return; }
       ph.style.transform = 'translateX(' + ((LARGE ? 140 : 0) * (1 - ke)) + 'px) translateY(' + ((LARGE ? 0 : -120) * (1 - ke) + 60 * k2) + 'px)';
