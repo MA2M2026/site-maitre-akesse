@@ -135,7 +135,8 @@
     if (!P.moi || P.moi.role !== 'principal') return '';
     let compte = null;
     try { compte = await P.serveur('mannequin_compte', { model_id: id }); } catch (e) { compte = { erreur: e.message }; }
-    ouverte.compte = compte && !compte.erreur ? compte : null;
+    // (la réponse est rangée avec SON identifiant : une fiche ouverte entre-temps ne reçoit pas l'e-mail d'une autre)
+    if (ouverte && ouverte.id === id) ouverte.compte = compte && !compte.erreur ? Object.assign({ id }, compte) : null;
     return '<section class="carte" id="mq-compte"><h2>Compte de connexion</h2>' +
       (compte && compte.erreur ? '<p class="doux">' + P.esc(compte.erreur) + '</p>' :
         '<p>E-mail de connexion : <b>' + P.esc(compte.email || '—') + '</b></p>' +
@@ -165,13 +166,16 @@
     el.disabled = true;
     try {
       const r = await P.sensible(() => P.serveur('mannequin_mdp_provisoire', { model_id: ouverte.id }));
-      const email = (ouverte.compte && ouverte.compte.email) || '';
-      const texte = 'Bonjour ' + (nom.split(' ')[0] || '') + ', voici votre mot de passe provisoire pour votre Espace mannequin MA2M : ' + r.motdepasse +
+      const email = (ouverte.compte && ouverte.compte.id === ouverte.id && ouverte.compte.email) || '';
+      const prenom = (ouverte.profil.full_name || '').trim().split(/\s+/)[0] || '';
+      const texte = 'Bonjour' + (prenom ? ' ' + prenom : '') + ', voici votre mot de passe provisoire pour votre Espace mannequin MA2M : ' + r.motdepasse +
         '\nConnectez-vous ' + (email ? 'avec votre e-mail ' + email + ' ' : '') + 'sur ' + ADRESSE_ESPACE + ' ; on vous demandera ensuite de choisir votre propre mot de passe.';
       ouverte.texteMdp = texte;
       P.fenetre('<h2>Mot de passe provisoire</h2><p>Pour « ' + P.esc(nom) + ' » :</p>' +
         '<p class="mdp-provisoire"><b>' + P.esc(r.motdepasse) + '</b></p>' +
         '<p class="doux petit-texte">Il ne sera plus affiché après fermeture : envoyez-le maintenant. À sa connexion, elle devra choisir son propre mot de passe.</p>' +
+        (r.deconnecte ? '<p class="doux petit-texte">✓ Ses appareils encore connectés ont été déconnectés (dans l’heure au plus tard).</p>'
+          : '<p class="note erreur">Ses appareils encore connectés n’ont pas pu être déconnectés : si un téléphone a été perdu ou volé, recommencez dans quelques minutes.</p>') +
         '<div class="ligne"><a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(texte) + '">💬 Envoyer par WhatsApp</a>' +
         '<button type="button" class="btn" data-action="mannequin-mdp-copier">📋 Copier le message</button>' +
         '<button type="button" class="btn" data-action="fermer-fenetre-recharger">Fermer</button></div>');

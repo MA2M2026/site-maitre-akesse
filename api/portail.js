@@ -69,12 +69,12 @@ async function principaleVerifiee(req, jeton, res, codeExige) {
 }
 // Journal des actions de l'Administration (audit_log, supabase-administration.sql) : qui, quoi, sur quel compte.
 // Jamais de mot de passe dedans. Une panne du journal ne bloque pas l'action (elle a déjà eu lieu).
-async function noterAction(acteurId, role, action, objetId, apres) {
+async function noterAction(req, acteurId, role, action, objetId, avant, apres) {
   const nom = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=nom&user_id=eq.' + encodeURIComponent(acteurId), { headers: enTetesService() })
     .then((r) => (r.ok ? r.json() : [])).then((l) => (l[0] && l[0].nom) || null).catch(() => null);
   await fetch(SUPABASE_URL + '/rest/v1/audit_log', {
     method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({ acteur: acteurId, acteur_nom: nom, acteur_role: role, action, objet: 'compte_mannequin', objet_id: objetId, apres: apres || null })
+    body: JSON.stringify({ acteur: acteurId, acteur_nom: nom, acteur_role: role, action, objet: 'compte_mannequin', objet_id: objetId, avant: avant || null, apres: apres || null, ip: extraireIp(req) || null })
   }).catch(() => {});
 }
 // Mot de passe provisoire d'une mannequin : « MA2M-XXXX-XXXX », 8 signes tirés au hasard parmi 31 (chiffres et
@@ -90,9 +90,11 @@ function tirerSignes(n) {
   }
   return sortie.join('');
 }
+// (même forme que estFormeMdpProvisoire, js/supabase-config.js, côté navigateur)
 const MDP_PROVISOIRE = /^MA2M-[2-9A-Z]{4}-[2-9A-Z]{4}$/;
 // Ferme TOUTES les sessions d'un compte (tous ses appareils) : connexion du serveur avec le mot de passe qu'il vient
-// de poser, puis « déconnexion partout ». Renvoie true si c'est fait.
+// de poser, puis « déconnexion partout » (plus aucun appareil ne peut renouveler sa session ; un jeton déjà délivré
+// reste valable jusqu'à son expiration, une heure au plus). Renvoie true si c'est fait.
 async function deconnecterPartout(email, motdepasse) {
   try {
     const r = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
@@ -449,15 +451,15 @@ module.exports = async function handler(req, res) {
         const deja = await rpcService('portail_utilisateur_par_email', { p_email: email });
         if (deja && deja !== cible) return res.status(400).json({ error: 'Cette adresse est déjà utilisée par un autre compte.' });
         await adminAuth('admin/users/' + cible, 'PUT', { email, email_confirm: true });
-        await noterAction(auteur.id, 'principal', 'E-mail de connexion d’une mannequin changé', cible, { avant: compte.email || null, apres: email });
+        await noterAction(req, auteur.id, 'principal', 'E-mail de connexion d’une mannequin changé', cible, { email: compte.email || null }, { email });
         return res.status(200).json({ ok: true, email });
       }
       // mot de passe provisoire : marqué dans app_metadata (que seul le serveur peut écrire) ; toutes les sessions du
-      // compte sont fermées (un appareil volé ou resté connecté ne garde pas l'accès)
+      // compte sont fermées (un appareil volé ou resté connecté perd l'accès, au plus tard dans l'heure)
       const motdepasse = 'MA2M-' + tirerSignes(4) + '-' + tirerSignes(4);
       await adminAuth('admin/users/' + cible, 'PUT', { password: motdepasse, app_metadata: { mdp_provisoire: true } });
       const deconnecte = compte.email ? await deconnecterPartout(compte.email, motdepasse) : false;
-      await noterAction(auteur.id, 'principal', 'Mot de passe provisoire d’une mannequin créé', cible, { deconnectee_partout: deconnecte });
+      await noterAction(req, auteur.id, 'principal', 'Mot de passe provisoire d’une mannequin créé', cible, null, { deconnectee_partout: deconnecte });
       return res.status(200).json({ ok: true, motdepasse, deconnecte });
     }
     // ---------- la mannequin remplace son mot de passe provisoire (10/11/2026) ----------
@@ -471,7 +473,7 @@ module.exports = async function handler(req, res) {
       if (motdepasse.length < 8 || motdepasse.length > 72) return res.status(400).json({ error: 'Le mot de passe doit contenir entre 8 et 72 caractères.' });
       if (MDP_PROVISOIRE.test(motdepasse.trim().toUpperCase())) return res.status(400).json({ error: 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.' });
       await adminAuth('admin/users/' + u.id, 'PUT', { password: motdepasse, app_metadata: { mdp_provisoire: false } });
-      await noterAction(u.id, 'mannequin', 'Mot de passe provisoire remplacé par la mannequin', u.id, null);
+      await noterAction(req, u.id, 'mannequin', 'Mot de passe provisoire remplacé par la mannequin', u.id, null, null);
       return res.status(200).json({ ok: true });
     }
 

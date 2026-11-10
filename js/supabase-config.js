@@ -40,6 +40,8 @@ function enTetesServeur(jeton) {
 // Mot de passe PROVISOIRE donné par l'agence (10/11/2026, Administration › fiche de la mannequin) : marque posée par
 // le serveur dans app_metadata (la mannequin ne peut pas l'effacer elle-même). Tant qu'il n'est pas remplacé,
 // l'Espace mannequin n'ouvre que « Choisissez votre mot de passe » ; les autres pages de l'application y renvoient.
+// forme du mot de passe provisoire (même règle que MDP_PROVISOIRE, api/portail.js) : refusée comme nouveau mot de passe
+function estFormeMdpProvisoire(m) { return /^MA2M-[2-9A-Z]{4}-[2-9A-Z]{4}$/i.test(String(m || '').trim()); }
 function mdpProvisoireEnCours(user) { return !!(user && user.app_metadata && user.app_metadata.mdp_provisoire); }
 function allerChoisirMdpSiProvisoire(user) {
   if (!mdpProvisoireEnCours(user)) return false;

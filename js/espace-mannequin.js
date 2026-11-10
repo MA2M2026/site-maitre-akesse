@@ -145,7 +145,7 @@ function viewAuthGate(){
 function afficherMdpObligatoire(){
   renderAuthGate();
   afficherPanneauAuth('auth-panneau-nouveau-mdp');
-  ['auth-onglets'].forEach(function(id){ const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  const onglets = document.getElementById('auth-onglets'); if (onglets) onglets.style.display = 'none';
   document.querySelector('#authPanel .em-vers-candidature')?.remove();
   const p = document.getElementById('auth-panneau-nouveau-mdp');
   if (p && !document.getElementById('au-nm-deconnexion')) {
@@ -272,13 +272,17 @@ function bindAuthGate(){
     if (nouveauMdp.length < 8) { msg.textContent = 'Le mot de passe doit contenir au moins 8 caractères.'; return; }
     // (10/11/2026) après un mot de passe provisoire donné par l'agence : il ne peut pas être gardé tel quel, et le
     // nouveau passe par le serveur (qui seul retire la marque « provisoire » ; js/supabase-config.js)
-    if (/^MA2M-[2-9A-Z]{4}-[2-9A-Z]{4}$/i.test(nouveauMdp.trim())) { msg.textContent = 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.'; return; }
+    if (estFormeMdpProvisoire(nouveauMdp)) { msg.textContent = 'Choisissez un mot de passe à vous, différent du mot de passe provisoire.'; return; }
     const bouton = this; bouton.disabled = true;
-    const { data: { user: actuel } } = await sb.auth.getUser();
     let error = null;
-    if (mdpProvisoireEnCours(actuel)) { try { await remplacerMdpProvisoire(nouveauMdp); } catch (e) { error = e; } }
-    else ({ error } = await sb.auth.updateUser({ password: nouveauMdp }));
-    bouton.disabled = false;
+    try {
+      // (compte relu au serveur : connexion instable → on ne choisit pas le mauvais chemin, on redemande)
+      const { data: { user: actuel }, error: erreurLecture } = await sb.auth.getUser();
+      if (erreurLecture || !actuel) error = new Error('connexion instable, réessayez dans un instant.');
+      else if (mdpProvisoireEnCours(actuel)) await remplacerMdpProvisoire(nouveauMdp);
+      else ({ error } = await sb.auth.updateUser({ password: nouveauMdp }));
+    } catch (e) { error = e; }
+    finally { bouton.disabled = false; }
     if (error) { msg.textContent = /different|same/i.test(error.message) ? 'Choisissez un mot de passe différent de l’ancien.' : 'Erreur : ' + error.message; return; }
     recuperationMdpEnCours = false;
     await demarrerApresConnexion();
@@ -784,7 +788,7 @@ function viewWizard(){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
     // (10/11/2026) nom court pour les petits écrans (application : les 6 étapes sur UNE ligne, css/mannequin-app.css)
     const manque = pts && BLOCS_ETAPES[i] ? pts.nb[BLOCS_ETAPES[i]] : 0;
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+(pts && BLOCS_ETAPES[i] ? pastilleRouge(pts.nb[BLOCS_ETAPES[i]]) : '')+'</button>';
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+pastilleRouge(manque)+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
