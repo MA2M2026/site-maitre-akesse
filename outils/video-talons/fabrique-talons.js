@@ -12,6 +12,8 @@
 const fs = require('fs'); const path = require('path'); const { execFileSync } = require('child_process');
 const ICI = __dirname, VOIX = process.env.VOIX, IMAGES = process.env.IMAGES, MUSIQUE = process.env.MUSIQUE;
 const FILM = process.env.FILM || 'film-talons.html', NOM = process.env.NOM || 'atelier-talons-elegance';
+// volume de la musique sous la voix (11/11/2026 : 0,3 — la propriétaire la trouvait un peu trop forte à 0,5)
+const VOLUME = process.env.VOLUME_MUSIQUE || '0.3';
 if (!VOIX || !IMAGES) { console.error('VOIX=<dossier> MUSIQUE=<.wav> IMAGES=<dossier> node fabrique-talons.js [vertical|large] [--apercus]'); process.exit(1); }
 const FORMAT = process.argv.includes('large') ? 'large' : 'vertical';
 const [L, H] = FORMAT === 'large' ? [1920, 1080] : [1080, 1920];
@@ -21,6 +23,19 @@ fs.writeFileSync(path.join(ICI, FILM.replace('film-', 'timing-').replace('.html'
   JSON.stringify({ phrases: mots.phrases, mots: mots.mots, duree: DUREE }) + ';\n');
 console.log('durée', DUREE, 's,', FORMAT);
 if (process.argv.includes('--minutage')) process.exit(0);
+
+// piste son : la voix, et la musique en fond, plus douce pendant que la voix parle (« ducking »)
+function faireSon() {
+  const son = path.join(IMAGES, 'son.m4a');
+  const filtre = MUSIQUE
+    ? '[0:a]aresample=48000,apad,atrim=0:' + DUREE + ',asplit=2[voix][cle];[1:a]aresample=48000,aloop=loop=-1:size=2e9,atrim=0:' + DUREE + ',volume=' + VOLUME + ',afade=t=in:d=2,afade=t=out:st=' + (DUREE - 3.5) + ':d=3.5[mus];' +
+      '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix][musd]amix=inputs=2:normalize=0,alimiter=limit=0.95[a]'
+    : '[0:a]aresample=48000,apad,atrim=0:' + DUREE + '[a]';
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : []), '-filter_complex', filtre, '-map', '[a]', '-c:a', 'aac', '-b:a', '160k', son]);
+  return son;
+}
+// --son : seulement la piste son (son.m4a dans IMAGES), sans refaire les images (ex. volume de la musique changé)
+if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.exit(0); }
 
 (async () => {
   const { chromium } = require('playwright');
@@ -46,13 +61,7 @@ if (process.argv.includes('--minutage')) process.exit(0);
     if (i % 300 === 0) console.log('image', i, '/', N);
   }
   await b.close();
-  // piste son : la voix, et la musique en fond, plus douce pendant que la voix parle (« ducking »)
-  const son = path.join(IMAGES, 'son.m4a');
-  const filtre = MUSIQUE
-    ? '[0:a]aresample=48000,apad,atrim=0:' + DUREE + ',asplit=2[voix][cle];[1:a]aresample=48000,aloop=loop=-1:size=2e9,atrim=0:' + DUREE + ',volume=0.5,afade=t=in:d=2,afade=t=out:st=' + (DUREE - 3.5) + ':d=3.5[mus];' +
-      '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix][musd]amix=inputs=2:normalize=0,alimiter=limit=0.95[a]'
-    : '[0:a]aresample=48000,apad,atrim=0:' + DUREE + '[a]';
-  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : []), '-filter_complex', filtre, '-map', '[a]', '-c:a', 'aac', '-b:a', '160k', son]);
+  const son = faireSon();
   const sortie = path.join(IMAGES, NOM + (FORMAT === 'large' ? '-large' : '') + '.mp4');
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-framerate', String(IPS), '-i', path.join(IMAGES, 'f%05d.jpg'), '-i', son,
     '-vf', 'scale=' + (FORMAT === 'large' ? '1280:720' : '720:1280') + ':flags=lanczos,format=yuv420p', '-c:v', 'libx264', '-preset', 'slow', '-crf', '22',
