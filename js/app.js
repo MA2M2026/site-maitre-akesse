@@ -2893,6 +2893,35 @@ function jaugeEnErreur(id, titre) {
   if (titre) j.querySelector('.jauge-titre').textContent = titre;
 }
 function cacherJauge(id) { const j = document.getElementById(id); if (j) j.classList.add('u-hidden'); }
+// Crée une jauge vide (même structure que celles écrites dans les pages) : une par photo pendant l'envoi
+// (cours de talons et candidatures, 10/11/2026 : chaque photo a sa barre, verte une fois arrivée).
+function creerJauge(id) {
+  const j = document.createElement('div'); j.id = id; j.className = 'jauge';
+  j.setAttribute('role', 'progressbar'); j.setAttribute('aria-valuemin', '0'); j.setAttribute('aria-valuemax', '100');
+  const haut = document.createElement('div'); haut.className = 'jauge-haut';
+  const titre = document.createElement('span'); titre.className = 'jauge-titre';
+  const pc = document.createElement('span'); pc.className = 'jauge-pc'; pc.textContent = '0 %';
+  const barre = document.createElement('div'); barre.className = 'jauge-barre';
+  const remplie = document.createElement('span'); remplie.className = 'jauge-remplie';
+  haut.append(titre, pc); barre.appendChild(remplie); j.append(haut, barre);
+  return j;
+}
+// Fait avancer doucement des jauges vers un plafond pendant un envoi d'un seul bloc (le navigateur ne dit pas où en
+// est l'envoi vers Google) : elles ne restent jamais figées, puis passent à 100 % (vertes) à la réponse.
+// Renvoie la fonction qui arrête l'avancée.
+function avancerDoucement(ids, depart, plafond, dureeEstimeeMs, titre) {
+  const debut = Date.now();
+  const pas = () => { const pc = depart + (plafond - depart) * (1 - Math.exp(-(Date.now() - debut) / dureeEstimeeMs)); ids.forEach((id) => majJauge(id, pc, titre)); };
+  pas();
+  const minuterie = setInterval(pas, 250);
+  return () => clearInterval(minuterie);
+}
+// Envoi rapide des candidatures et des cours de talons (10/11/2026, l'envoi décourageait) : vidéo de 3 minutes au plus,
+// allégée en 480p (~6 Mo la minute, son compris) ; photos réduites à 1600 px. Le programme Google Drive refuse plus
+// de 60 Mo par vidéo (VIDEO_MAX_OCTETS des pages).
+const VIDEO_DUREE_MAX_SECONDES = 185;
+const VIDEO_ALLEGEMENT_RAPIDE = { coteLong: 854, debit: 700000, audioDebit: 64000, dejaLegere: 5 * 1024 * 1024 };
+const PHOTO_COTE_ENVOI = 1600, PHOTO_QUALITE_ENVOI = 0.82;
 
 const enMo = (octets) => EN ? (octets / 1048576).toFixed(1) + ' MB' : (octets / 1048576).toFixed(1).replace('.', ',') + ' Mo';
 
@@ -3031,6 +3060,24 @@ async function envoyerVideoVersDrive(urlScript, infos, fichier, surProgres) {
       `${infos.nom || '?'}, vidéo ${(total / 1048576).toFixed(1)} Mo (${typeVideo}), ${Math.round((Date.now() - debut) / 1000)} s au total, réseau ${conn.effectiveType || '?'}${conn.downlink ? ' ~' + conn.downlink + ' Mbit/s' : ''}`,
       causes.slice(-6).join(' | '));
   }
+  return lien;
+}
+
+// Envoie la vidéo vers Drive (envoyerVideoVersDrive) en faisant avancer SA jauge en douceur à l'intérieur de chaque
+// morceau de 4 Mo, puis verte à l'arrivée (rouge si l'envoi échoue). Partagé par les cours de talons et les
+// candidatures (10/11/2026). Renvoie le lien de la vidéo, ou null.
+async function envoyerVideoAvecJauge(urlScript, infos, fichier, idJauge) {
+  const titre = T(`Vidéo (${enMo(fichier.size)}) : envoi…`, `Video (${enMo(fichier.size)}): sending…`);
+  const part = Math.min(98, TAILLE_MORCEAU_VIDEO / fichier.size * 100);       // part d'un morceau
+  const duree = Math.max(2500, Math.min(TAILLE_MORCEAU_VIDEO, fichier.size) * 1.37 / 150);  // ~150 Ko/s
+  let arreter = avancerDoucement([idJauge], 0, part, duree, titre);
+  const lien = await envoyerVideoVersDrive(urlScript, infos, fichier, (pc) => {
+    arreter();
+    if (pc < 100) arreter = avancerDoucement([idJauge], pc, Math.min(98, pc + part), duree, titre);
+  }).catch(() => null);
+  arreter();
+  if (lien) majJauge(idJauge, 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
+  else jaugeEnErreur(idJauge, T('Vidéo : non envoyée', 'Video: not sent'));
   return lien;
 }
 

@@ -22,9 +22,9 @@
   // 2 à 5 photos ; vidéo de 3 minutes au plus (décisions de la propriétaire, 10/11/2026). Le programme Google Drive
   // refuse plus de 60 Mo : la vidéo est allégée en 480p (environ 6 Mo la minute) et son poids final est vérifié.
   const PHOTOS_MAX = 5, PHOTOS_MIN = 2;
-  const VIDEO_MAX_SECONDES = 185;
+  const VIDEO_MAX_SECONDES = VIDEO_DUREE_MAX_SECONDES;  // (js/app.js)
   const VIDEO_MAX_OCTETS = 60 * 1024 * 1024, VIDEO_MAX_ORIGINAL = 4 * 1024 * 1024 * 1024;
-  const ALLEGEMENT = { coteLong: 854, debit: 700000, audioDebit: 64000, dejaLegere: 5 * 1024 * 1024 };
+  const ALLEGEMENT = VIDEO_ALLEGEMENT_RAPIDE;  // (js/app.js : 480p, ~6 Mo la minute)
   const fcfa = enFcfa;  // (js/app.js, comme LIEN_WAVE_AGENCE : le lien Wave des mensualités)
 
   remplirIndicatifs($('ct-indicatif'));
@@ -179,27 +179,7 @@
 
   const dureeLisible = (d) => { const t = Math.round(d); return t < 90 ? t + ' s' : Math.floor(t / 60) + ' min ' + String(t % 60).padStart(2, '0'); };
 
-  // ---------- jauges de l'envoi : une par photo et une pour la vidéo (vertes une fois arrivées)
-  function creerJauge(id) {
-    const j = document.createElement('div'); j.id = id; j.className = 'jauge';
-    j.setAttribute('role', 'progressbar'); j.setAttribute('aria-valuemin', '0'); j.setAttribute('aria-valuemax', '100');
-    const haut = document.createElement('div'); haut.className = 'jauge-haut';
-    const titre = document.createElement('span'); titre.className = 'jauge-titre';
-    const pc = document.createElement('span'); pc.className = 'jauge-pc'; pc.textContent = '0 %';
-    const barre = document.createElement('div'); barre.className = 'jauge-barre';
-    const remplie = document.createElement('span'); remplie.className = 'jauge-remplie';
-    haut.append(titre, pc); barre.appendChild(remplie); j.append(haut, barre);
-    return j;
-  }
-  // Fait avancer doucement une jauge vers un plafond pendant un envoi d'un seul bloc (le navigateur ne dit pas où
-  // en est l'envoi vers Google) : la jauge ne reste jamais figée, puis passe à 100 % (verte) à la réponse.
-  function avancerDoucement(ids, depart, plafond, dureeEstimee, titre) {
-    const debut = Date.now();
-    const pas = () => { const pc = depart + (plafond - depart) * (1 - Math.exp(-(Date.now() - debut) / dureeEstimee)); ids.forEach((id) => majJauge(id, pc, titre)); };
-    pas();
-    const minuterie = setInterval(pas, 250);
-    return () => clearInterval(minuterie);
-  }
+  // (jauges : creerJauge et avancerDoucement, js/app.js)
 
   // ---------- envoi des photos et de la vidéo vers Drive (au clic sur « Envoyer », jauges visibles)
   // Attend d'abord la fin de la préparation de la vidéo (rien ne part si elle est refusée) ; ne renvoie pas ce qui
@@ -226,7 +206,7 @@
       const base64 = [], rangs = [];
       for (let i = 0; i < photos.length; i++) {
         majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
-        try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(photos[i]), 1600, 0.82))); rangs.push(i); } catch (err) { /* photo illisible : ignorée */ }
+        try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(photos[i]), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI))); rangs.push(i); } catch (err) { /* photo illisible : ignorée */ }
         majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
       }
       // ~150 Ko/s : un débit mobile modeste ; la jauge ralentit d'elle-même si c'est plus long
@@ -238,18 +218,8 @@
       d.liens = r.liens || []; d.rangs = rangs; d.dossier = r.dossier || null;
       photosArrivees();
     }
-    if (!d.video) {
-      const fichierVideo = video, titre = T(`Vidéo (${enMo(fichierVideo.size)}) : envoi…`, `Video (${enMo(fichierVideo.size)}): sending…`);
-      const part = Math.min(100, TAILLE_MORCEAU_VIDEO / fichierVideo.size * 100);  // part d'un morceau (envoyé d'un bloc)
-      let arreter = avancerDoucement(['ct-jauge-video'], 0, Math.min(98, part), Math.max(2500, Math.min(TAILLE_MORCEAU_VIDEO, fichierVideo.size) * 1.37 / 150), titre);
-      d.video = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, fichierVideo, (pc) => {
-        arreter();
-        if (pc < 100) arreter = avancerDoucement(['ct-jauge-video'], pc, Math.min(98, pc + part), Math.max(2500, TAILLE_MORCEAU_VIDEO * 1.37 / 150), titre);
-      }).catch(() => null);
-      arreter();
-    }
-    if (d.video) majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
-    else jaugeEnErreur('ct-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));
+    if (!d.video) d.video = await envoyerVideoAvecJauge(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, video, 'ct-jauge-video');
+    else majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
     return true;
   }
 

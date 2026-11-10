@@ -9,6 +9,13 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables: { casting_projets: [{ nom: 'Défilé X', actif: true }] }, rpc: { casting_ouvert: true } }, journal);
+    // Google Drive simulé (photos, puis vidéo en morceaux) : rien n'est envoyé pour de vrai
+    await p.route(/script\.google\.com/, (route) => {
+      const c = JSON.parse(route.request().postData() || '{}');
+      const rep = c.action === 'video_debut' ? { ok: true, session: 's1', dossier: 'd1' } : c.action === 'video_morceau' ? { ok: true, video: 'https://drive.google.com/video' }
+        : { ok: true, liens: (c.photos || []).map((x, i) => 'https://drive.google.com/photo-' + i), dossier: 'd1' };
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rep) });
+    });
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
     // Remplissage comme une candidate de 15 ans
@@ -42,6 +49,9 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await p.fill('#ca-naissance', '2011-04-02'); await p.dispatchEvent('#ca-naissance', 'change'); await p.waitForTimeout(300);
     await p.click('#btn-envoyer');
     await p.waitForTimeout(12000);
+    // une jauge par photo (4) et une pour la vidéo, toutes vertes à l'arrivée (10/11/2026)
+    const jaugesVertes = await p.locator('#ca-jauges-photos .jauge.terminee').count(), videoVerte = await p.locator('#ca-jauge-video.terminee').count();
+    const aideVideo = await p.textContent('.ca-video-aide');
     const inserts = journal.filter(j => j[0] === 'POST' && j[1] === 'casting_applications').map(j => JSON.parse(j[3]));
     const c = inserts[0] || {};
     console.log(`\n===== ${page} (${vp.width}px) =====`);
@@ -51,7 +61,9 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     console.log('Parcours :', c.type_candidature, '| projet :', c.projet_nom, '| expérience :', c.experience_mannequin, '| e-mail agence :', journal.filter(j => j[0] === 'EMAIL').map(j => String(JSON.parse(j[1]).template_params.message).split('\n').slice(0, 2).join(' / ')));
     console.log('Message affiché :', (await p.textContent('#ca-msg').catch(() => '')).trim().slice(0, 160));
     console.log('Erreurs :', errs);
+    console.log('Jauges vertes : photos', jaugesVertes, '/ 4, vidéo', videoVerte, '| « 3 minutes maximum » annoncé :', /3 minutes/.test(aideVideo));
     // Échec bloquant (relecture du 11/10/2026) : la candidature doit être enregistrée avec le bon parcours.
+    if (jaugesVertes !== 4 || videoVerte !== 1 || !/3 minutes/.test(aideVideo)) { console.log('❌ ÉCHEC jauges ou durée sur', page); process.exitCode = 1; }
     if (!refus12ans || !inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
     await ctx.close();
   }

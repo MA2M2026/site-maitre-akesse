@@ -159,16 +159,18 @@ function niveauEtudesChoisi() {
   return cat ? cat + (classe ? ' · ' + classe : '') : null;
 }
 
-// --- Vidéo de présentation : obligatoire, 1 minute maximum. Une vidéo lourde
+// --- Vidéo de présentation : obligatoire, 3 minutes maximum (décision de la propriétaire, 10/11/2026 ; 1 minute avant).
+// Allégée en 480p pour un envoi rapide (VIDEO_ALLEGEMENT_RAPIDE, js/app.js). Une vidéo lourde
 // (4K, 60 images/s…) est d'abord ALLÉGÉE par l'appareil du candidat (js/video-allegee.js,
 // 30/09) ; si l'appareil ne sait pas le faire, la vidéo d'origine part telle quelle,
 // à condition de ne pas dépasser 60 Mo (au-delà, l'envoi échoue sur mobile). ---
 const VIDEO_MAX_OCTETS = 60 * 1024 * 1024;
 const VIDEO_MAX_ORIGINAL = 2 * 1024 * 1024 * 1024; // avant allègement
-const VIDEO_MAX_SECONDES = 65; // 1 minute annoncée (décision du 30/09), petite marge
+const VIDEO_MAX_SECONDES = VIDEO_DUREE_MAX_SECONDES; // 3 minutes annoncées (js/app.js), petite marge
 let videoChoisie = null;
 let videoEnPreparation = null; // promesse tant que l'allègement n'est pas fini
 let numeroVideo = 0;           // pour ignorer une ancienne vidéo remplacée entre-temps
+let envoiCommence = false;     // jauges de l'envoi affichées (la préparation de la vidéo y est aussi montrée)
 function montrerApercuVideo(adresseImage, texte) {
   const bloc = document.getElementById('ca-video-apercu');
   const img = bloc.querySelector('img');
@@ -194,7 +196,7 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   if (!fichier) { info.textContent = ''; return; }
   if (!/^video\//.test(fichier.type || '') && !/\.(mp4|mov|m4v|3gp|webm)$/i.test(fichier.name || '')) { info.textContent = T("Ce fichier n'est pas une vidéo.", 'This file is not a video.'); e.target.value = ''; return; }
   if (fichier.size > VIDEO_MAX_ORIGINAL) {
-    info.textContent = T(`Vidéo beaucoup trop lourde (${enMo(fichier.size)}). Filmez 1 minute maximum.`, `Video far too large (${enMo(fichier.size)}). Please film 1 minute maximum.`);
+    info.textContent = T(`Vidéo beaucoup trop lourde (${enMo(fichier.size)}). Filmez 3 minutes maximum.`, `Video far too large (${enMo(fichier.size)}). Please film 3 minutes maximum.`);
     e.target.value = ''; return;
   }
   info.style.color = 'var(--gris)';
@@ -205,14 +207,14 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   if (numero !== numeroVideo) return;
   if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) {
     info.style.color = 'var(--rouge)';
-    info.textContent = T(`Vidéo trop longue (${Math.round(duree)} s) : 1 minute maximum.`, `Video too long (${Math.round(duree)} s): 1 minute maximum.`);
+    info.textContent = T(`Vidéo trop longue (${Math.floor(Math.round(duree) / 60)} min ${String(Math.round(duree) % 60).padStart(2, '0')}) : 3 minutes maximum.`, `Video too long (${Math.floor(Math.round(duree) / 60)} min ${String(Math.round(duree) % 60).padStart(2, '0')}): 3 minutes maximum.`);
     e.target.value = ''; return;
   }
   montrerApercuVideo(examen.apercu, examen.apercu ? T('Votre vidéo : vérifiez que c\'est bien la bonne.', 'Your video: please check it is the right one.') : '');
 
   const refuserTropLourde = () => {
     info.style.color = 'var(--rouge)';
-    info.textContent = T(`Vidéo trop lourde (${enMo(fichier.size)}) et cet appareil ne peut pas l'alléger : 60 Mo maximum. Filmez 1 minute maximum, ou baissez la qualité de la caméra (720p au lieu de 1080p ou 4K).`, `Video too large (${enMo(fichier.size)}) and this device cannot reduce it: 60 MB maximum. Film 1 minute maximum, or lower the camera quality (720p instead of 1080p or 4K).`);
+    info.textContent = T(`Vidéo trop lourde (${enMo(fichier.size)}) et cet appareil ne peut pas l'alléger : 60 Mo maximum. Filmez 3 minutes maximum, ou baissez la qualité de la caméra (720p au lieu de 1080p ou 4K).`, `Video too large (${enMo(fichier.size)}) and this device cannot reduce it: 60 MB maximum. Film 3 minutes maximum, or lower the camera quality (720p instead of 1080p or 4K).`);
     e.target.value = '';
   };
   info.textContent = '';
@@ -221,13 +223,14 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
     try {
       if (window.allegerVideo) allegee = await window.allegerVideo(fichier, (pc) => {
         if (numero === numeroVideo) majJauge('ca-video-jauge', pc, T('Préparation de votre vidéo (allègement pour un envoi rapide)…', 'Preparing your video (reducing it for a faster upload)…'));
-      });
+        if (numero === numeroVideo && envoiCommence) majJauge('ca-jauge-video', pc, T('Vidéo : préparation…', 'Video: preparing…'));
+      }, VIDEO_ALLEGEMENT_RAPIDE);
     } catch (err) {
       allegee = null;
       if (window.signalerErreur) window.signalerErreur('Vidéo non allégée (envoi de l\'originale)', (err && err.message) || String(err), enMo(fichier.size) + ', ' + (fichier.type || 'type inconnu'));
     }
     if (numero !== numeroVideo) return;
-    if (allegee) { majJauge('ca-video-jauge', 100, T('Vidéo préparée', 'Video ready')); videoPrete(allegee, duree, fichier); }
+    if (allegee && allegee.size <= VIDEO_MAX_OCTETS) { majJauge('ca-video-jauge', 100, T('Vidéo préparée', 'Video ready')); videoPrete(allegee, duree, fichier); }
     else if (fichier.size <= VIDEO_MAX_OCTETS) { cacherJauge('ca-video-jauge'); videoPrete(fichier, duree, null); }
     else { cacherJauge('ca-video-jauge'); montrerApercuVideo(null, ''); refuserTropLourde(); }
     videoEnPreparation = null;
@@ -438,7 +441,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     document.getElementById('btn-envoyer').disabled = false;
   }
   if (!videoChoisie) {
-    afficherMsg(msg, T('Merci d\'ajouter votre vidéo de présentation (1 minute maximum).', 'Please add your introduction video (1 minute maximum).'), 'err');
+    afficherMsg(msg, T('Merci d\'ajouter votre vidéo de présentation (3 minutes maximum).', 'Please add your introduction video (3 minutes maximum).'), 'err');
     return;
   }
   if (fichiersPhotos.length > 12) {
@@ -490,36 +493,40 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 
   let nbPhotosEchouees = 0;
   let dossierDrive = null;
-  // Jauges : les photos sont d'abord préparées une par une (0 → 50 %), puis
-  // envoyées ensemble ; pendant l'envoi la jauge avance selon le temps estimé,
-  // sans jamais dépasser 95 % avant la réponse de Google.
+  // Jauges (10/11/2026) : UNE PAR PHOTO, préparée (0 → 25 %), puis envoyées ensemble (un seul envoi : le programme
+  // Google crée un dossier par envoi) ; pendant l'envoi les jauges avancent selon le temps estimé, sans dépasser
+  // 95 % avant la réponse de Google, puis passent au vert. Photos réduites à 1600 px (PHOTO_COTE_ENVOI, js/app.js).
+  envoiCommence = true;
   document.getElementById('ca-envoi-jauges').classList.remove('u-hidden');
-  majJauge('ca-jauge-photos', 0, T(`Photos (${fichiersPhotos.length}) : préparation…`, `Photos (${fichiersPhotos.length}): preparing…`));
+  const boiteJauges = document.getElementById('ca-jauges-photos');
+  boiteJauges.textContent = '';
+  const idsPhotos = fichiersPhotos.map((f, i) => { boiteJauges.appendChild(creerJauge('ca-jauge-photo-' + (i + 1))); return 'ca-jauge-photo-' + (i + 1); });
+  const nomPhoto = (i) => 'Photo ' + (i + 1);
+  idsPhotos.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
   majJauge('ca-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
-  let minuteurPhotos = null;
+  let arreterPhotos = () => {};
+  const rangsEnvoyes = [];
   try {
     const photosBase64 = [];
-    let prepares = 0;
-    for (const fichierOriginal of fichiersPhotos) {
+    for (let i = 0; i < fichiersPhotos.length; i++) {
+      majJauge(idsPhotos[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
       try {
-        const fichierConverti = await convertirSiHeic(fichierOriginal);
-        const fichier = await redimensionnerImage(fichierConverti);
+        const fichierConverti = await convertirSiHeic(fichiersPhotos[i]);
+        const fichier = await redimensionnerImage(fichierConverti, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
         photosBase64.push(await fichierEnBase64(fichier));
+        rangsEnvoyes.push(i);
+        majJauge(idsPhotos[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
       } catch (e) {
         nbPhotosEchouees++;
+        jaugeEnErreur(idsPhotos[i], nomPhoto(i) + T(' : illisible', ': unreadable'));
       }
-      majJauge('ca-jauge-photos', ++prepares / fichiersPhotos.length * 50, T(`Photos (${fichiersPhotos.length}) : préparation…`, `Photos (${fichiersPhotos.length}): preparing…`));
     }
 
     const octetsPhotos = photosBase64.reduce((t, b) => t + b.length, 0);
     const debitEstime = ((navigator.connection && navigator.connection.downlink) || 1) * 125000 * 0.6; // octets/s
-    const dureeEstimee = Math.max(3, octetsPhotos / debitEstime + 3);
-    const debutEnvoiPhotos = Date.now();
-    majJauge('ca-jauge-photos', 50, T(`Photos (${fichiersPhotos.length}) : envoi…`, `Photos (${fichiersPhotos.length}): sending…`));
-    minuteurPhotos = setInterval(() => {
-      const ecoule = (Date.now() - debutEnvoiPhotos) / 1000;
-      majJauge('ca-jauge-photos', 50 + 45 * (1 - Math.exp(-ecoule / dureeEstimee * 1.6)), T(`Photos (${fichiersPhotos.length}) : envoi…`, `Photos (${fichiersPhotos.length}): sending…`));
-    }, 300);
+    const idsEnvoyes = rangsEnvoyes.map((i) => idsPhotos[i]);
+    idsEnvoyes.forEach((id, k) => majJauge(id, 25, nomPhoto(rangsEnvoyes[k]) + T(' : envoi…', ': sending…')));
+    arreterPhotos = avancerDoucement(idsEnvoyes, 25, 95, Math.max(3000, (octetsPhotos / debitEstime + 3) * 1000 / 1.6), null);
     const { liens, echec, dossier } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name,
       email: candidature.email,
@@ -529,9 +536,12 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
       photos: photosBase64
     });
 
-    clearInterval(minuteurPhotos);
-    if (echec) jaugeEnErreur('ca-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
-    else majJauge('ca-jauge-photos', 100, T(`Photos (${liens.length}) : envoyées ✓`, `Photos (${liens.length}): sent ✓`));
+    arreterPhotos();
+    // (les liens reviennent dans l'ordre des photos envoyées ; une photo refusée par Google est en fin de liste)
+    rangsEnvoyes.forEach((i, k) => {
+      if (!echec && k < liens.length) majJauge(idsPhotos[i], 100, nomPhoto(i) + T(' : envoyée ✓', ': sent ✓'));
+      else jaugeEnErreur(idsPhotos[i], nomPhoto(i) + T(' : non envoyée', ': not sent'));
+    });
     dossierDrive = dossier || null;
     if (!echec) {
       for (const lien of liens) {
@@ -552,8 +562,8 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà
     // enregistré côté Supabase) — on signale juste que les photos n'ont pas pu partir.
     nbPhotosEchouees = fichiersPhotos.length;
-    clearInterval(minuteurPhotos);
-    jaugeEnErreur('ca-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
+    arreterPhotos();
+    idsPhotos.forEach((id, i) => jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent')));
   }
   Promise.resolve(journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees)).catch(() => {});
 
@@ -561,15 +571,12 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   // même dossier Drive ; son lien est ensuite rattaché à la candidature.
   let lienVideo = null;
   afficherMsg(msg, T('Envoi de votre vidéo… gardez la page ouverte.', 'Sending your video… please keep this page open.'), 'ok');
-  majJauge('ca-jauge-video', 0, T(`Vidéo (${enMo(videoChoisie.size)}) : envoi…`, `Video (${enMo(videoChoisie.size)}): sending…`));
   try {
-    lienVideo = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+    lienVideo = await envoyerVideoAvecJauge(URL_SCRIPT_PHOTOS_CASTING, {
       nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
       type: PARCOURS, projet: projetNom || '', dossier: dossierDrive
-    }, videoChoisie, (pc) => majJauge('ca-jauge-video', pc, T(`Vidéo (${enMo(videoChoisie.size)}) : envoi…`, `Video (${enMo(videoChoisie.size)}): sending…`)));
+    }, videoChoisie, 'ca-jauge-video');
     if (lienVideo) await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
-    if (lienVideo) majJauge('ca-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
-    else jaugeEnErreur('ca-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));
   } catch (e) {
     lienVideo = null;
     jaugeEnErreur('ca-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));
@@ -595,6 +602,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   if (PARCOURS === 'projet') document.getElementById('ca-bloc-projet-autre').style.display = 'none';
   videoChoisie = null;
   numeroVideo++;
+  envoiCommence = false;
   document.getElementById('ca-video-info').textContent = '';
   cacherJauge('ca-video-jauge');
   montrerApercuVideo(null, '');
