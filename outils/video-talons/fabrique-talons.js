@@ -14,7 +14,8 @@ const ICI = __dirname, VOIX = process.env.VOIX, IMAGES = process.env.IMAGES, MUS
 const FILM = process.env.FILM || 'film-talons.html', NOM = process.env.NOM || 'atelier-talons-elegance';
 // volumes (11/11/2026, demandes de la propriétaire : « augmente la voix, diminue la musique ») : musique 0,22 sous la
 // voix (0,5 au départ), voix renforcée × 1,5 (+3,5 dB), le limiteur final évite toute saturation
-const VOLUME = process.env.VOLUME_MUSIQUE || '0.22', VOLUME_VOIX = process.env.VOLUME_VOIX || '1.5';
+const VOLUME = process.env.VOLUME_MUSIQUE || '0.2', VOLUME_VOIX = process.env.VOLUME_VOIX || '2';
+// puis tout le son est ramené au niveau habituel des vidéos sur internet (-14 LUFS, « voix un peu petite » le 11/11/2026)
 if (!VOIX || !IMAGES) { console.error('VOIX=<dossier> MUSIQUE=<.wav> IMAGES=<dossier> node fabrique-talons.js [vertical|large] [--apercus]'); process.exit(1); }
 const FORMAT = process.argv.includes('large') ? 'large' : 'vertical';
 const [L, H] = FORMAT === 'large' ? [1920, 1080] : [1080, 1920];
@@ -30,7 +31,7 @@ function faireSon() {
   const son = path.join(IMAGES, 'son.m4a');
   const filtre = MUSIQUE
     ? '[0:a]aresample=48000,apad,atrim=0:' + DUREE + ',asplit=2[voix][cle];[1:a]aresample=48000,aloop=loop=-1:size=2e9,atrim=0:' + DUREE + ',volume=' + VOLUME + ',afade=t=in:d=2,afade=t=out:st=' + (DUREE - 3.5) + ':d=3.5[mus];' +
-      '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix]volume=' + VOLUME_VOIX + '[voixf];[voixf][musd]amix=inputs=2:normalize=0,alimiter=limit=0.95[a]'
+      '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix]volume=' + VOLUME_VOIX + '[voixf];[voixf][musd]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.2:LRA=9,alimiter=limit=0.95[a]'
     : '[0:a]aresample=48000,apad,atrim=0:' + DUREE + '[a]';
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : []), '-filter_complex', filtre, '-map', '[a]', '-c:a', 'aac', '-b:a', '160k', son]);
   return son;
