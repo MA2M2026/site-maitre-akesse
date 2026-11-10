@@ -34,21 +34,22 @@ html, body { width: var(--W); height: var(--H); overflow: hidden; background: va
 body { font-family: 'Work Sans', sans-serif; color: #fff; }
 #film { position: relative; width: var(--W); height: var(--H); overflow: hidden; background: var(--profond); }
 .scene { position: absolute; inset: 0; visibility: hidden; overflow: hidden;
-  background: radial-gradient(ellipse at 28% 22%, #3B3B42 0%, #18181C 40%, #050506 100%); }
+  background: radial-gradient(ellipse at 28% 22%, #222226 0%, #0B0B0D 42%, #000 100%); }
 /* noir brillant : reflet laqué en diagonale */
-.scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; background: linear-gradient(118deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.07) 44%, rgba(255,255,255,0.02) 52%, rgba(255,255,255,0) 64%); }
+.scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; background: linear-gradient(118deg, rgba(255,255,255,0) 34%, rgba(255,255,255,0.035) 45%, rgba(255,255,255,0) 56%); }
 .plateau, .fond-blocs { position: absolute; inset: 0; }
 .photo { position: absolute; overflow: hidden; }
-.photo img { position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; object-fit: cover; object-position: 50% 20%; }
+.photo img { filter: brightness(0.8) contrast(1.12); position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; object-fit: cover; object-position: 50% 20%; }
 body:not(.large) .photo { left: 0; right: 0; top: 0; height: 66%; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 50%, transparent 98%); mask-image: linear-gradient(180deg, #000 0%, #000 50%, transparent 98%); }
 body.large .photo { top: 0; bottom: 0; right: 0; width: 58%; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 36%); mask-image: linear-gradient(90deg, transparent 0%, #000 36%); }
 body.large .photo.gauche { right: auto; left: 0; -webkit-mask-image: linear-gradient(270deg, transparent 0%, #000 36%); mask-image: linear-gradient(270deg, transparent 0%, #000 36%); }
+.photo:not(.plein)::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 85% at 55% 40%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.65) 100%); }
 .photo.plein { inset: 0 !important; width: auto !important; height: auto !important; -webkit-mask-image: none !important; mask-image: none !important; }
 .photo.plein::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, rgba(6,6,8,0.72), rgba(6,6,8,0.96) 72%); }
 /* blocs du fond : translucides (au-dessus de la photo) ou rouges pleins (derrière) */
 .forme { position: absolute; border-radius: 8px; }
-.forme.voile { background: linear-gradient(150deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.22); box-shadow: 0 40px 80px -40px rgba(0,0,0,0.8); }
-.forme.contour { border: 1.5px solid rgba(255,255,255,0.45); }
+.forme.voile { background: linear-gradient(150deg, rgba(255,255,255,0.07), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 40px 80px -40px rgba(0,0,0,0.8); }
+.forme.contour { border: 1.5px solid rgba(255,255,255,0.28); }
 .forme.plein { background: linear-gradient(160deg, #3A3A42, #0E0E11); border-top: 1px solid rgba(255,255,255,0.28); box-shadow: 0 50px 90px -30px rgba(0,0,0,0.9); }
 .forme.rond { border-radius: 50%; }
 .forme.lame { height: 2px !important; border-radius: 0; background: linear-gradient(90deg, rgba(255,255,255,0), #fff, rgba(255,255,255,0)); }
@@ -84,7 +85,7 @@ em { font-style: italic; font-weight: 400; }
 [data-anim="bloc"] { position: relative; display: inline-block; }
 .balai { position: absolute; left: -10px; right: -10px; top: 6%; bottom: 6%; background: #fff; transform: scaleX(0); z-index: 2; }
 .carte { position: relative; padding: 56px 60px 52px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.38);
-  background: linear-gradient(155deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05) 45%, rgba(6,6,8,0.85)); box-shadow: 0 70px 130px -50px rgba(0,0,0,0.95); transform-origin: 50% 100%; }
+  background: linear-gradient(155deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02) 45%, rgba(0,0,0,0.9)); box-shadow: 0 70px 130px -50px rgba(0,0,0,0.95); transform-origin: 50% 100%; }
 .carte::before { content: ""; position: absolute; inset: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); }
 .etiquette { display: inline-block; padding: 10px 22px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.5); font: 600 22px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; }
 .carte h3 { font: 500 94px/1 'Cormorant Garamond'; margin: 26px 0 14px; }
@@ -136,21 +137,21 @@ body:not(.large) .mosaique { grid-template-columns: repeat(2, 1fr); grid-templat
 #barres { position: absolute; inset: 0; z-index: 47; display: flex; pointer-events: none; }
 #barres i { flex: 1; background: linear-gradient(180deg, #2C2C33, #070708); border-right: 1px solid rgba(255,255,255,0.35); visibility: hidden; }
 #poussiere i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 12px 3px rgba(255,255,255,0.5); z-index: 46; }
-#lueur { position: absolute; inset: -20%; z-index: 45; pointer-events: none; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.11), rgba(255,255,255,0) 40%); }
+#lueur { position: absolute; inset: -20%; z-index: 45; pointer-events: none; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), rgba(255,255,255,0) 40%); }
 #cadre { position: absolute; inset: 30px; border: 1px solid rgba(255,255,255,0.35); z-index: 50; }
 #marque { position: absolute; top: 72px; left: 90px; right: 90px; display: flex; justify-content: space-between; align-items: center; z-index: 51; font: 600 22px 'Work Sans'; letter-spacing: 0.34em; text-transform: uppercase; }
 #marque img { height: 56px; filter: brightness(0) invert(1); }
 body.large #marque { left: 150px; right: 150px; top: 70px; }
 #site { position: absolute; bottom: 72px; left: 0; right: 0; text-align: center; z-index: 51; font: 600 22px 'Work Sans'; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.85; }
-#eclat { position: absolute; top: -20%; bottom: -20%; width: 28%; z-index: 49; background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%); }
+#eclat { position: absolute; top: -20%; bottom: -20%; width: 28%; z-index: 49; background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.045) 50%, rgba(255,255,255,0) 100%); }
 </style></head>
 <body>
 <div id="film">
 
   <section class="scene" data-de="intro" data-transition="fondu">
     <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
-    <div class="medaillon" data-photo="talons-podium" data-voix="intro" data-mot="Talons" data-anim="medaillon" data-pos="870,880" data-posl="1060,300"></div>
-    <div class="medaillon moyen-m" data-photo="silhouette-podium" data-voix="intro" data-mot="Élégance" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
+    <div class="medaillon" data-photo="talons-bolli" data-voix="intro" data-mot="Talons" data-anim="medaillon" data-pos="870,880" data-posl="1060,300"></div>
+    <div class="medaillon moyen-m" data-photo="divine-tama" data-voix="intro" data-mot="Élégance" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
     <div class="texte"><p class="surtitre" data-voix="intro" data-anim="glisse">Ouvert à toutes · Abidjan</p>
       <h1 class="titre"><span data-voix="intro" data-mot="Atelier" data-anim="lettres">Atelier</span><br><em data-voix="intro" data-mot="Talons" data-anim="lettres">Talons &amp; Élégance</em></h1>
       <span class="trait losange" data-voix="intro" data-mot="Élégance" data-anim="trait"></span>
@@ -161,16 +162,16 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
     <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div>
     <div class="texte"><p class="surtitre" data-voix="questions" data-anim="glisse">Vous souhaitez…</p>
       <ul class="liste">
-        <li><span data-voix="questions" data-mot="concours" data-anim="bloc"><span class="n">—</span>Un concours de beauté</span><span class="medaillon petit" data-photo="visage-drapeau" data-voix="questions" data-mot="beauté" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="concours" data-anim="trait"></span></li>
-        <li><span data-voix="questions" data-mot="élégance" data-anim="bloc"><span class="n">—</span>Élégance &amp; prestance</span><span class="medaillon petit" data-photo="buste-blanc" data-voix="questions" data-mot="prestance" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="élégance" data-anim="trait"></span></li>
-        <li><span data-voix="questions" data-mot="marcher" data-anim="bloc"><span class="n">—</span>Marcher avec assurance</span><span class="medaillon petit" data-photo="talons-defile" data-voix="questions" data-mot="talons" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="marcher" data-anim="trait"></span></li></ul></div>
+        <li><span data-voix="questions" data-mot="concours" data-anim="bloc"><span class="n">—</span>Un concours de beauté</span><span class="medaillon petit" data-photo="ndri-concours" data-voix="questions" data-mot="beauté" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="concours" data-anim="trait"></span></li>
+        <li><span data-voix="questions" data-mot="élégance" data-anim="bloc"><span class="n">—</span>Élégance &amp; prestance</span><span class="medaillon petit" data-photo="mida-ophelia" data-voix="questions" data-mot="prestance" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="élégance" data-anim="trait"></span></li>
+        <li><span data-voix="questions" data-mot="marcher" data-anim="bloc"><span class="n">—</span>Marcher avec assurance</span><span class="medaillon petit" data-photo="talons-mina" data-voix="questions" data-mot="talons" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="marcher" data-anim="trait"></span></li></ul></div>
   </section>
 
   <section class="scene" data-de="endroit" data-transition="cercle">
     <div class="photo plein" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-blanc.jpg"></div>
-    <div class="vignette" data-voix="endroit" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div></div>
-    <div class="vignette" data-voix="endroit" data-mot="bon" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="../../assets/cours-talons/mannequin-podium.jpg"></div></div>
-    <div class="medaillon moyen-m" data-photo="buste-defile" data-voix="endroit" data-mot="bon" data-anim="medaillon" data-pos="540,640" data-posl="960,250"></div>
+    <div class="vignette" data-voix="endroit" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="vignettes/elvira-dumas.jpg"></div></div>
+    <div class="vignette" data-voix="endroit" data-mot="bon" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="vignettes/sensuella-kante.jpg"></div></div>
+    <div class="medaillon moyen-m" data-photo="rosemonde-dan" data-voix="endroit" data-mot="bon" data-anim="medaillon" data-pos="540,640" data-posl="960,250"></div>
     <div class="texte centre milieu"><p class="grand"><span data-voix="endroit" data-mot="vous" data-anim="lettres">Vous êtes</span><br><em data-voix="endroit" data-mot="bon" data-anim="lettres">au bon endroit.</em></p>
       <span class="trait losange" data-voix="demarche" data-anim="trait"></span>
       <p class="moyen"><span data-voix="demarche" data-mot="bien" data-anim="mots">Bien plus qu’une</span><br><em data-voix="demarche" data-mot="simple" data-anim="mots">simple démarche</em></p></div>
@@ -180,15 +181,15 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
     <div class="photo" data-mouvement="recule" data-cadrage="50% 80%"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
     <div class="texte"><p class="surtitre" data-voix="p1" data-anim="glisse">L’Atelier</p>
       <ul class="liste">
-        <li><span class="n" data-voix="p1" data-anim="pop">I</span><span data-voix="p1" data-anim="bloc">La posture</span><span class="medaillon petit" data-photo="silhouette-podium" data-voix="p1" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p1" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p2" data-anim="pop">II</span><span data-voix="p2" data-anim="bloc">Le port de tête</span><span class="medaillon petit" data-photo="visage-tailleur" data-voix="p2" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p2" data-anim="trait"></span></li>
+        <li><span class="n" data-voix="p1" data-anim="pop">I</span><span data-voix="p1" data-anim="bloc">La posture</span><span class="medaillon petit" data-photo="kouame-mina" data-voix="p1" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p1" data-anim="trait"></span></li>
+        <li><span class="n" data-voix="p2" data-anim="pop">II</span><span data-voix="p2" data-anim="bloc">Le port de tête</span><span class="medaillon petit" data-photo="traore-maria" data-voix="p2" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p2" data-anim="trait"></span></li>
         <li><span class="n" data-voix="p3" data-anim="pop">III</span><span data-voix="p3" data-anim="bloc">L’équilibre</span><span class="medaillon petit" data-photo="talons-podium" data-voix="p3" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p3" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p4" data-anim="pop">IV</span><span data-voix="p4" data-anim="bloc">La fluidité</span><span class="medaillon petit" data-photo="buste-defile" data-voix="p4" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p4" data-anim="trait"></span></li></ul></div>
+        <li><span class="n" data-voix="p4" data-anim="pop">IV</span><span data-voix="p4" data-anim="bloc">La fluidité</span><span class="medaillon petit" data-photo="diomande-roxane" data-voix="p4" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p4" data-anim="trait"></span></li></ul></div>
   </section>
 
   <section class="scene" data-de="confiance" data-transition="rideau">
     <div class="photo gauche" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="medaillon" data-photo="visage-tailleur" data-voix="confiance" data-mot="confiance" data-anim="medaillon" data-pos="840,1000" data-posl="1660,250"></div>
+    <div class="medaillon" data-photo="tossou" data-voix="confiance" data-mot="confiance" data-anim="medaillon" data-pos="840,1000" data-posl="1660,250"></div>
     <div class="texte droite"><p class="surtitre" data-voix="confiance" data-mot="surtout" data-anim="glisse">Et surtout</p>
       <p class="grand"><span data-voix="confiance" data-mot="confiance" data-anim="lettres">La confiance,</span><br><em data-voix="confiance" data-mot="remarque" data-anim="lettres">dès le premier pas.</em></p></div>
   </section>
@@ -202,19 +203,19 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
   </section>
 
   <section class="scene" data-de="groupe" data-transition="barres">
-    <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div>
+    <div class="photo" data-mouvement="recule"><img src="vignettes/divine-tama.jpg"></div>
     <div class="grand-chiffre" data-voix="groupe" data-anim="zoom">1</div>
-    <div class="texte"><div class="carte" data-voix="groupe" data-anim="leve"><div class="medaillon coin" data-photo="buste-defile" data-voix="groupe" data-mot="groupe" data-anim="medaillon"></div><span class="etiquette">Formule n° 1</span><h3>En groupe</h3>
+    <div class="texte"><div class="carte" data-voix="groupe" data-anim="leve"><div class="medaillon coin" data-photo="sensuella-kante" data-voix="groupe" data-mot="groupe" data-anim="medaillon"></div><span class="etiquette">Formule n° 1</span><h3>En groupe</h3>
       <p class="detail" data-voix="groupe" data-mot="dimanche" data-anim="bloc">Chaque dimanche, de 15 h à 18 h</p>
       <p class="prix" data-voix="groupe" data-mot="trente" data-anim="monte"><span data-voix="groupe" data-mot="trente" data-anim="compteur" data-valeur="30000">30 000</span><small>FCFA</small></p>
       <p class="detail" data-voix="groupe" data-mot="quatre" data-anim="monte">les 4 séances</p></div></div>
-    <div class="medaillon moyen-m" data-photo="talons-podium" data-voix="groupe" data-mot="dimanche" data-anim="medaillon" data-pos="880,330" data-posl="1700,250"></div>
+    <div class="medaillon moyen-m" data-photo="elvira-dumas" data-voix="groupe" data-mot="dimanche" data-anim="medaillon" data-pos="880,330" data-posl="1700,250"></div>
   </section>
 
   <section class="scene" data-de="prive" data-transition="rideau">
-    <div class="photo" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-blanc.jpg"></div>
+    <div class="photo" data-mouvement="avance"><img src="vignettes/tossou.jpg"></div>
     <div class="grand-chiffre" data-voix="prive" data-anim="zoom">2</div>
-    <div class="texte"><div class="carte" data-voix="prive" data-mot="privé" data-anim="leve"><div class="medaillon coin" data-photo="buste-blanc" data-voix="prive" data-mot="personnalisé" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>En privé</h3>
+    <div class="texte"><div class="carte" data-voix="prive" data-mot="privé" data-anim="leve"><div class="medaillon coin" data-photo="ori-kotchi" data-voix="prive" data-mot="personnalisé" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>En privé</h3>
       <p class="detail" data-voix="prive" data-mot="accompagnement" data-anim="bloc">Un accompagnement entièrement personnalisé</p>
       <p class="prix" data-voix="prive" data-mot="vingt" data-anim="monte"><span data-voix="prive" data-mot="vingt" data-anim="compteur" data-valeur="25000">25 000</span><small>FCFA</small></p>
       <p class="detail" data-voix="prive" data-mot="salle" data-anim="monte">la séance de 2 h · notre salle à la Riviera Faya</p></div></div>
@@ -223,7 +224,7 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
 
   <section class="scene" data-de="domicile" data-transition="cercle">
     <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="texte"><div class="carte" data-voix="domicile" data-anim="leve"><div class="medaillon coin" data-photo="visage-drapeau" data-voix="domicile" data-mot="chez" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>Chez vous</h3>
+    <div class="texte"><div class="carte" data-voix="domicile" data-anim="leve"><div class="medaillon coin" data-photo="roxane-ouattara" data-voix="domicile" data-mot="chez" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>Chez vous</h3>
       <p class="detail" data-voix="domicile" data-mot="lieu" data-anim="bloc">ou au lieu de votre choix</p>
       <p class="prix" data-voix="domicile" data-mot="entre" data-anim="monte"><span data-voix="domicile" data-mot="entre" data-anim="compteur" data-valeur="30000">30 000</span> – <span data-voix="domicile" data-mot="trente-cinq" data-anim="compteur" data-valeur="35000">35 000</span><small>FCFA</small></p>
       <p class="detail" data-voix="nombre" data-anim="monte">la séance</p></div>
@@ -231,9 +232,9 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
   </section>
 
   <section class="scene" data-de="inscrire" data-transition="barres">
-    <div class="vignette" data-voix="inscrire" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="../../assets/cours-talons/mannequin-defile.jpg"></div></div>
-    <div class="vignette" data-voix="inscrire" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="../../assets/cours-talons/galerie-blanc.jpg"></div></div>
-    <div class="vignette" data-voix="inscrire" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div></div>
+    <div class="vignette" data-voix="inscrire" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/divine-tama.jpg"></div></div>
+    <div class="vignette" data-voix="inscrire" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/kouame-mina.jpg"></div></div>
+    <div class="vignette" data-voix="inscrire" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/tossou.jpg"></div></div>
     <div class="texte milieu decale"><p class="surtitre" data-voix="inscrire" data-anim="glisse">S’inscrire</p>
       <p class="moyen"><span data-voix="inscrire" data-mot="rien" data-anim="mots">Rien de</span> <em data-voix="inscrire" data-mot="compliqué" data-anim="mots">compliqué</em></p>
       <span class="trait losange" data-voix="inscrire" data-mot="compliqué" data-anim="trait"></span>
@@ -260,8 +261,8 @@ body.large #marque { left: 150px; right: 150px; top: 70px; }
   </section>
 
   <section class="scene" data-de="fin1" data-transition="barres">
-    <div class="mosaique"><div class="photo-m"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div><div class="photo-m"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div><div class="photo-m"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div><div class="photo-m"><img src="../../assets/cours-talons/galerie-blanc.jpg"></div><div class="photo-m"><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div></div>
-    <div class="texte centre milieu"><div class="medaillon petit" data-photo="talons-podium" data-voix="fin1" data-anim="medaillon" style="width:270px;height:270px;margin:0 auto 30px"></div>
+    <div class="mosaique"><div class="photo-m"><img src="vignettes/divine-tama.jpg"></div><div class="photo-m"><img src="vignettes/sensuella-kante.jpg"></div><div class="photo-m"><img src="vignettes/ndri-concours.jpg"></div><div class="photo-m"><img src="vignettes/mida-ophelia.jpg"></div><div class="photo-m"><img src="vignettes/tossou.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="vignettes/elvira-dumas.jpg"></div></div>
+    <div class="texte centre milieu"><div class="medaillon petit" data-photo="talons-bolli" data-voix="fin1" data-anim="medaillon" style="width:270px;height:270px;margin:0 auto 30px"></div>
       <p class="surtitre" data-voix="fin1" data-anim="glisse">Atelier Talons &amp; Élégance</p>
       <p class="titre"><span data-voix="fin1" data-mot="votre" data-anim="lettres">Votre élégance</span><br><em data-voix="fin1" data-mot="commence" data-anim="lettres">commence ici</em></p>
       <span class="bouton" data-voix="fin2" data-mot="inscris" data-anim="pop">Je m’inscris<i></i></span></div>
