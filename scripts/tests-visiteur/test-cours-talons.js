@@ -3,8 +3,8 @@
 //  1. serveur (api/portail.js) : la table cours_talons passe par l'anti-robots ; SQL pas encore collé → réponse
 //     « pas prêt » (la page propose alors WhatsApp) ;
 //  2. page : menu « Cours de talons · Ouvert à toutes », avertissement « pas pour intégrer l'agence », vidéo,
-//     4 étapes (formule et total par séance, mineure → parent obligatoire, 2 à 4 photos + vidéo de
-//     3 minutes au plus, envoi au clic avec jauges, Wave ou plus tard),
+//     4 étapes (formule et total par séance, mineure → parent obligatoire, 2 à 5 photos + vidéo de
+//     2 minutes au plus, envoi au clic avec une jauge par photo, Wave ou plus tard),
 //     inscription envoyée par le serveur avec les liens Drive ; sans débordement sur téléphone.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const chemin = require('path');
@@ -90,10 +90,10 @@ async function navigateur() {
     // étape 3 : photos et vidéo
     await p.click('#ct-suivant');
     ok(/photo/i.test(await p.textContent('#ct-msg')), n + 'étape 3 : sans photos, un message les demande');
-    await p.setInputFiles('#ct-photos', [1, 2, 3, 1, 2].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
-    ok(await p.locator('#ct-photos-apercu img').count() === 4 && /sur 4|out of 4/.test(await p.textContent('#ct-photos-info')), n + '5 photos choisies : 4 gardées au maximum');
-    await p.click('#ct-photos-apercu figure:nth-child(4) button'); await p.click('#ct-photos-apercu figure:nth-child(3) button');
-    ok(/3 minutes/.test(await p.textContent('.ct-etape[data-etape="3"]')), n + 'vidéo : « 3 minutes maximum » annoncé');
+    await p.setInputFiles('#ct-photos', [1, 2, 3, 4, 0, 1].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
+    ok(await p.locator('#ct-photos-apercu img').count() === 5 && /sur 5|out of 5/.test(await p.textContent('#ct-photos-info')), n + '6 photos choisies : 5 gardées au maximum');
+    for (const k of [5, 4, 3]) await p.click('#ct-photos-apercu figure:nth-child(' + k + ') button');
+    ok(/2 minutes/.test(await p.textContent('.ct-etape[data-etape="3"]')), n + 'vidéo : « 2 minutes maximum » annoncé');
     await p.setInputFiles('#ct-video', chemin.join(MEDIAS, 'video.mp4'));
     await p.waitForFunction(() => /✓/.test(document.getElementById('ct-video-info').textContent), null, { timeout: 30000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 2 && /✓/.test(await p.textContent('#ct-video-info')), n + '2 photos en aperçu, vidéo prête');
@@ -131,6 +131,8 @@ async function navigateur() {
       ok(Array.isArray(l.photos) && l.photos.length === 2 && l.video === 'https://drive.google.com/video-marche' && !('statut' in l) && !('montant' in l), n + 'liens Drive des 2 photos et de la vidéo ; ni statut ni montant envoyés (la base décide)');
       ok(/Merci|Thank you/.test(merci) && journal.some((j) => j[0] === 'EMAIL'), n + 'message de remerciement, e-mail de notification à l’agence');
       ok(/bien arrivées|reached the agency/.test(merci) && await p.isVisible('#ct-jauge-video') && /✓/.test(await p.textContent('#ct-jauge-video')), n + 'confirmation : « photos et vidéo bien arrivées », jauges à 100 % visibles');
+      const vertes = await p.locator('#ct-jauges-photos .jauge.terminee').count(), videoVerte = await p.locator('#ct-jauge-video.terminee').count();
+      ok(vertes === 2 && videoVerte === 1, n + 'une jauge par photo (2) et une pour la vidéo, toutes vertes une fois arrivées');
     } else {
       ok(/WhatsApp/.test(merci) && (await p.getAttribute('#ct-merci a', 'href') || '').startsWith('https://wa.me/2250545656687?text='), n + 'SQL pas encore collé : bouton pour envoyer l’inscription sur WhatsApp');
     }

@@ -1,9 +1,10 @@
 // Page « Cours de talons » (Atelier Talons & Élégance, cours-talons.html et en/cours-talons.html, 08/11/2026).
-// Inscription en 4 étapes : formule → la personne → 2 à 4 photos + une vidéo de sa marche → paiement Wave
+// Inscription en 4 étapes : formule → la personne → 2 à 5 photos + une vidéo de sa marche → paiement Wave
 // maintenant ou plus tard. Les photos et la vidéo partent vers Google Drive (sous-dossier « Cours de
 // talons », même programme que les candidatures) au clic sur « Envoyer », sous les yeux de la personne (jauges),
 // ALLÉGÉES (10/11/2026 : l'envoi faisait attendre plusieurs minutes et décourageait les élèves ; photos 1600 px,
-// vidéo 480p, 3 minutes au plus) ; puis la ligne est enregistrée par le serveur du site
+// vidéo 480p, 2 minutes au plus), avec une jauge par photo et une pour la vidéo, qui passent au vert une fois
+// arrivées ; puis la ligne est enregistrée par le serveur du site
 // (anti-robots, table cours_talons, supabase-cours-talons.sql) : le statut et le montant sont décidés par la base.
 // Si le SQL n'est pas encore installé, l'inscription est proposée par WhatsApp (rien n'est perdu).
 // Outils partagés (js/app.js) : insererAvecPatience, envoyerPhotosVersDrive, envoyerVideoVersDrive, majJauge,
@@ -18,12 +19,12 @@
   // cours_talons_montant() dans la base, qui reste seule juge du montant enregistré.
   const PRIX = { groupe: 30000, prive_salle: 25000, prive_exterieur: 30000 };
   const WHATSAPP_AGENCE = '2250545656687';
-  // Vidéo : 3 minutes au plus (décision de la propriétaire, 10/11/2026). Le programme Google Drive refuse plus de
-  // 60 Mo : la vidéo est allégée en 480p (environ 8 Mo la minute) et son poids final est vérifié.
-  const PHOTOS_MAX = 4, PHOTOS_MIN = 2;
-  const VIDEO_MAX_SECONDES = 185;
+  // 2 à 5 photos ; vidéo de 2 minutes au plus (décisions de la propriétaire, 10/11/2026). Le programme Google Drive
+  // refuse plus de 60 Mo : la vidéo est allégée en 480p (environ 6 Mo la minute) et son poids final est vérifié.
+  const PHOTOS_MAX = 5, PHOTOS_MIN = 2;
+  const VIDEO_MAX_SECONDES = 125;
   const VIDEO_MAX_OCTETS = 60 * 1024 * 1024, VIDEO_MAX_ORIGINAL = 4 * 1024 * 1024 * 1024;
-  const ALLEGEMENT = { coteLong: 854, debit: 900000, dejaLegere: 6 * 1024 * 1024 };
+  const ALLEGEMENT = { coteLong: 854, debit: 700000, audioDebit: 64000, dejaLegere: 5 * 1024 * 1024 };
   const fcfa = enFcfa;  // (js/app.js, comme LIEN_WAVE_AGENCE : le lien Wave des mensualités)
 
   remplirIndicatifs($('ct-indicatif'));
@@ -38,8 +39,9 @@
   const idInscription = crypto.randomUUID();
   // Ce qui est déjà arrivé sur Drive { liens, dossier, video } : gardé pour un nouvel essai (rien n'est renvoyé en
   // double), oublié dès qu'on change les photos ou la vidéo. envoiEnCours : jauges de l'envoi affichées.
-  let dejaEnvoye = { liens: [], dossier: null, video: null }, envoiEnCours = false;
-  function mediasChanges() { dejaEnvoye = { liens: [], dossier: null, video: null }; }
+  // (rangs : numéros des photos réellement envoyées, une photo illisible étant laissée de côté)
+  let dejaEnvoye = { liens: [], rangs: [], dossier: null, video: null }, envoiEnCours = false;
+  function mediasChanges() { dejaEnvoye = { liens: [], rangs: [], dossier: null, video: null }; }
 
   const formule = () => (form.querySelector('input[name="formule"]:checked') || {}).value || '';
   const decision = () => (form.querySelector('input[name="decision"]:checked') || {}).value || '';
@@ -104,7 +106,7 @@
       }
     }
     if (n === 3) {
-      if (photos.length < PHOTOS_MIN) return erreur(T('Ajoutez 2 à 4 photos.', 'Please add 2 to 4 photos.'), $('ct-photos'));
+      if (photos.length < PHOTOS_MIN) return erreur(T('Ajoutez 2 à 5 photos.', 'Please add 2 to 5 photos.'), $('ct-photos'));
       if (!video && !videoEnPreparation) return erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video'));
     }
     return true;
@@ -114,7 +116,7 @@
   });
   $('ct-retour').addEventListener('click', () => montrer(Math.max(1, etape - 1)));
 
-  // ---------- photos (2 à 4)
+  // ---------- photos (2 à 5)
   function rafraichirPhotos() {
     const boite = $('ct-photos-apercu');
     boite.querySelectorAll('img').forEach((im) => URL.revokeObjectURL(im.src));
@@ -138,7 +140,7 @@
     rafraichirPhotos();
   });
 
-  // ---------- vidéo (3 minutes au plus, allégée sur l'appareil si elle est lourde)
+  // ---------- vidéo (2 minutes au plus, allégée sur l'appareil si elle est lourde)
   $('ct-video').addEventListener('change', async (e) => {
     const info = $('ct-video-info');
     const fichier = e.target.files && e.target.files[0];
@@ -155,7 +157,7 @@
     if (numero !== numeroVideo) return;
     const duree = examen.duree || (fichier.size <= 300 * 1048576 ? await dureeVideo(fichier) : null);
     if (numero !== numeroVideo) return;
-    if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) return refuser(T(`Vidéo trop longue (${dureeLisible(duree)}) : 3 minutes maximum.`, `Video too long (${dureeLisible(duree)}): 3 minutes maximum.`));
+    if (duree && isFinite(duree) && duree > VIDEO_MAX_SECONDES) return refuser(T(`Vidéo trop longue (${dureeLisible(duree)}) : 2 minutes maximum.`, `Video too long (${dureeLisible(duree)}): 2 minutes maximum.`));
     info.textContent = '';
     videoEnPreparation = (async () => {
       let allegee = null;
@@ -177,6 +179,28 @@
 
   const dureeLisible = (d) => { const t = Math.round(d); return t < 90 ? t + ' s' : Math.floor(t / 60) + ' min ' + String(t % 60).padStart(2, '0'); };
 
+  // ---------- jauges de l'envoi : une par photo et une pour la vidéo (vertes une fois arrivées)
+  function creerJauge(id) {
+    const j = document.createElement('div'); j.id = id; j.className = 'jauge';
+    j.setAttribute('role', 'progressbar'); j.setAttribute('aria-valuemin', '0'); j.setAttribute('aria-valuemax', '100');
+    const haut = document.createElement('div'); haut.className = 'jauge-haut';
+    const titre = document.createElement('span'); titre.className = 'jauge-titre';
+    const pc = document.createElement('span'); pc.className = 'jauge-pc'; pc.textContent = '0 %';
+    const barre = document.createElement('div'); barre.className = 'jauge-barre';
+    const remplie = document.createElement('span'); remplie.className = 'jauge-remplie';
+    haut.append(titre, pc); barre.appendChild(remplie); j.append(haut, barre);
+    return j;
+  }
+  // Fait avancer doucement une jauge vers un plafond pendant un envoi d'un seul bloc (le navigateur ne dit pas où
+  // en est l'envoi vers Google) : la jauge ne reste jamais figée, puis passe à 100 % (verte) à la réponse.
+  function avancerDoucement(ids, depart, plafond, dureeEstimee, titre) {
+    const debut = Date.now();
+    const pas = () => { const pc = depart + (plafond - depart) * (1 - Math.exp(-(Date.now() - debut) / dureeEstimee)); ids.forEach((id) => majJauge(id, pc, titre)); };
+    pas();
+    const minuterie = setInterval(pas, 250);
+    return () => clearInterval(minuterie);
+  }
+
   // ---------- envoi des photos et de la vidéo vers Drive (au clic sur « Envoyer », jauges visibles)
   // Attend d'abord la fin de la préparation de la vidéo (rien ne part si elle est refusée) ; ne renvoie pas ce qui
   // est déjà arrivé. Renvoie false si la vidéo manque, sinon met à jour dejaEnvoye.
@@ -184,29 +208,45 @@
     envoiEnCours = true;
     $('ct-envoi-jauges').classList.remove('u-hidden');
     const d = dejaEnvoye;
-    if (d.liens.length) majJauge('ct-jauge-photos', 100, T(`Photos (${d.liens.length}) : envoyées ✓`, `Photos (${d.liens.length}): sent ✓`));
-    else majJauge('ct-jauge-photos', 0, T('Photos : en attente…', 'Photos: waiting…'));
+    const boite = $('ct-jauges-photos'); boite.textContent = '';
+    const ids = photos.map((f, i) => { boite.appendChild(creerJauge('ct-jauge-photo-' + (i + 1))); return 'ct-jauge-photo-' + (i + 1); });
+    const nomPhoto = (i) => T('Photo ', 'Photo ') + (i + 1);
+    const photosArrivees = () => ids.forEach((id, i) => {
+      if (d.rangs.indexOf(i) !== -1 && d.rangs.indexOf(i) < d.liens.length) majJauge(id, 100, nomPhoto(i) + T(' : envoyée ✓', ': sent ✓'));
+      else jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent'));
+    });
+    if (d.liens.length) photosArrivees();
+    else ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
     if (videoEnPreparation) await videoEnPreparation;
     if (!video) return false;
     const nom = $('ct-nom').value.trim(), tel = composerTelephone($('ct-indicatif'), $('ct-telephone'));
     const infosDrive = { nom, email: '', phone: tel, type: 'projet', projet: 'Cours de talons' };
     if (!d.liens.length) {
-      const base64 = [];
-      for (const f of photos) {
-        try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(f), 1600, 0.82))); } catch (err) { /* photo illisible : ignorée */ }
-        majJauge('ct-jauge-photos', base64.length / photos.length * 40, T('Photos : préparation…', 'Photos: preparing…'));
+      const base64 = [], rangs = [];
+      for (let i = 0; i < photos.length; i++) {
+        majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
+        try { base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(photos[i]), 1600, 0.82))); rangs.push(i); } catch (err) { /* photo illisible : ignorée */ }
+        majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
       }
-      majJauge('ct-jauge-photos', 50, T('Photos : envoi…', 'Photos: sending…'));
+      // ~150 Ko/s : un débit mobile modeste ; la jauge ralentit d'elle-même si c'est plus long
+      const octets = base64.reduce((t, x) => t + x.length, 0);
+      const arreter = avancerDoucement(ids, 25, 95, Math.max(2500, octets / 150), null);
+      ids.forEach((id, i) => majJauge(id, 25, nomPhoto(i) + T(' : envoi…', ': sending…')));
       const r = base64.length ? await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, photos: base64 }) : { liens: [], dossier: null };
-      d.liens = r.liens || []; d.dossier = r.dossier || null;
-      if (d.liens.length) majJauge('ct-jauge-photos', 100, T(`Photos (${d.liens.length}) : envoyées ✓`, `Photos (${d.liens.length}): sent ✓`));
-      else jaugeEnErreur('ct-jauge-photos', T('Photos : non envoyées', 'Photos: not sent'));
+      arreter();
+      d.liens = r.liens || []; d.rangs = rangs; d.dossier = r.dossier || null;
+      photosArrivees();
     }
     if (!d.video) {
-      const fichierVideo = video;
-      d.video = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, fichierVideo,
-        (pc) => majJauge('ct-jauge-video', pc, T(`Vidéo (${enMo(fichierVideo.size)}) : envoi…`, `Video (${enMo(fichierVideo.size)}): sending…`))).catch(() => null);
+      const fichierVideo = video, titre = T(`Vidéo (${enMo(fichierVideo.size)}) : envoi…`, `Video (${enMo(fichierVideo.size)}): sending…`);
+      const part = Math.min(100, TAILLE_MORCEAU_VIDEO / fichierVideo.size * 100);  // part d'un morceau (envoyé d'un bloc)
+      let arreter = avancerDoucement(['ct-jauge-video'], 0, Math.min(98, part), Math.max(2500, Math.min(TAILLE_MORCEAU_VIDEO, fichierVideo.size) * 1.37 / 150), titre);
+      d.video = await envoyerVideoVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, fichierVideo, (pc) => {
+        arreter();
+        if (pc < 100) arreter = avancerDoucement(['ct-jauge-video'], pc, Math.min(98, pc + part), Math.max(2500, TAILLE_MORCEAU_VIDEO * 1.37 / 150), titre);
+      }).catch(() => null);
+      arreter();
     }
     if (d.video) majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
     else jaugeEnErreur('ct-jauge-video', T('Vidéo : non envoyée', 'Video: not sent'));

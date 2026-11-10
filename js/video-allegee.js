@@ -63,7 +63,7 @@
   // Renvoie un nouveau fichier allégé, ou null si l'allègement est inutile ou
   // impossible sur cet appareil. surProgres(0..100) pendant la préparation.
   // options (facultatif, page « Cours de talons », 10/11/2026) : { coteLong, debit,
-  // dejaLegere } — vidéo plus petite pour un envoi plus rapide.
+  // dejaLegere, audioDebit } — vidéo plus petite pour un envoi plus rapide.
   async function allegerVideo(fichier, surProgres, options) {
     const o = options || {};
     const coteLong = o.coteLong || COTE_LONG;
@@ -94,7 +94,7 @@
     const conversion = await MB.Conversion.init({
       input: entree, output: sortie, tracks: 'primary',
       video: { width: l, height: h, fit: 'contain', codec, bitrate: debit, frameRate: IMAGES_SECONDE },
-      audio: { numberOfChannels: 2 }
+      audio: o.audioDebit ? { numberOfChannels: 2, bitrate: o.audioDebit } : { numberOfChannels: 2 }
     });
     // Le son ne doit jamais disparaître : si la piste son est écartée, on n'allège pas.
     if (!conversion.isValid || conversion.discardedTracks.length) return null;
