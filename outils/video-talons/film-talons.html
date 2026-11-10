@@ -316,6 +316,14 @@ const SYMBOLES = {
   coeur: '<path d="M50 82 C20 62 13 45 21 32 C29 20 45 23 50 36 C55 23 71 20 79 32 C87 45 80 62 50 82 Z"/>'
 };
 window.MANQUES = [];
+// début d'une scène : un peu avant sa première phrase, mais jamais avant la fin de la phrase précédente (une voix
+// qui enchaîne sans pause ne doit pas voir la transition couper la fin de la scène d'avant)
+const CLES = Object.keys(T.phrases);
+function debutScene(cle) {
+  const i = CLES.indexOf(cle), d = T.phrases[cle][0];
+  const finAvant = i > 0 ? T.phrases[CLES[i - 1]][1] - 0.05 : 0;
+  return Math.max(0, Math.min(d, Math.max(d - 0.55, finAvant)));
+}
 // instant d'un élément : début du mot (data-mot) dans sa phrase, sinon début de la phrase, + data-retard
 function instant(el) {
   const cle = el.dataset.voix, mots = T.mots[cle] || [];
@@ -364,7 +372,7 @@ const scenes = [...document.querySelectorAll('.scene')].map((el, i) => {
     formes.push({ f, retard: 0.15 + k * 0.11, rot: (r() - 0.5) * 30, vit: 0.25 + r() * 0.4, amp: 18 + r() * 34, ph: r() * 6.28 });
   });
   el.insertBefore(arriere, el.firstChild); el.appendChild(avant); el.appendChild(plateau);
-  return { el, plateau, formes, debut: Math.max(0, T.phrases[el.dataset.de][0] - 0.55), transition: el.dataset.transition || 'fondu',
+  return { el, plateau, formes, debut: debutScene(el.dataset.de), transition: el.dataset.transition || 'fondu',
     photos: [...el.querySelectorAll('.photo, .photo-m')],
     elements: [...el.querySelectorAll('[data-voix]')].map((x) => ({ x, t: instant(x), anim: x.dataset.anim || 'monte',
       mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
@@ -425,12 +433,12 @@ function entree(s, t, premier) {
   else if (s.transition === 'volet') st.clipPath = LARGE ? 'inset(' + (100 * (1 - k)) + '% 0 0 0)' : 'inset(0 0 ' + (100 * (1 - k)) + '% 0)';
   else if (s.transition === 'cercle') st.clipPath = 'circle(' + (150 * k) + '% at 50% 50%)';
 }
-// barres : sept blocs montent couvrir l'image, la scène change dessous, puis ils s'envolent vers le haut
+// barres (rapides : la voix peut enchaîner sans pause) : sept blocs montent couvrir l'image, la scène change dessous, puis ils s'envolent vers le haut
 function rendreBarres(t) {
-  let actif = null; scenes.forEach((s) => { if (s.transition === 'barres' && t > s.debut - 0.5 && t < s.debut + 0.75) actif = s; });
+  let actif = null; scenes.forEach((s) => { if (s.transition === 'barres' && t > s.debut - 0.3 && t < s.debut + 0.8) actif = s; });
   lesBarres.forEach((b, j) => {
     if (!actif) { b.style.visibility = 'hidden'; return; }
-    const u = t - (actif.debut - 0.5), c = sortie((u - j * 0.04) / 0.3), o = sortie((u - 0.55 - j * 0.05) / 0.35);
+    const u = t - (actif.debut - 0.3), c = sortie((u - j * 0.02) / 0.18), o = sortie((u - 0.5 - j * 0.05) / 0.35);
     b.style.visibility = c > 0 && o < 1 ? 'visible' : 'hidden';
     b.style.transform = 'translateY(' + (o > 0 ? -100 * o : 100 * (1 - c)) + '%)';
   });
