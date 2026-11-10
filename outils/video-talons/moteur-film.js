@@ -141,6 +141,9 @@ function animer(e, t) {
       const d = t - e.t, k = sortie(d / 1.2), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
       s.transform = 'perspective(1400px) translateY(' + (260 * (1 - k) + 10 * Math.sin(d * 0.9 + rot)) + 'px) rotateX(' + (55 * (1 - k)) + 'deg) rotate(' + (rot * (2 - k) + 1.5 * Math.sin(d * 0.7)) + 'deg) scale(' + (0.7 + 0.3 * k) + ')';
       const img = x.querySelector('img'); img.style.transform = 'scale(' + (1.25 - 0.15 * Math.min(1, d / 8)) + ')'; break; }
+    case 'diapo': { // photos qui se succèdent très vite (effet de marche, comme une suite d'images) : data-pas secondes par photo
+      const d = t - e.t, enf = x.children, n = enf.length, pas = Number(x.dataset.pas || 0.4), k = Math.floor(d / pas) % n;
+      s.opacity = Math.min(1, d * 3); for (let j = 0; j < n; j++) { enf[j].style.opacity = j === k ? 1 : 0; enf[j].style.transform = 'scale(' + (1.04 + 0.04 * ((d / pas) % 1)) + ')'; } break; }
     case 'nuage': { // photo lancée de loin (data-dx, data-dy) en tournant, qui se pose à sa place puis flotte
       const d = t - e.t, k = sortie(d / 1.4), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
       s.transform = 'translate(' + (Number(x.dataset.dx || 0) * (1 - k)) + 'px,' + (Number(x.dataset.dy || 0) * (1 - k) + 8 * Math.sin(d + rot)) + 'px) rotate(' + (rot + 40 * (1 - k)) + 'deg) scale(' + (0.4 + 0.6 * k) + ')'; break; }

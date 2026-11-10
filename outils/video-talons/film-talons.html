@@ -1,144 +1,224 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8">
-<!-- Vidéo « Atelier Talons & Élégance », version luxe en VRAI motion design (10/11/2026, demande de la propriétaire :
-     « des blocs qui se soulèvent, qui se déplacent, des mannequins qui bougent, des médaillons, des symboles, des textes
-     qui bougent », pas un diaporama). Rendu image par image par fabrique-talons.js : window.rendre(t) place chaque
-     élément pour l'instant t (secondes) ; tout est calculé à partir de t (aucun hasard : deux rendus sont identiques).
-     Chaque élément apparaît sur le MOT de la voix qui le dit (timing-talons.js, d'après ElevenLabs) :
-       data-voix="clé de la phrase", data-mot="mot" (facultatif), data-retard (s),
-       data-anim = monte | glisse | leve (bloc qui se soulève en 3D) | bloc (volet blanc qui balaie puis révèle) |
-                   lettres (lettre par lettre) | mots | trait | pop | compteur | medaillon | vignette | zoom.
-     Médaillons : <div class="medaillon" data-symbole="talon|couronne|diamant|…">, placés par data-pos="x,y" (vertical)
-     et data-posl="x,y" (horizontal), ou dans le texte (classe « petit ») ou au coin d'une carte (classe « coin »).
-     Vignettes (photo encadrée qui arrive et flotte) : data-pos / data-posl / data-l (largeur) / data-rot (degrés).
-     Scènes : data-de (première phrase), data-transition = fondu | rideau | cercle | volet | barres ; en fond, des blocs
-     translucides qui se soulèvent puis dérivent, une poussière de lumière ; le texte et les photos bougent en
-     parallaxe (caméra). Photos : data-mouvement = recule | avance | panorama.
-     Format vertical (1080 × 1920) ou horizontal (?format=large, 1920 × 1080), chacun composé pour son écran.
-     Rouges et blanc seulement ; femmes majeures seulement à l'image. -->
+<!-- Vidéo « Atelier Talons & Élégance », 3e version (11/11/2026) : sur le modèle de la vidéo « Intégrer l'agence »
+     validée par la propriétaire — scènes qui ILLUSTRENT la voix (suite de photos de défilé qui donne l'effet de la
+     marche, vrais talons, posture / port de tête / équilibre / fluidité en grandes photos, empreintes de talons pas à
+     pas, calendrier et prix, téléphone de l'inscription, mur de photos « Ouvert à toutes »), rouge mat du site uni,
+     boutons du site, voix « Nicolas » de la propriétaire, musique de défilé ElevenLabs.
+     Moteur commun : moteur-film.css / moteur-film.js. Rendu : node fabrique-talons.js [vertical|large]
+     Femmes majeures seulement, jamais KAPO Ainhoa ni AKASSOU, jamais d'homme. -->
 <title>Film Atelier Talons & Élégance</title>
 <script src="timing-talons.js"></script>
-<link rel="stylesheet" href="moteur-film.css"></head>
-<body>
+<link rel="stylesheet" href="moteur-film.css">
+<style>
+/* 1. ouverture : suite de photos de défilé (la marche) + talons */
+.marche { overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 60px 120px -40px rgba(40,6,10,0.9); z-index: 4; }
+.marche div { position: absolute; inset: 0; }
+.marche img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+body:not(.large) .marche { left: 190px; top: 190px; width: 700px; height: 980px; }
+body.large .marche { left: 1120px; top: 120px; width: 600px; height: 840px; }
+.carre { overflow: hidden; border: 8px solid #fff; border-radius: 6px; box-shadow: 0 40px 80px -30px rgba(40,6,10,0.9); z-index: 6; }
+.carre img { width: 100%; height: 100%; object-fit: cover; }
+body:not(.large) .talon1 { left: 640px; top: 900px; width: 330px; height: 330px; }
+body.large .talon1 { left: 900px; top: 640px; width: 300px; height: 300px; }
+/* 2. trois envies */
+.triptyque { display: flex; gap: 22px; z-index: 5; }
+body:not(.large) .triptyque { left: 60px; right: 60px; top: 420px; }
+body.large .triptyque { left: 150px; right: 150px; top: 300px; }
+.triptyque > div { flex: 1; position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 50px 100px -40px rgba(40,6,10,0.9); transform-origin: 50% 100%; }
+body:not(.large) .triptyque > div { height: 980px; }
+body.large .triptyque > div { height: 600px; }
+.triptyque img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.triptyque b { position: absolute; left: 0; right: 0; bottom: 0; padding: 120px 22px 26px; background: linear-gradient(180deg, rgba(124,33,40,0), #7C2128 70%); font: 500 52px/1.05 'Cormorant Garamond'; text-align: center; }
+body.large .triptyque b { font-size: 46px; }
+/* 3. au bon endroit */
+body:not(.large) .bande.b3 { left: 40px; top: 1060px; }
+body.large .bande.b3 { left: 40px; top: 560px; }
+body:not(.large) .texte-haut { left: 90px; right: 90px; top: 300px; text-align: center; }
+body.large .texte-haut { left: 150px; right: 150px; top: 170px; text-align: center; }
+/* 4. l'atelier : quatre grandes photos */
+.quatre { display: grid; gap: 18px; z-index: 5; }
+body:not(.large) .quatre { left: 60px; right: 60px; top: 400px; grid-template-columns: 1fr 1fr; }
+body.large .quatre { left: 150px; right: 150px; top: 280px; grid-template-columns: repeat(4, 1fr); }
+.quatre > div { position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 50px 100px -40px rgba(40,6,10,0.9); transform-origin: 50% 100%; }
+body:not(.large) .quatre > div { height: 640px; }
+body.large .quatre > div { height: 620px; }
+.quatre img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.quatre b { position: absolute; left: 0; right: 0; bottom: 0; padding: 110px 20px 22px; background: linear-gradient(180deg, rgba(124,33,40,0), #7C2128 75%); font: 500 50px/1.05 'Cormorant Garamond'; }
+.quatre b i { display: block; font: italic 400 34px 'Cormorant Garamond'; opacity: 0.85; }
+/* 5. empreintes de talons */
+.empreinte { position: absolute; z-index: 6; width: 46px; height: 104px; left: var(--xv); top: var(--yv); }
+body.large .empreinte { left: var(--xl); top: var(--yl); width: 40px; height: 90px; }
+.empreinte svg { width: 100%; height: 100%; fill: #fff; transform: rotate(var(--r)); filter: drop-shadow(0 6px 10px rgba(40,6,10,0.6)); }
+/* 6. niveaux */
+.niveaux { display: flex; gap: 26px; z-index: 5; }
+body:not(.large) .niveaux { left: 90px; right: 90px; top: 420px; }
+body.large .niveaux { left: 150px; width: 900px; top: 260px; }
+.niveaux > div { flex: 1; text-align: center; }
+.niveaux .carre { position: relative; height: 640px; margin-bottom: 22px; }
+body.large .niveaux .carre { height: 520px; }
+.niveaux .carre img { object-position: 50% 20%; }
+.niveaux .bouton { white-space: nowrap; font-size: 34px; padding: 26px 50px; }
+body.large .niveaux .bouton { font-size: 30px; }
+/* 7–9. formules */
+.rangee { display: flex; gap: 14px; z-index: 5; }
+.rangee > div { width: 210px; height: 290px; overflow: hidden; border: 6px solid #fff; border-radius: 6px; box-shadow: 0 30px 60px -24px rgba(40,6,10,0.9); }
+body.large .rangee > div { width: 190px; height: 260px; }
+.rangee img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+body:not(.large) .rangee { left: 90px; top: 420px; }
+body.large .rangee { left: 150px; top: 390px; }
+.agenda { z-index: 6; width: 400px; border-radius: 18px; overflow: hidden; background: #fff; color: #7C2128; text-align: center; box-shadow: 0 40px 80px -30px rgba(40,6,10,0.9); }
+.agenda b { display: block; background: #7C2128; color: #fff; border: 4px solid #fff; border-bottom: 0; border-radius: 18px 18px 0 0; font: 700 34px 'Work Sans'; letter-spacing: 0.25em; padding: 16px; }
+.agenda span { display: block; font: 800 96px/1.15 'Big Shoulders Display'; padding: 10px 0 18px; }
+body:not(.large) .agenda { left: 340px; top: 790px; }
+body.large .agenda { left: 1130px; top: 390px; }
+.prix-geant { z-index: 6; font: 800 190px/0.9 'Big Shoulders Display'; white-space: nowrap; }
+.prix-geant small { font: 700 44px 'Work Sans'; margin-left: 16px; letter-spacing: 0.06em; }
+.prix-geant em { display: block; font: italic 400 50px 'Cormorant Garamond'; margin-top: 10px; }
+body:not(.large) .prix-geant { left: 90px; top: 1260px; }
+body.large .prix-geant { left: 150px; top: 730px; font-size: 160px; }
+body:not(.large) .prix-geant.p2 { top: 1240px; }
+body:not(.large) .grande-photo { left: 90px; right: 90px; top: 420px; height: 760px; }
+body.large .grande-photo { left: 1080px; top: 140px; width: 620px; height: 800px; }
+.lieu { z-index: 7; display: flex; align-items: center; gap: 16px; padding: 18px 30px; border-radius: 999px; background: #fff; color: #7C2128; font: 700 32px 'Montserrat'; box-shadow: 0 30px 60px -24px rgba(40,6,10,0.9); }
+.lieu svg { width: 40px; height: 40px; fill: none; stroke: #7C2128; stroke-width: 5; }
+body:not(.large) .lieu { left: 560px; top: 1110px; }
+body.large .lieu { left: 1300px; top: 860px; }
+.maison { z-index: 5; fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+body:not(.large) .maison { left: 290px; top: 380px; width: 500px; height: 500px; }
+body.large .maison { left: 1150px; top: 200px; width: 520px; height: 520px; }
+.seances { z-index: 6; text-align: center; }
+.seances b { display: block; font: 800 230px/0.9 'Big Shoulders Display'; }
+.seances > span { font: 600 30px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; }
+body:not(.large) .seances { left: 0; right: 0; top: 1500px; }
+body:not(.large) .seances b { font-size: 150px; }
+body.large .seances { left: 1150px; width: 520px; top: 740px; }
+body.large .seances b { font-size: 110px; }
+/* 10. inscription */
+.choix { margin: 0 34px 10px; padding: 18px 22px; border-radius: 12px; background: #fff; border: 2px solid #d4d4d8; font: 600 24px 'Work Sans'; display: flex; align-items: center; gap: 14px; }
+body.large .choix { margin: 0 26px 8px; padding: 12px 16px; font-size: 19px; }
+.choix i { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #7C2128; flex: none; }
+.choix.coche { border-color: #7C2128; }
+.choix.coche i { background: radial-gradient(circle, #7C2128 45%, #fff 50%); }
+/* 12. pas l'agence */
+.duo { display: flex; align-items: center; gap: 30px; z-index: 6; }
+body:not(.large) .duo { left: 60px; right: 60px; top: 520px; flex-direction: column; }
+body.large .duo { left: 150px; right: 150px; top: 330px; justify-content: center; }
+.duo .carte-etape { width: 520px; }
+.different { font: 800 180px/0.8 'Big Shoulders Display'; }
+/* 13. fin */
+body:not(.large) .talon-fin { left: 290px; top: 230px; width: 500px; height: 500px; }
+body.large .talon-fin { left: 150px; top: 260px; width: 560px; height: 560px; }
+body.large .fin-texte { left: 800px !important; right: 120px !important; width: auto !important; }
+</style>
+</head>
+<body class="mat">
 <div id="film">
 
   <section class="scene" data-de="intro" data-transition="fondu">
-    <div class="photo" data-mouvement="recule"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
-    <div class="medaillon" data-photo="t-145" data-voix="intro" data-mot="Talons" data-anim="medaillon" data-pos="870,880" data-posl="1180,280"></div>
-    <div class="medaillon moyen-m" data-photo="p-096" data-voix="intro" data-mot="Élégance" data-anim="medaillon" data-pos="540,1050" data-posl="1250,640"></div>
+    <div class="abs marche" data-voix="intro" data-retard="-1.2" data-anim="diapo" data-pas="0.42"><div><img src="vignettes/042.jpg"></div><div><img src="vignettes/034.jpg"></div><div><img src="vignettes/138.jpg"></div><div><img src="vignettes/149.jpg"></div><div><img src="vignettes/148.jpg"></div><div><img src="vignettes/146.jpg"></div><div><img src="vignettes/151.jpg"></div><div><img src="vignettes/182.jpg"></div><div><img src="vignettes/188.jpg"></div><div><img src="vignettes/144.jpg"></div><div><img src="vignettes/001.jpg"></div><div><img src="vignettes/009.jpg"></div></div>
+    <div class="abs carre talon1" data-voix="intro" data-mot="Talons" data-anim="leve"><img src="medaillons/t-145.jpg"></div>
     <div class="texte"><p class="surtitre" data-voix="intro" data-anim="glisse">Ouvert à toutes · Abidjan</p>
       <h1 class="titre"><span data-voix="intro" data-mot="Atelier" data-anim="lettres">Atelier</span><br><em data-voix="intro" data-mot="Talons" data-anim="lettres">Talons &amp; Élégance</em></h1>
-      <span class="trait losange" data-voix="intro" data-mot="Élégance" data-anim="trait"></span>
-      <p class="ligne" data-voix="intro" data-mot="Maître" data-anim="bloc">Maître Akesse Model Management</p></div>
+      <p class="ligne" style="margin-top:24px" data-voix="intro" data-mot="Maître" data-anim="bloc">Maître Akesse Model Management</p></div>
   </section>
 
   <section class="scene" data-de="questions" data-transition="barres">
-    <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/mannequin-defile.jpg"></div>
-    <div class="texte"><p class="surtitre" data-voix="questions" data-anim="glisse">Vous souhaitez…</p>
-      <ul class="liste">
-        <li><span data-voix="questions" data-mot="concours" data-anim="bloc"><span class="n">—</span>Un concours de beauté</span><span class="medaillon petit" data-photo="p-084" data-voix="questions" data-mot="beauté" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="concours" data-anim="trait"></span></li>
-        <li><span data-voix="questions" data-mot="élégance" data-anim="bloc"><span class="n">—</span>Élégance &amp; prestance</span><span class="medaillon petit" data-photo="p-162" data-voix="questions" data-mot="prestance" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="élégance" data-anim="trait"></span></li>
-        <li><span data-voix="questions" data-mot="marcher" data-anim="bloc"><span class="n">—</span>Marcher avec assurance</span><span class="medaillon petit" data-photo="t-048" data-voix="questions" data-mot="talons" data-anim="medaillon"></span><span class="filet" data-voix="questions" data-mot="marcher" data-anim="trait"></span></li></ul></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="questions" data-anim="glisse">Vous souhaitez…</p></div>
+    <div class="abs triptyque">
+      <div data-voix="questions" data-mot="concours" data-anim="leve"><img src="vignettes/084.jpg"><b>Un concours de beauté</b></div>
+      <div data-voix="questions" data-mot="élégance" data-anim="leve"><img src="vignettes/162.jpg"><b>Élégance &amp; prestance</b></div>
+      <div data-voix="questions" data-mot="marcher" data-anim="leve"><img src="vignettes/138.jpg"><b>Marcher en talons</b></div></div>
   </section>
 
   <section class="scene" data-de="endroit" data-transition="cercle">
-    <div class="photo plein" data-mouvement="avance"><img src="vignettes/106.jpg"></div>
-    <div class="vignette" data-voix="endroit" data-anim="vignette" data-pos="250,470" data-posl="330,560" data-l="300" data-h="400" data-rot="-8"><div><img src="vignettes/027.jpg"></div></div>
-    <div class="vignette" data-voix="endroit" data-mot="bon" data-anim="vignette" data-pos="830,1480" data-posl="1600,520" data-l="300" data-h="400" data-rot="7"><div><img src="vignettes/107.jpg"></div></div>
-    <div class="medaillon moyen-m" data-photo="p-016" data-voix="endroit" data-mot="bon" data-anim="medaillon" data-pos="540,640" data-posl="960,250"></div>
-    <div class="texte centre milieu"><p class="grand"><span data-voix="endroit" data-mot="vous" data-anim="lettres">Vous êtes</span><br><em data-voix="endroit" data-mot="bon" data-anim="lettres">au bon endroit.</em></p>
-      <span class="trait losange" data-voix="demarche" data-anim="trait"></span>
-      <p class="moyen"><span data-voix="demarche" data-mot="bien" data-anim="mots">Bien plus qu’une</span><br><em data-voix="demarche" data-mot="simple" data-anim="mots">simple démarche</em></p></div>
+    <div class="abs texte-haut"><p class="grand"><span data-voix="endroit" data-mot="vous" data-anim="lettres">Vous êtes</span><br><em data-voix="endroit" data-mot="bon" data-anim="lettres">au bon endroit.</em></p>
+      <p class="moyen" style="margin-top:40px"><span data-voix="demarche" data-mot="bien" data-anim="mots">Bien plus qu’une</span> <em data-voix="demarche" data-mot="simple" data-anim="mots">simple démarche</em></p></div>
+    <div class="abs bande b3" data-voix="endroit" data-anim="defile" data-vitesse="80"><div><img src="vignettes/149.jpg"></div><div><img src="vignettes/034.jpg"></div><div><img src="vignettes/146.jpg"></div><div><img src="vignettes/182.jpg"></div><div><img src="vignettes/151.jpg"></div><div><img src="vignettes/042.jpg"></div><div><img src="vignettes/188.jpg"></div><div><img src="vignettes/148.jpg"></div><div><img src="vignettes/138.jpg"></div><div><img src="vignettes/144.jpg"></div></div>
   </section>
 
   <section class="scene" data-de="p1" data-transition="volet">
-    <div class="photo" data-mouvement="recule" data-cadrage="50% 80%"><img src="../../assets/cours-talons/mannequin-podium.jpg"></div>
-    <div class="texte"><p class="surtitre" data-voix="p1" data-anim="glisse">L’Atelier</p>
-      <ul class="liste">
-        <li><span class="n" data-voix="p1" data-anim="pop">I</span><span data-voix="p1" data-anim="bloc">La posture</span><span class="medaillon petit" data-photo="p-103" data-voix="p1" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p1" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p2" data-anim="pop">II</span><span data-voix="p2" data-anim="bloc">Le port de tête</span><span class="medaillon petit" data-photo="p-119" data-voix="p2" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p2" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p3" data-anim="pop">III</span><span data-voix="p3" data-anim="bloc">L’équilibre</span><span class="medaillon petit" data-photo="t-135" data-voix="p3" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p3" data-anim="trait"></span></li>
-        <li><span class="n" data-voix="p4" data-anim="pop">IV</span><span data-voix="p4" data-anim="bloc">La fluidité</span><span class="medaillon petit" data-photo="p-107" data-voix="p4" data-retard="0.25" data-anim="medaillon"></span><span class="filet" data-voix="p4" data-anim="trait"></span></li></ul></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="p1" data-anim="glisse">L’Atelier</p></div>
+    <div class="abs quatre">
+      <div data-voix="p1" data-anim="leve"><img src="vignettes/103.jpg"><b><i>I</i>La posture</b></div>
+      <div data-voix="p2" data-anim="leve"><img src="vignettes/119.jpg"><b><i>II</i>Le port de tête</b></div>
+      <div data-voix="p3" data-anim="leve"><img src="medaillons/t-135.jpg"><b><i>III</i>L’équilibre</b></div>
+      <div data-voix="p4" data-anim="leve"><img src="vignettes/059.jpg"><b><i>IV</i>La fluidité</b></div></div>
   </section>
 
   <section class="scene" data-de="confiance" data-transition="rideau">
-    <div class="photo gauche" data-mouvement="avance"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="medaillon" data-photo="p-088" data-voix="confiance" data-mot="confiance" data-anim="medaillon" data-pos="840,1000" data-posl="1660,250"></div>
+    <div class="photo gauche" data-mouvement="avance"><img src="vignettes/088.jpg"></div>
+<div class="empreinte" data-voix="confiance" data-mot="premier" data-retard="0.00" data-anim="pop" style="--xv:640px;--yv:1180px;--xl:1000px;--yl:900px;--r:-14deg"><svg viewBox="0 0 40 90"><ellipse cx="20" cy="27" rx="14" ry="25"/><circle cx="20" cy="79" r="8"/></svg></div><div class="empreinte" data-voix="confiance" data-mot="premier" data-retard="0.30" data-anim="pop" style="--xv:760px;--yv:1080px;--xl:1110px;--yl:800px;--r:14deg"><svg viewBox="0 0 40 90"><ellipse cx="20" cy="27" rx="14" ry="25"/><circle cx="20" cy="79" r="8"/></svg></div><div class="empreinte" data-voix="confiance" data-mot="premier" data-retard="0.60" data-anim="pop" style="--xv:680px;--yv:960px;--xl:1050px;--yl:680px;--r:-14deg"><svg viewBox="0 0 40 90"><ellipse cx="20" cy="27" rx="14" ry="25"/><circle cx="20" cy="79" r="8"/></svg></div><div class="empreinte" data-voix="confiance" data-mot="premier" data-retard="0.90" data-anim="pop" style="--xv:800px;--yv:860px;--xl:1170px;--yl:580px;--r:14deg"><svg viewBox="0 0 40 90"><ellipse cx="20" cy="27" rx="14" ry="25"/><circle cx="20" cy="79" r="8"/></svg></div><div class="empreinte" data-voix="confiance" data-mot="premier" data-retard="1.20" data-anim="pop" style="--xv:720px;--yv:740px;--xl:1110px;--yl:460px;--r:-14deg"><svg viewBox="0 0 40 90"><ellipse cx="20" cy="27" rx="14" ry="25"/><circle cx="20" cy="79" r="8"/></svg></div><div class="empreinte" data-voix="confiance" data-mot="premier" data-retard="1.50" data-anim="pop" style="--xv:840px;--yv:640px;--xl:1230px;--yl:360px;--r:14deg"><svg viewBox="0 0 40 90"><ellipse cx="20" cy="27" rx="14" ry="25"/><circle cx="20" cy="79" r="8"/></svg></div>
     <div class="texte droite"><p class="surtitre" data-voix="confiance" data-mot="surtout" data-anim="glisse">Et surtout</p>
-      <p class="grand"><span data-voix="confiance" data-mot="confiance" data-anim="lettres">La confiance,</span><br><em data-voix="confiance" data-mot="remarque" data-anim="lettres">dès le premier pas.</em></p></div>
+      <p class="grand"><span data-voix="confiance" data-mot="confiance" data-anim="lettres">La confiance,</span><br><em data-voix="confiance" data-mot="premier" data-anim="lettres">dès le premier pas.</em></p></div>
   </section>
 
   <section class="scene" data-de="niveau" data-transition="cercle">
-    <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div>
-    <div class="medaillon" data-photo="t-104" data-voix="niveau" data-mot="débutante" data-anim="medaillon" data-pos="850,1060" data-posl="1060,300"></div>
-    <div class="texte"><p class="surtitre" data-voix="niveau" data-anim="glisse">Tous les niveaux</p>
-      <div class="pastilles"><span class="pastille" data-voix="niveau" data-mot="débutante" data-anim="pop">Débutante</span><span class="pastille" data-voix="niveau" data-mot="aise" data-anim="pop">Déjà à l’aise</span></div>
-      <p class="moyen" style="margin-top:36px"><span data-voix="niveau" data-mot="formule" data-anim="mots">Une formule</span> <em data-voix="niveau" data-mot="adaptée" data-anim="mots">pour vous</em></p></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="niveau" data-anim="glisse">Tous les niveaux</p></div>
+    <div class="abs niveaux">
+      <div data-voix="niveau" data-mot="débutante" data-anim="leve"><div class="carre"><img src="vignettes/102.jpg"></div><span class="bouton">Débutante</span></div>
+      <div data-voix="niveau" data-mot="aise" data-anim="leve"><div class="carre"><img src="vignettes/149.jpg"></div><span class="bouton">Déjà à l’aise</span></div></div>
+    <div class="abs centre-x" style="bottom:240px"><p class="moyen"><span data-voix="niveau" data-mot="formule" data-anim="mots">Une formule</span> <em data-voix="niveau" data-mot="adaptée" data-anim="mots">adaptée à vos besoins</em></p></div>
   </section>
 
   <section class="scene" data-de="groupe" data-transition="barres">
-    <div class="photo" data-mouvement="recule"><img src="vignettes/093.jpg"></div>
-    <div class="grand-chiffre" data-voix="groupe" data-anim="zoom">1</div>
-    <div class="texte"><div class="carte" data-voix="groupe" data-anim="leve"><div class="medaillon coin" data-photo="p-091" data-voix="groupe" data-mot="groupe" data-anim="medaillon"></div><span class="etiquette">Formule n° 1</span><h3>En groupe</h3>
-      <p class="detail" data-voix="groupe" data-mot="dimanche" data-anim="bloc">Chaque dimanche, de 15 h à 18 h</p>
-      <p class="prix" data-voix="groupe" data-mot="trente" data-anim="monte"><span data-voix="groupe" data-mot="trente" data-anim="compteur" data-valeur="30000">30 000</span><small>FCFA</small></p>
-      <p class="detail" data-voix="groupe" data-mot="quatre" data-anim="monte">les 4 séances</p></div></div>
-    <div class="medaillon moyen-m" data-photo="t-138" data-voix="groupe" data-mot="dimanche" data-anim="medaillon" data-pos="880,330" data-posl="1640,340"></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="groupe" data-anim="glisse">Formule 1</p><p class="grand"><span data-voix="groupe" data-mot="groupe" data-anim="lettres">En groupe</span></p></div>
+    <div class="abs rangee" data-voix="groupe" data-mot="groupe" data-anim="monte"><div><img src="vignettes/027.jpg"></div><div><img src="vignettes/043.jpg"></div><div><img src="vignettes/033.jpg"></div><div><img src="vignettes/055.jpg"></div></div>
+    <div class="abs agenda" data-voix="groupe" data-mot="dimanche" data-anim="leve"><b>DIMANCHE</b><span>15 h – 18 h</span></div>
+    <div class="abs prix-geant" data-voix="groupe" data-mot="trente" data-anim="monte"><span data-voix="groupe" data-mot="trente" data-anim="compteur" data-valeur="30000">30 000</span><small>FCFA</small><em data-voix="groupe" data-mot="quatre" data-anim="mots">les 4 séances</em></div>
   </section>
 
   <section class="scene" data-de="prive" data-transition="rideau">
-    <div class="photo" data-mouvement="avance"><img src="vignettes/005.jpg"></div>
-    <div class="grand-chiffre" data-voix="prive" data-anim="zoom">2</div>
-    <div class="texte"><div class="carte" data-voix="prive" data-mot="privé" data-anim="leve"><div class="medaillon coin" data-photo="p-081" data-voix="prive" data-mot="personnalisé" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>En privé</h3>
-      <p class="detail" data-voix="prive" data-mot="accompagnement" data-anim="bloc">Un accompagnement entièrement personnalisé</p>
-      <p class="prix" data-voix="prive" data-mot="vingt" data-anim="monte"><span data-voix="prive" data-mot="vingt" data-anim="compteur" data-valeur="25000">25 000</span><small>FCFA</small></p>
-      <p class="detail" data-voix="prive" data-mot="salle" data-anim="monte">la séance de 2 h · notre salle à la Riviera Faya</p></div></div>
-    <div class="medaillon moyen-m" data-photo="p-179" data-voix="prive" data-mot="salle" data-anim="medaillon" data-pos="880,330" data-posl="1640,340"></div>
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="prive" data-anim="glisse">Formule 2</p><p class="grand"><span data-voix="prive" data-mot="privé" data-anim="lettres">En privé</span></p>
+      <p class="ligne" data-voix="prive" data-mot="accompagnement" data-anim="bloc">Un accompagnement entièrement personnalisé</p></div>
+    <div class="abs carre grande-photo" data-voix="prive" data-mot="accompagnement" data-anim="leve"><img src="vignettes/016.jpg" style="object-position:50% 15%"></div>
+    <div class="abs lieu" data-voix="prive" data-mot="salle" data-anim="pop"><svg viewBox="0 0 100 100"><path d="M50 90 C50 90 22 60 22 40 C22 22 35 10 50 10 C65 10 78 22 78 40 C78 60 50 90 50 90 Z"/><circle cx="50" cy="40" r="10"/></svg>Riviera Faya</div>
+    <div class="abs prix-geant p2" data-voix="prive" data-mot="vingt" data-anim="monte"><span data-voix="prive" data-mot="vingt" data-anim="compteur" data-valeur="25000">25 000</span><small>FCFA</small><em data-voix="prive" data-mot="séance" data-anim="mots">la séance de 2 h</em></div>
   </section>
 
-  <section class="scene" data-de="domicile" data-transition="cercle">
-    <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-tailleur.jpg"></div>
-    <div class="texte"><div class="carte" data-voix="domicile" data-anim="leve"><div class="medaillon coin" data-photo="p-077" data-voix="domicile" data-mot="chez" data-anim="medaillon"></div><span class="etiquette">Formule n° 2</span><h3>Chez vous</h3>
-      <p class="detail" data-voix="domicile" data-mot="lieu" data-anim="bloc">ou au lieu de votre choix</p>
-      <p class="prix" data-voix="domicile" data-mot="entre" data-anim="monte"><span data-voix="domicile" data-mot="entre" data-anim="compteur" data-valeur="30000">30 000</span> – <span data-voix="domicile" data-mot="trente-cinq" data-anim="compteur" data-valeur="35000">35 000</span><small>FCFA</small></p>
-      <p class="detail" data-voix="nombre" data-anim="monte">la séance</p></div>
-      <div class="pastilles"><span class="pastille blanche" data-voix="nombre" data-mot="nombre" data-anim="pop">Autant de séances que vous le souhaitez</span></div></div>
+  <section class="scene" data-de="domicile" data-transition="volet">
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="domicile" data-anim="glisse">Formule 2</p><p class="grand"><span data-voix="domicile" data-mot="chez" data-anim="lettres">Chez vous</span></p>
+      <p class="ligne" data-voix="domicile" data-mot="lieu" data-anim="bloc">ou au lieu de votre choix</p></div>
+    <svg class="abs maison" viewBox="0 0 100 100"><path d="M12 48 L50 14 L88 48" data-voix="domicile" data-mot="chez" data-anim="trace" data-duree="1"/><path d="M22 40 L22 88 L78 88 L78 40" data-voix="domicile" data-mot="chez" data-retard="0.5" data-anim="trace" data-duree="1"/><path d="M42 88 L42 64 L58 64 L58 88" data-voix="domicile" data-mot="lieu" data-anim="trace" data-duree="0.8"/></svg>
+    <div class="abs prix-geant p2" data-voix="domicile" data-mot="entre" data-anim="monte" style="font-size:150px"><span data-voix="domicile" data-mot="entre" data-anim="compteur" data-valeur="30000">30 000</span>–<span data-voix="domicile" data-mot="trente-cinq" data-anim="compteur" data-valeur="35000">35 000</span><small>FCFA</small><em>la séance</em></div>
+    <div class="abs seances" data-voix="nombre" data-anim="pop"><b><span data-voix="nombre" data-mot="nombre" data-anim="compteur" data-depart="1" data-valeur="10" data-duree="1.6">10</span> séances</b><span>autant que vous le souhaitez</span></div>
   </section>
 
-  <section class="scene" data-de="inscrire" data-transition="barres">
-    <div class="vignette" data-voix="inscrire" data-anim="vignette" data-pos="230,400" data-posl="1330,330" data-l="250" data-h="330" data-rot="-9"><div><img src="vignettes/043.jpg"></div></div>
-    <div class="vignette" data-voix="inscrire" data-retard="0.2" data-anim="vignette" data-pos="540,360" data-posl="1600,560" data-l="250" data-h="330" data-rot="3"><div><img src="vignettes/131.jpg"></div></div>
-    <div class="vignette" data-voix="inscrire" data-retard="0.4" data-anim="vignette" data-pos="850,420" data-posl="1350,780" data-l="250" data-h="330" data-rot="10"><div><img src="vignettes/146.jpg"></div></div>
-    <div class="texte milieu decale"><p class="surtitre" data-voix="inscrire" data-anim="glisse">S’inscrire</p>
-      <p class="moyen"><span data-voix="inscrire" data-mot="rien" data-anim="mots">Rien de</span> <em data-voix="inscrire" data-mot="compliqué" data-anim="mots">compliqué</em></p>
-      <span class="trait losange" data-voix="inscrire" data-mot="compliqué" data-anim="trait"></span>
-      <ol class="etapes">
-        <li><span class="medaillon petit" data-symbole="liste" data-num="1" data-voix="e1" data-anim="medaillon"></span><div data-voix="e1" data-anim="bloc">Votre formule</div></li>
-        <li><span class="medaillon petit" data-symbole="photo" data-num="2" data-voix="e2" data-anim="medaillon"></span><div data-voix="e2" data-anim="bloc">2 ou 3 photos</div></li>
-        <li><span class="medaillon petit" data-symbole="camera" data-num="3" data-voix="e3" data-anim="medaillon"></span><div data-voix="e3" data-anim="bloc">Une courte vidéo<small>de votre marche</small></div></li>
-        <li><span class="medaillon petit" data-symbole="paiement" data-num="4" data-voix="e4" data-anim="medaillon"></span><div data-voix="e4" data-anim="bloc">Le paiement<small>par Wave</small></div></li></ol></div>
+  <section class="scene" data-de="inscrire" data-transition="cercle">
+    <div class="abs legende-tel"><p class="surtitre" data-voix="inscrire" data-anim="glisse">S’inscrire</p><p class="grand"><span data-voix="inscrire" data-mot="rien" data-anim="lettres">Rien de</span> <em data-voix="inscrire" data-mot="compliqué" data-anim="lettres">compliqué</em></p></div>
+    <div class="abs tel" data-voix="inscrire" data-anim="leve"><div class="ecran">
+      <div class="barre">Je m’inscris</div>
+      <h4>1 · Ma formule</h4>
+      <div class="choix coche" data-voix="e1" data-mot="formule" data-anim="pop"><i></i>En groupe · le dimanche</div>
+      <div class="choix" data-voix="e1" data-mot="formule" data-retard="0.15" data-anim="pop"><i></i>En privé · en salle</div>
+      <h4>2 · Mes photos</h4>
+      <div class="grille"><div data-voix="e2" data-mot="photos" data-anim="pop"><img src="vignettes/027.jpg"></div><div data-voix="e2" data-mot="photos" data-retard="0.15" data-anim="pop"><img src="vignettes/146.jpg"></div><div data-voix="e2" data-mot="photos" data-retard="0.3" data-anim="pop"><img src="vignettes/043.jpg"></div></div>
+      <h4>3 · Ma vidéo de marche</h4>
+      <div class="tuile-video" data-voix="e3" data-mot="vidéo" data-anim="pop"><img src="vignettes/138.jpg"></div>
+      <span class="envoyer bouton-dans-blanc" data-voix="e4" data-mot="wave" data-anim="pop">4 · Payer par Wave</span>
+    </div></div>
   </section>
 
-  <section class="scene" data-de="toutes" data-transition="cercle">
-    <div class="photo" data-mouvement="recule"><img src="vignettes/004.jpg"></div>
-    <div class="medaillon" data-photo="p-051" data-voix="toutes" data-mot="toutes" data-anim="medaillon" data-pos="850,1000" data-posl="1060,300"></div>
-    <div class="texte"><p class="surtitre" data-voix="toutes" data-mot="précision" data-anim="glisse">Une précision</p>
-      <p class="grand"><span data-voix="toutes" data-mot="ouvert" data-anim="lettres">Ouvert</span> <em data-voix="toutes" data-mot="toutes" data-anim="lettres">à toutes</em></p>
-      <div class="pastilles"><span class="pastille" data-voix="but" data-mot="marcher" data-anim="pop">Marcher en talons</span><span class="pastille" data-voix="but" data-mot="posture" data-anim="pop">Posture</span><span class="pastille" data-voix="but" data-mot="élégance" data-anim="pop">Élégance</span><span class="pastille" data-voix="but" data-mot="assurance" data-anim="pop">Assurance</span></div></div>
+  <section class="scene" data-de="toutes" data-transition="barres">
+    <div class="mosaique mur" data-pas="0.025"><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div><div class="photo-m"><img src="vignettes/050.jpg"></div><div class="photo-m"><img src="vignettes/017.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/149.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/061.jpg"></div><div class="photo-m"><img src="vignettes/104.jpg"></div><div class="photo-m"><img src="vignettes/182.jpg"></div><div class="photo-m"><img src="vignettes/148.jpg"></div><div class="photo-m"><img src="vignettes/138.jpg"></div><div class="photo-m"><img src="vignettes/063.jpg"></div><div class="photo-m"><img src="vignettes/042.jpg"></div><div class="photo-m"><img src="vignettes/151.jpg"></div><div class="photo-m"><img src="vignettes/016.jpg"></div><div class="photo-m"><img src="vignettes/088.jpg"></div><div class="photo-m"><img src="vignettes/113.jpg"></div><div class="photo-m"><img src="vignettes/162.jpg"></div><div class="photo-m"><img src="vignettes/179.jpg"></div><div class="photo-m"><img src="vignettes/051.jpg"></div><div class="photo-m"><img src="vignettes/084.jpg"></div><div class="photo-m"><img src="vignettes/103.jpg"></div><div class="photo-m"><img src="vignettes/119.jpg"></div><div class="photo-m"><img src="vignettes/102.jpg"></div><div class="photo-m"><img src="vignettes/077.jpg"></div><div class="photo-m"><img src="vignettes/001.jpg"></div><div class="photo-m"><img src="vignettes/009.jpg"></div><div class="photo-m"><img src="vignettes/034.jpg"></div><div class="photo-m"><img src="vignettes/144.jpg"></div><div class="photo-m"><img src="vignettes/188.jpg"></div><div class="photo-m"><img src="vignettes/037.jpg"></div><div class="photo-m"><img src="vignettes/053.jpg"></div><div class="photo-m"><img src="vignettes/005.jpg"></div><div class="photo-m"><img src="vignettes/106.jpg"></div><div class="photo-m"><img src="vignettes/004.jpg"></div><div class="photo-m"><img src="vignettes/135.jpg"></div><div class="photo-m"><img src="vignettes/011.jpg"></div><div class="photo-m"><img src="vignettes/008.jpg"></div><div class="photo-m"><img src="vignettes/041.jpg"></div><div class="photo-m"><img src="vignettes/057.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div></div>
+    <div class="texte centre milieu"><p class="surtitre" data-voix="toutes" data-mot="précision" data-anim="glisse">Une précision</p>
+      <p class="commence" data-voix="toutes" data-mot="ouvert" data-anim="pop">Ouvert à toutes</p>
+      <div class="pastilles"><span class="pastille blanche" data-voix="but" data-mot="marcher" data-anim="pop">Marcher en talons</span><span class="pastille blanche" data-voix="but" data-mot="posture" data-anim="pop">Posture</span><span class="pastille blanche" data-voix="but" data-mot="élégance" data-anim="pop">Élégance</span><span class="pastille blanche" data-voix="but" data-mot="assurance" data-anim="pop">Assurance</span></div></div>
   </section>
 
-  <section class="scene" data-de="agence" data-transition="rideau">
-    <div class="photo" data-mouvement="panorama"><img src="../../assets/cours-talons/galerie-drapeau.jpg"></div>
-    <div class="texte"><div class="note" data-voix="agence" data-anim="leve"><div class="medaillon coin" data-symbole="info" data-voix="agence" data-retard="0.4" data-anim="medaillon"></div><b>Ces cours ne permettent pas d’intégrer l’agence.</b>Ce n’est ni un casting, ni une inscription comme mannequin.</div>
-      <p class="moyen" style="margin-top:40px" data-voix="agence" data-mot="objectif" data-anim="mots">Devenir mannequin ?</p>
-      <div class="pastilles"><span class="pastille blanche" data-voix="agence" data-mot="page" data-anim="pop">Page « Intégrer l’agence » →</span></div></div>
+  <section class="scene" data-de="agence" data-transition="cercle">
+    <div class="abs legende-tel lh"><p class="surtitre" data-voix="agence" data-anim="glisse">À savoir</p></div>
+    <div class="abs duo">
+      <div class="carte-etape blanche" data-voix="agence" data-mot="permettent" data-anim="leve"><small>CE COURS</small><b>Atelier Talons &amp; Élégance</b><span>marche, posture, assurance</span></div>
+      <div class="different" data-voix="agence" data-mot="intégrer" data-anim="tampon" data-rot="0">≠</div>
+      <div class="carte-etape" data-voix="agence" data-mot="intégrer" data-retard="0.2" data-anim="leve"><small>L’AGENCE</small><b>Devenir mannequin</b><span>casting et parcours dédiés</span></div></div>
+    <div class="abs centre-x" style="bottom:230px"><span class="bouton" data-voix="agence" data-mot="page" data-anim="pop">Page « Intégrer l’agence » →<i></i></span></div>
   </section>
 
-  <section class="scene" data-de="fin1" data-transition="barres">
-    <div class="mosaique"><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m" data-seulement="vertical"><img src="vignettes/017.jpg"></div></div>
-    <div class="texte centre milieu"><div class="medaillon petit" data-photo="t-168" data-voix="fin1" data-anim="medaillon" style="width:340px;height:340px;margin:0 auto 30px"></div>
-      <p class="surtitre" data-voix="fin1" data-anim="glisse">Atelier Talons &amp; Élégance</p>
-      <p class="titre"><span data-voix="fin1" data-mot="votre" data-anim="lettres">Votre élégance</span><br><em data-voix="fin1" data-mot="commence" data-anim="lettres">commence ici</em></p>
+  <section class="scene" data-de="fin1" data-transition="cercle">
+    <div class="mosaique mur" data-pas="0.025"><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div><div class="photo-m"><img src="vignettes/050.jpg"></div><div class="photo-m"><img src="vignettes/017.jpg"></div><div class="photo-m"><img src="vignettes/107.jpg"></div><div class="photo-m"><img src="vignettes/131.jpg"></div><div class="photo-m"><img src="vignettes/014.jpg"></div><div class="photo-m"><img src="vignettes/149.jpg"></div><div class="photo-m"><img src="vignettes/146.jpg"></div><div class="photo-m"><img src="vignettes/089.jpg"></div><div class="photo-m"><img src="vignettes/093.jpg"></div><div class="photo-m"><img src="vignettes/096.jpg"></div><div class="photo-m"><img src="vignettes/061.jpg"></div><div class="photo-m"><img src="vignettes/104.jpg"></div><div class="photo-m"><img src="vignettes/182.jpg"></div><div class="photo-m"><img src="vignettes/148.jpg"></div><div class="photo-m"><img src="vignettes/138.jpg"></div><div class="photo-m"><img src="vignettes/063.jpg"></div><div class="photo-m"><img src="vignettes/042.jpg"></div><div class="photo-m"><img src="vignettes/151.jpg"></div><div class="photo-m"><img src="vignettes/016.jpg"></div><div class="photo-m"><img src="vignettes/088.jpg"></div><div class="photo-m"><img src="vignettes/113.jpg"></div><div class="photo-m"><img src="vignettes/162.jpg"></div><div class="photo-m"><img src="vignettes/179.jpg"></div><div class="photo-m"><img src="vignettes/051.jpg"></div><div class="photo-m"><img src="vignettes/084.jpg"></div><div class="photo-m"><img src="vignettes/103.jpg"></div><div class="photo-m"><img src="vignettes/119.jpg"></div><div class="photo-m"><img src="vignettes/102.jpg"></div><div class="photo-m"><img src="vignettes/077.jpg"></div><div class="photo-m"><img src="vignettes/001.jpg"></div><div class="photo-m"><img src="vignettes/009.jpg"></div><div class="photo-m"><img src="vignettes/034.jpg"></div><div class="photo-m"><img src="vignettes/144.jpg"></div><div class="photo-m"><img src="vignettes/188.jpg"></div><div class="photo-m"><img src="vignettes/037.jpg"></div><div class="photo-m"><img src="vignettes/053.jpg"></div><div class="photo-m"><img src="vignettes/005.jpg"></div><div class="photo-m"><img src="vignettes/106.jpg"></div><div class="photo-m"><img src="vignettes/004.jpg"></div><div class="photo-m"><img src="vignettes/135.jpg"></div><div class="photo-m"><img src="vignettes/011.jpg"></div><div class="photo-m"><img src="vignettes/008.jpg"></div><div class="photo-m"><img src="vignettes/041.jpg"></div><div class="photo-m"><img src="vignettes/057.jpg"></div><div class="photo-m"><img src="vignettes/027.jpg"></div><div class="photo-m"><img src="vignettes/043.jpg"></div><div class="photo-m"><img src="vignettes/033.jpg"></div><div class="photo-m"><img src="vignettes/059.jpg"></div><div class="photo-m"><img src="vignettes/055.jpg"></div></div>
+    <div class="abs carre talon-fin" data-voix="fin1" data-anim="leve"><img src="medaillons/t-168.jpg"></div>
+    <div class="texte centre milieu fin-texte" style="margin-top:220px"><p class="titre"><span data-voix="fin1" data-mot="votre" data-anim="lettres">Votre élégance</span><br><em data-voix="fin1" data-mot="commence" data-anim="lettres">commence ici</em></p>
       <span class="bouton" data-voix="fin2" data-mot="inscris" data-anim="pop">Je m’inscris<i></i></span></div>
   </section>
 
