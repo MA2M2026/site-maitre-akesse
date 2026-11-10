@@ -36,6 +36,8 @@ const tables = { model_profiles: [], model_photos: [], castings: [], actualites:
       });
       ok(etat && etat.texte === libelle, n + 'bouton « ' + (etat && etat.texte) + ' »');
       ok(etat && etat.rond && !etat.deborde, n + 'petit bouton rond visible, rien ne dépasse');
+      // (10/11/2026) la couverture photo d'« Intégrer l'agence » met le bouton plus bas : on descend jusqu'à lui, comme une visiteuse
+      await p.locator('.lien-marche-rond').first().scrollIntoViewIfNeeded(); await p.waitForTimeout(200);
       const rond = await (await p.$('.lien-marche-rond')).boundingBox();
       await p.mouse.move(rond.x + 23, rond.y + 23); await p.mouse.down(); await p.waitForTimeout(200);
       ok(await p.evaluate(() => /31, 163, 91/.test(getComputedStyle(document.querySelector('.lien-marche-rond svg')).stroke)), n + 'à l’appui, le symbole passe au vert');
