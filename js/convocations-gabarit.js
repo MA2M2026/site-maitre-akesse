@@ -39,6 +39,7 @@ window.GABARIT_CONVOCATIONS = `<h2 class="tdb-4">📨 Convocations</h2>
 <textarea id="cv-message" rows="12" maxlength="4000" aria-label="Message personnalisé"></textarea>
 <button type="button" class="btn-mini-admin" id="cv-message-type">Partir du message type</button>
 </details>
+<div class="form-champ"><span class="label-ij">🖼️ Affiche ou photo (facultatif)</span><div id="cv-affiche"></div></div>
 <fieldset class="agenda-choix"><legend>2. Les mannequins concernés</legend>
 <input id="cv-recherche" type="search" aria-label="Rechercher une mannequin" placeholder="Rechercher un nom…" class="agenda-recherche">
 <div id="cv-mannequins" class="agenda-cases agenda-cases-mannequins">Chargement…</div>

@@ -4530,3 +4530,19 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - Dans une rubrique, le menu de gauche (ou le tiroir sur téléphone) ne montre plus que les rubriques de SA tuile
   (`P.menuTuile`, `P.tuileDe`). Les adresses des rubriques n'ont pas changé.
 - css/admin-vivante.css : `.accueil-apaise`, `.av-recherche`, `.tuiles-accueil`, `.tu`, `.tu-page`, `.tu-ligne`, `.tu-plus`.
+
+## « Ajouter une image » aux messages (11/11/2026, maquette validée par la propriétaire)
+
+- Outil partagé js/image-jointe.js (`ImageJointe.brancher(zone, { valeur, surChange })`) : « ＋ Ajouter une image
+  depuis la galerie », aperçu, « Changer », « Retirer » ; envoi sur R2 (dossier « infos », `envoyerImageSite`,
+  js/images-site-ecriture.js). Chargé avant les Convocations dans js/admin/site.js (PIECES).
+- Lien dans les messages : `avecAffiche(texte, url)` (js/messages-convocations.js, partagé navigateur et serveur) ajoute
+  « 🖼️ Voir l'affiche : … » à la fin (WhatsApp et e-mail ne savent pas joindre une image à un message préparé).
+- **Convocations** : case « Affiche ou photo (facultatif) », gardée avec le projet dans `agenda_projets.affiche`
+  (**Extension 162**, supabase-affiche-projet.sql, une colonne, aucun droit changé). Tous les messages du projet (y
+  compris les e-mails programmés envoyés par api/portail.js) portent le lien ; envoyée « maintenant », la sélection
+  ou la convocation part aussi dans l'application (`envoyerDansApplication`, clés m:/c:), l'affiche en grand.
+  Sans l'Extension 162, le projet s'enregistre quand même et un avertissement le dit.
+- **Messages groupés** : case « Image (facultatif) » ; lien dans l'e-mail et le WhatsApp, image dans l'application.
+- (Informations agence avait déjà sa « Photo (affiche, visuel…) ».)
+- Essais : test-nouvelle-admin-convocations.js, test-nouvelle-admin-castings.js.

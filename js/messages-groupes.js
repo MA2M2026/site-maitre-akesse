@@ -46,7 +46,10 @@ window.demarrerMessagesGroupes = function () {
   // Message prêt pour une personne : fonction commune à la fiche (js/messages-candidats.js).
   // Mineur joint par son parent : texte de la case « version parents ».
   function texteDe(d) { return (contactsEnvoi(d).parent && $('mg-message-parent').value.trim()) || $('mg-message').value.trim(); }
-  function personnaliser(d) { return personnaliserMessage(texteDe(d), d, rdv(), () => A_COMPLETER); }
+  // (11/11/2026) image jointe (js/image-jointe.js) : un lien « Voir l'affiche » dans l'e-mail et le WhatsApp
+  const imageJointe = window.ImageJointe ? window.ImageJointe.brancher($('mg-image'), { surChange: () => majApercu() }) : null;
+  const image = () => (imageJointe ? imageJointe.valeur() : null);
+  function personnaliser(d) { return avecAffiche(personnaliserMessage(texteDe(d), d, rdv(), () => A_COMPLETER), image()); }
   function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   // Suivi des envois déjà faits pour CE message (même texte = même envoi), sur cet appareil.
@@ -240,7 +243,7 @@ window.demarrerMessagesGroupes = function () {
       const faits = dejaFaits('app');
       const titre = $('mg-source').value === 'inscription' ? '✉️ Message de l’agence' : '📣 Votre candidature casting';
       for (const d of choisis().filter((x) => x.email && !faits.has(x.id))) {
-        const n = await envoyerDansApplication(['e:' + d.email], 'message', titre, texteApplication(personnaliserMessage($('mg-message').value.trim(), d, rdv(), () => A_COMPLETER)));  // (js/messages-candidats.js)
+        const n = await envoyerDansApplication(['e:' + d.email], 'message', titre, texteApplication(personnaliserMessage($('mg-message').value.trim(), d, rdv(), () => A_COMPLETER)), image());  // (js/messages-candidats.js)
         if (n !== null) noterFait('app', d.id);  // (pas d'envoi possible : réessayé au prochain appui)
       }
     })().finally(() => { versAppEnCours = null; });

@@ -20,6 +20,7 @@ window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Messages groupés</h2
 </div>
 <div class="form-champ" id="mg-champ-message-parent"><label for="mg-message-parent">Version pour les parents (mineurs)</label><textarea id="mg-message-parent" rows="6"></textarea></div>
 <div class="form-champ"><label for="mg-message">Message</label><textarea id="mg-message" rows="8" placeholder="Écrivez ici votre message (cette case est vide pour l’instant)."></textarea></div>
+<div class="form-champ"><span class="label-ij">🖼️ Image (facultatif)</span><div id="mg-image"></div></div>
 <p id="mg-consigne" class="mg-consigne"></p>
 <div id="mg-apercu" class="mg-apercu"></div>
 <div class="mg-actions">

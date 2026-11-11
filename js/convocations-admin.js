@@ -519,6 +519,15 @@ window.demarrerConvocationsPanneau = function () {
         message('Envoi des e-mails…');
         var aEnvoyer = envois.filter(function (e) { return e.statut === 'en_cours' && e.canal === 'email' && e.sorte === sorte && cles[e.id]; });
         var partis = await envoyerEmails(aEnvoyer);
+        // (11/11/2026, « Ajouter une image ») avec une affiche : le message part aussi dans l'application des
+        // mannequins (comptes du site « m: », carnet « c: »), l'affiche en grand (envoyerDansApplication, js/messages-candidats.js)
+        if (projet.affiche && (sorte === 'convocation' || sorte === 'selection')) {
+          var clesApp = choisis.filter(function (x) { return !x.parent && (x.model_id || x.contact_id); }).map(function (x) { return x.model_id ? 'm:' + x.model_id : 'c:' + x.contact_id; })
+            .filter(function (c, i, l) { return l.indexOf(c) === i; });
+          var sansAffiche = Object.assign({}, projet, { affiche: null });
+          if (clesApp.length) await envoyerDansApplication(clesApp, sorte, (sorte === 'selection' ? '🎉 Sélection : ' : '📨 Convocation : ') + projet.titre,
+            texteApplication(messageConvocation(sansAffiche, { nom: '' }, sorte).texte), projet.affiche, null, '/app/#evenements');
+        }
         bilan = partis + ' e-mail(s) envoyé(s) sur ' + aEnvoyer.length + '.' + (nbWa ? ' ' + nbWa + ' WhatsApp prêt(s) : appuyez sur le bouton rouge « 💬 Envoyer le WhatsApp suivant », dans le suivi ci-dessous.' : '');
       } else {
         bilan = 'Programmé pour ' + quand(prevu) + ' : ' + nbEmails + ' e-mail(s) automatique(s)' + (nbWa ? ', ' + nbWa + ' WhatsApp à envoyer (vous serez prévenue par e-mail à l’heure prévue)' : '') + '.';

@@ -1214,3 +1214,13 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .tu-plus summary::after { content: '⌄'; }
 .tu-plus[open] summary::after { content: '⌃'; }
 .tu-plus .tu-liste { margin-top: 10px; }
+
+/* « Ajouter une image » à un message (11/11/2026, js/image-jointe.js : Convocations, Messages groupés) */
+.label-ij { display: block; font-weight: 600; margin-bottom: 6px; }
+.ij-ajouter { width: 100%; min-height: 52px; border: 2px dashed #F3DDE0; border-radius: 14px; background: #FFFFFF; color: #7C2128; font: 700 14px var(--av-texte); cursor: pointer; }
+.ij-ajouter:disabled { opacity: .7; cursor: wait; }
+.ij-choisie { display: flex; align-items: center; gap: 12px; }
+.ij-choisie img { width: 96px; height: 120px; object-fit: cover; border-radius: 12px; flex: none; }
+.ij-choisie b { display: block; margin-bottom: 6px; }
+.ij-boutons { display: flex; flex-wrap: wrap; gap: 6px; }
+.ij-canaux { margin: 8px 0 0; font-size: 12.5px; opacity: .85; }

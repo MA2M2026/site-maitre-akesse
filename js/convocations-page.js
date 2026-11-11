@@ -61,7 +61,10 @@ window.demarrerConvocationsPage = function (racine) {
   // la base connaît-elle le rappel quelques jours avant ? (colonne présente sur les projets lus)
   function rappelAvantConnu() { return projets.some(function (x) { return 'rappel_avant' in x; }); }
   // Projet choisi dans la liste (ou vierge pour « Nouveau projet »)
+  // (11/11/2026) affiche ou photo jointe aux messages du projet (js/image-jointe.js ; colonne affiche, Extension 162)
+  var affiche = window.ImageJointe ? window.ImageJointe.brancher($('cv-affiche'), {}) : null;
   function remplir(p) {
+    if (affiche) affiche.remplacer(p && p.affiche);
     projetChoisi = p || null;
     var v = function (id, val) { $(id).value = val || ''; };
     $('cv-type').value = (p && p.type) || 'defile';
@@ -141,12 +144,23 @@ window.demarrerConvocationsPage = function (racine) {
       if (r.error) { message('Erreur : ' + r.error.message, true); return; }
       if (!r.data || !r.data.length) { message('Rien n’a été enregistré : reconnectez-vous puis réessayez.', true); return; }
       var p = r.data[0];
+      var voulue = affiche ? affiche.valeur() : null;
+      var avertissement = '';
+      if ((voulue || null) !== (p.affiche || null)) {
+        if (!('affiche' in p)) avertissement = ' ⚠️ L’affiche n’a pas pu être gardée : exécutez une fois l’Extension 162 (supabase-affiche-projet.sql) dans Supabase.';
+        else {
+          var ra = await sb.from('agenda_projets').update({ affiche: voulue }).eq('id', p.id).select('*');
+          // (le projet, lui, est enregistré : on continue avec lui, sans le recréer au prochain essai)
+          if (ra.error || !ra.data || !ra.data.length) avertissement = ' ⚠️ L’affiche n’a pas été gardée : ' + (ra.error ? ra.error.message : 'reconnectez-vous puis réessayez.');
+          else p = ra.data[0];
+        }
+      }
       var nouveau = !projetChoisi;
       projets = projets.filter(function (x) { return x.id !== p.id; }).concat([p]).sort(function (a, b) { return String(a.date_debut).localeCompare(String(b.date_debut)); });
       dessinerProjets(p.id);
       projetChoisi = p;
-      message(nouveau ? 'Projet ajouté à l’agenda' + (p.visible ? ' (visible sur le site, sans les noms des mannequins).' : ' (caché du site).') + ' Choisissez maintenant les participants et l’envoi ci-dessous.'
-        : 'Projet enregistré. Choisissez maintenant les participants et l’envoi ci-dessous.');
+      message((nouveau ? 'Projet ajouté à l’agenda' + (p.visible ? ' (visible sur le site, sans les noms des mannequins).' : ' (caché du site).') + ' Choisissez maintenant les participants et l’envoi ci-dessous.'
+        : 'Projet enregistré. Choisissez maintenant les participants et l’envoi ci-dessous.') + avertissement, !!avertissement);
       Promise.resolve(window.ouvrirConvocations(p)).catch(function (err) { message('Erreur : ' + ((err && err.message) || err), true); });
     } finally {
       enCours = false;

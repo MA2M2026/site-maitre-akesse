@@ -41,14 +41,26 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.fill('#cv-heure-convocation', '15:00');
     await p.locator('#cv-mannequins').scrollIntoViewIfNeeded();
     await capture(p, 'convocations-mur' + suffixe);
+    // (11/11/2026) « Ajouter une image » : l'affiche choisie dans la galerie, envoyée (stockage simulé), puis gardée avec le projet
+    ok(/Ajouter une image depuis la galerie/.test(await p.textContent('#cv-affiche')), n + 'case « Affiche ou photo » : « ＋ Ajouter une image depuis la galerie »');
+    await p.setInputFiles('#cv-affiche input[type=file]', require('path').join(__dirname, 'medias/photo4.jpg'));
+    await p.waitForSelector('#cv-affiche .ij-choisie img', { timeout: 15000 }).catch(() => {});
+    ok(/Image jointe/.test(await p.textContent('#cv-affiche')) && !!(await p.$('#cv-affiche [data-ij="retirer"]')), n + 'affiche choisie : aperçu, « Changer » et « Retirer »');
+    await p.locator('#cv-affiche').scrollIntoViewIfNeeded(); await capture(p, 'convocations-affiche' + suffixe);
     await p.$eval('#cv-enregistrer', (x) => x.click()); await p.waitForTimeout(2200);
-    const maj = ecrits(journal, 'PATCH', 'agenda_projets').pop() || {};
+    const maj = ecrits(journal, 'PATCH', 'agenda_projets').find((x) => x.heure_convocation) || {};
+    const urlAffiche = (ecrits(journal, 'PATCH', 'agenda_projets').find((x) => 'affiche' in x) || {}).affiche || '';
+    ok(/^https:\/\/photos\.maitreakessemodelmanagement\.com\/site\/infos\/.+\.jpg$/.test(urlAffiche), n + 'affiche gardée avec le projet (' + urlAffiche.slice(-30) + ')');
     ok(maj.heure_convocation === '15:00' && (maj.mannequin_ids || []).length === 5, n + 'projet enregistré avec l’heure et les 5 mannequins');
     ok(await p.isVisible('#convoc-panneau') && (await p.$$('#convoc-participants .convoc-personne')).length === 5, n + 'panneau d’envoi ouvert, 5 participants');
     await p.click('#convoc-programmer');
     for (let i = 0; i < 40 && !/envoyé\(s\) sur/.test(await p.textContent('#convoc-msg')); i++) await p.waitForTimeout(400);
     const mails = journal.filter((j) => j[0] === 'EMAIL').length;
     ok(mails === 5 && /5 e-mail\(s\) envoyé\(s\) sur 5/.test(await p.textContent('#convoc-msg')), n + '5 e-mails partis, bilan affiché');
+    ok(journal.filter((j) => j[0] === 'EMAIL').every((j) => String(j[1]).includes('Voir l’affiche') && String(j[1]).includes(urlAffiche)), n + 'chaque e-mail porte le lien « Voir l’affiche »');
+    const app = journal.filter((j) => j[0] === 'rpc' && j[1] === 'app_messages_envoyer').map((j) => JSON.parse(j[2] || '{}')).pop() || {};
+    ok(app.p_image === urlAffiche && (app.p_cles || []).length === 5 && /(Sélection|Convocation) : ABIDJAN BORDER FORUM/.test(app.p_titre) && !/Voir l’affiche/.test(app.p_texte || ''),
+      n + 'la convocation part aussi dans l’application des 5 mannequins, l’affiche en grand (' + (app.p_cles || []).length + ')');
     ok(/Envoyer le WhatsApp suivant.*5 restants/.test(await p.textContent('.convoc-suivant')), n + 'bouton « WhatsApp suivant » (5 restants)');
     await p.locator('.convoc-suivant').scrollIntoViewIfNeeded(); await capture(p, 'convocations-suivi' + suffixe);
     const pales = await lirePageEntiere(p);

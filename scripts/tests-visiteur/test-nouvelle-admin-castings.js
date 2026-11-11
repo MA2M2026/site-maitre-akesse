@@ -140,8 +140,16 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.evaluate(() => { window.open = () => null; });
     const mailsAvant = journal.filter((j) => j[0] === 'EMAIL').length;
     if (/\[à compléter\]/.test(await p.textContent('#mg-apercu').catch(() => ''))) { await p.fill('#mg-lieu', 'Studio MA2M'); }
+    // (11/11/2026) « Ajouter une image » : l'image choisie, un lien « Voir l'affiche » dans l'e-mail, l'image dans l'application
+    await p.setInputFiles('#mg-image input[type=file]', require('path').join(__dirname, 'medias/photo4.jpg'));
+    await p.waitForSelector('#mg-image .ij-choisie img', { timeout: 15000 }).catch(() => {});
+    ok(/Image jointe/.test(await p.textContent('#mg-image')), n + 'Messages groupés : image jointe depuis la galerie');
     await p.click('#mg-email'); await p.waitForTimeout(2500);
     ok(journal.filter((j) => j[0] === 'EMAIL').length === mailsAvant + 1, n + 'Messages groupés : e-mail envoyé');
+    const dernier = journal.filter((j) => j[0] === 'EMAIL').pop() || [];
+    const appMg = journal.filter((j) => j[0] === 'rpc' && j[1] === 'app_messages_envoyer').map((j) => JSON.parse(j[2] || '{}')).pop() || {};
+    ok(/Voir l’affiche/.test(String(dernier[1])) && /^https:\/\/.+\/site\/infos\/.+\.jpg$/.test(appMg.p_image || '') && !/Voir l’affiche/.test(appMg.p_texte || ''),
+      n + 'Messages groupés : lien « Voir l’affiche » dans l’e-mail, image en grand dans l’application');
     await capture(p, 'messages-groupes' + suffixe);
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));
     await ctx.close();
