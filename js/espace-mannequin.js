@@ -1418,7 +1418,7 @@ function bindStudioCompcard(){
       if (!file) return;
       if (state.photos.book.length >= LIMITE_PHOTOS_BOOK) { toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true); return; }
       const lab = input.closest('.sc-case'); if (lab) lab.classList.add('envoi');
-      toast('Envoi de la photo…');
+      // (11/11/2026) plus de message en haut : la barre d'envoi du bas suit déjà la photo (js/app.js)
       const item = await Store.uploadPhoto(file);
       if (item) { state.photos.book.push(item); await assignerCompcardSlot(item, n); }
       render();
@@ -1487,7 +1487,7 @@ function bindStudioCv(){
     input.value = '';
     if (!file) return;
     if (state.photos.book.length >= LIMITE_PHOTOS_BOOK) { toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true); return; }
-    toast('Envoi de la photo…');
+    // (11/11/2026) plus de message en haut : la barre d'envoi du bas suit déjà la photo (js/app.js)
     const item = await Store.uploadPhoto(file);
     if (item) {
       state.photos.book.push(item);
@@ -1665,7 +1665,7 @@ function bindPhotoHandlers(){
         toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true);
         return;
       }
-      toast('Envoi de la photo…');
+      // (11/11/2026) plus de message en haut : la barre d'envoi du bas suit déjà la photo (js/app.js)
       const item = await Store.uploadPhoto(file);
       input.value = '';
       if (!item) return;
