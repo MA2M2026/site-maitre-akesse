@@ -84,6 +84,16 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(!!nomCherche && (await p.textContent('#av-resultats')).includes(nomCherche) && !!(await p.$('#av-resultats a[href^="#/site/b2-mannequins-publies/"]')), n + 'recherche d’une mannequin par son nom (' + nomCherche + ')');
     await p.fill('#av-recherche', '');
 
+    // 2bis. (11/11/2026) « Envoyer un message » : une seule question, « Que voulez-vous envoyer ? »
+    await p.click('.av-envoyer'); await p.waitForSelector('.tu-envois'); await p.waitForTimeout(600);
+    const envois = await p.$$eval('.tu-envoi', (l) => l.map((a) => a.getAttribute('href')));
+    ok(/Que voulez-vous envoyer/.test(await p.textContent('#contenu')) && envois.join() === '#/site/b2-convocations,#/site/b2-selection,#/site/b2-rappel,#/site/b2-infos,#/site/b2-messages-groupes',
+      n + '« Envoyer un message » : une question, cinq réponses (convoquer, sélection, rappel, information, candidates)');
+    if (tel) await capture(p, 'envoyer-tel');
+    await p.click('.tu-envoi[href="#/site/b2-rappel"]'); await p.waitForSelector('#ecran-convocations', { timeout: 15000 }); await p.waitForTimeout(800);
+    ok(/Rappeler l’information/.test(await p.textContent('#ecran-convocations h2')), n + '« Rappeler un événement » ouvre le bon écran, le rappel déjà choisi');
+    await p.goto(URL_ADMIN); await p.waitForSelector('.accueil-tete'); await p.waitForTimeout(800);
+
     // 3. Une tuile : ses rubriques utiles, « Plus d'outils », puis une rubrique et le menu de SA tuile
     await p.click('.tu[href="#/site/tuile-mannequins"]'); await p.waitForSelector('.tu-page'); await p.waitForTimeout(1500);
     ok(/Mannequins/.test(await p.textContent('.tu-tete')) && (await p.$$('.tu-page > .tu-liste .tu-ligne')).length === 5 && (await p.$$('.tu-visage img')).length >= 4 && !(await p.isVisible('.tu-plus .tu-ligne')),

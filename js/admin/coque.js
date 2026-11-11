@@ -514,6 +514,7 @@
       '<p class="bonjour">' + P.esc(d.jour.charAt(0).toUpperCase() + d.jour.slice(1) + ' ' + d.date) + ' · ' + P.esc(phrase) + '</p></div>' +
       '<div class="av-recherche apparait" style="--i:1"><label for="av-recherche" class="sr-only">Chercher une mannequin ou une rubrique</label>' +
         '<input id="av-recherche" type="search" autocomplete="off" placeholder="🔍 Chercher une mannequin, une rubrique…"><div id="av-resultats" class="av-resultats" hidden></div></div>' +
+      (P.moi.espaces.site ? '<a class="av-envoyer apparait" style="--i:1" href="#/site/tuile-messages"><em aria-hidden="true">✉️</em><span>Envoyer un message<small>Convoquer, annoncer une sélection, informer…</small></span><i aria-hidden="true">›</i></a>' : '') +
       '<h2 class="tu-titre apparait" style="--i:1">À faire aujourd’hui</h2>' + taches(site, paiements) +
       (site ? affiche(site) : '') +
       tuilesAccueil(site, paiements) +

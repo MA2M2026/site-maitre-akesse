@@ -43,7 +43,7 @@
     { cle: 'evenements', ic: '👠', titre: 'Événements', sous: 'Convocations, défilés, cartes',
       pages: ['b3c-agenda', 'b2-convocations', 'b2-defiles', 'b2-cartes'],
       plus: ['b2-selection', 'b2-rappel', 'b2-places', 'b2-fiches-evenement'] },
-    { cle: 'messages', ic: '💌', titre: 'Messages', sous: 'Écrire aux mannequins',
+    { cle: 'messages', ic: '💌', titre: 'Messages', sous: 'Convoquer, annoncer, informer', envoi: true,
       pages: ['b2-messages-groupes', 'b2-infos', 'b2-contacts'], plus: [] },
     { cle: 'site', ic: '🌐', titre: 'Le site', sous: 'Actualités, textes, vidéo', discret: true,
       pages: ['actualites', 'evenements', 'b3c-textes-pages', 'b3d-video-accueil'],
@@ -83,6 +83,19 @@
   // menu de gauche d'une rubrique : seulement les rubriques de SA tuile (js/admin/coque.js)
   P.menuTuile = (t) => [[null, t.ic + ' ' + t.titre], ['tuile-' + t.cle, 'Toute la tuile']].concat(t.pages.map((k) => [k, libelle(k)]))
     .concat(t.plus.length ? [[null, 'Plus d’outils']].concat(t.plus.map((k) => [k, libelle(k)])) : []);
+  // (11/11/2026, demande de la propriétaire : « l'envoi des messages est trop procédurier ») la tuile Messages
+  // commence par UNE question, « Que voulez-vous envoyer ? » : chaque réponse ouvre directement le bon écran,
+  // avec le bon message déjà choisi (convocation, sélection, rappel, information, candidats).
+  const ENVOIS = [
+    ['b2-convocations', '📨', 'Convoquer à un événement', 'Date, heure, lieu, programme et lien « Je confirme »'],
+    ['b2-selection', '🎉', 'Annoncer une sélection', 'Félicitations aux mannequins retenues pour un projet'],
+    ['b2-rappel', '🔔', 'Rappeler un événement', 'La date, l’heure et le lieu, à celles déjà prévenues'],
+    ['b2-infos', '📢', 'Donner une information', 'Casting, défilé, remerciement… à toutes ou à quelques-unes'],
+    ['b2-messages-groupes', '✨', 'Écrire à des candidates', 'Candidatures du site, retenues, inscriptions']
+  ];
+  const blocEnvoi = () => '<h2 class="tu-question">Que voulez-vous envoyer ?</h2><div class="tu-envois">' + ENVOIS.map((e) =>
+    '<a class="tu-envoi" href="#/site/' + e[0] + '"><em aria-hidden="true">' + e[1] + '</em><span><b>' + P.esc(e[2]) + '</b><small>' + P.esc(e[3]) + '</small></span><i aria-hidden="true">›</i></a>').join('') + '</div>' +
+    '<p class="tu-astuce">Chaque message part par WhatsApp, e-mail et dans l’application des mannequins.</p>';
   // la page d'une tuile : (visages,) rubriques utiles, puis « Plus d'outils » repliés
   async function pageTuile(t) {
     if (P.rafraichirCompteursSite) await P.essai(P.rafraichirCompteursSite());
@@ -98,6 +111,7 @@
     }
     return '<div class="tu-page"><div class="tu-tete"><a class="tu-retour" href="#/" aria-label="Retour à l’accueil">‹</a><h1>' + P.esc(t.titre) + '</h1></div>' +
       (visages ? '<div class="tu-visages">' + visages + '</div>' : '') +
+      (t.envoi ? blocEnvoi() + '<h2 class="tu-question">Aussi dans Messages</h2>' : '') +
       '<div class="tu-liste">' + t.pages.map(ligne).join('') + '</div>' +
       (t.plus.length ? '<details class="tu-plus"><summary>Plus d’outils (' + t.plus.length + ')</summary><div class="tu-liste">' + t.plus.map(ligne).join('') + '</div></details>' : '') + '</div>';
   }

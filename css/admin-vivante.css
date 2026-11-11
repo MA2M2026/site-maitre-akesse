@@ -1329,3 +1329,20 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .etude-resultat .notification { text-align: left; }
 .etude-resultat .notification textarea { width: 100%; }
 .etude-suivant { width: 100%; margin-top: 12px; }
+
+/* « Que voulez-vous envoyer ? » (11/11/2026 : un seul point d'entrée pour les messages) */
+.tu-question { margin: 6px 0 -2px; font: 600 24px/1.1 var(--av-titre); color: #FFFFFF; }
+.tu-envois { display: grid; gap: 8px; }
+@media (min-width: 900px) { .tu-envois { grid-template-columns: repeat(2, 1fr); } }
+.tu-envoi { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: #FFFFFF; color: #2a1416; text-decoration: none; box-shadow: var(--av-ombre); transition: transform .2s var(--av-courbe); }
+.tu-envoi:hover { transform: translateY(-2px); }
+.tu-envoi em { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: #F3DDE0; font-style: normal; font-size: 21px; }
+.tu-envoi span { flex: 1; min-width: 0; font: 700 15px var(--av-texte); }
+.tu-envoi small { display: block; margin-top: 2px; font-weight: 400; font-size: 12.5px; color: #6E4F53; }
+.tu-envoi i { font-style: normal; font-size: 22px; color: #B08A8F; }
+.tu-astuce { margin: 0; font-size: 12.5px; color: #F3DDE0; }
+.av-envoyer { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: linear-gradient(135deg, #5A141B, #8A2530); color: #FFFFFF; text-decoration: none; box-shadow: var(--av-ombre); }
+.av-envoyer em { flex: 0 0 42px; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #FFFFFF; font-style: normal; font-size: 20px; }
+.av-envoyer span { flex: 1; font: 700 16px var(--av-texte); }
+.av-envoyer small { display: block; font-weight: 400; font-size: 12.5px; color: #F3DDE0; }
+.av-envoyer i { font-style: normal; font-size: 24px; }
