@@ -21,6 +21,9 @@
 .lieu svg { width: 46px; height: 46px; }
 .talon-geant { left: 140px; top: 250px; width: 800px; height: 800px; }
 .fin-url { left: 40px; right: 40px; top: 1480px; text-align: center; font: 700 44px 'Montserrat'; letter-spacing: 0.02em; z-index: 7; }
+.fin-tel { left: 40px; right: 40px; top: 1580px; text-align: center; z-index: 7; }
+.fin-tel span { display: inline-block; padding: 22px 46px; border-radius: 999px; background: #fff; color: #7C2128; font: 800 64px/1 'Big Shoulders Display'; letter-spacing: 0.04em; box-shadow: 0 24px 50px -20px rgba(40,6,10,0.9); }
+.fin-tel small { display: block; font: 600 26px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 14px; }
 .logo-spot { display: block; width: 620px; margin: 0 auto 40px; filter: brightness(0) invert(1); }
 .marche-spot { overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 60px 120px -40px rgba(40,6,10,0.9); z-index: 4; left: 160px; top: 220px; width: 760px; height: 1060px; }
 .marche-spot div { position: absolute; inset: 0; }

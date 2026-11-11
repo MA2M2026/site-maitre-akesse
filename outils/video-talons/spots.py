@@ -62,6 +62,7 @@ def fin(cle, mot_site='site', sous='Décembre · Janvier · Février', bouton='J
       <p class="moyen"><em data-voix="{cle}" data-retard="0.3" data-anim="mots">{sous}</em></p>
       <span class="bouton" data-voix="{cle}" data-retard="0.5" data-anim="pop">{bouton}<i></i></span></div>
     <div class="abs fin-url" data-voix="{cle}" data-mot="{mot_site}" data-anim="pop">{bas}</div>
+    <div class="abs fin-tel" data-voix="{cle}" data-mot="{mot_site}" data-retard="0.3" data-anim="pop"><small>Tél. / WhatsApp</small><span>05 45 65 66 87</span></div>
   </section>
 '''
 
@@ -231,7 +232,7 @@ s5 = tete(5, 'Spot 5 Entreprises', '« L\'élégance au travail », offre Entrep
     <div class="abs centre-x" style="top:260px"><p class="grand"><span data-voix="s8" data-mot="résultat" data-anim="lettres">Résultat</span></p></div>
   </section>
 
-{fin('s9', mot_site='whatsapp', sous='Offre Entreprises · sur devis', bouton='Demander un devis', bas='maitreakessemodelmanagement.com<br>WhatsApp +225 05 45 65 66 87')}''' + pied('Entreprises')
+{fin('s9', mot_site='whatsapp', sous='Offre Entreprises · sur devis', bouton='Demander un devis', bas='maitreakessemodelmanagement.com')}''' + pied('Entreprises')
 
 for n, h in [(2, s2), (3, s3), (4, s4), (5, s5)]:
     open(os.path.join(ICI, f'film-spot{n}.html'), 'w', encoding='utf-8').write(h)

@@ -67,8 +67,9 @@ if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.ex
   const sortie = path.join(IMAGES, NOM + (FORMAT === 'large' ? '-large' : '') + '.mp4');
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-framerate', String(IPS), '-i', path.join(IMAGES, 'f%05d.jpg'), '-i', son,
     // version publiée : légère (crf 27) et couleurs étiquetées BT.709 (sans étiquette, certains téléphones délavent le rouge)
-    '-vf', 'scale=' + (FORMAT === 'large' ? '1280:720' : '720:1280') + ':flags=lanczos:out_color_matrix=bt709,format=yuv420p',
+    // HD=1 (spots pour les réseaux sociaux, 11/11/2026) : Full HD 1080 × 1920 et haute qualité, sans allègement
+    '-vf', 'scale=' + (process.env.HD ? (FORMAT === 'large' ? '1920:1080' : '1080:1920') : (FORMAT === 'large' ? '1280:720' : '720:1280')) + ':flags=lanczos:out_color_matrix=bt709,format=yuv420p',
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv',
-    '-c:v', 'libx264', '-preset', 'veryslow', '-crf', '27', '-tune', 'film', '-c:a', 'copy', '-shortest', '-movflags', '+faststart', sortie]);
+    '-c:v', 'libx264', '-preset', process.env.HD ? 'slow' : 'veryslow', '-crf', process.env.HD ? '17' : '27', '-tune', 'film', '-c:a', 'copy', '-shortest', '-movflags', '+faststart', sortie]);
   console.log('✓', sortie, (fs.statSync(sortie).size / 1048576).toFixed(1), 'Mo');
 })();
