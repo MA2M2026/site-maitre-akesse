@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<!-- Plaquette commerciale « L'élégance au travail » — Atelier Talons & Élégance, offre Entreprises (11/11/2026).
+     A4 portrait, 8 pages, même univers que assets/documents/MA2M-Plaquette-entreprises.pdf, en rouge mat.
+     Images : images IA de la propriétaire (outils/video-talons/ia/). PDF : node faire-pdf.js -->
+<title>Plaquette L'élégance au travail</title>
+<style>
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-ext-500-normal.woff2'); unicode-range: U+0100-024F; }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url('../../assets/polices/cormorant-garamond-latin-400-italic.woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url('../../assets/polices/cormorant-garamond-latin-ext-400-italic.woff2'); unicode-range: U+0100-024F; }
+@font-face { font-family: 'Montserrat'; font-weight: 500; src: url('../../assets/polices/montserrat-latin-500-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-600-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 700; src: url('../../assets/polices/montserrat-latin-700-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-ext-600-normal.woff2'); unicode-range: U+0100-024F; }
+@page { size: A4; margin: 0; }
+:root { --rouge: #7C2128; --rouge-fonce: #5E171D; --blanc: #fff; --texte: #2a1416; --doux: #8a6a6d; --filet: #e6d6d7; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat', sans-serif; color: var(--texte); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; background: var(--blanc); }
+.page.rouge { background: var(--rouge); color: #fff; }
+.pied { position: absolute; left: 16mm; right: 16mm; bottom: 10mm; display: flex; justify-content: space-between; font: 600 6.5pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--doux); }
+.rouge .pied { color: rgba(255,255,255,0.75); }
+.eyebrow { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.42em; text-transform: uppercase; color: var(--rouge); display: flex; align-items: center; gap: 10px; }
+.eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; }
+.rouge .eyebrow { color: #fff; }
+h1, h2 { font-family: 'Cormorant Garamond', serif; font-weight: 500; line-height: 1.02; letter-spacing: -0.01em; }
+h1 em, h2 em { font-style: italic; font-weight: 400; }
+h2 { font-size: 34pt; margin: 6mm 0 6mm; }
+p { font-size: 9.5pt; line-height: 1.65; }
+.photo { position: absolute; overflow: hidden; }
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
+.logo { height: 13mm; filter: brightness(0) invert(1); }
+
+/* 1. couverture */
+.couv .photo { inset: 0; }
+.couv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.55) 0%, rgba(124,33,40,0) 22%, rgba(124,33,40,0) 46%, rgba(124,33,40,0.92) 72%, #7C2128 100%); }
+.couv .haut { position: absolute; z-index: 2; left: 16mm; right: 16mm; top: 13mm; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
+.couv .haut span { font: 600 6.5pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; text-align: right; line-height: 1.8; }
+.couv .bas { position: absolute; z-index: 2; left: 16mm; right: 16mm; bottom: 22mm; color: #fff; }
+.couv h1 { font-size: 54pt; margin: 5mm 0 6mm; }
+.couv .ligne { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.9; }
+.couv .pied { z-index: 2; }
+.cadre { position: absolute; inset: 7mm; border: 1px solid rgba(255,255,255,0.45); z-index: 3; pointer-events: none; }
+
+/* 2. pourquoi */
+.p2 .photo { left: 0; top: 0; bottom: 0; width: 86mm; }
+.p2 .contenu { position: absolute; left: 100mm; right: 16mm; top: 26mm; }
+.citation { margin-top: 8mm; padding-left: 6mm; border-left: 2px solid var(--rouge); font: italic 400 15pt/1.35 'Cormorant Garamond'; color: var(--rouge); }
+.chiffres { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 10mm; }
+.chiffres div { border-top: 1px solid var(--filet); padding-top: 3mm; }
+.chiffres b { display: block; font: italic 400 26pt 'Cormorant Garamond'; color: var(--rouge); }
+.chiffres span { font-size: 8pt; color: var(--doux); line-height: 1.5; display: block; }
+
+/* 3. programme */
+.p3 .contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
+.modules { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm 6mm; margin-top: 8mm; }
+.module { position: relative; }
+.module .img { height: 66mm; overflow: hidden; }
+.module .img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; display: block; }
+.module .num { position: absolute; left: 0; top: 0; background: var(--rouge); color: #fff; font: 700 7pt 'Montserrat'; letter-spacing: 0.25em; padding: 2.2mm 3.4mm; }
+.module h3 { font: 500 17pt 'Cormorant Garamond'; margin: 3.5mm 0 1.5mm; }
+.module p { font-size: 8.4pt; color: #5b4547; line-height: 1.55; }
+
+/* 4. format (page rouge) */
+.p4 .photo { right: 0; top: 0; width: 82mm; height: 150mm; }
+.p4 .contenu { position: absolute; left: 16mm; width: 102mm; top: 24mm; }
+.format { margin-top: 9mm; display: grid; gap: 0; }
+.format div { display: grid; grid-template-columns: 36mm 1fr; gap: 4mm; padding: 4.2mm 0; border-top: 1px solid rgba(255,255,255,0.28); }
+.format div:last-child { border-bottom: 1px solid rgba(255,255,255,0.28); }
+.format b { font: 600 7pt 'Montserrat'; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.85; padding-top: 1.2mm; }
+.format span { font: 500 15pt/1.25 'Cormorant Garamond'; }
+.p4 .bande { position: absolute; left: 0; right: 0; bottom: 0; height: 120mm; }
+.p4 .bande .photo { position: absolute; top: 0; height: 100%; width: 33.4%; }
+.p4 .bande::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #7C2128 0%, rgba(124,33,40,0) 30%, rgba(124,33,40,0) 75%, rgba(124,33,40,0.85) 100%); }
+
+/* 5. bénéfices */
+.p5 .contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-top: 6mm; }
+.deux h3 { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; color: var(--rouge); padding-bottom: 3mm; border-bottom: 1px solid var(--rouge); margin-bottom: 2mm; }
+.deux li { list-style: none; font: 500 13pt/1.3 'Cormorant Garamond'; padding: 3mm 0 3mm 7mm; border-bottom: 1px solid var(--filet); position: relative; }
+.deux li::before { content: ""; position: absolute; left: 0; top: 5.2mm; width: 3mm; height: 3mm; background: var(--rouge); transform: rotate(45deg); }
+.occasions { margin-top: 10mm; }
+.occasions .liste { display: flex; flex-wrap: wrap; gap: 3mm; margin-top: 4mm; }
+.occasions .liste span { border: 1px solid var(--rouge); color: var(--rouge); border-radius: 999px; padding: 2.2mm 5mm; font: 600 7.5pt 'Montserrat'; letter-spacing: 0.08em; }
+.p5 .photo { left: 16mm; right: 16mm; bottom: 22mm; height: 62mm; }
+
+/* 6. offre (page rouge) */
+.p6 .photo { inset: 0; }
+.p6::after { content: ""; position: absolute; inset: 0; background: rgba(124,33,40,0.86); }
+.p6 .contenu { position: absolute; z-index: 2; left: 16mm; right: 16mm; top: 26mm; text-align: center; color: #fff; }
+.p6 .eyebrow { justify-content: center; }
+.p6 .eyebrow::after { content: ""; width: 26px; height: 1px; background: currentColor; }
+.prix { margin: 12mm auto 4mm; font: italic 400 76pt/0.9 'Cormorant Garamond'; }
+.prix small { font: 700 16pt 'Montserrat'; font-style: normal; letter-spacing: 0.08em; margin-left: 3mm; }
+.prix-sous { font: 600 8.5pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.9; }
+.carte-offre { margin: 12mm auto 0; width: 150mm; background: #fff; color: var(--texte); border-radius: 4mm; padding: 9mm 10mm; text-align: left; box-shadow: 0 20mm 40mm -16mm rgba(20,2,5,0.8); }
+.carte-offre div { display: flex; justify-content: space-between; align-items: baseline; padding: 3.4mm 0; border-bottom: 1px solid var(--filet); }
+.carte-offre div:last-child { border-bottom: 0; }
+.carte-offre b { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.2em; text-transform: uppercase; color: var(--doux); }
+.carte-offre span { font: 500 14pt 'Cormorant Garamond'; color: var(--rouge); text-align: right; }
+.exemple { margin-top: 9mm; font: italic 400 14pt 'Cormorant Garamond'; opacity: 0.95; }
+.p6 .pied { z-index: 2; }
+
+/* 7. comment + qui sommes-nous */
+.p7 .contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
+.etapes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; margin-top: 8mm; }
+.etapes div { border-top: 2px solid var(--rouge); padding-top: 4mm; }
+.etapes b { display: block; font: italic 400 30pt/1 'Cormorant Garamond'; color: var(--rouge); }
+.etapes h3 { font: 600 8pt 'Montserrat'; letter-spacing: 0.12em; text-transform: uppercase; margin: 3mm 0 2mm; }
+.etapes p { font-size: 8pt; color: #5b4547; line-height: 1.5; }
+.qui { position: absolute; left: 0; right: 0; bottom: 0; height: 128mm; background: var(--rouge); color: #fff; display: grid; grid-template-columns: 88mm 1fr; }
+.qui .photo { position: relative; height: 100%; }
+.qui .texte { padding: 14mm 16mm 18mm 12mm; }
+.qui h2 { font-size: 26pt; margin: 4mm 0 4mm; }
+.qui p { font-size: 8.8pt; opacity: 0.95; }
+.qui .piliers { margin-top: 6mm; font: 600 7pt 'Montserrat'; letter-spacing: 0.4em; text-transform: uppercase; }
+.p7 .pied { color: rgba(255,255,255,0.75); }
+
+/* 8. contact (rouge) */
+.p8 .photo { inset: 0; }
+.p8::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.7) 0%, rgba(124,33,40,0.92) 45%, #7C2128 100%); }
+.p8 .contenu { position: absolute; z-index: 2; left: 16mm; right: 16mm; top: 22mm; color: #fff; }
+.p8 h2 { font-size: 44pt; }
+.coordonnees { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm 10mm; margin-top: 12mm; }
+.coordonnees div { border-top: 1px solid rgba(255,255,255,0.35); padding-top: 3.5mm; }
+.coordonnees b { display: block; font: 600 6.8pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.8; margin-bottom: 1.6mm; }
+.coordonnees span { font: 500 15pt 'Cormorant Garamond'; }
+.qrs { display: flex; gap: 12mm; margin-top: 14mm; }
+.qrs div { display: flex; align-items: center; gap: 5mm; }
+.qrs img { width: 30mm; height: 30mm; background: #fff; padding: 1.5mm; }
+.qrs span { font: 600 7pt 'Montserrat'; letter-spacing: 0.25em; text-transform: uppercase; line-height: 1.8; }
+.bouton { display: inline-block; margin-top: 14mm; background: #fff; color: var(--rouge); border-radius: 999px; padding: 4.5mm 11mm; font: 700 9pt 'Montserrat'; letter-spacing: 0.08em; }
+.p8 .pied { z-index: 2; }
+</style></head>
+<body>
+
+<!-- 1. COUVERTURE -->
+<section class="page couv rouge">
+  <div class="photo"><img src="../video-talons/ia/ia-31.jpg"></div>
+  <div class="cadre"></div>
+  <div class="haut"><img class="logo" src="../../assets/logo-header.png" alt="Maître Akesse Model Management"><span>Offre Entreprises<br>Atelier Talons &amp; Élégance</span></div>
+  <div class="bas">
+    <p class="eyebrow">Pour vos collaboratrices</p>
+    <h1>L’élégance<br><em>au travail.</em></h1>
+    <p class="ligne">Posture · Démarche · Prestance · Confiance</p>
+  </div>
+  <div class="pied"><span>Maître Akesse Model Management · Abidjan</span><span>maitreakessemodelmanagement.com</span></div>
+</section>
+
+<!-- 2. POURQUOI -->
+<section class="page p2">
+  <div class="photo"><img src="../video-talons/ia/ia-30.jpg"></div>
+  <div class="contenu">
+    <p class="eyebrow">Pourquoi cet atelier</p>
+    <h2>Avant même<br>qu’elles parlent,<br><em>leur allure parle.</em></h2>
+    <p>À l’accueil, en réunion, face à un partenaire, lors d’une cérémonie officielle : vos collaboratrices sont la première image de votre institution. Une démarche assurée, une posture droite et des talons maîtrisés inspirent spontanément confiance et respect.</p>
+    <p style="margin-top:4mm">L’Atelier Talons &amp; Élégance de Maître Akesse Model Management met au service de vos équipes le savoir-faire d’une agence de mannequins : la même exigence, adaptée au monde professionnel.</p>
+    <p class="citation">« Une femme puissante se reconnaît dès son premier pas. »</p>
+    <div class="chiffres">
+      <div><b>4</b><span>samedis dans le mois, chez vous</span></div>
+      <div><b>4</b><span>modules : posture, démarche, prestance, confiance</span></div>
+    </div>
+  </div>
+  <div class="pied"><span>L’élégance au travail</span><span>02</span></div>
+</section>
+
+<!-- 3. PROGRAMME -->
+<section class="page p3">
+  <div class="contenu">
+    <p class="eyebrow">Le programme</p>
+    <h2>Quatre modules,<br><em>une nouvelle assurance.</em></h2>
+    <div class="modules">
+      <div class="module"><div class="img"><img src="../video-talons/ia/ia-03.jpg"></div><span class="num">MODULE 1</span><h3>La posture &amp; le port de tête</h3><p>Se tenir droite sans raideur, ouvrir les épaules, trouver un port de tête naturel et élégant, debout comme assise.</p></div>
+      <div class="module"><div class="img"><img src="../video-talons/ia/ia-28.jpg"></div><span class="num">MODULE 2</span><h3>La démarche en talons</h3><p>Équilibre, appui du pied, longueur du pas, fluidité : marcher en talons avec aisance, du bureau à la soirée de gala.</p></div>
+      <div class="module"><div class="img"><img src="../video-talons/ia/ia-27.jpg"></div><span class="num">MODULE 3</span><h3>La prestance &amp; l’art de se présenter</h3><p>Entrer dans une salle, saluer, se présenter, se placer face à un public : les gestes qui font la différence.</p></div>
+      <div class="module"><div class="img"><img src="../video-talons/ia/ia-12.jpg"></div><span class="num">MODULE 4</span><h3>La confiance en soi</h3><p>Prendre sa place avec sérénité, gérer le regard des autres et rayonner naturellement dans toutes les situations.</p></div>
+    </div>
+  </div>
+  <div class="pied"><span>Le programme</span><span>03</span></div>
+</section>
+
+<!-- 4. FORMAT -->
+<section class="page p4 rouge">
+  <div class="photo"><img src="../video-talons/ia/ia-23.jpg"></div>
+  <div class="contenu">
+    <p class="eyebrow">Le format</p>
+    <h2>Nous venons<br><em>à vous.</em></h2>
+    <div class="format">
+      <div><b>Durée</b><span>Un mois, quatre séances</span></div>
+      <div><b>Jour</b><span>Le samedi</span></div>
+      <div><b>Lieu</b><span>Dans vos locaux, ou dans l’espace de votre choix</span></div>
+      <div><b>Groupe</b><span>À partir de 10 participantes</span></div>
+      <div><b>Encadrement</b><span>Les formatrices de l’agence Maître Akesse Model Management</span></div>
+    </div>
+  </div>
+  <div class="bande">
+    <div class="photo" style="left:0"><img src="../video-talons/ia/ia-04.jpg"></div>
+    <div class="photo" style="left:33.3%"><img src="../video-talons/ia/ia-15.jpg"></div>
+    <div class="photo" style="left:66.6%"><img src="../video-talons/ia/ia-08.jpg"></div>
+  </div>
+  <div class="pied"><span>Le format</span><span>04</span></div>
+</section>
+
+<!-- 5. BÉNÉFICES -->
+<section class="page p5">
+  <div class="contenu">
+    <p class="eyebrow">Ce que vous y gagnez</p>
+    <h2>Un investissement<br><em>dans vos équipes.</em></h2>
+    <div class="deux">
+      <div><h3>Pour vos collaboratrices</h3><ul><li>Une démarche sûre et élégante</li><li>Une posture qui inspire le respect</li><li>Plus d’aisance en public</li><li>Une confiance en soi renforcée</li></ul></div>
+      <div><h3>Pour votre institution</h3><ul><li>Un accueil plus professionnel</li><li>Une image soignée et cohérente</li><li>Des équipes fières et motivées</li><li>Un geste fort envers vos femmes</li></ul></div>
+    </div>
+    <div class="occasions"><p class="eyebrow">Idéal pour</p>
+      <div class="liste"><span>Journée internationale de la femme · 8 mars</span><span>Fêtes de fin d’année</span><span>Séminaires</span><span>Cérémonies officielles</span><span>Accueil &amp; protocole</span><span>Comités et associations de femmes</span></div></div>
+  </div>
+  <div class="photo"><img src="../video-talons/ia/ia-07.jpg" style="object-position:50% 40%"></div>
+  <div class="pied"><span>Vos bénéfices</span><span>05</span></div>
+</section>
+
+<!-- 6. OFFRE -->
+<section class="page p6 rouge">
+  <div class="photo"><img src="../video-talons/ia/ia-01.jpg"></div>
+  <div class="contenu">
+    <p class="eyebrow">Offre spéciale Entreprises</p>
+    <div class="prix">30 000<small>FCFA</small></div>
+    <p class="prix-sous">par participante · pour le mois complet</p>
+    <div class="carte-offre">
+      <div><b>Séances</b><span>4 samedis dans le mois</span></div>
+      <div><b>Lieu</b><span>Vos locaux ou l’espace de votre choix</span></div>
+      <div><b>Participantes</b><span>10 minimum</span></div>
+      <div><b>Programme</b><span>Posture · Démarche · Prestance · Confiance</span></div>
+    </div>
+    <p class="exemple">Exemple : un groupe de 10 collaboratrices = 300 000 FCFA pour le mois.</p>
+  </div>
+  <div class="pied"><span>L’offre</span><span>06</span></div>
+</section>
+
+<!-- 7. COMMENT + QUI SOMMES-NOUS -->
+<section class="page p7">
+  <div class="contenu">
+    <p class="eyebrow">Comment ça se passe</p>
+    <h2>Simple, <em>de bout en bout.</em></h2>
+    <div class="etapes">
+      <div><b>1</b><h3>Votre demande</h3><p>Par e-mail, téléphone ou WhatsApp.</p></div>
+      <div><b>2</b><h3>Un échange</h3><p>Nombre de participantes, lieu, dates des samedis.</p></div>
+      <div><b>3</b><h3>La proposition</h3><p>Nous vous adressons notre proposition pour validation.</p></div>
+      <div><b>4</b><h3>Premier samedi</h3><p>L’atelier commence dans vos murs.</p></div>
+    </div>
+  </div>
+  <div class="qui">
+    <div class="photo"><img src="../video-talons/ia/ia-25.jpg"></div>
+    <div class="texte">
+      <p class="eyebrow">Qui sommes-nous</p>
+      <h2>Maître Akesse<br><em>Model Management</em></h2>
+      <p>Agence de mannequins et académie basée à Abidjan, nous formons, révélons et valorisons des talents depuis nos débuts. Défilés, campagnes, événements : la posture et la démarche sont notre métier au quotidien.</p>
+      <p style="margin-top:3mm">Avec l’Atelier Talons &amp; Élégance, nous ouvrons ce savoir-faire à toutes les femmes, et aujourd’hui aux équipes de votre institution.</p>
+      <p class="piliers">Former · Révéler · Valoriser</p>
+    </div>
+  </div>
+  <div class="pied"><span>Maître Akesse Model Management</span><span>07</span></div>
+</section>
+
+<!-- 8. CONTACT -->
+<section class="page p8 rouge">
+  <div class="photo"><img src="../video-talons/ia/ia-29.jpg"></div>
+  <div class="contenu">
+    <p class="eyebrow">Contact</p>
+    <h2>Offrez à vos équipes<br><em>l’élégance qu’elles méritent.</em></h2>
+    <div class="coordonnees">
+      <div><b>Téléphone</b><span>+225 27 22 23 11 76</span></div>
+      <div><b>WhatsApp</b><span>+225 05 45 65 66 87</span></div>
+      <div><b>E-mail</b><span>infos.ma2m@gmail.com</span></div>
+      <div><b>Site</b><span>maitreakessemodelmanagement.com</span></div>
+    </div>
+    <div class="qrs">
+      <div><img src="qr-site.png" alt=""><span>Voir<br>l’atelier</span></div>
+      <div><img src="qr-whatsapp.png" alt=""><span>Écrire sur<br>WhatsApp</span></div>
+    </div>
+    <span class="bouton">Demander notre proposition</span>
+  </div>
+  <div class="pied"><span>Abidjan · Côte d’Ivoire</span><span>08</span></div>
+</section>
+</body></html>
