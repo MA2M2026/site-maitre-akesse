@@ -461,24 +461,45 @@
   // un message de l'agence : titre, date, texte, photo, fiche jointe, page à ouvrir
   const ICONES_MESSAGE = { casting: '✨', defile: '👠', remerciement: '🤍', info: '💌', selection: '🎉', convocation: '💌', rappel: '⏰', places: '🎟️', mensualite: '💳', paiement: '✅', cachet: '💰' };
   const quandMessage = (d) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
-  function carteMessage(x) {
-    const ic = ICONES_MESSAGE[x.sorte] || '✉️';
-    return '<details class="ap-message-agence' + (x.nouveau ? ' nouveau' : '') + '"' + (x.nouveau ? ' open' : '') + '><summary><span class="ap-alerte-ic bleu" aria-hidden="true">' + ic + '</span>' +
-      '<span><b>' + esc(x.titre.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '')) + '</b><br><span class="doux">' + esc(quandMessage(x.cree_le)) + (x.nouveau ? ' · <em>nouveau</em>' : '') + '</span></span></summary>' +
-      (x.texte ? '<p class="ap-message-texte">' + esc(x.texte) + '</p>' : '') +
-      (x.image ? '<img class="ap-message-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
-      (x.fiche || x.lien ? '<div class="ap-btns">' + (x.fiche ? '<a class="ap-btn" href="' + esc(x.fiche) + '" target="_blank" rel="noopener">📄 Voir la fiche</a>' : '') +
-        (x.lien ? '<a class="ap-btn rouge" href="' + esc(x.lien) + '">Ouvrir</a>' : '') + '</div>' : '') + '</details>';
-  }
+  // Messages façon messagerie (11/11/2026, maquette validée par la propriétaire) : la conversation avec l'agence,
+  // bulles par jour (des plus anciennes aux plus récentes), nouveaux messages entourés, paiements en vert ;
+  // « Écrire à l'agence sur WhatsApp » (MA2M_WHATSAPP, js/app.js) pour répondre.
+  const MESSAGES_AFFICHES = 30;
   // proposer les notifications sur ce téléphone (pas encore acceptées, et possibles ici)
   const proposerNotifications = () => notificationsPossibles() && Notification.permission === 'default';  // (js/app.js)
+  const heureMessage = (d) => new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
+  const jourMessage = (d) => {
+    const j = new Date(d).toISOString().slice(0, 10), auj = aujourdhui();
+    if (j === auj) return 'Aujourd’hui';
+    if (dansJours(j) === -1) return 'Hier';
+    return jourLong(j);
+  };
+  function bulleMessage(x) {
+    const titre = /^\p{Extended_Pictographic}/u.test(x.titre) ? x.titre : (ICONES_MESSAGE[x.sorte] || '✉️') + ' ' + x.titre;
+    const vert = ['paiement', 'cachet'].includes(x.sorte);
+    return '<article class="ap-bulle ap-message-agence' + (x.nouveau ? ' nouveau' : '') + (vert ? ' paye' : '') + '"' + (x.nouveau ? ' data-nouveau' : '') + '>' +
+      (x.image ? '<img class="ap-message-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+      (x.nouveau ? '<span class="ap-bulle-nv">NOUVEAU</span>' : '') + '<b>' + esc(titre) + '</b>' +
+      (x.texte ? '<p class="ap-message-texte">' + esc(x.texte) + '</p>' : '') +
+      (x.fiche || x.lien ? '<div class="ap-btns">' + (x.fiche ? '<a class="ap-btn" href="' + esc(x.fiche) + '" target="_blank" rel="noopener">📄 Voir la fiche</a>' : '') +
+        (x.lien ? '<a class="ap-btn rouge" href="' + esc(x.lien) + '">Ouvrir</a>' : '') + '</div>' : '') +
+      '<time>' + esc(heureMessage(x.cree_le)) + '</time></article>';
+  }
   function ecranAlertes() {
     const l = alertes();
-    return (proposerNotifications() ? '<div class="ap-carte ap-notif"><b>🔔 Être prévenue sur mon téléphone</b><span class="doux">Recevez une notification à chaque message de l’agence, même application fermée.</span>' +
-        '<button type="button" class="ap-btn rouge" data-notifications>Activer les notifications</button></div>' : '') +
-      (l.length ? '<h2 class="ap-titre-sec">À faire</h2>' + l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><br>' + esc(x.texte) + '</span></' + (x.lien ? 'a' : 'div') + '>').join('') : '') +
-      '<h2 class="ap-titre-sec">Messages de l’agence</h2>' +
-      (etat.messages.length ? etat.messages.map(carteMessage).join('') : '<div class="ap-carte doux">Aucun message pour le moment. Les informations de l’agence arriveront ici.</div>');
+    let jourEnCours = '';
+    const fil = etat.messages.slice(0, MESSAGES_AFFICHES).reverse().map((x) => {
+      const jour = jourMessage(x.cree_le), sep = jour !== jourEnCours ? '<div class="ap-fil-jour"><span>' + esc(jour) + '</span></div>' : '';
+      jourEnCours = jour;
+      return sep + bulleMessage(x);
+    }).join('');
+    return (proposerNotifications() ? '<div class="ap-notif">🔔 <b>Être prévenue sur mon téléphone</b>' +
+        '<button type="button" class="ap-btn" data-notifications>Activer</button></div>' : '') +
+      (l.length ? '<h2 class="ap-titre-sec">À faire</h2><div class="ap-afaire">' + l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><small>' + esc(x.texte) + '</small></span></' + (x.lien ? 'a' : 'div') + '>').join('') + '</div>' : '') +
+      '<section class="ap-fil" aria-label="Messages de l’agence"><div class="ap-fil-tete"><span class="ap-post-avatar" aria-hidden="true"><img src="/assets/logo-header.png" alt=""></span>' +
+        '<div><b>Maître Akesse Model Management</b><small>● Messages de l’agence</small></div></div>' +
+        '<div class="ap-fil-corps">' + (fil || '<p class="ap-fil-vide">Aucun message pour le moment. Les informations de l’agence arriveront ici.</p>') + '</div></section>' +
+      '<a class="ap-wa" href="' + esc(MA2M_WHATSAPP) + '" target="_blank" rel="noopener">💬 Écrire à l’agence sur WhatsApp</a>';
   }
   // messages vus : marqués lus (ils gardent « nouveau » le temps de cette visite de l'onglet)
   function marquerLus() {
@@ -566,7 +587,7 @@
     message(ev.reponse === 'confirme' ? 'Merci ! Votre présence est confirmée.' : 'C’est noté : l’agence est prévenue.');
     afficher();
   });
-  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); });
+  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); const nv = ongletCourant() === 'alertes' && document.querySelector('[data-nouveau]'); if (nv) nv.scrollIntoView({ block: 'center' }); });
   // de retour dans l'application (notification touchée, autre application) : les nouveaux messages
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !etat) return;

@@ -256,9 +256,13 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     // (photo du message chargée à la demande : hauteur nulle tant qu'elle n'est pas arrivée)
     await p.waitForSelector('.ap-message-agence.nouveau .ap-message-image', { state: 'visible', timeout: 5000 }).catch(() => {});
     ok(/Mensualité de/.test(alertes) && /Casting ouvert : CASTING CACAO/.test(alertes) && !/confirmez votre présence/.test(alertes), n + 'Messages › À faire : mensualité, casting ; plus de convocation à confirmer');
-    ok(/Messages de l’agence/.test(alertes) && (await p.$$('.ap-message-agence')).length === 2 && await p.isVisible('.ap-message-agence.nouveau .ap-message-image') &&
+    ok(/Maître Akesse Model Management/.test(await p.textContent('.ap-fil-tete')) && (await p.$$('.ap-message-agence')).length === 2 && await p.isVisible('.ap-message-agence.nouveau .ap-message-image') &&
       (await p.getAttribute('.ap-message-agence.nouveau a[href="https://exemple.ci/fiche.pdf"]', 'target')) === '_blank' && /Veuillez vous préparer/.test(await p.textContent('.ap-message-agence.nouveau')),
-      n + 'Messages de l’agence : le nouveau message ouvert (texte, photo, fiche jointe), l’ancien replié');
+      n + 'Messages façon messagerie (11/11/2026) : bulles de l’agence, le nouveau entouré (texte, photo, fiche jointe)');
+    ok((await p.$$('.ap-fil-jour')).length >= 1 && (await p.$$eval('.ap-fil-corps .ap-message-agence', (l) => l.map((x) => x.classList.contains('nouveau')))).join() === 'false,true' && !!(await p.$('.ap-bulle.paye')) && !!(await p.$('.ap-afaire .ap-alerte')),
+      n + 'Messages : séparateurs par jour, du plus ancien au plus récent (le nouveau en bas), paiement en vert, « À faire » en cartes');
+    ok(/^https:\/\/wa\.me\//.test(await p.getAttribute('a.ap-wa', 'href')) && (await p.getAttribute('a.ap-wa', 'target')) === '_blank' && /Écrire à l’agence sur WhatsApp/.test(await p.textContent('a.ap-wa')),
+      n + '« Écrire à l’agence sur WhatsApp » : ouvre WhatsApp sur le numéro de l’agence');
     const lus = rpc('app_messages_lus');
     ok(lus.length === 1 && JSON.stringify(lus[0].p_ids) === '["msg1"]', n + 'message vu : marqué comme lu (seulement le nouveau)');
     // (proposée seulement quand le téléphone sait recevoir des notifications et ne les a ni acceptées ni refusées)
@@ -270,7 +274,6 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       ok(abo.length === 1 && abo[0].p_endpoint === 'https://push.exemple/aya' && /C’est activé/.test(await p.textContent('#ap-message')), n + '« Activer les notifications » : ce téléphone est abonné, la mannequin est prévenue');
     }
     await capture('5-messages');
-    await p.click('.ap-message-agence:not(.nouveau) summary');
     ok((await p.getAttribute('.ap-message-agence:not(.nouveau) a.ap-btn.rouge', 'href')) === '/app/#paiements', n + 'un message automatique ouvre la bonne page (Paiements)');
     ok(!(await deborde()), n + 'rien ne dépasse de l’écran');
     // 9. Déconnexion
