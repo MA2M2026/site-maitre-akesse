@@ -4506,6 +4506,7 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   (feuille de partage du téléphone), raccourcis Compcard / Mon CV / Mes photos, grille de 3 photos.
 - **Ma compcard** (js/espace-mannequin.js `viewStudioCompcard`, adresse `/app/espace-mannequin.html#compcard`) : 5 cases
   en grand, case touchée → galerie → photo dans le Book et dans la case ; aperçu, PDF, image, envoi WhatsApp.
+- **CV premium** (js/app.js `construireCanvasCv`, même style que la compcard, langues ajoutées) et écran **Mon CV** (js/espace-mannequin.js `viewStudioCv`, adresse `#cv`) : photo du CV depuis la galerie, liste Complet / À compléter, aperçu = image du CV, PDF, image, WhatsApp.
 - **Compcard premium** (js/app.js `construireCanvasCompcard`) : fond blanc, nom en Cormorant, photos sur deux tiers
   de la page (grande case : photo plus large que la case → seuls les côtés sont rognés), mesures sur deux lignes
   fines, pied rouge (infos.ma2m@gmail.com). L'aperçu affiche l'image même de la compcard (identique aux fichiers).

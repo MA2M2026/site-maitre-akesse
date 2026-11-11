@@ -741,6 +741,7 @@ function render(){
   // (la base refuse de toute façon toute modification, Extension 135).
   if (state.meta.desactive) { app.innerHTML = viewSourdine(); return; }
   if (state.meta.studio === 'compcard') { app.innerHTML = viewStudioCompcard(); bindStudioCompcard(); return; }
+  if (state.meta.studio === 'cv') { app.innerHTML = viewStudioCv(); bindStudioCv(); return; }
   const enModeGuide = !state.meta.premierePublicationFaite;
   if (enModeGuide) {
     if (state.meta.statutAffichage === 'en_attente') { app.innerHTML = viewConfirmation(); return; }
@@ -1476,6 +1477,85 @@ function bindStudioCompcard(){
   });
 }
 
+/* ------------------------------------------------------ ÉCRAN « MON CV » ---
+   (11/11/2026, maquette validée par la propriétaire) ouvert depuis l'application (Mon profil › Mon CV, adresse
+   …#cv) : la photo du CV (touchée → galerie → elle rejoint le Book et devient la photo du CV), la liste de ce que
+   contient le CV avec « Complet » / « À compléter » (touchée → la partie à remplir), l'aperçu du vrai CV, PDF,
+   image, envoi par WhatsApp. */
+function viewStudioCv(){
+  const pts = pointsARemplir();
+  const ph = state.photos.photoCv;
+  const lignes = [['identite','👤','Identité et contact'], ['physique','📏','Mensurations'], ['experiences','👠','Expériences'], ['formation','🎓','Formation'], ['photos','📸','Photos et portfolio']];
+  return '<div class="sc-studio">' +
+    '<div class="sc-tete"><a class="sc-retour" href="/app/#profil" aria-label="Retour à mon profil">‹</a><h1>Mon CV</h1></div>' +
+    '<p class="sc-sous">Votre CV de mannequin, prêt à envoyer. Il se remplit tout seul avec votre profil.</p>' +
+    '<label class="scv-photo"><span class="scv-vignette">' + (ph ? '<img src="'+echapperHtml(ph.url)+'" alt="Photo du CV">' : '<b>＋</b>') + '<i aria-hidden="true">＋</i></span>' +
+      '<span><b>Photo du CV</b>Un portrait net et souriant. Touchez la photo pour en choisir une dans votre galerie.</span>' +
+      '<input class="hidden-input" type="file" accept="image/*" data-scv-photo aria-label="Choisir la photo du CV dans la galerie"></label>' +
+    '<div class="scv-liste">' + lignes.map(function(l){
+      const manque = pts ? (pts.nb[l[0]] || 0) : 0;
+      const etat = l[0] === 'experiences' ? '<small class="ok">' + toutesExperiences().length + '</small>'
+        : manque ? '<small class="manque">À compléter</small>' : '<small class="ok">✓ Complet</small>';
+      return '<button type="button" data-scv-aller="'+l[0]+'"><em aria-hidden="true">'+l[1]+'</em><span>'+l[2]+'</span>'+etat+'</button>';
+    }).join('') + '</div>' +
+    '<div class="scv-apercu" id="scvApercu"><p>Préparation de l’aperçu…</p></div>' +
+    '<div class="sc-actions"><div class="sc-deux"><button type="button" class="btn primary" id="scvPdf">📄 PDF</button><button type="button" class="btn primary" id="scvJpeg">🖼️ Image</button></div>' +
+    '<button type="button" class="btn ghost" id="scvWhatsapp">↗ Envoyer par WhatsApp</button></div>' +
+  '</div>';
+}
+function bindStudioCv(){
+  const input = document.querySelector('[data-scv-photo]');
+  input.addEventListener('change', async function(){
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    if (state.photos.book.length >= LIMITE_PHOTOS_BOOK) { toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true); return; }
+    toast('Envoi de la photo…');
+    const item = await Store.uploadPhoto(file);
+    if (item) {
+      state.photos.book.push(item);
+      if (await Store.setRolePhoto('photo_cv', item.id)) { state.photos.photoCv = item; toast('Photo du CV définie'); }
+    }
+    render();
+  });
+  document.querySelectorAll('[data-scv-aller]').forEach(function(b){
+    b.addEventListener('click', function(){
+      const k = b.dataset.scvAller;
+      state.meta.studio = null;
+      history.replaceState(null, '', location.pathname);
+      if (state.meta.premierePublicationFaite) state.meta.editBlock = k; else state.meta.currentStep = BLOCS_ETAPES.indexOf(k) + 1;
+      render(); window.scrollTo(0, 0);
+    });
+  });
+  document.getElementById('scvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCvDepuisEtat(), 'scvPdf', 'scvJpeg'); });
+  document.getElementById('scvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCvDepuisEtat(), 'scvPdf', 'scvJpeg'); });
+  document.getElementById('scvWhatsapp').addEventListener('click', async function(){
+    const btn = this, texte = btn.textContent; btn.disabled = true; btn.textContent = 'Préparation…';
+    try {
+      const canvas = await construireCanvasCv(donneesCvDepuisEtat());  // (js/app.js, même dessin que le PDF)
+      const blob = await new Promise(function(ok){ canvas.toBlob(ok, 'image/jpeg', 0.92); });
+      const fichier = new File([blob], 'cv-' + ((state.identite.nomComplet||'mannequin').split(' ')[0]||'mannequin').toLowerCase() + '.jpg', { type: 'image/jpeg' });
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        try { await navigator.share({ files: [fichier], title: 'Mon CV', text: 'Mon CV · Maître Akesse Model Management' }); } catch (e) { /* partage annulé */ }
+      } else {
+        telechargerFichier(canvas.toDataURL('image/jpeg', 0.92), fichier.name);  // (js/app.js)
+        toast('CV enregistré : joignez-le dans WhatsApp.');
+      }
+    } catch (e) {
+      signalerProbleme('CV : envoi WhatsApp échoué', (e && e.message) || String(e), e && e.stack);
+      toast('Le CV n’a pas pu être préparé. Réessayez.', true);
+    } finally { btn.disabled = false; btn.textContent = texte; }
+  });
+  // aperçu : l'image même du CV (construireCanvasCv), en arrière-plan
+  construireCanvasCv(donneesCvDepuisEtat()).then(function(canvas){
+    const zone = document.getElementById('scvApercu');
+    if (zone) zone.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg', 0.8) + '" alt="Aperçu de mon CV">';
+  }).catch(function(e){
+    signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
+    const zone = document.getElementById('scvApercu'); if (zone) zone.innerHTML = '<p>L’aperçu n’a pas pu être préparé.</p>';
+  });
+}
+
 function bindPhotoHandlers(){
   const s = state;
   const fBook = document.getElementById('fBook');
@@ -1931,21 +2011,30 @@ function donneesCvDepuisEtat(){
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
     photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
-    physique: p, formation: f, competences: state.competences, experiences: toutesExperiences(), sexe: d.sexe
+    physique: p, formation: f, competences: state.competences, experiences: toutesExperiences(), sexe: d.sexe,
+    langues: (state.profilPro && state.profilPro.langues) || []
   };
 }
 
-function openCv(){
+// Aperçu du CV (11/11/2026, CV « premium ») : l'image affichée est LE CV lui-même, dessiné par construireCanvasCv
+// (js/app.js) — l'aperçu et les fichiers PDF / image sont donc toujours identiques.
+async function openCv(){
   const donneesCv = donneesCvDepuisEtat();
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
-    '<div class="cv-sheet">' +
-    '<div id="cv-mannequin-contenu">' + construireHtmlCv(donneesCv) + '</div>' +
-    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en JPEG</button><button class="btn primary small" id="btnCvPdf">🖨️ Télécharger en PDF</button></div>' +
-    '</div>';
+    '<div class="compcard-model compcard-apercu cv-apercu"><p class="sub">Préparation de votre CV…</p></div>' +
+    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en image</button><button class="btn primary small" id="btnCvPdf">📄 Télécharger en PDF</button></div>';
   showOverlay();
   document.getElementById('btnCvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
   document.getElementById('btnCvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
+  const zone = document.querySelector('.cv-apercu');
+  try {
+    const canvas = await construireCanvasCv(donneesCv);
+    if (zone) zone.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg', 0.85) + '" alt="Mon CV">';
+  } catch (e) {
+    signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
+    if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger le CV.</p>';
+  }
 }
 
 // Reconstruit, à partir de l'état réel du profil, l'objet { profil, photos, projets }
@@ -2013,7 +2102,8 @@ async function demarrerApresConnexion(){
   // (11/11/2026) raccourcis « Compcard », « Mon CV », « Mes photos » de l'application (onglet Mon profil) : la page
   // s'ouvre directement sur les photos (étape 5 des 6 étapes, ou bloc Photos une fois le profil validé)
   if (location.hash === '#compcard') state.meta.studio = 'compcard';
-  else if (/^#(cv|photos)$/.test(location.hash)) {
+  else if (location.hash === '#cv') state.meta.studio = 'cv';
+  else if (location.hash === '#photos') {
     if (state.meta.premierePublicationFaite) state.meta.editBlock = 'photos'; else state.meta.currentStep = 5;
   }
   render();

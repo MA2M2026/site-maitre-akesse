@@ -1243,41 +1243,6 @@ function envelopperLignesCanvas(ctxMesure, texte, largeurMaxPx, police) {
   return lignes;
 }
 
-// Dessine une icône du CV (MCV_ICONS, viewBox 18x18, contour seul) sur canvas à partir de
-// son fragment SVG — évite d'avoir à recoder chaque icône à la main une deuxième fois en
-// commandes canvas : on réinterprète directement les <circle> et <path d="…"> déjà écrits
-// pour l'affichage HTML (voir mcvIcon() ci-dessus).
-function dessinerIconeMcvCanvas(ctx, cle, xPx, yPx, taillePx, couleur) {
-  const frag = MCV_ICONS[cle];
-  if (!frag) return;
-  ctx.save();
-  ctx.translate(xPx, yPx);
-  ctx.scale(taillePx / 18, taillePx / 18);
-  ctx.strokeStyle = couleur;
-  ctx.fillStyle = couleur;
-  ctx.lineWidth = 1.4;
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const reCircle = /<circle cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.-]+)"\s*\/>/g;
-  let m;
-  while ((m = reCircle.exec(frag))) {
-    ctx.beginPath();
-    ctx.arc(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]), 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  const reRect = /<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.-]+)" height="([\d.-]+)"(?: rx="([\d.-]+)")?\s*\/>/g;
-  while ((m = reRect.exec(frag))) {
-    const rx = m[5] ? parseFloat(m[5]) : 0;
-    ctx.beginPath();
-    if (rx && ctx.roundRect) ctx.roundRect(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4]), rx);
-    else ctx.rect(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4]));
-    ctx.stroke();
-  }
-  const rePath = /<path d="([^"]+)"\s*\/>/g;
-  while ((m = rePath.exec(frag))) {
-    ctx.stroke(new Path2D(m[1]));
-  }
-  ctx.restore();
-}
 
 // Charge (une seule fois) le générateur de QR code hébergé sur le site — voir
 // js/qrcode-generator.js pour le pourquoi (plus de service extérieur).
@@ -1335,20 +1300,21 @@ function dessinerQrCanvas(ctx, texte, xPx, yPx, taillePx, couleur) {
 // Le canvas renvoyé porte canvas.zonesLiens = [{ x, y, l, h, url }] (en mm) pour que le
 // PDF rende le lien et le QR cliquables.
 async function construireCanvasCv(d) {
+  // (11/11/2026, CV « premium » validé par la propriétaire, même style que la compcard) fond blanc, rouge mat de
+  // l'agence ; colonne gauche : photo du CV, mensurations, informations, booking ; colonne droite : nom, phrase,
+  // profil, expériences par type, formation, compétences, portfolio, liens + QR code ; bande rouge en bas.
+  // Hauteur : au moins une page A4, plus si les expériences sont nombreuses (dessin « à blanc » puis réel).
   const p = d.physique || {}, f = d.formation || {};
   const groupes = groupExperiences(d.experiences);
-  const NOIR = '#060504', BORDEAUX2 = '#9c1c2c', OR = '#d55468', IVOIRE = '#f4f0ea';
-  const TEXTE_SOMBRE = '#2a2622', TEXTE_GRIS = '#6b6560', TEXTE_GRIS_CLAIR = '#8a8378', TRAIT = '#ddd0b8';
-  const LARGEUR_MM = 210, SIDEBAR_MM = 68, MAIN_MM = LARGEUR_MM - SIDEBAR_MM;
-  const DPI = 300;
-  const ESCALE = DPI / 25.4;
+  const ROUGE = '#7C2128', BLANC = '#ffffff', ENCRE = '#2a1416', DOUX = '#8a6a6d', GRIS = '#5b4547', FILET = '#e6d6d7';
+  const SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif', SANS = '"Work Sans", Arial, sans-serif';
+  const LARGEUR_MM = 210, DPI = 300, ESCALE = DPI / 25.4;
   const px = function (mm) { return mm * ESCALE; };
   const fpx = function (pt) { return pt * 0.3528 * ESCALE; };
-
   await Promise.all([
-    document.fonts.load('600 100px Jost'), document.fonts.load('400 100px Jost'), document.fonts.load('italic 400 100px Jost'),
-    document.fonts.load('600 100px "Cormorant Garamond"')
-  ]);
+    document.fonts.load('600 100px "Cormorant Garamond"'), document.fonts.load('italic 400 100px "Cormorant Garamond"'),
+    document.fonts.load('600 100px "Work Sans"'), document.fonts.load('400 100px "Work Sans"')
+  ].map(function (x) { return x.catch(function () { return null; }); }));
   await document.fonts.ready;
 
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
@@ -1363,309 +1329,202 @@ async function construireCanvasCv(d) {
   if (!window.qrcode) signalerProbleme('QR code absent du CV', 'le générateur de QR code n\'a pas pu se charger');
   const photosPresentes = photosPortfolio.filter(Boolean);
   const handle = d.instagram ? String(d.instagram).replace(/^@/, '') : '';
+  const age = (function () {
+    const n = d.dateNaissance ? new Date(d.dateNaissance + 'T12:00:00') : null;
+    if (!n || isNaN(n)) return null;
+    const a = new Date(); let ans = a.getFullYear() - n.getFullYear();
+    if (a.getMonth() < n.getMonth() || (a.getMonth() === n.getMonth() && a.getDate() < n.getDate())) ans--;
+    return ans > 0 && ans < 100 ? ans : null;
+  })();
 
-  const PAD_SIDEBAR = 7, PAD_MAIN = 8;
-  // Portfolio : une rangée de 5 photos (format 3/4) sur la largeur de la colonne principale
-  const ECART_PORTFOLIO = 2, L_PORTFOLIO = (MAIN_MM - PAD_MAIN * 2 - ECART_PORTFOLIO * 4) / 5, H_PORTFOLIO = L_PORTFOLIO * 4 / 3;
-  const hPhotoHero = SIDEBAR_MM; // photo carrée pleine largeur (ratio 1/1, plus sûr que 3/4 quelle que soit la photo fournie)
-  const hBanniere = 9;
-  const RESERVE_LOGO_BAS = 22; // logo de l'agence en pied de colonne gauche
+  const M = 14, Y_COL = 33, L_GAUCHE = 58, X_DROITE = M + L_GAUCHE + 8, L_DROITE = LARGEUR_MM - M - X_DROITE;
+  const H_PHOTO = 78, H_PIED = 20;
+  const ECART_PORTFOLIO = 2, L_PORTFOLIO = (L_DROITE - ECART_PORTFOLIO * 4) / 5, H_PORTFOLIO = L_PORTFOLIO * 4 / 3;
 
-  function dessinerTout(ctx, hColonnes) {
+  function dessinerTout(ctx, hPage) {
     const zonesLiens = [];
-    function dessinerCouvrant(image, xMm, yMm, lMm, hMm) {
+    function couvrant(image, xMm, yMm, lMm, hMm) {
       if (!image) return;
       const ratioImage = image.largeur / image.hauteur, ratioCadre = lMm / hMm;
       let sx = 0, sy = 0, sL = image.largeur, sH = image.hauteur;
       if (ratioImage > ratioCadre) { sL = image.hauteur * ratioCadre; sx = (image.largeur - sL) / 2; }
-      else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) / 2; }
+      else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) * 0.25; }  // garde le haut (visage)
       ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
     }
-
-    // --- Bandeau "document privé" ---
-    ctx.fillStyle = '#2c1116';
-    ctx.fillRect(0, 0, px(LARGEUR_MM), px(hBanniere));
-    ctx.fillStyle = '#f0d3d7';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = `400 ${fpx(9)}px Jost, sans-serif`;
-    ctx.fillText('Document privé, visible uniquement par ' + ((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M', px(LARGEUR_MM) / 2, px(hBanniere / 2));
-
-    // ============== COLONNE GAUCHE (sidebar sombre) ==============
-    const yColDebut = hBanniere;
-    const degradeSidebar = ctx.createLinearGradient(0, px(yColDebut), px(SIDEBAR_MM) * 0.6, px(yColDebut + hColonnes));
-    degradeSidebar.addColorStop(0, '#141010');
-    degradeSidebar.addColorStop(0.55, NOIR);
-    degradeSidebar.addColorStop(1, NOIR);
-    ctx.fillStyle = degradeSidebar;
-    ctx.fillRect(0, px(yColDebut), px(SIDEBAR_MM), px(hColonnes));
-
-    dessinerCouvrant(photoHero, 0, yColDebut, SIDEBAR_MM, hPhotoHero);
-    const degradePhoto = ctx.createLinearGradient(0, px(yColDebut), 0, px(yColDebut + hPhotoHero));
-    degradePhoto.addColorStop(0, 'rgba(13,10,8,.55)');
-    degradePhoto.addColorStop(0.3, 'rgba(13,10,8,0)');
-    degradePhoto.addColorStop(0.62, 'rgba(13,10,8,0)');
-    degradePhoto.addColorStop(1, 'rgba(13,10,8,.6)');
-    ctx.fillStyle = degradePhoto;
-    ctx.fillRect(0, px(yColDebut), px(SIDEBAR_MM), px(hPhotoHero));
-    if (logo) {
-      const hLogoMm = 6.5, wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = px(1);
-      ctx.drawImage(logo.canvas, px(4), px(yColDebut + 4), px(wLogoMm), px(hLogoMm));
-      ctx.restore();
-    }
-
-    let y = yColDebut + hPhotoHero + 8;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = OR;
-    ctx.font = `400 ${fpx(6.2)}px Jost, sans-serif`;
-    ctx.fillText('F O R M E R   ·   R É V É L E R   ·   V A L O R I S E R', px(SIDEBAR_MM / 2), px(y));
-    y += 6;
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = IVOIRE;
-    const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `600 ${fpx(16)}px "Cormorant Garamond", serif`);
-    ctx.font = `600 ${fpx(16)}px "Cormorant Garamond", serif`;
-    lignesNom.forEach(function (ligne) { y += 7.5; ctx.fillText(ligne, px(PAD_SIDEBAR), px(y)); });
-    y += 6;
-
-    ctx.strokeStyle = BORDEAUX2; ctx.lineWidth = px(0.35);
-    ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
-    y += 6;
-
-    const infosCv = [
-      ['calendar', 'Date de naissance', [formaterPeriode(d.dateNaissance)]],
-      ['pin', 'Lieu de naissance', [[d.villeNaissance, d.lieuNaissance].filter(Boolean).join(', ') || '—']],
-      ['globe', 'Nationalité', [d.nationalite || '—']],
-      ['home', 'Ville de résidence', [[d.ville, d.quartier].filter(Boolean).join(', ') || '—']],
-      ['phone', 'Contact agence', MA2M_TELEPHONES.concat(MA2M_EMAIL)]
-    ];
-    infosCv.forEach(function (ligne) {
-      dessinerIconeMcvCanvas(ctx, ligne[0], px(PAD_SIDEBAR), px(y - 3.2), px(4.2), OR);
-      ctx.fillStyle = 'rgba(244,240,234,.55)';
-      ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
-      ctx.fillText(ligne[1].toUpperCase(), px(PAD_SIDEBAR + 6.5), px(y));
-      y += 4;
-      ctx.fillStyle = IVOIRE;
-      ligne[2].forEach(function (valeur) {
-        const lignesVal = envelopperLignesCanvas(ctx, valeur, px(SIDEBAR_MM - PAD_SIDEBAR * 2 - 6.5), `400 ${fpx(9.5)}px Jost, sans-serif`);
-        lignesVal.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR + 6.5), px(y)); y += 4.2; });
-      });
-      y += 4;
-    });
-
-    y += 4;
-    ctx.strokeStyle = 'rgba(244,237,225,.14)'; ctx.lineWidth = px(0.3);
-    ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
-    y += 5;
-    ctx.fillStyle = 'rgba(244,240,234,.55)';
-    ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
-    ctx.fillText('CATÉGORIE', px(PAD_SIDEBAR), px(y));
-    y += 5;
-    ctx.fillStyle = IVOIRE;
-    ctx.font = `500 ${fpx(11)}px Jost, sans-serif`;
-    ctx.fillText(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '—', px(PAD_SIDEBAR), px(y));
-
-    if (d.citation) {
-      y += 6;
-      ctx.strokeStyle = 'rgba(244,237,225,.1)'; ctx.lineWidth = px(0.3);
-      ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
-      y += 6;
-      ctx.fillStyle = '#e8e0d2';
-      const lignesCitation = envelopperLignesCanvas(ctx, '« ' + d.citation + ' »', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `italic 400 ${fpx(11)}px "Cormorant Garamond", serif`);
-      lignesCitation.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR), px(y)); y += 5.5; });
-    }
-    const finSidebar = y - yColDebut;
-
-    if (logo) {
-      const hLogoBasMm = 7, wLogoBasMm = hLogoBasMm * (logo.largeur / logo.hauteur);
-      ctx.save(); ctx.globalAlpha = 0.9;
-      ctx.drawImage(logo.canvas, px(SIDEBAR_MM / 2 - wLogoBasMm / 2), px(yColDebut + hColonnes - hLogoBasMm - 8), px(wLogoBasMm), px(hLogoBasMm));
-      ctx.restore();
-    }
-
-    // ============== COLONNE DROITE (contenu clair) ==============
-    ctx.fillStyle = IVOIRE;
-    ctx.fillRect(px(SIDEBAR_MM), px(yColDebut), px(MAIN_MM), px(hColonnes));
-
-    const xMain = SIDEBAR_MM + PAD_MAIN, lMain = MAIN_MM - PAD_MAIN * 2;
-    let ym = yColDebut + PAD_MAIN;
-    ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_GRIS_CLAIR;
-    ctx.font = `400 ${fpx(6.8)}px Jost, sans-serif`;
-    ctx.fillText('M O D E L   C V', px(SIDEBAR_MM + MAIN_MM - PAD_MAIN), px(ym));
-    ym += 6;
-
-    function titreSection(icone, libelle) {
-      dessinerIconeMcvCanvas(ctx, icone, px(xMain), px(ym - 3.2), px(4.4), BORDEAUX2);
-      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE;
-      ctx.font = `600 ${fpx(8.4)}px Jost, sans-serif`;
-      ctx.fillText(libelle.toUpperCase(), px(xMain + 6.5), px(ym));
-      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.3);
-      const largeurTexte = ctx.measureText(libelle.toUpperCase()).width / ESCALE;
-      ctx.beginPath(); ctx.moveTo(px(xMain + 6.5 + largeurTexte + 1.5), px(ym - 1.5)); ctx.lineTo(px(xMain + lMain), px(ym - 1.5)); ctx.stroke();
-      ym += 6;
-    }
-
-    // --- Profil ---
-    titreSection('user', 'Profil');
-    ctx.fillStyle = TEXTE_GRIS_CLAIR;
-    envelopperLignesCanvas(ctx, d.bio || 'Profil à compléter.', px(lMain), `italic 400 ${fpx(10.5)}px Jost, sans-serif`).forEach(function (l) {
-      ctx.fillText(l, px(xMain), px(ym)); ym += 5.2;
-    });
-    ym += 4;
-
-    // --- Informations physiques ---
-    titreSection('body', 'Informations physiques');
-    const colInfosPhysiques = [
-      [['Taille', p.taille ? p.taille + ' cm' : '—'], ['Poids', p.poids ? p.poids + ' kg' : '—'],
-       ['Mensurations', texteMensurationsCv(p, d.sexe)],
-       ['Pointure', p.pointure || '—']],
-      [['Taille vêtements', p.tailleVet || '—'], ['Couleur des yeux', p.yeux || '—'], ['Couleur des cheveux', p.cheveux || '—'], ['Carnation', p.carnation || '—']]
-    ];
-    const yInfosDebut = ym;
-    const largeurColMm = (lMain - 5) / 2;
-    colInfosPhysiques.forEach(function (col, iCol) {
-      let yc = yInfosDebut;
-      const xcMm = xMain + iCol * (largeurColMm + 5);
-      col.forEach(function (ligne) {
-        ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
-        ctx.beginPath(); ctx.moveTo(px(xcMm), px(yc + 2)); ctx.lineTo(px(xcMm + largeurColMm), px(yc + 2)); ctx.stroke();
-        ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_GRIS;
-        ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
-        ctx.fillText(ligne[0], px(xcMm), px(yc));
-        ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE;
-        ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
-        ctx.fillText(String(ligne[1]), px(xcMm + largeurColMm), px(yc));
-        yc += 7;
-      });
-    });
-    ym = yInfosDebut + 4 * 7 + 6;
-
-    // --- Formation ---
-    titreSection('grad', 'Formation');
-    ctx.textAlign = 'left';
-    [['Niveau d’étude', f.niveau || '—'], ['Établissement', f.etablissement || '—'], ['Formation particulière', f.particuliere || 'Aucune'], ['Formation mannequin', f.mannequin || '—']].forEach(function (ligne) {
-      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
-      ctx.beginPath(); ctx.moveTo(px(xMain), px(ym + 2)); ctx.lineTo(px(xMain + lMain), px(ym + 2)); ctx.stroke();
-      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
-      ctx.fillText(ligne[0], px(xMain), px(ym));
-      ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
-      ctx.fillText(String(ligne[1]), px(xMain + lMain), px(ym));
+    function espace(texte, x, y, espaceMm, aligne) {
+      const esp = px(espaceMm), lettres = String(texte).split('');
+      const largeur = lettres.reduce(function (t, c) { return t + ctx.measureText(c).width; }, 0) + esp * (lettres.length - 1);
+      let xx = aligne === 'right' ? x - largeur : x;
       ctx.textAlign = 'left';
-      ym += 7;
-    });
-    ym += 4;
+      lettres.forEach(function (c) { ctx.fillText(c, xx, y); xx += ctx.measureText(c).width + esp; });
+    }
+    function titre(texte, x, l, y) {
+      ctx.fillStyle = ROUGE; ctx.font = '700 ' + fpx(7) + 'px ' + SANS;
+      espace(texte.toUpperCase(), px(x), px(y), 0.75);
+      ctx.fillStyle = FILET; ctx.fillRect(px(x), px(y + 2), px(l), px(0.3));
+      return y + 7.5;
+    }
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = BLANC; ctx.fillRect(0, 0, px(LARGEUR_MM), px(hPage));
 
-    // --- Expérience professionnelle (autant de lignes que nécessaire) ---
-    titreSection('star', 'Expérience professionnelle');
+    // --- En-tête : logo sur cartouche rouge, « CURRICULUM VITAE » ---
+    if (logo) {
+      const hL = 8.5, wL = hL * (logo.largeur / logo.hauteur);
+      ctx.fillStyle = ROUGE; ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(px(M), px(11), px(wL + 6), px(hL + 4), px(1.2)); else ctx.rect(px(M), px(11), px(wL + 6), px(hL + 4));
+      ctx.fill();
+      ctx.drawImage(logo.canvas, px(M + 3), px(13), px(wL), px(hL));
+    }
+    ctx.fillStyle = ROUGE; ctx.font = '600 ' + fpx(8.5) + 'px ' + SANS;
+    espace('CURRICULUM VITAE', px(LARGEUR_MM - M), px(18.5), 1.6, 'right');
+
+    // ============== COLONNE GAUCHE ==============
+    couvrant(photoHero, M, Y_COL, L_GAUCHE, H_PHOTO);
+    let y = Y_COL + H_PHOTO + 9;
+    y = titre('Mensurations', M, L_GAUCHE, y);
+    const mesures = [['Taille', p.taille ? p.taille + ' cm' : null], ['Poids', p.poids ? p.poids + ' kg' : null],
+      ['Mensurations', texteMensurationsCv(p, d.sexe)], ['Pointure', p.pointure || null], ['Vêtements', p.tailleVet || null],
+      ['Yeux', p.yeux || null], ['Cheveux', p.cheveux || null], ['Carnation', p.carnation || null]]
+      .filter(function (x) { return x[1] && x[1] !== '—'; });
+    mesures.forEach(function (m, i) {
+      const col = i % 2, xx = M + col * (L_GAUCHE / 2), yy = y + Math.floor(i / 2) * 10.5;
+      ctx.fillStyle = DOUX; ctx.font = '600 ' + fpx(5.6) + 'px ' + SANS; espace(m[0].toUpperCase(), px(xx), px(yy), 0.35);
+      ctx.fillStyle = ENCRE; ctx.font = '600 ' + fpx(11.5) + 'px ' + SERIF; ctx.textAlign = 'left';
+      envelopperLignesCanvas(ctx, String(m[1]), px(L_GAUCHE / 2 - 2), '600 ' + fpx(11.5) + 'px ' + SERIF).slice(0, 1).forEach(function (l) { ctx.fillText(l, px(xx), px(yy + 5)); });
+    });
+    y += Math.ceil(mesures.length / 2) * 10.5 + 4;
+    const infos = [['Âge', age ? age + ' ans' : null], ['Nationalité', d.nationalite || null], ['Résidence', d.ville || null],
+    ['Langues', (d.langues || []).length ? d.langues.join(' · ') : null]]
+      .filter(function (x) { return x[1]; });
+    if (infos.length) {
+      y = titre('Informations', M, L_GAUCHE, y);
+      infos.forEach(function (x) {
+        ctx.fillStyle = DOUX; ctx.font = '600 ' + fpx(5.6) + 'px ' + SANS; espace(x[0].toUpperCase(), px(M), px(y), 0.35);
+        ctx.fillStyle = ENCRE; ctx.textAlign = 'left';
+        const lv = envelopperLignesCanvas(ctx, String(x[1]), px(L_GAUCHE), '500 ' + fpx(9) + 'px ' + SANS);
+        ctx.font = '500 ' + fpx(9) + 'px ' + SANS;
+        lv.forEach(function (l, i) { ctx.fillText(l, px(M), px(y + 4.5 + i * 4.4)); });
+        y += 10 + (lv.length - 1) * 4.4;
+      });
+      y += 2;
+    }
+    y = titre('Booking', M, L_GAUCHE, y);
+    ctx.fillStyle = ENCRE; ctx.font = '500 ' + fpx(8.6) + 'px ' + SANS; ctx.textAlign = 'left';
+    ['Maître Akesse Model Management'].concat(MA2M_TELEPHONES, ['infos.ma2m@gmail.com']).forEach(function (l) { ctx.fillText(l, px(M), px(y)); y += 4.6; });
+    const finGauche = y;
+
+    // ============== COLONNE DROITE ==============
+    let ym = Y_COL + 9;
+    let taille = 30;
+    const nom = d.nomComplet || 'Mannequin';
+    ctx.font = '600 ' + fpx(taille) + 'px ' + SERIF;
+    while (ctx.measureText(nom).width > px(L_DROITE) && taille > 18) { taille -= 2; ctx.font = '600 ' + fpx(taille) + 'px ' + SERIF; }
+    ctx.fillStyle = ENCRE; ctx.textAlign = 'left'; ctx.fillText(nom, px(X_DROITE), px(ym));
+    ym += 8;
+    ctx.fillStyle = ROUGE; ctx.font = 'italic 500 ' + fpx(13) + 'px ' + SERIF;
+    ctx.fillText([d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : null, d.ville || null, age ? age + ' ans' : null].filter(Boolean).join(' · '), px(X_DROITE), px(ym));
+    ym += 6;
+    if (d.citation) {
+      const lignes = envelopperLignesCanvas(ctx, '« ' + d.citation + ' »', px(L_DROITE - 5), 'italic 500 ' + fpx(11.5) + 'px ' + SERIF);
+      ctx.fillStyle = ROUGE; ctx.fillRect(px(X_DROITE), px(ym + 1), px(0.6), px(lignes.length * 5.2 + 1));
+      ctx.fillStyle = GRIS; ctx.font = 'italic 500 ' + fpx(11.5) + 'px ' + SERIF;
+      lignes.forEach(function (l) { ym += 5.2; ctx.fillText(l, px(X_DROITE + 4), px(ym)); });
+      ym += 4;
+    }
+    ym += 5;
+    if (d.bio) {
+      ym = titre('Profil', X_DROITE, L_DROITE, ym);
+      ctx.fillStyle = GRIS;
+      envelopperLignesCanvas(ctx, d.bio, px(L_DROITE), '400 ' + fpx(8.6) + 'px ' + SANS).forEach(function (l) { ctx.fillText(l, px(X_DROITE), px(ym)); ym += 4.4; });
+      ym += 4;
+    }
+    ym = titre('Expériences', X_DROITE, L_DROITE, ym);
     if (groupes.length) {
       groupes.forEach(function (g) {
-        ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `600 ${fpx(7.6)}px Jost, sans-serif`;
-        ctx.fillText(g.label.toUpperCase(), px(xMain), px(ym));
-        ym += 5;
+        ctx.fillStyle = DOUX; ctx.font = '700 ' + fpx(6.2) + 'px ' + SANS; espace(g.label.toUpperCase(), px(X_DROITE), px(ym), 0.6);
+        ym += 5.5;
         g.items.forEach(function (item) {
-          ctx.fillStyle = BORDEAUX2;
-          ctx.beginPath(); ctx.arc(px(xMain + 1), px(ym - 1.6), px(0.55), 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = TEXTE_SOMBRE;
-          envelopperLignesCanvas(ctx, item, px(lMain - 3.5), `400 ${fpx(8.4)}px Jost, sans-serif`).forEach(function (l) {
-            ctx.fillText(l, px(xMain + 3.5), px(ym)); ym += 4.6;
+          envelopperLignesCanvas(ctx, item, px(L_DROITE), '600 ' + fpx(11) + 'px ' + SERIF).forEach(function (l) {
+            ctx.fillStyle = ENCRE; ctx.font = '600 ' + fpx(11) + 'px ' + SERIF; ctx.textAlign = 'left'; ctx.fillText(l, px(X_DROITE), px(ym)); ym += 4.9;
           });
-          ym += 0.6;
+          ctx.fillStyle = FILET; ctx.fillRect(px(X_DROITE), px(ym - 3), px(L_DROITE), px(0.2));
+          ym += 1.4;
         });
-        ym += 1.5;
+        ym += 2;
       });
     } else {
-      ctx.fillStyle = TEXTE_GRIS_CLAIR; ctx.font = `italic 400 ${fpx(8.4)}px Jost, sans-serif`;
-      ctx.fillText('Aucune expérience renseignée pour le moment.', px(xMain), px(ym));
-      ym += 6;
+      ctx.fillStyle = DOUX; ctx.font = 'italic 400 ' + fpx(8.4) + 'px ' + SANS; ctx.fillText('Expériences à venir avec l’agence.', px(X_DROITE), px(ym)); ym += 6;
     }
-    ym += 4;
-
-    // --- Compétences : deux colonnes ---
-    titreSection('medal', 'Compétences mannequin');
-    const nbGauche = Math.ceil(ORDRE_COMPETENCES.length / 2);
-    const largeurColSkills = (lMain - 8) / 2;
-    const ySkillsDebut = ym;
-    ORDRE_COMPETENCES.forEach(function (cle, i) {
-      const pct = (((d.competences || {})[cle] || 3) / 5);
-      const iCol = i < nbGauche ? 0 : 1;
-      const xs = xMain + iCol * (largeurColSkills + 8);
-      const ys = ySkillsDebut + (i - iCol * nbGauche) * 7;
-      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(7.6)}px Jost, sans-serif`;
-      ctx.fillText(LIBELLES_COMPETENCES[cle], px(xs), px(ys));
-      const yBarre = ys + 1.5, lBarre = largeurColSkills, hBarre = 1.4;
-      ctx.fillStyle = '#e3d9c4';
-      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(xs), px(yBarre), px(lBarre), px(hBarre), px(0.7)) : ctx.rect(px(xs), px(yBarre), px(lBarre), px(hBarre));
-      ctx.fill();
-      const degradeBarre = ctx.createLinearGradient(px(xs), 0, px(xs + lBarre * pct), 0);
-      degradeBarre.addColorStop(0, BORDEAUX2); degradeBarre.addColorStop(1, OR);
-      ctx.fillStyle = degradeBarre;
-      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px(xs), px(yBarre), px(lBarre * pct), px(hBarre), px(0.7)) : ctx.rect(px(xs), px(yBarre), px(lBarre * pct), px(hBarre));
-      ctx.fill();
+    ym += 3;
+    const formation = [f.niveau ? [f.niveau, f.etablissement].filter(Boolean).join(' · ') : (f.etablissement || null), f.mannequin || null,
+      f.particuliere && f.particuliere !== 'Aucune' ? f.particuliere : null].filter(Boolean);
+    if (formation.length) {
+      ym = titre('Formation', X_DROITE, L_DROITE, ym);
+      ctx.fillStyle = ENCRE;
+      formation.forEach(function (t) { envelopperLignesCanvas(ctx, t, px(L_DROITE), '400 ' + fpx(8.8) + 'px ' + SANS).forEach(function (l) { ctx.fillText(l, px(X_DROITE), px(ym)); ym += 4.6; }); ym += 0.8; });
+      ym += 4;
+    }
+    // Compétences : étiquettes rouges avec leur niveau en points (●●●●○)
+    ym = titre('Compétences', X_DROITE, L_DROITE, ym);
+    let xc = X_DROITE;
+    ctx.font = '600 ' + fpx(7.2) + 'px ' + SANS;
+    ORDRE_COMPETENCES.forEach(function (cle) {
+      const n = Math.max(1, Math.min(5, (d.competences || {})[cle] || 3));
+      const texte = LIBELLES_COMPETENCES[cle] + '  ' + '●'.repeat(n) + '○'.repeat(5 - n);
+      const l = ctx.measureText(texte).width / ESCALE + 6;
+      if (xc + l > X_DROITE + L_DROITE) { xc = X_DROITE; ym += 7.5; }
+      ctx.strokeStyle = ROUGE; ctx.lineWidth = px(0.3); ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(px(xc), px(ym - 4.2), px(l), px(6), px(3)); else ctx.rect(px(xc), px(ym - 4.2), px(l), px(6));
+      ctx.stroke();
+      ctx.fillStyle = ROUGE; ctx.textAlign = 'left'; ctx.fillText(texte, px(xc + 3), px(ym));
+      xc += l + 2;
     });
-    ym = ySkillsDebut + nbGauche * 7 + 4;
-
-    // --- Portfolio : une rangée de photos (5 emplacements), tout en bas ---
+    ym += 10;
     if (photosPresentes.length) {
-      titreSection('image', 'Portfolio');
-      const ecart = ECART_PORTFOLIO, lPhoto = L_PORTFOLIO, hPhoto = H_PORTFOLIO;
-      const lRangee = photosPresentes.length * lPhoto + (photosPresentes.length - 1) * ecart;
-      const xRangee = xMain + (lMain - lRangee) / 2;
-      photosPresentes.forEach(function (photo, i) {
-        dessinerCouvrant(photo, xRangee + i * (lPhoto + ecart), ym - 1, lPhoto, hPhoto);
-      });
-      ym += hPhoto + 6;
+      ym = titre('Portfolio', X_DROITE, L_DROITE, ym);
+      photosPresentes.slice(0, 5).forEach(function (ph, i) { couvrant(ph, X_DROITE + i * (L_PORTFOLIO + ECART_PORTFOLIO), ym - 3, L_PORTFOLIO, H_PORTFOLIO); });
+      ym += H_PORTFOLIO + 4;
     }
-
-    // --- En ligne : Instagram + lien vers la fiche publique + QR code ---
-    titreSection('link', 'En ligne');
-    const tailleQr = 24;
-    const xQr = xMain + lMain - tailleQr;
-    const yBlocLiens = ym - 2;
-    let yl = ym + 3;
-    ctx.textAlign = 'left';
+    // Liens : QR code de la fiche, lien, Instagram
+    const tailleQr = 20;
+    if (dessinerQrCanvas(ctx, lienFichePublique, px(X_DROITE), px(ym), px(tailleQr), ENCRE)) {
+      zonesLiens.push({ x: X_DROITE, y: ym, l: tailleQr, h: tailleQr, url: lienFichePublique });
+    }
+    let yl = ym + 6;
+    ctx.fillStyle = DOUX; ctx.font = '600 ' + fpx(5.8) + 'px ' + SANS; espace('BOOK COMPLET', px(X_DROITE + tailleQr + 4), px(yl), 0.4);
+    ctx.fillStyle = ROUGE; ctx.font = '600 ' + fpx(8.6) + 'px ' + SANS; ctx.textAlign = 'left';
+    ctx.fillText('maitreakessemodelmanagement.com', px(X_DROITE + tailleQr + 4), px(yl + 4.5));
+    zonesLiens.push({ x: X_DROITE + tailleQr + 4, y: yl - 3, l: 70, h: 9, url: lienFichePublique });
     if (handle) {
-      dessinerIconeMcvCanvas(ctx, 'insta', px(xMain), px(yl - 3.3), px(4.2), BORDEAUX2);
-      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
-      ctx.fillText('INSTAGRAM', px(xMain + 6.5), px(yl - 0.2));
-      ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
-      ctx.fillText('@' + handle, px(xMain + 6.5), px(yl + 4.2));
-      zonesLiens.push({ x: xMain, y: yl - 4, l: 70, h: 10, url: 'https://www.instagram.com/' + encodeURIComponent(handle) });
-      yl += 12;
+      yl += 11;
+      ctx.fillStyle = DOUX; ctx.font = '600 ' + fpx(5.8) + 'px ' + SANS; espace('INSTAGRAM', px(X_DROITE + tailleQr + 4), px(yl), 0.4);
+      ctx.fillStyle = ENCRE; ctx.font = '500 ' + fpx(8.6) + 'px ' + SANS; ctx.textAlign = 'left'; ctx.fillText('@' + handle, px(X_DROITE + tailleQr + 4), px(yl + 4.5));
+      zonesLiens.push({ x: X_DROITE + tailleQr + 4, y: yl - 3, l: 60, h: 9, url: 'https://www.instagram.com/' + encodeURIComponent(handle) });
     }
-    dessinerIconeMcvCanvas(ctx, 'link', px(xMain), px(yl - 3.3), px(4.2), BORDEAUX2);
-    ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
-    ctx.fillText('FICHE EN LIGNE', px(xMain + 6.5), px(yl - 0.2));
-    ctx.fillStyle = BORDEAUX2; ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
-    ctx.fillText('maitreakessemodelmanagement.com', px(xMain + 6.5), px(yl + 4.2));
-    zonesLiens.push({ x: xMain, y: yl - 4, l: 80, h: 10, url: lienFichePublique });
-    yl += 10;
+    ym = Math.max(ym + tailleQr, yl + 6) + 6;
 
-    if (dessinerQrCanvas(ctx, lienFichePublique, px(xQr), px(yBlocLiens), px(tailleQr), '#241a12')) {
-      ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
-      ctx.strokeRect(px(xQr), px(yBlocLiens), px(tailleQr), px(tailleQr));
-      ctx.textAlign = 'center'; ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6)}px Jost, sans-serif`;
-      ctx.fillText('Scannez pour ouvrir la fiche', px(xQr + tailleQr / 2), px(yBlocLiens + tailleQr + 3.8));
-      zonesLiens.push({ x: xQr, y: yBlocLiens, l: tailleQr, h: tailleQr, url: lienFichePublique });
-      yl = Math.max(yl, yBlocLiens + tailleQr + 4);
-    }
-    ym = yl + PAD_MAIN;
-
-    return { finSidebar: finSidebar, finMain: ym - yColDebut, zonesLiens: zonesLiens };
+    // --- Bande rouge du bas ---
+    const yPied = hPage - H_PIED;
+    ctx.fillStyle = ROUGE; ctx.fillRect(0, px(yPied), px(LARGEUR_MM), px(H_PIED));
+    ctx.fillStyle = BLANC; ctx.font = '700 ' + fpx(7.5) + 'px ' + SANS;
+    espace('BOOKING · MAÎTRE AKESSE MODEL MANAGEMENT', px(M), px(yPied + 8), 0.9);
+    ctx.font = '500 ' + fpx(9) + 'px ' + SANS; ctx.textAlign = 'left';
+    ctx.fillText(MA2M_TELEPHONES.join('  ·  ') + '  ·  infos.ma2m@gmail.com', px(M), px(yPied + 14));
+    ctx.textAlign = 'right'; ctx.font = '600 ' + fpx(9) + 'px ' + SANS;
+    ctx.fillText('maitreakessemodelmanagement.com', px(LARGEUR_MM - M), px(yPied + 14));
+    ctx.textAlign = 'left';
+    return { fin: Math.max(finGauche, ym), zonesLiens: zonesLiens };
   }
 
-  // Passe 1 : dessin « à blanc » pour connaître la hauteur réelle de chaque colonne.
-  const essai = document.createElement('canvas');
-  essai.width = 1; essai.height = 1;
-  const fins = dessinerTout(essai.getContext('2d'), 297);
-  const hColonnes = Math.max(fins.finSidebar + RESERVE_LOGO_BAS, fins.finMain);
-
-  // Passe 2 : dessin réel, à la hauteur exacte.
+  // Passe 1 : dessin « à blanc » pour connaître la hauteur réelle ; passe 2 : dessin réel (au moins une page A4).
+  const essai = document.createElement('canvas'); essai.width = 1; essai.height = 1;
+  const hPage = Math.max(297, dessinerTout(essai.getContext('2d'), 297).fin + 8 + H_PIED);
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(px(LARGEUR_MM));
-  canvas.height = Math.round(px(hBanniere + hColonnes));
-  const resultat = dessinerTout(canvas.getContext('2d'), hColonnes);
+  canvas.height = Math.round(px(hPage));
+  const resultat = dessinerTout(canvas.getContext('2d'), hPage);
   canvas.zonesLiens = resultat.zonesLiens;
-  canvas.photosFaibles = photosTropPetites([{ image: photoHero, url: photosAuto.hero, coteMm: hPhotoHero }].concat(
+  canvas.photosFaibles = photosTropPetites([{ image: photoHero, url: photosAuto.hero, coteMm: H_PHOTO }].concat(
     photosPortfolio.map(function (image, i) { return { image: image, url: photosAuto.compcard[i], coteMm: H_PORTFOLIO }; })));
   return canvas;
 }
