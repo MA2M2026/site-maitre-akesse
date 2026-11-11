@@ -1,0 +1,36 @@
+/* Styles communs des spots réseaux sociaux (vertical, 11/11/2026) : mots géants, grandes photos, mois, dimanches,
+   boutons du bas, maison et lieu (cours privé), empreintes, carte de fin. Avec moteur-film.css. */
+.mot-geant { left: 0; right: 0; text-align: center; top: 1180px; font: 800 150px/0.95 'Big Shoulders Display'; text-transform: uppercase; z-index: 7; }
+.photo-mot { left: 140px; top: 230px; width: 800px; height: 900px; }
+.photo-mot img { object-position: 50% 15%; }
+.portrait { left: 90px; right: 90px; top: 200px; height: 1050px; }
+.portrait img { object-position: 50% 12%; }
+.triptyque { display: flex; gap: 18px; z-index: 5; left: 50px; right: 50px; top: 330px; }
+.triptyque > div { height: 1020px; }
+.triptyque b { font-size: 46px; }
+.mois { display: flex; flex-direction: column; gap: 16px; left: 0; right: 0; top: 240px; align-items: center; z-index: 6; }
+.mois .agenda { position: relative; width: 640px; }
+.mois .agenda span { font-size: 120px; }
+.dimanches { left: 0; right: 0; top: 1190px; text-align: center; z-index: 6; }
+.dimanches b { display: block; font: 800 170px/0.95 'Big Shoulders Display'; white-space: nowrap; }
+.dimanches span { font: italic 400 64px 'Cormorant Garamond'; }
+.pastilles-bas { left: 60px; right: 60px; bottom: 210px; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; z-index: 6; }
+.pastilles-bas .bouton { font-size: 36px; padding: 24px 46px; margin: 0; }
+.maison { left: 270px; top: 470px; width: 540px; height: 540px; }
+.lieu { left: 230px; top: 1110px; font-size: 38px; }
+.lieu svg { width: 46px; height: 46px; }
+.talon-geant { left: 140px; top: 250px; width: 800px; height: 800px; }
+.fin-url { left: 40px; right: 40px; top: 1480px; text-align: center; font: 700 44px 'Montserrat'; letter-spacing: 0.02em; z-index: 7; }
+.logo-spot { display: block; width: 620px; margin: 0 auto 40px; filter: brightness(0) invert(1); }
+.marche-spot { overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 60px 120px -40px rgba(40,6,10,0.9); z-index: 4; left: 160px; top: 220px; width: 760px; height: 1060px; }
+.marche-spot div { position: absolute; inset: 0; }
+.marche-spot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.duo-photos { left: 60px; right: 60px; top: 260px; display: flex; gap: 20px; z-index: 5; }
+.duo-photos > div { flex: 1; height: 860px; }
+.duo-photos .bouton { position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%); white-space: nowrap; font-size: 32px; }
+.grande-question { left: 60px; right: 60px; top: 1280px; text-align: center; z-index: 7; }
+.chemin-mois { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 4; }
+.etape-mois { left: 90px; right: 90px; z-index: 6; display: flex; align-items: center; gap: 30px; }
+.etape-mois .carre { position: relative; width: 300px; height: 380px; flex: none; }
+.etape-mois b { display: block; font: 800 96px/0.9 'Big Shoulders Display'; text-transform: uppercase; }
+.etape-mois span { display: block; font: italic 400 46px/1.15 'Cormorant Garamond'; margin-top: 10px; }
