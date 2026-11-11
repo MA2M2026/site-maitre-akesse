@@ -4372,7 +4372,9 @@ dans `PAGES`, `js/gabarit.js` ; style `.menu-etiquette`, `css/menu.css`).
   `assets/cours-talons/atelier-talons-elegance.mp4` (vertical 720 × 1280) et `atelier-talons-elegance-large.mp4`
   (horizontal 1280 × 720), ~7,4 Mo chacune, chargées seulement au clic (`preload="none"`), avec leurs affiches
   `affiche.jpg` / `affiche-large.jpg` (le `?v=` des pages change à chaque nouvelle version : fichiers en cache 1 an).
-  **Version du 10/11/2026** (motion design « noir profond ») fabriquée par `outils/video-talons/` (jamais publié) :
+  **Version du 11/11/2026** (validée par la propriétaire) : même construction que la vidéo « Intégrer l'agence » —
+  scènes illustrées, rouge mat du site uni (thème `body.mat`, sans voile clair), boutons du site, musique de défilé
+  ElevenLabs, voix à -14 LUFS ; fabriquée par `outils/video-talons/` (jamais publié) :
   voix « Nicolas – Narrator » enregistrée par la propriétaire sur ElevenLabs et calée mot à mot par
   `aligner-voix.py` (reconnaissance locale faster-whisper : la clé de la session n'a pas les droits speech_to_text ni
   forced_alignment ; l'ancienne voix générée reste possible avec `voix-eleven.py`), texte `voix-talons.json`, musique originale
