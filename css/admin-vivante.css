@@ -1353,3 +1353,8 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .ecran-mg .mg-etape { padding: 18px; border-radius: var(--av-rayon); background: var(--av-carte); box-shadow: var(--av-ombre); }
 .ecran-mg .mg-etapes button { cursor: pointer; }
 .ecran-mg .mg-etape .mg-grille { padding: 0; box-shadow: none; }
+
+/* Informations agence en 3 étapes (11/11/2026 ; js/admin/site-infos.js) */
+.if-form .if-etape { display: none; }
+.if-form[data-etape="1"] .if-etape[data-if="1"], .if-form[data-etape="2"] .if-etape[data-if="2"], .if-form[data-etape="3"] .if-etape[data-if="3"] { display: contents; }
+.if-etapes button { cursor: pointer; }

@@ -4587,3 +4587,5 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - **Messages groupés en 3 étapes** (« Écrire à des candidates » ; js/messages-groupes-gabarit.js, étapes menées par
   js/admin/site-messages-groupes.js, `data-etape` sur `#ecran-mg`) : 1 · À qui ?, 2 · Le message, 3 · Envoyer (résumé,
   e-mail, WhatsApp une personne après l'autre). La logique (js/messages-groupes.js) est inchangée.
+- **Informations agence en 3 étapes** (js/admin/site-infos.js : `brouillon.etape`, `data-etape` sur le formulaire
+  `.if-form`, les champs gardent ce qui est tapé) : 1 · L'information, 2 · À qui ?, 3 · Message et envoi.
