@@ -263,7 +263,7 @@ const COUPES = scenes.slice(1).map((s) => s.debut + 0.15).concat(scenes.flatMap(
 function effetsCinema(t) {
   if (grain) { const h = Math.floor(t * 24); grain.style.backgroundPosition = ((h * 97) % 256) + 'px ' + ((h * 57) % 256) + 'px'; }
   let pr = 9; COUPES.forEach((c) => { const d = t - c; if (d >= -0.05 && d < pr) pr = d; });
-  if (flash) flash.style.opacity = pr < 0.35 ? 0.32 * (1 - lisse(pr / 0.35)) : 0;
+  if (flash) flash.style.opacity = pr < 0.3 ? 0.14 * (1 - lisse(pr / 0.3)) : 0;  // flash discret (un flash fort pâlissait l'écran)
   if (fuite) { const v = pr < 1.6 ? Math.sin(Math.PI * lisse(pr / 1.6)) : 0; fuite.style.opacity = 0.55 * v; fuite.style.transform = 'translateX(' + (-30 + 60 * lisse(pr / 1.6)) + '%)'; }
 }
 window.rendre = (t) => {

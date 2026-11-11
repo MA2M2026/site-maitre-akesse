@@ -159,7 +159,7 @@ def texte(cle, haut, bas, mot1, mot2, surtitre=''):
     return f'''    <div class="texte sur-plan">{st}<p class="grand"><span data-voix="{cle}" data-mot="{mot1}" data-anim="reveal">{haut}</span><em data-voix="{cle}" data-mot="{mot2}" data-anim="reveal">{bas}</em></p></div>\n'''
 
 
-def scene(cle, corps, tr='barres', demot=None):
+def scene(cle, corps, tr='pousse', demot=None):
     """Une scène ; demot : elle commence sur ce mot de la phrase (pas de temps mort avant le premier élément)."""
     dm = f' data-demot="{demot}"' if demot else ''
     return f'  <section class="scene" data-de="{cle}"{dm} data-transition="{tr}">\n{corps}  </section>\n\n'
@@ -195,10 +195,10 @@ s1 = tete(1, 'Spot 1 Allure', '« Votre allure parle avant vous », femmes de bu
             + polar('s3', 'posture', ia(12), 'Une posture droite', 480, 560, 520, 700, 6, 700, -200)
             + polar('s3', 'talons', ia(16), 'Des talons maîtrisés', 230, 950, 560, 640, -3, 0, 900), 'volet') \
     + scene('s4', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s4" data-anim="reveal">Cette saison</p></div>\n'
-            + mois('s4')
-            + '    <div class="abs dimanches" style="top:1030px"><b data-voix="s5" data-mot="consacre" data-anim="reveal">4 dimanches</b><span data-voix="s5" data-mot="mois" data-anim="reveal">par mois, pour marcher avec</span></div>\n', 'cercle') \
+            + mois('s4') + carte('s4', ia(26), 'janvier', 330, 980, 420, 420, -4, 0, 900)
+            + '    <div class="abs dimanches" style="top:1430px"><b data-voix="s5" data-mot="consacre" data-anim="reveal">4 dimanches</b><span data-voix="s5" data-mot="mois" data-anim="reveal">par mois, pour marcher avec</span></div>\n', 'cercle') \
     + scene('s5', '    <div class="abs" style="left:90px;right:90px;top:380px;display:flex;flex-direction:column;gap:30px;z-index:6">'
-            + ''.join(f'<div class="qualite" data-voix="s5" data-mot="{m}" data-anim="leve"><img src="{ia(n)}"><span>{t}</span></div>' for m, t, n in [('aisance', 'Aisance', 24), ('prestance', 'Prestance', 21), ('autorité', 'Autorité', 25)]) + '</div>\n', 'barres', 'aisance') \
+            + ''.join(f'<div class="qualite" data-voix="s5" data-mot="{m}" data-anim="leve"><img src="{ia(n)}"><span>{t}</span></div>' for m, t, n in [('aisance', 'Aisance', 24), ('prestance', 'Prestance', 21), ('autorité', 'Autorité', 25)]) + '</div>\n', 'pousse', 'aisance') \
     + scene('s6', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s6" data-anim="reveal">Cours privé</p><p class="grand"><span data-voix="s6" data-mot="chez" data-anim="reveal">Chez vous</span></p></div>\n'
             + '    <svg class="abs maison" viewBox="0 0 100 100" style="left:90px;top:560px;width:420px;height:420px"><path d="M12 48 L50 14 L88 48" data-voix="s6" data-mot="chez" data-anim="trace" data-duree="0.8"/><path d="M22 40 L22 88 L78 88 L78 40" data-voix="s6" data-mot="chez" data-retard="0.4" data-anim="trace" data-duree="0.8"/><path d="M42 88 L42 64 L58 64 L58 88" data-voix="s6" data-mot="lieu" data-anim="trace" data-duree="0.6"/></svg>\n'
             + carte('s6', ia(23), 'chez', 520, 520, 470, 640, 5, 600, -200)
@@ -260,7 +260,7 @@ s2 = tete(2, 'Spot 2 Premiers talons', '« Mes premiers talons », jeunes femmes
             + polar('s4', 'pas', ia(11), 'Le bon pas', 230, 950, 560, 640, -3, 0, 900), 'volet') \
     + scene('s5', liste('s5', 'Vos dimanches', [('s5', 'dimanche', 'DIMANCHE 1', 'Les bases', ia(4), True), ('s5', 'après', 'DIMANCHE 2', 'La démarche', ia(11), True),
                                                ('s5', 'confiance', 'DIMANCHE 3', 'La prestance', ia(24), True)])
-            + '    <div class="abs tampon" style="left:240px;top:1250px" data-voix="s5" data-mot="arrive" data-anim="tampon" data-rot="-6">CONFIANCE</div>\n', 'barres') \
+            + '    <div class="abs tampon" style="left:240px;top:1250px" data-voix="s5" data-mot="arrive" data-anim="tampon" data-rot="-6">CONFIANCE</div>\n', 'pousse') \
     + scene('s6', mois('s6').replace('data-mot="décembre" ', 'data-retard="-0.4" ')
             + polar('s6', 'ambiance', ia(15), 'Une ambiance bienveillante', 300, 1040, 480, 560, 5, 600, 400), 'cercle') \
     + prive_ag('s7') \
@@ -275,7 +275,7 @@ s3 = tete(3, 'Spot 3 Grands jours', '« Prête pour les grands jours », fêtes,
             + polar('s1', 'saint', ia(20), 'Saint-Valentin', 520, 980, 470, 620, -6, 700, 500), 'fondu') \
     + scene('s2', liste('s2', 'Votre saison', [('s2', 'décembre', '31 DÉCEMBRE', 'Réveillon', ia(17), True), ('s2', 'occasions', 'SAMEDI', 'Mariage', ia(18), True),
                                                ('s2', 'enchaînent', '14 FÉVRIER', 'Saint-Valentin', ia(20), True)])
-            + grand_bas('s2', 'Les grandes occasions', 'grandes', top=1380, taille=90), 'barres') \
+            + grand_bas('s2', 'Les grandes occasions', 'grandes', top=1380, taille=90), 'pousse') \
     + scene('s3', photo('s3', ia(22), 140, 240, 800, 1000)
             + '    <div class="abs pastilles-bas" style="top:1290px;bottom:auto"><span class="bouton" data-voix="s3" data-mot="robe" data-anim="monte">La robe ✓</span><span class="bouton" data-voix="s3" data-mot="talons" data-anim="monte">Les talons ✓</span></div>\n'
             + '    <div class="abs tampon" style="left:140px;top:1440px;font-size:84px" data-voix="s3" data-mot="démarche" data-anim="tampon" data-rot="-6">ET LA DÉMARCHE ?</div>\n', 'pousse') \
@@ -300,7 +300,7 @@ def mois_scene(cle, mot, nom, contenu, img, tr):
 s4 = tete(4, 'Spot 4 Programme', '« Trois mois, douze dimanches », le programme') \
     + scene('s1', photo('s1', ia(26), 140, 240, 800, 900)
             + '    <div class="abs dimanches" style="top:1180px"><b data-voix="s1" data-mot="trois" data-anim="reveal">3 mois</b><b style="font-size:110px" data-voix="s1" data-mot="douze" data-anim="reveal">12 dimanches</b><span data-voix="s1" data-mot="nouvelle" data-anim="reveal">une nouvelle démarche</span></div>\n', 'fondu') \
-    + mois_scene('s2', 'bases', 'DÉCEMBRE', 'Posture, équilibre, port de tête', ia(4), 'barres') \
+    + mois_scene('s2', 'bases', 'DÉCEMBRE', 'Posture, équilibre, port de tête', ia(4), 'pousse') \
     + mois_scene('s3', 'fluidité', 'JANVIER', 'Fluidité & assurance', ia(24), 'volet') \
     + mois_scene('s4', 'élégance', 'FÉVRIER', 'Élégance & présence', ia(5), 'rideau') \
     + scene('s5', photo('s5', ia(25), 250, 240, 580, 800) + empreintes('s5', 'rapproche', 1100)
@@ -326,7 +326,7 @@ s5 = tete(5, 'Spot 5 Entreprises', '« L\'élégance au travail », offre Entrep
                                                        ('s6', 'trois', 'MODULE 3', 'Prestance', ia(27), True), ('s7', 'quatre', 'MODULE 4', 'Confiance en soi', ia(12), True)], 260), 'cercle') \
     + scene('s8', '    <div class="abs" style="left:90px;right:90px;top:380px;display:flex;flex-direction:column;gap:30px;z-index:6">'
             + ''.join(f'<div class="qualite" data-voix="s8" data-mot="{m}" data-anim="leve"><img src="{ia(n)}"><span>{t}</span></div>' for m, t, n in [('équipes', 'Équipes assurées', 31), ('accueil', 'Accueil soigné', 6), ('image', 'Image renforcée', 12)])
-            + '</div>\n' + grand_bas('s8', 'Résultat', 'résultat', top=1380), 'barres', 'résultat') \
+            + '</div>\n' + grand_bas('s8', 'Résultat', 'résultat', top=1380), 'pousse', 'résultat') \
     + fin('s9', mot_site='whatsapp', sous='Offre Entreprises · sur devis', bouton='Demander un devis') + pied('Entreprises')
 
 for n, h in [(1, s1), (2, s2), (3, s3), (4, s4), (5, s5)]:

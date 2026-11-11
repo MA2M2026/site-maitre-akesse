@@ -112,3 +112,5 @@ body.mat .surtitre { font: 600 24px 'Montserrat', sans-serif; letter-spacing: 0.
 .qualite { padding: 22px 34px 22px 22px; }
 .qualite img { width: 170px; height: 170px; }
 .qualite span { font-size: 88px; }
+.mois { top: 300px !important; }
+.mois { transform: scale(0.82); transform-origin: 50% 0; }
