@@ -76,7 +76,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -89,7 +89,8 @@
       sb.rpc('mannequin_du_mois_actuelle'),  // (supabase-mannequin-du-mois.sql)
       sb.rpc('mes_bulletins'),  // bulletins trimestriels publiés (supabase-bulletins.sql)
       // (11/11/2026, « Mon profil » façon réseau social) adresse publique du book, phrase de la mannequin, demande en cours
-      sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle()
+      sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle(),
+      sb.rpc('mes_recus')  // (11/11/2026) paiements validés, pour « Mes opérations » de l'écran Paiements (supabase-bloc2-complements.sql)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -101,7 +102,7 @@
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
       messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || [],
-      vitrine: donnees(vitrine) || {}
+      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || []
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -348,43 +349,80 @@
     if (navigator.share) { try { await navigator.share({ title: p.full_name, text: texte, url: lien }); } catch (e) { /* partage annulé */ } return; }
     try { await navigator.clipboard.writeText(lien); message('Lien de votre book copié : collez-le où vous voulez.'); } catch (e) { message(lien); }
   }
+  // Paiements « style application bancaire » (11/11/2026, maquette validée par la propriétaire) : la carte de
+  // membre façon carte bancaire, deux chiffres (mois payés, cachets reçus), le prochain paiement avec « Payer avec
+  // Wave », la grille des mois, puis « Mes opérations » comme un relevé (cachets reçus et mensualités validées).
+  const MOIS_COURTS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+  const moisCourt = (d) => MOIS_COURTS[Number(String(d).slice(5, 7)) - 1];
+  const MODES_PAIEMENT = { wave: 'Wave', especes: 'Espèces', orange_money: 'Orange Money', mtn: 'MTN Money', moov: 'Moov Money', virement: 'Virement', avant_systeme: 'Avant l’application' };
+  function carteMembre(m) {
+    const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
+    const champ = (titre, valeur) => (valeur ? '<div><b>' + titre + '</b>' + esc(valeur) + '</div>' : '');
+    return '<div class="ap-cb" aria-label="Ma carte de membre"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>CARTE MEMBRE</span></div>' +
+      '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(m.nom || p.full_name || '').toUpperCase()) + '</div>' +
+      '<div class="ap-cb-bas">' + champ('FORMATION', p.niveau_mannequin || 'Mannequinat') +
+        champ('DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : '') + champ('MENSUALITÉ', fcfa(m.mensualite)) + '</div></div>';
+  }
   function ecranPaiements() {
     const m = etat.mensualites;
+    const totalCachets = etat.cachets.reduce((t, c) => t + (Number(c.montant) || 0), 0);
+    const tuileCachets = '<div class="ap-tuile"><div class="ap-chiffre">' + fcfa(totalCachets) + '</div><div class="doux">cachets reçus</div>' +
+      '<span class="ap-pastille vert">' + (etat.cachets.length ? etat.cachets.length + (etat.cachets.length > 1 ? ' cachets' : ' cachet') : 'Aucun pour l’instant') + '</span></div>';
     let haut;
-    if (!m) haut = '<div class="ap-carte doux">Vos paiements ne sont pas disponibles pour le moment. Réessayez plus tard.</div>';
-    else if (!m.inscrit) haut = '<div class="ap-carte doux">Votre espace n’est pas encore rattaché au registre de l’agence. Contactez l’agence.</div>';
+    if (!m) haut = '<div class="ap-carte doux">Vos paiements ne sont pas disponibles pour le moment. Réessayez plus tard.</div><div class="ap-tuiles">' + tuileCachets + '</div>';
+    else if (!m.inscrit) haut = '<div class="ap-carte doux">Votre espace n’est pas encore rattaché au registre de l’agence. Contactez l’agence.</div><div class="ap-tuiles">' + tuileCachets + '</div>';
     else {
       const mois = m.mois || [], { payes, total } = bilanFormation(m);  // (js/app.js)
       const courant = moisCourant(), enRetard = mois.some((x) => x.etat === 'non_paye');
+      const aPayer = mois.find((x) => x.etat === 'non_paye') || mois.find((x) => x.etat === 'a_payer');
       const prochain = mois.find((x) => x.etat === 'a_payer' || x.etat === 'non_paye' || x.etat === 'a_venir');
       const avance = moisPayablesAvance(mois).length > 0;  // (js/app.js)
       const situation = situationFormation(m);  // (js/app.js)
-      haut = '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div></div>' +
-        (enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
-          : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
-          : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>'
-          : situation && situation.ferme ? '<span class="ap-pastille gris">Agence fermée</span>'
-          : situation && situation.termine ? '<span class="ap-pastille gris">Terminée</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
-        '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
+      const pastille = enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
+        : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
+        : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>'
+        : situation && situation.ferme ? '<span class="ap-pastille gris">Agence fermée</span>'
+        : situation && situation.termine ? '<span class="ap-pastille gris">Terminée</span>' : '<span class="ap-pastille vert">✓ À jour</span>';
+      // le prochain paiement : le mois à payer (« Payer avec Wave »), sinon « Rien à payer » (et « Payer à l'avance »)
+      const nomDe = (x) => MOIS[Number(String(x.mois).slice(5, 7)) - 1] + ' ' + String(x.mois).slice(0, 4);
+      const carteProchain = aPayer
+        ? '<div class="ap-prochain"><small>PROCHAIN PAIEMENT</small><div class="ap-prochain-ligne"><b>' + fcfa(m.mensualite) + '</b><span>' + esc(nomDe(aPayer)) + ' · ' + (aPayer.etat === 'non_paye' ? 'en retard' : 'avant le 5') + '</span></div>' +
+          '<div class="ap-btns"><a class="ap-btn rouge ap-btn-wave" href="/app/mes-paiements.html"><i aria-hidden="true">~</i>Payer avec Wave</a></div></div>'
+        : '<div class="ap-prochain"><small>PROCHAIN PAIEMENT</small>' +
+          (prochain && !situation ? '<div class="ap-prochain-ligne"><b>' + fcfa(m.mensualite) + '</b><span>' + esc(nomDe(prochain)) + ' · avant le 5</span></div>' : '') +
+          '<p class="ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
+            : 'Rien à payer pour le moment.' + (avance ? ' Vous pouvez payer jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance.' : '')) + '</p>' +
+          // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js)
+          '<div class="ap-btns">' + (avance ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
+          '<a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>';
+      // la grille des mois : ✓ payé, 🌴 congés, ⏳ en vérification, ! en retard ; le mois en cours est entouré
+      const ICONE = { paye: '✓', conge: '🌴', attente: '⏳', non_paye: '!', a_payer: '•', rodage: '☆' };
+      const grille = mois.map((x, i) => {
+        const cle = x.conge && x.etat !== 'paye' ? 'conge' : x.etat;
+        const annee = i === 0 || String(x.mois).slice(5, 7) === '01' ? '<small>' + String(x.mois).slice(0, 4) + '</small>' : '';
+        return '<div class="ap-mois ' + esc(cle) + (courant && x.mois === courant.mois ? ' courant' : '') + '" title="' + esc(nomDe(x)) + '"><i aria-hidden="true">' + (ICONE[cle] || '·') + '</i>' + esc(moisCourt(x.mois)) + annee + '</div>';
+      }).join('');
+      haut = carteMembre(m) +
+        '<div class="ap-tuiles"><div class="ap-tuile"><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div>' + pastille +
+          '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div></div>' + tuileCachets + '</div>' +
         // (Reprise de mars : niveau, mois X sur 9, mois restants, agence fermée — situationFormation, js/app.js)
         (situation ? '<p class="ap-formation-note"><b>' + esc(situation.titre) + '</b><br><span class="doux">' + situation.lignes.map(esc).join('<br>') + '</span></p>'
           : '<p class="doux ap-formation-note">' + total + ' mois de cours en 2 ans. Décembre, janvier et février : congés, pas de mensualité.</p>') +
-        (prochain && !situation ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
-        // « Payer avec Wave » s'il y a un mois à payer ; à jour, « Payer à l'avance » (avant, le bouton
-        // menait à la grille des mois sans rien à payer, relevé par la propriétaire le 26/10/2026)
-        (mois.some((x) => x.etat === 'a_payer' || x.etat === 'non_paye')
-          ? '<div class="ap-btns"><a class="ap-btn rouge" href="/app/mes-paiements.html">Payer avec Wave</a><a class="ap-btn" href="/app/mes-paiements.html">Mes reçus</a></div></div>'
-          : '<p class="doux ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
-            : 'Rien à payer pour le moment.' + (avance ? ' Vous pouvez payer jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance.' : '')) + '</p>' +
-            // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js)
-            '<div class="ap-btns">' + (avance ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
-            '<a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>');
+        carteProchain +
+        (mois.length ? '<h2 class="ap-titre-sec">Mes mois</h2><div class="ap-grille-mois">' + grille + '</div>' : '');
     }
-    return '<h2 class="ap-titre-sec">Formation · mensualités</h2>' + haut +
-      '<h2 class="ap-titre-sec">Mes cachets</h2>' + (etat.cachets.length ? '<div class="ap-carte ap-cachets">' + etat.cachets.map((c) =>
-        '<div class="ap-cachet"><div><b>' + esc(c.prestation || c.motif || 'Cachet') + '</b><br><span class="doux">' + esc(c.paye_le ? jourLong(String(c.paye_le).slice(0, 10)) : '') + '</span></div>' +
-        '<div class="ap-droite"><b>' + fcfa(c.montant) + '</b><br><span class="ap-pastille vert">Payé</span></div></div>').join('') + '</div>'
-        : '<div class="ap-carte doux">Aucun cachet payé pour le moment.</div>');
+    // « Mes opérations » : cachets reçus (+) et paiements validés, du plus récent au plus ancien
+    const ops = etat.cachets.map((c) => ({ quand: String(c.paye_le || ''), ic: '💰', titre: 'Cachet · ' + (c.prestation || c.motif || 'prestation'), sous: c.paye_le ? jourLong(String(c.paye_le).slice(0, 10)) : '', montant: '+ ' + fcfa(c.montant), plus: true }))
+      .concat((etat.recus || []).map((r) => ({ quand: String(r.valide_le || r.mois || ''), ic: '💳',
+        titre: r.objet === 'inscription' ? 'Inscription' : r.mois ? 'Mensualité ' + (/^[aeiou]/.test(MOIS[Number(String(r.mois).slice(5, 7)) - 1]) ? 'd’' : 'de ') + MOIS[Number(String(r.mois).slice(5, 7)) - 1] : 'Mensualité',
+        sous: [MODES_PAIEMENT[r.mode] || '', r.valide_le ? jourLong(String(r.valide_le).slice(0, 10)) : ''].filter(Boolean).join(' · '),
+        montant: r.montant ? fcfa(r.montant) : '—', plus: false })))
+      .sort((x, y) => (x.quand < y.quand ? 1 : x.quand > y.quand ? -1 : 0)).slice(0, 8);
+    return haut +
+      '<h2 class="ap-titre-sec">Mes opérations</h2>' + (ops.length ? '<div class="ap-releve">' + ops.map((o) =>
+        '<div class="ap-op"><em aria-hidden="true">' + o.ic + '</em><span><b>' + esc(o.titre) + '</b><small>' + esc(o.sous) + '</small></span><strong' + (o.plus ? ' class="plus"' : '') + '>' + esc(o.montant) + '</strong></div>').join('') + '</div>' +
+        '<a class="ap-lien-recus" href="/app/mes-paiements.html">Tous mes reçus ›</a>'
+        : '<div class="ap-carte doux">Aucune opération pour le moment.</div>');
   }
   // un message de l'agence : titre, date, texte, photo, fiche jointe, page à ouvrir
   const ICONES_MESSAGE = { casting: '✨', defile: '👠', remerciement: '🤍', info: '💌', selection: '🎉', convocation: '💌', rappel: '⏰', places: '🎟️', mensualite: '💳', paiement: '✅', cachet: '💰' };

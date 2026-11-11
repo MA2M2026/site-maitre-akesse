@@ -49,6 +49,7 @@ function donnees() {
       mes_bulletins: [{ trimestre: '2026-07-01', notes: { marche: 4, posture: 5, photo: 3 }, appreciation: 'Très bon trimestre' }],
       // cours du dimanche (chantier 14) : le mois dernier, présente à tous sauf le premier (rouge)
       mes_presences: { date_entree: '2025-09-01', annulees: [], presences: P.dimanchesDuMois(P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1)).slice(1).map((d) => ({ dimanche: d, etat: 'present' })) },
+      mes_recus: [{ objet: 'mensualite', mois: moisDe(-1), montant: 10000, mode: 'wave', valide_le: jour(-30) + 'T09:00:00Z', numero: 'REC-2026-00012' }],
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
     }
   };
@@ -220,6 +221,10 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     const paiements = await p.textContent('#ap-ecran');
     ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/mes-paiements.html',
       n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
+    ok(/AYA KOUASSI/.test(await p.textContent('.ap-cb')) && /10 000 F/.test(await p.textContent('.ap-cb')) && (await p.$$('.ap-mois')).length === 24 && (await p.$$('.ap-mois.paye')).length === 8 && !!(await p.$('.ap-mois.courant.a_payer')) &&
+      /Cachet · Border Forum.*\+ 25 000 F/s.test(await p.textContent('.ap-releve')) && /Mensualité d.*Wave/s.test(await p.textContent('.ap-releve')) && /Payer avec Wave/.test(await p.textContent('.ap-prochain')),
+      n + 'Paiements « style banque » (11/11/2026) : carte de membre, grille des 24 mois (8 payés, mois en cours entouré), relevé des opérations (cachet + mensualité Wave)');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'Paiements : rien ne dépasse de l’écran');
     await capture('4-paiements');
     // à jour (rien à payer) : pas de « Payer avec Wave » qui mènerait à une page sans Wave (relevé par la propriétaire, 26/10/2026)
     const avantMois = d.rpc.mes_mensualites.mois;

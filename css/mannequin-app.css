@@ -440,3 +440,54 @@ body.ap-page-profil .scv-apercu img { width: 100%; height: auto; display: block;
 .ap-post-avatar img { width: 82%; height: auto; display: block; }
 .ap-post-image { display: block; width: 100%; max-height: 420px; object-fit: cover; }
 .ap-post-texte { padding: 11px 13px 13px; font-size: 13.5px; line-height: 1.45; }
+
+/* Paiements « style application bancaire » (11/11/2026, maquette validée par la propriétaire) : carte de membre
+   façon carte bancaire, deux tuiles chiffrées, prochain paiement, grille des mois, relevé des opérations. */
+.ap-cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; min-height: 200px; color: #FFFFFF;
+  background: linear-gradient(135deg, #5A141B 0%, #8A2530 55%, #5A141B 100%); box-shadow: 0 22px 40px -18px rgba(90, 20, 27, .9); }
+.ap-cb::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, .07); }
+.ap-cb::after { content: ''; position: absolute; left: -40px; bottom: -90px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255, 255, 255, .05); }
+.ap-cb > * { position: relative; z-index: 1; }
+.ap-cb-tete { display: flex; justify-content: space-between; align-items: center; }
+.ap-cb-tete img { height: 26px; width: auto; }
+.ap-cb-tete span { font: 600 9px 'Work Sans', sans-serif; letter-spacing: .3em; }
+.ap-cb-puce { display: block; width: 38px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #F3DDE0, #FFFFFF); margin: 22px 0 14px; }
+.ap-cb-nom { font: 600 22px/1.1 'Cormorant Garamond', Georgia, serif; letter-spacing: .06em; }
+.ap-cb-bas { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font: 500 11.5px 'Work Sans', sans-serif; }
+.ap-cb-bas b { display: block; font-size: 9px; font-weight: 700; letter-spacing: .2em; color: #F3DDE0; margin-bottom: 2px; }
+.ap-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ap-tuile { border-radius: 16px; padding: 12px; background: rgba(255, 255, 255, .1); color: #FFFFFF; }
+.ap-tuile .ap-chiffre { font-size: 28px; }
+.ap-tuile .ap-chiffre small { font-size: 18px; color: #F3DDE0; }
+.ap-tuile .doux { color: #F3DDE0; font-size: 12.5px; margin-bottom: 6px; }
+.ap-tuile .ap-jauge { background: rgba(255, 255, 255, .14); }
+.ap-tuile .ap-jauge i { background: #FFFFFF; }
+.ap-prochain { border-radius: 18px; padding: 16px; background: #FFFFFF; color: #2a1416; box-shadow: var(--ap-ombre); }
+.ap-prochain small { font: 700 9.5px 'Work Sans', sans-serif; letter-spacing: .2em; color: #6E4F53; }
+.ap-prochain-ligne { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
+.ap-prochain-ligne b { font: 600 30px/1.1 'Cormorant Garamond', Georgia, serif; }
+.ap-prochain-ligne span { font-size: 13px; color: #5b4547; }
+.ap-prochain .ap-rien-a-payer { margin-top: 6px; font-size: 14px; color: #5b4547; }
+.ap-prochain .ap-btns { margin-top: 12px; }
+.ap-btn-wave { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; }
+.ap-btn-wave i { width: 22px; height: 22px; border-radius: 6px; background: #1DC3F0; color: #FFFFFF; font-style: normal; font-size: 13px; line-height: 22px; text-align: center; }
+.ap-grille-mois { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.ap-mois { border-radius: 10px; padding: 7px 0; text-align: center; font: 600 10.5px 'Work Sans', sans-serif; background: rgba(255, 255, 255, .1); color: #FFFFFF; }
+.ap-mois i { display: block; font-style: normal; font-size: 13px; margin-bottom: 2px; }
+.ap-mois small { display: block; font-size: 9px; font-weight: 500; opacity: .8; }
+.ap-mois.paye { background: #FFFFFF; color: #24603A; }
+.ap-mois.attente { background: #FFFFFF; color: #9A560B; }
+.ap-mois.non_paye, .ap-mois.a_payer { background: #FFFFFF; color: #7C2128; }
+.ap-mois.conge { opacity: .55; }
+.ap-mois.courant { box-shadow: 0 0 0 2px #F3DDE0; }
+.ap-releve { border-radius: 18px; overflow: hidden; background: #FFFFFF; color: #2a1416; box-shadow: var(--ap-ombre); }
+.ap-op { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid #F2F2F2; }
+.ap-op:first-child { border-top: 0; }
+.ap-op em { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; background: #F3DDE0; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 17px; }
+.ap-op span { flex: 1; min-width: 0; font: 600 13px 'Work Sans', sans-serif; }
+.ap-op small { display: block; font-weight: 400; color: #6E4F53; font-size: 11.5px; }
+.ap-op strong { font: 700 14px 'Work Sans', sans-serif; white-space: nowrap; }
+.ap-op strong.plus { color: #24603A; }
+.ap-lien-recus { align-self: center; font: 600 13px 'Work Sans', sans-serif; text-decoration: underline; text-underline-offset: 3px; color: #FFFFFF; }
+.ap-prochain .ap-btn.rouge { background: #7C2128; color: #FFFFFF; }
+.ap-prochain .ap-btn:not(.rouge) { background: #F2F2F2; color: #7C2128; }
