@@ -419,3 +419,24 @@ body.ap-page-profil .scv-liste small.manque { background: #F3DDE0; color: var(--
 body.ap-page-profil .scv-apercu { margin-top: 16px; padding: 8px; border-radius: 10px; background: #FFFFFF; min-height: 120px; display: flex; align-items: center; justify-content: center;
   color: var(--rouge-mat, #7C2128); font-size: 13px; box-shadow: 0 18px 30px -16px rgba(40, 8, 12, 0.7); }
 body.ap-page-profil .scv-apercu img { width: 100%; height: auto; display: block; }
+
+/* ---------- Accueil en « fil » (11/11/2026, maquette validée par la propriétaire) ----------
+   ronds façon « stories » en haut, puis le fil de l'agence en grandes publications. */
+.ap-stories { display: flex; gap: 12px; margin: 0 -18px; padding: 4px 18px 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ap-stories::-webkit-scrollbar { display: none; }
+.ap-story { flex: 0 0 auto; width: 64px; text-align: center; text-decoration: none; color: #FFFFFF; font: 600 11px 'Work Sans', sans-serif; }
+.ap-story-rond { position: relative; display: flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin: 0 auto 5px; border-radius: 50%;
+  padding: 3px; background: linear-gradient(45deg, #F3DDE0, #FFFFFF); box-shadow: 0 0 0 2px var(--rouge-mat, #7C2128) inset; }
+.ap-story-rond img, .ap-story-rond b, .ap-story-rond em { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--rouge-mat, #7C2128); }
+.ap-story-rond img { object-fit: cover; object-position: center 20%; display: block; }
+.ap-story-rond b, .ap-story-rond em { display: flex; align-items: center; justify-content: center; background: var(--rouge-mat, #7C2128); color: #FFFFFF; font-style: normal; font-size: 22px; }
+.ap-story-rond b { font: 600 20px 'Cormorant Garamond', serif; }
+.ap-story-rond i { position: absolute; top: -2px; right: -2px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #FFFFFF; color: var(--rouge-mat, #7C2128);
+  font: 700 11px/20px 'Work Sans', sans-serif; font-style: normal; box-shadow: 0 0 0 2px var(--rouge-mat, #7C2128); }
+.ap-post { display: block; overflow: hidden; border-radius: 16px; background: #FFFFFF; color: #2a1416; text-decoration: none; box-shadow: var(--ap-ombre); }
+.ap-post-tete { display: flex; align-items: center; gap: 10px; padding: 11px 12px; font-size: 13px; }
+.ap-post-tete small { display: block; color: #6E4F53; font-size: 11px; font-weight: 400; }
+.ap-post-avatar { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; background: var(--rouge-mat, #7C2128); display: flex; align-items: center; justify-content: center; }
+.ap-post-avatar img { width: 82%; height: auto; display: block; }
+.ap-post-image { display: block; width: 100%; max-height: 420px; object-fit: cover; }
+.ap-post-texte { padding: 11px 13px 13px; font-size: 13.5px; line-height: 1.45; }

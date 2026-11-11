@@ -137,7 +137,9 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
     ok(/Nouveau message de l’agence : ✨ Casting Kouroukan/.test(accueil) && (await p.getAttribute('.ap-nouveau-message', 'href')) === '#alertes', n + 'Accueil : « Nouveau message de l’agence » mène à l’onglet Messages');
     ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Messages/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
-    ok(/Ma carte.*Ma compcard.*Mon CV/s.test(await p.textContent('.ap-raccourcis')) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil), n + 'Accueil : raccourcis, casting ouvert, mensualité du mois à payer');
+    ok(/Moi.*Ma carte.*Compcard.*Mon CV.*Messages/s.test(await p.textContent('.ap-stories')) && /Le fil de l’agence/.test(accueil) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil),
+      n + 'Accueil en « fil » (11/11/2026) : ronds façon stories, fil de l’agence (casting ouvert), mensualité du mois à payer');
+    ok((await p.$$('.ap-post')).length >= 2 && !!(await p.$('.ap-post-image')), n + 'Accueil : les messages de l’agence en publications, avec leur photo');
     const nav = await p.evaluate(() => { const r = document.querySelector('.ap-nav').getBoundingClientRect(); return Math.abs(r.bottom - innerHeight) < 2; });
     ok(nav && !(await deborde()), n + 'menu collé en bas de l’écran, rien ne dépasse');
     await capture('1-accueil');

@@ -238,21 +238,38 @@
   }
 
   // ---------- les cinq onglets ----------
+  // Accueil façon « fil » de réseau social (11/11/2026, maquette validée par la propriétaire) : des ronds façon
+  // « stories » (Moi, Ma carte, Compcard, Mon CV, Messages), le prochain rendez-vous, puis le fil de l'agence
+  // (castings ouverts et messages de l'agence en grandes publications, avec leur photo).
   function ecranAccueil() {
     const prochain = aVenir()[0];
     const m = etat.mensualites;
     const nouveaux = nonLus();
-    return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
+    const moi = photoProfil();
+    const rond = (href, contenu, texte, extra) => '<a class="ap-story" href="' + href + '"' + (extra || '') + '><span class="ap-story-rond">' + contenu + '</span>' + texte + '</a>';
+    const stories = '<nav class="ap-stories" aria-label="Raccourcis">' +
+      rond('#profil', moi ? '<img src="' + esc(urlPhotoMemeOrigine(moi)) + '" alt="">' : '<b>' + esc(initialesDe(etat.profil.full_name)) + '</b>', 'Moi') +
+      rond('#evenements', '<em>🎫</em>', 'Ma carte', ' data-ma-carte') +
+      rond('/app/espace-mannequin.html#compcard', '<em>🗂️</em>', 'Compcard') +
+      rond('/app/espace-mannequin.html#cv', '<em>📄</em>', 'Mon CV') +
+      rond('#alertes', '<em>✉️</em>' + (nouveaux.length ? '<i>' + nouveaux.length + '</i>' : ''), 'Messages') + '</nav>';
+    // le fil : castings ouverts, puis les derniers messages de l'agence (sauf paiements), avec leur photo
+    const entete = (quand) => '<div class="ap-post-tete"><span class="ap-post-avatar" aria-hidden="true"><img src="/assets/logo-header.png" alt=""></span><div><b>Maître Akesse Model Management</b>' + (quand ? '<small>' + esc(quand) + '</small>' : '') + '</div></div>';
+    const posts = etat.castings.map((c) => '<article class="ap-post">' + entete('Casting ouvert') +
+        '<div class="ap-post-texte"><b>Casting ouvert : ' + esc(c.nom) + '</b><br>' + esc([c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.') + '</div></article>')
+      .concat(etat.messages.filter((x) => !['paiement', 'mensualite', 'cachet'].includes(x.sorte)).slice(0, 4).map((x) => '<a class="ap-post" href="#alertes">' + entete(quandMessage(x.cree_le)) +
+        (x.image ? '<img class="ap-post-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+        '<div class="ap-post-texte"><b>' + esc(x.titre.replace(/^\p{Extended_Pictographic}️?\s*/u, '')) + '</b>' + (x.texte ? '<br>' + esc(x.texte.length > 140 ? x.texte.slice(0, 140) + '…' : x.texte) : '') + '</div></a>'));
+    return stories +
+      '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       (nouveaux.length ? '<a class="ap-carte ap-rappel ap-nouveau-message" href="#alertes">✉️ <span><b>' + (nouveaux.length > 1 ? nouveaux.length + ' nouveaux messages' : 'Nouveau message') + '</b> de l’agence : ' + esc(nouveaux[0].titre) + '</span> ›</a>' : '') +
       (etat.mannequinDuMois && etat.mannequinDuMois.compte === etat.uid ? '<div class="ap-carte pr-app-mdm">🏆 <span><b>Vous êtes la mannequin du mois !</b><br>Félicitations : le site et l’application vous mettent à l’honneur tout le mois.</span></div>' : '') +
       cartePresencesAccueil() +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
-      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/app/espace-mannequin.html"><span>🗂️</span>Ma compcard</a><a href="/app/espace-mannequin.html"><span>📄</span>Mon CV</a></nav>' +
       (m && m.inscrit && moisCourant() && (moisCourant().etat === 'a_payer' || moisCourant().etat === 'non_paye')
         ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
-      (etat.castings.length ? '<h2 class="ap-titre-sec">Messages de l’agence</h2><div class="ap-carte ap-messages">' + etat.castings.map((c) =>
-        '<div class="ap-msg"><i></i><div><b>Casting ouvert : ' + esc(c.nom) + '</b><br><span class="doux">' + esc([c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.') + '</span></div></div>').join('') + '</div>' : '');
+      (posts.length ? '<h2 class="ap-titre-sec">Le fil de l’agence</h2>' + posts.join('') : '');
   }
   function ecranEvenements() {
     const avenir = aVenir(), passes = etat.evenements.filter((e) => e.passe).reverse();
