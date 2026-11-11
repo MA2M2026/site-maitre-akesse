@@ -27,7 +27,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await brancher(q, { tables: { model_profiles: [{ id: 'admin-1', full_name: 'AWA KONÉ', published: false, desactive: false }], model_photos: [] }, rpc: {} }, journal);
     await q.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await q.waitForSelector('.stepper .step-tab', { timeout: 10000 }).catch(() => {});
     const cases = await q.$$eval('.stepper .step-tab', (l) => l.map((x) => { const r = x.getBoundingClientRect(); return { g: r.left, d: r.right, h: Math.round(r.top) }; }));
-    const lignes = [...new Set(cases.map((c) => c.h))];
+    // (11/11/2026, modèle « les cartes ») la carte ouverte se soulève de 2 px : même ligne à quelques pixels près
+    const lignes = cases.length ? (Math.max(...cases.map((c) => c.h)) - Math.min(...cases.map((c) => c.h)) <= 4 ? [cases[0].h] : [...new Set(cases.map((c) => c.h))]) : [];
     ok(cases.length === 6 && cases.every((c) => c.g >= 0 && c.d <= innerWidthOf(ecran)) && lignes.length === 1, nom + ' : les 6 étapes visibles en entier, sur UNE ligne (« Récapitulatif » compris, 10/11/2026)');
     // (10/11/2026) la ligne des étapes reste en haut de l'écran quand on fait défiler
     await q.evaluate(() => scrollTo(0, 900)); await q.waitForTimeout(200);

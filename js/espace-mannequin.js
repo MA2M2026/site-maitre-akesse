@@ -720,6 +720,8 @@ const Store = {
 /* ------------------------------------------------------------- UTILS UI --- */
 const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
 const STEP_COURTS = ['Identité','Physique','Formation','Expér.','Photos','Récap.'];
+// (11/11/2026, modèle « les cartes » choisi par la propriétaire) dessin de chaque étape (affiché dans l'application)
+const STEP_ICONES = ['👤','📏','🎓','👠','📸','✨'];
 const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];
 // MOIS_FR / formaterPeriode : partagés dans js/app.js (aussi utilisés par le CV).
 
@@ -788,7 +790,7 @@ function viewWizard(){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
     // (10/11/2026) nom court pour les petits écrans (application : les 6 étapes sur UNE ligne, css/mannequin-app.css)
     const manque = pts && BLOCS_ETAPES[i] ? pts.nb[BLOCS_ETAPES[i]] : 0;
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+pastilleRouge(manque)+'</button>';
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="ic" aria-hidden="true">'+STEP_ICONES[i]+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+pastilleRouge(manque)+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone

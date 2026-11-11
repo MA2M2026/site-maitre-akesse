@@ -88,6 +88,7 @@ a{color:inherit}
   background:transparent;
 }
 .step-tab:last-child{border-right:none}
+.step-tab .ic{display:none} /* dessins des étapes : application seulement (css/mannequin-app.css) */
 .step-tab .n{display:block;font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--texte-clair);margin-bottom:2px}
 .step-tab.active{background:var(--c-rgba-213-84-104-_1);color:var(--ivoire)}
 .step-tab.active .n{color:var(--or-clair)}
