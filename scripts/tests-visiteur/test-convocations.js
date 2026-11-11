@@ -56,6 +56,8 @@ async function ouvrirAgenda(p) {
   await p.goto(BASE + 'admin/#/site/b3c-agenda'); await p.waitForSelector('#agenda-form', { state: 'attached', timeout: 15000 }).catch(() => {}); await p.waitForTimeout(1500);
 }
 const rubrique = async (p, cle) => { await p.evaluate((c) => { location.hash = '#/site/' + c; }, cle); };
+// (11/11/2026) Convocations en 4 étapes : toucher une étape dans la barre des étapes
+const etape = (p, n) => p.$eval('.cv-etapes [data-aller-etape="' + n + '"]', (b) => b.click()).then(() => p.waitForTimeout(300));
 const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] === table).map(j => JSON.parse(j[3] || 'null'));
 
 // client cité dans les messages (24/10/2026) : « … pour *Marque* », ou pas si la case est décochée
@@ -83,6 +85,8 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(choix.length === 2 && choix[0].startsWith('|') && /AFRICA IN RHYTHM/.test(choix[1]) && !choix.some(c => /DEFILE PASSE/.test(c)), n + 'liste : « Nouveau projet » et les projets à venir seulement');
     ok((await p.$$eval('#cv-mannequins input:checked', cs => cs.map(c => c.value))).join() === 'm1,m2', n + 'mannequins du projet déjà cochés');
     await p.fill('#cv-heure-evenement', '20:00'); await p.fill('#cv-heure-convocation', '15:00');
+    // (11/11/2026, parcours en étapes) les détails sont rangés dans « Plus de détails »
+    if (!(await p.$eval('#cv-details', (d) => d.open))) await p.click('#cv-details > summary');
     for (const [h, a] of [['15:00', 'Accueil'], ['15:30', 'Essayage'], ['18:00', 'Répétition']]) {
       await p.click('#cv-ajouter-etape');
       const l = p.locator('#cv-deroule .agenda-etape').last();
@@ -127,7 +131,8 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /convocation de Mademoiselle PETITE AMA/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour la mineure : adressé au parent');
 
     if (process.env.CAPTURES) { await p.$eval('#convoc-panneau', e => e.scrollIntoView()); await p.screenshot({ path: process.env.CAPTURES + '/panneau-' + vp.width + '.png', fullPage: false }); }
-    // 3. Envoyer maintenant
+    // 3. Envoyer maintenant (étape 4 « Envoi »)
+    await etape(p, 4);
     await p.click('#convoc-programmer'); await p.waitForTimeout(5500);
     const participants = ecrits(journal, 'POST', 'convocation_participants').flat();
     const lignesEnvois = ecrits(journal, 'POST', 'convocation_envois').flat();
@@ -169,7 +174,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
       n + '« Dans 1 heure » : envois programmés, rien ne part tout de suite');
     ok(await p.isVisible('#convoc-msg') && /Programmé pour/.test(await p.textContent('#convoc-msg')), n + 'message « Programmé pour … » affiché');
     // 5. Nouveau projet depuis la page : ajouté à l'agenda (visible, sans adresse publique) ; date passée refusée
-    await p.selectOption('#cv-projet', '');
+    await p.click('#cv-retour'); await p.click('#cv-nouveau'); await p.waitForTimeout(300);  // (11/11/2026 : billets, « ＋ Nouveau projet »)
     ok((await p.inputValue('#cv-titre')) === '' && (await p.$$eval('#cv-mannequins input:checked', cs => cs.length)) === 0 && await p.isHidden('#convoc-panneau'), n + '« Nouveau projet » : page vierge');
     await p.fill('#cv-titre', 'SHOOTING TEST'); await p.fill('#cv-date', '2020-05-05'); await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(500);
     ok(await p.isVisible('#cv-etat') && /déjà passée/.test(await p.textContent('#cv-etat')), n + 'nouveau projet à une date passée : refusé');
@@ -234,6 +239,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(/A confirmé sa présence/.test(await p.textContent('#convoc-participants')) && /Ne pourra pas venir/.test(await p.textContent('#convoc-participants')), 'réponses visibles dans la liste des participants');
     // « 📋 Voir les réponses » en haut de la page Convocations : choisir un projet déjà convoqué
     await rubrique(p, 'b2-convocations'); await p.waitForTimeout(800);
+    if (await p.isVisible('#cv-retour')) { await p.click('#cv-retour'); await p.waitForTimeout(500); }  // (11/11/2026 : retour aux billets)
     ok(await p.isHidden('#cv-reponses-bloc'), '« Voir les réponses » : fermé à l’ouverture de la page');
     await p.click('#cv-voir-reponses'); await p.waitForTimeout(1200);
     const choix = await p.$$eval('#cv-reponses-projet option', os => os.map(o => o.value));
@@ -277,6 +283,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(await p.isHidden('#convoc-rappel-info') && /La convocation avec tous les détails suit/.test(await p.textContent('#convoc-sorte-aide')), n + 'explication affichée, pas de rappel annoncé');
     await p.selectOption('#convoc-apercu-qui', { index: 2 });
     ok(/Bonjour Madame Ama Mère/.test(await p.textContent('#convoc-apercu')) && /Mademoiselle PETITE AMA est sélectionnée !/.test(await p.textContent('#convoc-apercu')) && /qu’elle fera partie/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour le parent de la mineure');
+    await etape(p, 4);
     await p.click('#convoc-programmer');
     for (let i = 0; i < 30 && !/envoyé\(s\) sur/.test(await p.textContent('#convoc-msg')); i++) await p.waitForTimeout(400);
     const lignes = ecrits(journal, 'POST', 'convocation_envois').flat();
@@ -288,27 +295,28 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     ok(/F%C3%A9licitations/.test(suivant || '') && /annonce de la sélection/.test(await p.textContent('#convoc-suivi')), n + '« Envoyer le WhatsApp suivant » : le message de sélection');
     ok(/Sélection déjà annoncée/.test(await p.textContent('#convoc-participants')) && (await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 0, n + 'après l’envoi : « Sélection déjà annoncée », personne recoché');
     ok(/2 convoqué\(s\) · 0 confirmé · 0 absent · 2 sans réponse/.test(await p.textContent('.convoc-chiffres')), n + 'les réponses comptent dès la sélection (la mineure et son parent : une personne)');
-    await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200);
+    await etape(p, 3); await p.selectOption('#convoc-sorte', 'convocation'); await p.waitForTimeout(200); await etape(p, 4);
     ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 3 && /15h00 précises/.test(await p.textContent('#convoc-apercu')) && await p.isVisible('#convoc-rappel-info'), n + 'puis « Convocation » : tout le monde recoché, message complet, rappel annoncé');
     // ligne « Annoncer la sélection » du menu (23/10/2026) : même écran, message de sélection imposé
-    await rubrique(p, 'b2-selection'); await p.waitForSelector('#cv-projet', { timeout: 10000 }); await p.waitForTimeout(1000);
-    await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
+    await rubrique(p, 'b2-selection'); await p.waitForSelector('#cv-projet', { state: 'attached', timeout: 10000 }); await p.waitForSelector('.cv-billet, #cv-retour', { timeout: 10000 }); if (await p.isVisible('#cv-retour')) await p.click('#cv-retour'); await p.waitForSelector('.cv-billet'); await p.waitForTimeout(1000);
+    await p.click('.cv-billet[data-cv-projet="pa2"]'); await p.waitForTimeout(800);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     ok(/Annoncer la sélection/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'selection' && /Félicitations/.test(await p.textContent('#convoc-apercu')),
       n + 'menu « Annoncer la sélection » : l’annonce est choisie d’office, même après un premier envoi');
-    await rubrique(p, 'b2-convocations'); await p.waitForSelector('#cv-projet', { timeout: 10000 }); await p.waitForTimeout(1000);
-    await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
+    await rubrique(p, 'b2-convocations'); await p.waitForSelector('#cv-projet', { state: 'attached', timeout: 10000 }); await p.waitForSelector('.cv-billet, #cv-retour', { timeout: 10000 }); if (await p.isVisible('#cv-retour')) await p.click('#cv-retour'); await p.waitForSelector('.cv-billet'); await p.waitForTimeout(1000);
+    await p.click('.cv-billet[data-cv-projet="pa2"]'); await p.waitForTimeout(800);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     ok(/Convocations/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'convocation', n + 'puis « Convocations » : la convocation est proposée');
     // ligne « Rappeler l'information » du menu (23/10/2026) : le rappel envoyé à la main, aux personnes déjà prévenues
-    await rubrique(p, 'b2-rappel'); await p.waitForSelector('#cv-projet', { timeout: 10000 }); await p.waitForTimeout(1000);
-    await p.selectOption('#cv-projet', 'pa2'); await p.waitForTimeout(800);
+    await rubrique(p, 'b2-rappel'); await p.waitForSelector('#cv-projet', { state: 'attached', timeout: 10000 }); await p.waitForSelector('.cv-billet, #cv-retour', { timeout: 10000 }); if (await p.isVisible('#cv-retour')) await p.click('#cv-retour'); await p.waitForSelector('.cv-billet'); await p.waitForTimeout(1000);
+    await p.click('.cv-billet[data-cv-projet="pa2"]'); await p.waitForTimeout(800);
     await p.$eval('#cv-enregistrer', x => x.click()); await p.waitForTimeout(1800);
     ok(/Rappeler l’information/.test(await p.textContent('#ecran-convocations h2')) && (await p.inputValue('#convoc-sorte')) === 'rappel_avant'
       && /🔔 \*Rappel :\*/.test(await p.textContent('#convoc-apercu')) && /Hôtel Ivoire/.test(await p.textContent('#convoc-apercu')) && await p.isHidden('#convoc-rappel-info'),
       n + 'menu « Rappeler l’information » : le rappel est choisi d’office (date, heure, lieu)');
     ok((await p.$$eval('#convoc-participants input:checked', cs => cs.length)) === 3, n + 'rappel : les 3 personnes déjà prévenues sont cochées');
     const avantRappel = ecrits(journal, 'POST', 'convocation_envois').length, avantEmails = journal.filter(j => j[0] === 'EMAIL').length;
+    await etape(p, 4);
     await p.click('#convoc-programmer');
     for (let i = 0; i < 30 && !/envoyé\(s\) sur/.test(await p.textContent('#convoc-msg')); i++) await p.waitForTimeout(400);
     const lignesRappel = ecrits(journal, 'POST', 'convocation_envois').slice(avantRappel).flat();
@@ -345,6 +353,7 @@ const ecrits = (journal, m, table) => journal.filter(j => j[0] === m && j[1] ===
     const cleParent = (qui.find(q => /parent : Madame Fatou Mère/.test(q)) || '').split('|')[0];
     await p.selectOption('#convoc-apercu-qui', cleParent);
     ok(/Bonjour Madame Fatou Mère/.test(await p.textContent('#convoc-apercu')) && /FATOU AGENCE/.test(await p.textContent('#convoc-apercu')), n + 'aperçu pour le parent : adressé au parent, au sujet de sa fille');
+    await etape(p, 4);
     await p.click('#convoc-programmer'); await p.waitForTimeout(5000);
     const parts = ecrits(journal, 'POST', 'convocation_participants').flat().filter(l => l.contact_id);
     ok(parts.length === 2 && parts.some(l => l.parent && l.telephone === '2250703030303' && l.parent_nom === 'Madame Fatou Mère') && parts.some(l => !l.parent && l.telephone === '2250702020202') && parts[0].contact_id === parts[1].contact_id,

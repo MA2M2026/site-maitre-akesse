@@ -85,10 +85,12 @@
       .observe($('cv-affiche'), { childList: true, subtree: true });
     new MutationObserver(majEtapes).observe($('convoc-panneau'), { attributes: true, attributeFilter: ['hidden'] });
     // le projet enregistré (« Enregistrer · suivant », js/convocations-page.js) ouvre son panneau : on passe au Message
+    let enregistre = false;
+    $('cv-form').addEventListener('submit', () => { enregistre = true; });
     const ouvrirPanneau = window.ouvrirConvocations;
     window.ouvrirConvocations = async function (p) {
       const r = await ouvrirPanneau.apply(this, arguments);
-      if (racine.isConnected && racine.dataset.etape === '2' && racine.dataset.vue === 'parcours') { titre(p); etape(3); }
+      if (enregistre && racine.isConnected && racine.dataset.vue === 'parcours') { enregistre = false; titre(p); etape(3); }
       return r;
     };
     // l'onglet « Réponses · 8/12 »
@@ -119,6 +121,13 @@
       if (e.target.closest('#cv-nouveau')) { C.choisir(''); ouvrir(null); $('cv-titre').focus(); return; }
       if (e.target.closest('#cv-retour') || e.target.closest('#convoc-fermer')) { vue('liste'); }
     });
+    // la rubrique touchée dans le menu alors qu'un projet est ouvert (même adresse : la page ne se redessine pas) : retour aux billets
+    const memeRubrique = (e) => {
+      if (!racine.isConnected) { document.removeEventListener('click', memeRubrique); return; }
+      const a = e.target.closest('a[href^="#/site/"]');
+      if (a && a.getAttribute('href') === location.hash && racine.dataset.vue === 'parcours') vue('liste');
+    };
+    document.addEventListener('click', memeRubrique);
     // projets chargés : les billets ; un projet demandé (Agenda, Places, « Convoquer la sélection ») s'ouvre directement
     C.pret().then(() => {
       const demande = C.choisi();

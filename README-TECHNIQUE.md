@@ -4546,3 +4546,18 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - **Messages groupés** : case « Image (facultatif) » ; lien dans l'e-mail et le WhatsApp, image dans l'application.
 - (Informations agence avait déjà sa « Photo (affiche, visuel…) ».)
 - Essais : test-nouvelle-admin-convocations.js, test-nouvelle-admin-castings.js.
+
+## Convocations en billets et en 4 étapes (11/11/2026, maquette validée par la propriétaire)
+
+- js/convocations-gabarit.js : l'écran est rangé en deux vues. **Liste** (`#cv-liste`) : « ＋ Nouveau projet », les
+  projets à venir en billets (`#cv-billets` : date, visages, jauge des réponses), « Réponses d'un projet passé ».
+  **Parcours** (`#cv-parcours`) : onglets « Convoquer » / « Réponses · 8/12 », barre des étapes 1 · Projet
+  (l'essentiel ; « Plus de détails » et l'affiche repliés), 2 · Mannequins (mur de visages, « Enregistrer · suivant »),
+  3 · Message (participants, aperçu), 4 · Envoi (résumé, moyens, quand, suivi). Tous les identifiants sont gardés :
+  js/convocations-page.js et js/convocations-admin.js n'ont presque pas changé.
+- js/admin/site-convocations.js : le parcours (`data-vue`, `data-etape`, `data-onglet` sur `#ecran-convocations`, la
+  CSS montre l'étape en cours) ; après un enregistrement, l'étape 3 s'ouvre ; un projet demandé (Agenda, Places,
+  affiche du jour sur l'accueil : `convocationDemandee`) s'ouvre directement. js/convocations-page.js expose
+  `window.ConvocationsPage` (pret, projets, choisi, choisir). Les réponses ont trois chiffres en tuiles (`.convoc-tuiles`).
+- Essais : test-nouvelle-admin-convocations.js (billets, étapes, envoi, onglet Réponses), test-convocations.js,
+  test-visages-partout.js (étape du mur de visages), test-defile.js.
