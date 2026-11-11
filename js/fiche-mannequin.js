@@ -262,6 +262,26 @@ async function chargerProfilInterne() {
     div.querySelector('img').addEventListener('click', () => ouvrirLightbox(index));
     galerie.appendChild(div);
   });
+
+  // (11/11/2026, fiche « premium ») le Book montre d'abord 12 photos, puis « Voir les N photos »
+  const BOOK_APERCU = 12;
+  const ancienBouton = document.getElementById('btn-voir-book');
+  if (ancienBouton) ancienBouton.remove();
+  galerie.classList.toggle('book-reduit', ordreGalerie.length > BOOK_APERCU);
+  if (ordreGalerie.length > BOOK_APERCU) {
+    const voir = document.createElement('button');
+    voir.type = 'button'; voir.id = 'btn-voir-book'; voir.className = 'fiche-voir-book no-print';
+    voir.textContent = T('Voir les ' + ordreGalerie.length + ' photos', 'See all ' + ordreGalerie.length + ' photos');
+    voir.addEventListener('click', () => { galerie.classList.remove('book-reduit'); voir.remove(); });
+    galerie.after(voir);
+  }
+  // photos de la « Sélection » (compcard) : la galerie plein écran sur cette photo
+  contenu.querySelectorAll('[data-photo-index]').forEach((b) => {
+    b.addEventListener('click', () => ouvrirLightbox(Math.max(0, Number(b.dataset.photoIndex) || 0)));
+  });
+  // « Compcard » de la barre du bas (téléphone) : le PDF directement
+  const compcardBas = document.querySelector('[data-fiche-compcard]');
+  if (compcardBas) compcardBas.addEventListener('click', () => genererFiche('pdf', ficheData, 'btn-telecharger-pdf', 'btn-telecharger-jpeg', EN ? 'en' : undefined));
 }
 
 // --- Lightbox plein écran (système partagé, voir js/app.js) ---

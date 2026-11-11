@@ -56,6 +56,13 @@ const cas = [
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     const entrer = await p.$('text=/^\\s*(Entrer|Enter)\\s*$/i'); if (entrer) await entrer.click().catch(() => {});
     await p.waitForTimeout(2500);
+    // (11/11/2026, fiche « premium ») comme un visiteur : « Toutes les mensurations » et « Voir tous les projets » ouverts
+    if (page.includes('mannequin.html?')) {
+      await p.evaluate(() => { document.querySelectorAll('.fiche-mens-tout').forEach((d) => { d.open = true; }); });
+      const tous = await p.$('#btn-voir-tous-projets');
+      if (tous) { await tous.evaluate((b) => b.scrollIntoView({ block: 'center', behavior: 'instant' })); await p.waitForTimeout(600); await tous.click({ position: { x: 10, y: 8 } }); }
+      await p.waitForTimeout(200);
+    }
     const texte = await p.evaluate(() => document.body.innerText);
     const manquants = attendus.filter(t => !texte.toLowerCase().includes(t.toLowerCase()));
     // Barre du haut, menu et bas de page communs (js/gabarit.js, 11/10/2026)
