@@ -33,6 +33,9 @@ def pied(etiquette='Atelier'):
     return f'''  <div id="poussiere"></div>
   <div id="lueur"></div>
   <div id="barres"></div>
+  <div id="fuite"></div>
+  <div id="flash"></div>
+  <div id="grain"></div>
   <div id="eclat"></div>
   <div id="cadre"></div>
   <div id="marque"><img src="../../assets/logo-header.png" alt=""><span>{etiquette}</span></div>
@@ -44,10 +47,16 @@ def pied(etiquette='Atelier'):
 
 
 def plan(cle, img, mot='', entree='zoom', camera='avance', retard=None, fin=None, clair=False):
-    """Grand plan plein écran ouvert sur le mot ; fin = (clé, mot) où il s'efface (pour enchaîner plusieurs plans)."""
+    """Grand plan plein écran ouvert sur le mot ; en relief 2.5D (décor + personnage détouré, dossier ia/couches)
+    quand les couches existent. fin = (clé, mot) où il s'efface (pour enchaîner plusieurs plans)."""
     dep = f' data-mot="{mot}"' if mot else ''
     if retard is not None: dep += f' data-retard="{retard}"'
     f = f' data-finvoix="{fin[0]}" data-finmot="{fin[1]}" data-finretard="0.6"' if fin else ''
+    base = img[:-4].replace('ia/', 'ia/couches/')
+    if os.path.exists(os.path.join(ICI, base + '-sujet.png')):
+        sens = 'gauche' if camera in ('recule', 'glisse', 'descend') else 'droite'
+        return (f'    <div class="p25" data-voix="{cle}"{dep} data-anim="p25" data-entree="{entree}" data-camera="{sens}"{f}>'
+                f'<img class="fond" src="{base}-fond.jpg"><img class="sujet" src="{base}-sujet.png"></div>\n')
     return f'    <div class="plan{" clair" if clair else ""}" data-voix="{cle}"{dep} data-anim="plan" data-entree="{entree}" data-camera="{camera}"{f}><img src="{img}"></div>\n'
 
 
@@ -57,7 +66,7 @@ def suite(cle, items, haut=False):
     h = ''
     for k, (mot, img, texte, en, cam) in enumerate(items):
         nxt = items[k + 1][0] if k + 1 < len(items) else None
-        h += plan(cle, img, mot, en, cam, None if mot else -0.5)
+        h += plan(cle, img, mot, 'fouet' if k else en, cam, None if mot else -0.5)  # coupes suivantes : coup de fouet
         dep = f'data-mot="{mot}"' if mot else 'data-retard="-0.2"'
         fin = f' data-finvoix="{cle}" data-finmot="{nxt}" data-finretard="-0.05"' if nxt else ''
         if haut:

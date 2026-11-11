@@ -147,6 +147,21 @@ function animer(e, t) {
     case 'grandit': { // la personne grandit, posée au sol (data-depart : taille de départ, 0,85 = 85 %), en data-duree secondes
       const k = lisse((t - e.t) / Number(x.dataset.duree || 1.4)), dep = Number(x.dataset.depart || 0.85); s.opacity = Math.min(1, (t - e.t) * 4);
       s.transformOrigin = '50% 100%'; s.transform = 'scale(' + (dep + (1 - dep) * k) + ')'; break; }
+    case 'p25': { // photo en relief « 2.5D » : décor (fond reconstitué) et personnage détouré bougent à des vitesses
+      // différentes — la caméra avance dans la scène, le décor glisse derrière la personne qui vient vers nous.
+      // data-entree = zoom | gauche | droite | bas | haut | fouet (coup de fouet latéral avec flou de mouvement) ; data-camera = gauche | droite
+      const d = t - e.t, k = sortie(d / 0.7), en = x.dataset.entree || 'zoom', sens = x.dataset.camera === 'gauche' ? -1 : 1;
+      const u = Math.min(1, d / 6), fond = x.querySelector('.fond'), sujet = x.querySelector('.sujet');
+      s.opacity = en === 'zoom' ? Math.min(1, k * 1.5) : 1; s.clipPath = ''; s.transform = ''; s.filter = '';
+      if (en === 'gauche') s.clipPath = 'inset(0 ' + (100 * (1 - k)) + '% 0 0)';
+      else if (en === 'droite') s.clipPath = 'inset(0 0 0 ' + (100 * (1 - k)) + '%)';
+      else if (en === 'bas') s.clipPath = 'inset(' + (100 * (1 - k)) + '% 0 0 0)';
+      else if (en === 'haut') s.clipPath = 'inset(0 0 ' + (100 * (1 - k)) + '% 0)';
+      else if (en === 'fouet') { const f = sortie(d / 0.38); s.transform = 'translateX(' + (100 * (1 - f)) + '%)'; s.filter = f < 0.97 ? 'url(#flou-fouet' + Math.min(3, Math.floor((1 - f) * 4)) + ')' : ''; }
+      const z = en === 'zoom' ? 0.15 * (1 - k) : 0;
+      fond.style.transform = 'scale(' + (1.14 + 0.05 * u + z) + ') translateX(' + (-sens * 28 * u) + 'px)';
+      sujet.style.transform = 'scale(' + (1.03 + 0.11 * u + z) + ') translateX(' + (sens * 22 * u) + 'px)';
+      break; }
     case 'panneaux': { // photo qui arrive en bandes verticales (glissent du haut et du bas, en cascade), puis travelling
       const d = t - e.t, lames = x.children, n = lames.length; s.opacity = 1;
       for (let j = 0; j < n; j++) { const k = sortie((d - j * 0.06) / 0.7), sens = j % 2 ? 1 : -1;
@@ -213,7 +228,19 @@ function rendreBarres(t) {
   });
 }
 const eclat = document.getElementById('eclat'), lueur = document.getElementById('lueur'), reflets = [...document.querySelectorAll('.bouton i')];
+const grain = document.getElementById('grain'), flash = document.getElementById('flash'), fuite = document.getElementById('fuite');
+if (grain) document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute">' + [12, 30, 55, 85].map((v, i) =>
+  '<filter id="flou-fouet' + i + '" x="-20%" width="140%"><feGaussianBlur stdDeviation="' + v + ' 0"/></filter>').join('') + '</svg>');
+// coupes « dures » : début de chaque scène et de chaque plan en coup de fouet (flash et fuite de lumière dessus)
+const COUPES = scenes.slice(1).map((s) => s.debut + 0.15).concat(scenes.flatMap((s) => s.elements.filter((e) => e.anim === 'p25' && e.x.dataset.entree === 'fouet').map((e) => e.t + 0.3)));
+function effetsCinema(t) {
+  if (grain) { const h = Math.floor(t * 24); grain.style.backgroundPosition = ((h * 97) % 256) + 'px ' + ((h * 57) % 256) + 'px'; }
+  let pr = 9; COUPES.forEach((c) => { const d = t - c; if (d >= -0.05 && d < pr) pr = d; });
+  if (flash) flash.style.opacity = pr < 0.35 ? 0.32 * (1 - lisse(pr / 0.35)) : 0;
+  if (fuite) { const v = pr < 1.6 ? Math.sin(Math.PI * lisse(pr / 1.6)) : 0; fuite.style.opacity = 0.55 * v; fuite.style.transform = 'translateX(' + (-30 + 60 * lisse(pr / 1.6)) + '%)'; }
+}
 window.rendre = (t) => {
+  effetsCinema(t);
   scenes.forEach((s, i) => {
     const visible = t >= s.debut && t < s.fin;
     s.el.style.visibility = visible ? 'visible' : 'hidden';
