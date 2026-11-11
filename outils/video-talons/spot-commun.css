@@ -37,3 +37,15 @@
 .etape-mois .carre { position: relative; width: 300px; height: 380px; flex: none; }
 .etape-mois b { display: block; font: 800 96px/0.9 'Big Shoulders Display'; text-transform: uppercase; }
 .etape-mois span { display: block; font: italic 400 46px/1.15 'Cormorant Garamond'; margin-top: 10px; }
+
+/* Grands plans plein écran (images IA, 11/11/2026) : dégradé rouge mat en bas pour la lisibilité des textes */
+.plan { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
+.plan img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: contrast(1.06) saturate(1.06); }
+.plan::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.45) 0%, rgba(124,33,40,0) 16%, rgba(124,33,40,0) 48%, rgba(124,33,40,0.78) 74%, #7C2128 100%); }
+.plan.clair::after { background: linear-gradient(180deg, rgba(124,33,40,0.45) 0%, rgba(124,33,40,0) 16%, rgba(124,33,40,0) 62%, rgba(124,33,40,0.7) 85%, rgba(124,33,40,0.92) 100%); }
+.sur-plan { text-shadow: 0 6px 30px rgba(40,6,10,0.75); }
+.mot-plan { left: 60px; right: 60px; text-align: center; top: 1280px; font: 800 150px/0.95 'Big Shoulders Display'; text-transform: uppercase; z-index: 7; text-shadow: 0 8px 40px rgba(40,6,10,0.8); }
+.etiquette-plan { left: 0; right: 0; text-align: center; top: 1500px; z-index: 7; }
+.etiquette-plan .bouton { font-size: 38px; padding: 26px 56px; margin: 0; }
+.cadre-flottant { position: absolute; z-index: 6; overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 50px 100px -30px rgba(40,6,10,0.95); }
+.cadre-flottant img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }

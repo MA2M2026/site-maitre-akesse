@@ -147,6 +147,16 @@ function animer(e, t) {
     case 'grandit': { // la personne grandit, posée au sol (data-depart : taille de départ, 0,85 = 85 %), en data-duree secondes
       const k = lisse((t - e.t) / Number(x.dataset.duree || 1.4)), dep = Number(x.dataset.depart || 0.85); s.opacity = Math.min(1, (t - e.t) * 4);
       s.transformOrigin = '50% 100%'; s.transform = 'scale(' + (dep + (1 - dep) * k) + ')'; break; }
+    case 'plan': { // grand plan plein écran (images IA des spots) : s'ouvre par un volet ou un zoom (data-entree = gauche |
+      // droite | bas | haut | zoom), puis lent travelling (data-camera = avance | recule | monte | descend | glisse)
+      const d = t - e.t, k = sortie(d / 0.75), en = x.dataset.entree || 'zoom', c = x.dataset.camera || 'avance';
+      s.opacity = en === 'zoom' ? k : 1;
+      s.clipPath = en === 'gauche' ? 'inset(0 ' + (100 * (1 - k)) + '% 0 0)' : en === 'droite' ? 'inset(0 0 0 ' + (100 * (1 - k)) + '%)'
+        : en === 'bas' ? 'inset(' + (100 * (1 - k)) + '% 0 0 0)' : en === 'haut' ? 'inset(0 0 ' + (100 * (1 - k)) + '% 0)' : '';
+      const u = Math.min(1, d / 7), img = x.querySelector('img'), z0 = en === 'zoom' ? 0.12 * (1 - k) : 0;
+      img.style.transform = c === 'recule' ? 'scale(' + (1.16 - 0.1 * u + z0) + ')' : c === 'monte' ? 'scale(' + (1.1 + z0) + ') translateY(' + (3 - 6 * u) + '%)'
+        : c === 'descend' ? 'scale(' + (1.1 + z0) + ') translateY(' + (-3 + 6 * u) + '%)' : c === 'glisse' ? 'scale(' + (1.12 + z0) + ') translateX(' + (3 - 6 * u) + '%)'
+        : 'scale(' + (1.04 + 0.1 * u + z0) + ')'; break; }
     case 'nuage': { // photo lancée de loin (data-dx, data-dy) en tournant, qui se pose à sa place puis flotte
       const d = t - e.t, k = sortie(d / 1.4), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
       s.transform = 'translate(' + (Number(x.dataset.dx || 0) * (1 - k)) + 'px,' + (Number(x.dataset.dy || 0) * (1 - k) + 8 * Math.sin(d + rot)) + 'px) rotate(' + (rot + 40 * (1 - k)) + 'deg) scale(' + (0.4 + 0.6 * k) + ')'; break; }
