@@ -365,7 +365,9 @@
     const esp = P.espaces[module];
     // (11/11/2026, tuiles) dans l'Administration du site : seulement les rubriques de la tuile de cette page
     const tuile = module === 'site' && P.tuileDe ? P.tuileDe(page) : null;
-    const nav = P.menuRubriques(tuile ? { nav: P.menuTuile(tuile), compteur: esp.compteur } : esp, module, page);  // (js/portail/noyau.js : compartiments)
+    // (Paiements, Comptabilité : seulement le groupe de la rubrique, js/admin/blocs-index.js)
+    const groupe = !tuile && P.groupeBloc ? P.groupeBloc(module, page) : null;
+    const nav = P.menuRubriques(tuile ? { nav: P.menuTuile(tuile), compteur: esp.compteur } : groupe ? { nav: groupe, compteur: esp.compteur } : esp, module, page);  // (js/portail/noyau.js : compartiments)
     const blocs = '<div class="blocs">' + '<a class="bloc" href="#/">' + icone('accueil') + 'Accueil</a>' +
       blocsPermis().map((k) => '<a class="bloc' + (k === module ? ' actif' : '') + '" href="#/' + k + '/' + premierePage(P.espaces[k]) + '">' + icone(k) + P.esc(P.ESPACES[k]) + '</a>').join('') + '</div>';
     const secu = lienSecurite();

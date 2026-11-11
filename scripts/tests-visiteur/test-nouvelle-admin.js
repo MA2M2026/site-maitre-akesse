@@ -120,6 +120,14 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     // 4. Blocs 2 et 3 dans la nouvelle décoration
     // photos en médaillon partout où le nom mène à la fiche, cliquables (demande du 22/10/2026)
     const visages = (sel) => p.$$eval(sel + ' .visage-lien .vis', (l) => l.map((v) => !!(v.querySelector('img'))));
+    // (11/11/2026) Paiements et Comptabilité : une page d'entrée, rubriques groupées ; chacune rangée dans UN groupe
+    for (const bloc of ['paiements', 'compta']) {
+      await p.goto(URL_ADMIN + '#/' + bloc + '/accueil'); await p.waitForSelector('.tu-page', { timeout: 15000 }); await p.waitForTimeout(800);
+      const r = await p.evaluate((b) => { const P = window.Portail, G = P.GROUPES_BLOCS[b]; const cles = P.espaces[b].nav.filter((x) => x[0] && x[0] !== 'accueil').map((x) => x[0]);
+        return { lignes: document.querySelectorAll('.tu-page .tu-ligne').length, titres: [...document.querySelectorAll('.tu-question')].map((h) => h.textContent), seules: cles.filter((k) => G.filter((g) => g.pages.includes(k) || g.plus.includes(k)).length !== 1) }; }, bloc);
+      ok(r.lignes >= 10 && r.titres.length >= 3 && !r.seules.length && !r.titres.some((x) => /Autres/.test(x)), n + bloc + ' : page d’entrée, rubriques groupées (' + r.titres.join(', ') + ') ' + r.seules.join(','));
+    }
+    if (!tel) await capture(p, 'compta-entree-pc');
     await p.goto(URL_ADMIN + '#/paiements/registre'); await p.waitForTimeout(2000);
     const vr = await visages('#contenu');
     ok(vr.length === 6 && vr.filter(Boolean).length === 3, n + 'registre : photos en médaillon pour les 3 inscrites, initiales pour les autres (' + vr + ')');

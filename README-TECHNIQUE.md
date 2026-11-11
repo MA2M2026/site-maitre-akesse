@@ -4571,3 +4571,16 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   décision, le message prêt (e-mail parti tout seul, WhatsApp en un appui) puis « Candidature suivante ».
 - Le changement de statut est partagé par la fiche et ce mode : `enregistrerStatut`, `notifier` (plus de recopie).
 - css/admin-vivante.css : `.etude-*`. Essai : test-nouvelle-admin-castings.js (section 5bis).
+
+## Soir du 11/11/2026 : messages, anciennes mannequins, Paiements et Comptabilité rangés
+
+- **« Que voulez-vous envoyer ? »** (js/admin/site.js, tuile Messages, `ENVOIS`) : une question, cinq réponses qui ouvrent
+  directement le bon écran (Convoquer, Annoncer une sélection, Rappeler, Information, Candidates) ; raccourci
+  « ✉️ Envoyer un message » sur l'accueil (js/admin/coque.js).
+- **Anciennes mannequins sans espace** (js/portail/espace-paiements.js, Codes de l'espace) : bouton « Inscrite avant
+  l'application : créer son code » = `reprise_inscription(encaissee)` (aucune recette en compta) puis `code_espace_creer`.
+  La création du compte ne change pas.
+- **« Reprise du 1er mars » renommée « Dossiers de formation »** (js/portail/espace-reprise.js ; les adresses ne changent pas).
+- **Paiements et Comptabilité rangés** (js/admin/blocs-index.js, chargé en dernier dans admin/index.html) : page d'entrée
+  `#/paiements/accueil`, `#/compta/accueil` (rubriques groupées avec icône et explication, outils rares repliés),
+  menu de côté limité au groupe de la rubrique (`P.groupeBloc`, js/admin/coque.js). Une rubrique sans groupe va dans « Autres ».
