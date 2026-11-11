@@ -54,6 +54,33 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(!errs.length, nom + ' : aucune erreur ' + errs.join(' | '));
     await q.close();
   }
+  // (11/11/2026, capture de la propriétaire) mannequin DÉJÀ EN LIGNE : « Modifier mon profil » ouvre aussi les 6 étapes
+  // (plus l'ancien tableau de bord à blocs), l'état « Profil en ligne » en haut, un récapitulatif sans « Soumettre »
+  {
+    const q = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage(); const errs = [], journal = [];
+    q.on('pageerror', (e) => errs.push(e.message));
+    await q.addInitScript(() => {
+      const b64 = (o) => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+      const exp = Math.floor(Date.now() / 1000) + 36000;
+      const jeton = b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: 'admin-1', role: 'authenticated', aud: 'authenticated', exp }) + '.c2ln';
+      localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify({ access_token: jeton, token_type: 'bearer', expires_in: 36000, expires_at: exp, refresh_token: 'x', user: { id: 'admin-1', aud: 'authenticated', role: 'authenticated', email: 'diarra@example.com' } }));
+    });
+    await brancher(q, { tables: { model_profiles: [{ id: 'admin-1', full_name: 'DIARRA SY', category: 'femme', published: true, premiere_publication_faite: true, height_cm: 178, weight_kg: 58, city: 'Abidjan', desactive: false }], model_photos: [] }, rpc: {} }, journal);
+    await q.goto('http://127.0.0.1:' + PORT + '/app/espace-mannequin.html'); await q.waitForSelector('.stepper .step-tab', { timeout: 10000 }).catch(() => {});
+    const texte = await q.textContent('#app');
+    ok((await q.$$('.stepper .step-tab')).length === 6 && /Profil en ligne, visible sur le site/.test(texte) && /Bonjour DIARRA/.test(texte) && !(await q.$('.blocks-grid, .block-card')) && !/Modifiez un bloc à la fois/.test(texte),
+      'déjà en ligne : « Modifier mon profil » ouvre les 6 étapes avec « Profil en ligne » en haut (plus l’ancien tableau à blocs)');
+    await q.click('.step-tab[data-goto="2"]'); await q.waitForTimeout(400);
+    await q.click('#save2'); await q.waitForTimeout(900);
+    ok(/Étape 3 sur 6/.test(await q.textContent('.panel')), 'déjà en ligne : « Continuer » enregistre l’étape et passe à la suivante');
+    await q.click('.step-tab[data-goto="6"]'); await q.waitForTimeout(400);
+    const recap = await q.textContent('.panel');
+    ok(/Récapitulatif/.test(recap) && !(await q.$('#submitProfile')) && !(await q.$('#f-visible')) && (await q.getAttribute('.panel a.btn.primary', 'href')) === '/app/#profil',
+      'déjà en ligne : récapitulatif sans « Soumettre » ni « Rendre visible », bouton « Terminé » vers l’application');
+    await q.screenshot({ path: path.join(__dirname, 'captures', 'etapes-deja-en-ligne.png') });
+    ok(!errs.length, 'déjà en ligne : aucune erreur ' + errs.join(' | '));
+    await q.close();
+  }
   await b.close();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);

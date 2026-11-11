@@ -17,7 +17,7 @@ let currentUser = null;
 function emptyState(){
   return {
     meta:{
-      currentStep:1, editBlock:null, activeCompcardSlot:1,
+      currentStep:1, activeCompcardSlot:1,
       // Dérivés à l'affichage à partir des vraies colonnes (published /
       // en_attente_validation / raison_refus / premiere_publication_faite) —
       // jamais écrits tels quels en base, voir deriverStatutAffichage().
@@ -751,13 +751,12 @@ function render(){
     marquerChampsARemplir(BLOCS_ETAPES[state.meta.currentStep - 1]);
     return;
   }
-  // Mode autonome : le tableau de bord reste toujours accessible une fois la
-  // première publication faite, même si le profil repasse en attente/refusé
-  // par la suite — seuls les bandeaux d'état changent (identique à l'ancien
-  // système, voir appliquerModeGuide()/gerer_validation_publication()).
-  if (state.meta.editBlock) { app.innerHTML = viewBlockEditor(state.meta.editBlock); bindBlockPage(state.meta.editBlock); marquerChampsARemplir(state.meta.editBlock); return; }
-  app.innerHTML = viewDashboard();
-  bindDashboard();
+  // (11/11/2026, capture de la propriétaire) profil déjà en ligne : les mêmes 6 étapes que la première fois (avant :
+  // l'ancien tableau de bord à blocs), avec l'état du profil en haut et un récapitulatif sans « Soumettre » ; même
+  // enregistrement (Store.saveBlock), même revalidation par l'agence que l'ancien tableau de bord.
+  app.innerHTML = viewWizard();
+  bindWizard();
+  marquerChampsARemplir(BLOCS_ETAPES[state.meta.currentStep - 1]);
 }
 
 /* --------------------------------------------------------------- WIZARD */
@@ -774,9 +773,11 @@ function viewWizard(){
   const pct = Math.round(((state.meta.currentStep-1)/6)*100 + (stepComplete(state.meta.currentStep)?100/6:0));
   const clamped = Math.min(100, Math.max(0,pct));
   const pts = pointsARemplir();
+  const enLigne = state.meta.premierePublicationFaite;
   return header() +
-  '<div class="greet"><h1>Bonjour ' + echapperHtml((state.identite.nomComplet||'').split(' ')[0]||'') + '</h1>' +
-  '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure, vous pouvez y revenir à tout moment avant l’envoi final.</p>' +
+  '<div class="greet">' + (enLigne ? bandeauStatut() : '') + '<h1>Bonjour ' + echapperHtml((state.identite.nomComplet||'').split(' ')[0]||'') + '</h1>' +
+  (enLigne ? '<p>Modifiez votre profil étape par étape : chaque étape s’enregistre dès que vous appuyez sur « Continuer ». Votre compcard et votre CV ont leurs propres pages dans l’application.</p>' : '') +
+  (enLigne ? '' : '<p>Complétez votre profil professionnel pour permettre à l’agence de créer votre dossier mannequin. Chaque étape s’enregistre au fur et à mesure, vous pouvez y revenir à tout moment avant l’envoi final.</p>') +
   '<div class="progress-row"><div class="progress-track"><div class="progress-fill" data-largeur="'+clamped+'"></div></div>' +
   '<div class="progress-pct">'+clamped+'%</div></div></div>' +
   '<div class="stepper">' + STEP_LABELS.map(function(l,i){
@@ -787,7 +788,7 @@ function viewWizard(){
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
-  (state.meta.currentStep !== 6 ? '<div class="actions-row aller-recap"><button type="button" class="btn primary" id="allerRecap" data-bouton-libre>Enregistrer et voir le récapitulatif (mise en ligne) →</button></div>' : '');
+  (state.meta.currentStep !== 6 ? '<div class="actions-row aller-recap"><button type="button" class="btn primary" id="allerRecap" data-bouton-libre>'+(enLigne ? 'Enregistrer et voir le récapitulatif' : 'Enregistrer et voir le récapitulatif (mise en ligne)')+' →</button></div>' : '');
 }
 
 function stepContent(n){
@@ -1088,8 +1089,11 @@ function stepRecap(){
   ];
   return '<h2>Récapitulatif</h2><p class="sub">Vérifiez vos informations avant l’envoi</p>' +
     rows.map(function(r){ return '<div class="recap-block"><div><div class="lbl">'+r[0]+'</div><div class="val">'+r[1]+'</div></div><button class="recap-link" data-goto="'+r[2]+'">Modifier</button></div>'; }).join('') +
-    '<div class="visible-toggle"><input type="checkbox" id="f-visible"><p>Rendre mon profil visible publiquement sur le site.</p></div>' +
-    '<div class="actions-row"><button class="btn ghost" data-goto="5">← Retour</button><button class="btn primary" id="submitProfile">Soumettre mon profil</button></div>';
+    (state.meta.premierePublicationFaite
+      ? '<p class="sub">Tout est enregistré. Chaque modification est revue par l’agence avant d’apparaître sur votre fiche.</p>' +
+        '<div class="actions-row"><button class="btn ghost" data-goto="5">← Retour</button><a class="btn primary" href="/app/#profil">Terminé</a></div>'
+      : '<div class="visible-toggle"><input type="checkbox" id="f-visible"><p>Rendre mon profil visible publiquement sur le site.</p></div>' +
+        '<div class="actions-row"><button class="btn ghost" data-goto="5">← Retour</button><button class="btn primary" id="submitProfile">Soumettre mon profil</button></div>');
 }
 
 // (07/11/2026) « Enregistrer et voir le récapitulatif » : l'étape est d'abord enregistrée par son propre bouton ;
@@ -1098,9 +1102,8 @@ let allerAuRecap = false;
 function suite(n){ if (allerAuRecap) { allerAuRecap = false; return 6; } return n; }
 function goto(n){ state.meta.currentStep = n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 
-// Lecture des champs Identité/Physique — mutualisée entre le formulaire du
-// premier parcours (bindWizard) et l'éditeur de bloc post-publication
-// (bindBlockPage), qui réutilisent tous les deux stepIdentite()/stepPhysique().
+// Lecture des champs Identité/Physique des 6 étapes (bindWizard ; depuis le 11/11/2026 aussi pour les profils
+// déjà en ligne, l'ancien éditeur de blocs est retiré).
 function lireIdentiteFormulaire(){
   return {
     nomComplet: val('f-nom'), dateNaissance: val('f-dob'),
@@ -1497,7 +1500,7 @@ function bindStudioCv(){
       const k = b.dataset.scvAller;
       state.meta.studio = null;
       history.replaceState(null, '', location.pathname);
-      if (state.meta.premierePublicationFaite) state.meta.editBlock = k; else state.meta.currentStep = BLOCS_ETAPES.indexOf(k) + 1;
+      state.meta.currentStep = BLOCS_ETAPES.indexOf(k) + 1;
       render(); window.scrollTo(0, 0);
     });
   });
@@ -1547,7 +1550,7 @@ function bindPhotoHandlers(){
     resultats.forEach(function(item){ if (item) { s.photos.book.push(item); nbOk++; } });  // (dans l'ordre choisi)
     if (aEnvoyer.length > 1) toast(nbOk === aEnvoyer.length ? 'Les '+nbOk+' photos ont bien été ajoutées.' : nbOk+' photo(s) ajoutée(s) sur '+aEnvoyer.length+'.', nbOk !== aEnvoyer.length);
     else if (nbOk === 1) toast('Photo ajoutée.');
-    fBook.value=''; render(); reopenDashboardBlock('photos');
+    fBook.value=''; render();
   });
   document.querySelectorAll('[data-rmbook]').forEach(function(b){ b.addEventListener('click', async function(e){
     e.stopPropagation();
@@ -1560,7 +1563,7 @@ function bindPhotoHandlers(){
       if (s.photos.photoCv && String(s.photos.photoCv.id)===String(id)) s.photos.photoCv=null;
       if (s.photos.pleinPied && String(s.photos.pleinPied.id)===String(id)) s.photos.pleinPied=null;
       if (s.photos.couverture && String(s.photos.couverture.id)===String(id)) s.photos.couverture=null;
-      render(); reopenDashboardBlock('photos');
+      render();
     }
   }); });
 
@@ -1576,14 +1579,14 @@ function bindPhotoHandlers(){
     if (!photo) return;
     if (photo.compcardOrdre) {
       const ok = await Store.setCompcardOrdre(photo.id, null);
-      if (ok) { retirerDeCompcardLocal(photo); render(); reopenDashboardBlock('photos'); toast('Retirée de la compcard'); }
+      if (ok) { retirerDeCompcardLocal(photo); render(); toast('Retirée de la compcard'); }
       return;
     }
     const occupes = s.photos.book.map(function(ph){ return ph.compcardOrdre; }).filter(Boolean);
     let slotLibre = null;
     for (let n=1; n<=5; n++){ if (occupes.indexOf(n)===-1) { slotLibre = n; break; } }
     if (!slotLibre) { toast('Compcard déjà complète (5/5), retirez-en une avant d’en ajouter une autre', true); return; }
-    if (await assignerCompcardSlot(photo, slotLibre)) { render(); reopenDashboardBlock('photos'); }
+    if (await assignerCompcardSlot(photo, slotLibre)) { render(); }
   }); });
 
   function ouvrirChoixBook(onChoisir){
@@ -1608,23 +1611,23 @@ function bindPhotoHandlers(){
   async function assignerCouverture(photo){ const ok = await Store.setRolePhoto('photo_couverture', photo.id); if (ok) { s.photos.couverture=photo; toast('Photo de couverture définie'); } return ok; }
 
   document.getElementById('uPhotoCv')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerPhotoCv(photo)) { render(); reopenDashboardBlock('photos'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerPhotoCv(photo)) { render(); } });
   });
   document.getElementById('uPrincipale')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerPrincipale(photo)) { render(); reopenDashboardBlock('photos'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerPrincipale(photo)) { render(); } });
   });
   document.getElementById('uPleinPied')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerPleinPied(photo)) { render(); reopenDashboardBlock('photos'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerPleinPied(photo)) { render(); } });
   });
   document.getElementById('uCouverture')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerCouverture(photo)) { render(); reopenDashboardBlock('photos'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerCouverture(photo)) { render(); } });
   });
   document.querySelectorAll('[data-couv-pos]').forEach(function(btn){ btn.addEventListener('click', async function(e){
     e.stopPropagation();
     if (!s.photos.couverture) return;
     const pos = btn.dataset.couvPos;
     const ok = await Store.setCouverturePosition(s.photos.couverture.id, pos);
-    if (ok) { s.photos.couverture.couverturePosition = pos; render(); reopenDashboardBlock('photos'); }
+    if (ok) { s.photos.couverture.couverturePosition = pos; render(); }
   }); });
   (function appliquerCadrageCouverturePreview(){
     const img = document.querySelector('[data-couv-preview]');
@@ -1635,7 +1638,7 @@ function bindPhotoHandlers(){
   document.querySelectorAll('[data-cc-book]').forEach(function(btn){ btn.addEventListener('click', function(e){
     e.stopPropagation();
     const slot = parseInt(btn.dataset.ccBook,10);
-    ouvrirChoixBook(async function(photo){ if (await assignerCompcardSlot(photo, slot)) { render(); reopenDashboardBlock('photos'); } });
+    ouvrirChoixBook(async function(photo){ if (await assignerCompcardSlot(photo, slot)) { render(); } });
   }); });
   document.querySelectorAll('[data-clear-cc-slot]').forEach(function(btn){ btn.addEventListener('click', async function(e){
     e.stopPropagation();
@@ -1643,7 +1646,7 @@ function bindPhotoHandlers(){
     const photo = s.photos.book.find(function(ph){ return ph.compcardOrdre===slot; });
     if (!photo) return;
     const ok = await Store.setCompcardOrdre(photo.id, null);
-    if (ok) { retirerDeCompcardLocal(photo); render(); reopenDashboardBlock('photos'); toast('Emplacement '+slot+' libéré, la photo reste dans le Book'); }
+    if (ok) { retirerDeCompcardLocal(photo); render(); toast('Emplacement '+slot+' libéré, la photo reste dans le Book'); }
   }); });
 
   // Téléversement direct par rôle : la photo est ajoutée au Book (comme toute
@@ -1672,7 +1675,7 @@ function bindPhotoHandlers(){
       else if (cle==='pleinPied') await assignerPleinPied(item);
       else if (cle==='couverture') await assignerCouverture(item);
       else await assignerCompcardSlot(item, parseInt(cle,10));
-      render(); reopenDashboardBlock('photos');
+      render();
     });
   });
 
@@ -1796,112 +1799,10 @@ function marquerChampsARemplir(bloc){
   }
 }
 
-const BLOCKS = [
-  {k:'identite', ic:'👤', title:'Identité', desc:'Nom, contact, sexe, naissance'},
-  {k:'physique', ic:'📏', title:'Physique', desc:'Mensurations'},
-  {k:'formation', ic:'🎓', title:'Formation', desc:'Études et formation mannequin'},
-  {k:'experiences', ic:'👠', title:'Expérience', desc:'Défilés, campagnes, shootings…'},
-  {k:'photos', ic:'📸', title:'Photos', desc:'Principales, book, compcard'},
-];
 
-// Bouton "Enregistrer" (rouge → vert une fois enregistré) + bouton "Retour au
-// tableau de bord" sous chaque bloc, sans exception — y compris Photos et
-// Expérience, où chaque action se sauvegarde déjà individuellement : le clic
-// y confirme simplement visuellement (même code couleur) plutôt que de forcer
-// à remonter en haut de page pour retrouver le bouton retour.
-function editorAction(label){
-  return '<div class="editor-page-actions"><button type="button" class="btn ghost ret" data-editor-retour="1">← Retour au tableau de bord</button><button class="btn editor-save" data-editor-save="1">'+label+'</button></div>';
-}
 
-function editorPageBody(k){
-  if (k==='identite') return stepIdentite().replace('<p class="sub">Étape 1 sur 6</p>','<p class="sub">Modifiez ici tous les éléments de votre identité.</p>').replace('<div class="actions-row end"><button class="btn primary" id="save1">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if (k==='physique') return stepPhysique().replace('<p class="sub">Étape 2 sur 6</p>','<p class="sub">Modifiez ici toutes vos mensurations.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="1">← Retour</button><button class="btn primary" id="save2">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if (k==='formation') return stepFormation().replace('<p class="sub">Étape 3 sur 6</p>','<p class="sub">Modifiez ici votre formation et votre parcours mannequin.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="2">← Retour</button><button class="btn primary" id="save3">Enregistrer</button></div>', editorAction('Enregistrer'));
-  if (k==='experiences') return stepExperience().replace('<p class="sub">Étape 4 sur 6</p>','<p class="sub">Modifiez ici votre profil professionnel et vos expériences, chaque ligne est enregistrée séparément.</p>').replace('<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>', editorAction('Enregistrer'));
-  if (k==='photos') return stepPhotos().replace('<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>', editorAction('Enregistrer'));
-  return '';
-}
-
-/* Messages personnalisés des blocs : la mannequin doit se sentir chez elle
-   dans son propre espace, pas devant un formulaire générique — chaque
-   message emploie directement son prénom (déduit de state.identite.nomComplet,
-   avec repli sur le titre générique tant qu'elle ne l'a pas encore renseigné). */
-function messageBlocPersonnalise(k, prenom){
-  const messages = {
-    identite: prenom+', vérifiez que vos informations d’identité sont exactes, c’est ce que les recruteurs verront en premier.',
-    physique: prenom+', gardez vos mensurations à jour pour recevoir des propositions qui vous correspondent vraiment.',
-    formation: prenom+', votre formation valorise votre profil, complétez-la avec soin.',
-    experiences: prenom+', chaque expérience ajoutée renforce votre parcours professionnel.',
-    photos: prenom+', vos photos sont votre vitrine, choisissez celles qui vous représentent le mieux.'
-  };
-  return messages[k] || (prenom+', ce bloc s’enregistre indépendamment des autres.');
-}
-function viewBlockEditor(k){
-  const titles = {identite:'Identité', physique:'Physique', formation:'Formation', experiences:'Expérience professionnelle', photos:'Photos & compcard'};
-  const prenom = prenomDe(state.identite.nomComplet);
-  const sousTitre = prenom ? messageBlocPersonnalise(k, prenom) : 'Ce bloc s’enregistre indépendamment des autres.';
-  return header('Modification du profil') +
-    '<div class="block-editor-page"><div class="block-editor-top"><div><span class="editor-kicker">VOTRE ESPACE</span><h1>'+echapperHtml(prenom ? (prenom+' · '+(titles[k]||'')) : (titles[k]||'Modification'))+'</h1><p>'+echapperHtml(sousTitre)+'</p></div>' +
-    '<button type="button" class="btn ghost small p20-19" id="fermerEditeurBloc">← Retour au tableau de bord</button></div>' +
-    '<div class="panel block-editor-panel">'+editorPageBody(k)+'</div></div>';
-}
-
-function bindBlockPage(k){
-  const s = state;
-  document.getElementById('fermerEditeurBloc')?.addEventListener('click', function(){ state.meta.editBlock=null; render(); });
-  document.querySelector('[data-editor-retour="1"]')?.addEventListener('click', function(){ state.meta.editBlock=null; render(); });
-  bindExperienceHandlers();
-  bindProfilProHandlers();
-  bindPhotoHandlers();
-  bindCompetencesHandlers();
-  initSelectsAvecAutre();
-  brancherTaillesCalculees();
-  bindStepIdentite();
-
-  const btn = document.querySelector('[data-editor-save="1"]');
-  if (!btn) return;
-
-  // Photos et Expérience s'enregistrent déjà individuellement à chaque action
-  // (upload, sélection, ligne ajoutée…) : le bouton confirme simplement en
-  // vert, sans nouvel appel réseau ni notion de "payload" en attente.
-  if (k==='photos' || k==='experiences') {
-    btn.addEventListener('click', function(){
-      btn.textContent='✓ Enregistré'; btn.classList.add('saved');
-      setTimeout(function(){ btn.textContent='Enregistrer'; btn.classList.remove('saved'); }, 1800);
-    });
-    return;
-  }
-
-  btn.addEventListener('click', async function(){
-    if (k==='identite' && (!lireCiviliteFormulaire() || !lireInstagramFormulaire() || !lireParentFormulaire())) return;
-    btn.disabled = true; btn.textContent = 'Enregistrement…';
-    let ok = false, payload = {};
-    if (k==='identite') {
-      const identiteFormulaire = lireIdentiteFormulaire();
-      identiteFormulaire.sexe = identiteFormulaire.sexe || s.identite.sexe;
-      Object.assign(s.identite, identiteFormulaire);
-      s.bio = val('f-bio'); s.citation = val('f-citation');
-      payload = Object.assign(identiteToDb(s.identite), { bio: s.bio||null, instagram: s.instagram||null, citation: s.citation||null });
-    } else if (k==='physique') {
-      Object.assign(s.physique, lirePhysiqueFormulaire());
-      payload = physiqueToDb(s.physique);
-    } else if (k==='formation') {
-      s.formation.niveau=val('f-niveau'); s.formation.etablissement=val('f-etab'); s.formation.particuliere=val('f-formPart'); s.formation.mannequin=val('f-formMannequin');
-      payload = formationToDb(s.formation);
-    }
-    ok = await Store.saveBlock(payload);
-    if (ok && k==='physique') await enregistrerComplementsPhysique(s.physique);
-    if (ok && k==='identite') await enregistrerComplementsIdentite();
-    if (ok) { btn.textContent='✓ Enregistré'; btn.classList.add('saved'); setTimeout(function(){ toast('Bloc « '+k+' » enregistré'); }, 400); }
-    else { btn.disabled=false; btn.textContent='Enregistrer'; }
-  });
-}
-
-function reopenDashboardBlock(k){ setTimeout(function(){ const btn=document.querySelector('[data-edit="'+k+'"]'); if (btn) btn.click(); }, 0); }
-
-function viewDashboard(){
-  const d = state.identite;
-  const pts = pointsARemplir();
+// état du profil déjà publié, en haut des 6 étapes (avant : en haut de l'ancien tableau de bord)
+function bandeauStatut(){
   let bandeau = '';
   if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
   else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' · « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
@@ -1909,43 +1810,9 @@ function viewDashboard(){
   // (11/11/2026, signalé par la propriétaire) profil jamais publié mais marqué « déjà formé » par le rattrapage de
   // l'Extension 43 : le bandeau disait à tort « en ligne » ; l'Extension 161 les renvoie vers les 6 étapes.
   else bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Profil pas encore en ligne : il doit d’abord être validé par l’agence</div>';
-
-  // Rappel (non bloquant) des blocs encore incomplets — le profil reste en
-  // ligne tel quel, mais un book/fiche plus complet est plus attrayant pour
-  // les recruteurs. Demande explicite de la propriétaire, 28 septembre 2026.
-  // Même règle que les pastilles rouges (js/analyse-profil.js) quand elle est disponible.
-  const blocsIncomplets = BLOCKS.filter(function(b, i){ return pts ? pts.nb[b.k] > 0 : !stepComplete(i + 1); });
-  let alerteIncomplet = '';
-  if (blocsIncomplets.length) {
-    alerteIncomplet = '<div class="alerte-incomplet">⚠ <strong>Votre profil n’est pas complet.</strong> Un profil complet est bien plus attrayant pour les recruteurs, complétez : ' +
-      blocsIncomplets.map(function(b){ return '<button type="button" class="alerte-lien" data-alerte-goto="'+b.k+'">'+b.title+'</button>'; }).join(', ') +
-      '.</div>';
-  }
-
-  return header('Espace validé') + '<div class="panel">' + bandeau + alerteIncomplet +
-    '<h1 class="p20-10">Bonjour '+echapperHtml((d.nomComplet||'').split(' ')[0]||'')+'</h1>' +
-    '<p class="sub p20-13">Modifiez un bloc à la fois, chaque bloc s’enregistre indépendamment des autres.</p>' +
-    (typeof ma2mTailles === 'function' ? '<div class="tailles-calculees">' + htmlSyntheseTailles(taillesDepuisEtat(), true) + '</div>' : '') +
-    '<div class="blocks-grid">' + BLOCKS.map(function(b){
-      return '<div class="block-card" data-block="'+b.k+'">'+(pts ? pastilleRouge(pts.nb[b.k]) : '')+'<span class="ic">'+b.ic+'</span><h3>'+b.title+'</h3><p>'+b.desc+'</p><button class="btn ghost small block-btn" data-edit="'+b.k+'">Modifier</button></div>';
-    }).join('') + '</div>' +
-    '<div class="cv-cta"><div class="txt"><h3>CV mannequin, privé</h3><p>Généré à partir de votre profil. Visible uniquement par vous et l’administrateur MA2M.</p></div>' +
-    '<button class="btn primary" id="openCv">Voir mon CV</button></div>' +
-    '<div class="cv-cta p20-15"><div class="txt"><h3>Compcard</h3><p>Fiche publique à partir des 5 photos sélectionnées.</p></div>' +
-    '<button class="btn ghost" id="openCc">Voir la compcard</button></div>' +
-    '<p class="lock-note">La case « rendre visible » et le bouton « soumettre » n’existent plus après la première publication.<br>Vous ne pouvez ni dépublier votre profil vous-même, ni accéder au dossier d’un autre mannequin.</p></div>';
+  return bandeau;
 }
 
-function bindDashboard(){
-  document.querySelectorAll('[data-edit]').forEach(function(btn){
-    btn.addEventListener('click', function(){ state.meta.editBlock = btn.dataset.edit; render(); window.scrollTo({top:0,behavior:'smooth'}); });
-  });
-  document.querySelectorAll('[data-alerte-goto]').forEach(function(btn){
-    btn.addEventListener('click', function(){ state.meta.editBlock = btn.dataset.alerteGoto; render(); window.scrollTo({top:0,behavior:'smooth'}); });
-  });
-  document.getElementById('openCv')?.addEventListener('click', openCv);
-  document.getElementById('openCc')?.addEventListener('click', openCompcard);
-}
 
 
 /* ------------------------------------------------------------- CV / PDF ---
@@ -1974,26 +1841,6 @@ function donneesCvDepuisEtat(){
   };
 }
 
-// Aperçu du CV (11/11/2026, CV « premium ») : l'image affichée est LE CV lui-même, dessiné par construireCanvasCv
-// (js/app.js) — l'aperçu et les fichiers PDF / image sont donc toujours identiques.
-async function openCv(){
-  const donneesCv = donneesCvDepuisEtat();
-  document.getElementById('overlayContent').innerHTML =
-    '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
-    '<div class="compcard-model compcard-apercu cv-apercu"><p class="sub">Préparation de votre CV…</p></div>' +
-    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en image</button><button class="btn primary small" id="btnCvPdf">📄 Télécharger en PDF</button></div>';
-  showOverlay();
-  document.getElementById('btnCvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
-  document.getElementById('btnCvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
-  const zone = document.querySelector('.cv-apercu');
-  try {
-    const canvas = await construireCanvasCv(donneesCv);
-    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Mon CV">';
-  } catch (e) {
-    signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
-    if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger le CV.</p>';
-  }
-}
 
 // Reconstruit, à partir de l'état réel du profil, l'objet { profil, photos, projets }
 // attendu par construireCanvasCompcard()/genererFiche() (js/app.js) — le même
@@ -2062,7 +1909,7 @@ async function demarrerApresConnexion(){
   if (location.hash === '#compcard') state.meta.studio = 'compcard';
   else if (location.hash === '#cv') state.meta.studio = 'cv';
   else if (location.hash === '#photos') {
-    if (state.meta.premierePublicationFaite) state.meta.editBlock = 'photos'; else state.meta.currentStep = 5;
+    state.meta.currentStep = 5;
   }
   render();
 }

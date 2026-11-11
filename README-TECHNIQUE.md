@@ -4612,3 +4612,14 @@ badge seul. Photo pleine page, « MODEL » en grand en haut, nom de l'événemen
 Le voile qui monte du bas prend la couleur de l'affiche du projet (`couleurAffiche`, Extension 162), noir
 sans affiche ; modifiable (champ couleur). Logo au choix : aucun (par défaut), agence, ou logo du
 partenaire téléversé (ImageJointe). Plus de ligne « Organisé par » ni de QR code. Essai : test-cartes-acces.
+
+## Profil déjà en ligne : les mêmes 6 étapes (11/11/2026, capture de la propriétaire)
+
+« Modifier mon profil » d'une mannequin déjà publiée ouvrait encore l'ancien tableau de bord à blocs. Désormais
+`render()` (js/espace-mannequin.js) montre à tout le monde les 6 étapes (`viewWizard`) ; pour un profil déjà en
+ligne : l'état du profil en haut (`bandeauStatut`), un texte d'accueil adapté, et un récapitulatif sans « Rendre
+visible » ni « Soumettre » (bouton « Terminé » vers /app/#profil). Même enregistrement (Store.saveBlock) et même
+revalidation par l'agence qu'avant. Retirés : viewDashboard, l'éditeur de blocs (viewBlockEditor, bindBlockPage),
+BLOCKS, reopenDashboardBlock et l'ancien aperçu du CV en superposition (« Mon CV » a sa page). Le petit message
+« Enregistré » (toast) s'écrivait blanc sur blanc : texte foncé (css/espace-mannequin-correctifs.css). Essai :
+test-etapes-profil (parcours « déjà en ligne »).
