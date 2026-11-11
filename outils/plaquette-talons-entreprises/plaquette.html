@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8">
-<!-- Plaquette commerciale « L'élégance au travail » — Atelier Talons & Élégance, offre Entreprises (11/11/2026).
-     A4 portrait, 8 pages, même univers que assets/documents/MA2M-Plaquette-entreprises.pdf, en rouge mat.
+<!-- Plaquette commerciale « L'élégance au travail » — Atelier Talons & Élégance, offre Entreprises (v2, 11/11/2026).
+     A4 portrait, 15 pages, rouge mat MA2M (#7C2128) + blanc. Structure voulue par la propriétaire (modèle « Le Wafou ») :
+     sommaire → susciter le besoin (pourquoi, situations, gains) → programme séance par séance (théorie + pratique)
+     → format → argent (tarifs, 3 cas pratiques, proforma type) → agence → contact.
      Images : images IA de la propriétaire (outils/video-talons/ia/). PDF : node faire-pdf.js -->
 <title>Plaquette L'élégance au travail</title>
 <style>
@@ -14,114 +16,225 @@
 @font-face { font-family: 'Montserrat'; font-weight: 700; src: url('../../assets/polices/montserrat-latin-700-normal.woff2'); }
 @font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-ext-600-normal.woff2'); unicode-range: U+0100-024F; }
 @page { size: A4; margin: 0; }
-:root { --rouge: #7C2128; --rouge-fonce: #5E171D; --blanc: #fff; --texte: #2a1416; --doux: #8a6a6d; --filet: #e6d6d7; }
+:root { --rouge: #7C2128; --rouge-fonce: #5E171D; --blanc: #fff; --texte: #2a1416; --doux: #8a6a6d; --filet: #e6d6d7; --gris: #5b4547; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Montserrat', sans-serif; color: var(--texte); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; background: var(--blanc); }
 .page.rouge { background: var(--rouge); color: #fff; }
-.pied { position: absolute; left: 16mm; right: 16mm; bottom: 10mm; display: flex; justify-content: space-between; font: 600 6.5pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--doux); }
+.pied { position: absolute; z-index: 4; left: 16mm; right: 16mm; bottom: 10mm; display: flex; justify-content: space-between; font: 600 6.5pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--doux); }
 .rouge .pied { color: rgba(255,255,255,0.75); }
 .eyebrow { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.42em; text-transform: uppercase; color: var(--rouge); display: flex; align-items: center; gap: 10px; }
 .eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; }
 .rouge .eyebrow { color: #fff; }
 h1, h2 { font-family: 'Cormorant Garamond', serif; font-weight: 500; line-height: 1.02; letter-spacing: -0.01em; }
 h1 em, h2 em { font-style: italic; font-weight: 400; }
-h2 { font-size: 34pt; margin: 6mm 0 6mm; }
+h2 { font-size: 32pt; margin: 6mm 0 5mm; }
 p { font-size: 9.5pt; line-height: 1.65; }
+.chapo { font-size: 9.8pt; color: var(--gris); max-width: 150mm; }
+.rouge .chapo { color: rgba(255,255,255,0.92); }
+.contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
 .photo { position: absolute; overflow: hidden; }
-.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
+.photo img, .img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
 .logo { height: 13mm; filter: brightness(0) invert(1); }
 
-/* 1. couverture */
+/* couverture */
 .couv .photo { inset: 0; }
 .couv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.55) 0%, rgba(124,33,40,0) 22%, rgba(124,33,40,0) 46%, rgba(124,33,40,0.92) 72%, #7C2128 100%); }
 .couv .haut { position: absolute; z-index: 2; left: 16mm; right: 16mm; top: 13mm; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
 .couv .haut span { font: 600 6.5pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; text-align: right; line-height: 1.8; }
 .couv .bas { position: absolute; z-index: 2; left: 16mm; right: 16mm; bottom: 22mm; color: #fff; }
-.couv h1 { font-size: 54pt; margin: 5mm 0 6mm; }
+.couv h1 { font-size: 54pt; margin: 5mm 0 5mm; }
+.couv .accroche { font-size: 10pt; max-width: 140mm; margin-bottom: 6mm; opacity: 0.95; }
 .couv .ligne { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.9; }
-.couv .pied { z-index: 2; }
 .cadre { position: absolute; inset: 7mm; border: 1px solid rgba(255,255,255,0.45); z-index: 3; pointer-events: none; }
 
-/* 2. pourquoi */
-.p2 .photo { left: 0; top: 0; bottom: 0; width: 86mm; }
-.p2 .contenu { position: absolute; left: 100mm; right: 16mm; top: 26mm; }
-.citation { margin-top: 8mm; padding-left: 6mm; border-left: 2px solid var(--rouge); font: italic 400 15pt/1.35 'Cormorant Garamond'; color: var(--rouge); }
-.chiffres { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 10mm; }
-.chiffres div { border-top: 1px solid var(--filet); padding-top: 3mm; }
-.chiffres b { display: block; font: italic 400 26pt 'Cormorant Garamond'; color: var(--rouge); }
-.chiffres span { font-size: 8pt; color: var(--doux); line-height: 1.5; display: block; }
+/* sommaire */
+.som .photo { right: 0; top: 0; bottom: 0; width: 70mm; }
+.som .contenu { right: 86mm; top: 26mm; }
+.som ol { list-style: none; margin-top: 10mm; }
+.som li { display: grid; grid-template-columns: 12mm 1fr 10mm; align-items: baseline; padding: 4.2mm 0; border-bottom: 1px solid var(--filet); }
+.som li b { font: italic 400 15pt 'Cormorant Garamond'; color: var(--rouge); }
+.som li span { font: 500 14.5pt/1.2 'Cormorant Garamond'; }
+.som li small { display: block; font: 500 7.5pt/1.5 'Montserrat'; color: var(--doux); margin-top: 1mm; }
+.som li i { font: 600 7.5pt 'Montserrat'; color: var(--rouge); text-align: right; font-style: normal; }
+.som .partie { margin-top: 8mm; font: 600 6.8pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; color: var(--doux); }
 
-/* 3. programme */
-.p3 .contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
-.modules { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm 6mm; margin-top: 8mm; }
-.module { position: relative; }
-.module .img { height: 66mm; overflow: hidden; }
-.module .img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; display: block; }
-.module .num { position: absolute; left: 0; top: 0; background: var(--rouge); color: #fff; font: 700 7pt 'Montserrat'; letter-spacing: 0.25em; padding: 2.2mm 3.4mm; }
-.module h3 { font: 500 17pt 'Cormorant Garamond'; margin: 3.5mm 0 1.5mm; }
-.module p { font-size: 8.4pt; color: #5b4547; line-height: 1.55; }
+/* besoin */
+.besoin .photo { left: 0; top: 0; bottom: 0; width: 84mm; }
+.besoin .contenu { left: 98mm; top: 24mm; }
+.besoin h2 { font-size: 30pt; }
+.citation { margin-top: 7mm; padding-left: 6mm; border-left: 2px solid var(--rouge); font: italic 400 15pt/1.35 'Cormorant Garamond'; color: var(--rouge); }
+.constat { margin-top: 8mm; border-top: 1px solid var(--filet); }
+.constat div { padding: 3.4mm 0; border-bottom: 1px solid var(--filet); }
+.constat b { display: block; font: 600 7pt 'Montserrat'; letter-spacing: 0.24em; text-transform: uppercase; color: var(--rouge); margin-bottom: 1mm; }
+.constat span { font: 500 12.5pt/1.3 'Cormorant Garamond'; }
 
-/* 4. format (page rouge) */
-.p4 .photo { right: 0; top: 0; width: 82mm; height: 150mm; }
-.p4 .contenu { position: absolute; left: 16mm; width: 102mm; top: 24mm; }
-.format { margin-top: 9mm; display: grid; gap: 0; }
+/* raisons (style liste numérotée) */
+.raisons { margin-top: 7mm; }
+.raisons > div { display: grid; grid-template-columns: 13mm 1fr; padding: 3.4mm 0; border-top: 1px solid var(--filet); }
+.raisons > div:last-child { border-bottom: 1px solid var(--filet); }
+.raisons b { font: italic 400 17pt 'Cormorant Garamond'; color: var(--rouge); line-height: 1; }
+.raisons h3 { font: 500 14.5pt/1.2 'Cormorant Garamond'; margin-bottom: 1mm; }
+.raisons p { font-size: 8.6pt; color: var(--gris); line-height: 1.55; }
+.bandeau-noir { position: absolute; left: 16mm; right: 16mm; bottom: 22mm; background: var(--rouge); color: #fff; padding: 6mm 8mm; display: grid; grid-template-columns: 1fr auto; gap: 8mm; align-items: center; }
+.bandeau-noir p { font: italic 400 15pt/1.35 'Cormorant Garamond'; }
+.bandeau-noir span { font: 600 7pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.85; text-align: right; line-height: 1.8; }
+
+/* situations (rouge) */
+.scenes { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 8mm; }
+.scene .img { height: 84mm; overflow: hidden; }
+.scene h3 { font: 500 16pt 'Cormorant Garamond'; margin: 3mm 0 1mm; }
+.scene p { font-size: 8.2pt; line-height: 1.5; opacity: 0.9; }
+
+/* gains */
+.cibles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; margin-top: 7mm; }
+.cible { border-top: 2px solid var(--rouge); padding-top: 4mm; }
+.cible small { font: 600 6.8pt 'Montserrat'; letter-spacing: 0.26em; text-transform: uppercase; color: var(--rouge); }
+.cible h3 { font: 500 15pt/1.15 'Cormorant Garamond'; margin: 2mm 0 3mm; }
+.cible li { list-style: none; font-size: 8.2pt; line-height: 1.5; color: var(--gris); padding: 1.4mm 0 1.4mm 5mm; position: relative; }
+.cible li::before { content: ""; position: absolute; left: 0; top: 3.1mm; width: 2.2mm; height: 2.2mm; background: var(--rouge); transform: rotate(45deg); }
+.occasions { margin-top: 9mm; }
+.occasions .liste { display: flex; flex-wrap: wrap; gap: 3mm; margin-top: 4mm; }
+.occasions .liste span { border: 1px solid var(--rouge); color: var(--rouge); border-radius: 999px; padding: 2.2mm 5mm; font: 600 7.5pt 'Montserrat'; letter-spacing: 0.08em; }
+.gains .photo { left: 16mm; right: 16mm; bottom: 22mm; height: 84mm; }
+
+/* programme (vue d'ensemble) */
+.samedis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-top: 8mm; }
+.samedi .img { height: 62mm; overflow: hidden; position: relative; }
+.samedi .num { position: absolute; left: 0; top: 0; background: var(--rouge); color: #fff; font: 700 6.6pt 'Montserrat'; letter-spacing: 0.22em; padding: 2mm 3mm; }
+.samedi h3 { font: 500 14pt/1.15 'Cormorant Garamond'; margin: 3mm 0 1.5mm; }
+.samedi p { font-size: 7.8pt; color: var(--gris); line-height: 1.5; }
+.methode { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 10mm; }
+.methode div { background: #f7eeef; padding: 6mm 7mm; }
+.methode b { display: block; font: 600 7pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rouge); margin-bottom: 2mm; }
+.methode h3 { font: 500 17pt 'Cormorant Garamond'; margin-bottom: 2mm; }
+.methode p { font-size: 8.4pt; color: var(--gris); line-height: 1.55; }
+.fil { margin-top: 8mm; display: flex; justify-content: space-between; font: 600 7pt 'Montserrat'; letter-spacing: 0.2em; text-transform: uppercase; color: var(--rouge); border-top: 1px solid var(--filet); padding-top: 4mm; }
+
+/* séances détaillées */
+.seance { margin-top: 7mm; }
+.seance .tete { display: grid; grid-template-columns: 52mm 1fr; gap: 7mm; align-items: stretch; }
+.seance .img { height: 56mm; overflow: hidden; }
+.seance .num { font: 600 7pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rouge); }
+.seance h3 { font: 500 22pt/1.05 'Cormorant Garamond'; margin: 2mm 0 2mm; }
+.seance h3 em { font-style: italic; font-weight: 400; }
+.seance .objectif { font-size: 8.6pt; color: var(--gris); }
+.colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 4mm; }
+.colonnes div { border-top: 1px solid var(--rouge); padding-top: 2.5mm; }
+.colonnes b { font: 600 6.8pt 'Montserrat'; letter-spacing: 0.28em; text-transform: uppercase; color: var(--rouge); }
+.colonnes li { list-style: none; font-size: 8pt; line-height: 1.45; color: var(--texte); padding: 1.1mm 0 1.1mm 4mm; position: relative; }
+.colonnes li::before { content: "–"; position: absolute; left: 0; color: var(--rouge); }
+.acquis { margin-top: 3.5mm; background: #f7eeef; padding: 3mm 5mm; font: italic 400 12pt/1.35 'Cormorant Garamond'; color: var(--rouge); }
+.acquis b { font: 600 6.6pt 'Montserrat'; letter-spacing: 0.26em; text-transform: uppercase; font-style: normal; margin-right: 2mm; }
+.separateur { height: 1px; background: var(--filet); margin-top: 7mm; }
+
+/* format (rouge) */
+.p-format .photo.haut { right: 0; top: 0; width: 82mm; height: 150mm; }
+.p-format .contenu { width: 102mm; right: auto; top: 24mm; }
+.format { margin-top: 9mm; }
 .format div { display: grid; grid-template-columns: 36mm 1fr; gap: 4mm; padding: 4.2mm 0; border-top: 1px solid rgba(255,255,255,0.28); }
 .format div:last-child { border-bottom: 1px solid rgba(255,255,255,0.28); }
 .format b { font: 600 7pt 'Montserrat'; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.85; padding-top: 1.2mm; }
 .format span { font: 500 15pt/1.25 'Cormorant Garamond'; }
-.p4 .bande { position: absolute; left: 0; right: 0; bottom: 0; height: 120mm; }
-.p4 .bande .photo { position: absolute; top: 0; height: 100%; width: 33.4%; }
-.p4 .bande::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #7C2128 0%, rgba(124,33,40,0) 30%, rgba(124,33,40,0) 75%, rgba(124,33,40,0.85) 100%); }
+.bande { position: absolute; left: 0; right: 0; bottom: 0; height: 120mm; }
+.bande .photo { top: 0; height: 100%; width: 33.4%; }
+.bande::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #7C2128 0%, rgba(124,33,40,0) 30%, rgba(124,33,40,0) 75%, rgba(124,33,40,0.85) 100%); }
 
-/* 5. bénéfices */
-.p5 .contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
-.deux { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-top: 6mm; }
-.deux h3 { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; color: var(--rouge); padding-bottom: 3mm; border-bottom: 1px solid var(--rouge); margin-bottom: 2mm; }
-.deux li { list-style: none; font: 500 13pt/1.3 'Cormorant Garamond'; padding: 3mm 0 3mm 7mm; border-bottom: 1px solid var(--filet); position: relative; }
-.deux li::before { content: ""; position: absolute; left: 0; top: 5.2mm; width: 3mm; height: 3mm; background: var(--rouge); transform: rotate(45deg); }
-.occasions { margin-top: 10mm; }
-.occasions .liste { display: flex; flex-wrap: wrap; gap: 3mm; margin-top: 4mm; }
-.occasions .liste span { border: 1px solid var(--rouge); color: var(--rouge); border-radius: 999px; padding: 2.2mm 5mm; font: 600 7.5pt 'Montserrat'; letter-spacing: 0.08em; }
-.p5 .photo { left: 16mm; right: 16mm; bottom: 22mm; height: 62mm; }
+/* investissement */
+.trois { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; margin-top: 8mm; }
+.trois div { border: 1px solid var(--filet); padding: 5mm 5mm 4mm; }
+.trois div.fort { background: var(--rouge); border-color: var(--rouge); color: #fff; }
+.trois b { display: block; font: 500 30pt/1 'Cormorant Garamond'; color: var(--rouge); }
+.trois .fort b { color: #fff; }
+.trois b small { font: 700 9pt 'Montserrat'; letter-spacing: 0.06em; margin-left: 1.5mm; }
+.trois span { display: block; margin-top: 2.5mm; font-size: 7.8pt; line-height: 1.45; color: var(--doux); }
+.trois .fort span { color: rgba(255,255,255,0.9); }
+.soustitre { margin-top: 11mm; font: 600 7pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rouge); }
+table.tarifs { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+.tarifs th { font: 600 6.6pt 'Montserrat'; letter-spacing: 0.22em; text-transform: uppercase; color: var(--doux); text-align: left; padding: 2.5mm 3mm; border-bottom: 1px solid var(--texte); }
+.tarifs th:last-child, .tarifs td:last-child { text-align: right; }
+.tarifs td { padding: 3.6mm 3mm; border-bottom: 1px solid var(--filet); font-size: 9pt; }
+.tarifs td:first-child { font: 500 13pt 'Cormorant Garamond'; }
+.tarifs td:last-child { font-weight: 700; }
+.tarifs tr.fort td { background: var(--rouge); color: #fff; }
+.note { margin-top: 6mm; font: italic 400 13pt/1.4 'Cormorant Garamond'; color: var(--texte); }
+.note-petite { margin-top: 3mm; font-size: 8pt; color: var(--doux); }
+.inclus { margin-top: 9mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+.inclus div { border-top: 1px solid var(--rouge); padding-top: 3mm; font: 500 12pt/1.25 'Cormorant Garamond'; }
+.inclus small { display: block; font: 600 6.4pt 'Montserrat'; letter-spacing: 0.24em; text-transform: uppercase; color: var(--rouge); margin-bottom: 1.5mm; }
 
-/* 6. offre (page rouge) */
-.p6 .photo { inset: 0; }
-.p6::after { content: ""; position: absolute; inset: 0; background: rgba(124,33,40,0.86); }
-.p6 .contenu { position: absolute; z-index: 2; left: 16mm; right: 16mm; top: 26mm; text-align: center; color: #fff; }
-.p6 .eyebrow { justify-content: center; }
-.p6 .eyebrow::after { content: ""; width: 26px; height: 1px; background: currentColor; }
-.prix { margin: 12mm auto 4mm; font: italic 400 76pt/0.9 'Cormorant Garamond'; }
-.prix small { font: 700 16pt 'Montserrat'; font-style: normal; letter-spacing: 0.08em; margin-left: 3mm; }
-.prix-sous { font: 600 8.5pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.9; }
-.carte-offre { margin: 12mm auto 0; width: 150mm; background: #fff; color: var(--texte); border-radius: 4mm; padding: 9mm 10mm; text-align: left; box-shadow: 0 20mm 40mm -16mm rgba(20,2,5,0.8); }
-.carte-offre div { display: flex; justify-content: space-between; align-items: baseline; padding: 3.4mm 0; border-bottom: 1px solid var(--filet); }
-.carte-offre div:last-child { border-bottom: 0; }
-.carte-offre b { font: 600 7.5pt 'Montserrat'; letter-spacing: 0.2em; text-transform: uppercase; color: var(--doux); }
-.carte-offre span { font: 500 14pt 'Cormorant Garamond'; color: var(--rouge); text-align: right; }
-.exemple { margin-top: 9mm; font: italic 400 14pt 'Cormorant Garamond'; opacity: 0.95; }
-.p6 .pied { z-index: 2; }
+/* cas pratiques */
+.cas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 8mm; }
+.cas > div { border: 1px solid var(--filet); display: flex; flex-direction: column; }
+.cas .img { height: 52mm; overflow: hidden; }
+.cas .corps { padding: 5mm; display: flex; flex-direction: column; flex: 1; }
+.cas small { font: 600 6.4pt 'Montserrat'; letter-spacing: 0.26em; text-transform: uppercase; color: var(--rouge); }
+.cas h3 { font: 500 15pt/1.15 'Cormorant Garamond'; margin: 2mm 0 2.5mm; }
+.cas p { font-size: 7.9pt; line-height: 1.5; color: var(--gris); }
+.cas li { list-style: none; font-size: 7.8pt; line-height: 1.45; padding: 1mm 0 1mm 4mm; position: relative; color: var(--texte); }
+.cas li::before { content: "–"; position: absolute; left: 0; color: var(--rouge); }
+.cas ul { margin: 3mm 0; }
+.cas .total { margin-top: auto; border-top: 1px solid var(--filet); padding-top: 3mm; }
+.cas .total span { display: block; font: 600 6.4pt 'Montserrat'; letter-spacing: 0.22em; text-transform: uppercase; color: var(--doux); }
+.cas .total b { font: 500 19pt 'Cormorant Garamond'; color: var(--rouge); }
+.cas > div.fort { background: var(--rouge); border-color: var(--rouge); color: #fff; }
+.cas .fort small, .cas .fort h3, .cas .fort li, .cas .fort p, .cas .fort .total b { color: #fff; }
+.cas .fort li::before { color: #fff; }
+.cas .fort .total { border-color: rgba(255,255,255,0.35); }
+.cas .fort .total span { color: rgba(255,255,255,0.8); }
+.gagnant { margin-top: 7mm; background: #f7eeef; padding: 6mm 8mm; }
+.gagnant b { font: 600 7pt 'Montserrat'; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rouge); }
+.gagnant p { margin-top: 2mm; font: italic 400 13.5pt/1.4 'Cormorant Garamond'; color: var(--texte); }
 
-/* 7. comment + qui sommes-nous */
-.p7 .contenu { position: absolute; left: 16mm; right: 16mm; top: 22mm; }
+/* proforma */
+.pro { position: absolute; left: 14mm; right: 14mm; top: 14mm; bottom: 22mm; border: 1px solid var(--filet); }
+.pro .entete { background: var(--rouge); color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 7mm 8mm; }
+.pro .entete .logo { height: 11mm; }
+.pro .entete div { text-align: right; }
+.pro .entete strong { display: block; font: 700 10pt 'Montserrat'; letter-spacing: 0.5em; }
+.pro .entete span { font: 600 6.4pt 'Montserrat'; letter-spacing: 0.25em; opacity: 0.85; }
+.pro .corps { padding: 7mm 8mm; }
+.pro .parties { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10mm; padding-bottom: 6mm; border-bottom: 1px solid var(--texte); }
+.pro small { display: block; font: 600 6.4pt 'Montserrat'; letter-spacing: 0.26em; text-transform: uppercase; color: var(--doux); margin-bottom: 2mm; }
+.pro .parties h3 { font: 500 16pt 'Cormorant Garamond'; }
+.pro .parties p { font-size: 8.4pt; line-height: 1.55; }
+.pro .parties .gris { color: var(--doux); font-size: 8pt; }
+.pro table { width: 100%; border-collapse: collapse; margin-top: 2mm; }
+.pro th { font: 600 6.2pt 'Montserrat'; letter-spacing: 0.22em; text-transform: uppercase; color: var(--doux); text-align: left; padding: 4mm 0 3mm; border-bottom: 1px solid var(--filet); }
+.pro th:nth-child(n+2), .pro td:nth-child(n+2) { text-align: right; }
+.pro td { padding: 4mm 0; border-bottom: 1px solid var(--filet); vertical-align: top; font-size: 8.4pt; }
+.pro td:first-child { width: 48%; }
+.pro td h4 { font: 500 13.5pt 'Cormorant Garamond'; font-weight: 500; }
+.pro td p { font-size: 7.6pt; color: var(--doux); line-height: 1.45; margin-top: 0.8mm; }
+.pro td:last-child { font-weight: 700; }
+.pro .total { margin-top: 6mm; background: var(--rouge); color: #fff; display: flex; justify-content: space-between; align-items: baseline; padding: 5mm 7mm; }
+.pro .total span { font: italic 400 17pt 'Cormorant Garamond'; }
+.pro .total b { font: 500 24pt 'Cormorant Garamond'; }
+.pro .engagement { margin-top: 5mm; border: 1px solid var(--rouge); padding: 4mm 6mm; }
+.pro .engagement b { font: 700 6.4pt 'Montserrat'; letter-spacing: 0.26em; text-transform: uppercase; color: var(--rouge); }
+.pro .engagement p { margin-top: 1.5mm; font: italic 400 12pt/1.4 'Cormorant Garamond'; }
+.pro .signatures { position: absolute; left: 8mm; right: 8mm; bottom: 9mm; display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; }
+.pro .signatures div { border-top: 1px solid var(--texte); padding-top: 2mm; font: 600 6.2pt 'Montserrat'; letter-spacing: 0.2em; text-transform: uppercase; color: var(--doux); }
+
+/* étapes + qui sommes-nous */
 .etapes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; margin-top: 8mm; }
 .etapes div { border-top: 2px solid var(--rouge); padding-top: 4mm; }
 .etapes b { display: block; font: italic 400 30pt/1 'Cormorant Garamond'; color: var(--rouge); }
 .etapes h3 { font: 600 8pt 'Montserrat'; letter-spacing: 0.12em; text-transform: uppercase; margin: 3mm 0 2mm; }
-.etapes p { font-size: 8pt; color: #5b4547; line-height: 1.5; }
+.etapes p { font-size: 8pt; color: var(--gris); line-height: 1.5; }
 .qui { position: absolute; left: 0; right: 0; bottom: 0; height: 128mm; background: var(--rouge); color: #fff; display: grid; grid-template-columns: 88mm 1fr; }
 .qui .photo { position: relative; height: 100%; }
 .qui .texte { padding: 14mm 16mm 18mm 12mm; }
 .qui h2 { font-size: 26pt; margin: 4mm 0 4mm; }
 .qui p { font-size: 8.8pt; opacity: 0.95; }
 .qui .piliers { margin-top: 6mm; font: 600 7pt 'Montserrat'; letter-spacing: 0.4em; text-transform: uppercase; }
-.p7 .pied { color: rgba(255,255,255,0.75); }
+.p-agence .pied { color: rgba(255,255,255,0.75); left: 104mm; }
 
-/* 8. contact (rouge) */
-.p8 .photo { inset: 0; }
-.p8::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.7) 0%, rgba(124,33,40,0.92) 45%, #7C2128 100%); }
-.p8 .contenu { position: absolute; z-index: 2; left: 16mm; right: 16mm; top: 22mm; color: #fff; }
-.p8 h2 { font-size: 44pt; }
+/* contact (rouge) */
+.p-contact .photo { inset: 0; }
+.p-contact::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.7) 0%, rgba(124,33,40,0.92) 45%, #7C2128 100%); }
+.p-contact .contenu { z-index: 2; color: #fff; }
+.p-contact h2 { font-size: 44pt; }
 .coordonnees { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm 10mm; margin-top: 12mm; }
 .coordonnees div { border-top: 1px solid rgba(255,255,255,0.35); padding-top: 3.5mm; }
 .coordonnees b { display: block; font: 600 6.8pt 'Montserrat'; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.8; margin-bottom: 1.6mm; }
@@ -131,58 +244,205 @@ p { font-size: 9.5pt; line-height: 1.65; }
 .qrs img { width: 30mm; height: 30mm; background: #fff; padding: 1.5mm; }
 .qrs span { font: 600 7pt 'Montserrat'; letter-spacing: 0.25em; text-transform: uppercase; line-height: 1.8; }
 .bouton { display: inline-block; margin-top: 14mm; background: #fff; color: var(--rouge); border-radius: 999px; padding: 4.5mm 11mm; font: 700 9pt 'Montserrat'; letter-spacing: 0.08em; }
-.p8 .pied { z-index: 2; }
 </style></head>
 <body>
 
-<!-- 1. COUVERTURE -->
+<!-- 01. COUVERTURE -->
 <section class="page couv rouge">
-  <div class="photo"><img src="../video-talons/ia/ia-31.jpg"></div>
+  <div class="photo"><img src="../video-talons/ia/ia-31.jpg" alt=""></div>
   <div class="cadre"></div>
-  <div class="haut"><img class="logo" src="../../assets/logo-header.png" alt="Maître Akesse Model Management"><span>Offre Entreprises<br>Atelier Talons &amp; Élégance</span></div>
+  <div class="haut"><img class="logo" src="../../assets/logo-header.png" alt="Maître Akesse Model Management"><span>Offre Entreprises &amp; Organisations<br>Atelier Talons &amp; Élégance</span></div>
   <div class="bas">
-    <p class="eyebrow">Pour vos collaboratrices</p>
+    <p class="eyebrow">Pour les femmes de votre organisation</p>
     <h1>L’élégance<br><em>au travail.</em></h1>
+    <p class="accroche">Un mois, quatre samedis, dans vos locaux : les formatrices d’une agence de mannequins apprennent à vos collaboratrices à se tenir, à marcher en talons et à se présenter avec assurance.</p>
     <p class="ligne">Posture · Démarche · Prestance · Confiance</p>
   </div>
-  <div class="pied"><span>Maître Akesse Model Management · Abidjan</span><span>maitreakessemodelmanagement.com</span></div>
+  <div class="pied"><span>Maître Akesse Model Management · Abidjan</span><span>Novembre 2026</span></div>
 </section>
 
-<!-- 2. POURQUOI -->
-<section class="page p2">
-  <div class="photo"><img src="../video-talons/ia/ia-30.jpg"></div>
+<!-- 02. SOMMAIRE -->
+<section class="page som">
+  <div class="photo"><img src="../video-talons/ia/ia-12.jpg" alt=""></div>
   <div class="contenu">
-    <p class="eyebrow">Pourquoi cet atelier</p>
-    <h2>Avant même<br>qu’elles parlent,<br><em>leur allure parle.</em></h2>
-    <p>À l’accueil, en réunion, face à un partenaire, lors d’une cérémonie officielle : vos collaboratrices sont la première image de votre institution. Une démarche assurée, une posture droite et des talons maîtrisés inspirent spontanément confiance et respect.</p>
-    <p style="margin-top:4mm">L’Atelier Talons &amp; Élégance de Maître Akesse Model Management met au service de vos équipes le savoir-faire d’une agence de mannequins : la même exigence, adaptée au monde professionnel.</p>
-    <p class="citation">« Une femme puissante se reconnaît dès son premier pas. »</p>
-    <div class="chiffres">
-      <div><b>4</b><span>samedis dans le mois, chez vous</span></div>
-      <div><b>4</b><span>modules : posture, démarche, prestance, confiance</span></div>
-    </div>
+    <p class="eyebrow">Sommaire</p>
+    <h2>Ce que vous allez<br><em>découvrir.</em></h2>
+    <p class="partie">Pourquoi</p>
+    <ol>
+      <li><b>01</b><span>L’allure, première image<small>Ce que l’on voit avant même qu’elles parlent</small></span><i>03</i></li>
+      <li><b>02</b><span>Pourquoi savoir marcher en talons<small>Six raisons qui concernent toutes les femmes</small></span><i>04</i></li>
+      <li><b>03</b><span>Les moments qui comptent<small>L’accueil, la réunion, le partenaire, la cérémonie</small></span><i>05</i></li>
+      <li><b>04</b><span>Ce que votre organisation y gagne<small>Entreprises, institutions, associations</small></span><i>06</i></li>
+    </ol>
+    <p class="partie">Comment</p>
+    <ol>
+      <li><b>05</b><span>Le programme, samedi par samedi<small>Théorie et pratique, étape par étape</small></span><i>07</i></li>
+      <li><b>06</b><span>Le format<small>Où, quand, avec qui</small></span><i>10</i></li>
+    </ol>
+    <p class="partie">Combien</p>
+    <ol>
+      <li><b>07</b><span>L’investissement<small>Tarifs, trois cas pratiques, proforma type</small></span><i>11</i></li>
+      <li><b>08</b><span>Nous connaître, nous contacter</span><i>14</i></li>
+    </ol>
   </div>
   <div class="pied"><span>L’élégance au travail</span><span>02</span></div>
 </section>
 
-<!-- 3. PROGRAMME -->
-<section class="page p3">
+<!-- 03. LE BESOIN -->
+<section class="page besoin">
+  <div class="photo"><img src="../video-talons/ia/ia-30.jpg" alt=""></div>
   <div class="contenu">
-    <p class="eyebrow">Le programme</p>
-    <h2>Quatre modules,<br><em>une nouvelle assurance.</em></h2>
-    <div class="modules">
-      <div class="module"><div class="img"><img src="../video-talons/ia/ia-03.jpg"></div><span class="num">MODULE 1</span><h3>La posture &amp; le port de tête</h3><p>Se tenir droite sans raideur, ouvrir les épaules, trouver un port de tête naturel et élégant, debout comme assise.</p></div>
-      <div class="module"><div class="img"><img src="../video-talons/ia/ia-28.jpg"></div><span class="num">MODULE 2</span><h3>La démarche en talons</h3><p>Équilibre, appui du pied, longueur du pas, fluidité : marcher en talons avec aisance, du bureau à la soirée de gala.</p></div>
-      <div class="module"><div class="img"><img src="../video-talons/ia/ia-27.jpg"></div><span class="num">MODULE 3</span><h3>La prestance &amp; l’art de se présenter</h3><p>Entrer dans une salle, saluer, se présenter, se placer face à un public : les gestes qui font la différence.</p></div>
-      <div class="module"><div class="img"><img src="../video-talons/ia/ia-12.jpg"></div><span class="num">MODULE 4</span><h3>La confiance en soi</h3><p>Prendre sa place avec sérénité, gérer le regard des autres et rayonner naturellement dans toutes les situations.</p></div>
+    <p class="eyebrow">L’allure, première image</p>
+    <h2>Avant même<br>qu’elles parlent,<br><em>leur allure parle.</em></h2>
+    <p>On forme les femmes à leur métier, aux outils, aux chiffres. On les forme rarement à ce que tout le monde voit en premier : leur façon de se tenir, d’entrer dans une pièce, de marcher, de saluer.</p>
+    <p style="margin-top:3mm">Or c’est souvent là que se joue la première impression, celle que l’on garde d’une personne… et de l’institution qu’elle représente.</p>
+    <div class="constat">
+      <div><b>Ce que l’on voit</b><span>Une démarche hésitante, des talons qui gênent, des épaules rentrées, un regard qui fuit.</span></div>
+      <div><b>Ce que l’on pense</b><span>« Elle n’est pas à l’aise. » Même quand elle est la plus compétente de la salle.</span></div>
+      <div><b>Ce que nous changeons</b><span>Une femme droite, sereine, sûre de ses pas, qui prend naturellement sa place.</span></div>
     </div>
+    <p class="citation">« Une femme puissante se reconnaît dès son premier pas. »</p>
   </div>
-  <div class="pied"><span>Le programme</span><span>03</span></div>
+  <div class="pied"><span>Pourquoi</span><span>03</span></div>
 </section>
 
-<!-- 4. FORMAT -->
-<section class="page p4 rouge">
-  <div class="photo"><img src="../video-talons/ia/ia-23.jpg"></div>
+<!-- 04. POURQUOI LES TALONS -->
+<section class="page">
+  <div class="contenu">
+    <p class="eyebrow">Pourquoi savoir marcher en talons</p>
+    <h2>Les talons ne sont pas un détail.<br><em>Ils se maîtrisent.</em></h2>
+    <p class="chapo">Les talons font partie de la tenue professionnelle et des grandes occasions. Pourtant, personne ne nous apprend à marcher avec. Voici pourquoi cela compte pour chaque femme de votre organisation.</p>
+    <div class="raisons">
+      <div><b>01</b><div><h3>La première impression se joue en quelques secondes</h3><p>La démarche et la posture sont lues avant le CV, avant la carte de visite, avant le premier mot.</p></div></div>
+      <div><b>02</b><div><h3>Les grandes occasions l’exigent</h3><p>Cérémonies officielles, galas, réceptions, 8 mars, fin d’année : mal maîtrisés, les talons deviennent une gêne ; maîtrisés, un atout.</p></div></div>
+      <div><b>03</b><div><h3>Cela s’apprend, comme tout savoir-faire</h3><p>Appui du pied, équilibre, longueur du pas : une bonne technique rend la marche plus sûre, plus fluide et moins fatigante.</p></div></div>
+      <div><b>04</b><div><h3>L’assurance se voit</h3><p>Une femme à l’aise dans ses talons se tient droite, regarde devant elle et prend la parole plus sereinement.</p></div></div>
+      <div><b>05</b><div><h3>Chaque femme représente votre maison</h3><p>À l’accueil, au protocole, en rendez-vous, sur une estrade : son allure devient l’image de votre institution.</p></div></div>
+      <div><b>06</b><div><h3>Un moment rien que pour elles</h3><p>Quatre samedis entre collègues ou entre membres, pour prendre soin de soi, progresser ensemble et en sortir plus fières.</p></div></div>
+    </div>
+  </div>
+  <div class="bandeau-noir"><p>Marcher en talons n’est pas un don. C’est une technique : nous l’enseignons chaque jour à nos mannequins.</p><span>Le savoir-faire<br>d’une agence</span></div>
+  <div class="pied"><span>Pourquoi</span><span>04</span></div>
+</section>
+
+<!-- 05. LES MOMENTS QUI COMPTENT -->
+<section class="page rouge">
+  <div class="contenu">
+    <p class="eyebrow">Les moments qui comptent</p>
+    <h2>Imaginez-les<br><em>dans chacun de ces moments.</em></h2>
+    <div class="scenes">
+      <div class="scene"><div class="img"><img src="../video-talons/ia/ia-06.jpg" alt="" style="object-position:50% 30%"></div><h3>L’accueil</h3><p>Le premier visage de votre maison : un sourire, une posture droite, un geste juste.</p></div>
+      <div class="scene"><div class="img"><img src="../video-talons/ia/ia-02.jpg" alt=""></div><h3>La réunion, la présentation</h3><p>Se lever, aller jusqu’à l’écran, tenir la salle : sans hésiter, sans se cacher.</p></div>
+      <div class="scene"><div class="img"><img src="../video-talons/ia/ia-29.jpg" alt=""></div><h3>Le partenaire, le client</h3><p>Entrer, saluer, tendre la main : la confiance commence par l’allure.</p></div>
+      <div class="scene"><div class="img"><img src="../video-talons/ia/ia-05.jpg" alt="" style="object-position:50% 35%"></div><h3>La cérémonie, le gala</h3><p>Monter une estrade, descendre un escalier, traverser une salle : avec grâce, en talons.</p></div>
+    </div>
+  </div>
+  <div class="pied"><span>Pourquoi</span><span>05</span></div>
+</section>
+
+<!-- 06. CE QUE VOTRE ORGANISATION Y GAGNE -->
+<section class="page gains">
+  <div class="contenu">
+    <p class="eyebrow">Ce que votre organisation y gagne</p>
+    <h2>Un investissement<br><em>dans vos femmes.</em></h2>
+    <div class="cibles">
+      <div class="cible"><small>Entreprises</small><h3>Directions générales &amp; ressources humaines</h3><ul><li>Un accueil et une relation client plus professionnels</li><li>Des collaboratrices plus à l’aise en rendez-vous et en public</li><li>Une action concrète de valorisation des femmes</li><li>Des équipes fières et motivées</li></ul></div>
+      <div class="cible"><small>Institutions</small><h3>Ministères, ambassades, organisations</h3><ul><li>Un protocole et un accueil officiel irréprochables</li><li>Des agentes prêtes pour les cérémonies et visites officielles</li><li>Une image soignée et cohérente de l’institution</li><li>Un geste fort à l’occasion du 8 mars</li></ul></div>
+      <div class="cible"><small>Associations</small><h3>Collectifs &amp; réseaux de femmes</h3><ul><li>Des membres plus sûres d’elles pour prendre la parole et diriger</li><li>Une activité qui rassemble et crée des liens</li><li>Une préparation idéale avant vos galas et événements</li><li>Une valeur ajoutée concrète pour vos adhérentes</li></ul></div>
+    </div>
+    <div class="occasions"><p class="eyebrow">Le bon moment</p>
+      <div class="liste"><span>Journée internationale de la femme · 8 mars</span><span>Fêtes de fin d’année</span><span>Séminaires &amp; team building</span><span>Cérémonies officielles</span><span>Intégration des nouvelles recrues</span><span>Galas &amp; assemblées</span></div></div>
+  </div>
+  <div class="photo"><img src="../video-talons/ia/ia-08.jpg" alt="" style="object-position:50% 45%"></div>
+  <div class="pied"><span>Pourquoi</span><span>06</span></div>
+</section>
+
+<!-- 07. LE PROGRAMME -->
+<section class="page">
+  <div class="contenu">
+    <p class="eyebrow">Le programme</p>
+    <h2>Quatre samedis,<br><em>étape par étape.</em></h2>
+    <p class="chapo">Chaque samedi correspond à un module. Chaque séance associe un temps de théorie pour comprendre, et un temps de pratique pour s’exercer, encadrés par les formatrices de l’agence.</p>
+    <div class="samedis">
+      <div class="samedi"><div class="img"><img src="../video-talons/ia/ia-23.jpg" alt=""><span class="num">SAMEDI 1</span></div><h3>La posture &amp; le port de tête</h3><p>Se tenir droite sans raideur, debout comme assise.</p></div>
+      <div class="samedi"><div class="img"><img src="../video-talons/ia/ia-28.jpg" alt=""><span class="num">SAMEDI 2</span></div><h3>La démarche en talons</h3><p>Équilibre, appui, longueur du pas, fluidité.</p></div>
+      <div class="samedi"><div class="img"><img src="../video-talons/ia/ia-27.jpg" alt=""><span class="num">SAMEDI 3</span></div><h3>La prestance &amp; l’art de se présenter</h3><p>Entrer, saluer, se présenter, tenir une salle.</p></div>
+      <div class="samedi"><div class="img"><img src="../video-talons/ia/ia-10.jpg" alt=""><span class="num">SAMEDI 4</span></div><h3>La confiance en soi</h3><p>Prendre sa place et rayonner, jusqu’au passage final.</p></div>
+    </div>
+    <div class="methode">
+      <div><b>La théorie</b><h3>Comprendre</h3><p>Les formatrices expliquent simplement le pourquoi de chaque geste : comment le corps s’aligne, comment le pied se pose, ce que le regard et l’attitude disent de nous.</p></div>
+      <div><b>La pratique</b><h3>S’exercer</h3><p>Exercices guidés, en groupe puis individuellement, avec des corrections personnalisées. Chaque participante repart avec des exercices à refaire chez elle.</p></div>
+    </div>
+    <p class="fil"><span>Comprendre</span><span>·</span><span>S’exercer</span><span>·</span><span>Corriger</span><span>·</span><span>Recommencer</span></p>
+  </div>
+  <div class="pied"><span>Comment</span><span>07</span></div>
+</section>
+
+<!-- 08. SAMEDIS 1 ET 2 -->
+<section class="page">
+  <div class="contenu">
+    <p class="eyebrow">Le programme en détail</p>
+    <div class="seance">
+      <div class="tete">
+        <div class="img"><img src="../video-talons/ia/ia-23.jpg" alt=""></div>
+        <div><p class="num">Samedi 1 · Module 1</p><h3>La posture<br><em>&amp; le port de tête</em></h3><p class="objectif">Objectif : trouver un alignement naturel, sans raideur, qui inspire confiance dès le premier regard.</p></div>
+      </div>
+      <div class="colonnes">
+        <div><b>Théorie</b><ul><li>Ce que notre posture dit de nous</li><li>L’alignement : tête, épaules, dos, bassin</li><li>Bien choisir ses talons : hauteur, taille, stabilité</li></ul></div>
+        <div><b>Pratique</b><ul><li>Exercices d’alignement contre le mur</li><li>Le port de tête et l’ouverture des épaules</li><li>S’asseoir, se lever, rester debout avec élégance</li></ul></div>
+      </div>
+      <p class="acquis"><b>À la fin</b>elles se tiennent droites, naturellement, debout comme assises.</p>
+    </div>
+    <div class="separateur"></div>
+    <div class="seance">
+      <div class="tete">
+        <div class="img"><img src="../video-talons/ia/ia-15.jpg" alt=""></div>
+        <div><p class="num">Samedi 2 · Module 2</p><h3>La démarche<br><em>en talons</em></h3><p class="objectif">Objectif : marcher en talons avec sûreté et fluidité, du bureau à la soirée de gala.</p></div>
+      </div>
+      <div class="colonnes">
+        <div><b>Théorie</b><ul><li>Comment le pied se pose : talon, plante, pointe</li><li>L’équilibre et la longueur du pas</li><li>Les erreurs les plus courantes, et comment les éviter</li></ul></div>
+        <div><b>Pratique</b><ul><li>Marche en ligne, demi-tours, arrêts</li><li>Monter et descendre des marches en talons</li><li>Marcher sur différents sols, avec un sac ou des dossiers</li></ul></div>
+      </div>
+      <p class="acquis"><b>À la fin</b>elles marchent en talons avec aisance, sans hésitation.</p>
+    </div>
+  </div>
+  <div class="pied"><span>Comment</span><span>08</span></div>
+</section>
+
+<!-- 09. SAMEDIS 3 ET 4 -->
+<section class="page">
+  <div class="contenu">
+    <p class="eyebrow">Le programme en détail</p>
+    <div class="seance">
+      <div class="tete">
+        <div class="img"><img src="../video-talons/ia/ia-27.jpg" alt=""></div>
+        <div><p class="num">Samedi 3 · Module 3</p><h3>La prestance<br><em>&amp; l’art de se présenter</em></h3><p class="objectif">Objectif : maîtriser les gestes qui font la différence face à un client, un partenaire ou un public.</p></div>
+      </div>
+      <div class="colonnes">
+        <div><b>Théorie</b><ul><li>Les codes de la présentation et du salut</li><li>Le regard, le sourire, les gestes des mains</li><li>Adapter son allure à chaque occasion</li></ul></div>
+        <div><b>Pratique</b><ul><li>Entrer dans une salle et la traverser</li><li>Se présenter, saluer, tendre la main</li><li>Prendre la parole debout devant le groupe</li></ul></div>
+      </div>
+      <p class="acquis"><b>À la fin</b>elles savent entrer, saluer et se présenter avec assurance.</p>
+    </div>
+    <div class="separateur"></div>
+    <div class="seance">
+      <div class="tete">
+        <div class="img"><img src="../video-talons/ia/ia-12.jpg" alt=""></div>
+        <div><p class="num">Samedi 4 · Module 4</p><h3>La confiance<br><em>en soi</em></h3><p class="objectif">Objectif : réunir tout ce qui a été appris et le vivre devant les autres, sereinement.</p></div>
+      </div>
+      <div class="colonnes">
+        <div><b>Théorie</b><ul><li>Gérer le regard des autres et le trac</li><li>L’image de soi : se voir avec bienveillance</li><li>Garder les bons réflexes au quotidien</li></ul></div>
+        <div><b>Pratique</b><ul><li>Révision des trois premiers modules</li><li>Mises en situation : accueil, réunion, cérémonie</li><li>Le passage final : chacune défile devant le groupe</li></ul></div>
+      </div>
+      <p class="acquis"><b>À la fin</b>elles prennent leur place, et elles le savent.</p>
+    </div>
+  </div>
+  <div class="pied"><span>Comment</span><span>09</span></div>
+</section>
+
+<!-- 10. FORMAT -->
+<section class="page p-format rouge">
+  <div class="photo haut"><img src="../video-talons/ia/ia-04.jpg" alt=""></div>
   <div class="contenu">
     <p class="eyebrow">Le format</p>
     <h2>Nous venons<br><em>à vous.</em></h2>
@@ -195,75 +455,116 @@ p { font-size: 9.5pt; line-height: 1.65; }
     </div>
   </div>
   <div class="bande">
-    <div class="photo" style="left:0"><img src="../video-talons/ia/ia-04.jpg"></div>
-    <div class="photo" style="left:33.3%"><img src="../video-talons/ia/ia-15.jpg"></div>
-    <div class="photo" style="left:66.6%"><img src="../video-talons/ia/ia-08.jpg"></div>
+    <div class="photo" style="left:0"><img src="../video-talons/ia/ia-07.jpg" alt=""></div>
+    <div class="photo" style="left:33.3%"><img src="../video-talons/ia/ia-11.jpg" alt=""></div>
+    <div class="photo" style="left:66.6%"><img src="../video-talons/ia/ia-03.jpg" alt=""></div>
   </div>
-  <div class="pied"><span>Le format</span><span>04</span></div>
+  <div class="pied"><span>Comment</span><span>10</span></div>
 </section>
 
-<!-- 5. BÉNÉFICES -->
-<section class="page p5">
+<!-- 11. L'INVESTISSEMENT -->
+<section class="page">
   <div class="contenu">
-    <p class="eyebrow">Ce que vous y gagnez</p>
-    <h2>Un investissement<br><em>dans vos équipes.</em></h2>
-    <div class="deux">
-      <div><h3>Pour vos collaboratrices</h3><ul><li>Une démarche sûre et élégante</li><li>Une posture qui inspire le respect</li><li>Plus d’aisance en public</li><li>Une confiance en soi renforcée</li></ul></div>
-      <div><h3>Pour votre institution</h3><ul><li>Un accueil plus professionnel</li><li>Une image soignée et cohérente</li><li>Des équipes fières et motivées</li><li>Un geste fort envers vos femmes</li></ul></div>
+    <p class="eyebrow">L’investissement</p>
+    <h2>Un tarif simple,<br><em>par participante.</em></h2>
+    <p class="chapo">Un seul prix pour le mois complet : les quatre samedis, les quatre modules, la théorie et la pratique.</p>
+    <div class="trois">
+      <div class="fort"><b>30 000<small>FCFA</small></b><span>par participante, pour le mois complet</span></div>
+      <div><b>4</b><span>samedis, un module par séance</span></div>
+      <div><b>10</b><span>participantes minimum par groupe</span></div>
     </div>
-    <div class="occasions"><p class="eyebrow">Idéal pour</p>
-      <div class="liste"><span>Journée internationale de la femme · 8 mars</span><span>Fêtes de fin d’année</span><span>Séminaires</span><span>Cérémonies officielles</span><span>Accueil &amp; protocole</span><span>Comités et associations de femmes</span></div></div>
+    <p class="soustitre">Votre budget selon la taille du groupe</p>
+    <table class="tarifs">
+      <thead><tr><th>Participantes</th><th>Tarif par participante</th><th>Séances</th><th>Total pour le mois</th></tr></thead>
+      <tbody>
+        <tr><td>10 participantes</td><td>30 000 FCFA</td><td>4 samedis</td><td>300 000 FCFA</td></tr>
+        <tr><td>15 participantes</td><td>30 000 FCFA</td><td>4 samedis</td><td>450 000 FCFA</td></tr>
+        <tr class="fort"><td>20 participantes</td><td>30 000 FCFA</td><td>4 samedis</td><td>600 000 FCFA</td></tr>
+        <tr><td>30 participantes</td><td>30 000 FCFA</td><td>4 samedis</td><td>900 000 FCFA</td></tr>
+        <tr><td>50 participantes</td><td>30 000 FCFA</td><td>4 samedis</td><td>1 500 000 FCFA</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Exemple : 20 collaboratrices × 30 000 FCFA = 600 000 FCFA pour un mois complet, soit 7 500 FCFA par participante et par samedi.</p>
+    <div class="inclus">
+      <div><small>Inclus</small>Les quatre séances du samedi</div>
+      <div><small>Inclus</small>La théorie et la pratique</div>
+      <div><small>Inclus</small>Les formatrices de l’agence</div>
+      <div><small>Inclus</small>Les exercices à refaire chez soi</div>
+    </div>
   </div>
-  <div class="photo"><img src="../video-talons/ia/ia-07.jpg" style="object-position:50% 40%"></div>
-  <div class="pied"><span>Vos bénéfices</span><span>05</span></div>
+  <div class="pied"><span>Combien</span><span>11</span></div>
 </section>
 
-<!-- 6. OFFRE -->
-<section class="page p6 rouge">
-  <div class="photo"><img src="../video-talons/ia/ia-01.jpg"></div>
+<!-- 12. TROIS CAS PRATIQUES -->
+<section class="page">
   <div class="contenu">
-    <p class="eyebrow">Offre spéciale Entreprises</p>
-    <div class="prix">30 000<small>FCFA</small></div>
-    <p class="prix-sous">par participante · pour le mois complet</p>
-    <div class="carte-offre">
-      <div><b>Séances</b><span>4 samedis dans le mois</span></div>
-      <div><b>Lieu</b><span>Vos locaux ou l’espace de votre choix</span></div>
-      <div><b>Participantes</b><span>10 minimum</span></div>
-      <div><b>Programme</b><span>Posture · Démarche · Prestance · Confiance</span></div>
+    <p class="eyebrow">Trois cas pratiques</p>
+    <h2>Pour chaque organisation,<br><em>une même exigence.</em></h2>
+    <div class="cas">
+      <div><div class="img"><img src="../video-talons/ia/ia-01.jpg" alt=""></div><div class="corps"><small>Cas 01 · Une entreprise</small><h3>Une banque prépare ses équipes</h3><p>La DRH réunit les femmes de l’accueil, du service client et de l’encadrement.</p><ul><li>20 collaboratrices</li><li>4 samedis dans la salle de réunion</li><li>Objectif : un accueil irréprochable</li></ul><div class="total"><span>Budget du mois</span><b>600 000 FCFA</b></div></div></div>
+      <div class="fort"><div class="img"><img src="../video-talons/ia/ia-03.jpg" alt=""></div><div class="corps"><small>Cas 02 · Une institution</small><h3>Un service du protocole avant une saison officielle</h3><p>Les agentes de l’accueil et du protocole se préparent aux visites et cérémonies.</p><ul><li>15 agentes</li><li>4 samedis dans les locaux du service</li><li>Objectif : une image officielle impeccable</li></ul><div class="total"><span>Budget du mois</span><b>450 000 FCFA</b></div></div></div>
+      <div><div class="img"><img src="../video-talons/ia/ia-08.jpg" alt=""></div><div class="corps"><small>Cas 03 · Une association</small><h3>Un réseau de femmes prépare le 8 mars</h3><p>L’association offre l’atelier à ses membres, dans l’espace qu’elle a choisi.</p><ul><li>30 membres</li><li>4 samedis en février</li><li>Objectif : rayonner le jour J</li></ul><div class="total"><span>Budget du mois</span><b>900 000 FCFA</b></div></div></div>
     </div>
-    <p class="exemple">Exemple : un groupe de 10 collaboratrices = 300 000 FCFA pour le mois.</p>
+    <div class="gagnant"><b>Dans chacun des trois cas</b><p>Les femmes gagnent en assurance, l’organisation gagne en image, et tout le monde se souvient du jour où elles ont fait leur premier pas… autrement.</p></div>
   </div>
-  <div class="pied"><span>L’offre</span><span>06</span></div>
+  <div class="pied"><span>Combien</span><span>12</span></div>
 </section>
 
-<!-- 7. COMMENT + QUI SOMMES-NOUS -->
-<section class="page p7">
+<!-- 13. PROFORMA TYPE -->
+<section class="page">
+  <div class="pro">
+    <div class="entete"><img class="logo" src="../../assets/logo-header.png" alt="Maître Akesse Model Management"><div><strong>PROFORMA</strong><span>EXEMPLE · ATELIER TALONS &amp; ÉLÉGANCE</span></div></div>
+    <div class="corps">
+      <div class="parties">
+        <div><small>Destinataire</small><h3>Votre organisation</h3><p class="gris">Entreprise, institution ou association</p></div>
+        <div><small>Objet</small><p>Atelier Talons &amp; Élégance pour 20 participantes : un mois, quatre séances le samedi, dans vos locaux ou l’espace de votre choix, encadrées par les formatrices de Maître Akesse Model Management.</p></div>
+      </div>
+      <table>
+        <thead><tr><th>Désignation</th><th>Quantité</th><th>Prix unit.</th><th>Montant</th></tr></thead>
+        <tbody>
+          <tr><td><h4>Atelier Talons &amp; Élégance</h4><p>Un mois complet : quatre séances le samedi, théorie et pratique</p></td><td>20 participantes</td><td>30 000 FCFA</td><td>600 000 FCFA</td></tr>
+          <tr><td><h4>Module 1 · La posture &amp; le port de tête</h4><p>Samedi 1</p></td><td>—</td><td>—</td><td>Inclus</td></tr>
+          <tr><td><h4>Module 2 · La démarche en talons</h4><p>Samedi 2</p></td><td>—</td><td>—</td><td>Inclus</td></tr>
+          <tr><td><h4>Module 3 · La prestance &amp; l’art de se présenter</h4><p>Samedi 3</p></td><td>—</td><td>—</td><td>Inclus</td></tr>
+          <tr><td><h4>Module 4 · La confiance en soi</h4><p>Samedi 4, avec le passage final</p></td><td>—</td><td>—</td><td>Inclus</td></tr>
+        </tbody>
+      </table>
+      <div class="total"><span>Total de l’atelier</span><b>600 000 FCFA</b></div>
+      <div class="engagement"><b>Bon à savoir</b><p>Le lieu est choisi et mis à disposition par vos soins. Les dates des quatre samedis sont fixées ensemble lors de notre premier échange.</p></div>
+    </div>
+    <div class="signatures"><div>Bon pour accord · pour votre organisation</div><div>Pour Maître Akesse Model Management</div></div>
+  </div>
+  <div class="pied"><span>Combien</span><span>13</span></div>
+</section>
+
+<!-- 14. COMMENT ÇA SE PASSE + QUI SOMMES-NOUS -->
+<section class="page p-agence">
   <div class="contenu">
     <p class="eyebrow">Comment ça se passe</p>
     <h2>Simple, <em>de bout en bout.</em></h2>
     <div class="etapes">
       <div><b>1</b><h3>Votre demande</h3><p>Par e-mail, téléphone ou WhatsApp.</p></div>
       <div><b>2</b><h3>Un échange</h3><p>Nombre de participantes, lieu, dates des samedis.</p></div>
-      <div><b>3</b><h3>La proposition</h3><p>Nous vous adressons notre proposition pour validation.</p></div>
-      <div><b>4</b><h3>Premier samedi</h3><p>L’atelier commence dans vos murs.</p></div>
+      <div><b>3</b><h3>La proposition</h3><p>Nous vous adressons notre proforma pour validation.</p></div>
+      <div><b>4</b><h3>Premier samedi</h3><p>L’atelier commence chez vous.</p></div>
     </div>
   </div>
   <div class="qui">
-    <div class="photo"><img src="../video-talons/ia/ia-25.jpg"></div>
+    <div class="photo"><img src="../video-talons/ia/ia-25.jpg" alt=""></div>
     <div class="texte">
       <p class="eyebrow">Qui sommes-nous</p>
       <h2>Maître Akesse<br><em>Model Management</em></h2>
-      <p>Agence de mannequins et académie basée à Abidjan, nous formons, révélons et valorisons des talents depuis nos débuts. Défilés, campagnes, événements : la posture et la démarche sont notre métier au quotidien.</p>
-      <p style="margin-top:3mm">Avec l’Atelier Talons &amp; Élégance, nous ouvrons ce savoir-faire à toutes les femmes, et aujourd’hui aux équipes de votre institution.</p>
+      <p>Agence de mannequins et académie basée à Abidjan, nous formons, révélons et valorisons des talents. Défilés, campagnes, événements : la posture et la démarche sont notre métier au quotidien.</p>
+      <p style="margin-top:3mm">Avec l’Atelier Talons &amp; Élégance, nous ouvrons ce savoir-faire à toutes les femmes, et aujourd’hui aux équipes de votre organisation.</p>
       <p class="piliers">Former · Révéler · Valoriser</p>
     </div>
   </div>
-  <div class="pied"><span>Maître Akesse Model Management</span><span>07</span></div>
+  <div class="pied"><span>Nous connaître</span><span>14</span></div>
 </section>
 
-<!-- 8. CONTACT -->
-<section class="page p8 rouge">
-  <div class="photo"><img src="../video-talons/ia/ia-29.jpg"></div>
+<!-- 15. CONTACT -->
+<section class="page p-contact rouge">
+  <div class="photo"><img src="../video-talons/ia/ia-29.jpg" alt=""></div>
   <div class="contenu">
     <p class="eyebrow">Contact</p>
     <h2>Offrez à vos équipes<br><em>l’élégance qu’elles méritent.</em></h2>
@@ -277,8 +578,8 @@ p { font-size: 9.5pt; line-height: 1.65; }
       <div><img src="qr-site.png" alt=""><span>Voir<br>l’atelier</span></div>
       <div><img src="qr-whatsapp.png" alt=""><span>Écrire sur<br>WhatsApp</span></div>
     </div>
-    <span class="bouton">Demander notre proposition</span>
+    <span class="bouton">Demander notre proforma</span>
   </div>
-  <div class="pied"><span>Abidjan · Côte d’Ivoire</span><span>08</span></div>
+  <div class="pied"><span>Abidjan · Côte d’Ivoire</span><span>15</span></div>
 </section>
 </body></html>
