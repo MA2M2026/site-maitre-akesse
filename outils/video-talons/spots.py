@@ -88,6 +88,46 @@ def prive(cle, img=23):
 '''
 
 
+# ---------- Motion design (11/11/2026, « trop diaporama ») : plusieurs couches qui bougent ensemble
+def panneaux(cle, img, mot='', n=6, retard=None, fin=None):
+    """Photo qui arrive en n bandes verticales glissant du haut et du bas, en cascade."""
+    dep = f' data-mot="{mot}"' if mot else ''
+    if retard is not None: dep += f' data-retard="{retard}"'
+    f = f' data-finvoix="{fin[0]}" data-finmot="{fin[1]}" data-finretard="0.6"' if fin else ''
+    w = 1080 / n
+    lames = ''.join(f'<div class="lame"><img src="{img}" style="left:{-k * w:.1f}px"></div>' for k in range(n))
+    return f'    <div class="panneaux" data-voix="{cle}"{dep} data-anim="panneaux"{f}>{lames}</div>\n'
+
+
+def tiers(cle, items):
+    """Écran partagé : une colonne par mot, qui coulisse du haut ou du bas ; items = [(mot, image, légende)]."""
+    n, h = len(items), ''
+    for k, (mot, img, leg) in enumerate(items):
+        w = 1080 / n
+        h += (f'    <div class="tiers plan" style="inset:auto;top:0;bottom:0;left:{k * w:.0f}px;width:{w + 2:.0f}px" data-voix="{cle}" data-mot="{mot}" data-anim="plan" '
+              f'data-entree="{"bas" if k % 2 else "haut"}" data-camera="{"monte" if k % 2 else "descend"}"><img src="{img}"><b>{leg}</b></div>\n')
+    return h
+
+
+def carte(cle, img, mot, x, y, w, h, rot, dx, dy, retard=0):
+    """Photo encadrée lancée de loin, qui se pose de biais par-dessus le fond puis flotte."""
+    return (f'    <div class="carte-photo" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px" data-voix="{cle}" data-mot="{mot}" data-retard="{retard}" '
+            f'data-anim="nuage" data-rot="{rot}" data-dx="{dx}" data-dy="{dy}"><img src="{img}"></div>\n')
+
+
+def bandeau(cle, texte, top, vitesse=110, plein=False, mot=''):
+    """Bandeau de texte qui défile en continu (texte répété)."""
+    dep = f' data-mot="{mot}"' if mot else ' data-retard="-0.6"'
+    return f'    <div class="bandeau{" plein" if plein else ""}" style="top:{top}px" data-voix="{cle}"{dep} data-anim="defile" data-vitesse="{vitesse}">{(texte + " · ") * 8}</div>\n'
+
+
+def traverse(cle, mot, texte, top, sens=1, duree=2.6, fin=None):
+    """Mot géant qui traverse l'écran sur le mot dit ; fin = mot (même phrase) où il s'efface."""
+    x0, x1 = (1100, -900) if sens > 0 else (-1400, 300)
+    f = f' data-finvoix="{cle}" data-finmot="{fin}" data-finretard="-0.1"' if fin else ''
+    return f'    <div class="mot-traverse" style="top:{top}px" data-voix="{cle}" data-mot="{mot}" data-anim="deplace" data-x0="{x0}" data-x1="{x1}" data-duree="{duree}"{f}>{texte}</div>\n'
+
+
 MUR = [1, 2, 5, 6, 10, 12, 14, 15, 17, 18, 19, 20, 21, 22, 24, 25, 27, 30, 31, 4, 9, 11, 13, 16, 26, 28, 29, 3, 7, 8]
 
 
@@ -114,18 +154,31 @@ def scene(cle, corps, tr='barres'):
     return f'  <section class="scene" data-de="{cle}" data-transition="{tr}">\n{corps}  </section>\n\n'
 
 
-# ---------- Spot 1 : « Votre allure parle avant vous » (femmes de bureau, femmes de pouvoir)
+# ---------- Spot 1 : « Votre allure parle avant vous » (femmes de bureau, femmes de pouvoir) — version motion design
 s1 = tete(1, 'Spot 1 Allure', '« Votre allure parle avant vous », femmes de bureau et de pouvoir') \
-    + scene('s1', suite('s1', [('', ia(1), 'Réunion', 'zoom', 'avance'), ('présentation', ia(2), 'Présentation', 'gauche', 'glisse'), ('rendez', ia(9), 'Rendez-vous', 'droite', 'recule')]), 'fondu') \
-    + scene('s2', plan('s2', ia(10), '', 'bas', 'avance', -0.3) + texte('s2', 'Votre allure', 'parle pour vous.', 'allure', 'parle')) \
-    + scene('s3', suite('s3', [('démarche', ia(11), 'Une démarche assurée', 'gauche', 'monte'), ('posture', ia(12), 'Une posture droite', 'droite', 'recule'), ('talons', ia(16), 'Des talons maîtrisés', 'bas', 'descend')], haut=True)
-            + '    <div class="abs legende-tel sur-plan"><p class="surtitre" data-voix="s3" data-mot="élégance" data-anim="glisse">L’élégance des femmes qui décident</p></div>\n', 'volet') \
-    + scene('s4', plan('s4', ia(26), '', 'zoom', 'glisse', -0.3) + mois_pilules('s4'), 'cercle') \
-    + scene('s5', plan('s5', ia(15), '', 'gauche', 'avance', -0.3)
+    + scene('s1', panneaux('s1', ia(1), retard=-0.6)
+            + bandeau('s1', 'Réunion · Présentation · Rendez-vous', 240, 160, plein=True)
+            + carte('s1', ia(2), 'présentation', 520, 470, 470, 640, 6, 700, -300)
+            + carte('s1', ia(9), 'rendez', 90, 620, 470, 640, -7, -700, 300)
+            + traverse('s1', 'réunion', 'Réunion', 1380, 1, 2.2, 'présentation')
+            + traverse('s1', 'présentation', 'Présentation', 1380, -1, 2.0, 'rendez')
+            + traverse('s1', 'rendez', 'Rendez-vous', 1380, 1, 2.4), 'fondu') \
+    + scene('s2', plan('s2', ia(10), '', 'zoom', 'avance', -0.3)
+            + bandeau('s2', 'Allure', 300, 90) + bandeau('s2', 'Allure', 440, -90)
+            + texte('s2', 'Votre allure', 'parle pour vous.', 'allure', 'parle'), 'pousse') \
+    + scene('s3', tiers('s3', [('démarche', ia(11), 'Une démarche assurée'), ('posture', ia(12), 'Une posture droite'), ('talons', ia(16), 'Des talons maîtrisés')])
+            + '    <div class="abs centre-x sur-plan" style="top:1660px;z-index:7"><p class="surtitre" data-voix="s3" data-mot="élégance" data-anim="glisse">L’élégance des femmes qui décident</p></div>\n', 'volet') \
+    + scene('s4', panneaux('s4', ia(26), retard=-0.3, n=5)
+            + bandeau('s4', 'Décembre · Janvier · Février', 250, 140, plein=True)
+            + mois_pilules('s4'), 'pousse') \
+    + scene('s5', plan('s5', ia(15), '', 'gauche', 'glisse', -0.3)
+            + carte('s5', ia(4), 'consacre', 600, 380, 400, 540, 7, 600, -200)
             + '    <div class="abs dimanches sur-plan" style="top:1150px"><b data-voix="s5" data-mot="consacre" data-anim="pop">4 dimanches</b><span data-voix="s5" data-mot="mois" data-anim="mots">par mois</span></div>\n'
             + '    <div class="abs pastilles-bas"><span class="bouton" data-voix="s5" data-mot="aisance" data-anim="pop">Aisance</span><span class="bouton" data-voix="s5" data-mot="prestance" data-anim="pop">Prestance</span><span class="bouton" data-voix="s5" data-mot="autorité" data-anim="pop">Autorité</span></div>\n') \
     + prive('s6') + '\n' \
-    + scene('s7', plan('s7', ia(25), '', 'zoom', 'recule', -0.3) + empreintes('s7', 'premier', 1060) + texte('s7', 'Une femme puissante', 'dès son premier pas.', 'puissante', 'premier')) \
+    + scene('s7', panneaux('s7', ia(25), retard=-0.3, n=7) + empreintes('s7', 'premier', 1060)
+            + traverse('s7', 'puissante', 'Puissante', 820, 1, 3.0)
+            + texte('s7', 'Une femme puissante', 'dès son premier pas.', 'puissante', 'premier'), 'pousse') \
     + fin('s8') + pied()
 
 # ---------- Spot 2 : « Mes premiers talons » (jeunes femmes, débutantes)

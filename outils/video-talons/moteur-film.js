@@ -147,6 +147,12 @@ function animer(e, t) {
     case 'grandit': { // la personne grandit, posée au sol (data-depart : taille de départ, 0,85 = 85 %), en data-duree secondes
       const k = lisse((t - e.t) / Number(x.dataset.duree || 1.4)), dep = Number(x.dataset.depart || 0.85); s.opacity = Math.min(1, (t - e.t) * 4);
       s.transformOrigin = '50% 100%'; s.transform = 'scale(' + (dep + (1 - dep) * k) + ')'; break; }
+    case 'panneaux': { // photo qui arrive en bandes verticales (glissent du haut et du bas, en cascade), puis travelling
+      const d = t - e.t, lames = x.children, n = lames.length; s.opacity = 1;
+      for (let j = 0; j < n; j++) { const k = sortie((d - j * 0.06) / 0.7), sens = j % 2 ? 1 : -1;
+        lames[j].style.transform = 'translateY(' + (sens * 105 * (1 - k)) + '%)';
+        const img = lames[j].querySelector('img'); if (img) img.style.transform = 'scale(' + (1.04 + 0.08 * Math.min(1, d / 7)) + ')'; }
+      break; }
     case 'plan': { // grand plan plein écran (images IA des spots) : s'ouvre par un volet ou un zoom (data-entree = gauche |
       // droite | bas | haut | zoom), puis lent travelling (data-camera = avance | recule | monte | descend | glisse)
       const d = t - e.t, k = sortie(d / 0.75), en = x.dataset.entree || 'zoom', c = x.dataset.camera || 'avance';
@@ -187,13 +193,14 @@ function avant(e) {
 }
 function entree(s, t, premier) {
   const k = lisse((t - s.debut) / 0.9), st = s.el.style;
-  st.opacity = ''; st.clipPath = '';
+  st.opacity = ''; st.clipPath = ''; st.transform = '';
   if (premier) { st.opacity = lisse(t / 1.2); return; }
   if (k >= 1) return;
   if (s.transition === 'fondu') st.opacity = k;
   else if (s.transition === 'rideau') st.clipPath = 'inset(0 0 0 ' + (100 * (1 - k)) + '%)';
   else if (s.transition === 'volet') st.clipPath = LARGE ? 'inset(' + (100 * (1 - k)) + '% 0 0 0)' : 'inset(0 0 ' + (100 * (1 - k)) + '% 0)';
   else if (s.transition === 'cercle') st.clipPath = 'circle(' + (150 * k) + '% at 50% 50%)';
+  else if (s.transition === 'pousse') { st.opacity = Math.min(1, k * 1.8); st.transform = 'scale(' + (1.35 - 0.35 * sortie(k)) + ')'; }  // la caméra plonge dans la scène
 }
 // barres (rapides : la voix peut enchaîner sans pause) : sept blocs montent couvrir l'image, la scène change dessous, puis ils s'envolent vers le haut
 function rendreBarres(t) {
