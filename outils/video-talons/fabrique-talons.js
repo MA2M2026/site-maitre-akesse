@@ -33,7 +33,17 @@ function faireSon() {
     ? '[0:a]aresample=48000,apad,atrim=0:' + DUREE + ',asplit=2[voix][cle];[1:a]aresample=48000,aloop=loop=-1:size=2e9,atrim=0:' + DUREE + ',volume=' + VOLUME + ',afade=t=in:d=2,afade=t=out:st=' + (DUREE - 3.5) + ':d=3.5[mus];' +
       '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix]volume=' + VOLUME_VOIX + '[voixf];[voixf][musd]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.2:LRA=9,alimiter=limit=0.95[a]'
     : '[0:a]aresample=48000,apad,atrim=0:' + DUREE + '[a]';
-  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : []), '-filter_complex', filtre, '-map', '[a]', '-c:a', 'aac', '-b:a', '128k', son]);
+  // effets sonores (SONS=1 : sons/*.mp3 aux instants de window.EFFETS, enregistrés dans IMAGES/effets.json)
+  const fe = path.join(IMAGES, 'effets.json'), effets = process.env.SONS && fs.existsSync(fe) ? JSON.parse(fs.readFileSync(fe, 'utf8')) : [];
+  const VOL = { whoosh: 0.55, fouet2: 0.55, impact: 0.75, reveal: 0.35, talons: 0.6, photo: 0.5, shine: 0.45 };
+  let f2 = filtre, entrees = ['-i', path.join(VOIX, 'voix.wav'), ...(MUSIQUE ? ['-i', MUSIQUE] : [])];
+  if (effets.length) {
+    const base = MUSIQUE ? 2 : 1;
+    effets.forEach((e) => entrees.push('-i', path.join(ICI, 'sons', e.son + '.mp3')));
+    f2 = filtre.replace(/\[a\]$/, '[pre]') + ';' + effets.map((e, i) => '[' + (base + i) + ':a]aresample=48000,aformat=channel_layouts=stereo,volume=' + (VOL[e.son] || 0.5) + ',adelay=' + Math.round(e.t * 1000) + ':all=1[e' + i + ']').join(';') +
+      ';[pre]' + effets.map((e, i) => '[e' + i + ']').join('') + 'amix=inputs=' + (effets.length + 1) + ':normalize=0:duration=first,alimiter=limit=0.95[a]';
+  }
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', ...entrees, '-filter_complex', f2, '-map', '[a]', '-c:a', 'aac', '-b:a', '128k', son]);
   return son;
 }
 // --son : seulement la piste son (son.m4a dans IMAGES), sans refaire les images (ex. volume de la musique changé)
@@ -45,6 +55,7 @@ if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.ex
   const erreurs = []; p.on('pageerror', (e) => erreurs.push(e.message));
   await p.goto('file://' + ICI + '/' + FILM + (FORMAT === 'large' ? '?format=large' : '')); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1200);
   const manques = await p.evaluate(() => window.MANQUES);
+  fs.writeFileSync(path.join(IMAGES, 'effets.json'), JSON.stringify(await p.evaluate(() => window.EFFETS || [])));
   if (erreurs.length || manques.length) { console.error('ERREURS', erreurs, 'MOTS INTROUVABLES', manques); process.exit(1); }
   const P = mots.phrases;
   if (process.argv.includes('--apercus')) {

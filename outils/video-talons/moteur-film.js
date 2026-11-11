@@ -237,6 +237,24 @@ function rendreBarres(t) {
   });
 }
 const eclat = document.getElementById('eclat'), lueur = document.getElementById('lueur'), reflets = [...document.querySelectorAll('.bouton i')];
+// Effets sonores (11/11/2026, spots) : liste des instants où un mouvement mérite un son, lue par fabrique-talons.js
+// (dossier sons/, effets créés avec ElevenLabs) : coupes, coups de fouet, photos qui se posent, mots qui traversent,
+// tampons, pas de talons, bouton final.
+(function () {
+  const ev = [];
+  scenes.forEach((sc, i) => { if (i) ev.push([sc.debut, sc.transition === 'pousse' ? 'impact' : 'whoosh']);
+    sc.elements.forEach((e) => {
+      if (e.anim === 'p25' && e.x.dataset.entree === 'fouet') ev.push([e.t, 'fouet2']);
+      else if (e.anim === 'nuage') ev.push([e.t + 0.85, 'photo']);
+      else if (e.anim === 'deplace' && e.x.classList.contains('mot-traverse')) ev.push([e.t, 'whoosh']);
+      else if (e.anim === 'tampon') ev.push([e.t + 0.25, 'impact']);
+      else if (e.x.classList.contains('empreinte') && !e.x.previousElementSibling?.classList.contains('empreinte')) ev.push([e.t, 'talons']);
+      else if (e.x.classList.contains('bouton') && e.x.closest('.texte.centre')) ev.push([e.t + 0.2, 'shine']);
+      else if (e.x.classList.contains('mot-plan')) ev.push([e.t, 'reveal']);
+    }); });
+  ev.sort((a, b) => a[0] - b[0]);
+  window.EFFETS = ev.filter((x, i) => !i || x[0] - ev[i - 1][0] > 0.25 || x[1] !== ev[i - 1][1]).map(([t, son]) => ({ t: +t.toFixed(3), son }));
+})();
 const grain = document.getElementById('grain'), flash = document.getElementById('flash'), fuite = document.getElementById('fuite');
 if (grain) document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute">' + [12, 30, 55, 85].map((v, i) =>
   '<filter id="flou-fouet' + i + '" x="-20%" width="140%"><feGaussianBlur stdDeviation="' + v + ' 0"/></filter>').join('') + '</svg>');
