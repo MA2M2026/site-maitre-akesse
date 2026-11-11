@@ -95,7 +95,7 @@ window.demarrerConvocationsPage = function (racine) {
     var essai = await sb.from('convocation_envois').select('id').limit(1);
     actif = !essai.error;
     $('cv-inactif').hidden = actif;
-    $('cv-voir-reponses').disabled = !actif;
+    $('cv-voir-reponses').closest('details').hidden = !actif;  // (un <summary> ne se désactive pas)
     form.querySelectorAll('input, select, textarea, button').forEach(function (c) { c.disabled = !actif; });
     if (!actif) return;
     var r = await Promise.all([

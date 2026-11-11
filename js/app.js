@@ -82,6 +82,28 @@ if (!window.Partage) console.error('[MA2M] js/partage.js non chargé : outils pa
 // Neutralise un texte avant de l'insérer dans le HTML — protège aussi bien le contenu
 // texte que les attributs (src="...", alt="...", data-chemin="...", etc.), en échappant
 // systématiquement les caractères qui pourraient casser la structure de la page.
+// Noms courts des mois (11/11/2026 ; partagés : billets des Convocations, Accueil de l'Administration,
+// application des mannequins). moisCourt('2026-11-15') → « Nov. » ; en capitales : .toUpperCase()
+const MA2M_MOIS_COURTS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+function moisCourtDe(iso) { return MA2M_MOIS_COURTS[Number(String(iso).slice(5, 7)) - 1] || ''; }
+// Texte espacé lettre par lettre sur une toile (« C O M P C A R D », libellés) : marche dans tous les
+// navigateurs (compcard et CV, 11/11/2026). espacePx : l'espace entre deux lettres, en pixels.
+function texteEspaceToile(ctx, texte, x, y, espacePx, aligne) {
+  const lettres = String(texte).split('');
+  const largeur = lettres.reduce((t, c) => t + ctx.measureText(c).width, 0) + espacePx * (lettres.length - 1);
+  let xx = aligne === 'right' ? x - largeur : aligne === 'center' ? x - largeur / 2 : x;
+  const avant = ctx.textAlign; ctx.textAlign = 'left';
+  lettres.forEach((c) => { ctx.fillText(c, xx, y); xx += ctx.measureText(c).width + espacePx; });
+  ctx.textAlign = avant;
+}
+// Aperçu léger d'une toile (compcard, CV ; 11/11/2026) : une copie réduite à 1200 px de large, pour ne pas garder
+// en mémoire une image de 15 millions de pixels sur les petits téléphones (les fichiers PDF / image restent nets).
+function apercuLeger(toile, largeur) {
+  const l = Math.min(largeur || 1200, toile.width), h = Math.round(toile.height * l / toile.width);
+  const c = document.createElement('canvas'); c.width = l; c.height = h;
+  c.getContext('2d').drawImage(toile, 0, 0, l, h);
+  return c.toDataURL('image/jpeg', 0.85);
+}
 function echapperHtml(texte) {
   if (texte === null || texte === undefined) return '';
   return String(texte)
@@ -699,14 +721,7 @@ async function construireCanvasCompcard(ficheData, langue) {
   }
 
   // texte espacé (« C O M P C A R D », libellés), lettre par lettre : marche dans tous les navigateurs
-  function texteEspace(texte, x, yy, espaceMm, aligne) {
-    const esp = px(espaceMm), lettres = String(texte).split('');
-    const largeur = lettres.reduce((t, c) => t + ctx.measureText(c).width, 0) + esp * (lettres.length - 1);
-    let xx = aligne === 'right' ? x - largeur : aligne === 'center' ? x - largeur / 2 : x;
-    const avant = ctx.textAlign; ctx.textAlign = 'left';
-    lettres.forEach((c) => { ctx.fillText(c, xx, yy); xx += ctx.measureText(c).width + esp; });
-    ctx.textAlign = avant;
-  }
+  const texteEspace = (texte, x, yy, espaceMm, aligne) => texteEspaceToile(ctx, texte, x, yy, px(espaceMm), aligne);
   const M = 14, LARGEUR_UTILE = LARGEUR_MM - 2 * M;
 
   // --- Fond blanc ---
@@ -1351,13 +1366,7 @@ async function construireCanvasCv(d) {
       else { sH = image.largeur / ratioCadre; sy = (image.hauteur - sH) * 0.25; }  // garde le haut (visage)
       ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
     }
-    function espace(texte, x, y, espaceMm, aligne) {
-      const esp = px(espaceMm), lettres = String(texte).split('');
-      const largeur = lettres.reduce(function (t, c) { return t + ctx.measureText(c).width; }, 0) + esp * (lettres.length - 1);
-      let xx = aligne === 'right' ? x - largeur : x;
-      ctx.textAlign = 'left';
-      lettres.forEach(function (c) { ctx.fillText(c, xx, y); xx += ctx.measureText(c).width + esp; });
-    }
+    function espace(texte, x, y, espaceMm, aligne) { texteEspaceToile(ctx, texte, x, y, px(espaceMm), aligne); ctx.textAlign = 'left'; }
     function titre(texte, x, l, y) {
       ctx.fillStyle = ROUGE; ctx.font = '700 ' + fpx(7) + 'px ' + SANS;
       espace(texte.toUpperCase(), px(x), px(y), 0.75);

@@ -20,11 +20,7 @@
     };
     const aller = (n) => {
       racine.dataset.etape = String(n);
-      racine.querySelectorAll('.mg-etapes [data-mg-etape]').forEach((b) => {
-        const k = Number(b.dataset.mgEtape);
-        b.classList.toggle('fait', k < n); b.classList.toggle('actif', k === n);
-        if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
-      });
+      P.marquerEtapes(racine.querySelectorAll('.mg-etapes [data-mg-etape]'), n, 'mgEtape');  // (js/admin/coque.js)
       if (n === 3) resume();
       racine.scrollIntoView({ block: 'start' });
     };

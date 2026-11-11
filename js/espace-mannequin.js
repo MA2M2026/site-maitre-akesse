@@ -1457,24 +1457,27 @@ function bindStudioCompcard(){
   document.getElementById('scVoir').addEventListener('click', function(){ if (pret()) openCompcard(); });
   document.getElementById('scPdf').addEventListener('click', function(){ if (pret()) void genererFiche('pdf', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
   document.getElementById('scJpeg').addEventListener('click', function(){ if (pret()) void genererFiche('jpeg', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
-  document.getElementById('scWhatsapp').addEventListener('click', async function(){
-    if (!pret()) return;
-    const btn = this, texte = btn.textContent; btn.disabled = true; btn.textContent = 'Préparation…';
-    try {
-      const canvas = await construireCanvasCompcard(ficheDataDepuisEtat());  // (js/app.js, même dessin que le PDF)
-      const blob = await new Promise(function(ok){ canvas.toBlob(ok, 'image/jpeg', 0.92); });
-      const fichier = new File([blob], 'compcard-' + ((state.identite.nomComplet||'mannequin').split(' ')[0]||'mannequin').toLowerCase() + '.jpg', { type: 'image/jpeg' });
-      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
-        try { await navigator.share({ files: [fichier], title: 'Ma compcard', text: 'Ma compcard · Maître Akesse Model Management' }); } catch (e) { /* partage annulé */ }
-      } else {
-        telechargerFichier(canvas.toDataURL('image/jpeg', 0.92), fichier.name);  // (js/app.js)
-        toast('Compcard enregistrée : joignez-la dans WhatsApp.');
-      }
-    } catch (e) {
-      signalerProbleme('Compcard : envoi WhatsApp échoué', (e && e.message) || String(e), e && e.stack);
-      toast('La compcard n’a pas pu être préparée. Réessayez.', true);
-    } finally { btn.disabled = false; btn.textContent = texte; }
-  });
+  document.getElementById('scWhatsapp').addEventListener('click', function(){ if (pret()) void partagerToile(this, construireCanvasCompcard, ficheDataDepuisEtat(), 'compcard', 'Ma compcard'); });
+}
+
+// Envoyer la compcard ou le CV par WhatsApp (11/11/2026, partagé par les écrans « Ma compcard » et « Mon CV ») :
+// la feuille de partage du téléphone avec l'image, sinon l'image enregistrée à joindre dans WhatsApp.
+async function partagerToile(btn, construire, donnees, prefixe, titre){
+  const texte = btn.textContent; btn.disabled = true; btn.textContent = 'Préparation…';
+  try {
+    const canvas = await construire(donnees);  // (js/app.js, même dessin que le PDF)
+    const blob = await new Promise(function(ok){ canvas.toBlob(ok, 'image/jpeg', 0.92); });
+    const fichier = new File([blob], prefixe + '-' + ((state.identite.nomComplet||'mannequin').split(' ')[0]||'mannequin').toLowerCase() + '.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+      try { await navigator.share({ files: [fichier], title: titre, text: titre + ' · Maître Akesse Model Management' }); } catch (e) { /* partage annulé */ }
+    } else {
+      telechargerFichier(blob, fichier.name);  // (js/app.js)
+      toast(titre + ' : image enregistrée, joignez-la dans WhatsApp.');
+    }
+  } catch (e) {
+    signalerProbleme(titre + ' : envoi WhatsApp échoué', (e && e.message) || String(e), e && e.stack);
+    toast('L’image n’a pas pu être préparée. Réessayez.', true);
+  } finally { btn.disabled = false; btn.textContent = texte; }
 }
 
 /* ------------------------------------------------------ ÉCRAN « MON CV » ---
@@ -1529,27 +1532,11 @@ function bindStudioCv(){
   });
   document.getElementById('scvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCvDepuisEtat(), 'scvPdf', 'scvJpeg'); });
   document.getElementById('scvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCvDepuisEtat(), 'scvPdf', 'scvJpeg'); });
-  document.getElementById('scvWhatsapp').addEventListener('click', async function(){
-    const btn = this, texte = btn.textContent; btn.disabled = true; btn.textContent = 'Préparation…';
-    try {
-      const canvas = await construireCanvasCv(donneesCvDepuisEtat());  // (js/app.js, même dessin que le PDF)
-      const blob = await new Promise(function(ok){ canvas.toBlob(ok, 'image/jpeg', 0.92); });
-      const fichier = new File([blob], 'cv-' + ((state.identite.nomComplet||'mannequin').split(' ')[0]||'mannequin').toLowerCase() + '.jpg', { type: 'image/jpeg' });
-      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
-        try { await navigator.share({ files: [fichier], title: 'Mon CV', text: 'Mon CV · Maître Akesse Model Management' }); } catch (e) { /* partage annulé */ }
-      } else {
-        telechargerFichier(canvas.toDataURL('image/jpeg', 0.92), fichier.name);  // (js/app.js)
-        toast('CV enregistré : joignez-le dans WhatsApp.');
-      }
-    } catch (e) {
-      signalerProbleme('CV : envoi WhatsApp échoué', (e && e.message) || String(e), e && e.stack);
-      toast('Le CV n’a pas pu être préparé. Réessayez.', true);
-    } finally { btn.disabled = false; btn.textContent = texte; }
-  });
+  document.getElementById('scvWhatsapp').addEventListener('click', function(){ void partagerToile(this, construireCanvasCv, donneesCvDepuisEtat(), 'cv', 'Mon CV'); });
   // aperçu : l'image même du CV (construireCanvasCv), en arrière-plan
   construireCanvasCv(donneesCvDepuisEtat()).then(function(canvas){
     const zone = document.getElementById('scvApercu');
-    if (zone) zone.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg', 0.8) + '" alt="Aperçu de mon CV">';
+    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Aperçu de mon CV">';
   }).catch(function(e){
     signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
     const zone = document.getElementById('scvApercu'); if (zone) zone.innerHTML = '<p>L’aperçu n’a pas pu être préparé.</p>';
@@ -2030,7 +2017,7 @@ async function openCv(){
   const zone = document.querySelector('.cv-apercu');
   try {
     const canvas = await construireCanvasCv(donneesCv);
-    if (zone) zone.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg', 0.85) + '" alt="Mon CV">';
+    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Mon CV">';
   } catch (e) {
     signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
     if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger le CV.</p>';
@@ -2070,7 +2057,7 @@ async function openCompcard(){
   const zone = document.querySelector('.compcard-apercu');
   try {
     const canvas = await construireCanvasCompcard(ficheDataDepuisEtat());
-    if (zone) zone.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg', 0.85) + '" alt="Ma compcard">';
+    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Ma compcard">';
   } catch (e) {
     signalerProbleme('Aperçu de la compcard échoué', (e && e.message) || String(e), e && e.stack);
     if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger la compcard.</p>';

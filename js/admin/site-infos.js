@@ -119,9 +119,9 @@
     if (!b || !brouillon) return;
     const n = Number(b.dataset.ifEtape), form = document.querySelector('.if-form');
     if (!form) return;
-    if (n > 1 && !String(brouillon.titre || '').trim()) { P.message('Indiquez d’abord un titre.'); n !== 1 && (form.dataset.etape = '1'); return; }
+    if (n > 1 && !String(brouillon.titre || '').trim()) { P.message('Indiquez d’abord un titre.'); return; }
     brouillon.etape = n; form.dataset.etape = String(n);
-    document.querySelectorAll('.if-etapes [data-if-etape]').forEach((x) => { const k = Number(x.dataset.ifEtape); x.classList.toggle('actif', k === n); x.classList.toggle('fait', k < n); if (k === n) x.setAttribute('aria-current', 'step'); else x.removeAttribute('aria-current'); });
+    P.marquerEtapes(document.querySelectorAll('.if-etapes [data-if-etape]'), n, 'ifEtape');  // (js/admin/coque.js)
     form.scrollIntoView({ block: 'start' });
   });
   const redessinerMessage = () => {

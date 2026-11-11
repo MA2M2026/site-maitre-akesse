@@ -531,7 +531,8 @@ window.demarrerConvocationsPanneau = function () {
         // (11/11/2026, « Ajouter une image ») avec une affiche : le message part aussi dans l'application des
         // mannequins (comptes du site « m: », carnet « c: »), l'affiche en grand (envoyerDansApplication, js/messages-candidats.js)
         if (projet.affiche && (sorte === 'convocation' || sorte === 'selection')) {
-          var clesApp = choisis.filter(function (x) { return !x.parent && (x.model_id || x.contact_id); }).map(function (x) { return x.model_id ? 'm:' + x.model_id : 'c:' + x.contact_id; })
+          // (une mineure : la ligne du parent porte son model_id → c'est SON application qui reçoit le message)
+          var clesApp = choisis.filter(function (x) { return x.model_id || (x.contact_id && !x.parent); }).map(function (x) { return x.model_id ? 'm:' + x.model_id : 'c:' + x.contact_id; })
             .filter(function (c, i, l) { return l.indexOf(c) === i; });
           var sansAffiche = Object.assign({}, projet, { affiche: null });
           if (clesApp.length) await envoyerDansApplication(clesApp, sorte, (sorte === 'selection' ? '🎉 Sélection : ' : '📨 Convocation : ') + projet.titre,

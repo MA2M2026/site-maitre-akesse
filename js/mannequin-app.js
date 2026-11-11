@@ -188,8 +188,7 @@
   const dansCombien = (e) => { const j = dansJours(e.date_debut); return j <= 0 ? 'aujourd’hui' : j === 1 ? 'demain' : 'dans ' + j + ' jours'; };
   // Événements façon application de billets (11/11/2026, maquette validée par la propriétaire) : la date dans un
   // carré blanc, le prochain en grand, les suivants en lignes qu'on touche pour les ouvrir
-  const MOIS_COURTS_EV = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
-  const pave = (e) => '<span class="ap-ev-date" aria-hidden="true"><b>' + esc(String(e.date_debut).slice(8, 10)) + '</b><small>' + MOIS_COURTS_EV[Number(String(e.date_debut).slice(5, 7)) - 1] + '</small></span>';
+  const pave = (e) => '<span class="ap-ev-date" aria-hidden="true"><b>' + esc(String(e.date_debut).slice(8, 10)) + '</b><small>' + esc(moisCourtDe(e.date_debut).toUpperCase()) + '</small></span>';
   function infosBillet(e) {
     const ligne = (ic, haut, bas) => '<dt>' + ic + '</dt><dd>' + haut + (bas ? '<small>' + bas + '</small>' : '') + '</dd>';
     return '<dl class="ap-ev-infos">' +
@@ -386,15 +385,14 @@
   // Paiements « style application bancaire » (11/11/2026, maquette validée par la propriétaire) : la carte de
   // membre façon carte bancaire, deux chiffres (mois payés, cachets reçus), le prochain paiement avec « Payer avec
   // Wave », la grille des mois, puis « Mes opérations » comme un relevé (cachets reçus et mensualités validées).
-  const MOIS_COURTS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
-  const moisCourt = (d) => MOIS_COURTS[Number(String(d).slice(5, 7)) - 1];
+  const moisCourt = moisCourtDe;  // (js/app.js)
   const MODES_PAIEMENT = { wave: 'Wave', especes: 'Espèces', orange_money: 'Orange Money', mtn: 'MTN Money', moov: 'Moov Money', virement: 'Virement', avant_systeme: 'Avant l’application' };
   function carteMembre(m) {
     const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
     const champ = (titre, valeur) => (valeur ? '<div><b>' + titre + '</b>' + esc(valeur) + '</div>' : '');
     return '<div class="ap-cb" aria-label="Ma carte de membre"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>CARTE MEMBRE</span></div>' +
       '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(m.nom || p.full_name || '').toUpperCase()) + '</div>' +
-      '<div class="ap-cb-bas">' + champ('FORMATION', p.niveau_mannequin || 'Mannequinat') +
+      '<div class="ap-cb-bas">' + champ('FORMATION', niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat') +
         champ('DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : '') + champ('MENSUALITÉ', fcfa(m.mensualite)) + '</div></div>';
   }
   function ecranPaiements() {

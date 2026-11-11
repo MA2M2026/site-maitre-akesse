@@ -340,7 +340,13 @@
     croix: '<path d="M6 6l12 12M18 6L6 18"/>'
   };
   const icone = (cle, taille) => '<svg width="' + (taille || 20) + '" height="' + (taille || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[cle] + '</svg>';
-  P.icone = icone;  // (aussi pour les autres pièces, ex. js/admin/site-contenu.js)
+  P.icone = icone;
+  // Barre d'étapes (Convocations, Messages groupés, Informations agence, 11/11/2026) : étape en cours, étapes faites
+  P.marquerEtapes = (boutons, n, cle) => boutons.forEach((b) => {
+    const k = Number(b.dataset[cle]);
+    b.classList.toggle('fait', k < n); b.classList.toggle('actif', k === n);
+    if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+  });  // (aussi pour les autres pièces, ex. js/admin/site-contenu.js)
   const COURT = { site: 'Le site', paiements: 'Paiements', compta: 'Compta' };
   const premierePage = P.premierePage;  // js/portail/noyau.js
   const blocsPermis = () => ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]);
@@ -430,7 +436,7 @@
     const auj = P.aujourdhui(), enCours = p.date_debut === auj || (p.date_fin && p.date_debut <= auj && p.date_fin >= auj);
     const j = String(p.date_debut).slice(0, 10).split('-');
     const r = site.reponses;
-    return '<a class="affiche affiche-ligne apparait" href="#/site/b2-convocations" data-projet="' + P.esc(p.id) + '" style="--i:2"><span class="af-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'][Number(j[1]) - 1] + '</small></span>' +
+    return '<a class="affiche affiche-ligne apparait" href="#/site/b2-convocations" data-projet="' + P.esc(p.id) + '" style="--i:2"><span class="af-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + P.esc(moisCourtDe(p.date_debut).toUpperCase()) + '</small></span>' +
       '<span class="txt"><span class="surtitre">' + (enCours ? 'Aujourd’hui' : 'Prochain événement') + (p.lieu || p.ville ? ' · ' + P.esc([p.lieu, p.ville].filter(Boolean).join(', ')) : '') + '</span>' +
       '<span class="titre">' + P.esc(p.titre) + '</span>' +
       (r ? '<span class="reponses">' + r.confirme + ' sur ' + r.total + ' confirmées' + (r.sans ? ' · ' + r.sans + ' sans réponse' : '') + '</span>' +

@@ -9,7 +9,6 @@
   'use strict';
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
-  const MOIS_COURTS = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
   const ecran = async () => '<div class="ecran-partage ecran-convocations" id="ecran-convocations" data-vue="liste" data-etape="1" data-onglet="convoquer">' + window.GABARIT_CONVOCATIONS + '</div>';
 
   // ---------- les billets des projets à venir ----------
@@ -31,7 +30,7 @@
       const visages = (p.mannequin_ids || []).filter((id) => photos[id]).slice(0, 4).map((id) => P.visage(photos[id], '')).join('');
       const etat = l.length ? conf + ' confirmée' + (conf > 1 ? 's' : '') + ' sur ' + l.length + (sans ? ' · ' + sans + ' sans réponse' : '')
         : (p.mannequin_ids || []).length ? 'Pas encore convoquées' : 'Aucune mannequin choisie';
-      return '<button type="button" class="cv-billet" data-cv-projet="' + P.esc(p.id) + '"><span class="cv-billet-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + MOIS_COURTS[Number(j[1]) - 1] + '</small></span>' +
+      return '<button type="button" class="cv-billet" data-cv-projet="' + P.esc(p.id) + '"><span class="cv-billet-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + P.esc(moisCourtDe(p.date_debut).toUpperCase()) + '</small></span>' +
         '<span class="cv-billet-t"><small>' + P.esc(libelleTypeAgenda(p.type)) + '</small><b>' + P.esc(p.titre) + '</b>' +
         (visages ? '<span class="cv-billet-vis">' + visages + '</span>' : '') +
         (l.length ? '<span class="cv-jauge"><i style="width:' + Math.round(100 * conf / l.length) + '%"></i></span>' : '') +
@@ -41,17 +40,15 @@
 
   // ---------- le parcours ----------
   function parcours(racine) {
+    let enregistre = false, sale = false;
     const $ = (id) => racine.querySelector('#' + id);
     const C = window.ConvocationsPage;
     const panneauOuvert = () => !$('convoc-panneau').hidden;
     function majEtapes() {
       const e = Number(racine.dataset.etape);
-      racine.querySelectorAll('.cv-etapes [data-aller-etape]').forEach((b) => {
-        const n = Number(b.dataset.allerEtape);
-        b.classList.toggle('fait', n < e); b.classList.toggle('actif', n === e);
-        b.disabled = n > 2 && !panneauOuvert();   // Message et Envoi : une fois le projet enregistré
-        if (n === e) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
-      });
+      const boutons = racine.querySelectorAll('.cv-etapes [data-aller-etape]');
+      P.marquerEtapes(boutons, e, 'allerEtape');  // (js/admin/coque.js)
+      boutons.forEach((b) => { b.disabled = Number(b.dataset.allerEtape) > 2 && !panneauOuvert(); });   // Message et Envoi : une fois le projet enregistré
       if (e === 4) resume();
     }
     function etape(n) {
@@ -72,6 +69,7 @@
     }
     // un projet ouvert : le formulaire rempli ; déjà enregistré, son panneau d'envoi aussi (Message, Envoi, Réponses)
     function ouvrir(p) {
+      enregistre = false; sale = false;
       titre(p);
       // « Plus de détails » ouvert d'office quand le projet en a déjà
       $('cv-details').open = !!(p && (p.date_fin || p.heure_evenement || p.adresse || (p.deroule || []).length || p.a_prevoir || p.message_modele));
@@ -85,8 +83,16 @@
       .observe($('cv-affiche'), { childList: true, subtree: true });
     new MutationObserver(majEtapes).observe($('convoc-panneau'), { attributes: true, attributeFilter: ['hidden'] });
     // le projet enregistré (« Enregistrer · suivant », js/convocations-page.js) ouvre son panneau : on passe au Message
-    let enregistre = false;
-    $('cv-form').addEventListener('submit', () => { enregistre = true; });
+    // (déclaré plus haut : ouvrir() le remet à zéro)
+    $('cv-form').addEventListener('submit', () => { enregistre = true; sale = false; });
+    // changements des étapes 1 et 2 pas encore enregistrés (affiche, mannequins, date…)
+    $('cv-form').addEventListener('input', () => { sale = true; });
+    $('cv-form').addEventListener('change', () => { sale = true; });
+    new MutationObserver(() => { sale = true; }).observe($('cv-affiche'), { childList: true, subtree: true });
+    // Entrée dans un champ de l'étape 1 : l'étape suivante, pas l'enregistrement direct
+    $('cv-form').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && racine.dataset.etape === '1' && e.target.tagName === 'INPUT') { e.preventDefault(); racine.querySelector('.cv-suite [data-aller-etape="2"]').click(); }
+    });
     const ouvrirPanneau = window.ouvrirConvocations;
     window.ouvrirConvocations = async function (p) {
       const r = await ouvrirPanneau.apply(this, arguments);
@@ -112,6 +118,8 @@
       if (b) {
         const n = Number(b.dataset.allerEtape);
         if (n === 2 && racine.dataset.etape === '1' && (!$('cv-titre').value.trim() || !$('cv-date').value)) { $('cv-etat').className = 'form-msg err'; $('cv-etat').textContent = 'Indiquez au moins un titre et une date.'; return; }
+        // vers Message ou Envoi avec des changements pas encore enregistrés : on enregistre d'abord (puis l'étape Message s'ouvre)
+        if (n > 2 && Number(racine.dataset.etape) <= 2 && sale) { $('cv-enregistrer').click(); return; }
         etape(n); return;
       }
       const o = e.target.closest('[data-cv-onglet]');
