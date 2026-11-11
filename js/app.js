@@ -70,7 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
   observerAjouts.observe(document.body, { childList: true, subtree: true });
 });
 // Outils partagés avec le serveur (js/partage.js, phase 2, 02/11/2026)
-const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure, rognerBlancs, empreinteTexte } = window.Partage;
+const { deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours, urlHttpSure, rognerBlancs, empreinteTexte } = window.Partage || {};
+// (11/11/2026, journal : « Cannot destructure … of window.Partage », un iPhone sur /services) si js/partage.js n'a pas
+// pu être chargé (coupure réseau), le reste du site (menu, apparitions, formulaires) fonctionne quand même ; le
+// journal garde la trace du fichier manquant.
+if (!window.Partage) console.error('[MA2M] js/partage.js non chargé : outils partagés indisponibles sur cette page');
 
 
 // Sécurité : neutralise tout HTML dans un texte avant de l'insérer dans la page
@@ -2848,8 +2852,12 @@ const URL_SCRIPT_PHOTOS_CASTING = 'https://script.google.com/macros/s/AKfycbxzPe
 // Message sous un formulaire, jauges d'envoi, taille en Mo et durée d'une vidéo : partagés le 08/11/2026 entre la
 // candidature (js/formulaire-candidature.js) et l'inscription aux cours de talons (js/cours-talons.js).
 function afficherMsg(el, texte, type) {
+  // même message qu'au tap précédent : il « clignote » pour montrer que le bouton a bien réagi (journal du 11/11/2026 :
+  // « Envoyer ma candidature » tapé 4 fois en 2 s, le message d'erreur restant identique, rien ne semblait bouger)
+  const memeMessage = el.textContent === texte && el.classList.contains(type);
   el.className = 'form-msg ' + type;
   el.textContent = texte;
+  if (memeMessage) { void el.offsetWidth; el.classList.add('rappel'); }
   // le message ramené à l'écran : sur un petit téléphone, il restait hors de vue et le visiteur
   // tapait « Envoyer » encore et encore sans savoir pourquoi rien ne partait (journal du 19/10/2026)
   if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
