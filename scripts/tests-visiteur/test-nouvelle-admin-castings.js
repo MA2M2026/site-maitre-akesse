@@ -99,6 +99,28 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('[data-action="dossier-supprimer"]'); await p.waitForTimeout(1200);
     ok(ecrits(journal, 'DELETE', 'casting_applications').length === 1 && /#\/site\/b2-candidatures$/.test(p.url()), n + 'dossier supprimé, retour à la liste');
 
+    // 5bis. Étudier les nouvelles une à une (11/11/2026, maquette validée par la propriétaire)
+    await p.goto(URL_ADMIN + '#/site/b2-candidatures'); await p.waitForSelector('.etude-lancer', { timeout: 15000 }); await p.waitForTimeout(600);
+    const nbNouvelles = Number(((await p.textContent('.etude-lancer')).match(/les (\d+) nouvelles/) || [0, 1])[1]);
+    ok(/Étudier (les \d+ nouvelles|la nouvelle candidature)/.test(await p.textContent('.etude-lancer')), n + 'bouton « ▶ Étudier les nouvelles » (' + nbNouvelles + ')');
+    await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
+    const etude = await p.evaluate(() => ({ rang: document.querySelector('.etude-haut').innerText, nom: document.querySelector('.etude-voile b').textContent, choix: document.querySelectorAll('.etude-choix').length }));
+    ok(new RegExp('1 / ' + nbNouvelles).test(etude.rang) && etude.nom && etude.choix === 3 && /#\/site\/b2-candidatures\/etude$/.test(p.url()),
+      n + 'étudier : 1 / ' + nbNouvelles + ', ' + etude.nom + ' en grand, trois décisions');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'étudier : rien ne dépasse de l’écran');
+    await capture(p, 'etude' + suffixe);
+    const patchsAvant = ecrits(journal, 'PATCH', 'casting_applications').length;
+    await p.click('.etude-choix.revoir');  // (« À revoir » : la suite de l'essai compte les « Retenue »)
+    await p.waitForSelector('.etude-resultat', { timeout: 15000 }); await p.waitForTimeout(1500);
+    const patch = ecrits(journal, 'PATCH', 'casting_applications').slice(patchsAvant).pop();
+    ok(patch && /"status":"en étude"/.test(patch[3]) && /à revoir/.test(await p.textContent('.etude-resultat h2')) && await p.isVisible('#dos-notif-texte'),
+      n + '« À revoir » : enregistré, « … à revoir plus tard », le message est prêt');
+    ok(!!(await p.$('#dos-notif-wa')) || /e-mail/i.test(await p.textContent('#dos-notif-statut')), n + 'après la décision : WhatsApp prêt ou e-mail envoyé');
+    await capture(p, 'etude-decision' + suffixe);
+    await p.click('.etude-suivant'); await p.waitForTimeout(1500);
+    ok(nbNouvelles > 1 ? new RegExp('2 / ' + nbNouvelles).test(await p.textContent('.etude-haut')) : /étudiées/.test(await p.textContent('#contenu')), n + '« Candidature suivante » : la suivante s’affiche');
+    await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
+
     // 6. Demandes recruteurs
     await p.goto(URL_ADMIN + '#/site/b2-recruteurs'); await p.waitForSelector('.dossiers-grille'); await p.waitForTimeout(800);
     ok(/Koffi Marc.*Défilé.*Maison Ivoire/.test(await p.textContent('.dossier-carte')), n + 'demande recruteur listée (contact, projet, entreprise)');

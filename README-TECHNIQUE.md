@@ -4561,3 +4561,13 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   `window.ConvocationsPage` (pret, projets, choisi, choisir). Les réponses ont trois chiffres en tuiles (`.convoc-tuiles`).
 - Essais : test-nouvelle-admin-convocations.js (billets, étapes, envoi, onglet Réponses), test-convocations.js,
   test-visages-partout.js (étape du mur de visages), test-defile.js.
+
+## Candidatures : « Étudier les nouvelles » une à une (11/11/2026, maquette validée par la propriétaire)
+
+- js/admin/site-dossiers.js : bouton « ▶ Étudier les N nouvelles » en haut de la liste (`etude-demarrer`, la liste des
+  nouvelles est fixée au départ dans `P.etat.etude`), page `#/site/b2-candidatures/etude` (`pageEtude`) : photos en
+  grand qui défilent (points), nom, âge, casting, date, l'essentiel (taille, ville, expérience, mineure → message au
+  parent, vidéo), la phrase de la candidate, trois décisions (`etude-decider` : Refuser, À revoir, Retenir) ; après la
+  décision, le message prêt (e-mail parti tout seul, WhatsApp en un appui) puis « Candidature suivante ».
+- Le changement de statut est partagé par la fiche et ce mode : `enregistrerStatut`, `notifier` (plus de recopie).
+- css/admin-vivante.css : `.etude-*`. Essai : test-nouvelle-admin-castings.js (section 5bis).

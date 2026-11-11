@@ -1290,3 +1290,42 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .convoc-tuile-confirme b { color: #24603A; }
 .convoc-tuile-attente b { color: #9A560B; }
 .convoc-tuile-absent b { color: #7C2128; }
+
+/* Candidatures : étudier les nouvelles une à une (11/11/2026, maquette validée ; js/admin/site-dossiers.js) */
+.etude-lancer { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border: 0; border-radius: 18px; background: #FFFFFF; color: #7C2128; text-align: left; font: 700 16px var(--av-texte); cursor: pointer; box-shadow: var(--av-ombre); }
+.etude-lancer em { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #7C2128; color: #FFFFFF; font-style: normal; }
+.etude-lancer small { display: block; margin-top: 2px; font-weight: 400; font-size: 12.5px; color: #6E4F53; }
+.etude { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 560px; margin: 0 auto; }
+.etude-haut { display: flex; justify-content: space-between; align-items: center; font: 600 14px var(--av-texte); color: #F3DDE0; }
+.etude-quitter { color: #FFFFFF; text-decoration: none; }
+.etude-photos { position: relative; border-radius: 22px; overflow: hidden; background: #5A141B; box-shadow: var(--av-ombre-forte); }
+.etude-piste { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.etude-piste::-webkit-scrollbar { display: none; }
+.etude-photo { flex: 0 0 100%; padding: 0; border: 0; background: none; scroll-snap-align: start; cursor: zoom-in; }
+.etude-piste .vis { display: block; width: 100%; height: min(62vh, 520px); border-radius: 0; font-size: 56px; }
+.etude-piste .vis img { object-fit: cover; object-position: center 20%; }
+.etude-points { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; gap: 4px; pointer-events: none; }
+.etude-points i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .45); }
+.etude-points i.actif { background: #FFFFFF; }
+.etude-voile { position: absolute; left: 0; right: 0; bottom: 0; padding: 44px 16px 14px; background: linear-gradient(rgba(90, 20, 27, 0), rgba(90, 20, 27, .92)); color: #FFFFFF; pointer-events: none; }
+.etude-voile b { display: block; font: 600 28px/1.1 var(--av-titre); }
+.etude-voile small { font-size: 13px; color: #F3DDE0; }
+.etude-infos { display: flex; flex-wrap: wrap; gap: 6px; }
+.etude-infos span, .etude-infos a { padding: 7px 11px; border-radius: 12px; background: #FFFFFF; color: #2a1416; font: 600 12.5px var(--av-texte); text-decoration: none; }
+.etude-infos a { color: #7C2128; }
+.etude-mot { margin: 0; padding: 11px 13px; border-radius: 14px; background: rgba(255, 255, 255, .1); font-style: italic; font-size: 14px; }
+.etude-decision { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.etude-choix { min-height: 84px; border: 0; border-radius: 18px; background: #FFFFFF; font: 700 14px var(--av-texte); cursor: pointer; box-shadow: var(--av-ombre); transition: transform .15s var(--av-courbe); }
+.etude-choix:active { transform: scale(.96); }
+.etude-choix:disabled { opacity: .6; cursor: wait; }
+.etude-choix em { display: block; margin-bottom: 4px; font-style: normal; font-size: 24px; }
+.etude-choix.non { color: #7C2128; }
+.etude-choix.revoir { color: #9A560B; }
+.etude-choix.oui { color: #24603A; }
+.etude-fiche { align-self: center; color: #F3DDE0; font-size: 13px; }
+.etude-resultat, .etude-fin { padding: 18px; border-radius: 20px; background: #FFFFFF; color: #2a1416; text-align: center; box-shadow: var(--av-ombre); }
+.etude-resultat h2, .etude-fin h1 { margin: 4px 0 10px; font: 600 26px/1.15 var(--av-titre); }
+.etude-gros { font-size: 42px; }
+.etude-resultat .notification { text-align: left; }
+.etude-resultat .notification textarea { width: 100%; }
+.etude-suivant { width: 100%; margin-top: 12px; }
