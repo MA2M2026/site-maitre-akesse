@@ -4517,3 +4517,16 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - **6 étapes en cartes à dessins** (modèle « B ») ; **Extension 161** (supabase-premiere-publication.sql, lancée le
   11/11) : profils jamais publiés marqués « déjà validés » par le rattrapage de l'Extension 43 remis dans les 6 étapes.
 - Essais : test-app-mannequin.js, test-studio-compcard.js, test-profil-jamais-publie.js, test-compcard-entiere.js.
+
+## Administration apaisée : accueil en 8 tuiles (11/11/2026, maquette validée par la propriétaire)
+
+- « Trop touffu, trop surchargé » : l'accueil (js/admin/coque.js `P.vuePortail`) montre bonjour + date, une
+  **recherche** (rubriques du rôle, mannequins publiées par leur nom), « À faire aujourd'hui », le prochain
+  événement en une ligne, puis **8 tuiles** : Castings, Mannequins, Événements, Messages, Paiements,
+  Comptabilité, Le site, Réglages (selon les droits du rôle).
+- Les tuiles du bloc 1 sont définies dans js/admin/site.js (`TUILES` : rubriques utiles `pages`, outils rares
+  `plus` repliés dans « Plus d'outils » ; `INFOS` : icône et explication de chaque rubrique). Chaque rubrique du
+  MENU est dans une seule tuile (contrôlé par test-nouvelle-admin.js). Page d'une tuile : `#/site/tuile-<clé>`.
+- Dans une rubrique, le menu de gauche (ou le tiroir sur téléphone) ne montre plus que les rubriques de SA tuile
+  (`P.menuTuile`, `P.tuileDe`). Les adresses des rubriques n'ont pas changé.
+- css/admin-vivante.css : `.accueil-apaise`, `.av-recherche`, `.tuiles-accueil`, `.tu`, `.tu-page`, `.tu-ligne`, `.tu-plus`.
