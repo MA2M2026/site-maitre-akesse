@@ -82,7 +82,7 @@
   // ---------- Nouvelle information ----------
   async function formulaire() {
     if (!personnes) personnes = await P.personnesPossibles(true);
-    if (!brouillon) brouillon = { sorte: 'casting', projet: '', titre: '', date: '', date_fin: '', heure: '', lieu: '', ville: '', client: '', precisions: '', image: '', fiche: '', message: '', retouche: false, choisis: new Set() };
+    if (!brouillon) brouillon = { etape: 1, sorte: 'casting', projet: '', titre: '', date: '', date_fin: '', heure: '', lieu: '', ville: '', client: '', precisions: '', image: '', fiche: '', message: '', retouche: false, choisis: new Set() };
     const b = brouillon;
     if (!b.retouche) b.message = messageMannequin(b);
     const projets = await P.bd(sb.from('agenda_projets').select('id, titre, type, date_debut').eq('annule', false).gte('date_debut', new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10)).order('date_debut', { ascending: false }).limit(60)).catch(() => []);
@@ -90,7 +90,10 @@
     const groupe = (titre, filtre) => P.casesVisages(titre, gens.filter((x) => filtre(x)), (x) => 'data-change="infos-choix" value="' + P.esc(x.cle) + '"' + (b.choisis.has(x.cle) ? ' checked' : ''));
     const champ = (nom, libelle, type, extra) => '<label class="fl" for="if-' + nom + '">' + libelle + '<input id="if-' + nom + '" name="' + nom + '" type="' + (type || 'text') + '" value="' + P.esc(b[nom]) + '" data-change="infos-champ" data-direct' + (extra || '') + '></label>';
     return P.entete('Nouvelle information', '<a class="btn" href="#/site/' + PAGE + '">← Toutes les informations</a>') +
-      '<form class="carte f" data-form="infos-envoyer">' +
+      // (11/11/2026, « trop procédurier ») trois étapes, une seule à l'écran : l'information, à qui, le message et l'envoi
+      '<ol class="cv-etapes if-etapes large" aria-label="Étapes">' + [['1', '1 · L’information'], ['2', '2 · À qui ?'], ['3', '3 · Message et envoi']].map((e) =>
+        '<li><button type="button" data-if-etape="' + e[0] + '"' + (String(b.etape || 1) === e[0] ? ' class="actif" aria-current="step"' : Number(e[0]) < (b.etape || 1) ? ' class="fait"' : '') + '>' + e[1] + '</button></li>').join('') + '</ol>' +
+      '<form class="carte f if-form" data-form="infos-envoyer" data-etape="' + (b.etape || 1) + '" novalidate><div class="if-etape" data-if="1">' +
       '<fieldset class="large if-sortes"><legend>Quelle information ?</legend>' + Object.keys(SORTES).map((s) =>
         '<label class="if-sorte"><input type="radio" name="sorte" value="' + s + '" data-change="infos-champ"' + (b.sorte === s ? ' checked' : '') + '> ' + SORTES[s][0] + ' ' + SORTES[s][1] + '</label>').join('') + '</fieldset>' +
       '<label class="fl large" for="if-projet">Projet de l’agenda (facultatif : remplit tout)<select id="if-projet" name="projet" data-change="infos-projet"><option value="">Aucun</option>' +
@@ -102,13 +105,25 @@
       '<label class="fl" for="if-photo">Photo (affiche, visuel…)<input id="if-photo" type="file" accept="image/*,.heic,.heif" data-change="infos-fichier" data-quoi="image"></label>' +
       '<label class="fl" for="if-fiche">Fiche jointe (PDF ou image)<input id="if-fiche" type="file" accept="application/pdf,image/*" data-change="infos-fichier" data-quoi="fiche"></label>' +
       '<p class="doux large" id="if-pieces">' + [b.image ? '🖼️ Photo jointe' : '', b.fiche ? '📄 Fiche jointe' : ''].filter(Boolean).join(' · ') + '</p>' +
-      '<label class="fl large" for="if-message">Le message (rédigé pour vous, à retoucher si besoin)<textarea id="if-message" name="message" rows="12" maxlength="4000" data-change="infos-message" data-direct>' + P.esc(b.message) + '</textarea></label>' +
+      '<div class="cv-suite large"><button type="button" class="btn rouge" data-if-etape="2">Suivant : à qui ? ›</button></div></div>' +
+      '<div class="if-etape" data-if="3"><label class="fl large" for="if-message">Le message (rédigé pour vous, à retoucher si besoin)<textarea id="if-message" name="message" rows="12" maxlength="4000" data-change="infos-message" data-direct>' + P.esc(b.message) + '</textarea></label>' +
       '<p class="doux large">« {prénom} » est remplacé par le nom de chaque mannequin. Une mineure : WhatsApp et e-mail partent à son parent ; l’application, à elle.</p>' +
-      '<div class="large"><h2>À qui ?</h2><div class="ligne"><button class="btn petit" type="button" data-action="infos-tout" data-valeur="1">Toutes</button><button class="btn petit" type="button" data-action="infos-tout" data-valeur="0">Aucune</button>' +
+      '<div class="ligne large"><button class="btn" type="button" data-if-etape="2">‹ À qui ?</button><button class="btn rouge" type="submit">Envoyer dans l’application et préparer e-mail et WhatsApp</button></div></div>' +
+      '<div class="if-etape" data-if="2"><div class="large"><h2>À qui ?</h2><div class="ligne"><button class="btn petit" type="button" data-action="infos-tout" data-valeur="1">Toutes</button><button class="btn petit" type="button" data-action="infos-tout" data-valeur="0">Aucune</button>' +
       (b.projet ? '<button class="btn petit" type="button" data-action="infos-du-projet">Celles du projet</button>' : '') + '<span class="doux" id="if-compte">' + P.pluriel(b.choisis.size, 'mannequin choisie', 'mannequins choisies') + '</span></div>' +
       groupe('Mannequins de l’agence', (x) => x.origine === 'agence') + groupe('Mannequins extérieures', (x) => x.origine === 'exterieure') + '</div>' +
-      '<div class="ligne large"><button class="btn rouge" type="submit">Envoyer dans l’application et préparer e-mail et WhatsApp</button></div></form>';
+      '<div class="cv-suite large"><button class="btn" type="button" data-if-etape="1">‹ L’information</button><button class="btn rouge" type="button" data-if-etape="3">Suivant : le message ›</button></div></div></form>';
   }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-if-etape]');
+    if (!b || !brouillon) return;
+    const n = Number(b.dataset.ifEtape), form = document.querySelector('.if-form');
+    if (!form) return;
+    if (n > 1 && !String(brouillon.titre || '').trim()) { P.message('Indiquez d’abord un titre.'); return; }
+    brouillon.etape = n; form.dataset.etape = String(n);
+    P.marquerEtapes(document.querySelectorAll('.if-etapes [data-if-etape]'), n, 'ifEtape');  // (js/admin/coque.js)
+    form.scrollIntoView({ block: 'start' });
+  });
   const redessinerMessage = () => {
     const b = brouillon, zone = document.getElementById('if-message');
     if (!b.retouche) { b.message = messageMannequin(b); if (zone) zone.value = b.message; }

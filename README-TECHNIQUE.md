@@ -4488,3 +4488,104 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - **Étapes du profil (application)** : les 6 étapes sur UNE ligne, en pastilles numérotées reliées, collées en haut
   de l'écran (css/mannequin-app.css ; blocs de 1/6 sans grille ni flex, noms courts sous 420 px) ; app/sw.js v11.
 - Essais : test-compte-mannequin-serveur.js, test-mdp-provisoire.js, test-etapes-profil.js, test-nouvelle-admin-mannequins.js.
+
+## Offre Entreprises du cours de talons : plaquette et prospection par e-mail (11/11/2026)
+
+- **Plaquette** (validée par la propriétaire) : `outils/plaquette-talons-entreprises/plaquette.html`, 15 pages A4,
+  rouge mat #7C2128 + blanc, structure « pourquoi → comment → combien » (sommaire, besoin, 6 raisons, situations,
+  gains, programme samedi par samedi théorie/pratique, format, tarifs 10→50 participantes, 3 cas pratiques
+  inventés et présentés comme exemples, proforma type, agence, contact + QR codes). PDF : `node faire-pdf.js`.
+- **Prospection** : `outils/prospection/` (modèles d'e-mails, plaquette allégée, règles d'envoi dans LISEZMOI.md).
+  Liste des destinataires hors dépôt (dépôt public) ; adresses générales publiques uniquement.
+
+## Application des mannequins façon réseau social, compcard premium (11/11/2026, maquettes validées par la propriétaire)
+
+- **Mon profil** (js/mannequin-app.js `ecranProfil`, css/mannequin-app.css `.ap-vitrine-*`) : couverture et photo ronde
+  touchées → galerie du téléphone → la photo rejoint le Book et reçoit son rôle (js/app.js `insererPhotoBook`,
+  `definirRolePhoto`, partagés avec l'Espace mannequin) ; chiffres, phrase, état, « Partager mon book »
+  (feuille de partage du téléphone), raccourcis Compcard / Mon CV / Mes photos, grille de 3 photos.
+- **Ma compcard** (js/espace-mannequin.js `viewStudioCompcard`, adresse `/app/espace-mannequin.html#compcard`) : 5 cases
+  en grand, case touchée → galerie → photo dans le Book et dans la case ; aperçu, PDF, image, envoi WhatsApp.
+- **Accueil en « fil »** (js/mannequin-app.js `ecranAccueil`, css `.ap-stories`, `.ap-post`) : ronds façon stories (Moi, Ma carte, Compcard, Mon CV, Messages), prochain rendez-vous, fil de l’agence (castings ouverts, messages de l’agence avec leur photo, sans les paiements).
+- **Paiements « style application bancaire »** (js/mannequin-app.js `ecranPaiements`, `carteMembre`, css `.ap-cb`, `.ap-tuile`, `.ap-prochain`, `.ap-grille-mois`, `.ap-releve`) : carte de membre façon carte bancaire (nom, formation, date d’entrée de `mes_presences`, mensualité), mois payés et cachets reçus, prochain paiement avec « Payer avec Wave » (ou « Rien à payer » / « Payer à l’avance »), grille des mois (✓ payé, 🌴 congés, ⏳ vérification, mois en cours entouré), relevé « Mes opérations » (cachets + paiements validés lus par `mes_recus`).
+- **Événements façon billets** (js/mannequin-app.js `ecranEvenements`, `billetUne`, `billetMini`, `blocPassages` partagé avec l’Accueil, `carteAcces` en billet à bord prédécoupé ; css `.ap-seg`, `.ap-ev-*`, `.ap-acces`) : le prochain événement en grand (date en carré blanc, « dans N jours », convocation, lieu, réponse), « Mes passages », la carte d’accès, puis « Ensuite » en lignes qu’on touche pour les ouvrir (elles restent ouvertes après une réponse).
+- **Messages façon messagerie** (js/mannequin-app.js `ecranAlertes`, `bulleMessage` ; css `.ap-afaire`, `.ap-fil*`, `.ap-bulle*`, `.ap-wa`) : « À faire » en cartes qui défilent, conversation avec l’agence (bulles par jour, des 30 derniers messages, du plus ancien au plus récent ; nouveaux entourés, paiements en vert ; l’écran descend jusqu’au premier nouveau message), bouton « Écrire à l’agence sur WhatsApp » (`MA2M_WHATSAPP`, js/app.js).
+- **CV premium** (js/app.js `construireCanvasCv`, même style que la compcard, langues ajoutées) et écran **Mon CV** (js/espace-mannequin.js `viewStudioCv`, adresse `#cv`) : photo du CV depuis la galerie, liste Complet / À compléter, aperçu = image du CV, PDF, image, WhatsApp.
+- **Compcard premium** (js/app.js `construireCanvasCompcard`) : fond blanc, nom en Cormorant, photos sur deux tiers
+  de la page (grande case : photo plus large que la case → seuls les côtés sont rognés), mesures sur deux lignes
+  fines, pied rouge (infos.ma2m@gmail.com). L'aperçu affiche l'image même de la compcard (identique aux fichiers).
+- **6 étapes en cartes à dessins** (modèle « B ») ; **Extension 161** (supabase-premiere-publication.sql, lancée le
+  11/11) : profils jamais publiés marqués « déjà validés » par le rattrapage de l'Extension 43 remis dans les 6 étapes.
+- Essais : test-app-mannequin.js, test-studio-compcard.js, test-profil-jamais-publie.js, test-compcard-entiere.js.
+
+## Administration apaisée : accueil en 8 tuiles (11/11/2026, maquette validée par la propriétaire)
+
+- « Trop touffu, trop surchargé » : l'accueil (js/admin/coque.js `P.vuePortail`) montre bonjour + date, une
+  **recherche** (rubriques du rôle, mannequins publiées par leur nom), « À faire aujourd'hui », le prochain
+  événement en une ligne, puis **8 tuiles** : Castings, Mannequins, Événements, Messages, Paiements,
+  Comptabilité, Le site, Réglages (selon les droits du rôle).
+- Les tuiles du bloc 1 sont définies dans js/admin/site.js (`TUILES` : rubriques utiles `pages`, outils rares
+  `plus` repliés dans « Plus d'outils » ; `INFOS` : icône et explication de chaque rubrique). Chaque rubrique du
+  MENU est dans une seule tuile (contrôlé par test-nouvelle-admin.js). Page d'une tuile : `#/site/tuile-<clé>`.
+- Dans une rubrique, le menu de gauche (ou le tiroir sur téléphone) ne montre plus que les rubriques de SA tuile
+  (`P.menuTuile`, `P.tuileDe`). Les adresses des rubriques n'ont pas changé.
+- css/admin-vivante.css : `.accueil-apaise`, `.av-recherche`, `.tuiles-accueil`, `.tu`, `.tu-page`, `.tu-ligne`, `.tu-plus`.
+
+## « Ajouter une image » aux messages (11/11/2026, maquette validée par la propriétaire)
+
+- Outil partagé js/image-jointe.js (`ImageJointe.brancher(zone, { valeur, surChange })`) : « ＋ Ajouter une image
+  depuis la galerie », aperçu, « Changer », « Retirer » ; envoi sur R2 (dossier « infos », `envoyerImageSite`,
+  js/images-site-ecriture.js). Chargé avant les Convocations dans js/admin/site.js (PIECES).
+- Lien dans les messages : `avecAffiche(texte, url)` (js/messages-convocations.js, partagé navigateur et serveur) ajoute
+  « 🖼️ Voir l'affiche : … » à la fin (WhatsApp et e-mail ne savent pas joindre une image à un message préparé).
+- **Convocations** : case « Affiche ou photo (facultatif) », gardée avec le projet dans `agenda_projets.affiche`
+  (**Extension 162**, supabase-affiche-projet.sql, une colonne, aucun droit changé). Tous les messages du projet (y
+  compris les e-mails programmés envoyés par api/portail.js) portent le lien ; envoyée « maintenant », la sélection
+  ou la convocation part aussi dans l'application (`envoyerDansApplication`, clés m:/c:), l'affiche en grand.
+  Sans l'Extension 162, le projet s'enregistre quand même et un avertissement le dit.
+- **Messages groupés** : case « Image (facultatif) » ; lien dans l'e-mail et le WhatsApp, image dans l'application.
+- (Informations agence avait déjà sa « Photo (affiche, visuel…) ».)
+- Essais : test-nouvelle-admin-convocations.js, test-nouvelle-admin-castings.js.
+
+## Convocations en billets et en 4 étapes (11/11/2026, maquette validée par la propriétaire)
+
+- js/convocations-gabarit.js : l'écran est rangé en deux vues. **Liste** (`#cv-liste`) : « ＋ Nouveau projet », les
+  projets à venir en billets (`#cv-billets` : date, visages, jauge des réponses), « Réponses d'un projet passé ».
+  **Parcours** (`#cv-parcours`) : onglets « Convoquer » / « Réponses · 8/12 », barre des étapes 1 · Projet
+  (l'essentiel ; « Plus de détails » et l'affiche repliés), 2 · Mannequins (mur de visages, « Enregistrer · suivant »),
+  3 · Message (participants, aperçu), 4 · Envoi (résumé, moyens, quand, suivi). Tous les identifiants sont gardés :
+  js/convocations-page.js et js/convocations-admin.js n'ont presque pas changé.
+- js/admin/site-convocations.js : le parcours (`data-vue`, `data-etape`, `data-onglet` sur `#ecran-convocations`, la
+  CSS montre l'étape en cours) ; après un enregistrement, l'étape 3 s'ouvre ; un projet demandé (Agenda, Places,
+  affiche du jour sur l'accueil : `convocationDemandee`) s'ouvre directement. js/convocations-page.js expose
+  `window.ConvocationsPage` (pret, projets, choisi, choisir). Les réponses ont trois chiffres en tuiles (`.convoc-tuiles`).
+- Essais : test-nouvelle-admin-convocations.js (billets, étapes, envoi, onglet Réponses), test-convocations.js,
+  test-visages-partout.js (étape du mur de visages), test-defile.js.
+
+## Candidatures : « Étudier les nouvelles » une à une (11/11/2026, maquette validée par la propriétaire)
+
+- js/admin/site-dossiers.js : bouton « ▶ Étudier les N nouvelles » en haut de la liste (`etude-demarrer`, la liste des
+  nouvelles est fixée au départ dans `P.etat.etude`), page `#/site/b2-candidatures/etude` (`pageEtude`) : photos en
+  grand qui défilent (points), nom, âge, casting, date, l'essentiel (taille, ville, expérience, mineure → message au
+  parent, vidéo), la phrase de la candidate, trois décisions (`etude-decider` : Refuser, À revoir, Retenir) ; après la
+  décision, le message prêt (e-mail parti tout seul, WhatsApp en un appui) puis « Candidature suivante ».
+- Le changement de statut est partagé par la fiche et ce mode : `enregistrerStatut`, `notifier` (plus de recopie).
+- css/admin-vivante.css : `.etude-*`. Essai : test-nouvelle-admin-castings.js (section 5bis).
+
+## Soir du 11/11/2026 : messages, anciennes mannequins, Paiements et Comptabilité rangés
+
+- **« Que voulez-vous envoyer ? »** (js/admin/site.js, tuile Messages, `ENVOIS`) : une question, cinq réponses qui ouvrent
+  directement le bon écran (Convoquer, Annoncer une sélection, Rappeler, Information, Candidates) ; raccourci
+  « ✉️ Envoyer un message » sur l'accueil (js/admin/coque.js).
+- **Anciennes mannequins sans espace** (js/portail/espace-paiements.js, Codes de l'espace) : bouton « Inscrite avant
+  l'application : créer son code » = `reprise_inscription(encaissee)` (aucune recette en compta) puis `code_espace_creer`.
+  La création du compte ne change pas.
+- **« Reprise du 1er mars » renommée « Dossiers de formation »** (js/portail/espace-reprise.js ; les adresses ne changent pas).
+- **Paiements et Comptabilité rangés** (js/admin/blocs-index.js, chargé en dernier dans admin/index.html) : page d'entrée
+  `#/paiements/accueil`, `#/compta/accueil` (rubriques groupées avec icône et explication, outils rares repliés),
+  menu de côté limité au groupe de la rubrique (`P.groupeBloc`, js/admin/coque.js). Une rubrique sans groupe va dans « Autres ».
+- **Messages groupés en 3 étapes** (« Écrire à des candidates » ; js/messages-groupes-gabarit.js, étapes menées par
+  js/admin/site-messages-groupes.js, `data-etape` sur `#ecran-mg`) : 1 · À qui ?, 2 · Le message, 3 · Envoyer (résumé,
+  e-mail, WhatsApp une personne après l'autre). La logique (js/messages-groupes.js) est inchangée.
+- **Informations agence en 3 étapes** (js/admin/site-infos.js : `brouillon.etape`, `data-etape` sur le formulaire
+  `.if-form`, les champs gardent ce qui est tapé) : 1 · L'information, 2 · À qui ?, 3 · Message et envoi.

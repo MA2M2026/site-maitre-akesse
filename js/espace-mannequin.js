@@ -629,12 +629,7 @@ const Store = {
     }, 90000);
     try{
       // Préparation et envoi partagés avec le tableau de bord (js/app.js).
-      const colonnes = await envoyerPhotoBook(currentUser.id, file);
-
-      const { data: row, error: dbErr } = await sb.from('model_photos').insert(Object.assign({
-        model_id: currentUser.id, originale_optimisee:true }, colonnes)).select().single();
-      if (dbErr) throw dbErr;
-      return photoDuBook(row);
+      return photoDuBook(await insererPhotoBook(currentUser.id, file));  // (js/app.js)
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
@@ -670,12 +665,8 @@ const Store = {
      que "principale" déjà en production : on désactive l'ancienne avant
      d'activer la nouvelle. */
   async setRolePhoto(colonne, photoId){
-    const { error: eOff } = await sb.from('model_photos').update({ [colonne]: false }).eq('model_id', currentUser.id).eq(colonne, true);
-    if (eOff) { console.error(eOff); toast('Échec de la mise à jour', true); return false; }
-    if (photoId) {
-      const { error: eOn } = await sb.from('model_photos').update({ [colonne]: true }).eq('id', photoId).eq('model_id', currentUser.id);
-      if (eOn) { console.error(eOn); toast('Échec de la mise à jour', true); return false; }
-    }
+    const erreur = await definirRolePhoto(currentUser.id, colonne, photoId);  // (js/app.js)
+    if (erreur) { console.error(erreur); toast('Échec de la mise à jour', true); return false; }
     return true;
   },
 
@@ -720,6 +711,8 @@ const Store = {
 /* ------------------------------------------------------------- UTILS UI --- */
 const STEP_LABELS = ['Identité','Physique','Formation','Expérience','Photos','Récapitulatif'];
 const STEP_COURTS = ['Identité','Physique','Formation','Expér.','Photos','Récap.'];
+// (11/11/2026, modèle « les cartes » choisi par la propriétaire) dessin de chaque étape (affiché dans l'application)
+const STEP_ICONES = ['👤','📏','🎓','👠','📸','✨'];
 const EXP_TYPES = ['Défilé','Campagne','Éditorial','Shooting','Lookbook','Publicité','Fitting','Showroom','Vidéo','Autre'];
 // MOIS_FR / formaterPeriode : partagés dans js/app.js (aussi utilisés par le CV).
 
@@ -747,6 +740,8 @@ function render(){
   // Profil mis en sourdine par l'agence : plus aucun formulaire, seulement le message
   // (la base refuse de toute façon toute modification, Extension 135).
   if (state.meta.desactive) { app.innerHTML = viewSourdine(); return; }
+  if (state.meta.studio === 'compcard') { app.innerHTML = viewStudioCompcard(); bindStudioCompcard(); return; }
+  if (state.meta.studio === 'cv') { app.innerHTML = viewStudioCv(); bindStudioCv(); return; }
   const enModeGuide = !state.meta.premierePublicationFaite;
   if (enModeGuide) {
     if (state.meta.statutAffichage === 'en_attente') { app.innerHTML = viewConfirmation(); return; }
@@ -788,7 +783,7 @@ function viewWizard(){
     const n=i+1; const cls = n===state.meta.currentStep?'active':(stepComplete(n)?'done':'');
     // (10/11/2026) nom court pour les petits écrans (application : les 6 étapes sur UNE ligne, css/mannequin-app.css)
     const manque = pts && BLOCS_ETAPES[i] ? pts.nb[BLOCS_ETAPES[i]] : 0;
-    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+pastilleRouge(manque)+'</button>';
+    return '<button type="button" class="step-tab '+cls+'" data-goto="'+n+'" data-bouton-libre aria-label="Étape '+n+' : '+l+(manque > 0 ? ', '+manque+' élément'+(manque>1?'s':'')+' à remplir ou à corriger' : '')+'"><span class="n">'+n+'</span><span class="ic" aria-hidden="true">'+STEP_ICONES[i]+'</span><span class="l-long">'+l+'</span><span class="l-court" aria-hidden="true">'+STEP_COURTS[i]+'</span>'+pastilleRouge(manque)+'</button>';
   }).join('') + '</div>' +
   '<div class="panel">' + stepContent(state.meta.currentStep) + '</div>' +
   // (07/11/2026) accès toujours visible au récapitulatif, même si les cases du haut s'affichent mal sur un vieux téléphone
@@ -1400,6 +1395,154 @@ function retirerDeCompcardLocal(photo){
 // l'écouteur était auparavant ajouté à chaque fois (un clic = plusieurs enregistrements).
 let ecouteChoixBookPose = false;
 
+// Une photo du Book reçoit une case de la compcard (1 à 5) ; utilisé par le bloc Photos et l'écran « Ma compcard »
+async function assignerCompcardSlot(photo, slot){
+  if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
+  const ok = await Store.setCompcardOrdre(photo.id, slot);
+  if (ok) {
+    // même chose à l'écran : l'ancienne photo de cette case la quitte
+    state.photos.book.forEach(function(ph){ if (ph !== photo && ph.compcardOrdre === slot) ph.compcardOrdre = null; });
+    photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot);
+  }
+  return ok;
+}
+
+/* ------------------------------------------------ ÉCRAN « MA COMPCARD » ---
+   (11/11/2026, maquette validée par la propriétaire) ouvert depuis l'application (Mon profil › Compcard,
+   adresse …#compcard) : les 5 cases en grand, on touche une case → la galerie du téléphone s'ouvre → la photo
+   rejoint le Book et prend la case. Puis la vraie compcard : aperçu, PDF, image, envoi par WhatsApp. */
+const CASES_COMPCARD = ['Principale', 'Plein pied', 'Profil', 'Mouvement', 'Libre'];
+function viewStudioCompcard(){
+  const parCase = {};
+  state.photos.book.forEach(function(ph){ if (ph.compcardOrdre) parCase[ph.compcardOrdre] = ph; });
+  const nb = Object.keys(parCase).length;
+  const caseHtml = function(n){
+    const ph = parCase[n];
+    return '<label class="sc-case sc-case-'+n+(ph?' pleine':'')+'"><span class="sc-num">'+n+(n===1?' · PRINCIPALE':'')+'</span>' +
+      (ph ? '<img src="'+echapperHtml(ph.url)+'" alt="Photo '+n+' de la compcard"><span class="sc-changer">Changer</span>'
+          : '<span class="sc-vide"><b>＋</b>'+CASES_COMPCARD[n-1]+'<small>depuis la galerie</small></span>') +
+      '<input class="hidden-input" type="file" accept="image/*" data-sc-case="'+n+'" aria-label="Choisir la photo '+n+' de la compcard dans la galerie"></label>';
+  };
+  return '<div class="sc-studio">' +
+    '<div class="sc-tete"><a class="sc-retour" href="/app/#profil" aria-label="Retour à mon profil">‹</a><h1>Ma compcard</h1></div>' +
+    '<p class="sc-sous">Vos 5 plus belles photos, celles que l’agence envoie aux clients. Touchez une case pour choisir une photo dans votre galerie.</p>' +
+    '<div class="sc-prog"><div><i data-largeur="'+(nb*20)+'"></i></div>'+nb+' / 5</div>' +
+    '<div class="sc-grille">'+caseHtml(1)+'<div class="sc-droite">'+[2,3,4,5].map(caseHtml).join('')+'</div></div>' +
+    '<div class="sc-conseil">💡 <b>Conseil de l’agence :</b> un portrait souriant en 1, puis une photo en pied, un profil, une photo en mouvement.</div>' +
+    '<div class="sc-actions"><button type="button" class="btn primary" id="scVoir">Voir ma compcard</button>' +
+    '<div class="sc-deux"><button type="button" class="btn ghost" id="scPdf">📄 PDF</button><button type="button" class="btn ghost" id="scJpeg">🖼️ Image</button></div>' +
+    '<button type="button" class="btn ghost" id="scWhatsapp">↗ Envoyer par WhatsApp</button></div>' +
+  '</div>';
+}
+function bindStudioCompcard(){
+  document.querySelectorAll('.sc-prog i[data-largeur]').forEach(function(i){ i.style.width = i.dataset.largeur + '%'; });
+  document.querySelectorAll('[data-sc-case]').forEach(function(input){
+    input.addEventListener('change', async function(){
+      const file = input.files && input.files[0];
+      const n = parseInt(input.dataset.scCase, 10);
+      input.value = '';
+      if (!file) return;
+      if (state.photos.book.length >= LIMITE_PHOTOS_BOOK) { toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true); return; }
+      const lab = input.closest('.sc-case'); if (lab) lab.classList.add('envoi');
+      toast('Envoi de la photo…');
+      const item = await Store.uploadPhoto(file);
+      if (item) { state.photos.book.push(item); await assignerCompcardSlot(item, n); }
+      render();
+    });
+  });
+  const pret = function(){
+    if (!state.photos.book.some(function(ph){ return ph.compcardOrdre; })) { toast('Choisissez d’abord au moins une photo de compcard.', true); return false; }
+    return true;
+  };
+  document.getElementById('scVoir').addEventListener('click', function(){ if (pret()) openCompcard(); });
+  document.getElementById('scPdf').addEventListener('click', function(){ if (pret()) void genererFiche('pdf', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
+  document.getElementById('scJpeg').addEventListener('click', function(){ if (pret()) void genererFiche('jpeg', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
+  document.getElementById('scWhatsapp').addEventListener('click', function(){ if (pret()) void partagerToile(this, construireCanvasCompcard, ficheDataDepuisEtat(), 'compcard', 'Ma compcard'); });
+}
+
+// Envoyer la compcard ou le CV par WhatsApp (11/11/2026, partagé par les écrans « Ma compcard » et « Mon CV ») :
+// la feuille de partage du téléphone avec l'image, sinon l'image enregistrée à joindre dans WhatsApp.
+async function partagerToile(btn, construire, donnees, prefixe, titre){
+  const texte = btn.textContent; btn.disabled = true; btn.textContent = 'Préparation…';
+  try {
+    const canvas = await construire(donnees);  // (js/app.js, même dessin que le PDF)
+    const blob = await new Promise(function(ok){ canvas.toBlob(ok, 'image/jpeg', 0.92); });
+    const fichier = new File([blob], prefixe + '-' + ((state.identite.nomComplet||'mannequin').split(' ')[0]||'mannequin').toLowerCase() + '.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+      try { await navigator.share({ files: [fichier], title: titre, text: titre + ' · Maître Akesse Model Management' }); } catch (e) { /* partage annulé */ }
+    } else {
+      telechargerFichier(blob, fichier.name);  // (js/app.js)
+      toast(titre + ' : image enregistrée, joignez-la dans WhatsApp.');
+    }
+  } catch (e) {
+    signalerProbleme(titre + ' : envoi WhatsApp échoué', (e && e.message) || String(e), e && e.stack);
+    toast('L’image n’a pas pu être préparée. Réessayez.', true);
+  } finally { btn.disabled = false; btn.textContent = texte; }
+}
+
+/* ------------------------------------------------------ ÉCRAN « MON CV » ---
+   (11/11/2026, maquette validée par la propriétaire) ouvert depuis l'application (Mon profil › Mon CV, adresse
+   …#cv) : la photo du CV (touchée → galerie → elle rejoint le Book et devient la photo du CV), la liste de ce que
+   contient le CV avec « Complet » / « À compléter » (touchée → la partie à remplir), l'aperçu du vrai CV, PDF,
+   image, envoi par WhatsApp. */
+function viewStudioCv(){
+  const pts = pointsARemplir();
+  const ph = state.photos.photoCv;
+  const lignes = [['identite','👤','Identité et contact'], ['physique','📏','Mensurations'], ['experiences','👠','Expériences'], ['formation','🎓','Formation'], ['photos','📸','Photos et portfolio']];
+  return '<div class="sc-studio">' +
+    '<div class="sc-tete"><a class="sc-retour" href="/app/#profil" aria-label="Retour à mon profil">‹</a><h1>Mon CV</h1></div>' +
+    '<p class="sc-sous">Votre CV de mannequin, prêt à envoyer. Il se remplit tout seul avec votre profil.</p>' +
+    '<label class="scv-photo"><span class="scv-vignette">' + (ph ? '<img src="'+echapperHtml(ph.url)+'" alt="Photo du CV">' : '<b>＋</b>') + '<i aria-hidden="true">＋</i></span>' +
+      '<span><b>Photo du CV</b>Un portrait net et souriant. Touchez la photo pour en choisir une dans votre galerie.</span>' +
+      '<input class="hidden-input" type="file" accept="image/*" data-scv-photo aria-label="Choisir la photo du CV dans la galerie"></label>' +
+    '<div class="scv-liste">' + lignes.map(function(l){
+      const manque = pts ? (pts.nb[l[0]] || 0) : 0;
+      const etat = l[0] === 'experiences' ? '<small class="ok">' + toutesExperiences().length + '</small>'
+        : manque ? '<small class="manque">À compléter</small>' : '<small class="ok">✓ Complet</small>';
+      return '<button type="button" data-scv-aller="'+l[0]+'"><em aria-hidden="true">'+l[1]+'</em><span>'+l[2]+'</span>'+etat+'</button>';
+    }).join('') + '</div>' +
+    '<div class="scv-apercu" id="scvApercu"><p>Préparation de l’aperçu…</p></div>' +
+    '<div class="sc-actions"><div class="sc-deux"><button type="button" class="btn primary" id="scvPdf">📄 PDF</button><button type="button" class="btn primary" id="scvJpeg">🖼️ Image</button></div>' +
+    '<button type="button" class="btn ghost" id="scvWhatsapp">↗ Envoyer par WhatsApp</button></div>' +
+  '</div>';
+}
+function bindStudioCv(){
+  const input = document.querySelector('[data-scv-photo]');
+  input.addEventListener('change', async function(){
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    if (state.photos.book.length >= LIMITE_PHOTOS_BOOK) { toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true); return; }
+    toast('Envoi de la photo…');
+    const item = await Store.uploadPhoto(file);
+    if (item) {
+      state.photos.book.push(item);
+      if (await Store.setRolePhoto('photo_cv', item.id)) { state.photos.photoCv = item; toast('Photo du CV définie'); }
+    }
+    render();
+  });
+  document.querySelectorAll('[data-scv-aller]').forEach(function(b){
+    b.addEventListener('click', function(){
+      const k = b.dataset.scvAller;
+      state.meta.studio = null;
+      history.replaceState(null, '', location.pathname);
+      if (state.meta.premierePublicationFaite) state.meta.editBlock = k; else state.meta.currentStep = BLOCS_ETAPES.indexOf(k) + 1;
+      render(); window.scrollTo(0, 0);
+    });
+  });
+  document.getElementById('scvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCvDepuisEtat(), 'scvPdf', 'scvJpeg'); });
+  document.getElementById('scvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCvDepuisEtat(), 'scvPdf', 'scvJpeg'); });
+  document.getElementById('scvWhatsapp').addEventListener('click', function(){ void partagerToile(this, construireCanvasCv, donneesCvDepuisEtat(), 'cv', 'Mon CV'); });
+  // aperçu : l'image même du CV (construireCanvasCv), en arrière-plan
+  construireCanvasCv(donneesCvDepuisEtat()).then(function(canvas){
+    const zone = document.getElementById('scvApercu');
+    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Aperçu de mon CV">';
+  }).catch(function(e){
+    signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
+    const zone = document.getElementById('scvApercu'); if (zone) zone.innerHTML = '<p>L’aperçu n’a pas pu être préparé.</p>';
+  });
+}
+
 function bindPhotoHandlers(){
   const s = state;
   const fBook = document.getElementById('fBook');
@@ -1492,16 +1635,6 @@ function bindPhotoHandlers(){
   async function assignerPrincipale(photo){ const ok = await Store.setRolePhoto('principale', photo.id); if (ok) { s.photos.principale=photo; toast('Photo de profil définie'); } return ok; }
   async function assignerPleinPied(photo){ const ok = await Store.setRolePhoto('photo_pleinpied', photo.id); if (ok) { s.photos.pleinPied=photo; toast('Photo plein pied définie'); } return ok; }
   async function assignerCouverture(photo){ const ok = await Store.setRolePhoto('photo_couverture', photo.id); if (ok) { s.photos.couverture=photo; toast('Photo de couverture définie'); } return ok; }
-  async function assignerCompcardSlot(photo, slot){
-    if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
-    const ok = await Store.setCompcardOrdre(photo.id, slot);
-    if (ok) {
-      // même chose à l'écran : l'ancienne photo de cette case la quitte
-      state.photos.book.forEach(function(ph){ if (ph !== photo && ph.compcardOrdre === slot) ph.compcardOrdre = null; });
-      photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot);
-    }
-    return ok;
-  }
 
   document.getElementById('uPhotoCv')?.addEventListener('click', function(){
     ouvrirChoixBook(async function(photo){ if (await assignerPhotoCv(photo)) { render(); reopenDashboardBlock('photos'); } });
@@ -1801,7 +1934,10 @@ function viewDashboard(){
   let bandeau = '';
   if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
   else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' · « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
-  else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne, visible sur le site</div>';
+  else if (state.meta.statutAffichage === 'valide') bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne, visible sur le site</div>';
+  // (11/11/2026, signalé par la propriétaire) profil jamais publié mais marqué « déjà formé » par le rattrapage de
+  // l'Extension 43 : le bandeau disait à tort « en ligne » ; l'Extension 161 les renvoie vers les 6 étapes.
+  else bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Profil pas encore en ligne : il doit d’abord être validé par l’agence</div>';
 
   // Rappel (non bloquant) des blocs encore incomplets — le profil reste en
   // ligne tel quel, mais un book/fiche plus complet est plus attrayant pour
@@ -1862,21 +1998,30 @@ function donneesCvDepuisEtat(){
       return ph ? (ph.urlPleine||ph.url) : null;
     }),
     photosBook: (state.photos.principale ? [state.photos.principale] : []).concat(state.photos.book).map(function(ph){ return ph.urlPleine||ph.url; }),
-    physique: p, formation: f, competences: state.competences, experiences: toutesExperiences(), sexe: d.sexe
+    physique: p, formation: f, competences: state.competences, experiences: toutesExperiences(), sexe: d.sexe,
+    langues: (state.profilPro && state.profilPro.langues) || []
   };
 }
 
-function openCv(){
+// Aperçu du CV (11/11/2026, CV « premium ») : l'image affichée est LE CV lui-même, dessiné par construireCanvasCv
+// (js/app.js) — l'aperçu et les fichiers PDF / image sont donc toujours identiques.
+async function openCv(){
   const donneesCv = donneesCvDepuisEtat();
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
-    '<div class="cv-sheet">' +
-    '<div id="cv-mannequin-contenu">' + construireHtmlCv(donneesCv) + '</div>' +
-    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en JPEG</button><button class="btn primary small" id="btnCvPdf">🖨️ Télécharger en PDF</button></div>' +
-    '</div>';
+    '<div class="compcard-model compcard-apercu cv-apercu"><p class="sub">Préparation de votre CV…</p></div>' +
+    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="btnCvJpeg">🖼️ Télécharger en image</button><button class="btn primary small" id="btnCvPdf">📄 Télécharger en PDF</button></div>';
   showOverlay();
   document.getElementById('btnCvPdf').addEventListener('click', function(){ void genererCvFichier('pdf', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
   document.getElementById('btnCvJpeg').addEventListener('click', function(){ void genererCvFichier('jpeg', donneesCv, 'btnCvPdf', 'btnCvJpeg'); });
+  const zone = document.querySelector('.cv-apercu');
+  try {
+    const canvas = await construireCanvasCv(donneesCv);
+    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Mon CV">';
+  } catch (e) {
+    signalerProbleme('Aperçu du CV échoué', (e && e.message) || String(e), e && e.stack);
+    if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger le CV.</p>';
+  }
 }
 
 // Reconstruit, à partir de l'état réel du profil, l'objet { profil, photos, projets }
@@ -1899,35 +2044,24 @@ function ficheDataDepuisEtat(){
   };
 }
 
-function openCompcard(){
-  const compcardPhotos = state.photos.book.filter(function(ph){ return ph.compcardOrdre; }).sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; });
-  const slotsChoisis = [1,2,3,4,5].map(function(n){ return compcardPhotos.find(function(ph){ return ph.compcardOrdre===n; }) || null; });
-  // Cases vides complétées automatiquement avec les autres photos du Book (même règle
-  // que le fichier PDF/JPEG, voir completerEmplacementsPhotos dans js/app.js).
-  const urlsSlots = completerEmplacementsPhotos(slotsChoisis.map(function(ph){ return ph ? (ph.urlPleine||ph.url) : null; }), state.photos.book.map(function(ph){ return ph.urlPleine||ph.url; }), 5);
-  const slots = urlsSlots.map(function(u){ return u ? { urlPleine: u } : null; });
-  const cover = slots[0];
-  const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
-  const d = state.identite, p = state.physique;
-  // mesures incohérentes : non affichées, comme sur la compcard téléchargée (js/tailles.js)
-  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: d.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches });
+// Aperçu de la compcard (11/11/2026, compcard « premium ») : l'image affichée est LA compcard elle-même, dessinée par
+// construireCanvasCompcard (js/app.js) — l'aperçu et les fichiers PDF / image sont donc toujours identiques.
+async function openCompcard(){
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
-    '<div class="compcard-model">' +
-      '<div class="ccm-header"><img class="ccm-logo" src="assets/logo-header.png" alt="Maître Akesse Model Management"><div class="ccm-title">COMPCARD</div></div>' +
-      '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
-      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, toutesExperiences(), state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
-      '<div class="ccm-measures">' +
-        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(masquer?'—':(p.poitrine||'—')+' cm')+'</b></div>' +
-        '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>BASSIN</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
-        '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
-      '</div></div>' +
-      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com, toute demande de booking passe exclusivement par l’agence.</small></div>' +
-    '</div>' +
-    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
+    '<div class="compcard-model compcard-apercu"><p class="sub">Préparation de votre compcard…</p></div>' +
+    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en image</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();
   document.getElementById('p20BtnPdf').addEventListener('click', function(){ void genererFiche('pdf', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg', undefined, true); });
   document.getElementById('p20BtnJpeg').addEventListener('click', function(){ void genererFiche('jpeg', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg', undefined, true); });
+  const zone = document.querySelector('.compcard-apercu');
+  try {
+    const canvas = await construireCanvasCompcard(ficheDataDepuisEtat());
+    if (zone) zone.innerHTML = '<img src="' + apercuLeger(canvas) + '" alt="Ma compcard">';
+  } catch (e) {
+    signalerProbleme('Aperçu de la compcard échoué', (e && e.message) || String(e), e && e.stack);
+    if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger la compcard.</p>';
+  }
 }
 
 function showOverlay(){
@@ -1952,6 +2086,13 @@ async function demarrerApresConnexion(){
   await Store.ensureProfileRow();
   state = await Store.load();
   if (!state.meta.currentStep) state.meta.currentStep = 1;
+  // (11/11/2026) raccourcis « Compcard », « Mon CV », « Mes photos » de l'application (onglet Mon profil) : la page
+  // s'ouvre directement sur les photos (étape 5 des 6 étapes, ou bloc Photos une fois le profil validé)
+  if (location.hash === '#compcard') state.meta.studio = 'compcard';
+  else if (location.hash === '#cv') state.meta.studio = 'cv';
+  else if (location.hash === '#photos') {
+    if (state.meta.premierePublicationFaite) state.meta.editBlock = 'photos'; else state.meta.currentStep = 5;
+  }
   render();
 }
 

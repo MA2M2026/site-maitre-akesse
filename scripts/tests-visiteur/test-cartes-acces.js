@@ -41,7 +41,7 @@ const pdfDe = async (p, clic) => {
     // 1. Le menu : « Cartes d'événement », choisir l'événement
     await p.goto(URL_ADMIN + '#/site/b2-cartes'); await p.waitForSelector('.ca-evenement', { timeout: 15000 });
     const compartiment = await p.evaluate(() => { const a = document.querySelector('.lateral .nav.actif'), c = a && a.closest('.compartiment'); return c ? c.getAttribute('aria-label') : ''; });
-    ok(compartiment === 'Projets et convocations' && /ABIDJAN BORDER FORUM/.test(await p.textContent('#contenu')), n + 'rubrique « Cartes d’événement » (compartiment « ' + compartiment + ' ») : choisir l’événement');
+    ok(/Événements/.test(compartiment) && /ABIDJAN BORDER FORUM/.test(await p.textContent('#contenu')), n + 'rubrique « Cartes d’événement » (compartiment « ' + compartiment + ' ») : choisir l’événement');
     await p.click('.ca-evenement:has-text("ABIDJAN BORDER FORUM")'); await p.waitForSelector('.ca-liste', { timeout: 15000 });
     const noms = await p.$$eval('.ca-nom', (l) => l.map((x) => x.textContent));
     ok(noms.join('|') === 'AYA KOUASSI|JEAN EXTÉRIEUR|MARIAM TRAORÉ', n + 'seulement les 3 confirmées, sans « Madame / Monsieur », par ordre alphabétique (' + noms.join(', ') + ') — pas celles sans réponse ni l’absente');

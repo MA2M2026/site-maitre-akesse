@@ -1,0 +1,116 @@
+/* Styles communs des spots réseaux sociaux (vertical, 11/11/2026) : mots géants, grandes photos, mois, dimanches,
+   boutons du bas, maison et lieu (cours privé), empreintes, carte de fin. Avec moteur-film.css. */
+.mot-geant { left: 0; right: 0; text-align: center; top: 1180px; font: 800 150px/0.95 'Big Shoulders Display'; text-transform: uppercase; z-index: 7; }
+.photo-mot { left: 140px; top: 230px; width: 800px; height: 900px; }
+.photo-mot img { object-position: 50% 15%; }
+.portrait { left: 90px; right: 90px; top: 200px; height: 1050px; }
+.portrait img { object-position: 50% 12%; }
+.triptyque { display: flex; gap: 18px; z-index: 5; left: 50px; right: 50px; top: 330px; }
+.triptyque > div { height: 1020px; }
+.triptyque b { font-size: 46px; }
+.mois { display: flex; flex-direction: column; gap: 16px; left: 0; right: 0; top: 240px; align-items: center; z-index: 6; }
+.mois .agenda { position: relative; width: 640px; }
+.mois .agenda span { font-size: 120px; }
+.dimanches { left: 0; right: 0; top: 1190px; text-align: center; z-index: 6; }
+.dimanches b { display: block; font: 800 170px/0.95 'Big Shoulders Display'; white-space: nowrap; }
+.dimanches span { font: italic 400 64px 'Cormorant Garamond'; }
+.pastilles-bas { left: 60px; right: 60px; bottom: 210px; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; z-index: 6; }
+.pastilles-bas .bouton { font-size: 36px; padding: 24px 46px; margin: 0; }
+.maison { left: 270px; top: 470px; width: 540px; height: 540px; }
+.lieu { left: 230px; top: 1110px; font-size: 38px; }
+.lieu svg { width: 46px; height: 46px; }
+.talon-geant { left: 140px; top: 250px; width: 800px; height: 800px; }
+.fin-url { left: 40px; right: 40px; top: 1480px; text-align: center; font: 700 44px 'Montserrat'; letter-spacing: 0.02em; z-index: 7; }
+.fin-tel { left: 40px; right: 40px; top: 1580px; text-align: center; z-index: 7; }
+.fin-tel span { display: inline-block; padding: 22px 46px; border-radius: 999px; background: #fff; color: #7C2128; font: 800 64px/1 'Big Shoulders Display'; letter-spacing: 0.04em; box-shadow: 0 24px 50px -20px rgba(40,6,10,0.9); }
+.fin-tel small { display: block; font: 600 26px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 14px; }
+.logo-spot { display: block; width: 620px; margin: 0 auto 40px; filter: brightness(0) invert(1); }
+.marche-spot { overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 60px 120px -40px rgba(40,6,10,0.9); z-index: 4; left: 160px; top: 220px; width: 760px; height: 1060px; }
+.marche-spot div { position: absolute; inset: 0; }
+.marche-spot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.duo-photos { left: 60px; right: 60px; top: 260px; display: flex; gap: 20px; z-index: 5; }
+.duo-photos > div { flex: 1; height: 860px; }
+.duo-photos .bouton { position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%); white-space: nowrap; font-size: 32px; }
+.grande-question { left: 60px; right: 60px; top: 1280px; text-align: center; z-index: 7; }
+.chemin-mois { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 4; }
+.etape-mois { left: 90px; right: 90px; z-index: 6; display: flex; align-items: center; gap: 30px; }
+.etape-mois .carre { position: relative; width: 300px; height: 380px; flex: none; }
+.etape-mois b { display: block; font: 800 96px/0.9 'Big Shoulders Display'; text-transform: uppercase; }
+.etape-mois span { display: block; font: italic 400 46px/1.15 'Cormorant Garamond'; margin-top: 10px; }
+
+/* Grands plans plein écran (images IA, 11/11/2026) : dégradé rouge mat en bas pour la lisibilité des textes */
+.plan { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
+.plan img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: contrast(1.06) saturate(1.06); }
+.plan::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0.45) 0%, rgba(124,33,40,0) 16%, rgba(124,33,40,0) 48%, rgba(124,33,40,0.78) 74%, #7C2128 100%); }
+.plan.clair::after { background: linear-gradient(180deg, rgba(124,33,40,0.45) 0%, rgba(124,33,40,0) 16%, rgba(124,33,40,0) 62%, rgba(124,33,40,0.7) 85%, rgba(124,33,40,0.92) 100%); }
+.sur-plan { text-shadow: 0 6px 30px rgba(40,6,10,0.75); }
+.mot-plan { left: 60px; right: 60px; text-align: center; top: 1280px; font: 800 150px/0.95 'Big Shoulders Display'; text-transform: uppercase; z-index: 7; text-shadow: 0 8px 40px rgba(40,6,10,0.8); }
+.etiquette-plan { left: 0; right: 0; text-align: center; top: 1500px; z-index: 7; }
+.etiquette-plan .bouton { font-size: 38px; padding: 26px 56px; margin: 0; }
+.cadre-flottant { position: absolute; z-index: 6; overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 50px 100px -30px rgba(40,6,10,0.95); }
+.cadre-flottant img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+
+/* Motion design des spots (11/11/2026 : « trop diaporama ») : photo en bandes, écran partagé, bandeaux qui défilent */
+.panneaux { position: absolute; inset: 0; display: flex; overflow: hidden; z-index: 1; }
+.panneaux .lame { flex: 1; position: relative; overflow: hidden; }
+.panneaux .lame img { position: absolute; top: 0; height: 100%; width: 1080px; max-width: none; object-fit: cover; object-position: 50% 30%; }
+.panneaux::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(124,33,40,0.45) 0%, rgba(124,33,40,0) 16%, rgba(124,33,40,0) 48%, rgba(124,33,40,0.78) 74%, #7C2128 100%); }
+.tiers { position: absolute; top: 0; bottom: 0; overflow: hidden; z-index: 2; border-right: 6px solid #7C2128; }
+.tiers img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.tiers::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124,33,40,0) 55%, rgba(124,33,40,0.85) 85%, #7C2128 100%); }
+.tiers b { position: absolute; left: 0; right: 0; bottom: 330px; z-index: 2; text-align: center; font: 500 50px/1.05 'Cormorant Garamond'; padding: 0 16px; text-shadow: 0 4px 20px rgba(40,6,10,0.8); }
+.bandeau { position: absolute; left: 0; z-index: 4; white-space: nowrap; font: 800 120px/1 'Big Shoulders Display'; text-transform: uppercase; color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,0.55); }
+.bandeau.plein { color: #fff; -webkit-text-stroke: 0; font-size: 46px; letter-spacing: 0.25em; background: #7C2128; padding: 16px 0; }
+.mot-traverse { position: absolute; left: 0; z-index: 7; white-space: nowrap; font: 800 260px/0.9 'Big Shoulders Display'; text-transform: uppercase; text-shadow: 0 10px 50px rgba(40,6,10,0.8); }
+.carte-photo { position: absolute; z-index: 6; overflow: hidden; border: 10px solid #fff; border-radius: 6px; box-shadow: 0 50px 100px -30px rgba(40,6,10,0.95); }
+.carte-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+
+/* Relief 2.5D et effets cinéma (11/11/2026, « comme un studio hollywoodien ») */
+.p25 { position: absolute; inset: 0; overflow: hidden; z-index: 1; }
+.p25 img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; max-width: none; transform-origin: 50% 75%; }
+.p25 .fond { filter: contrast(1.08) saturate(1.05) brightness(0.92); }
+.p25 .sujet { filter: contrast(1.08) saturate(1.08) drop-shadow(0 30px 40px rgba(30,4,8,0.45)); }
+.p25::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(124,33,40,0.45) 0%, rgba(124,33,40,0) 16%, rgba(124,33,40,0) 50%, rgba(124,33,40,0.75) 76%, #7C2128 100%), radial-gradient(ellipse 85% 70% at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,2,5,0.45) 100%); }
+#grain { position: absolute; inset: 0; z-index: 52; pointer-events: none; background: url(ia/grain.png); opacity: 0.08; mix-blend-mode: overlay; }
+#flash { position: absolute; inset: 0; z-index: 53; pointer-events: none; background: #fff; opacity: 0; }
+#fuite { position: absolute; inset: -20%; z-index: 52; pointer-events: none; opacity: 0; mix-blend-mode: screen; background: radial-gradient(ellipse 45% 60% at 70% 40%, rgba(255,170,120,0.55), rgba(255,90,90,0.18) 45%, rgba(0,0,0,0) 70%); }
+
+/* Typographie de publicité (11/11/2026, « les polices font PowerPoint ») : lignes qui se dévoilent, grandes italiques
+   élégantes, capitales fines très espacées */
+@font-face { font-family: 'Montserrat'; font-weight: 500; src: url('../../assets/polices/montserrat-latin-500-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-600-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-ext-600-normal.woff2'); unicode-range: U+0100-024F; }
+.ligne-r { display: block; overflow: hidden; padding: 0.04em 0.06em 0.12em; margin: -0.04em -0.06em -0.12em; }
+.ligne-r .int { display: inline-block; will-change: transform; }
+body.mat .texte .grand, body.mat .sur-plan .grand { font: 500 118px/1.02 'Cormorant Garamond', serif; letter-spacing: -0.01em; }
+body.mat .texte .grand em, body.mat .sur-plan .grand em { font-weight: 400; font-style: italic; }
+body.mat .surtitre { font: 600 24px 'Montserrat', sans-serif; letter-spacing: 0.5em; }
+.mot-plan { font: italic 400 210px/0.92 'Cormorant Garamond', serif !important; text-transform: none !important; letter-spacing: -0.02em; }
+.mot-traverse { font: italic 400 300px/0.9 'Cormorant Garamond', serif !important; text-transform: none !important; opacity: 0.92; }
+.legende-luxe { display: inline-flex; align-items: center; gap: 26px; font: 600 30px 'Montserrat', sans-serif; letter-spacing: 0.38em; text-transform: uppercase; text-shadow: 0 4px 24px rgba(40,6,10,0.85); }
+.legende-luxe::before, .legende-luxe::after { content: ""; width: 70px; height: 1px; background: #fff; }
+.dimanches b { font: italic 400 170px/0.95 'Cormorant Garamond', serif !important; }
+.tiers b { font: 600 24px 'Montserrat', sans-serif !important; letter-spacing: 0.3em; text-transform: uppercase; }
+.dimanches b .ligne-r, .dimanches b .int, .tiers b .int { font: inherit; }
+
+/* Style « Intégrer l'agence » pour les spots (11/11/2026) : scènes illustrées sur le rouge mat, images IA dedans */
+.agenda-jour { left: 80px; right: 80px; top: 300px; z-index: 6; background: #fff; color: #7C2128; border-radius: 26px; padding: 34px 38px 14px; box-shadow: 0 60px 120px -40px rgba(40,6,10,0.9); transform-origin: 50% 100%; }
+.agenda-jour h5 { margin: 0 0 10px; font: 600 24px 'Montserrat', sans-serif; letter-spacing: 0.32em; text-transform: uppercase; color: #9a6b6f; }
+.rdv { display: flex; align-items: center; gap: 28px; padding: 22px 0; border-top: 1px solid #eadcdd; }
+.rdv img { width: 170px; height: 170px; border-radius: 14px; object-fit: cover; object-position: 50% 25%; flex: none; }
+.rdv b { display: block; font: 700 26px 'Montserrat', sans-serif; letter-spacing: 0.1em; color: #9a6b6f; }
+.rdv span { display: block; font: 500 60px/1.05 'Cormorant Garamond', serif; }
+.rdv i { margin-left: auto; width: 54px; height: 54px; border-radius: 50%; background: #7C2128; flex: none; position: relative; }
+.rdv i::after { content: ""; position: absolute; left: 19px; top: 12px; width: 12px; height: 24px; border: solid #fff; border-width: 0 5px 5px 0; transform: rotate(45deg); }
+.bulle-parole { z-index: 7; background: #fff; color: #7C2128; border-radius: 46px 46px 46px 10px; padding: 26px 44px; font: 700 70px/1 'Montserrat', sans-serif; letter-spacing: 0.2em; box-shadow: 0 30px 60px -24px rgba(40,6,10,0.9); }
+.polar { position: absolute; z-index: 5; background: #fff; padding: 14px 14px 96px; border-radius: 4px; box-shadow: 0 50px 90px -30px rgba(40,6,10,0.95); }
+.polar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
+.polar b { position: absolute; left: 0; right: 0; bottom: 22px; text-align: center; font: italic 500 46px 'Cormorant Garamond', serif; color: #7C2128; }
+.qualite { display: flex; align-items: center; gap: 26px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.35); border-radius: 18px; padding: 16px 30px 16px 16px; }
+.qualite img { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; object-position: 50% 25%; }
+.qualite span { font: italic 500 64px 'Cormorant Garamond', serif; }
+.qualite { padding: 22px 34px 22px 22px; }
+.qualite img { width: 170px; height: 170px; }
+.qualite span { font-size: 88px; }
+.mois { top: 300px !important; }
+.mois { transform: scale(0.82); transform-origin: 50% 0; }

@@ -152,7 +152,10 @@
         '</article>';
     }).join('');
     const plus = count > dossiers.length ? '<button type="button" class="btn" data-action="dossiers-plus" data-source="' + source + '">Voir plus (' + (count - dossiers.length) + ' de plus)</button>' : '';
-    return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres +
+    // (11/11/2026, maquette validée) étudier les nouvelles une à une, en grand
+    const etudier = source === 'casting' && nb.nouvelle ? '<button type="button" class="etude-lancer apparait" data-action="etude-demarrer"><em aria-hidden="true">▶</em><span>Étudier ' +
+      (nb.nouvelle > 1 ? 'les ' + nb.nouvelle + ' nouvelles' : 'la nouvelle candidature') + '<small>Une à une, en grand, décision en un geste</small></span></button>' : '';
+    return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres + etudier +
       (cartes ? '<div class="dossiers-grille' + (source === 'recruteur' ? ' sans-visage' : '') + '">' + cartes + '</div>' + plus :
         '<div class="carte vide">Aucun dossier « ' + P.esc(e.filtre === 'toutes' ? 'toutes' : conf.libelles[e.filtre]) + ' » pour le moment.</div>');
   }
@@ -328,34 +331,110 @@
     return envoyerEmail(texte, st);
   };
   // Changement de statut : enregistré, puis premier message proposé et e-mail parti tout seul
-  P.actions['dossier-statut'] = async (el) => {
-    const conf = SOURCES[fiche.source], nouveau = el.dataset.statut, d = fiche.d;
-    if (d[conf.champStatut] === nouveau) return;
+  // (partagé par la fiche et le mode « étudier une à une », 11/11/2026)
+  async function enregistrerStatut(source, d, nouveau) {
+    const conf = SOURCES[source];
     const r = await P.bd(sb.from(conf.table).update({ [conf.champStatut]: nouveau }).eq('id', d.id).select('id'));
-    if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
+    if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return false; }
     d[conf.champStatut] = nouveau;
-    document.querySelectorAll('.statuts .btn').forEach((b) => { const oui = b.dataset.statut === nouveau; b.classList.toggle('actif', oui); b.setAttribute('aria-pressed', String(oui)); });
-    const tete = document.querySelector('.fiche-tete > .pastille');
-    if (tete) { tete.className = 'pastille ' + (TONS[nouveau] || 'neutre'); tete.textContent = conf.libelles[nouveau]; }
-    P.message('Statut : ' + conf.libelles[nouveau] + '.');
-    const zone = document.getElementById('dos-notification');
-    const cle = PREMIER[fiche.source] && PREMIER[fiche.source][nouveau];
-    // la zone du code d'inscription suit le statut « Retenue »
-    if (fiche.source === 'casting') void rafraichirCode();
+    return true;
+  }
+  async function notifier(source, d, nouveau, zone) {
+    const cle = PREMIER[source] && PREMIER[source][nouveau];
     if (!cle) { zone.innerHTML = ''; return; }
     const texte = personnaliserMessage(texteMessageCandidat(messageCandidatParCle(cle), d, typeCandidature(d)), d, {}, () => '');
-    const wa = lienWaTexte(fiche.source, d, texte), c = contacts(fiche.source, d);
-    zone.innerHTML = '<div class="notification apparait"><p class="doux petit-texte">Message pour ce nouveau statut (modifiable avant envoi) :' + P.esc(noteParent(fiche.source, d)) + '</p>' +
+    const wa = lienWaTexte(source, d, texte), c = contacts(source, d);
+    zone.innerHTML = '<div class="notification apparait"><p class="doux petit-texte">Message pour ce nouveau statut (modifiable avant envoi) :' + P.esc(noteParent(source, d)) + '</p>' +
       '<textarea id="dos-notif-texte" rows="8" aria-label="Message pour le nouveau statut">' + P.esc(texte) + '</textarea>' +
-      '<div class="ligne"><button type="button" class="btn" data-action="dossier-notif-email">✉️ ' + (c.email ? 'Renvoyer l’e-mail' : 'Envoyer l’e-mail') + '</button>' +
-      (wa ? '<a class="btn rouge" id="dos-notif-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>' : '') + '</div>' +
+      '<div class="ligne">' + (wa ? '<a class="btn rouge" id="dos-notif-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Prévenir sur WhatsApp</a>' : '') +
+      '<button type="button" class="btn" data-action="dossier-notif-email">✉️ ' + (c.email ? 'Renvoyer l’e-mail' : 'Envoyer l’e-mail') + '</button></div>' +
       '<p class="doux petit-texte" id="dos-notif-statut" role="status"></p></div>';
     if (c.email) {
       const st = document.getElementById('dos-notif-statut');
       st.textContent = 'Envoi automatique de l’e-mail en cours…';
-      if (await envoyerEmail(texte, st)) st.textContent = 'E-mail envoyé automatiquement à ' + c.email + '. Vous pouvez le modifier et le renvoyer, ou l’envoyer aussi par WhatsApp.';
+      if (await envoyerEmail(texte, st)) st.textContent = 'E-mail envoyé automatiquement à ' + c.email + '. Vous pouvez le modifier et le renvoyer, ou prévenir aussi sur WhatsApp.';
     }
+  }
+  P.actions['dossier-statut'] = async (el) => {
+    const conf = SOURCES[fiche.source], nouveau = el.dataset.statut, d = fiche.d;
+    if (d[conf.champStatut] === nouveau) return;
+    if (!(await enregistrerStatut(fiche.source, d, nouveau))) return;
+    document.querySelectorAll('.statuts .btn').forEach((b) => { const oui = b.dataset.statut === nouveau; b.classList.toggle('actif', oui); b.setAttribute('aria-pressed', String(oui)); });
+    const tete = document.querySelector('.fiche-tete > .pastille');
+    if (tete) { tete.className = 'pastille ' + (TONS[nouveau] || 'neutre'); tete.textContent = conf.libelles[nouveau]; }
+    P.message('Statut : ' + conf.libelles[nouveau] + '.');
+    // la zone du code d'inscription suit le statut « Retenue »
+    if (fiche.source === 'casting') void rafraichirCode();
+    await notifier(fiche.source, d, nouveau, document.getElementById('dos-notification'));
   };
+
+  // ---------- Étudier les nouvelles, une à une (11/11/2026, maquette validée par la propriétaire) ----------
+  // Les nouvelles candidatures en grand, l'une après l'autre : photos qui défilent, l'essentiel, trois
+  // décisions (Refuser, À revoir, Retenir) ; après la décision, le message prêt (e-mail parti tout seul,
+  // WhatsApp en un appui), puis la suivante. La liste des candidatures à étudier est fixée au départ.
+  async function chargerEtude() {
+    const l = await P.bd(sb.from('casting_applications').select('id').eq('status', 'nouvelle').order('created_at', { ascending: false }).limit(100));
+    P.etat.etude = { ids: l.map((x) => x.id), i: 0 };
+  }
+  P.actions['etude-demarrer'] = async () => { await chargerEtude(); location.hash = '#/site/b2-candidatures/etude'; };
+  P.actions['etude-suivant'] = () => { if (P.etat.etude) P.etat.etude.i += 1; return P.afficher(); };
+  const accord = (d, f, m) => (d.genre === 'homme' || d.civilite === 'Monsieur' ? m : f);
+  async function pageEtude() {
+    const e = P.etat.etude;
+    if (!e) { await chargerEtude(); return pageEtude(); }  // (adresse ouverte directement)
+    const conf = SOURCES.casting, retour = '<a class="etude-quitter" href="#/site/' + conf.page + '">‹ Quitter</a>';
+    if (e.i >= e.ids.length) {
+      fiche = null;
+      return '<div class="etude"><div class="etude-haut">' + retour + '</div><div class="etude-fin apparait"><div class="etude-gros" aria-hidden="true">🎉</div>' +
+        '<h1>' + (e.ids.length ? 'Toutes les nouvelles sont étudiées' : 'Aucune nouvelle candidature') + '</h1><p class="doux">Bravo, la file est à jour.</p>' +
+        '<a class="btn rouge" href="#/site/' + conf.page + '">Retour aux candidatures</a></div></div>';
+    }
+    const d = await P.bd(sb.from(conf.table).select('*').eq('id', e.ids[e.i]).maybeSingle());
+    if (!d) { e.i += 1; return pageEtude(); }
+    fiche = { source: 'casting', d, photos: (await photosDe(conf, [d.id]).catch(() => ({})))[d.id] || [] };
+    const age = ageDe(d), mineur = age !== null && age < 18, ph = fiche.photos;
+    const video = /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view$/.test(String(d.video_url || ''));
+    const infos = [
+      d.height_cm ? '📏 ' + (Number(d.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '',
+      d.city ? '📍 ' + d.city : '',
+      d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
+      mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''
+    ].filter(Boolean).map((x) => '<span>' + P.esc(x) + '</span>').join('') + (video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : '');
+    return '<div class="etude"><div class="etude-haut">' + retour + '<span>' + (e.i + 1) + ' / ' + e.ids.length + '</span></div>' +
+      '<div class="etude-photos apparait">' + (ph.length ? '<div class="etude-piste" id="etude-piste">' + ph.map((x, i) =>
+          '<button type="button" class="etude-photo" data-action="dossier-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' + visageDossier(x.affiche, d.full_name) + '</button>').join('') + '</div>' +
+          (ph.length > 1 ? '<div class="etude-points" aria-hidden="true">' + ph.map((x, i) => '<i' + (i ? '' : ' class="actif"') + '></i>').join('') + '</div>' : '')
+        : '<div class="etude-piste">' + visageDossier('', d.full_name) + '</div>') +
+        '<div class="etude-voile"><b>' + P.esc(nomDe('casting', d)) + '</b><small>' + P.esc([age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + dateFr(d.created_at)].filter(Boolean).join(' · ')) + '</small></div></div>' +
+      (infos ? '<div class="etude-infos">' + infos + '</div>' : '') +
+      (d.message ? '<blockquote class="etude-mot">« ' + P.esc(d.message) + ' »</blockquote>' : '') +
+      '<div class="etude-decision" id="etude-decision">' +
+        '<button type="button" class="etude-choix non" data-action="etude-decider" data-statut="refusée"><em aria-hidden="true">✕</em>Refuser</button>' +
+        '<button type="button" class="etude-choix revoir" data-action="etude-decider" data-statut="en étude"><em aria-hidden="true">⏸</em>À revoir</button>' +
+        '<button type="button" class="etude-choix oui" data-action="etude-decider" data-statut="retenue"><em aria-hidden="true">✓</em>Retenir</button></div>' +
+      '<a class="etude-fiche" data-visage href="#/site/' + conf.page + '/' + P.esc(encodeURIComponent(d.id)) + '">Voir la fiche complète</a></div>';
+  }
+  P.actions['etude-decider'] = async (el) => {
+    if (!fiche || fiche.source !== 'casting') return;
+    const d = fiche.d, nouveau = el.dataset.statut, zone = document.getElementById('etude-decision');
+    zone.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    if (d.status !== nouveau && !(await enregistrerStatut('casting', d, nouveau))) { zone.querySelectorAll('button').forEach((b) => { b.disabled = false; }); return; }
+    const prenom = String(d.full_name || '').trim().split(/\s+/)[0] || 'Elle';
+    const titre = { retenue: ['✅', prenom + ' est ' + accord(d, 'retenue', 'retenu')], 'en étude': ['⏸', prenom + ' : à revoir plus tard'], 'refusée': ['✕', 'Candidature de ' + prenom + ' non retenue'] }[nouveau];
+    zone.outerHTML = '<div class="etude-resultat apparait"><div class="etude-gros" aria-hidden="true">' + titre[0] + '</div><h2>' + P.esc(titre[1]) + '</h2>' +
+      '<div id="dos-notification"></div><button type="button" class="btn rouge etude-suivant" data-action="etude-suivant">' +
+      (P.etat.etude && P.etat.etude.i + 1 < P.etat.etude.ids.length ? 'Candidature suivante ›' : 'Terminer ›') + '</button></div>';
+    await notifier('casting', d, nouveau, document.getElementById('dos-notification'));
+  };
+  // les points sous les photos suivent la photo affichée
+  function apresEtude() {
+    const piste = document.getElementById('etude-piste'), points = document.querySelectorAll('.etude-points i');
+    if (!piste || !points.length) return;
+    piste.addEventListener('scroll', () => {
+      const n = Math.round(piste.scrollLeft / Math.max(1, piste.clientWidth));
+      points.forEach((x, i) => x.classList.toggle('actif', i === n));
+    }, { passive: true });
+  }
   P.actions['dossier-notif-email'] = () => envoyerEmail(document.getElementById('dos-notif-texte').value, document.getElementById('dos-notif-statut'));
   async function rafraichirCode() {
     const ancien = document.querySelector('.fiche-col .carte.code-zone');
@@ -419,7 +498,11 @@
   // ---------- Branchement dans le bloc 1 ----------
   Object.keys(SOURCES).forEach((source) => {
     const conf = SOURCES[source];
-    P.espaces.site.pages[conf.page] = (args) => (args && args[0] ? pageFiche(source, decodeURIComponent(args[0])) : liste(source));
-    P.espaces.site.apres[conf.page] = () => { if (location.hash.split('/').length > 3) apresFiche(); else fiche = null; };
+    P.espaces.site.pages[conf.page] = (args) => (args && args[0] === 'etude' && source === 'casting' ? pageEtude()
+      : args && args[0] ? pageFiche(source, decodeURIComponent(args[0])) : liste(source));
+    P.espaces.site.apres[conf.page] = () => {
+      const morceaux = location.hash.split('/');
+      if (morceaux[3] === 'etude') apresEtude(); else if (morceaux.length > 3) apresFiche(); else fiche = null;
+    };
   });
 })();

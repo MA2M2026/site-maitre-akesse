@@ -1,8 +1,15 @@
-// Écran des Messages groupés, en un seul endroit (22/10/2026) : utilisé par l'ancien tableau de
+// Écran des Messages groupés, en un seul endroit (22/10/2026 ; en 3 étapes le 11/11/2026 : À qui ?, Le message, Envoyer —
+// la logique est inchangée, les étapes sont menées par js/admin/site-messages-groupes.js) : utilisé par l'ancien tableau de
 // bord (placé tout de suite dans #messages-groupes-racine) et par la nouvelle Administration
 // (js/admin/site-messages-groupes.js), sans recopier le code. Logique : js/messages-groupes.js.
-window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Messages groupés</h2>
+window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Écrire à des candidates</h2>
 <p class="tdb-9">Un seul message, envoyé à chaque personne <strong>séparément</strong> : personne ne voit les autres et aucun groupe n'est créé. Écrivez <strong>{prénom}</strong> ou <strong>{casting}</strong> dans le message : ils seront remplacés pour chaque personne.</p>
+<ol class="cv-etapes mg-etapes" aria-label="Étapes">
+<li><button type="button" data-mg-etape="1">1 · À qui ?</button></li>
+<li><button type="button" data-mg-etape="2">2 · Le message</button></li>
+<li><button type="button" data-mg-etape="3">3 · Envoyer</button></li>
+</ol>
+<section class="mg-etape" data-mg="1">
 <div class="mg-grille">
 <div class="form-champ"><label for="mg-source">Qui ?</label><select id="mg-source"><option value="agence">Candidatures : intégrer l'agence</option><option value="casting">Candidatures : un casting précis</option><option value="inscription">Inscriptions mannequins</option></select></div>
 <div class="form-champ"><label for="mg-statut">Statut</label><select id="mg-statut"></select></div>
@@ -13,6 +20,9 @@ window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Messages groupés</h2
 <p id="mg-resume" class="mg-resume"></p>
 <button class="btn-mini-admin" id="mg-tout" type="button">Tout cocher / tout décocher</button>
 <div id="mg-liste" class="mg-liste"></div>
+<div class="cv-suite"><button type="button" class="btn btn--principal" data-mg-etape="2">Suivant : le message ›</button></div>
+</section>
+<section class="mg-etape" data-mg="2">
 <div id="mg-infos-rdv" class="mg-grille">
 <div class="form-champ"><label for="mg-date">Date du casting</label><input type="date" id="mg-date"></div>
 <div class="form-champ"><label for="mg-heure">Heure</label><input type="text" id="mg-heure" placeholder="15 h 00"></div>
@@ -20,8 +30,13 @@ window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Messages groupés</h2
 </div>
 <div class="form-champ" id="mg-champ-message-parent"><label for="mg-message-parent">Version pour les parents (mineurs)</label><textarea id="mg-message-parent" rows="6"></textarea></div>
 <div class="form-champ"><label for="mg-message">Message</label><textarea id="mg-message" rows="8" placeholder="Écrivez ici votre message (cette case est vide pour l’instant)."></textarea></div>
+<div class="form-champ"><span class="label-ij">🖼️ Image (facultatif)</span><div id="mg-image"></div></div>
 <p id="mg-consigne" class="mg-consigne"></p>
 <div id="mg-apercu" class="mg-apercu"></div>
+<div class="cv-suite"><button type="button" class="btn" data-mg-etape="1">‹ À qui ?</button><button type="button" class="btn btn--principal" data-mg-etape="3">Suivant : envoyer ›</button></div>
+</section>
+<section class="mg-etape" data-mg="3">
+<p id="mg-resume-envoi" class="cv-resume"></p>
 <div class="mg-actions">
 <button class="btn btn--principal" id="mg-email" type="button">📧 Envoyer par e-mail</button>
 </div>
@@ -32,7 +47,9 @@ window.GABARIT_MESSAGES_GROUPES = `<h2 class="tdb-10">📣 Messages groupés</h2
 <button class="btn btn--principal" id="mg-wa-suivant" type="button">💬 Ouvrir WhatsApp pour la personne suivante</button>
 <button class="btn" id="mg-wa-copier" type="button">📋 Copier tous les numéros</button>
 </div>
-<p id="mg-wa-etat" class="mg-resume"></p>`;
+<p id="mg-wa-etat" class="mg-resume"></p>
+<div class="cv-suite"><button type="button" class="btn" data-mg-etape="2">‹ Le message</button></div>
+</section>`;
 (function () {
   var racine = document.getElementById('messages-groupes-racine');
   if (racine) racine.innerHTML = window.GABARIT_MESSAGES_GROUPES;

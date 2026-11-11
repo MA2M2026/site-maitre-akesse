@@ -63,6 +63,10 @@ document.querySelectorAll('[data-anim="mots"]').forEach((el) => {
 document.querySelectorAll('[data-anim="lettres"]').forEach((el) => {
   el.innerHTML = el.textContent.split(/(\s+)/).map((p) => (/^\s+$/.test(p) ? p : '<span class="mot">' + [...p].map((c) => '<span class="lettre">' + c + '</span>').join('') + '</span>')).join('');
 });
+// « reveal » (11/11/2026, typographie de publicité) : chaque ligne (séparée par <br>) sort de derrière un cache
+document.querySelectorAll('[data-anim="reveal"]').forEach((el) => {
+  el.innerHTML = el.innerHTML.split(/<br\s*\/?>/i).map((l) => '<span class="ligne-r"><span class="int">' + l + '</span></span>').join('');
+});
 document.querySelectorAll('[data-anim="bloc"]').forEach((el) => {
   const c = document.createElement('span'); c.className = 'contenu'; c.style.display = 'inline-block';
   while (el.firstChild) c.appendChild(el.firstChild);
@@ -99,7 +103,7 @@ const scenes = [...document.querySelectorAll('.scene')].map((el, i) => {
   return { el, plateau, formes, debut: debutScene(el.dataset.de, el.dataset.demot), transition: el.dataset.transition || 'fondu',
     photos: [...el.querySelectorAll('.photo, .photo-m')],
     elements: [...el.querySelectorAll('[data-voix]')].map((x) => ({ x, t: instant(x), anim: x.dataset.anim || 'monte',
-      mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
+      mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : x.dataset.anim === 'reveal' ? '.int' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
       onde: x.querySelector(':scope > .onde'), anneau: x.querySelector(':scope > .anneau'), ph: (x.dataset.symbole || x.textContent).length,
       // data-finvoix (+ data-finmot) : l'élément s'efface quand la voix dit ce mot (deux images à la même place, l'une après l'autre)
       tf: x.dataset.finvoix ? instant({ dataset: { voix: x.dataset.finvoix, mot: x.dataset.finmot || '', retard: x.dataset.finretard || 0 } }) : null })) };
@@ -147,6 +151,42 @@ function animer(e, t) {
     case 'grandit': { // la personne grandit, posée au sol (data-depart : taille de départ, 0,85 = 85 %), en data-duree secondes
       const k = lisse((t - e.t) / Number(x.dataset.duree || 1.4)), dep = Number(x.dataset.depart || 0.85); s.opacity = Math.min(1, (t - e.t) * 4);
       s.transformOrigin = '50% 100%'; s.transform = 'scale(' + (dep + (1 - dep) * k) + ')'; break; }
+    case 'reveal': { // ligne par ligne : monte de derrière son cache, décélération « expo », lettres qui se resserrent
+      s.opacity = 1;
+      e.mots.forEach((m, i) => { const u = Math.max(0, Math.min(1, (t - e.t - i * 0.13) / 1.05)), k = u >= 1 ? 1 : 1 - Math.pow(2, -10 * u);
+        m.style.transform = 'translateY(' + (112 * (1 - k)) + '%) skewY(' + (5 * (1 - k)) + 'deg)'; m.style.letterSpacing = (0.16 * (1 - k)) + 'em'; m.style.opacity = u > 0 ? 1 : 0; });
+      break; }
+    case 'p25': { // photo en relief « 2.5D » : décor (fond reconstitué) et personnage détouré bougent à des vitesses
+      // différentes — la caméra avance dans la scène, le décor glisse derrière la personne qui vient vers nous.
+      // data-entree = zoom | gauche | droite | bas | haut | fouet (coup de fouet latéral avec flou de mouvement) ; data-camera = gauche | droite
+      const d = t - e.t, k = sortie(d / 0.7), en = x.dataset.entree || 'zoom', sens = x.dataset.camera === 'gauche' ? -1 : 1;
+      const u = Math.min(1, d / 6), fond = x.querySelector('.fond'), sujet = x.querySelector('.sujet');
+      s.opacity = en === 'zoom' ? Math.min(1, k * 1.5) : 1; s.clipPath = ''; s.transform = ''; s.filter = '';
+      if (en === 'gauche') s.clipPath = 'inset(0 ' + (100 * (1 - k)) + '% 0 0)';
+      else if (en === 'droite') s.clipPath = 'inset(0 0 0 ' + (100 * (1 - k)) + '%)';
+      else if (en === 'bas') s.clipPath = 'inset(' + (100 * (1 - k)) + '% 0 0 0)';
+      else if (en === 'haut') s.clipPath = 'inset(0 0 ' + (100 * (1 - k)) + '% 0)';
+      else if (en === 'fouet') { const f = sortie(d / 0.38); s.transform = 'translateX(' + (100 * (1 - f)) + '%)'; s.filter = f < 0.97 ? 'url(#flou-fouet' + Math.min(3, Math.floor((1 - f) * 4)) + ')' : ''; }
+      const z = en === 'zoom' ? 0.15 * (1 - k) : 0;
+      fond.style.transform = 'scale(' + (1.14 + 0.05 * u + z) + ') translateX(' + (-sens * 28 * u) + 'px)';
+      sujet.style.transform = 'scale(' + (1.03 + 0.11 * u + z) + ') translateX(' + (sens * 22 * u) + 'px)';
+      break; }
+    case 'panneaux': { // photo qui arrive en bandes verticales (glissent du haut et du bas, en cascade), puis travelling
+      const d = t - e.t, lames = x.children, n = lames.length; s.opacity = 1;
+      for (let j = 0; j < n; j++) { const k = sortie((d - j * 0.06) / 0.7), sens = j % 2 ? 1 : -1;
+        lames[j].style.transform = 'translateY(' + (sens * 105 * (1 - k)) + '%)';
+        const img = lames[j].querySelector('img'); if (img) img.style.transform = 'scale(' + (1.04 + 0.08 * Math.min(1, d / 7)) + ')'; }
+      break; }
+    case 'plan': { // grand plan plein écran (images IA des spots) : s'ouvre par un volet ou un zoom (data-entree = gauche |
+      // droite | bas | haut | zoom), puis lent travelling (data-camera = avance | recule | monte | descend | glisse)
+      const d = t - e.t, k = sortie(d / 0.75), en = x.dataset.entree || 'zoom', c = x.dataset.camera || 'avance';
+      s.opacity = en === 'zoom' ? k : 1;
+      s.clipPath = en === 'gauche' ? 'inset(0 ' + (100 * (1 - k)) + '% 0 0)' : en === 'droite' ? 'inset(0 0 0 ' + (100 * (1 - k)) + '%)'
+        : en === 'bas' ? 'inset(' + (100 * (1 - k)) + '% 0 0 0)' : en === 'haut' ? 'inset(0 0 ' + (100 * (1 - k)) + '% 0)' : '';
+      const u = Math.min(1, d / 7), img = x.querySelector('img'), z0 = en === 'zoom' ? 0.12 * (1 - k) : 0;
+      img.style.transform = c === 'recule' ? 'scale(' + (1.16 - 0.1 * u + z0) + ')' : c === 'monte' ? 'scale(' + (1.1 + z0) + ') translateY(' + (3 - 6 * u) + '%)'
+        : c === 'descend' ? 'scale(' + (1.1 + z0) + ') translateY(' + (-3 + 6 * u) + '%)' : c === 'glisse' ? 'scale(' + (1.12 + z0) + ') translateX(' + (3 - 6 * u) + '%)'
+        : 'scale(' + (1.04 + 0.1 * u + z0) + ')'; break; }
     case 'nuage': { // photo lancée de loin (data-dx, data-dy) en tournant, qui se pose à sa place puis flotte
       const d = t - e.t, k = sortie(d / 1.4), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
       s.transform = 'translate(' + (Number(x.dataset.dx || 0) * (1 - k)) + 'px,' + (Number(x.dataset.dy || 0) * (1 - k) + 8 * Math.sin(d + rot)) + 'px) rotate(' + (rot + 40 * (1 - k)) + 'deg) scale(' + (0.4 + 0.6 * k) + ')'; break; }
@@ -169,7 +209,7 @@ function animer(e, t) {
 function avant(e) {
   const s = e.x.style;
   if (e.anim === 'compteur') { const dec = Number(e.x.dataset.decimales || 0), dep = Number(e.x.dataset.depart || 0); e.x.textContent = dec ? dep.toFixed(dec).replace('.', ',') : fmt(dep); return; }
-  if (e.anim === 'mots' || e.anim === 'lettres') { s.opacity = 1; e.mots.forEach((m) => { m.style.opacity = 0; }); return; }
+  if (e.anim === 'mots' || e.anim === 'lettres' || e.anim === 'reveal') { s.opacity = 1; e.mots.forEach((m) => { m.style.opacity = 0; }); return; }
   if (e.anim === 'bloc') { s.opacity = 1; e.contenu.style.opacity = 0; e.balai.style.transform = 'scaleX(0)'; return; }
   if (e.anim === 'ouvre') { s.opacity = 1; s.transform = ''; return; }
   if (e.anim === 'trace') { const L = e.x.getTotalLength(); s.strokeDasharray = L; s.strokeDashoffset = L; return; }
@@ -177,13 +217,14 @@ function avant(e) {
 }
 function entree(s, t, premier) {
   const k = lisse((t - s.debut) / 0.9), st = s.el.style;
-  st.opacity = ''; st.clipPath = '';
+  st.opacity = ''; st.clipPath = ''; st.transform = '';
   if (premier) { st.opacity = lisse(t / 1.2); return; }
   if (k >= 1) return;
   if (s.transition === 'fondu') st.opacity = k;
   else if (s.transition === 'rideau') st.clipPath = 'inset(0 0 0 ' + (100 * (1 - k)) + '%)';
   else if (s.transition === 'volet') st.clipPath = LARGE ? 'inset(' + (100 * (1 - k)) + '% 0 0 0)' : 'inset(0 0 ' + (100 * (1 - k)) + '% 0)';
   else if (s.transition === 'cercle') st.clipPath = 'circle(' + (150 * k) + '% at 50% 50%)';
+  else if (s.transition === 'pousse') { st.opacity = Math.min(1, k * 1.8); st.transform = 'scale(' + (1.35 - 0.35 * sortie(k)) + ')'; }  // la caméra plonge dans la scène
 }
 // barres (rapides : la voix peut enchaîner sans pause) : sept blocs montent couvrir l'image, la scène change dessous, puis ils s'envolent vers le haut
 function rendreBarres(t) {
@@ -196,7 +237,37 @@ function rendreBarres(t) {
   });
 }
 const eclat = document.getElementById('eclat'), lueur = document.getElementById('lueur'), reflets = [...document.querySelectorAll('.bouton i')];
+// Effets sonores (11/11/2026, spots) : liste des instants où un mouvement mérite un son, lue par fabrique-talons.js
+// (dossier sons/, effets créés avec ElevenLabs) : coupes, coups de fouet, photos qui se posent, mots qui traversent,
+// tampons, pas de talons, bouton final.
+(function () {
+  const ev = [];
+  scenes.forEach((sc, i) => { if (i) ev.push([sc.debut, sc.transition === 'pousse' ? 'impact' : 'whoosh']);
+    sc.elements.forEach((e) => {
+      if (e.anim === 'p25' && e.x.dataset.entree === 'fouet') ev.push([e.t, 'fouet2']);
+      else if (e.anim === 'nuage') ev.push([e.t + 0.85, 'photo']);
+      else if (e.anim === 'deplace' && e.x.classList.contains('mot-traverse')) ev.push([e.t, 'whoosh']);
+      else if (e.anim === 'tampon') ev.push([e.t + 0.25, 'impact']);
+      else if (e.x.classList.contains('empreinte') && !e.x.previousElementSibling?.classList.contains('empreinte')) ev.push([e.t, 'talons']);
+      else if (e.x.classList.contains('bouton') && e.x.closest('.texte.centre')) ev.push([e.t + 0.2, 'shine']);
+      else if (e.x.classList.contains('mot-plan')) ev.push([e.t, 'reveal']);
+    }); });
+  ev.sort((a, b) => a[0] - b[0]);
+  window.EFFETS = ev.filter((x, i) => !i || x[0] - ev[i - 1][0] > 0.25 || x[1] !== ev[i - 1][1]).map(([t, son]) => ({ t: +t.toFixed(3), son }));
+})();
+const grain = document.getElementById('grain'), flash = document.getElementById('flash'), fuite = document.getElementById('fuite');
+if (grain) document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute">' + [12, 30, 55, 85].map((v, i) =>
+  '<filter id="flou-fouet' + i + '" x="-20%" width="140%"><feGaussianBlur stdDeviation="' + v + ' 0"/></filter>').join('') + '</svg>');
+// coupes « dures » : début de chaque scène et de chaque plan en coup de fouet (flash et fuite de lumière dessus)
+const COUPES = scenes.slice(1).map((s) => s.debut + 0.15).concat(scenes.flatMap((s) => s.elements.filter((e) => e.anim === 'p25' && e.x.dataset.entree === 'fouet').map((e) => e.t + 0.3)));
+function effetsCinema(t) {
+  if (grain) { const h = Math.floor(t * 24); grain.style.backgroundPosition = ((h * 97) % 256) + 'px ' + ((h * 57) % 256) + 'px'; }
+  let pr = 9; COUPES.forEach((c) => { const d = t - c; if (d >= -0.05 && d < pr) pr = d; });
+  if (flash) flash.style.opacity = pr < 0.3 ? 0.14 * (1 - lisse(pr / 0.3)) : 0;  // flash discret (un flash fort pâlissait l'écran)
+  if (fuite) { const v = pr < 1.6 ? Math.sin(Math.PI * lisse(pr / 1.6)) : 0; fuite.style.opacity = 0.55 * v; fuite.style.transform = 'translateX(' + (-30 + 60 * lisse(pr / 1.6)) + '%)'; }
+}
 window.rendre = (t) => {
+  effetsCinema(t);
   scenes.forEach((s, i) => {
     const visible = t >= s.debut && t < s.fin;
     s.el.style.visibility = visible ? 'visible' : 'hidden';

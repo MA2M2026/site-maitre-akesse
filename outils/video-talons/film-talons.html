@@ -17,19 +17,14 @@
 .marche img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
 body:not(.large) .marche { left: 190px; top: 190px; width: 700px; height: 980px; }
 body.large .marche { left: 1120px; top: 120px; width: 600px; height: 840px; }
-.carre { overflow: hidden; border: 8px solid #fff; border-radius: 6px; box-shadow: 0 40px 80px -30px rgba(40,6,10,0.9); z-index: 6; }
-.carre img { width: 100%; height: 100%; object-fit: cover; }
 body:not(.large) .talon1 { left: 640px; top: 900px; width: 330px; height: 330px; }
 body.large .talon1 { left: 900px; top: 640px; width: 300px; height: 300px; }
 /* 2. trois envies */
 .triptyque { display: flex; gap: 22px; z-index: 5; }
 body:not(.large) .triptyque { left: 60px; right: 60px; top: 420px; }
 body.large .triptyque { left: 150px; right: 150px; top: 300px; }
-.triptyque > div { flex: 1; position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 50px 100px -40px rgba(40,6,10,0.9); transform-origin: 50% 100%; }
 body:not(.large) .triptyque > div { height: 980px; }
 body.large .triptyque > div { height: 600px; }
-.triptyque img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
-.triptyque b { position: absolute; left: 0; right: 0; bottom: 0; padding: 120px 22px 26px; background: linear-gradient(180deg, rgba(124,33,40,0), #7C2128 70%); font: 500 52px/1.05 'Cormorant Garamond'; text-align: center; }
 body.large .triptyque b { font-size: 46px; }
 /* 3. au bon endroit */
 body:not(.large) .bande.b3 { left: 40px; top: 1060px; }
@@ -47,9 +42,7 @@ body.large .quatre > div { height: 620px; }
 .quatre b { position: absolute; left: 0; right: 0; bottom: 0; padding: 110px 20px 22px; background: linear-gradient(180deg, rgba(124,33,40,0), #7C2128 75%); font: 500 50px/1.05 'Cormorant Garamond'; }
 .quatre b i { display: block; font: italic 400 34px 'Cormorant Garamond'; opacity: 0.85; }
 /* 5. empreintes de talons */
-.empreinte { position: absolute; z-index: 6; width: 46px; height: 104px; left: var(--xv); top: var(--yv); }
 body.large .empreinte { left: var(--xl); top: var(--yl); width: 40px; height: 90px; }
-.empreinte svg { width: 100%; height: 100%; fill: #fff; transform: rotate(var(--r)); filter: drop-shadow(0 6px 10px rgba(40,6,10,0.6)); }
 /* 6. niveaux */
 .niveaux { display: flex; gap: 26px; z-index: 5; }
 body:not(.large) .niveaux { left: 90px; right: 90px; top: 420px; }
@@ -67,24 +60,15 @@ body.large .rangee > div { width: 190px; height: 260px; }
 .rangee img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
 body:not(.large) .rangee { left: 90px; top: 420px; }
 body.large .rangee { left: 150px; top: 390px; }
-.agenda { z-index: 6; width: 400px; border-radius: 18px; overflow: hidden; background: #fff; color: #7C2128; text-align: center; box-shadow: 0 40px 80px -30px rgba(40,6,10,0.9); }
-.agenda b { display: block; background: #7C2128; color: #fff; border: 4px solid #fff; border-bottom: 0; border-radius: 18px 18px 0 0; font: 700 34px 'Work Sans'; letter-spacing: 0.25em; padding: 16px; }
-.agenda span { display: block; font: 800 96px/1.15 'Big Shoulders Display'; padding: 10px 0 18px; }
 body:not(.large) .agenda { left: 340px; top: 790px; }
 body.large .agenda { left: 1130px; top: 390px; }
-.prix-geant { z-index: 6; font: 800 190px/0.9 'Big Shoulders Display'; white-space: nowrap; }
-.prix-geant small { font: 700 44px 'Work Sans'; margin-left: 16px; letter-spacing: 0.06em; }
-.prix-geant em { display: block; font: italic 400 50px 'Cormorant Garamond'; margin-top: 10px; }
 body:not(.large) .prix-geant { left: 90px; top: 1260px; }
 body.large .prix-geant { left: 150px; top: 730px; font-size: 160px; }
 body:not(.large) .prix-geant.p2 { top: 1240px; }
 body:not(.large) .grande-photo { left: 90px; right: 90px; top: 420px; height: 760px; }
 body.large .grande-photo { left: 1080px; top: 140px; width: 620px; height: 800px; }
-.lieu { z-index: 7; display: flex; align-items: center; gap: 16px; padding: 18px 30px; border-radius: 999px; background: #fff; color: #7C2128; font: 700 32px 'Montserrat'; box-shadow: 0 30px 60px -24px rgba(40,6,10,0.9); }
-.lieu svg { width: 40px; height: 40px; fill: none; stroke: #7C2128; stroke-width: 5; }
 body:not(.large) .lieu { left: 560px; top: 1110px; }
 body.large .lieu { left: 1300px; top: 860px; }
-.maison { z-index: 5; fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 body:not(.large) .maison { left: 290px; top: 380px; width: 500px; height: 500px; }
 body.large .maison { left: 1150px; top: 200px; width: 520px; height: 520px; }
 .seances { z-index: 6; text-align: center; }

@@ -340,7 +340,13 @@
     croix: '<path d="M6 6l12 12M18 6L6 18"/>'
   };
   const icone = (cle, taille) => '<svg width="' + (taille || 20) + '" height="' + (taille || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONES[cle] + '</svg>';
-  P.icone = icone;  // (aussi pour les autres pièces, ex. js/admin/site-contenu.js)
+  P.icone = icone;
+  // Barre d'étapes (Convocations, Messages groupés, Informations agence, 11/11/2026) : étape en cours, étapes faites
+  P.marquerEtapes = (boutons, n, cle) => boutons.forEach((b) => {
+    const k = Number(b.dataset[cle]);
+    b.classList.toggle('fait', k < n); b.classList.toggle('actif', k === n);
+    if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+  });  // (aussi pour les autres pièces, ex. js/admin/site-contenu.js)
   const COURT = { site: 'Le site', paiements: 'Paiements', compta: 'Compta' };
   const premierePage = P.premierePage;  // js/portail/noyau.js
   const blocsPermis = () => ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]);
@@ -363,7 +369,11 @@
   // Coque d'un bloc : en-tête, menu des rubriques (à gauche ; en bas, en tiroir, sur téléphone)
   P.coque = (module, page, html) => {
     const esp = P.espaces[module];
-    const nav = P.menuRubriques(esp, module, page);  // (js/portail/noyau.js : compartiments)
+    // (11/11/2026, tuiles) dans l'Administration du site : seulement les rubriques de la tuile de cette page
+    const tuile = module === 'site' && P.tuileDe ? P.tuileDe(page) : null;
+    // (Paiements, Comptabilité : seulement le groupe de la rubrique, js/admin/blocs-index.js)
+    const groupe = !tuile && P.groupeBloc ? P.groupeBloc(module, page) : null;
+    const nav = P.menuRubriques(tuile ? { nav: P.menuTuile(tuile), compteur: esp.compteur } : groupe ? { nav: groupe, compteur: esp.compteur } : esp, module, page);  // (js/portail/noyau.js : compartiments)
     const blocs = '<div class="blocs">' + '<a class="bloc" href="#/">' + icone('accueil') + 'Accueil</a>' +
       blocsPermis().map((k) => '<a class="bloc' + (k === module ? ' actif' : '') + '" href="#/' + k + '/' + premierePage(P.espaces[k]) + '">' + icone(k) + P.esc(P.ESPACES[k]) + '</a>').join('') + '</div>';
     const secu = lienSecurite();
@@ -419,18 +429,18 @@
   }
 
   function dateCourte(d) { const s = String(d).slice(0, 10).split('-'); return Number(s[2]) + ' ' + P.MOIS[Number(s[1]) - 1]; }
+  // le prochain projet en une ligne (11/11/2026, accueil apaisé) : la date en carré blanc, le titre, les réponses
   function affiche(site) {
     const p = site.prochain;
     if (!p) return '';
-    const auj = P.aujourdhui(), quand = p.date_debut === auj || (p.date_fin && p.date_debut <= auj && p.date_fin >= auj) ? 'Aujourd’hui' : 'Prochain projet · ' + dateCourte(p.date_debut);
-    const ids = (p.mannequin_ids || []).filter((id) => site.photos[id]).slice(0, 4);
-    const fond = (ids.length ? ids.map((id) => [site.photos[id], '']) : site.profils.slice(0, 4).map((m) => [site.photos[m.id], m.full_name]));
+    const auj = P.aujourdhui(), enCours = p.date_debut === auj || (p.date_fin && p.date_debut <= auj && p.date_fin >= auj);
+    const j = String(p.date_debut).slice(0, 10).split('-');
     const r = site.reponses;
-    return '<a class="affiche apparait" href="#/site/b2-convocations" style="--i:1"><span class="fond">' + fond.map((f) => P.visage(f[0], f[1])).join('') + '</span>' +
-      '<span class="txt"><span class="surtitre">' + P.esc(quand) + (p.lieu || p.ville ? ' · ' + P.esc([p.lieu, p.ville].filter(Boolean).join(', ')) : '') + '</span>' +
+    return '<a class="affiche affiche-ligne apparait" href="#/site/b2-convocations" data-projet="' + P.esc(p.id) + '" style="--i:2"><span class="af-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + P.esc(moisCourtDe(p.date_debut).toUpperCase()) + '</small></span>' +
+      '<span class="txt"><span class="surtitre">' + (enCours ? 'Aujourd’hui' : 'Prochain événement') + (p.lieu || p.ville ? ' · ' + P.esc([p.lieu, p.ville].filter(Boolean).join(', ')) : '') + '</span>' +
       '<span class="titre">' + P.esc(p.titre) + '</span>' +
-      (r ? '<span class="surtitre">Réponses : ' + r.confirme + ' sur ' + r.total + ' confirmées' + (r.sans ? ' · ' + r.sans + ' sans réponse' : '') + '</span>' +
-        '<span class="jauge"><i data-largeur="' + Math.round(100 * r.confirme / Math.max(1, r.total)) + '"></i></span>' : '<span class="surtitre">Aucune convocation envoyée pour l’instant</span>') +
+      (r ? '<span class="reponses">' + r.confirme + ' sur ' + r.total + ' confirmées' + (r.sans ? ' · ' + r.sans + ' sans réponse' : '') + '</span>' +
+        '<span class="jauge"><i data-largeur="' + Math.round(100 * r.confirme / Math.max(1, r.total)) + '"></i></span>' : '<span class="reponses">Aucune convocation envoyée pour l’instant</span>') +
       '</span></a>';
   }
   function taches(site, paiements) {
@@ -444,28 +454,54 @@
     return '<div class="taches apparait" style="--i:2">' + t.map((x) => '<a class="tache" href="' + x[0] + '"><span class="point' + (x[4] ? ' chaud' : '') + '"></span>' +
       '<span class="t">' + P.esc(x[1]) + '<small>' + P.esc(x[2]) + '</small></span><b>' + P.compte(x[3]) + '</b></a>').join('') + '</div>';
   }
-  function ruban(site) {
-    const avecPhoto = site.profils.filter((m) => site.photos[m.id]);
-    if (!avecPhoto.length) return '';
-    const carte = (m, cache) => '<a class="carte-vis" href="#/site/b2-mannequins-publies/' + P.esc(encodeURIComponent(m.id)) + '"' + (cache ? ' aria-hidden="true" tabindex="-1"' : '') + '>' + P.visage(site.photos[m.id], m.full_name) +
-      '<b>' + P.esc(m.full_name) + '</b><span>' + P.esc([m.niveau_mannequin, m.city].filter(Boolean).join(' · ')) + '</span></a>';
-    return '<div class="section-titre apparait" style="--i:4"><h2>Nos mannequins</h2><a href="#/site/b2-mannequins-publies">Tout voir →</a></div>' +
-      '<div class="ruban apparait" style="--i:5"><div class="piste">' + avecPhoto.map((m) => carte(m, false)).join('') + avecPhoto.map((m) => carte(m, true)).join('') + '</div></div>';
+  // 8 grandes tuiles (11/11/2026, maquette validée par la propriétaire) : celles de l'Administration du site
+  // (js/admin/site.js, P.TUILES_SITE), puis Paiements et Comptabilité ; chacune selon les droits du rôle
+  function tuilesAccueil(site, paiements) {
+    const tuile = (lien, ic, titre, sous, badge, discret, i) => '<a class="tu apparait' + (discret ? ' discret' : '') + '" style="--i:' + (3 + i) + '" href="' + lien + '">' +
+      '<em aria-hidden="true">' + ic + '</em>' + (badge ? '<i>' + P.compte(badge) + '</i>' : '') + '<b class="nom">' + P.esc(titre) + '</b><small>' + P.esc(sous) + '</small></a>';
+    const l = [];
+    const badges = site ? { castings: (site.nouvelles || 0) + (site.recruteurs || 0), mannequins: site.aValider || 0 } : {};
+    const siteT = P.moi.espaces.site && P.TUILES_SITE ? P.TUILES_SITE : [];
+    siteT.filter((x) => !x.discret).forEach((x) => l.push(['#/site/tuile-' + x.cle, x.ic, x.titre, x.sous, badges[x.cle], false]));
+    if (P.moi.espaces.paiements && P.espaces.paiements) l.push(['#/paiements/' + (P.espaces.paiements.pages.accueil ? 'accueil' : premierePage(P.espaces.paiements)), '💳', 'Paiements', 'Mensualités, cachets', paiements && paiements.declares, false]);
+    if (P.moi.espaces.compta && P.espaces.compta) l.push(['#/compta/' + (P.espaces.compta.pages.accueil ? 'accueil' : premierePage(P.espaces.compta)), '📒', 'Comptabilité', 'Recettes, dépenses', 0, false]);
+    siteT.filter((x) => x.discret).forEach((x) => l.push(['#/site/tuile-' + x.cle, x.ic, x.titre, x.sous, 0, true]));
+    return l.length ? '<h2 class="tu-titre apparait" style="--i:3">Tout gérer</h2><div class="tuiles-accueil">' + l.map((x, i) => tuile(x[0], x[1], x[2], x[3], x[4], x[5], i)).join('') + '</div>' : '';
   }
-  function blocsAccueil(site, paiements, compta) {
-    const cartes = blocsPermis().map((k, i) => {
-      const lien = '#/' + k + '/' + premierePage(P.espaces[k]);
-      let grand = '', legende = '';
-      if (k === 'site' && site) { grand = P.compte(site.profils.length); legende = 'mannequins publiés au Book'; }
-      if (k === 'paiements' && paiements) { grand = paiements.declares == null ? '—' : P.compte(paiements.declares); legende = 'paiements déclarés à valider'; }
-      if (k === 'compta' && compta) { grand = compta.total == null ? '—' : P.compte(compta.total, ' F'); legende = 'en caisse et en banque'; }
-      return '<a class="bloc-accueil apparait' + (i === 0 ? ' noir' : '') + '" style="--i:' + (3 + i) + '" href="' + lien + '">' +
-        '<span class="nom">' + P.esc(P.ESPACES[k]) + '</span><span><span class="grand">' + grand + '</span><span class="legende" style="display:block">' + P.esc(legende) + '</span></span>' +
-        '<span class="pied"><span>Ouvrir</span><span class="fleche" aria-hidden="true">→</span></span></a>';
-    }).join('');
-    return '<div class="blocs-accueil">' + cartes + '</div>';
+  // recherche de l'accueil : une rubrique (toutes celles du rôle) ou une mannequin publiée (par son nom)
+  function rubriquesCherchables() {
+    const l = [];
+    ['site', 'paiements', 'compta'].filter((k) => P.moi.espaces[k] && P.espaces[k]).forEach((k) =>
+      P.espaces[k].nav.forEach((n) => { if (n[0]) l.push(['#/' + k + '/' + n[0], n[1]]); }));
+    (P.moi.espaces.site && P.TUILES_SITE ? P.TUILES_SITE : []).forEach((x) => l.push(['#/site/tuile-' + x.cle, x.titre]));
+    return l;
   }
-
+  const sansAccents = (x) => String(x).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  let rechercheMinuteur = 0, rechercheNo = 0;
+  function brancherRecherche() {
+    const champ = document.getElementById('av-recherche'), zone = document.getElementById('av-resultats');
+    if (!champ || !zone) return;
+    champ.addEventListener('input', () => {
+      clearTimeout(rechercheMinuteur);
+      const q = champ.value.trim(), n = ++rechercheNo;
+      if (q.length < 2) { zone.innerHTML = ''; zone.hidden = true; return; }
+      const rub = rubriquesCherchables().filter((r) => sansAccents(r[1]).includes(sansAccents(q))).slice(0, 6);
+      const dessiner = (mannequins) => {
+        if (n !== rechercheNo) return;
+        const lignes = rub.map((r) => '<a href="' + r[0] + '"><em aria-hidden="true">📂</em>' + P.esc(r[1]) + '</a>')
+          .concat((mannequins || []).map((m) => '<a href="#/site/b2-mannequins-publies/' + P.esc(encodeURIComponent(m.id)) + '"><em aria-hidden="true">👩🏾</em>' + P.esc(m.full_name) + '</a>'));
+        zone.innerHTML = lignes.length ? lignes.join('') : '<p>Rien trouvé pour « ' + P.esc(q) + ' ».</p>';
+        zone.hidden = false;
+      };
+      dessiner(null);
+      if (!P.moi.espaces.site) return;
+      rechercheMinuteur = setTimeout(async () => {
+        const motif = '%' + q.replace(/[%_,()\\]/g, ' ') + '%';
+        const m = await essai(P.bd(sb.from('model_profiles').select('id, full_name').eq('published', true).ilike('full_name', motif).order('full_name').limit(6)));
+        dessiner(m || []);
+      }, 250);
+    });
+  }
   P.vuePortail = async () => {
     const d = dateDuJour();
     const [site, paiements, compta] = await Promise.all([
@@ -474,26 +510,32 @@
       P.moi.espaces.compta ? essai(donneesCompta()) : null
     ]);
     const phrase = {
-      principal: 'Voici l’essentiel de la journée. Touchez un bloc pour y entrer.',
+      principal: 'voici l’essentiel.',
       site: 'Le site au quotidien : mannequins, castings, contenu. Aucune donnée financière.',
       caisse: 'Les paiements des mannequins : à valider, en retard, messages.',
       compta: 'La comptabilité de l’agence. Sur les mannequins, vous ne voyez que des totaux.'
     }[P.moi.role];
     const secu = lienSecurite();
-    return '<div class="coque sans-menu">' + enTete('Bonjour, ' + P.moi.nom) +
-      '<main class="contenu" id="contenu">' +
-      '<div class="accueil-tete"><div class="date">' + P.esc(d.jour.charAt(0).toUpperCase() + d.jour.slice(1)) + '<span>' + P.esc(d.date) + '</span></div>' +
-      '<p class="bonjour">' + P.esc(phrase) + '</p></div>' +
+    return '<div class="coque sans-menu">' + enTete('Accueil') +
+      '<main class="contenu accueil-apaise" id="contenu">' +
+      '<div class="accueil-tete"><div class="date"><span class="bj">Bonjour</span> <em>' + P.esc(P.moi.nom) + '</em></div>' +
+      '<p class="bonjour">' + P.esc(d.jour.charAt(0).toUpperCase() + d.jour.slice(1) + ' ' + d.date) + ' · ' + P.esc(phrase) + '</p></div>' +
+      '<div class="av-recherche apparait" style="--i:1"><label for="av-recherche" class="sr-only">Chercher une mannequin ou une rubrique</label>' +
+        '<input id="av-recherche" type="search" autocomplete="off" placeholder="🔍 Chercher une mannequin, une rubrique…"><div id="av-resultats" class="av-resultats" hidden></div></div>' +
+      (P.moi.espaces.site ? '<a class="av-envoyer apparait" style="--i:1" href="#/site/tuile-messages"><em aria-hidden="true">✉️</em><span>Envoyer un message<small>Convoquer, annoncer une sélection, informer…</small></span><i aria-hidden="true">›</i></a>' : '') +
+      '<h2 class="tu-titre apparait" style="--i:1">À faire aujourd’hui</h2>' + taches(site, paiements) +
       (site ? affiche(site) : '') +
-      taches(site, paiements) +
-      blocsAccueil(site, paiements, compta) +
-      (site ? ruban(site) : '') +
+      tuilesAccueil(site, paiements) +
       '<div class="pied-portail"><span class="ligne"><a class="btn petit" href="' + secu[0] + '">' + P.esc(secu[1]) + '</a>' +
       (P.installee() ? '' : '<button class="btn petit" data-action="installer">Installer l’application</button>') +
       '<button class="btn petit" data-action="se-deconnecter">Déconnexion</button></span><a href="/" class="retour">Voir le site public →</a></div>' +
       '</main>' + barreBas('', false) + '</div>';
   };
   P.apresPortail = () => {
+    brancherRecherche();
+    // le prochain événement touché : son projet s'ouvre directement dans les Convocations (js/admin/site-convocations.js)
+    const af = document.querySelector('.affiche[data-projet]');
+    if (af) af.addEventListener('click', () => { window.convocationDemandee = af.dataset.projet; });
     P.animerChiffres(document.getElementById('app'));
     // la jauge des réponses se remplit après l'apparition de l'affiche
     setTimeout(() => document.querySelectorAll('.affiche .jauge i[data-largeur]').forEach((i) => { i.style.width = i.dataset.largeur + '%'; }), 350);

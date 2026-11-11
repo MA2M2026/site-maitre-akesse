@@ -206,7 +206,7 @@ window.demarrerConvocationsPanneau = function () {
       if (!deja) { parGroupe[g] = x; convoques.push(x); return; }
       if (!deja.reponse && x.reponse) { convoques[convoques.indexOf(deja)] = x; parGroupe[g] = x; }
     });
-    if (!convoques.length) { boite.textContent = 'Personne n’a encore été convoqué pour ce projet.'; return false; }
+    if (!convoques.length) { boite.textContent = 'Personne n’a encore été convoqué pour ce projet.'; boite.dataset.bilan = ''; return false; }
     var groupes = [
       ['confirme', '✅ Confirmé', convoques.filter(function (x) { return x.reponse === 'confirme'; })],
       ['absent', '❌ Absent', convoques.filter(function (x) { return x.reponse === 'absent'; })],
@@ -216,6 +216,15 @@ window.demarrerConvocationsPanneau = function () {
     titre.className = 'convoc-chiffres';
     titre.textContent = convoques.length + ' convoqué(s) · ' + groupes.map(function (g) { return g[2].length + ' ' + g[1].replace(/^\S+ /, '').toLowerCase(); }).join(' · ');
     boite.appendChild(titre);
+    // (11/11/2026, Convocations en étapes) les trois chiffres en tuiles ; le total sert à l'onglet « Réponses · 8/12 »
+    var tuiles = document.createElement('div');
+    tuiles.className = 'convoc-tuiles';
+    [['confirme', 'confirmées'], ['attente', 'sans réponse'], ['absent', 'absentes']].forEach(function (t) {
+      var g = groupes.find(function (x) { return x[0] === t[0]; }), c = document.createElement('span'), b = document.createElement('b');
+      c.className = 'convoc-tuile-' + t[0]; b.textContent = g[2].length; c.appendChild(b); c.appendChild(document.createTextNode(t[1])); tuiles.appendChild(c);
+    });
+    boite.appendChild(tuiles);
+    boite.dataset.bilan = groupes[0][2].length + '/' + convoques.length;
     var barre = document.createElement('div');
     barre.className = 'convoc-barre';
     barre.setAttribute('role', 'img');
@@ -519,6 +528,16 @@ window.demarrerConvocationsPanneau = function () {
         message('Envoi des e-mails…');
         var aEnvoyer = envois.filter(function (e) { return e.statut === 'en_cours' && e.canal === 'email' && e.sorte === sorte && cles[e.id]; });
         var partis = await envoyerEmails(aEnvoyer);
+        // (11/11/2026, « Ajouter une image ») avec une affiche : le message part aussi dans l'application des
+        // mannequins (comptes du site « m: », carnet « c: »), l'affiche en grand (envoyerDansApplication, js/messages-candidats.js)
+        if (projet.affiche && (sorte === 'convocation' || sorte === 'selection')) {
+          // (une mineure : la ligne du parent porte son model_id → c'est SON application qui reçoit le message)
+          var clesApp = choisis.filter(function (x) { return x.model_id || (x.contact_id && !x.parent); }).map(function (x) { return x.model_id ? 'm:' + x.model_id : 'c:' + x.contact_id; })
+            .filter(function (c, i, l) { return l.indexOf(c) === i; });
+          var sansAffiche = Object.assign({}, projet, { affiche: null });
+          if (clesApp.length) await envoyerDansApplication(clesApp, sorte, (sorte === 'selection' ? '🎉 Sélection : ' : '📨 Convocation : ') + projet.titre,
+            texteApplication(messageConvocation(sansAffiche, { nom: '' }, sorte).texte), projet.affiche, null, '/app/#evenements');
+        }
         bilan = partis + ' e-mail(s) envoyé(s) sur ' + aEnvoyer.length + '.' + (nbWa ? ' ' + nbWa + ' WhatsApp prêt(s) : appuyez sur le bouton rouge « 💬 Envoyer le WhatsApp suivant », dans le suivi ci-dessous.' : '');
       } else {
         bilan = 'Programmé pour ' + quand(prevu) + ' : ' + nbEmails + ' e-mail(s) automatique(s)' + (nbWa ? ', ' + nbWa + ' WhatsApp à envoyer (vous serez prévenue par e-mail à l’heure prévue)' : '') + '.';

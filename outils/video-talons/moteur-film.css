@@ -232,3 +232,22 @@ body.mat .forme.voile, body.mat .forme.contour, body.mat #poussiere { display: n
 body.mat .photo img, body.mat .carre img, body.mat .triptyque img, body.mat .quatre img, body.mat .marche img, body.mat .rangee img,
 body.mat .vignette img, body.mat .bande img, body.mat .mosaique img { filter: contrast(1.12) saturate(1.12) brightness(0.96); }
 body.mat .photo:not(.plein)::after { background: radial-gradient(ellipse 80% 85% at 55% 40%, rgba(124,33,40,0) 60%, rgba(124,33,40,0.45) 100%); }
+
+/* Composants repris de la vidéo du cours de talons (11/11/2026) pour les spots : grande photo encadrée, cartes
+   photo avec légende, empreintes de talons, maison tracée, épingle de lieu, calendrier, prix géant */
+.carre { overflow: hidden; border: 8px solid #fff; border-radius: 6px; box-shadow: 0 40px 80px -30px rgba(40,6,10,0.9); z-index: 6; }
+.carre img { width: 100%; height: 100%; object-fit: cover; }
+.triptyque > div { flex: 1; position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 50px 100px -40px rgba(40,6,10,0.9); transform-origin: 50% 100%; }
+.triptyque img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.triptyque b { position: absolute; left: 0; right: 0; bottom: 0; padding: 120px 22px 26px; background: linear-gradient(180deg, rgba(124,33,40,0), #7C2128 70%); font: 500 52px/1.05 'Cormorant Garamond'; text-align: center; }
+.empreinte svg { width: 100%; height: 100%; fill: #fff; transform: rotate(var(--r)); filter: drop-shadow(0 6px 10px rgba(40,6,10,0.6)); }
+.agenda { z-index: 6; width: 400px; border-radius: 18px; overflow: hidden; background: #fff; color: #7C2128; text-align: center; box-shadow: 0 40px 80px -30px rgba(40,6,10,0.9); }
+.agenda b { display: block; background: #7C2128; color: #fff; border: 4px solid #fff; border-bottom: 0; border-radius: 18px 18px 0 0; font: 700 34px 'Work Sans'; letter-spacing: 0.25em; padding: 16px; }
+.agenda span { display: block; font: 800 96px/1.15 'Big Shoulders Display'; padding: 10px 0 18px; }
+.prix-geant { z-index: 6; font: 800 190px/0.9 'Big Shoulders Display'; white-space: nowrap; }
+.prix-geant small { font: 700 44px 'Work Sans'; margin-left: 16px; letter-spacing: 0.06em; }
+.prix-geant em { display: block; font: italic 400 50px 'Cormorant Garamond'; margin-top: 10px; }
+.lieu { z-index: 7; display: flex; align-items: center; gap: 16px; padding: 18px 30px; border-radius: 999px; background: #fff; color: #7C2128; font: 700 32px 'Montserrat'; box-shadow: 0 30px 60px -24px rgba(40,6,10,0.9); }
+.lieu svg { width: 40px; height: 40px; fill: none; stroke: #7C2128; stroke-width: 5; }
+.maison { z-index: 5; fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.empreinte { position: absolute; z-index: 6; width: 46px; height: 104px; left: var(--xv); top: var(--yv); }

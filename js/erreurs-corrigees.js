@@ -16,6 +16,19 @@
 // Facultatif : navigateur: 'texte' — la règle ne vaut que pour les navigateurs dont l'identité
 // contient ce texte (ex. 'Brave') ; une même erreur venue d'un autre navigateur reste visible.
 window.MA2M_ERREURS_CORRIGEES = [
+  // journal du 11/11/2026 (copié par la propriétaire)
+  { motif: 'Lightpanda', corrige_le: '2100-01-01T00:00:00Z', note: 'Robot « Lightpanda » (faux navigateur qui lit les pages sans tout charger) : pas un défaut du site, toujours ignoré' },
+  { motif: 'Google-Safety', corrige_le: '2100-01-01T00:00:00Z', note: 'Robot de sécurité de Google (vérifie les liens) : il ne charge pas tout le site, toujours ignoré' },
+  { motif: 'PTST/', corrige_le: '2100-01-01T00:00:00Z', note: 'Robot de mesure de vitesse WebPageTest (téléphone simulé) : pas un visiteur, toujours ignoré' },
+  { motif: 'chrome-extension:', corrige_le: '2100-01-01T00:00:00Z', note: 'Extension installée dans le navigateur du visiteur : pas un défaut du site, toujours ignorée' },
+  { motif: 'style-src-elem → script/style en ligne', navigateur: 'Chrome/155', corrige_le: '2026-11-11T13:30:00Z', note: 'Accueil : aucun style de ce type dans la page (vérifié le 11/11) ; ajouté par une extension du navigateur. S’il revient, il réapparaîtra ici' },
+  { motif: "etat.profil.full_name", corrige_le: '2026-11-09T23:59:00Z', note: 'Application mannequin : compte sans fiche, déjà corrigé le 09/11 (écran « Ce compte n’est pas un compte mannequin »)' },
+  { motif: 'div.news-une.reveal', corrige_le: '2026-11-11T13:30:00Z', note: 'Fausse alerte : la grande photo « À la une » passe sous la barre de défilement de l’ordinateur (8 px), invisible ; la page ne glisse pas' },
+  { motif: 'h3.parcours-sous-titre', corrige_le: '2026-11-11T13:30:00Z', note: 'Fausse alerte : le sous-titre arrive en glissant depuis la gauche (animation de 1 s), la page ne glisse pas' },
+  { motif: "/cours-talons : la page s'affiche dézoomée", navigateur: 'X11; Linux', corrige_le: '2026-11-11T13:30:00Z', note: 'Fausse alerte : ordinateur Linux avec un écran inhabituel (1231 × 1899) et zoom à 65 % réglé par la personne' },
+  { motif: "of 'window.Partage'", corrige_le: '2026-11-11T21:30:00Z', note: 'Si le fichier des outils partagés ne se charge pas (coupure), le reste de la page fonctionne quand même (mise en ligne du 11/11)' },
+  { motif: "deriverNiveauMannequin' from null", corrige_le: '2026-11-11T21:30:00Z', note: 'Même correction (iPhone) : mise en ligne du 11/11' },
+  { motif: 'button#btn-envoyer.btn.btn--principal', corrige_le: '2026-11-11T21:30:00Z', note: 'Candidature : un message identique au précédent bouge maintenant (petit rappel), pour montrer que le bouton a bien réagi' },
   // journal du 24/10/2026 (copié par la propriétaire)
   { motif: 'user-script:1', corrige_le: '2100-01-01T00:00:00Z', note: 'Programme ajouté par Chrome sur iPhone (remplissage automatique des formulaires) : pas un défaut du site, toujours ignoré' },
   { motif: 'kaspersky-labs.com', corrige_le: '2100-01-01T00:00:00Z', note: 'Antivirus Kaspersky du visiteur, qui ajoute ses propres programmes aux pages : pas un défaut du site, toujours ignoré' },

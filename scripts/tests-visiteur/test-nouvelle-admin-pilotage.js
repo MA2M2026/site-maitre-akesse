@@ -45,7 +45,10 @@ const texte = (p, sel) => p.evaluate((s) => document.querySelector(s).innerText.
     const lignes = await p.$$eval('.taches .tache', (l) => l.map((c) => c.innerText.replace(/\s+/g, ' ')));
     ok(lignes.length === 3 && /5 actions en attente/.test(await texte(p, '.entete')), n + 'à traiter : 3 lignes, 5 actions (' + lignes.join(' | ') + ')');
     const pastilles = await p.$$eval('#menu-lateral a.nav .compteur', (l) => l.map((x) => x.closest('a').getAttribute('href').split('/')[2] + '=' + x.textContent));
-    ok(pastilles.includes('b1-a-traiter=5') && pastilles.includes('b2-candidatures=3') && pastilles.includes('b2-validations=1'), n + 'pastilles du menu : ' + pastilles.join(', '));
+    // (11/11/2026, tuiles : le menu ne montre que la tuile Castings ; « Validations » est dans la tuile Mannequins)
+    ok(pastilles.includes('b1-a-traiter=5') && pastilles.includes('b2-candidatures=3') && pastilles.includes('b2-recruteurs=1'), n + 'pastilles du menu : ' + pastilles.join(', '));
+    await p.goto(URL_ADMIN + '#/site/tuile-mannequins'); await p.waitForSelector('.tu-page'); await p.waitForTimeout(800);
+    ok(/1/.test(await texte(p, '.tu-ligne[href="#/site/b2-validations"] b')), n + 'tuile Mannequins : pastille « 1 » sur Validations en attente');
 
     // 3. Top 3 et classement, avec les visages
     await p.goto(URL_ADMIN + '#/site/v2-top3'); await p.waitForSelector('.podium'); await p.waitForTimeout(2000);

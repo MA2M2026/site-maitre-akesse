@@ -99,6 +99,28 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('[data-action="dossier-supprimer"]'); await p.waitForTimeout(1200);
     ok(ecrits(journal, 'DELETE', 'casting_applications').length === 1 && /#\/site\/b2-candidatures$/.test(p.url()), n + 'dossier supprimé, retour à la liste');
 
+    // 5bis. Étudier les nouvelles une à une (11/11/2026, maquette validée par la propriétaire)
+    await p.goto(URL_ADMIN + '#/site/b2-candidatures'); await p.waitForSelector('.etude-lancer', { timeout: 15000 }); await p.waitForTimeout(600);
+    const nbNouvelles = Number(((await p.textContent('.etude-lancer')).match(/les (\d+) nouvelles/) || [0, 1])[1]);
+    ok(/Étudier (les \d+ nouvelles|la nouvelle candidature)/.test(await p.textContent('.etude-lancer')), n + 'bouton « ▶ Étudier les nouvelles » (' + nbNouvelles + ')');
+    await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
+    const etude = await p.evaluate(() => ({ rang: document.querySelector('.etude-haut').innerText, nom: document.querySelector('.etude-voile b').textContent, choix: document.querySelectorAll('.etude-choix').length }));
+    ok(new RegExp('1 / ' + nbNouvelles).test(etude.rang) && etude.nom && etude.choix === 3 && /#\/site\/b2-candidatures\/etude$/.test(p.url()),
+      n + 'étudier : 1 / ' + nbNouvelles + ', ' + etude.nom + ' en grand, trois décisions');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'étudier : rien ne dépasse de l’écran');
+    await capture(p, 'etude' + suffixe);
+    const patchsAvant = ecrits(journal, 'PATCH', 'casting_applications').length;
+    await p.click('.etude-choix.revoir');  // (« À revoir » : la suite de l'essai compte les « Retenue »)
+    await p.waitForSelector('.etude-resultat', { timeout: 15000 }); await p.waitForTimeout(1500);
+    const patch = ecrits(journal, 'PATCH', 'casting_applications').slice(patchsAvant).pop();
+    ok(patch && /"status":"en étude"/.test(patch[3]) && /à revoir/.test(await p.textContent('.etude-resultat h2')) && await p.isVisible('#dos-notif-texte'),
+      n + '« À revoir » : enregistré, « … à revoir plus tard », le message est prêt');
+    ok(!!(await p.$('#dos-notif-wa')) || /e-mail/i.test(await p.textContent('#dos-notif-statut')), n + 'après la décision : WhatsApp prêt ou e-mail envoyé');
+    await capture(p, 'etude-decision' + suffixe);
+    await p.click('.etude-suivant'); await p.waitForTimeout(1500);
+    ok(nbNouvelles > 1 ? new RegExp('2 / ' + nbNouvelles).test(await p.textContent('.etude-haut')) : /étudiées/.test(await p.textContent('#contenu')), n + '« Candidature suivante » : la suivante s’affiche');
+    await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
+
     // 6. Demandes recruteurs
     await p.goto(URL_ADMIN + '#/site/b2-recruteurs'); await p.waitForSelector('.dossiers-grille'); await p.waitForTimeout(800);
     ok(/Koffi Marc.*Défilé.*Maison Ivoire/.test(await p.textContent('.dossier-carte')), n + 'demande recruteur listée (contact, projet, entreprise)');
@@ -139,9 +161,23 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok((await p.$$('.mg-personne')).length === 1 && /YAO KOUASSI/.test(await p.textContent('#mg-liste')), n + 'Messages groupés : destinataires chargés (retenues de l’agence)');
     await p.evaluate(() => { window.open = () => null; });
     const mailsAvant = journal.filter((j) => j[0] === 'EMAIL').length;
+    // (11/11/2026) trois étapes : À qui ? → Le message → Envoyer
+    await p.click('.mg-etape[data-mg="1"] [data-mg-etape="2"]'); await p.waitForTimeout(300);
+    ok(await p.isVisible('#mg-message') && !(await p.isVisible('#mg-charger')), n + 'Messages groupés : étape 2 « Le message » seule à l’écran');
     if (/\[à compléter\]/.test(await p.textContent('#mg-apercu').catch(() => ''))) { await p.fill('#mg-lieu', 'Studio MA2M'); }
+    // (11/11/2026) « Ajouter une image » : l'image choisie, un lien « Voir l'affiche » dans l'e-mail, l'image dans l'application
+    await p.setInputFiles('#mg-image input[type=file]', require('path').join(__dirname, 'medias/photo4.jpg'));
+    await p.waitForSelector('#mg-image .ij-choisie img', { timeout: 15000 }).catch(() => {});
+    ok(/Image jointe/.test(await p.textContent('#mg-image')), n + 'Messages groupés : image jointe depuis la galerie');
+    await p.waitForTimeout(1500);  // (le bandeau « Envoi de la photo… » disparaît)
+    await p.$eval('.mg-etape[data-mg="2"] [data-mg-etape="3"]', (b) => b.click()); await p.waitForTimeout(300);
+    ok(/1 personne/.test(await p.textContent('#mg-resume-envoi')) && /avec l’image/.test(await p.textContent('#mg-resume-envoi')), n + 'Messages groupés : étape 3, le résumé (1 personne, avec l’image)');
     await p.click('#mg-email'); await p.waitForTimeout(2500);
     ok(journal.filter((j) => j[0] === 'EMAIL').length === mailsAvant + 1, n + 'Messages groupés : e-mail envoyé');
+    const dernier = journal.filter((j) => j[0] === 'EMAIL').pop() || [];
+    const appMg = journal.filter((j) => j[0] === 'rpc' && j[1] === 'app_messages_envoyer').map((j) => JSON.parse(j[2] || '{}')).pop() || {};
+    ok(/Voir l’affiche/.test(String(dernier[1])) && /^https:\/\/.+\/site\/infos\/.+\.jpg$/.test(appMg.p_image || '') && !/Voir l’affiche/.test(appMg.p_texte || ''),
+      n + 'Messages groupés : lien « Voir l’affiche » dans l’e-mail, image en grand dans l’application');
     await capture(p, 'messages-groupes' + suffixe);
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));
     await ctx.close();

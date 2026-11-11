@@ -35,6 +35,8 @@
       if (pasActivee(e)) return P.entete('Liste de présence') + '<div class="carte vide">La liste de présence n’est pas encore activée : il faut d’abord coller le fichier <b>supabase-presences.sql</b> dans Supabase.</div>';
       throw e;
     }
+    if (!d || Array.isArray(d)) d = {};  // (réponse vide : la page s'affiche quand même, sans mannequin)
+    d.mannequins = d.mannequins || [];
     etat.donnees = d;
     const visages = await visagesDe(d.mannequins);
     const jours = C.dimanchesDuMois(etat.mois), auj = aujourdhui(), annulees = (d.annulees || []).map((a) => a.dimanche);
@@ -71,7 +73,7 @@
       '<button type="button" class="btn petit" data-action="presences-mois" data-pas="1" aria-label="Mois suivant">›</button></div>' +
       carteMdm +
       '<div class="chiffres">' + P.chiffre('Mannequins', String(d.mannequins.length)) + (presentes !== null ? P.chiffre('Présentes aujourd’hui', String(presentes), 'vert') : '') + '</div>' +
-      '<p class="doux petit-texte">Touchez une case : <span class="pr-legende e-present">✓</span> présente, puis <span class="pr-legende e-excuse">E</span> absence excusée, puis vide. Un dimanche passé sans croix devient <span class="pr-legende e-absent">✕</span> rouge tout seul. Chaque toucher est enregistré tout de suite ; la mannequin le voit dans son application.</p>' +
+      '<p class="doux petit-texte">Touchez une case : <span class="pr-legende e-present" data-couleur-libre>✓</span> présente, puis <span class="pr-legende e-excuse" data-couleur-libre>E</span> absence excusée, puis vide. Un dimanche passé sans croix devient <span class="pr-legende e-absent" data-couleur-libre>✕</span> rouge tout seul. Chaque toucher est enregistré tout de suite ; la mannequin le voit dans son application.</p>' +
       '<label class="fl pr-recherche" for="pr-recherche">Chercher un nom<input id="pr-recherche" type="search" data-change="presences-filtre" data-direct value="' + P.esc(etat.filtre) + '" placeholder="ex. : Awa"></label>' +
       (d.mannequins.length ? '<div class="pr-tableau"><table class="pr-grille"><thead>' + tete + '</thead><tbody>' + lignes + '</tbody></table></div>'
         : '<div class="carte vide">Aucune mannequin active au registre.</div>');
@@ -89,6 +91,7 @@
       [historique, precedent] = await Promise.all([P.rpc('mannequins_du_mois_historique'), P.rpc('presences_mois', { p_mois: avant + '-01' })]);
     } catch (e) { return ''; }  // (pas encore activée : la carte n'apparaît pas)
     const actuelle = (historique || []).find((h) => String(h.mois).slice(0, 7) === ceMois);
+    if (!precedent || Array.isArray(precedent)) precedent = { mannequins: [] };
     const pres = parMannequin(precedent), annulees = (precedent.annulees || []).map((a) => a.dimanche);
     const assidues = d.mannequins.filter((m) => C.moisMannequin(avant, pres.get(m.id), annulees, m.date_entree, aujourdhui()).bilan.mention === 'assidu');
     const bouton = (m) => '<button type="button" class="btn petit" data-action="mdm-choisir" data-mannequin="' + P.esc(m.id) + '" data-nom="' + P.esc(m.nom) + '">Choisir</button>';

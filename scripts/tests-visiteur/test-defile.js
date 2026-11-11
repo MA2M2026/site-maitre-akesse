@@ -31,7 +31,7 @@ let srv; process.on('exit', () => srv && srv.kill());
     // 1. Liste, puis nouveau défilé sur 2 jours
     await p.goto(URL_ADMIN + '#/site/b2-defiles'); await p.waitForSelector('[data-action="defile-nouveau"]', { timeout: 15000 });
     const compartiment = await p.evaluate(() => { const a = document.querySelector('.lateral .nav.actif'), c = a && a.closest('.compartiment'); return c ? c.getAttribute('aria-label') : ''; });
-    ok(/Aucun défilé programmé/.test(await p.textContent('#contenu')) && compartiment === 'Projets et convocations', n + 'liste vide ; la rubrique est dans le compartiment « ' + compartiment + ' »');
+    ok(/Aucun défilé programmé/.test(await p.textContent('#contenu')) && /Événements/.test(compartiment), n + 'liste vide ; la rubrique est dans le compartiment « ' + compartiment + ' »');
     await p.click('[data-action="defile-nouveau"]'); await p.waitForSelector('.voile #df-titre');
     await p.fill('#df-titre', 'FASHION WEEK'); await p.fill('#df-debut', '2030-12-01'); await p.fill('#df-fin', '2030-12-02'); await p.fill('#df-lieu', 'Sofitel');
     await p.click('form[data-form="defile-nouveau"] [type=submit]'); await p.waitForSelector('form[data-form="defile-passage"]', { timeout: 10000 }); await p.waitForTimeout(500);

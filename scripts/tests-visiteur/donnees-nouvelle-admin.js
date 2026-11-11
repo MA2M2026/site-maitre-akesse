@@ -26,7 +26,7 @@ function donnees(role) {
         { id: 'c2', full_name: 'BINTOU TRAORÉ', email: 'bintou@test.ci', phone: '+225 0505050505', genre: 'femme', date_naissance: '1998-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-20T10:00:00Z' },
         { id: 'c3', full_name: 'YAO KOUASSI', email: 'yao@test.ci', phone: '+225 0707070707', genre: 'homme', date_naissance: '1999-01-01', type_candidature: 'agence', status: 'retenue', created_at: '2026-10-09T10:00:00Z' }],
       agenda_projets: [
-        { id: 'p1', type: 'defile', titre: 'ABIDJAN BORDER FORUM', date_debut: auj(), date_fin: null, lieu: 'Parc des Expositions', ville: 'Abidjan', annule: false, visible: true,
+        { id: 'p1', type: 'defile', titre: 'ABIDJAN BORDER FORUM', date_debut: auj(), date_fin: null, lieu: 'Parc des Expositions', ville: 'Abidjan', annule: false, visible: true, affiche: null,
           mannequin_ids: ['m0', 'm1', 'm2', 'm3'], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: [] },
         { id: 'p2', type: 'shooting', titre: 'SHOOTING CACAO', date_debut: dansJours(12), date_fin: null, lieu: 'Studio MA2M', ville: 'Abidjan', annule: false, visible: true,
           mannequin_ids: [], partenaire_ids: [], seances: [], intervenants: [], mannequins_libres: [], partenaires_libres: [] }],

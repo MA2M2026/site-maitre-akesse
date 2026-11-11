@@ -233,7 +233,7 @@
       }
       lignes.push(remplie);
     });
-    const texte = lignes.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    const texte = avecAffiche(lignes.join('\n').replace(/\n{3,}/g, '\n\n').trim(), p.affiche);
     return { texte, email: sansMarquesWhatsApp(texte) };
   }
 
@@ -289,6 +289,12 @@
     return lignes.join('\n');
   }
 
+  // (11/11/2026, « Ajouter une image ») l'affiche ou la photo jointe : un lien à la fin du message (WhatsApp et
+  // e-mail ne savent pas joindre une image à un message préparé ; dans l'application, elle s'affiche en grand)
+  function avecAffiche(texte, url) {
+    return /^https:\/\/\S+$/.test(String(url || '')) ? String(texte || '').trim() + '\n\n🖼️ *Voir l’affiche :* ' + url : texte;
+  }
+
   // *gras* et _italique_ de WhatsApp retirés pour la version e-mail (partagé avec
   // messagePourEmail, js/messages-candidats.js)
   function sansMarquesWhatsApp(texte) {
@@ -297,7 +303,7 @@
       .replace(/(^|[\s(«])_([^_\n]+)_(?=$|[\s.,;:!?)»])/gm, '$1$2');
   }
 
-  const outils = { periode, lieuxDuProjet, auxLieux, villeEnPlus, heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
+  const outils = { periode, lieuxDuProjet, auxLieux, villeEnPlus, heureRappelAvant, messageConvocation, messageRelance, messageRappel, messagePlaces, LIEN_PLACES, sansMarquesWhatsApp, avecAffiche, heureRappel, dateLongue, MODELE_CONVOCATION, MODELE_SELECTION, EMAIL_AGENCE, LIEN_CONFIRMER };
   if (typeof module !== 'undefined' && module.exports) module.exports = outils;
   else Object.assign(racine, outils);
 })(typeof window !== 'undefined' ? window : globalThis);

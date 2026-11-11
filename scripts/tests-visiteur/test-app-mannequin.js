@@ -49,6 +49,7 @@ function donnees() {
       mes_bulletins: [{ trimestre: '2026-07-01', notes: { marche: 4, posture: 5, photo: 3 }, appreciation: 'Très bon trimestre' }],
       // cours du dimanche (chantier 14) : le mois dernier, présente à tous sauf le premier (rouge)
       mes_presences: { date_entree: '2025-09-01', annulees: [], presences: P.dimanchesDuMois(P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1)).slice(1).map((d) => ({ dimanche: d, etat: 'present' })) },
+      mes_recus: [{ objet: 'mensualite', mois: moisDe(-1), montant: 10000, mode: 'wave', valide_le: jour(-30) + 'T09:00:00Z', numero: 'REC-2026-00012' }],
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
     }
   };
@@ -137,7 +138,9 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
     ok(/Nouveau message de l’agence : ✨ Casting Kouroukan/.test(accueil) && (await p.getAttribute('.ap-nouveau-message', 'href')) === '#alertes', n + 'Accueil : « Nouveau message de l’agence » mène à l’onglet Messages');
     ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Messages/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
-    ok(/Ma carte.*Ma compcard.*Mon CV/s.test(await p.textContent('.ap-raccourcis')) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil), n + 'Accueil : raccourcis, casting ouvert, mensualité du mois à payer');
+    ok(/Moi.*Ma carte.*Compcard.*Mon CV.*Messages/s.test(await p.textContent('.ap-stories')) && /Le fil de l’agence/.test(accueil) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil),
+      n + 'Accueil en « fil » (11/11/2026) : ronds façon stories, fil de l’agence (casting ouvert), mensualité du mois à payer');
+    ok((await p.$$('.ap-post')).length >= 2 && !!(await p.$('.ap-post-image')), n + 'Accueil : les messages de l’agence en publications, avec leur photo');
     const nav = await p.evaluate(() => { const r = document.querySelector('.ap-nav').getBoundingClientRect(); return Math.abs(r.bottom - innerHeight) < 2; });
     ok(nav && !(await deborde()), n + 'menu collé en bas de l’écran, rien ne dépasse');
     await capture('1-accueil');
@@ -148,7 +151,10 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       n + '« Je confirme » : réponse envoyée avec son lien personnel, « ✓ Confirmée » affiché');
     // 5. Mes événements : passages du défilé, carte d'accès, passés
     await p.click('.ap-nav a[href="#evenements"]'); await p.waitForSelector('.ap-onglets');
-    ok((await p.$$('#ap-ecran article.ap-carte')).length === 2 && /SHOOTING CACAO/.test(await p.textContent('#ap-ecran')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
+    ok((await p.$$('#ap-ecran .ap-ev-une')).length === 1 && (await p.$$('#ap-ecran .ap-ev-mini')).length === 1 && /SHOOTING CACAO/.test(await p.textContent('.ap-ev-mini')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
+    ok(/ABIDJAN FASHION WEEK/.test(await p.textContent('.ap-ev-une')) && /^\d\d[A-ZÉÛ.]+$/.test((await p.textContent('.ap-ev-une .ap-ev-date')).trim()) && /dans 4 jours/.test(await p.textContent('.ap-ev-compte')) && /Convocation à 15h00/.test(await p.textContent('.ap-ev-une')) && /Ensuite/.test(await p.textContent('#ap-ecran')),
+      n + 'Événements façon billets (11/11/2026) : le prochain en grand (date en carré, « dans 4 jours », convocation), les suivants sous « Ensuite »');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'Événements : rien ne dépasse de l’écran');
     await p.click('[data-passages]'); await p.waitForSelector('.ap-passage');
     const passages = await p.$$eval('.ap-passage', (l) => l.map((x) => x.textContent));
     ok(rpc('defile_programme').length === 1 && passages.length === 1 && /Salle A/.test(passages[0]) && /17h00/.test(passages[0]) ,
@@ -161,15 +167,30 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     await p.click('[data-periode="passes"]'); await p.waitForTimeout(200);
     ok(/BORDER FORUM/.test(await p.textContent('#ap-ecran')) && !/SHOOTING CACAO/.test(await p.textContent('#ap-ecran')), n + 'onglet « Passés »');
     await p.click('[data-periode="avenir"]');
-    await p.click('article.ap-carte:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
-    ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('article.ap-carte:has-text("SHOOTING CACAO")')), n + '« Je ne pourrai pas venir » (après confirmation) : l’agence est prévenue');
+    await p.click('.ap-ev-mini:has-text("SHOOTING CACAO") summary'); await p.click('.ap-ev-mini:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
+    ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('.ap-ev-mini:has-text("SHOOTING CACAO")')) && !!(await p.$('.ap-ev-mini details[open]')), n + '« Je ne pourrai pas venir » (ligne touchée puis ouverte, après confirmation) : l’agence est prévenue, la ligne reste ouverte');
     await p.click('.ap-nav a[href="#accueil"]'); await p.waitForTimeout(400);
     ok(/Vous êtes la mannequin du mois/.test(await p.textContent('#ap-ecran')), n + 'Accueil : « 🏆 Vous êtes la mannequin du mois ! »');
     // 6. Profil
-    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait');
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-vitrine');
     const profil = await p.textContent('#ap-ecran');
-    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Publié/.test(profil) && /Profil complet à \d+ %/.test(profil) && /1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-galerie img')).length === 3,
-      n + 'Mon profil : niveau, en ligne, profil complet en %, mensurations, photos du Book');
+    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Profil en ligne sur le Book/.test(profil) && /Abidjan · 1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-vitrine-grille img')).length === 3,
+      n + 'Mon profil (façon réseau social, 11/11/2026) : niveau, en ligne, mensurations, grille des photos du Book');
+    ok(!!(await p.$('.ap-vitrine-avatar img')) && !!(await p.$('.ap-vitrine-couv input[type=file][data-photo-role="photo_couverture"]')) && !!(await p.$('.ap-vitrine-avatar input[type=file][data-photo-role="principale"]'))
+      && /3\s*photos/.test(await p.textContent('.ap-vitrine-chiffres')) && (await p.$$('.ap-vitrine-raccourcis a')).length === 3,
+      n + 'Mon profil : photo ronde et couverture qu’on touche pour choisir dans la galerie, chiffres, raccourcis Compcard / CV / Photos');
+    // photo ronde touchée : la galerie, puis la photo part dans le Book et devient la photo de profil
+    // stockage des photos simulé (comme test-envoi-photos.js) : rien ne part pour de vrai
+    await p.route(/\/api\/r2-presigner/, (r) => { const c = JSON.parse(r.request().postData() || '{}');
+      if (c.action === 'verifier') return r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: BASE + '/__stockage', publicUrl: BASE + '/scripts/tests-visiteur/medias/photo4.jpg' }) }); });
+    await p.route(/__stockage/, (r) => r.fulfill({ status: 200, body: '' }));
+    await p.setInputFiles('.ap-vitrine-avatar input[type=file]', path.join(__dirname, 'medias/photo4.jpg'));
+    await p.waitForFunction(() => /Nouvelle photo de profil|n’a pas pu être envoyée/.test((document.getElementById('ap-message') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
+    ok(/Nouvelle photo de profil/.test(await p.textContent('#ap-message')) && (await p.$$('.ap-vitrine-grille img')).length === 4,
+      n + 'Mon profil : photo ronde changée depuis la galerie (elle rejoint aussi le Book) [' + (await p.textContent('#ap-message')) + ' · ' + (await p.$$('.ap-vitrine-grille img')).length + ']');
+    await p.click('[data-partager-book]'); await p.waitForTimeout(500);
+    ok(/copié|\/book\/|mannequin\.html\?id=/.test(await p.textContent('#ap-message')), n + 'Mon profil : « Partager mon book » donne le lien du book');
     // cours du dimanche (chantier 14) : en lecture seule, cochés par l'agence
     const moisAvant = P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1), nbAvant = P.dimanchesDuMois(moisAvant).length;
     ok(/Mes cours du dimanche/.test(profil) && (await p.$$('.pr-app-jour')).length === P.dimanchesDuMois(P.jourIso(new Date()).slice(0, 7)).length,
@@ -196,13 +217,17 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/\/app\/mes-paiements\.html$/.test(p.url()) && /Paiements/.test(await p.textContent('.ap-nav a.actif')) && /Wave/.test(await p.textContent('#mp-zone')),
       n + 'un lien « Mes paiements » du site : la page de paiement s’ouvre dans l’application (Wave, « J’ai payé »)');
     await capture('4b-paiements-wave');
-    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait', { timeout: 15000 }); // (depuis une page du site)
+    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-vitrine', { timeout: 15000 }); // (depuis une page du site)
     ok(/\/app\/#profil$/.test(p.url()), n + 'retour à l’application par le menu du bas');
     // 7. Paiements
     await p.click('.ap-nav a[href="#paiements"]'); await p.waitForSelector('.ap-chiffre');
     const paiements = await p.textContent('#ap-ecran');
     ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/mes-paiements.html',
       n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
+    ok(/AYA KOUASSI/.test(await p.textContent('.ap-cb')) && /10 000 F/.test(await p.textContent('.ap-cb')) && (await p.$$('.ap-mois')).length === 24 && (await p.$$('.ap-mois.paye')).length === 8 && !!(await p.$('.ap-mois.courant.a_payer')) &&
+      /Cachet · Border Forum.*\+ 25 000 F/s.test(await p.textContent('.ap-releve')) && /Mensualité d.*Wave/s.test(await p.textContent('.ap-releve')) && /Payer avec Wave/.test(await p.textContent('.ap-prochain')),
+      n + 'Paiements « style banque » (11/11/2026) : carte de membre, grille des 24 mois (8 payés, mois en cours entouré), relevé des opérations (cachet + mensualité Wave)');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'Paiements : rien ne dépasse de l’écran');
     await capture('4-paiements');
     // à jour (rien à payer) : pas de « Payer avec Wave » qui mènerait à une page sans Wave (relevé par la propriétaire, 26/10/2026)
     const avantMois = d.rpc.mes_mensualites.mois;
@@ -231,9 +256,13 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     // (photo du message chargée à la demande : hauteur nulle tant qu'elle n'est pas arrivée)
     await p.waitForSelector('.ap-message-agence.nouveau .ap-message-image', { state: 'visible', timeout: 5000 }).catch(() => {});
     ok(/Mensualité de/.test(alertes) && /Casting ouvert : CASTING CACAO/.test(alertes) && !/confirmez votre présence/.test(alertes), n + 'Messages › À faire : mensualité, casting ; plus de convocation à confirmer');
-    ok(/Messages de l’agence/.test(alertes) && (await p.$$('.ap-message-agence')).length === 2 && await p.isVisible('.ap-message-agence.nouveau .ap-message-image') &&
+    ok(/Maître Akesse Model Management/.test(await p.textContent('.ap-fil-tete')) && (await p.$$('.ap-message-agence')).length === 2 && await p.isVisible('.ap-message-agence.nouveau .ap-message-image') &&
       (await p.getAttribute('.ap-message-agence.nouveau a[href="https://exemple.ci/fiche.pdf"]', 'target')) === '_blank' && /Veuillez vous préparer/.test(await p.textContent('.ap-message-agence.nouveau')),
-      n + 'Messages de l’agence : le nouveau message ouvert (texte, photo, fiche jointe), l’ancien replié');
+      n + 'Messages façon messagerie (11/11/2026) : bulles de l’agence, le nouveau entouré (texte, photo, fiche jointe)');
+    ok((await p.$$('.ap-fil-jour')).length >= 1 && (await p.$$eval('.ap-fil-corps .ap-message-agence', (l) => l.map((x) => x.classList.contains('nouveau')))).join() === 'false,true' && !!(await p.$('.ap-bulle.paye')) && !!(await p.$('.ap-afaire .ap-alerte')),
+      n + 'Messages : séparateurs par jour, du plus ancien au plus récent (le nouveau en bas), paiement en vert, « À faire » en cartes');
+    ok(/^https:\/\/wa\.me\//.test(await p.getAttribute('a.ap-wa', 'href')) && (await p.getAttribute('a.ap-wa', 'target')) === '_blank' && /Écrire à l’agence sur WhatsApp/.test(await p.textContent('a.ap-wa')),
+      n + '« Écrire à l’agence sur WhatsApp » : ouvre WhatsApp sur le numéro de l’agence');
     const lus = rpc('app_messages_lus');
     ok(lus.length === 1 && JSON.stringify(lus[0].p_ids) === '["msg1"]', n + 'message vu : marqué comme lu (seulement le nouveau)');
     // (proposée seulement quand le téléphone sait recevoir des notifications et ne les a ni acceptées ni refusées)
@@ -245,11 +274,10 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       ok(abo.length === 1 && abo[0].p_endpoint === 'https://push.exemple/aya' && /C’est activé/.test(await p.textContent('#ap-message')), n + '« Activer les notifications » : ce téléphone est abonné, la mannequin est prévenue');
     }
     await capture('5-messages');
-    await p.click('.ap-message-agence:not(.nouveau) summary');
     ok((await p.getAttribute('.ap-message-agence:not(.nouveau) a.ap-btn.rouge', 'href')) === '/app/#paiements', n + 'un message automatique ouvre la bonne page (Paiements)');
     ok(!(await deborde()), n + 'rien ne dépasse de l’écran');
     // 9. Déconnexion
-    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-vitrine'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
     ok(true, n + 'déconnexion : retour à la connexion');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

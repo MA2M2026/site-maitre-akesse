@@ -24,6 +24,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
   ok(o.villeEnPlus({ ville: 'Man' }, ['Salle Germaine']) === 'Man' && o.auxLieux({ lieu: 'Chez Noom, Au Plateau' }) === 'chez Noom et au Plateau' &&
     o.lieuxDuProjet({ lieu: 'Noom', seances: [null, { lieu: 'Sofitel' }] }).join() === 'Noom,Sofitel', 'ville en mot entier, « Chez » / « Au » avec majuscule, jour vide (comme app_lieux en base)');
 }
+// (11/11/2026) « Nouvelle information » en 3 étapes : toucher une étape
+const etapeIf = (p, n) => p.$eval('.if-etapes [data-if-etape="' + n + '"]', (b) => b.click()).then(() => p.waitForTimeout(250));
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
@@ -50,7 +52,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.goto(URL_ADMIN + '#/site/b2-infos'); await p.waitForSelector('#contenu .entete', { timeout: 8000 });
     ok(/Aucune information envoyée/.test(await p.textContent('#contenu')), n + 'Informations agence : liste vide au départ');
     // 2. Nouvelle information : un casting
-    await p.click('a[href="#/site/b2-infos/nouvelle"]'); await p.waitForSelector('#if-message', { timeout: 8000 });
+    await p.click('a[href="#/site/b2-infos/nouvelle"]'); await p.waitForSelector('#if-titre', { timeout: 8000 });
+    ok(await p.isVisible('#if-titre') && !(await p.isVisible('#if-message')) && (await p.$$('.if-etapes [data-if-etape]')).length === 3, n + 'nouvelle information en 3 étapes (11/11/2026) : l’information d’abord');
     await p.fill('#if-titre', 'Casting Kouroukan Mode'); await p.fill('#if-date', '2026-11-14'); await p.fill('#if-lieu', 'Riviera Faya'); await p.fill('#if-client', 'Kouroukan');
     let m = await p.inputValue('#if-message');
     ok(/L’agence organise le casting \*Casting Kouroukan Mode\* pour Kouroukan, le samedi 14 novembre 2026, à Riviera Faya\./.test(m) && /Préparez-vous avec soin/.test(m) && /^✨ \*MAÎTRE AKESSE/.test(m) && !/—/.test(m),
@@ -67,17 +70,18 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(/Merci pour votre participation à \*ABIDJAN BORDER FORUM\*, du \S+ \d+(er)? (\S+ )?au \S+ \d+(er)? \S+ \d{4}, au Parc des Expositions et à la Tribe, à Abidjan\./.test(await p.inputValue('#if-message')),
       n + 'remerciement : « du … au …, au Parc des Expositions et à la Tribe, à Abidjan » en une phrase');
     // retouche à la main : gardée même si on change un champ
-    await p.fill('#if-message', (await p.inputValue('#if-message')) + '\nÀ très vite !'); await p.fill('#if-client', 'Border Forum'); await p.waitForTimeout(200);
+    await etapeIf(p, 3); await p.fill('#if-message', (await p.inputValue('#if-message')) + '\nÀ très vite !');
+    await etapeIf(p, 1); await p.fill('#if-client', 'Border Forum'); await p.waitForTimeout(200);
     ok(/À très vite !/.test(await p.inputValue('#if-message')), n + 'message retouché à la main : gardé');
     // une mannequin du registre sans compte, mineure (WhatsApp au parent)
-    await p.check('.df-choix-carte input[value="r:r3"]');
+    await etapeIf(p, 2); await p.check('.df-choix-carte input[value="r:r3"]');
     // photo jointe (Cloudflare R2, dossier « infos »)
     await p.setInputFiles('#if-photo', chemin.resolve(__dirname, 'medias/photo1.jpg')); await p.waitForFunction(() => /Photo jointe/.test(document.getElementById('if-pieces').textContent), null, { timeout: 8000 });
     ok(journal.some((j) => j[0] === 'API' && j[1] === '/api/r2-site-images' && /"categorie":"infos"/.test(j[2] || '') && /site\/infos\//.test(j[2] || '')), n + 'photo envoyée dans le dossier des informations');
     await capture(p, 'infos-nouvelle' + suffixe);
     const pales = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25)); ok(!pales.length, n + 'écran lisible ' + pales.join(' | '));
     // 3. Envoi : dans l'application tout de suite
-    await p.click('form[data-form="infos-envoyer"] [type=submit]'); await p.waitForSelector('[data-action="infos-emails"]', { timeout: 8000 });
+    await etapeIf(p, 3); await p.click('form[data-form="infos-envoyer"] [type=submit]'); await p.waitForSelector('[data-action="infos-emails"]', { timeout: 8000 });
     const envoi = journal.find((j) => j[0] === 'rpc' && j[1] === 'app_messages_envoyer');
     const x = envoi ? JSON.parse(envoi[2]) : {};
     ok(x.p_cles && x.p_cles.length === 5 && x.p_sorte === 'remerciement' && x.p_titre === '🤍 ABIDJAN BORDER FORUM' && /Merci pour votre participation à ABIDJAN BORDER FORUM/.test(x.p_texte) && !/MAÎTRE AKESSE|Bonjour|\*/.test(x.p_texte) && /^https?:/.test(x.p_image || ''),

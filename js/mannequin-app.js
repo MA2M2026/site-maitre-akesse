@@ -76,7 +76,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -87,7 +87,10 @@
       lireMessages(uid),
       sb.rpc('mes_presences'),  // cours du dimanche (chantier 14, supabase-presences.sql) ; absente : rien ne s'affiche
       sb.rpc('mannequin_du_mois_actuelle'),  // (supabase-mannequin-du-mois.sql)
-      sb.rpc('mes_bulletins')  // bulletins trimestriels publiés (supabase-bulletins.sql)
+      sb.rpc('mes_bulletins'),  // bulletins trimestriels publiés (supabase-bulletins.sql)
+      // (11/11/2026, « Mon profil » façon réseau social) adresse publique du book, phrase de la mannequin, demande en cours
+      sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle(),
+      sb.rpc('mes_recus')  // (11/11/2026) paiements validés, pour « Mes opérations » de l'écran Paiements (supabase-bloc2-complements.sql)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -98,7 +101,8 @@
       analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
-      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || []
+      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || [],
+      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || []
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -145,11 +149,14 @@
       (e.heure_convocation ? '<dt>⏰</dt><dd>Convocation à ' + esc(heure(e.heure_convocation)) + '</dd>' : '') +
       (e.lieu || e.ville ? '<dt>📍</dt><dd>' + esc([e.lieu, e.ville].filter(Boolean).join(', ')) + '</dd>' : '') + '</dl>';
   }
+  // carte d'accès façon billet de spectacle (11/11/2026, maquette validée) : à montrer à l'entrée
   function carteAcces(e) {
     const p = etat.profil || {};
-    return '<div class="ap-acces" aria-label="Carte d’accès"><div class="ap-acces-photo">' + visage(p.full_name) + '</div><div class="ap-acces-texte">' +
-      '<span class="ap-acces-sur">Mannequin · Accès événement</span><b>' + esc(String(p.full_name || '').toUpperCase()) + '</b>' +
-      '<span class="ap-acces-ev">' + esc(e.titre) + ' · ' + esc(datesEvenement(e)) + '</span></div><div class="ap-acces-bande">ACCÈS MANNEQUIN · MA2M</div></div>';
+    return '<div class="ap-acces" aria-label="Carte d’accès"><div class="ap-acces-texte">' +
+      '<span class="ap-acces-sur">ACCÈS MANNEQUIN</span><b>' + esc(String(p.full_name || '').toUpperCase()) + '</b>' +
+      '<span class="ap-acces-ev">' + esc(e.titre) + ' · ' + esc(datesEvenement(e)) + '</span>' +
+      '<img class="ap-acces-logo" src="/assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
+      '<div class="ap-acces-photo">' + visage(p.full_name) + '</div></div>';
   }
   function photoProfil() {
     const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
@@ -159,19 +166,48 @@
     const url = photoProfil();
     return url ? '<img src="' + esc(urlPhotoMemeOrigine(url)) + '" alt="" loading="lazy">' : '<span>' + esc(initialesDe(nom)) + '</span>';
   }
+  // « Mes passages » d'un défilé confirmé (Accueil et Événements) : chargés à la demande, puis tout le programme
+  function blocPassages(e, sombre) {
+    if (!(e.defile && e.reponse === 'confirme' && !e.passe)) return '';
+    const prog = programmes[e.jeton], passages = prog && prog.filter((x) => x.moi);
+    if (!passages) return '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-passages="' + esc(e.jeton) + '">👠 Voir mes passages</button>';
+    return '<div class="ap-passages">' +
+      (passages.length ? passages.map((x, i) => '<div class="ap-passage"><b>' + esc(heure(x.debut) || 'À préciser') + '</b><span>' + esc(x.salle || jourCourt(x.jour)) +
+          '<small>' + esc([x.salle ? jourCourt(x.jour) : '', x.theme].filter(Boolean).join(' · ')) + '</small></span><i>Passage ' + (i + 1) + '</i></div>').join('')
+        : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
+      (prog.length ? '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-programme="' + esc(e.jeton) + '" aria-expanded="' + !!programmeOuvert[e.jeton] + '">📋 ' + (programmeOuvert[e.jeton] ? 'Masquer le programme' : 'Tout le programme') + '</button>' : '') +
+      (programmeOuvert[e.jeton] ? toutLeProgramme(prog) : '') + '</div>';
+  }
   function carteEvenement(e, mise) {
     const sombre = mise === 'sombre';
-    const prog = programmes[e.jeton], passages = prog && prog.filter((x) => x.moi);
     return '<article class="ap-carte' + (sombre ? ' sombre' : '') + '"><div class="ap-ligne entre"><span class="ap-pastille or">' + esc(libelleTypeAgenda(e.type)) +
-      (sombre && !e.passe ? ' · ' + esc(dansJours(e.date_debut) <= 0 ? 'aujourd’hui' : dansJours(e.date_debut) === 1 ? 'demain' : 'dans ' + dansJours(e.date_debut) + ' jours') : '') + '</span>' + pastilleReponse(e) + '</div>' +
-      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) +
-      (e.defile && e.reponse === 'confirme' && !e.passe ? (passages ? '<div class="ap-passages"><span class="doux">Mes passages</span>' +
-        (passages.length ? passages.map((x) => '<div class="ap-passage"><span>' + esc(jourCourt(x.jour) + (x.salle ? ' · ' + x.salle : '') + (x.theme ? ' · ' + x.theme : '')) + '</span><b>' + esc(heure(x.debut) || 'À préciser') + '</b></div>').join('')
-          : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
-        (prog.length ? '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-programme="' + esc(e.jeton) + '" aria-expanded="' + !!programmeOuvert[e.jeton] + '">📋 ' + (programmeOuvert[e.jeton] ? 'Masquer le programme' : 'Tout le programme') + '</button>' : '') +
-        (programmeOuvert[e.jeton] ? toutLeProgramme(prog) : '') + '</div>'
-        : '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-passages="' + esc(e.jeton) + '">👠 Voir mes passages</button>') : '') +
+      (sombre && !e.passe ? ' · ' + esc(dansCombien(e)) : '') + '</span>' + pastilleReponse(e) + '</div>' +
+      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) + blocPassages(e, sombre) +
       boutonsReponse(e, sombre) + '</article>';
+  }
+  const dansCombien = (e) => { const j = dansJours(e.date_debut); return j <= 0 ? 'aujourd’hui' : j === 1 ? 'demain' : 'dans ' + j + ' jours'; };
+  // Événements façon application de billets (11/11/2026, maquette validée par la propriétaire) : la date dans un
+  // carré blanc, le prochain en grand, les suivants en lignes qu'on touche pour les ouvrir
+  const pave = (e) => '<span class="ap-ev-date" aria-hidden="true"><b>' + esc(String(e.date_debut).slice(8, 10)) + '</b><small>' + esc(moisCourtDe(e.date_debut).toUpperCase()) + '</small></span>';
+  function infosBillet(e) {
+    const ligne = (ic, haut, bas) => '<dt>' + ic + '</dt><dd>' + haut + (bas ? '<small>' + bas + '</small>' : '') + '</dd>';
+    return '<dl class="ap-ev-infos">' +
+      (e.date_fin && e.date_fin !== e.date_debut ? ligne('📅', esc(datesEvenement(e))) : '') +
+      (e.heure_convocation ? ligne('🕒', 'Convocation à <b>' + esc(heure(e.heure_convocation)) + '</b>', e.heure_evenement ? 'Début à ' + esc(heure(e.heure_evenement)) : '')
+        : e.heure_evenement ? ligne('🕒', 'Début à <b>' + esc(heure(e.heure_evenement)) + '</b>') : '') +
+      (e.lieu || e.ville ? ligne('📍', esc(e.lieu || e.ville), e.lieu && e.ville ? esc(e.ville) : '') : '') + '</dl>';
+  }
+  function billetUne(e) {
+    return '<article class="ap-ev-une"><div class="ap-ev-haut">' + pave(e) + '<div><small class="ap-ev-type">' + esc(libelleTypeAgenda(e.type)) + '</small>' +
+      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3><span class="ap-ev-compte">⏳ ' + esc(dansCombien(e)) + '</span> ' + pastilleReponse(e) + '</div></div>' +
+      '<div class="ap-ev-corps">' + infosBillet(e) + boutonsReponse(e, false) + '</div></article>' +
+      (e.defile && e.reponse === 'confirme' ? '<h2 class="ap-titre-sec">Mes passages</h2><div class="ap-ev-passages">' + blocPassages(e, false) + '</div>' : '');
+  }
+  function billetMini(e) {
+    const sous = [e.lieu || e.ville, e.heure_convocation ? heure(e.heure_convocation) : heure(e.heure_evenement)].filter(Boolean).join(' · ');
+    return '<article class="ap-ev-mini' + (e.passe ? ' passe' : '') + '"><details' + (programmeOuvert['mini-' + e.jeton] ? ' open' : '') + ' data-mini="' + esc(e.jeton) + '"><summary>' + pave(e) +
+      '<span class="ap-ev-mini-t"><b>' + esc(e.titre) + '</b><small>' + esc(sous) + '</small></span>' + pastilleReponse(e) + '</summary>' +
+      '<div class="ap-ev-corps">' + infosBillet(e) + blocPassages(e, true) + boutonsReponse(e, true) + '</div></details></article>';
   }
 
   // tout le programme du défilé, jour par jour : ses passages soulignés, les autres avec leur visage
@@ -235,112 +271,233 @@
   }
 
   // ---------- les cinq onglets ----------
+  // Accueil façon « fil » de réseau social (11/11/2026, maquette validée par la propriétaire) : des ronds façon
+  // « stories » (Moi, Ma carte, Compcard, Mon CV, Messages), le prochain rendez-vous, puis le fil de l'agence
+  // (castings ouverts et messages de l'agence en grandes publications, avec leur photo).
   function ecranAccueil() {
     const prochain = aVenir()[0];
     const m = etat.mensualites;
     const nouveaux = nonLus();
-    return '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
+    const moi = photoProfil();
+    const rond = (href, contenu, texte, extra) => '<a class="ap-story" href="' + href + '"' + (extra || '') + '><span class="ap-story-rond">' + contenu + '</span>' + texte + '</a>';
+    const stories = '<nav class="ap-stories" aria-label="Raccourcis">' +
+      rond('#profil', moi ? '<img src="' + esc(urlPhotoMemeOrigine(moi)) + '" alt="">' : '<b>' + esc(initialesDe(etat.profil.full_name)) + '</b>', 'Moi') +
+      rond('#evenements', '<em>🎫</em>', 'Ma carte', ' data-ma-carte') +
+      rond('/app/espace-mannequin.html#compcard', '<em>🗂️</em>', 'Compcard') +
+      rond('/app/espace-mannequin.html#cv', '<em>📄</em>', 'Mon CV') +
+      rond('#alertes', '<em>✉️</em>' + (nouveaux.length ? '<i>' + nouveaux.length + '</i>' : ''), 'Messages') + '</nav>';
+    // le fil : castings ouverts, puis les derniers messages de l'agence (sauf paiements), avec leur photo
+    const entete = (quand) => '<div class="ap-post-tete"><span class="ap-post-avatar" aria-hidden="true"><img src="/assets/logo-header.png" alt=""></span><div><b>Maître Akesse Model Management</b>' + (quand ? '<small>' + esc(quand) + '</small>' : '') + '</div></div>';
+    const posts = etat.castings.map((c) => '<article class="ap-post">' + entete('Casting ouvert') +
+        '<div class="ap-post-texte"><b>Casting ouvert : ' + esc(c.nom) + '</b><br>' + esc([c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.') + '</div></article>')
+      .concat(etat.messages.filter((x) => !['paiement', 'mensualite', 'cachet'].includes(x.sorte)).slice(0, 4).map((x) => '<a class="ap-post" href="#alertes">' + entete(quandMessage(x.cree_le)) +
+        (x.image ? '<img class="ap-post-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+        '<div class="ap-post-texte"><b>' + esc(x.titre.replace(/^\p{Extended_Pictographic}️?\s*/u, '')) + '</b>' + (x.texte ? '<br>' + esc(x.texte.length > 140 ? x.texte.slice(0, 140) + '…' : x.texte) : '') + '</div></a>'));
+    return stories +
+      '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       (nouveaux.length ? '<a class="ap-carte ap-rappel ap-nouveau-message" href="#alertes">✉️ <span><b>' + (nouveaux.length > 1 ? nouveaux.length + ' nouveaux messages' : 'Nouveau message') + '</b> de l’agence : ' + esc(nouveaux[0].titre) + '</span> ›</a>' : '') +
       (etat.mannequinDuMois && etat.mannequinDuMois.compte === etat.uid ? '<div class="ap-carte pr-app-mdm">🏆 <span><b>Vous êtes la mannequin du mois !</b><br>Félicitations : le site et l’application vous mettent à l’honneur tout le mois.</span></div>' : '') +
       cartePresencesAccueil() +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
-      '<nav class="ap-raccourcis" aria-label="Raccourcis"><a href="#evenements" data-ma-carte><span>🎫</span>Ma carte</a><a href="/app/espace-mannequin.html"><span>🗂️</span>Ma compcard</a><a href="/app/espace-mannequin.html"><span>📄</span>Mon CV</a></nav>' +
       (m && m.inscrit && moisCourant() && (moisCourant().etat === 'a_payer' || moisCourant().etat === 'non_paye')
         ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
-      (etat.castings.length ? '<h2 class="ap-titre-sec">Messages de l’agence</h2><div class="ap-carte ap-messages">' + etat.castings.map((c) =>
-        '<div class="ap-msg"><i></i><div><b>Casting ouvert : ' + esc(c.nom) + '</b><br><span class="doux">' + esc([c.date_casting ? jourLong(c.date_casting) : '', c.lieu].filter(Boolean).join(' · ') || 'Renseignez-vous auprès de l’agence.') + '</span></div></div>').join('') + '</div>' : '');
+      (posts.length ? '<h2 class="ap-titre-sec">Le fil de l’agence</h2>' + posts.join('') : '');
   }
   function ecranEvenements() {
     const avenir = aVenir(), passes = etat.evenements.filter((e) => e.passe).reverse();
-    const liste = periode === 'avenir' ? avenir : passes;
     const confirmes = avenir.filter((e) => e.reponse === 'confirme');
-    return '<div class="ap-onglets" role="tablist"><button type="button" role="tab" data-periode="avenir" aria-selected="' + (periode === 'avenir') + '">À venir (' + avenir.length + ')</button>' +
-      '<button type="button" role="tab" data-periode="passes" aria-selected="' + (periode === 'passes') + '">Passés (' + passes.length + ')</button></div>' +
-      (!etat.evenementsActifs ? '<div class="ap-carte doux">Vos convocations apparaîtront ici très bientôt.</div>'
-        : liste.length ? liste.map((e, i) => carteEvenement(e, periode === 'avenir' && i === 0 ? 'sombre' : '')).join('')
-        : '<div class="ap-carte doux">' + (periode === 'avenir' ? 'Aucune convocation à venir.' : 'Aucun événement passé pour le moment.') + '</div>') +
-      (periode === 'avenir' && confirmes.length ? '<h2 class="ap-titre-sec">Ma carte d’accès</h2>' + carteAcces(confirmes[0]) +
-        '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '');
+    const onglets = '<div class="ap-onglets ap-seg" role="tablist"><button type="button" role="tab" data-periode="avenir" aria-selected="' + (periode === 'avenir') + '">À venir · ' + avenir.length + '</button>' +
+      '<button type="button" role="tab" data-periode="passes" aria-selected="' + (periode === 'passes') + '">Passés · ' + passes.length + '</button></div>';
+    if (!etat.evenementsActifs) return onglets + '<div class="ap-carte doux">Vos convocations apparaîtront ici très bientôt.</div>';
+    if (periode === 'passes') return onglets + (passes.length ? passes.map(billetMini).join('') : '<div class="ap-carte doux">Aucun événement passé pour le moment.</div>');
+    if (!avenir.length) return onglets + '<div class="ap-carte doux">Aucune convocation à venir. Dès que l’agence vous convoque, elle apparaît ici.</div>';
+    return onglets + billetUne(avenir[0]) +
+      (confirmes.length ? '<h2 class="ap-titre-sec">Ma carte d’accès</h2>' + carteAcces(confirmes[0]) +
+        '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '') +
+      (avenir.length > 1 ? '<h2 class="ap-titre-sec">Ensuite</h2>' + avenir.slice(1).map(billetMini).join('') : '');
   }
+  // « Mon profil » façon réseau social (11/11/2026, maquette validée par la propriétaire) : couverture et photo ronde
+  // qu'on touche pour choisir une photo dans la galerie (elle rejoint aussi le Book), chiffres, phrase, boutons
+  // Compcard / Mon CV / Partager mon book, grille de photos de 3 comme sur Instagram.
   function ecranProfil() {
-    const p = etat.profil, a = etat.analyse || { score: 0 };
-    const mesures = [p.height_cm ? (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
-    const vignettes = etat.photos.slice(0, 3);
-    return '<div class="ap-carte ap-ligne haut"><div class="ap-portrait">' + visage(p.full_name) + '</div><div class="ap-plein"><h3 class="ap-ev-titre">' + esc(p.full_name) + '</h3>' +
-      (p.niveau_mannequin ? '<span class="ap-pastille rose">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span> ' : '') +
-      (p.published ? '<span class="ap-pastille vert">Publié</span>' : '<span class="ap-pastille gris">Pas encore en ligne</span>') +
-      '<p class="doux ap-score">Profil complet à ' + a.score + ' %</p><div class="ap-jauge"><i style="width:' + a.score + '%"></i></div></div></div>' +
-      '<h2 class="ap-titre-sec">Photos du Book <span class="doux">(' + etat.photos.length + ')</span></h2>' +
-      '<div class="ap-galerie">' + vignettes.map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
-      '<a href="/app/espace-mannequin.html" aria-label="Ajouter des photos">＋</a></div>' +
-      '<div class="ap-carte ap-liste"><a href="/app/espace-mannequin.html">Identité <span>' + esc(p.city || '') + ' ›</span></a>' +
-      '<a href="/app/espace-mannequin.html">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
-      '<a href="/app/espace-mannequin.html">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
-      '<a href="/app/espace-mannequin.html">Formation et compétences <span>›</span></a></div>' +
+    const p = etat.profil, a = etat.analyse || { score: 0 }, v = etat.vitrine || {};
+    const mesures = [p.city || '', p.height_cm ? (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
+    const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
+    const url = (x) => (x ? esc(urlPhotoMemeOrigine(x.url_miniature || x.url_petite || x.url)) : '');
+    const r = presencesCalculees();
+    const cours = r && r.ceMois.bilan.comptees ? r.ceMois.bilan.presents + '/' + r.ceMois.bilan.comptees : '–';
+    const etatProfil = p.published ? ['vert', 'Profil en ligne sur le Book'] : v.en_attente_validation ? ['orange', 'En cours de validation par l’agence'] : ['gris', 'Pas encore en ligne'];
+    const champPhoto = (role, texte) => '<input class="ap-cache" type="file" accept="image/*" data-photo-role="' + role + '" aria-label="' + texte + '">';
+    return '<section class="ap-vitrine">' +
+      '<label class="ap-vitrine-couv' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
+        '<span class="ap-vitrine-modif">📷 Couverture</span>' + champPhoto('photo_couverture', 'Changer ma photo de couverture') + '</label>' +
+      '<div class="ap-vitrine-haut"><label class="ap-vitrine-avatar">' + (vues.profil ? '<img src="' + url(vues.profil) + '" alt="">' : '<span>' + esc(initialesDe(p.full_name)) + '</span>') +
+        '<i aria-hidden="true">＋</i>' + champPhoto('principale', 'Changer ma photo de profil') + '</label>' +
+        (p.niveau_mannequin ? '<span class="ap-vitrine-niveau">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span>' : '') +
+        '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div></div>' +
+      '<h1 class="ap-vitrine-nom">' + esc(p.full_name) + '</h1>' + (mesures ? '<p class="ap-vitrine-mesures">' + esc(mesures) + '</p>' : '') +
+      (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
+      '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
+      (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html">Profil complet à ' + a.score + ' % · compléter ›</a>' : '') +
+      '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
+      '<div class="ap-vitrine-raccourcis"><a href="/app/espace-mannequin.html#compcard"><span>🗂️</span>Compcard</a><a href="/app/espace-mannequin.html#cv"><span>📄</span>Mon CV</a><a href="/app/espace-mannequin.html#photos"><span>📸</span>Mes photos</a></div>' +
+      '</section>' +
+      '<div class="ap-vitrine-grille">' + etat.photos.slice().sort((x, y) => String(y.created_at).localeCompare(String(x.created_at))).map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
+        '<label class="ap-vitrine-ajout">＋<span>Ajouter</span>' + champPhoto('', 'Ajouter une photo au Book') + '</label></div>' +
       blocPresences() + blocBulletins() +
-      '<div class="ap-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">✏️ Modifier mon profil</a><a class="ap-btn" href="/app/espace-mannequin.html">🗂️ Compcard et CV</a></div>' +
       '<button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button>';
+  }
+  // Photo choisie dans la galerie depuis « Mon profil » : elle part dans le Book (js/app.js insererPhotoBook) et
+  // reçoit son rôle (photo ronde = principale, couverture) ; vide = simple ajout au Book.
+  const LIMITE_PHOTOS_APP = 60;  // (même limite que l'Espace mannequin)
+  racine.addEventListener('change', async (e) => {
+    const champ = e.target.closest('[data-photo-role]');
+    if (!champ || !champ.files || !champ.files[0] || !etat) return;
+    const fichier = champ.files[0], role = champ.dataset.photoRole;
+    champ.value = '';
+    if (etat.photos.length >= LIMITE_PHOTOS_APP) { message('Limite de ' + LIMITE_PHOTOS_APP + ' photos atteinte : retirez-en une dans « Modifier mon profil ».'); return; }
+    message('Envoi de la photo…');
+    try {
+      const ligne = await insererPhotoBook(etat.uid, fichier);
+      if (role) { const erreur = await definirRolePhoto(etat.uid, role, ligne.id); if (erreur) throw erreur; }
+      const { data } = await sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', etat.uid);
+      if (data) etat.photos = data.filter((x) => x.tri_statut !== 'ecartee');
+      if (!etat.photos.some((x) => x.id === ligne.id)) etat.photos.push(ligne);  // (relecture pas encore à jour : la photo s'affiche tout de suite)
+      if (role) etat.photos.forEach((x) => { x[role] = x.id === ligne.id; });
+      message(role === 'principale' ? 'Nouvelle photo de profil ✨' : role === 'photo_couverture' ? 'Nouvelle couverture ✨' : 'Photo ajoutée à votre Book ✨');
+      afficher();
+    } catch (err) {
+      const brut = (err && err.message) || '';
+      message(/failed to fetch|load failed|network/i.test(brut) ? 'Connexion interrompue pendant l’envoi : réessayez.' : 'La photo n’a pas pu être envoyée : réessayez.');
+      if (window.signalerErreur) window.signalerErreur('Envoi de photo échoué (application)', brut || 'erreur inconnue', (fichier.name || 'photo') + ', ' + Math.round((fichier.size || 0) / 1024) + ' Ko');
+    }
+  });
+  // « Partager mon book » : la feuille de partage du téléphone (WhatsApp, Instagram…), sinon le lien copié
+  async function partagerBook() {
+    const p = etat.profil, v = etat.vitrine || {};
+    if (!p.published) { message('Votre book sera partageable dès que l’agence aura mis votre profil en ligne.'); return; }
+    const lien = 'https://www.maitreakessemodelmanagement.com/' + lienFicheMannequin({ id: etat.uid, slug: v.slug });
+    const texte = 'Mon book chez Maître Akesse Model Management ✨';
+    if (navigator.share) { try { await navigator.share({ title: p.full_name, text: texte, url: lien }); } catch (e) { /* partage annulé */ } return; }
+    try { await navigator.clipboard.writeText(lien); message('Lien de votre book copié : collez-le où vous voulez.'); } catch (e) { message(lien); }
+  }
+  // Paiements « style application bancaire » (11/11/2026, maquette validée par la propriétaire) : la carte de
+  // membre façon carte bancaire, deux chiffres (mois payés, cachets reçus), le prochain paiement avec « Payer avec
+  // Wave », la grille des mois, puis « Mes opérations » comme un relevé (cachets reçus et mensualités validées).
+  const moisCourt = moisCourtDe;  // (js/app.js)
+  const MODES_PAIEMENT = { wave: 'Wave', especes: 'Espèces', orange_money: 'Orange Money', mtn: 'MTN Money', moov: 'Moov Money', virement: 'Virement', avant_systeme: 'Avant l’application' };
+  function carteMembre(m) {
+    const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
+    const champ = (titre, valeur) => (valeur ? '<div><b>' + titre + '</b>' + esc(valeur) + '</div>' : '');
+    return '<div class="ap-cb" aria-label="Ma carte de membre"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>CARTE MEMBRE</span></div>' +
+      '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(m.nom || p.full_name || '').toUpperCase()) + '</div>' +
+      '<div class="ap-cb-bas">' + champ('FORMATION', niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat') +
+        champ('DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : '') + champ('MENSUALITÉ', fcfa(m.mensualite)) + '</div></div>';
   }
   function ecranPaiements() {
     const m = etat.mensualites;
+    const totalCachets = etat.cachets.reduce((t, c) => t + (Number(c.montant) || 0), 0);
+    const tuileCachets = '<div class="ap-tuile"><div class="ap-chiffre">' + fcfa(totalCachets) + '</div><div class="doux">cachets reçus</div>' +
+      '<span class="ap-pastille vert">' + (etat.cachets.length ? etat.cachets.length + (etat.cachets.length > 1 ? ' cachets' : ' cachet') : 'Aucun pour l’instant') + '</span></div>';
     let haut;
-    if (!m) haut = '<div class="ap-carte doux">Vos paiements ne sont pas disponibles pour le moment. Réessayez plus tard.</div>';
-    else if (!m.inscrit) haut = '<div class="ap-carte doux">Votre espace n’est pas encore rattaché au registre de l’agence. Contactez l’agence.</div>';
+    if (!m) haut = '<div class="ap-carte doux">Vos paiements ne sont pas disponibles pour le moment. Réessayez plus tard.</div><div class="ap-tuiles">' + tuileCachets + '</div>';
+    else if (!m.inscrit) haut = '<div class="ap-carte doux">Votre espace n’est pas encore rattaché au registre de l’agence. Contactez l’agence.</div><div class="ap-tuiles">' + tuileCachets + '</div>';
     else {
       const mois = m.mois || [], { payes, total } = bilanFormation(m);  // (js/app.js)
       const courant = moisCourant(), enRetard = mois.some((x) => x.etat === 'non_paye');
+      const aPayer = mois.find((x) => x.etat === 'non_paye') || mois.find((x) => x.etat === 'a_payer');
       const prochain = mois.find((x) => x.etat === 'a_payer' || x.etat === 'non_paye' || x.etat === 'a_venir');
       const avance = moisPayablesAvance(mois).length > 0;  // (js/app.js)
       const situation = situationFormation(m);  // (js/app.js)
-      haut = '<div class="ap-carte"><div class="ap-ligne entre bas"><div><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div></div>' +
-        (enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
-          : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
-          : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>'
-          : situation && situation.ferme ? '<span class="ap-pastille gris">Agence fermée</span>'
-          : situation && situation.termine ? '<span class="ap-pastille gris">Terminée</span>' : '<span class="ap-pastille vert">À jour</span>') + '</div>' +
-        '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div>' +
+      const pastille = enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
+        : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
+        : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>'
+        : situation && situation.ferme ? '<span class="ap-pastille gris">Agence fermée</span>'
+        : situation && situation.termine ? '<span class="ap-pastille gris">Terminée</span>' : '<span class="ap-pastille vert">✓ À jour</span>';
+      // le prochain paiement : le mois à payer (« Payer avec Wave »), sinon « Rien à payer » (et « Payer à l'avance »)
+      const nomDe = (x) => MOIS[Number(String(x.mois).slice(5, 7)) - 1] + ' ' + String(x.mois).slice(0, 4);
+      const carteProchain = aPayer
+        ? '<div class="ap-prochain"><small>PROCHAIN PAIEMENT</small><div class="ap-prochain-ligne"><b>' + fcfa(m.mensualite) + '</b><span>' + esc(nomDe(aPayer)) + ' · ' + (aPayer.etat === 'non_paye' ? 'en retard' : 'avant le 5') + '</span></div>' +
+          '<div class="ap-btns"><a class="ap-btn rouge ap-btn-wave" href="/app/mes-paiements.html"><i aria-hidden="true">~</i>Payer avec Wave</a></div></div>'
+        : '<div class="ap-prochain"><small>PROCHAIN PAIEMENT</small>' +
+          (prochain && !situation ? '<div class="ap-prochain-ligne"><b>' + fcfa(m.mensualite) + '</b><span>' + esc(nomDe(prochain)) + ' · avant le 5</span></div>' : '') +
+          '<p class="ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
+            : 'Rien à payer pour le moment.' + (avance ? ' Vous pouvez payer jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance.' : '')) + '</p>' +
+          // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js)
+          '<div class="ap-btns">' + (avance ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
+          '<a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>';
+      // la grille des mois : ✓ payé, 🌴 congés, ⏳ en vérification, ! en retard ; le mois en cours est entouré
+      const ICONE = { paye: '✓', conge: '🌴', attente: '⏳', non_paye: '!', a_payer: '•', rodage: '☆' };
+      const grille = mois.map((x, i) => {
+        const cle = x.conge && x.etat !== 'paye' ? 'conge' : x.etat;
+        const annee = i === 0 || String(x.mois).slice(5, 7) === '01' ? '<small>' + String(x.mois).slice(0, 4) + '</small>' : '';
+        return '<div class="ap-mois ' + esc(cle) + (courant && x.mois === courant.mois ? ' courant' : '') + '" title="' + esc(nomDe(x)) + '"><i aria-hidden="true">' + (ICONE[cle] || '·') + '</i>' + esc(moisCourt(x.mois)) + annee + '</div>';
+      }).join('');
+      haut = carteMembre(m) +
+        '<div class="ap-tuiles"><div class="ap-tuile"><div class="ap-chiffre">' + payes + ' <small>/ ' + total + '</small></div><div class="doux">mois payés</div>' + pastille +
+          '<div class="ap-jauge"><i style="width:' + Math.round(payes * 100 / total) + '%"></i></div></div>' + tuileCachets + '</div>' +
         // (Reprise de mars : niveau, mois X sur 9, mois restants, agence fermée — situationFormation, js/app.js)
         (situation ? '<p class="ap-formation-note"><b>' + esc(situation.titre) + '</b><br><span class="doux">' + situation.lignes.map(esc).join('<br>') + '</span></p>'
           : '<p class="doux ap-formation-note">' + total + ' mois de cours en 2 ans. Décembre, janvier et février : congés, pas de mensualité.</p>') +
-        (prochain && !situation ? '<p class="ap-echeance"><b>Prochaine échéance</b><br><span class="doux">' + esc(MOIS[Number(String(prochain.mois).slice(5, 7)) - 1]) + ' · ' + fcfa(m.mensualite) + '</span></p>' : '') +
-        // « Payer avec Wave » s'il y a un mois à payer ; à jour, « Payer à l'avance » (avant, le bouton
-        // menait à la grille des mois sans rien à payer, relevé par la propriétaire le 26/10/2026)
-        (mois.some((x) => x.etat === 'a_payer' || x.etat === 'non_paye')
-          ? '<div class="ap-btns"><a class="ap-btn rouge" href="/app/mes-paiements.html">Payer avec Wave</a><a class="ap-btn" href="/app/mes-paiements.html">Mes reçus</a></div></div>'
-          : '<p class="doux ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
-            : 'Rien à payer pour le moment.' + (avance ? ' Vous pouvez payer jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance.' : '')) + '</p>' +
-            // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js)
-            '<div class="ap-btns">' + (avance ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
-            '<a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>');
+        carteProchain +
+        (mois.length ? '<h2 class="ap-titre-sec">Mes mois</h2><div class="ap-grille-mois">' + grille + '</div>' : '');
     }
-    return '<h2 class="ap-titre-sec">Formation · mensualités</h2>' + haut +
-      '<h2 class="ap-titre-sec">Mes cachets</h2>' + (etat.cachets.length ? '<div class="ap-carte ap-cachets">' + etat.cachets.map((c) =>
-        '<div class="ap-cachet"><div><b>' + esc(c.prestation || c.motif || 'Cachet') + '</b><br><span class="doux">' + esc(c.paye_le ? jourLong(String(c.paye_le).slice(0, 10)) : '') + '</span></div>' +
-        '<div class="ap-droite"><b>' + fcfa(c.montant) + '</b><br><span class="ap-pastille vert">Payé</span></div></div>').join('') + '</div>'
-        : '<div class="ap-carte doux">Aucun cachet payé pour le moment.</div>');
+    // « Mes opérations » : cachets reçus (+) et paiements validés, du plus récent au plus ancien
+    const ops = etat.cachets.map((c) => ({ quand: String(c.paye_le || ''), ic: '💰', titre: 'Cachet · ' + (c.prestation || c.motif || 'prestation'), sous: c.paye_le ? jourLong(String(c.paye_le).slice(0, 10)) : '', montant: '+ ' + fcfa(c.montant), plus: true }))
+      .concat((etat.recus || []).map((r) => ({ quand: String(r.valide_le || r.mois || ''), ic: '💳',
+        titre: r.objet === 'inscription' ? 'Inscription' : r.mois ? 'Mensualité ' + (/^[aeiou]/.test(MOIS[Number(String(r.mois).slice(5, 7)) - 1]) ? 'd’' : 'de ') + MOIS[Number(String(r.mois).slice(5, 7)) - 1] : 'Mensualité',
+        sous: [MODES_PAIEMENT[r.mode] || '', r.valide_le ? jourLong(String(r.valide_le).slice(0, 10)) : ''].filter(Boolean).join(' · '),
+        montant: r.montant ? fcfa(r.montant) : '—', plus: false })))
+      .sort((x, y) => (x.quand < y.quand ? 1 : x.quand > y.quand ? -1 : 0)).slice(0, 8);
+    return haut +
+      '<h2 class="ap-titre-sec">Mes opérations</h2>' + (ops.length ? '<div class="ap-releve">' + ops.map((o) =>
+        '<div class="ap-op"><em aria-hidden="true">' + o.ic + '</em><span><b>' + esc(o.titre) + '</b><small>' + esc(o.sous) + '</small></span><strong' + (o.plus ? ' class="plus"' : '') + '>' + esc(o.montant) + '</strong></div>').join('') + '</div>' +
+        '<a class="ap-lien-recus" href="/app/mes-paiements.html">Tous mes reçus ›</a>'
+        : '<div class="ap-carte doux">Aucune opération pour le moment.</div>');
   }
   // un message de l'agence : titre, date, texte, photo, fiche jointe, page à ouvrir
   const ICONES_MESSAGE = { casting: '✨', defile: '👠', remerciement: '🤍', info: '💌', selection: '🎉', convocation: '💌', rappel: '⏰', places: '🎟️', mensualite: '💳', paiement: '✅', cachet: '💰' };
   const quandMessage = (d) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
-  function carteMessage(x) {
-    const ic = ICONES_MESSAGE[x.sorte] || '✉️';
-    return '<details class="ap-message-agence' + (x.nouveau ? ' nouveau' : '') + '"' + (x.nouveau ? ' open' : '') + '><summary><span class="ap-alerte-ic bleu" aria-hidden="true">' + ic + '</span>' +
-      '<span><b>' + esc(x.titre.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '')) + '</b><br><span class="doux">' + esc(quandMessage(x.cree_le)) + (x.nouveau ? ' · <em>nouveau</em>' : '') + '</span></span></summary>' +
-      (x.texte ? '<p class="ap-message-texte">' + esc(x.texte) + '</p>' : '') +
-      (x.image ? '<img class="ap-message-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
-      (x.fiche || x.lien ? '<div class="ap-btns">' + (x.fiche ? '<a class="ap-btn" href="' + esc(x.fiche) + '" target="_blank" rel="noopener">📄 Voir la fiche</a>' : '') +
-        (x.lien ? '<a class="ap-btn rouge" href="' + esc(x.lien) + '">Ouvrir</a>' : '') + '</div>' : '') + '</details>';
-  }
+  // Messages façon messagerie (11/11/2026, maquette validée par la propriétaire) : la conversation avec l'agence,
+  // bulles par jour (des plus anciennes aux plus récentes), nouveaux messages entourés, paiements en vert ;
+  // « Écrire à l'agence sur WhatsApp » (MA2M_WHATSAPP, js/app.js) pour répondre.
+  const MESSAGES_AFFICHES = 30;
   // proposer les notifications sur ce téléphone (pas encore acceptées, et possibles ici)
   const proposerNotifications = () => notificationsPossibles() && Notification.permission === 'default';  // (js/app.js)
+  const heureMessage = (d) => new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' });
+  const jourMessage = (d) => {
+    const j = new Date(d).toISOString().slice(0, 10), auj = aujourdhui();
+    if (j === auj) return 'Aujourd’hui';
+    if (dansJours(j) === -1) return 'Hier';
+    return jourLong(j);
+  };
+  function bulleMessage(x) {
+    const titre = /^\p{Extended_Pictographic}/u.test(x.titre) ? x.titre : (ICONES_MESSAGE[x.sorte] || '✉️') + ' ' + x.titre;
+    const vert = ['paiement', 'cachet'].includes(x.sorte);
+    return '<article class="ap-bulle ap-message-agence' + (x.nouveau ? ' nouveau' : '') + (vert ? ' paye' : '') + '"' + (x.nouveau ? ' data-nouveau' : '') + '>' +
+      (x.image ? '<img class="ap-message-image" src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+      (x.nouveau ? '<span class="ap-bulle-nv">NOUVEAU</span>' : '') + '<b>' + esc(titre) + '</b>' +
+      (x.texte ? '<p class="ap-message-texte">' + esc(x.texte) + '</p>' : '') +
+      (x.fiche || x.lien ? '<div class="ap-btns">' + (x.fiche ? '<a class="ap-btn" href="' + esc(x.fiche) + '" target="_blank" rel="noopener">📄 Voir la fiche</a>' : '') +
+        (x.lien ? '<a class="ap-btn rouge" href="' + esc(x.lien) + '">Ouvrir</a>' : '') + '</div>' : '') +
+      '<time>' + esc(heureMessage(x.cree_le)) + '</time></article>';
+  }
   function ecranAlertes() {
     const l = alertes();
-    return (proposerNotifications() ? '<div class="ap-carte ap-notif"><b>🔔 Être prévenue sur mon téléphone</b><span class="doux">Recevez une notification à chaque message de l’agence, même application fermée.</span>' +
-        '<button type="button" class="ap-btn rouge" data-notifications>Activer les notifications</button></div>' : '') +
-      (l.length ? '<h2 class="ap-titre-sec">À faire</h2>' + l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><br>' + esc(x.texte) + '</span></' + (x.lien ? 'a' : 'div') + '>').join('') : '') +
-      '<h2 class="ap-titre-sec">Messages de l’agence</h2>' +
-      (etat.messages.length ? etat.messages.map(carteMessage).join('') : '<div class="ap-carte doux">Aucun message pour le moment. Les informations de l’agence arriveront ici.</div>');
+    let jourEnCours = '';
+    const fil = etat.messages.slice(0, MESSAGES_AFFICHES).reverse().map((x) => {
+      const jour = jourMessage(x.cree_le), sep = jour !== jourEnCours ? '<div class="ap-fil-jour"><span>' + esc(jour) + '</span></div>' : '';
+      jourEnCours = jour;
+      return sep + bulleMessage(x);
+    }).join('');
+    return (proposerNotifications() ? '<div class="ap-notif">🔔 <b>Être prévenue sur mon téléphone</b>' +
+        '<button type="button" class="ap-btn" data-notifications>Activer</button></div>' : '') +
+      (l.length ? '<h2 class="ap-titre-sec">À faire</h2><div class="ap-afaire">' + l.map((x) => '<' + (x.lien ? 'a href="' + x.lien + '"' : 'div') + ' class="ap-alerte"><span class="ap-alerte-ic ' + x.fond + '">' + x.ic + '</span><span><b>' + esc(x.titre) + '</b><small>' + esc(x.texte) + '</small></span></' + (x.lien ? 'a' : 'div') + '>').join('') + '</div>' : '') +
+      '<section class="ap-fil" aria-label="Messages de l’agence"><div class="ap-fil-tete"><span class="ap-post-avatar" aria-hidden="true"><img src="/assets/logo-header.png" alt=""></span>' +
+        '<div><b>Maître Akesse Model Management</b><small>● Messages de l’agence</small></div></div>' +
+        '<div class="ap-fil-corps">' + (fil || '<p class="ap-fil-vide">Aucun message pour le moment. Les informations de l’agence arriveront ici.</p>') + '</div></section>' +
+      '<a class="ap-wa" href="' + esc(MA2M_WHATSAPP) + '" target="_blank" rel="noopener">💬 Écrire à l’agence sur WhatsApp</a>';
   }
   // messages vus : marqués lus (ils gardent « nouveau » le temps de cette visite de l'onglet)
   function marquerLus() {
@@ -391,9 +548,11 @@
   }
 
   // ---------- actions ----------
+  racine.addEventListener('toggle', (e) => { const m = e.target.closest && e.target.closest('[data-mini]'); if (m) programmeOuvert['mini-' + m.dataset.mini] = m.open; }, true);
   racine.addEventListener('click', async (e) => {
     const notif = e.target.closest('[data-notifications]');
     if (notif) { await activerNotifications(notif); return; }
+    if (e.target.closest('[data-partager-book]')) { await partagerBook(); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');
     if (tout) { programmeOuvert[tout.dataset.programme] = !programmeOuvert[tout.dataset.programme]; afficher(); return; }
     if (per) { periode = per.dataset.periode; afficher(); return; }
@@ -426,7 +585,7 @@
     message(ev.reponse === 'confirme' ? 'Merci ! Votre présence est confirmée.' : 'C’est noté : l’agence est prévenue.');
     afficher();
   });
-  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); });
+  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); const nv = ongletCourant() === 'alertes' && document.querySelector('[data-nouveau]'); if (nv) nv.scrollIntoView({ block: 'center' }); });
   // de retour dans l'application (notification touchée, autre application) : les nouveaux messages
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !etat) return;

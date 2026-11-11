@@ -76,10 +76,10 @@ function donnees(role) {
     await p.waitForSelector('.note.erreur');
     ok((await texte(p)).includes('Code incorrect'), nomEcran + ' : un mauvais code est refusé');
     await p.fill('#cx-code', '123456'); await p.click('form[data-form="code"] [type=submit]');
-    await p.waitForSelector('.bloc-accueil');
-    ok((await p.$$('.bloc-accueil')).length === 3, nomEcran + ' : administrateur principal → les trois blocs sur l’accueil');
-    const libelles = await p.$$eval('.bloc-accueil .nom', (l) => l.map((x) => x.textContent));
-    ok(libelles.join('|') === 'Administration du site|Suivi des paiements et des inscriptions|Comptabilité', nomEcran + ' : libellés exacts des trois blocs');
+    await p.waitForSelector('.tu');
+    // (11/11/2026, accueil apaisé : 8 tuiles à la place des 3 blocs)
+    const libelles = await p.$$eval('.tuiles-accueil .tu .nom', (l) => l.map((x) => x.textContent));
+    ok(libelles.join('|') === 'Castings|Mannequins|Événements|Messages|Paiements|Comptabilité|Le site|Réglages', nomEcran + ' : administrateur principal → les 8 tuiles sur l’accueil (' + libelles.join(', ') + ')');
     let mal = await pales(p); ok(!mal.length, nomEcran + ' : accueil lisible ' + mal.join(' | '));
     // menu : à gauche sur ordinateur ; sur téléphone et tablette en vertical, bouton « ☰ Menu » qui fait glisser le menu
     for (const largeur of nomEcran === 'téléphone' ? [390, 768] : [1280]) {
@@ -178,18 +178,18 @@ function donnees(role) {
     await c.p.fill('#cx-pin1', '4826'); await c.p.fill('#cx-pin2', '4827'); await c.p.click('form[data-form="choisir-pin"] [type=submit]');
     ok((await texte(c.p)).includes('pas identiques'), nomEcran + ' : deux codes différents refusés');
     await c.p.fill('#cx-pin1', '4826'); await c.p.fill('#cx-pin2', '4826'); await c.p.click('form[data-form="choisir-pin"] [type=submit]');
-    await c.p.waitForSelector('.bloc-accueil', { timeout: 6000 }).catch(() => {});
-    ok(pin.code === '4826' && await c.p.isVisible('.bloc-accueil'), nomEcran + ' : code enregistré, entrée dans l’administration');
+    await c.p.waitForSelector('.tu', { timeout: 6000 }).catch(() => {});
+    ok(pin.code === '4826' && await c.p.isVisible('.tu'), nomEcran + ' : code enregistré, entrée dans l’administration');
     // b) 15 minutes sans geste : écran verrouillé, le code à 4 chiffres suffit
     await c.p.clock.fastForward('15:30'); await c.p.waitForSelector('#cx-pin', { timeout: 6000 }).catch(() => {});
     ok(await c.p.isVisible('#cx-pin') && pin.verrouille, nomEcran + ' : 15 minutes sans activité → écran verrouillé (serveur prévenu)');
-    ok(!(await c.p.isVisible('.bloc-accueil')), nomEcran + ' : écran verrouillé : plus rien de l’administration n’est visible');
+    ok(!(await c.p.isVisible('.tu')), nomEcran + ' : écran verrouillé : plus rien de l’administration n’est visible');
     await c.p.fill('#cx-pin', '0000'); await c.p.click('form[data-form="deverrouiller"] [type=submit]');
     await c.p.waitForSelector('.note.erreur', { timeout: 4000 }).catch(() => {});
     ok((await texte(c.p)).includes('Essais restants : 4'), nomEcran + ' : mauvais code refusé, essais restants affichés');
     await c.p.fill('#cx-pin', '4826'); await c.p.click('form[data-form="deverrouiller"] [type=submit]');
-    await c.p.waitForSelector('.bloc-accueil', { timeout: 6000 }).catch(() => {});
-    ok(await c.p.isVisible('.bloc-accueil') && !pin.verrouille, nomEcran + ' : bon code → retour dans l’administration, sans l’application d’authentification');
+    await c.p.waitForSelector('.tu', { timeout: 6000 }).catch(() => {});
+    ok(await c.p.isVisible('.tu') && !pin.verrouille, nomEcran + ' : bon code → retour dans l’administration, sans l’application d’authentification');
     // c) rouvrir l'application alors que l'appareil est verrouillé : écran du code d'abord
     pin.verrouille = true; await c.p.reload(); await c.p.waitForSelector('#cx-pin', { timeout: 6000 }).catch(() => {});
     ok(await c.p.isVisible('#cx-pin'), nomEcran + ' : application rouverte sur un appareil verrouillé → code à 4 chiffres demandé');
@@ -212,7 +212,7 @@ function donnees(role) {
       const r = await ouvrir(role, ecran);
       const pr = r.p;
       await pr.waitForSelector('#cx-code'); await pr.fill('#cx-code', '123456'); await pr.click('form[data-form="code"] [type=submit]');
-      await pr.waitForSelector('.bloc-accueil, .lateral', { timeout: 6000 }).catch(() => {});
+      await pr.waitForSelector('.tu, .lateral', { timeout: 6000 }).catch(() => {});
       await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.tableau tbody tr', { timeout: 6000 }).catch(() => {});
       const lignes = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
       ok(lignes.length === 4 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription à enregistrer/.test(x)) && lignes.some((x) => /YAO KOUASSI.*En attente de validation/.test(x)),

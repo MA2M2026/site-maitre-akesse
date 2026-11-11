@@ -21,7 +21,9 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   const routes = await p.evaluate(() => { const r = ['#/']; for (const [e, v] of Object.entries(window.Portail.espaces)) (v.nav || []).forEach(n => { if (n[0]) r.push('#/' + e + '/' + n[0]); }); return r; });
   const rapport = [];
   const actions = {
-    'convoc': async () => { await p.evaluate(() => { location.hash = '#/site/b2-convocations'; }); await p.waitForTimeout(1800); await p.selectOption('#cv-projet', 'p2').catch(() => {}); await p.waitForTimeout(600); await p.$eval('#cv-mannequins input', c => c.click()).catch(() => {}); await p.$eval('#cv-enregistrer', x => x.click()).catch(() => {}); await p.waitForTimeout(2500); },
+    'convoc': async () => { await p.evaluate(() => { location.hash = '#/site/b2-convocations'; }); await p.waitForTimeout(1800); await p.click('.cv-billet[data-cv-projet="p2"]').catch(() => {}); await p.waitForTimeout(600); await p.$eval('#cv-mannequins input', c => c.click()).catch(() => {}); await p.$eval('#cv-enregistrer', x => x.click()).catch(() => {}); await p.waitForTimeout(2500); },
+    // (11/11/2026, Convocations en étapes) l'étape 2 : le mur de visages du projet p1
+    'convoc-mur': async () => { await p.evaluate(() => { location.hash = '#/site/b2-agenda-vide'; }); await p.waitForTimeout(300); await p.evaluate(() => { location.hash = '#/site/b2-convocations'; }); await p.waitForTimeout(1800); await p.click('.cv-billet[data-cv-projet="p1"]').catch(() => {}); await p.waitForTimeout(600); await p.$eval('.cv-etapes [data-aller-etape="2"]', (b) => b.click()).catch(() => {}); await p.waitForTimeout(800); },
     'agenda-form': async () => { await p.evaluate(() => { location.hash = '#/site/b3c-agenda'; }); await p.waitForTimeout(2000); await p.click('[data-modifier="p1"]').catch(() => {}); await p.waitForTimeout(1200); },
     'fiche-mannequin': async () => { await p.evaluate(() => { location.hash = '#/site/b2-mannequins-publies/m0'; }); await p.waitForTimeout(2200); },
     'fiche-candidature': async () => { await p.evaluate(() => { location.hash = '#/site/b2-candidatures/c1'; }); await p.waitForTimeout(2200); },

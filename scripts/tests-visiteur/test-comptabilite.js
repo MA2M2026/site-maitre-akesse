@@ -95,8 +95,10 @@ function donnees(role) {
     await controler(p, nomEcran + ' : tableau du mois');
     ok(/Tableau de bord/.test(t) && /Mode actuel : Factures internes, non déclarées/.test(t) && /Identité de l’agence →/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
     if (ecran.width > 860) {
-      const menu = await p.$$eval('.menu a, nav a', (l) => l.map((a) => a.textContent.trim()));
-      const ordre = ['Tableau de bord', 'Recettes', 'Devis, proforma, factures', 'Dépenses et charges', 'Impôts et taxes', 'Clôture mensuelle', 'Identité de l’agence'];
+      // (11/11/2026) toutes les rubriques sont sur la page d'entrée « Toutes les rubriques », dans l'ordre des groupes
+      await p.goto(p.url().split('#')[0] + '#/compta/accueil'); await p.waitForSelector('.tu-page'); await p.waitForTimeout(500);
+      const menu = await p.$$eval('.tu-page .tu-ligne span', (l) => l.map((a) => a.firstChild.textContent.trim()));
+      const ordre = ['Tableau de bord', 'Recettes', 'Dépenses et charges', 'Clôture mensuelle', 'Devis, proforma, factures', 'Impôts et taxes', 'Identité de l’agence'];
       const pos = ordre.map((x) => menu.indexOf(x));
       ok(pos.every((x, i) => x >= 0 && (i === 0 || x > pos[i - 1])), nomEcran + ' : menu dans l’ordre du plan ' + JSON.stringify(menu.slice(0, 12)));
     }
