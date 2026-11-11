@@ -31,27 +31,30 @@ body.large .logo-centre { width: 560px; }
 body.large .deux { font-size: 860px; top: 90px; left: 0; right: auto; width: 1000px; }
 /* 4–5. téléphone */
 /* 6. toise */
-.toise { z-index: 5; }
-body:not(.large) .toise { left: 100px; top: 430px; width: 120px; height: 1200px; --pas: 133.3px; }
-body.large .toise { left: 150px; top: 180px; width: 100px; height: 800px; --pas: 88.9px; }
-.toise::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.8); }
-.grad { position: absolute; left: 0; bottom: calc(var(--k) * var(--pas)); width: 100%; }
-.grad i { position: absolute; left: 0; width: 34px; height: 2px; background: #fff; }
-.grad b { position: absolute; left: 44px; top: -14px; font: 600 24px 'Work Sans'; opacity: 0.75; }
-body.large .grad b { font-size: 19px; top: -11px; }
-.pied { position: absolute; z-index: 4; overflow: hidden; }
-.pied img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
-.repere { position: absolute; z-index: 7; height: 3px; background: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.6); }
-.repere b { position: absolute; right: -10px; bottom: 12px; transform: translateX(100%); font: 800 150px/0.9 'Big Shoulders Display'; white-space: nowrap; }
-body.large .repere b { font-size: 120px; }
-.repere small { position: absolute; right: -10px; top: 14px; transform: translateX(100%); font: 600 26px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; white-space: nowrap; }
-body:not(.large) .pied.femme { left: 240px; width: 380px; top: 943px; height: 707px; }
-body:not(.large) .pied.homme { left: 240px; width: 440px; top: 677px; height: 973px; }
-body.large .pied.femme { left: 270px; width: 270px; top: 522px; height: 478px; }
-body.large .pied.homme { left: 270px; width: 330px; top: 344px; height: 656px; }
-body:not(.large) .repere { left: 100px; width: 540px; top: 1630px; }
-body.large .repere { left: 150px; width: 470px; top: 980px; }
 body.large .deux { left: auto; right: 60px; width: 820px; }
+/* 6. toise (11/11/2026) : de 0 à 2 m, la personne DÉTOURÉE et en pied grandit jusqu'à sa taille, le trait monte avec
+   elle jusqu'au sommet de la tête (vertical : sol 1720 px, 7,1 px/cm ; horizontal : sol 990 px, 4,1 px/cm) */
+.toise { position: absolute; z-index: 5; border-left: 2px solid rgba(255,255,255,0.85); }
+body:not(.large) .toise { left: 120px; top: 300px; height: 1420px; width: 60px; }
+body.large .toise { left: 150px; top: 170px; height: 820px; width: 50px; }
+.toise i { position: absolute; left: 0; height: 2px; background: #fff; width: 22px; bottom: var(--bv); }
+body.large .toise i { bottom: var(--bl); }
+.toise i.l { width: 40px; }
+.toise i b { position: absolute; left: 50px; top: -15px; font: 600 24px 'Work Sans'; white-space: nowrap; opacity: 0.85; }
+body.large .toise i b { font-size: 18px; top: -11px; left: 46px; }
+.detoure { position: absolute; z-index: 6; bottom: 200px; filter: drop-shadow(0 30px 40px rgba(40,6,10,0.6)); }
+body.large .detoure { bottom: 90px; }
+body:not(.large) .detoure.femme { left: 250px; height: 1242px; }
+body:not(.large) .detoure.homme { left: 250px; height: 1313px; }
+body.large .detoure.femme { left: 330px; height: 717px; }
+body.large .detoure.homme { left: 330px; height: 758px; }
+.mesure { position: absolute; z-index: 7; height: 3px; background: #fff; box-shadow: 0 0 18px rgba(255,255,255,0.6); }
+body:not(.large) .mesure { left: 120px; width: 520px; top: 655px; }
+body.large .mesure { left: 150px; width: 430px; top: 375px; }
+.mesure b { position: absolute; left: 100%; margin-left: 14px; bottom: -50px; font: 800 120px/1 'Big Shoulders Display'; white-space: nowrap; }
+body.large .mesure b { font-size: 110px; bottom: -45px; }
+.mesure small { position: absolute; left: 100%; margin-left: 18px; top: 60px; font: 600 26px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; }
+body.large .mesure small { top: 58px; font-size: 22px; }
 /* 7. 14+ */
 .quatorze { font: 800 560px/0.85 'Big Shoulders Display'; }
 body.large .quatorze { font-size: 420px; }
@@ -186,14 +189,14 @@ body.large .gratuit { left: 1440px; top: 120px; }
 
   <section class="scene" data-de="criteres" data-transition="cercle">
     <div class="abs legende-tel lh lc"><p class="surtitre" data-voix="criteres" data-anim="glisse">Nos critères</p></div>
-    <div class="abs toise" data-voix="criteres" data-anim="monte"><div class="grad" style="--k:0"><i></i><b>1,50</b></div><div class="grad" style="--k:1"><i></i><b>1,55</b></div><div class="grad" style="--k:2"><i></i><b>1,60</b></div><div class="grad" style="--k:3"><i></i><b>1,65</b></div><div class="grad" style="--k:4"><i></i><b>1,70</b></div><div class="grad" style="--k:5"><i></i><b>1,75</b></div><div class="grad" style="--k:6"><i></i><b>1,80</b></div><div class="grad" style="--k:7"><i></i><b>1,85</b></div><div class="grad" style="--k:8"><i></i><b>1,90</b></div><div class="grad" style="--k:9"><i></i><b>1,95</b></div></div>
-    <div class="pied femme" data-voix="tailles" data-anim="monte" data-finvoix="tailles" data-finmot="hommes" data-finretard="-0.2"><img src="vignettes/146.jpg"></div>
-    <div class="pied homme" data-voix="tailles" data-mot="hommes" data-anim="monte"><img src="vignettes/h000.jpg"></div>
-    <div class="repere femme" data-voix="tailles" data-mot="minimum" data-anim="deplace" data-y1="-667" data-y1l="-444" data-finvoix="tailles" data-finmot="hommes" data-finretard="-0.2"><b><span data-voix="tailles" data-mot="minimum" data-anim="compteur" data-depart="1.5" data-valeur="1.75" data-decimales="2">1,75</span> m</b><small>Femmes</small></div>
-    <div class="repere homme" data-voix="tailles" data-mot="hommes" data-anim="deplace" data-y1="-933" data-y1l="-622"><b><span data-voix="tailles" data-mot="hommes" data-anim="compteur" data-depart="1.5" data-valeur="1.85" data-decimales="2">1,85</span> m</b><small>Hommes</small></div>
+    <div class="toise" data-voix="criteres" data-anim="monte"><i class="" style="--bv:0.0px;--bl:0.0px"></i><i class="" style="--bv:71.0px;--bl:41.0px"></i><i class="" style="--bv:142.0px;--bl:82.0px"></i><i class="" style="--bv:213.0px;--bl:123.0px"></i><i class="" style="--bv:284.0px;--bl:164.0px"></i><i class="l" style="--bv:355.0px;--bl:205.0px"><b>0,50</b></i><i class="" style="--bv:426.0px;--bl:246.0px"></i><i class="" style="--bv:497.0px;--bl:287.0px"></i><i class="" style="--bv:568.0px;--bl:328.0px"></i><i class="" style="--bv:639.0px;--bl:369.0px"></i><i class="l" style="--bv:710.0px;--bl:410.0px"><b>1,00</b></i><i class="l" style="--bv:781.0px;--bl:451.0px"><b>1,10</b></i><i class="l" style="--bv:852.0px;--bl:492.0px"><b>1,20</b></i><i class="l" style="--bv:923.0px;--bl:533.0px"><b>1,30</b></i><i class="l" style="--bv:994.0px;--bl:574.0px"><b>1,40</b></i><i class="l" style="--bv:1065.0px;--bl:615.0px"><b>1,50</b></i><i class="l" style="--bv:1136.0px;--bl:656.0px"><b>1,60</b></i><i class="l" style="--bv:1207.0px;--bl:697.0px"><b>1,70</b></i><i class="l" style="--bv:1278.0px;--bl:738.0px"><b>1,80</b></i><i class="l" style="--bv:1349.0px;--bl:779.0px"><b>1,90</b></i><i class="l" style="--bv:1420.0px;--bl:820.0px"><b>2,00</b></i></div>
+    <img class="detoure femme" src="detoures/femme-102.png" alt="" data-voix="tailles" data-mot="1m75" data-anim="grandit" data-depart="0.857" data-finvoix="tailles" data-finmot="1m85" data-finretard="-0.15">
+    <div class="mesure" data-voix="tailles" data-mot="1m75" data-anim="deplace" data-duree="1.4" data-y1="-177.5" data-y1l="-102.5" data-finvoix="tailles" data-finmot="1m85" data-finretard="-0.15"><b><span data-voix="tailles" data-mot="1m75" data-anim="compteur" data-duree="1.4" data-depart="1.5" data-valeur="1.75" data-decimales="2">1,75</span> m</b><small>Femmes</small></div>
+    <img class="detoure homme" src="detoures/homme-000.png" alt="" data-voix="tailles" data-mot="1m85" data-anim="grandit" data-depart="0.81">
+    <div class="mesure" data-voix="tailles" data-mot="1m85" data-anim="deplace" data-duree="1.4" data-y1="-248.5" data-y1l="-143.5"><b><span data-voix="tailles" data-mot="1m85" data-anim="compteur" data-duree="1.4" data-depart="1.5" data-valeur="1.85" data-decimales="2">1,85</span> m</b><small>Hommes</small></div>
   </section>
 
-  <section class="scene" data-de="tailles" data-demot="âge" data-transition="fondu">
+  <section class="scene" data-de="tailles" data-demot="14" data-transition="fondu">
     <div class="texte centre milieu"><p class="surtitre" data-voix="tailles" data-mot="âge" data-anim="glisse">Âge minimum</p>
       <div class="quatorze" data-voix="tailles" data-mot="14" data-anim="zoom">14<sup>+</sup></div>
       <p class="moyen"><em data-voix="tailles" data-mot="ans" data-anim="mots">ans minimum</em></p>

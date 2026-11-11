@@ -144,6 +144,9 @@ function animer(e, t) {
     case 'diapo': { // photos qui se succèdent très vite (effet de marche, comme une suite d'images) : data-pas secondes par photo
       const d = t - e.t, enf = x.children, n = enf.length, pas = Number(x.dataset.pas || 0.4), k = Math.floor(d / pas) % n;
       s.opacity = Math.min(1, d * 3); for (let j = 0; j < n; j++) { enf[j].style.opacity = j === k ? 1 : 0; enf[j].style.transform = 'scale(' + (1.04 + 0.04 * ((d / pas) % 1)) + ')'; } break; }
+    case 'grandit': { // la personne grandit, posée au sol (data-depart : taille de départ, 0,85 = 85 %), en data-duree secondes
+      const k = lisse((t - e.t) / Number(x.dataset.duree || 1.4)), dep = Number(x.dataset.depart || 0.85); s.opacity = Math.min(1, (t - e.t) * 4);
+      s.transformOrigin = '50% 100%'; s.transform = 'scale(' + (dep + (1 - dep) * k) + ')'; break; }
     case 'nuage': { // photo lancée de loin (data-dx, data-dy) en tournant, qui se pose à sa place puis flotte
       const d = t - e.t, k = sortie(d / 1.4), rot = Number(x.dataset.rot || 0); s.opacity = Math.min(1, d * 3);
       s.transform = 'translate(' + (Number(x.dataset.dx || 0) * (1 - k)) + 'px,' + (Number(x.dataset.dy || 0) * (1 - k) + 8 * Math.sin(d + rot)) + 'px) rotate(' + (rot + 40 * (1 - k)) + 'deg) scale(' + (0.4 + 0.6 * k) + ')'; break; }

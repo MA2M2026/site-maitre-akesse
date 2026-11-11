@@ -202,7 +202,7 @@ body.large .canaux span { font-size: 17px; padding: 10px 16px; }
 body:not(.large) .legende-tel { left: 90px; right: 90px; top: 210px; }
 body.large .legende-tel { left: 780px; right: 150px; top: 330px; }
 body.large .legende-tel.lh { left: 150px; right: 150px; top: 165px; }
-body.large .legende-tel.lc { left: 720px; top: 165px; }
+body.large .legende-tel.lc { left: 1150px; top: 480px; }
 .bande { display: flex; gap: 18px; z-index: 4; }
 .bande div { flex: none; width: 380px; height: 600px; overflow: hidden; border-radius: 4px; }
 body.large .bande div { width: 270px; height: 385px; }
