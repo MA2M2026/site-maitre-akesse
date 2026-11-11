@@ -151,7 +151,10 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       n + '« Je confirme » : réponse envoyée avec son lien personnel, « ✓ Confirmée » affiché');
     // 5. Mes événements : passages du défilé, carte d'accès, passés
     await p.click('.ap-nav a[href="#evenements"]'); await p.waitForSelector('.ap-onglets');
-    ok((await p.$$('#ap-ecran article.ap-carte')).length === 2 && /SHOOTING CACAO/.test(await p.textContent('#ap-ecran')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
+    ok((await p.$$('#ap-ecran .ap-ev-une')).length === 1 && (await p.$$('#ap-ecran .ap-ev-mini')).length === 1 && /SHOOTING CACAO/.test(await p.textContent('.ap-ev-mini')) && /Mes événements/.test(await p.textContent('.ap-tete')), n + 'Mes événements : les 2 à venir');
+    ok(/ABIDJAN FASHION WEEK/.test(await p.textContent('.ap-ev-une')) && /^\d\d[A-ZÉÛ.]+$/.test((await p.textContent('.ap-ev-une .ap-ev-date')).trim()) && /dans 4 jours/.test(await p.textContent('.ap-ev-compte')) && /Convocation à 15h00/.test(await p.textContent('.ap-ev-une')) && /Ensuite/.test(await p.textContent('#ap-ecran')),
+      n + 'Événements façon billets (11/11/2026) : le prochain en grand (date en carré, « dans 4 jours », convocation), les suivants sous « Ensuite »');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'Événements : rien ne dépasse de l’écran');
     await p.click('[data-passages]'); await p.waitForSelector('.ap-passage');
     const passages = await p.$$eval('.ap-passage', (l) => l.map((x) => x.textContent));
     ok(rpc('defile_programme').length === 1 && passages.length === 1 && /Salle A/.test(passages[0]) && /17h00/.test(passages[0]) ,
@@ -164,8 +167,8 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     await p.click('[data-periode="passes"]'); await p.waitForTimeout(200);
     ok(/BORDER FORUM/.test(await p.textContent('#ap-ecran')) && !/SHOOTING CACAO/.test(await p.textContent('#ap-ecran')), n + 'onglet « Passés »');
     await p.click('[data-periode="avenir"]');
-    await p.click('article.ap-carte:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
-    ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('article.ap-carte:has-text("SHOOTING CACAO")')), n + '« Je ne pourrai pas venir » (après confirmation) : l’agence est prévenue');
+    await p.click('.ap-ev-mini:has-text("SHOOTING CACAO") summary'); await p.click('.ap-ev-mini:has-text("SHOOTING CACAO") [data-repondre="absent"]'); await p.waitForTimeout(600);
+    ok((rpc('convocation_repondre').pop() || {}).p_reponse === 'absent' && /Absent\(e\)/.test(await p.textContent('.ap-ev-mini:has-text("SHOOTING CACAO")')) && !!(await p.$('.ap-ev-mini details[open]')), n + '« Je ne pourrai pas venir » (ligne touchée puis ouverte, après confirmation) : l’agence est prévenue, la ligne reste ouverte');
     await p.click('.ap-nav a[href="#accueil"]'); await p.waitForTimeout(400);
     ok(/Vous êtes la mannequin du mois/.test(await p.textContent('#ap-ecran')), n + 'Accueil : « 🏆 Vous êtes la mannequin du mois ! »');
     // 6. Profil

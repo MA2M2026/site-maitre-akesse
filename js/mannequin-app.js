@@ -149,11 +149,14 @@
       (e.heure_convocation ? '<dt>⏰</dt><dd>Convocation à ' + esc(heure(e.heure_convocation)) + '</dd>' : '') +
       (e.lieu || e.ville ? '<dt>📍</dt><dd>' + esc([e.lieu, e.ville].filter(Boolean).join(', ')) + '</dd>' : '') + '</dl>';
   }
+  // carte d'accès façon billet de spectacle (11/11/2026, maquette validée) : à montrer à l'entrée
   function carteAcces(e) {
     const p = etat.profil || {};
-    return '<div class="ap-acces" aria-label="Carte d’accès"><div class="ap-acces-photo">' + visage(p.full_name) + '</div><div class="ap-acces-texte">' +
-      '<span class="ap-acces-sur">Mannequin · Accès événement</span><b>' + esc(String(p.full_name || '').toUpperCase()) + '</b>' +
-      '<span class="ap-acces-ev">' + esc(e.titre) + ' · ' + esc(datesEvenement(e)) + '</span></div><div class="ap-acces-bande">ACCÈS MANNEQUIN · MA2M</div></div>';
+    return '<div class="ap-acces" aria-label="Carte d’accès"><div class="ap-acces-texte">' +
+      '<span class="ap-acces-sur">ACCÈS MANNEQUIN</span><b>' + esc(String(p.full_name || '').toUpperCase()) + '</b>' +
+      '<span class="ap-acces-ev">' + esc(e.titre) + ' · ' + esc(datesEvenement(e)) + '</span>' +
+      '<img class="ap-acces-logo" src="/assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
+      '<div class="ap-acces-photo">' + visage(p.full_name) + '</div></div>';
   }
   function photoProfil() {
     const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
@@ -163,19 +166,49 @@
     const url = photoProfil();
     return url ? '<img src="' + esc(urlPhotoMemeOrigine(url)) + '" alt="" loading="lazy">' : '<span>' + esc(initialesDe(nom)) + '</span>';
   }
+  // « Mes passages » d'un défilé confirmé (Accueil et Événements) : chargés à la demande, puis tout le programme
+  function blocPassages(e, sombre) {
+    if (!(e.defile && e.reponse === 'confirme' && !e.passe)) return '';
+    const prog = programmes[e.jeton], passages = prog && prog.filter((x) => x.moi);
+    if (!passages) return '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-passages="' + esc(e.jeton) + '">👠 Voir mes passages</button>';
+    return '<div class="ap-passages">' +
+      (passages.length ? passages.map((x, i) => '<div class="ap-passage"><b>' + esc(heure(x.debut) || 'À préciser') + '</b><span>' + esc(x.salle || jourCourt(x.jour)) +
+          '<small>' + esc([x.salle ? jourCourt(x.jour) : '', x.theme].filter(Boolean).join(' · ')) + '</small></span><i>Passage ' + (i + 1) + '</i></div>').join('')
+        : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
+      (prog.length ? '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-programme="' + esc(e.jeton) + '" aria-expanded="' + !!programmeOuvert[e.jeton] + '">📋 ' + (programmeOuvert[e.jeton] ? 'Masquer le programme' : 'Tout le programme') + '</button>' : '') +
+      (programmeOuvert[e.jeton] ? toutLeProgramme(prog) : '') + '</div>';
+  }
   function carteEvenement(e, mise) {
     const sombre = mise === 'sombre';
-    const prog = programmes[e.jeton], passages = prog && prog.filter((x) => x.moi);
     return '<article class="ap-carte' + (sombre ? ' sombre' : '') + '"><div class="ap-ligne entre"><span class="ap-pastille or">' + esc(libelleTypeAgenda(e.type)) +
-      (sombre && !e.passe ? ' · ' + esc(dansJours(e.date_debut) <= 0 ? 'aujourd’hui' : dansJours(e.date_debut) === 1 ? 'demain' : 'dans ' + dansJours(e.date_debut) + ' jours') : '') + '</span>' + pastilleReponse(e) + '</div>' +
-      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) +
-      (e.defile && e.reponse === 'confirme' && !e.passe ? (passages ? '<div class="ap-passages"><span class="doux">Mes passages</span>' +
-        (passages.length ? passages.map((x) => '<div class="ap-passage"><span>' + esc(jourCourt(x.jour) + (x.salle ? ' · ' + x.salle : '') + (x.theme ? ' · ' + x.theme : '')) + '</span><b>' + esc(heure(x.debut) || 'À préciser') + '</b></div>').join('')
-          : '<p class="doux">Pas encore de passage pour vous : l’agence prépare le programme.</p>') +
-        (prog.length ? '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-programme="' + esc(e.jeton) + '" aria-expanded="' + !!programmeOuvert[e.jeton] + '">📋 ' + (programmeOuvert[e.jeton] ? 'Masquer le programme' : 'Tout le programme') + '</button>' : '') +
-        (programmeOuvert[e.jeton] ? toutLeProgramme(prog) : '') + '</div>'
-        : '<button type="button" class="ap-btn' + (sombre ? ' clair' : '') + '" data-passages="' + esc(e.jeton) + '">👠 Voir mes passages</button>') : '') +
+      (sombre && !e.passe ? ' · ' + esc(dansCombien(e)) : '') + '</span>' + pastilleReponse(e) + '</div>' +
+      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3>' + infosEvenement(e) + blocPassages(e, sombre) +
       boutonsReponse(e, sombre) + '</article>';
+  }
+  const dansCombien = (e) => { const j = dansJours(e.date_debut); return j <= 0 ? 'aujourd’hui' : j === 1 ? 'demain' : 'dans ' + j + ' jours'; };
+  // Événements façon application de billets (11/11/2026, maquette validée par la propriétaire) : la date dans un
+  // carré blanc, le prochain en grand, les suivants en lignes qu'on touche pour les ouvrir
+  const MOIS_COURTS_EV = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
+  const pave = (e) => '<span class="ap-ev-date" aria-hidden="true"><b>' + esc(String(e.date_debut).slice(8, 10)) + '</b><small>' + MOIS_COURTS_EV[Number(String(e.date_debut).slice(5, 7)) - 1] + '</small></span>';
+  function infosBillet(e) {
+    const ligne = (ic, haut, bas) => '<dt>' + ic + '</dt><dd>' + haut + (bas ? '<small>' + bas + '</small>' : '') + '</dd>';
+    return '<dl class="ap-ev-infos">' +
+      (e.date_fin && e.date_fin !== e.date_debut ? ligne('📅', esc(datesEvenement(e))) : '') +
+      (e.heure_convocation ? ligne('🕒', 'Convocation à <b>' + esc(heure(e.heure_convocation)) + '</b>', e.heure_evenement ? 'Début à ' + esc(heure(e.heure_evenement)) : '')
+        : e.heure_evenement ? ligne('🕒', 'Début à <b>' + esc(heure(e.heure_evenement)) + '</b>') : '') +
+      (e.lieu || e.ville ? ligne('📍', esc(e.lieu || e.ville), e.lieu && e.ville ? esc(e.ville) : '') : '') + '</dl>';
+  }
+  function billetUne(e) {
+    return '<article class="ap-ev-une"><div class="ap-ev-haut">' + pave(e) + '<div><small class="ap-ev-type">' + esc(libelleTypeAgenda(e.type)) + '</small>' +
+      '<h3 class="ap-ev-titre">' + esc(e.titre) + '</h3><span class="ap-ev-compte">⏳ ' + esc(dansCombien(e)) + '</span> ' + pastilleReponse(e) + '</div></div>' +
+      '<div class="ap-ev-corps">' + infosBillet(e) + boutonsReponse(e, false) + '</div></article>' +
+      (e.defile && e.reponse === 'confirme' ? '<h2 class="ap-titre-sec">Mes passages</h2><div class="ap-ev-passages">' + blocPassages(e, false) + '</div>' : '');
+  }
+  function billetMini(e) {
+    const sous = [e.lieu || e.ville, e.heure_convocation ? heure(e.heure_convocation) : heure(e.heure_evenement)].filter(Boolean).join(' · ');
+    return '<article class="ap-ev-mini' + (e.passe ? ' passe' : '') + '"><details' + (programmeOuvert['mini-' + e.jeton] ? ' open' : '') + ' data-mini="' + esc(e.jeton) + '"><summary>' + pave(e) +
+      '<span class="ap-ev-mini-t"><b>' + esc(e.titre) + '</b><small>' + esc(sous) + '</small></span>' + pastilleReponse(e) + '</summary>' +
+      '<div class="ap-ev-corps">' + infosBillet(e) + blocPassages(e, true) + boutonsReponse(e, true) + '</div></details></article>';
   }
 
   // tout le programme du défilé, jour par jour : ses passages soulignés, les autres avec leur visage
@@ -274,15 +307,16 @@
   }
   function ecranEvenements() {
     const avenir = aVenir(), passes = etat.evenements.filter((e) => e.passe).reverse();
-    const liste = periode === 'avenir' ? avenir : passes;
     const confirmes = avenir.filter((e) => e.reponse === 'confirme');
-    return '<div class="ap-onglets" role="tablist"><button type="button" role="tab" data-periode="avenir" aria-selected="' + (periode === 'avenir') + '">À venir (' + avenir.length + ')</button>' +
-      '<button type="button" role="tab" data-periode="passes" aria-selected="' + (periode === 'passes') + '">Passés (' + passes.length + ')</button></div>' +
-      (!etat.evenementsActifs ? '<div class="ap-carte doux">Vos convocations apparaîtront ici très bientôt.</div>'
-        : liste.length ? liste.map((e, i) => carteEvenement(e, periode === 'avenir' && i === 0 ? 'sombre' : '')).join('')
-        : '<div class="ap-carte doux">' + (periode === 'avenir' ? 'Aucune convocation à venir.' : 'Aucun événement passé pour le moment.') + '</div>') +
-      (periode === 'avenir' && confirmes.length ? '<h2 class="ap-titre-sec">Ma carte d’accès</h2>' + carteAcces(confirmes[0]) +
-        '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '');
+    const onglets = '<div class="ap-onglets ap-seg" role="tablist"><button type="button" role="tab" data-periode="avenir" aria-selected="' + (periode === 'avenir') + '">À venir · ' + avenir.length + '</button>' +
+      '<button type="button" role="tab" data-periode="passes" aria-selected="' + (periode === 'passes') + '">Passés · ' + passes.length + '</button></div>';
+    if (!etat.evenementsActifs) return onglets + '<div class="ap-carte doux">Vos convocations apparaîtront ici très bientôt.</div>';
+    if (periode === 'passes') return onglets + (passes.length ? passes.map(billetMini).join('') : '<div class="ap-carte doux">Aucun événement passé pour le moment.</div>');
+    if (!avenir.length) return onglets + '<div class="ap-carte doux">Aucune convocation à venir. Dès que l’agence vous convoque, elle apparaît ici.</div>';
+    return onglets + billetUne(avenir[0]) +
+      (confirmes.length ? '<h2 class="ap-titre-sec">Ma carte d’accès</h2>' + carteAcces(confirmes[0]) +
+        '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '') +
+      (avenir.length > 1 ? '<h2 class="ap-titre-sec">Ensuite</h2>' + avenir.slice(1).map(billetMini).join('') : '');
   }
   // « Mon profil » façon réseau social (11/11/2026, maquette validée par la propriétaire) : couverture et photo ronde
   // qu'on touche pour choisir une photo dans la galerie (elle rejoint aussi le Book), chiffres, phrase, boutons
@@ -495,6 +529,7 @@
   }
 
   // ---------- actions ----------
+  racine.addEventListener('toggle', (e) => { const m = e.target.closest && e.target.closest('[data-mini]'); if (m) programmeOuvert['mini-' + m.dataset.mini] = m.open; }, true);
   racine.addEventListener('click', async (e) => {
     const notif = e.target.closest('[data-notifications]');
     if (notif) { await activerNotifications(notif); return; }
