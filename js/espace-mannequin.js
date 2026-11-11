@@ -740,6 +740,7 @@ function render(){
   // Profil mis en sourdine par l'agence : plus aucun formulaire, seulement le message
   // (la base refuse de toute façon toute modification, Extension 135).
   if (state.meta.desactive) { app.innerHTML = viewSourdine(); return; }
+  if (state.meta.studio === 'compcard') { app.innerHTML = viewStudioCompcard(); bindStudioCompcard(); return; }
   const enModeGuide = !state.meta.premierePublicationFaite;
   if (enModeGuide) {
     if (state.meta.statutAffichage === 'en_attente') { app.innerHTML = viewConfirmation(); return; }
@@ -1393,6 +1394,88 @@ function retirerDeCompcardLocal(photo){
 // l'écouteur était auparavant ajouté à chaque fois (un clic = plusieurs enregistrements).
 let ecouteChoixBookPose = false;
 
+// Une photo du Book reçoit une case de la compcard (1 à 5) ; utilisé par le bloc Photos et l'écran « Ma compcard »
+async function assignerCompcardSlot(photo, slot){
+  if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
+  const ok = await Store.setCompcardOrdre(photo.id, slot);
+  if (ok) {
+    // même chose à l'écran : l'ancienne photo de cette case la quitte
+    state.photos.book.forEach(function(ph){ if (ph !== photo && ph.compcardOrdre === slot) ph.compcardOrdre = null; });
+    photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot);
+  }
+  return ok;
+}
+
+/* ------------------------------------------------ ÉCRAN « MA COMPCARD » ---
+   (11/11/2026, maquette validée par la propriétaire) ouvert depuis l'application (Mon profil › Compcard,
+   adresse …#compcard) : les 5 cases en grand, on touche une case → la galerie du téléphone s'ouvre → la photo
+   rejoint le Book et prend la case. Puis la vraie compcard : aperçu, PDF, image, envoi par WhatsApp. */
+const CASES_COMPCARD = ['Principale', 'Plein pied', 'Profil', 'Mouvement', 'Libre'];
+function viewStudioCompcard(){
+  const parCase = {};
+  state.photos.book.forEach(function(ph){ if (ph.compcardOrdre) parCase[ph.compcardOrdre] = ph; });
+  const nb = Object.keys(parCase).length;
+  const caseHtml = function(n){
+    const ph = parCase[n];
+    return '<label class="sc-case sc-case-'+n+(ph?' pleine':'')+'"><span class="sc-num">'+n+(n===1?' · PRINCIPALE':'')+'</span>' +
+      (ph ? '<img src="'+echapperHtml(ph.url)+'" alt="Photo '+n+' de la compcard"><span class="sc-changer">Changer</span>'
+          : '<span class="sc-vide"><b>＋</b>'+CASES_COMPCARD[n-1]+'<small>depuis la galerie</small></span>') +
+      '<input class="hidden-input" type="file" accept="image/*" data-sc-case="'+n+'" aria-label="Choisir la photo '+n+' de la compcard dans la galerie"></label>';
+  };
+  return '<div class="sc-studio">' +
+    '<div class="sc-tete"><a class="sc-retour" href="/app/#profil" aria-label="Retour à mon profil">‹</a><h1>Ma compcard</h1></div>' +
+    '<p class="sc-sous">Vos 5 plus belles photos, celles que l’agence envoie aux clients. Touchez une case pour choisir une photo dans votre galerie.</p>' +
+    '<div class="sc-prog"><div><i data-largeur="'+(nb*20)+'"></i></div>'+nb+' / 5</div>' +
+    '<div class="sc-grille">'+caseHtml(1)+'<div class="sc-droite">'+[2,3,4,5].map(caseHtml).join('')+'</div></div>' +
+    '<div class="sc-conseil">💡 <b>Conseil de l’agence :</b> un portrait souriant en 1, puis une photo en pied, un profil, une photo en mouvement.</div>' +
+    '<div class="sc-actions"><button type="button" class="btn primary" id="scVoir">Voir ma compcard</button>' +
+    '<div class="sc-deux"><button type="button" class="btn ghost" id="scPdf">📄 PDF</button><button type="button" class="btn ghost" id="scJpeg">🖼️ Image</button></div>' +
+    '<button type="button" class="btn ghost" id="scWhatsapp">↗ Envoyer par WhatsApp</button></div>' +
+  '</div>';
+}
+function bindStudioCompcard(){
+  document.querySelectorAll('.sc-prog i[data-largeur]').forEach(function(i){ i.style.width = i.dataset.largeur + '%'; });
+  document.querySelectorAll('[data-sc-case]').forEach(function(input){
+    input.addEventListener('change', async function(){
+      const file = input.files && input.files[0];
+      const n = parseInt(input.dataset.scCase, 10);
+      input.value = '';
+      if (!file) return;
+      if (state.photos.book.length >= LIMITE_PHOTOS_BOOK) { toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true); return; }
+      const lab = input.closest('.sc-case'); if (lab) lab.classList.add('envoi');
+      toast('Envoi de la photo…');
+      const item = await Store.uploadPhoto(file);
+      if (item) { state.photos.book.push(item); await assignerCompcardSlot(item, n); }
+      render();
+    });
+  });
+  const pret = function(){
+    if (!state.photos.book.some(function(ph){ return ph.compcardOrdre; })) { toast('Choisissez d’abord au moins une photo de compcard.', true); return false; }
+    return true;
+  };
+  document.getElementById('scVoir').addEventListener('click', function(){ if (pret()) openCompcard(); });
+  document.getElementById('scPdf').addEventListener('click', function(){ if (pret()) void genererFiche('pdf', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
+  document.getElementById('scJpeg').addEventListener('click', function(){ if (pret()) void genererFiche('jpeg', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
+  document.getElementById('scWhatsapp').addEventListener('click', async function(){
+    if (!pret()) return;
+    const btn = this, texte = btn.textContent; btn.disabled = true; btn.textContent = 'Préparation…';
+    try {
+      const canvas = await construireCanvasCompcard(ficheDataDepuisEtat());  // (js/app.js, même dessin que le PDF)
+      const blob = await new Promise(function(ok){ canvas.toBlob(ok, 'image/jpeg', 0.92); });
+      const fichier = new File([blob], 'compcard-' + ((state.identite.nomComplet||'mannequin').split(' ')[0]||'mannequin').toLowerCase() + '.jpg', { type: 'image/jpeg' });
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        try { await navigator.share({ files: [fichier], title: 'Ma compcard', text: 'Ma compcard · Maître Akesse Model Management' }); } catch (e) { /* partage annulé */ }
+      } else {
+        telechargerFichier(canvas.toDataURL('image/jpeg', 0.92), fichier.name);  // (js/app.js)
+        toast('Compcard enregistrée : joignez-la dans WhatsApp.');
+      }
+    } catch (e) {
+      signalerProbleme('Compcard : envoi WhatsApp échoué', (e && e.message) || String(e), e && e.stack);
+      toast('La compcard n’a pas pu être préparée. Réessayez.', true);
+    } finally { btn.disabled = false; btn.textContent = texte; }
+  });
+}
+
 function bindPhotoHandlers(){
   const s = state;
   const fBook = document.getElementById('fBook');
@@ -1485,16 +1568,6 @@ function bindPhotoHandlers(){
   async function assignerPrincipale(photo){ const ok = await Store.setRolePhoto('principale', photo.id); if (ok) { s.photos.principale=photo; toast('Photo de profil définie'); } return ok; }
   async function assignerPleinPied(photo){ const ok = await Store.setRolePhoto('photo_pleinpied', photo.id); if (ok) { s.photos.pleinPied=photo; toast('Photo plein pied définie'); } return ok; }
   async function assignerCouverture(photo){ const ok = await Store.setRolePhoto('photo_couverture', photo.id); if (ok) { s.photos.couverture=photo; toast('Photo de couverture définie'); } return ok; }
-  async function assignerCompcardSlot(photo, slot){
-    if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
-    const ok = await Store.setCompcardOrdre(photo.id, slot);
-    if (ok) {
-      // même chose à l'écran : l'ancienne photo de cette case la quitte
-      state.photos.book.forEach(function(ph){ if (ph !== photo && ph.compcardOrdre === slot) ph.compcardOrdre = null; });
-      photo.compcardOrdre = slot; toast('Photo affectée à l’emplacement '+slot);
-    }
-    return ok;
-  }
 
   document.getElementById('uPhotoCv')?.addEventListener('click', function(){
     ouvrirChoixBook(async function(photo){ if (await assignerPhotoCv(photo)) { render(); reopenDashboardBlock('photos'); } });
@@ -1950,7 +2023,8 @@ async function demarrerApresConnexion(){
   if (!state.meta.currentStep) state.meta.currentStep = 1;
   // (11/11/2026) raccourcis « Compcard », « Mon CV », « Mes photos » de l'application (onglet Mon profil) : la page
   // s'ouvre directement sur les photos (étape 5 des 6 étapes, ou bloc Photos une fois le profil validé)
-  if (/^#(compcard|cv|photos)$/.test(location.hash)) {
+  if (location.hash === '#compcard') state.meta.studio = 'compcard';
+  else if (/^#(cv|photos)$/.test(location.hash)) {
     if (state.meta.premierePublicationFaite) state.meta.editBlock = 'photos'; else state.meta.currentStep = 5;
   }
   render();

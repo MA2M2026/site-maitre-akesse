@@ -359,3 +359,40 @@ body.ap-page-profil .step-tab .pastille-rouge { position: absolute; top: -6px; r
   color: #FFFFFF; font: 300 34px/1 'Work Sans', sans-serif; }
 .ap-vitrine-ajout span { font: 600 11.5px 'Work Sans', sans-serif; margin-top: 4px; }
 .ap-vitrine-avatar:focus-within, .ap-vitrine-couv:focus-within, .ap-vitrine-ajout:focus-within { outline: 3px solid #FFFFFF; outline-offset: 2px; }
+
+/* ---------- Écran « Ma compcard » (11/11/2026, maquette validée par la propriétaire ; js/espace-mannequin.js) ----------
+   les 5 cases en grand : la 1 (principale) haute à gauche, les 2 à 5 en carré à droite ; on touche une case → galerie. */
+body.ap-page-profil .sc-studio { color: #FFFFFF; padding-bottom: 10px; }
+body.ap-page-profil .sc-tete { display: flex; align-items: center; gap: 12px; margin: 4px 0 6px; }
+body.ap-page-profil .sc-retour { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); color: #FFFFFF;
+  display: flex; align-items: center; justify-content: center; font: 400 24px/1 'Work Sans', sans-serif; text-decoration: none; }
+body.ap-page-profil .sc-tete h1 { margin: 0; font: 600 30px/1.1 'Cormorant Garamond', serif; color: #FFFFFF; }
+body.ap-page-profil .sc-sous { margin: 4px 0 14px; font-size: 13.5px; line-height: 1.5; opacity: 0.9; }
+body.ap-page-profil .sc-prog { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font: 700 12.5px 'Work Sans', sans-serif; }
+body.ap-page-profil .sc-prog div { flex: 1; height: 5px; border-radius: 5px; background: rgba(255, 255, 255, 0.22); overflow: hidden; }
+body.ap-page-profil .sc-prog i { display: block; height: 100%; width: 0; background: #FFFFFF; transition: width 0.4s ease; }
+body.ap-page-profil .sc-grille { display: flex; gap: 8px; height: 118vw; max-height: 520px; min-height: 360px; }
+body.ap-page-profil .sc-grille > .sc-case { flex: 1.25 1 0; }
+body.ap-page-profil .sc-droite { flex: 1 1 0; display: flex; flex-wrap: wrap; gap: 8px; align-content: stretch; }
+body.ap-page-profil .sc-droite .sc-case { flex: 1 1 calc(50% - 4px); height: calc(50% - 4px); min-width: 0; }
+body.ap-page-profil .sc-case { position: relative; display: block; overflow: hidden; cursor: pointer; border-radius: 16px; background: rgba(255, 255, 255, 0.08);
+  border: 1.5px dashed rgba(255, 255, 255, 0.5); }
+body.ap-page-profil .sc-case.pleine { border: 0; }
+body.ap-page-profil .sc-case img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
+body.ap-page-profil .sc-case.envoi { opacity: 0.55; }
+body.ap-page-profil .sc-case:focus-within { outline: 3px solid #FFFFFF; outline-offset: 2px; }
+body.ap-page-profil .sc-num { position: absolute; z-index: 2; left: 8px; top: 8px; padding: 3px 9px; border-radius: 20px; background: #FFFFFF; color: var(--rouge-mat, #7C2128);
+  font: 700 11px 'Work Sans', sans-serif; }
+body.ap-page-profil .sc-changer { position: absolute; z-index: 2; right: 8px; bottom: 8px; padding: 5px 11px; border-radius: 20px; background: rgba(90, 20, 27, 0.82);
+  font: 600 11.5px 'Work Sans', sans-serif; }
+body.ap-page-profil .sc-vide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px;
+  text-align: center; font: 600 12.5px/1.25 'Work Sans', sans-serif; }
+body.ap-page-profil .sc-vide b { font: 300 36px/1 'Work Sans', sans-serif; }
+body.ap-page-profil .sc-vide small { font-weight: 400; font-size: 10.5px; opacity: 0.8; }
+body.ap-page-profil .sc-conseil { margin: 14px 0 0; padding: 11px 13px; border-radius: 14px; background: rgba(255, 255, 255, 0.1); font-size: 12.5px; line-height: 1.5; }
+body.ap-page-profil .sc-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+body.ap-page-profil .sc-actions .btn { width: 100%; margin: 0; min-height: 46px; }
+body.ap-page-profil .sc-actions .btn.primary { background: #FFFFFF; color: var(--rouge-mat, #7C2128); border-color: #FFFFFF; }
+body.ap-page-profil .sc-actions .btn.ghost { background: rgba(255, 255, 255, 0.14); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.3); }
+body.ap-page-profil .sc-deux { display: flex; gap: 9px; }
+body.ap-page-profil .sc-deux .btn { flex: 1; }
