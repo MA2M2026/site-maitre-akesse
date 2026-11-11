@@ -21,6 +21,8 @@
       if (pasActivee(e)) return P.entete('Bulletins trimestriels') + '<div class="carte vide">Les bulletins ne sont pas encore activés : il faut d’abord coller le fichier <b>supabase-bulletins.sql</b> dans Supabase.</div>';
       throw e;
     }
+    if (!d || Array.isArray(d)) d = {};  // (réponse vide : la page s'affiche quand même, sans mannequin)
+    d.mannequins = d.mannequins || [];
     const visages = await P.photosCouverture(d.mannequins.map((m) => m.compte).filter(Boolean)).catch(() => ({}));
     const parId = new Map((d.bulletins || []).map((b) => [b.mannequin, b]));
     const pres = new Map(), annulees = periode ? (periode.annulees || []).map((a) => a.dimanche) : [];

@@ -457,8 +457,8 @@
     const badges = site ? { castings: (site.nouvelles || 0) + (site.recruteurs || 0), mannequins: site.aValider || 0 } : {};
     const siteT = P.moi.espaces.site && P.TUILES_SITE ? P.TUILES_SITE : [];
     siteT.filter((x) => !x.discret).forEach((x) => l.push(['#/site/tuile-' + x.cle, x.ic, x.titre, x.sous, badges[x.cle], false]));
-    if (P.moi.espaces.paiements && P.espaces.paiements) l.push(['#/paiements/' + premierePage(P.espaces.paiements), '💳', 'Paiements', 'Mensualités, cachets', paiements && paiements.declares, false]);
-    if (P.moi.espaces.compta && P.espaces.compta) l.push(['#/compta/' + premierePage(P.espaces.compta), '📒', 'Comptabilité', 'Recettes, dépenses', 0, false]);
+    if (P.moi.espaces.paiements && P.espaces.paiements) l.push(['#/paiements/' + (P.espaces.paiements.pages.accueil ? 'accueil' : premierePage(P.espaces.paiements)), '💳', 'Paiements', 'Mensualités, cachets', paiements && paiements.declares, false]);
+    if (P.moi.espaces.compta && P.espaces.compta) l.push(['#/compta/' + (P.espaces.compta.pages.accueil ? 'accueil' : premierePage(P.espaces.compta)), '📒', 'Comptabilité', 'Recettes, dépenses', 0, false]);
     siteT.filter((x) => x.discret).forEach((x) => l.push(['#/site/tuile-' + x.cle, x.ic, x.titre, x.sous, 0, true]));
     return l.length ? '<h2 class="tu-titre apparait" style="--i:3">Tout gérer</h2><div class="tuiles-accueil">' + l.map((x, i) => tuile(x[0], x[1], x[2], x[3], x[4], x[5], i)).join('') + '</div>' : '';
   }

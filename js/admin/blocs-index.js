@@ -10,8 +10,8 @@
   if (!P || !P.espaces) return;
   const GROUPES = {
     paiements: [
-      { cle: 'mois', ic: '📅', titre: 'Ce mois-ci', pages: ['tableau', 'a-valider', 'mensualites', 'messages'], plus: ['rapprochement', 'recapitulatif', 'figes'] },
-      { cle: 'mannequins', ic: '💃', titre: 'Mannequins', pages: ['registre', 'ajouter', 'codes', 'reprise'], plus: ['sorties', 'matrice'] },
+      { cle: 'mois', ic: '📅', titre: 'Ce mois-ci', pages: ['tableau', 'a-valider', 'mensualites', 'messages'], plus: ['matrice', 'rapprochement', 'recapitulatif', 'figes'] },
+      { cle: 'mannequins', ic: '💃', titre: 'Mannequins', pages: ['registre', 'ajouter', 'codes', 'reprise'], plus: ['sorties'] },
       { cle: 'reglages', ic: '⚙️', titre: 'Réglages', pages: ['parametres'], plus: ['archives-rodage'] }
     ],
     compta: [
@@ -67,7 +67,9 @@
     const esp = P.espaces[module];
     if (!esp) return;
     esp.pages.accueil = async () => pageAccueil(module);
-    esp.nav.unshift(['accueil', 'Toutes les rubriques']);  // première page du bloc (barre du bas, accueil)
+    // en fin de liste : la première rubrique (Tableau du mois…) reste la page d'arrivée d'un compte à un seul bloc ;
+    // les tuiles de l'accueil mènent, elles, à cette page d'entrée (js/admin/coque.js)
+    esp.nav.push(['accueil', 'Toutes les rubriques']);
   });
   // menu de côté d'une rubrique : seulement son groupe (js/admin/coque.js)
   P.groupeBloc = (module, page) => {

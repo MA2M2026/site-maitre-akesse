@@ -24,9 +24,12 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(await p.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(124, 33, 40)'), n + 'fond rouge très mat (#7C2128)');
     // toutes les pages des menus des trois espaces
     const pages = ['#/'];
+    // (11/11/2026 : les menus ne montrent plus que le groupe de la rubrique) toutes les rubriques des espaces, et les tuiles
     for (const esp of ['site', 'paiements', 'compta', 'securite']) {
       await p.goto(BASE + '#/' + esp); await p.waitForSelector('.lateral .nav', { state: 'attached', timeout: 10000 });
-      for (const h of await p.$$eval('.lateral a.nav', (l) => l.map((a) => a.getAttribute('href')))) if (h && !pages.includes(h)) pages.push(h);
+      const toutes = await p.evaluate((e) => { const P = window.Portail; return P.espaces[e].nav.filter((n) => n[0] && (!n[2] || n[2]())).map((n) => '#/' + e + '/' + n[0])
+        .concat(e === 'site' && P.TUILES_SITE ? P.TUILES_SITE.map((x) => '#/site/tuile-' + x.cle) : []); }, esp);
+      for (const h of toutes.concat(await p.$$eval('.lateral a.nav', (l) => l.map((a) => a.getAttribute('href'))))) if (h && !pages.includes(h)) pages.push(h);
     }
     const pales = [], interdits = [];
     for (const h of pages) {
