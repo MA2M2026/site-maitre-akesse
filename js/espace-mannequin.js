@@ -1801,7 +1801,10 @@ function viewDashboard(){
   let bandeau = '';
   if (state.meta.statutAffichage === 'en_attente') bandeau = '<div class="online-banner p20-7"><span class="dot p20-4"></span> Modifications en cours de revalidation par l’agence</div>';
   else if (state.meta.statutAffichage === 'refuse') bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Correction demandée'+(state.meta.commentaireAdmin?' · « '+echapperHtml(state.meta.commentaireAdmin)+' »':'')+'</div>';
-  else bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne, visible sur le site</div>';
+  else if (state.meta.statutAffichage === 'valide') bandeau = '<div class="online-banner"><span class="dot p20-3"></span> Profil en ligne, visible sur le site</div>';
+  // (11/11/2026, signalé par la propriétaire) profil jamais publié mais marqué « déjà formé » par le rattrapage de
+  // l'Extension 43 : le bandeau disait à tort « en ligne » ; l'Extension 161 les renvoie vers les 6 étapes.
+  else bandeau = '<div class="online-banner p20-5"><span class="dot p20-2"></span> Profil pas encore en ligne : il doit d’abord être validé par l’agence</div>';
 
   // Rappel (non bloquant) des blocs encore incomplets — le profil reste en
   // ligne tel quel, mais un book/fiche plus complet est plus attrayant pour
