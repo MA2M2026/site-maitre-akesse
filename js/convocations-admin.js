@@ -206,7 +206,7 @@ window.demarrerConvocationsPanneau = function () {
       if (!deja) { parGroupe[g] = x; convoques.push(x); return; }
       if (!deja.reponse && x.reponse) { convoques[convoques.indexOf(deja)] = x; parGroupe[g] = x; }
     });
-    if (!convoques.length) { boite.textContent = 'Personne n’a encore été convoqué pour ce projet.'; return false; }
+    if (!convoques.length) { boite.textContent = 'Personne n’a encore été convoqué pour ce projet.'; boite.dataset.bilan = ''; return false; }
     var groupes = [
       ['confirme', '✅ Confirmé', convoques.filter(function (x) { return x.reponse === 'confirme'; })],
       ['absent', '❌ Absent', convoques.filter(function (x) { return x.reponse === 'absent'; })],
@@ -216,6 +216,15 @@ window.demarrerConvocationsPanneau = function () {
     titre.className = 'convoc-chiffres';
     titre.textContent = convoques.length + ' convoqué(s) · ' + groupes.map(function (g) { return g[2].length + ' ' + g[1].replace(/^\S+ /, '').toLowerCase(); }).join(' · ');
     boite.appendChild(titre);
+    // (11/11/2026, Convocations en étapes) les trois chiffres en tuiles ; le total sert à l'onglet « Réponses · 8/12 »
+    var tuiles = document.createElement('div');
+    tuiles.className = 'convoc-tuiles';
+    [['confirme', 'confirmées'], ['attente', 'sans réponse'], ['absent', 'absentes']].forEach(function (t) {
+      var g = groupes.find(function (x) { return x[0] === t[0]; }), c = document.createElement('span'), b = document.createElement('b');
+      c.className = 'convoc-tuile-' + t[0]; b.textContent = g[2].length; c.appendChild(b); c.appendChild(document.createTextNode(t[1])); tuiles.appendChild(c);
+    });
+    boite.appendChild(tuiles);
+    boite.dataset.bilan = groupes[0][2].length + '/' + convoques.length;
     var barre = document.createElement('div');
     barre.className = 'convoc-barre';
     barre.setAttribute('role', 'img');

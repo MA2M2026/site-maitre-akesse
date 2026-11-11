@@ -428,7 +428,7 @@
     const auj = P.aujourdhui(), enCours = p.date_debut === auj || (p.date_fin && p.date_debut <= auj && p.date_fin >= auj);
     const j = String(p.date_debut).slice(0, 10).split('-');
     const r = site.reponses;
-    return '<a class="affiche affiche-ligne apparait" href="#/site/b2-convocations" style="--i:2"><span class="af-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'][Number(j[1]) - 1] + '</small></span>' +
+    return '<a class="affiche affiche-ligne apparait" href="#/site/b2-convocations" data-projet="' + P.esc(p.id) + '" style="--i:2"><span class="af-date" aria-hidden="true"><b>' + Number(j[2]) + '</b><small>' + ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'][Number(j[1]) - 1] + '</small></span>' +
       '<span class="txt"><span class="surtitre">' + (enCours ? 'Aujourd’hui' : 'Prochain événement') + (p.lieu || p.ville ? ' · ' + P.esc([p.lieu, p.ville].filter(Boolean).join(', ')) : '') + '</span>' +
       '<span class="titre">' + P.esc(p.titre) + '</span>' +
       (r ? '<span class="reponses">' + r.confirme + ' sur ' + r.total + ' confirmées' + (r.sans ? ' · ' + r.sans + ' sans réponse' : '') + '</span>' +
@@ -524,6 +524,9 @@
   };
   P.apresPortail = () => {
     brancherRecherche();
+    // le prochain événement touché : son projet s'ouvre directement dans les Convocations (js/admin/site-convocations.js)
+    const af = document.querySelector('.affiche[data-projet]');
+    if (af) af.addEventListener('click', () => { window.convocationDemandee = af.dataset.projet; });
     P.animerChiffres(document.getElementById('app'));
     // la jauge des réponses se remplit après l'apparition de l'affiche
     setTimeout(() => document.querySelectorAll('.affiche .jauge i[data-largeur]').forEach((i) => { i.style.width = i.dataset.largeur + '%'; }), 350);

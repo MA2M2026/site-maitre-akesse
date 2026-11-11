@@ -258,5 +258,12 @@ window.demarrerConvocationsPage = function (racine) {
   if (racine && window.convocationDemandee) { projetChoisi = { id: window.convocationDemandee }; window.convocationDemandee = null; }
   if (!racine) new MutationObserver(siVisible).observe(section, { attributes: true, attributeFilter: ['class'] });
   siVisible();
+  // (11/11/2026) pour le parcours en étapes (js/admin/site-convocations.js) : projets chargés, choisir un projet
+  window.ConvocationsPage = {
+    pret: function () { return Promise.resolve(chargement); },
+    projets: function () { return projets; },
+    choisi: function () { return projetChoisi && projetChoisi.titre ? projetChoisi : null; },
+    choisir: function (id) { var p = projets.find(function (x) { return x.id === id; }) || null; $('cv-projet').value = p ? p.id : ''; remplir(p); return p; }
+  };
 };
 window.demarrerConvocationsPage();
