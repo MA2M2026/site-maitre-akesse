@@ -5,7 +5,9 @@
    Les boutons gardent les couleurs du bouton unique du site (css/bouton-ma2m.css, maître des couleurs) ; dans ces
    pages ils sont seulement arrondis (--bouton-rayon) avec un reflet (accord de la propriétaire, 10/11/2026). */
 
-:root { --lx-verre: rgba(255, 255, 255, 0.07); --lx-verre-fort: rgba(255, 255, 255, 0.11); --lx-lisere: rgba(255, 255, 255, 0.22); }
+/* (11/11/2026, demande de la propriétaire : plus aucun « voile blanc » qui pâlit le rouge — les cartes et écrins sont
+   du même rouge mat que la page, seul un liseré blanc les dessine) */
+:root { --lx-verre: rgba(0, 0, 0, 0.06); --lx-verre-fort: rgba(0, 0, 0, 0.1); --lx-lisere: rgba(255, 255, 255, 0.3); }
 .lx-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
 
 /* ---------- couverture : photo de mannequin, voile rouge, cadre fin, titre */
@@ -61,7 +63,7 @@
 .lx-ornement::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; transform: rotate(45deg); border: 1px solid #fff; background: var(--rouge-mat); }
 
 /* ---------- trois points numérotés en chiffres romains */
-.lx-promesse { padding: 6rem 0 5rem; background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 60%); }
+.lx-promesse { padding: 6rem 0 5rem; }
 .lx-piliers { list-style: none; margin: 3rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
 @media (min-width: 860px) { .lx-piliers { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
 .lx-piliers li { position: relative; padding: 2rem 1.6rem 1.6rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.35); }
@@ -104,18 +106,18 @@
 
 /* ---------- carte de verre dépoli à liseré blanc (formules, étapes, avantages…) */
 .lx-verre { position: relative; overflow: hidden; border-radius: 8px; color: #fff;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 45%, rgba(90, 20, 27, 0.55) 100%);
-  border: 1px solid var(--lx-lisere); box-shadow: 0 30px 60px -30px rgba(90, 20, 27, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: var(--rouge-mat, #7C2128);
+  border: 1px solid var(--lx-lisere); box-shadow: 0 30px 60px -30px rgba(40, 8, 12, 0.85);
   transition: transform 0.35s ease, box-shadow 0.35s ease; }
-.lx-verre::before { content: ""; position: absolute; inset: 10px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); pointer-events: none; }
-.lx-verre:hover { transform: translateY(-6px); box-shadow: 0 40px 70px -30px rgba(90, 20, 27, 1), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.lx-verre::before { content: ""; position: absolute; inset: 10px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.14); pointer-events: none; }
+.lx-verre:hover { transform: translateY(-6px); box-shadow: 0 40px 70px -30px rgba(40, 8, 12, 0.95); }
 .lx-verre :is(h3, p, li, span, b) { color: #fff; }
 
 /* ---------- écrin du formulaire (.lx-ecrin, ou le formulaire de candidature d'une section .lx-formulaire : sa balise
    <form> reste telle quelle, le serveur la retouche — middleware.js, formulairesRemplis) */
 .lx-ecrin, .lx-formulaire #form-casting { padding: 2rem 1.4rem 1.6rem; border-radius: 10px;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(90, 20, 27, 0.6) 100%);
-  border: 1px solid var(--lx-lisere); box-shadow: 0 40px 80px -40px rgba(90, 20, 27, 1), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
+  background: var(--rouge-mat, #7C2128);
+  border: 1px solid var(--lx-lisere); box-shadow: 0 40px 80px -40px rgba(40, 8, 12, 0.9); }
 @media (min-width: 700px) { .lx-ecrin, .lx-formulaire #form-casting { padding: 2.6rem 2.6rem 2rem; } }
 .lx-formulaire { padding-top: 5rem; }
 .lx-formulaire .ca-1 { max-width: 760px; }

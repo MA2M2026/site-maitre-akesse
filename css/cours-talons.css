@@ -10,7 +10,7 @@
 
 /* avertissement « ces cours ne permettent pas d'intégrer l'agence » : verre dépoli sur la couverture */
 .ct-avertissement { margin: 1.6rem 0; padding: 1.1rem 1.3rem; max-width: 58ch; border-radius: 18px; color: #fff;
-  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.28); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  background: var(--rouge-mat, #7C2128); border: 1px solid rgba(255, 255, 255, 0.35); }  /* (11/11/2026 : plus de verre blanc flou) */
 .ct-avertissement strong { display: block; font-size: 1.02rem; color: #fff; }
 .ct-avertissement p { margin: 0.4rem 0 0.7rem; color: #fff; opacity: 0.92; }
 .ct-lien-agence { font-weight: 600; color: #fff; text-decoration: underline; text-underline-offset: 4px; }
@@ -20,7 +20,7 @@
 .ct-cartes { display: grid; grid-template-columns: 1fr; gap: 1.4rem; }
 @media (min-width: 800px) { .ct-cartes { grid-template-columns: 1fr 1fr; } }
 .ct-carte { padding: 2.6rem 2.2rem 2.2rem; }
-.ct-carte--rouge { background: linear-gradient(155deg, rgba(255, 255, 255, 0.16) 0%, rgba(124, 33, 40, 0.2) 40%, rgba(90, 20, 27, 0.9) 100%); }
+.ct-carte--rouge { background: var(--rouge-mat, #7C2128); }
 .ct-carte-num { display: inline-block; padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 600; color: #fff; }
 .ct-carte h3 { margin: 0.9rem 0 0.3rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 2.5rem; text-transform: none; letter-spacing: 0; }
@@ -69,7 +69,7 @@
 .ct-choix em { font-style: normal; font-size: 0.92rem; opacity: 0.88; }
 .ct-choix b { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; font-weight: 600; margin-top: 0.2rem; }
 .ct-choix > span::after { content: ""; position: absolute; right: 1.3rem; top: 50%; width: 1.8rem; height: 1.8rem; margin-top: -0.9rem; box-sizing: border-box;
-  border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.04); transition: all 0.25s ease; }
+  border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.7); background: transparent; transition: all 0.25s ease; }
 .ct-choix:hover > span { transform: translateY(-2px); background: var(--lx-verre-fort); border-color: rgba(255, 255, 255, 0.45); box-shadow: 0 16px 34px -18px rgba(90, 20, 27, 1); }
 .ct-choix input:checked + span { background: #fff; border-color: #fff; color: var(--rouge-profond); transform: translateY(-2px);
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18), 0 22px 40px -18px rgba(90, 20, 27, 1); }
@@ -91,7 +91,7 @@
   background: var(--lx-verre); border: 1px solid var(--lx-lisere); transition: all 0.25s ease; }
 .ct-pastille:hover span { background: var(--lx-verre-fort); }
 .ct-pastille input:checked + span { background: #fff; border-color: #fff; color: var(--rouge-profond); font-weight: 600; box-shadow: 0 10px 24px -12px rgba(90, 20, 27, 1); }
-.ct-parent { margin: 0.6rem 0 1rem; padding: 1.1rem 1.2rem; border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.04); }
+.ct-parent { margin: 0.6rem 0 1rem; padding: 1.1rem 1.2rem; border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.45); background: transparent; }
 .ct-aide { margin-bottom: 1.2rem; line-height: 1.65; opacity: 0.92; }
 .ct-vignettes { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 0.4rem; }
 .ct-vignettes figure { position: relative; margin: 0; width: 96px; height: 128px; border-radius: 14px; overflow: hidden; background: var(--rouge-profond);
@@ -100,7 +100,7 @@
 .ct-vignettes button { position: absolute; top: 5px; right: 5px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #fff; color: var(--rouge-mat); font-weight: 700; cursor: pointer; }
 .ct-info { font-size: 0.9rem; margin: 0.35rem 0 0; }
 .ct-info.err { color: #fff; font-weight: 600; }
-.ct-wave { --bouton-rayon: 999px; margin: -0.2rem 0 1rem; padding: 1.1rem 1.2rem; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.18); }
+.ct-wave { --bouton-rayon: 999px; margin: -0.2rem 0 1rem; padding: 1.1rem 1.2rem; border-radius: 18px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); }
 .ct-wave .btn { margin-bottom: 1rem; }
 .ct-boutons { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.8rem; margin-top: 1.6rem; }
 .ct-boutons .btn--principal { margin-left: auto; }

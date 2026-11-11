@@ -8,7 +8,7 @@
 .ia-choix-rapide { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 1.6rem 0 0.6rem; }
 
 .ia-section { padding: 5rem 0 2rem; }
-.ia-section--criteres { background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 65%); }
+.ia-section--criteres { background: none; }  /* (11/11/2026 : plus de halo blanc) */
 
 /* étapes : trois cartes de verre, chiffres romains */
 .ia-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 1.4rem; position: relative; }
@@ -35,7 +35,7 @@
 .ia-parcours-tete { display: flex; gap: 1rem; align-items: flex-start; }
 .ia-parcours-tete h3 { margin: 0; font-size: 2rem; color: inherit; }
 .ia-parcours-tete p { margin: 0.3rem 0 0; color: inherit; opacity: 0.9; }
-.ia-rond { flex: none; width: 1.9rem; height: 1.9rem; margin-top: 0.45rem; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.75); background: rgba(255, 255, 255, 0.04);
+.ia-rond { flex: none; width: 1.9rem; height: 1.9rem; margin-top: 0.45rem; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.75); background: transparent;
   display: grid; place-items: center; font-weight: 800; font-size: 0.95rem; transition: all 0.25s ease; }
 .ia-ligne { list-style: none; margin: 1.4rem 0 1.6rem; padding: 0 0 0 1.4rem; border-left: 1px solid rgba(255, 255, 255, 0.5); display: grid; gap: 1rem; }
 .ia-ligne li { display: grid; gap: 0.15rem; position: relative; }
