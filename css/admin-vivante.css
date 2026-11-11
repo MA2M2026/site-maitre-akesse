@@ -1358,3 +1358,5 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .if-form .if-etape { display: none; }
 .if-form[data-etape="1"] .if-etape[data-if="1"], .if-form[data-etape="2"] .if-etape[data-if="2"], .if-form[data-etape="3"] .if-etape[data-if="3"] { display: contents; }
 .if-etapes button { cursor: pointer; }
+.ecran-mg .mg-etape { color: #2a1416; }
+.ecran-mg .mg-etape .mg-resume, .ecran-mg .mg-etape .tdb-9, .ecran-mg .mg-etape .mg-consigne, .ecran-mg .mg-etape .mg-sous-titre { color: #5b4547; }
