@@ -26,9 +26,9 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: 'div.news-une.reveal', corrige_le: '2026-11-11T13:30:00Z', note: 'Fausse alerte : la grande photo « À la une » passe sous la barre de défilement de l’ordinateur (8 px), invisible ; la page ne glisse pas' },
   { motif: 'h3.parcours-sous-titre', corrige_le: '2026-11-11T13:30:00Z', note: 'Fausse alerte : le sous-titre arrive en glissant depuis la gauche (animation de 1 s), la page ne glisse pas' },
   { motif: "/cours-talons : la page s'affiche dézoomée", navigateur: 'X11; Linux', corrige_le: '2026-11-11T13:30:00Z', note: 'Fausse alerte : ordinateur Linux avec un écran inhabituel (1231 × 1899) et zoom à 65 % réglé par la personne' },
-  { motif: "of 'window.Partage'", corrige_le: '2026-11-12T01:00:00Z', note: 'Si le fichier des outils partagés ne se charge pas (coupure), le reste de la page fonctionne quand même (mise en ligne du 12/11)' },
-  { motif: "deriverNiveauMannequin' from null", corrige_le: '2026-11-12T01:00:00Z', note: 'Même correction (iPhone) : mise en ligne du 12/11' },
-  { motif: 'button#btn-envoyer.btn.btn--principal', corrige_le: '2026-11-12T01:00:00Z', note: 'Candidature : un message identique au précédent bouge maintenant (petit rappel), pour montrer que le bouton a bien réagi' },
+  { motif: "of 'window.Partage'", corrige_le: '2026-11-11T21:30:00Z', note: 'Si le fichier des outils partagés ne se charge pas (coupure), le reste de la page fonctionne quand même (mise en ligne du 11/11)' },
+  { motif: "deriverNiveauMannequin' from null", corrige_le: '2026-11-11T21:30:00Z', note: 'Même correction (iPhone) : mise en ligne du 11/11' },
+  { motif: 'button#btn-envoyer.btn.btn--principal', corrige_le: '2026-11-11T21:30:00Z', note: 'Candidature : un message identique au précédent bouge maintenant (petit rappel), pour montrer que le bouton a bien réagi' },
   // journal du 24/10/2026 (copié par la propriétaire)
   { motif: 'user-script:1', corrige_le: '2100-01-01T00:00:00Z', note: 'Programme ajouté par Chrome sur iPhone (remplissage automatique des formulaires) : pas un défaut du site, toujours ignoré' },
   { motif: 'kaspersky-labs.com', corrige_le: '2100-01-01T00:00:00Z', note: 'Antivirus Kaspersky du visiteur, qui ajoute ses propres programmes aux pages : pas un défaut du site, toujours ignoré' },
