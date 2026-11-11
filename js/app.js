@@ -780,6 +780,19 @@ async function construireCanvasCompcard(ficheData, langue) {
     }
   }
 
+  // --- Logo discret au milieu des photos (demande de la propriétaire, 11/11/2026) : à cheval entre la grande photo et
+  // les petites, il reste sur l'image même si la compcard est recadrée ou une photo découpée ; blanc, en partie transparent.
+  if (logo) {
+    const lBadge = 30, hBadge = lBadge * (logo.hauteur / logo.largeur);
+    const cx = M + lGrande + ecart / 2, cy = yPhotos + hPhotos / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.72;
+    ctx.shadowColor = 'rgba(40,8,12,0.55)';
+    ctx.shadowBlur = px(1.8);
+    ctx.drawImage(logo.canvas, px(cx - lBadge / 2), px(cy - hBadge / 2), px(lBadge), px(hBadge));
+    ctx.restore();
+  }
+
   // --- Mensurations : deux lignes fines sous les photos (libellé espacé, valeur en lettres élégantes) ---
   const champs = champsCompcard(profil, en ? 'en' : 'fr');
   const lignes = champs.length > 6 ? [champs.slice(0, 6), champs.slice(6)] : [champs];
