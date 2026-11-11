@@ -87,8 +87,8 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     // 2bis. (11/11/2026) « Envoyer un message » : une seule question, « Que voulez-vous envoyer ? »
     await p.click('.av-envoyer'); await p.waitForSelector('.tu-envois'); await p.waitForTimeout(600);
     const envois = await p.$$eval('.tu-envoi', (l) => l.map((a) => a.getAttribute('href')));
-    ok(/Que voulez-vous envoyer/.test(await p.textContent('#contenu')) && envois.join() === '#/site/b2-convocations,#/site/b2-selection,#/site/b2-rappel,#/site/b2-places,#/site/b2-infos,#/site/b2-messages-groupes',
-      n + '« Envoyer un message » : une question, six réponses (convoquer, sélection, rappel, places limitées, information, candidates)');
+    ok(/Que voulez-vous envoyer/.test(await p.textContent('#contenu')) && envois.join() === '#/site/b2-convocations,#/site/b2-selection,#/site/b2-rappel,#/site/b2-infos,#/site/b2-messages-groupes',
+      n + '« Envoyer un message » : une question, cinq réponses (convoquer, sélection, rappel, information, candidates)');
     if (tel) await capture(p, 'envoyer-tel');
     await p.click('.tu-envoi[href="#/site/b2-rappel"]'); await p.waitForSelector('#ecran-convocations', { timeout: 15000 }); await p.waitForTimeout(800);
     ok(/Rappeler l’information/.test(await p.textContent('#ecran-convocations h2')), n + '« Rappeler un événement » ouvre le bon écran, le rappel déjà choisi');

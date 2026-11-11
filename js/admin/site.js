@@ -41,8 +41,8 @@
       pages: ['b2-mannequins-publies', 'b2-validations', 'b2-presences', 'b2-bulletins', 'b2-documents'],
       plus: ['b2-exterieures', 'b3c-vedette-admin', 'b2-tri-photos', 'b2-rapport-profils'] },
     { cle: 'evenements', ic: '👠', titre: 'Événements', sous: 'Convocations, défilés, cartes',
-      pages: ['b3c-agenda', 'b2-convocations', 'b2-places', 'b2-defiles', 'b2-cartes'],  // (Places limitées remontée le 11/11, demande de la propriétaire)
-      plus: ['b2-selection', 'b2-rappel', 'b2-fiches-evenement'] },
+      pages: ['b3c-agenda', 'b2-convocations', 'b2-defiles', 'b2-cartes'],
+      plus: ['b2-selection', 'b2-rappel', 'b2-places', 'b2-fiches-evenement'] },
     { cle: 'messages', ic: '💌', titre: 'Messages', sous: 'Convoquer, annoncer, informer', envoi: true,
       pages: ['b2-messages-groupes', 'b2-infos', 'b2-contacts'], plus: [] },
     { cle: 'site', ic: '🌐', titre: 'Le site', sous: 'Actualités, textes, vidéo', discret: true,
@@ -65,7 +65,7 @@
     'b3c-agenda': ['🗓️', 'Tous les projets à venir'], 'b2-convocations': ['📨', 'Convoquer et suivre les réponses'],
     'b2-defiles': ['💃', 'Passages et salles des défilés'], 'b2-cartes': ['🎫', 'Cartes d’accès à imprimer'],
     'b2-selection': ['🎉', 'Annoncer les mannequins retenues'], 'b2-rappel': ['⏰', 'Rappeler l’information avant le jour J'],
-    'b2-places': ['🎟️', 'Les mannequins choisissent leur place, les plus rapides d’abord'], 'b2-fiches-evenement': ['🗒️', 'Fiches pratiques des événements'],
+    'b2-places': ['🎟️', 'Événements à places limitées'], 'b2-fiches-evenement': ['🗒️', 'Fiches pratiques des événements'],
     'b2-messages-groupes': ['💌', 'WhatsApp, e-mail et application, à plusieurs'], 'b2-infos': ['📢', 'Une information de l’agence à toutes'],
     'b2-contacts': ['✉️', 'Messages reçus depuis le site'],
     'actualites': ['📰', 'Les actualités du site'], 'evenements': ['🎆', 'Les événements affichés sur le site'],
@@ -90,7 +90,6 @@
     ['b2-convocations', '📨', 'Convoquer à un événement', 'Date, heure, lieu, programme et lien « Je confirme »'],
     ['b2-selection', '🎉', 'Annoncer une sélection', 'Félicitations aux mannequins retenues pour un projet'],
     ['b2-rappel', '🔔', 'Rappeler un événement', 'La date, l’heure et le lieu, à celles déjà prévenues'],
-    ['b2-places', '🎟️', 'Proposer des places limitées', 'Les plus rapides choisissent leur place elles-mêmes'],
     ['b2-infos', '📢', 'Donner une information', 'Casting, défilé, remerciement… à toutes ou à quelques-unes'],
     ['b2-messages-groupes', '✨', 'Écrire à des candidates', 'Candidatures du site, retenues, inscriptions']
   ];
