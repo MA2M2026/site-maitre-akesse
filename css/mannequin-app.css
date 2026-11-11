@@ -571,7 +571,7 @@ body.ap-page-profil .scv-apercu img { width: 100%; height: auto; display: block;
 /* Volet de paiement (11/11/2026) : « Payer avec Wave », « Payer à l'avance », « Mes reçus » sans quitter la page
    Paiements ; le contenu est celui de js/mes-paiements.js (styles .mp-* de css/mes-paiements.css) */
 body.ap-volet-ouvert { overflow: hidden; }
-.ap-volet-fond { position: fixed; inset: 0; z-index: 60; background: rgba(20, 6, 8, 0.55); display: flex; align-items: flex-end; justify-content: center; }
+.ap-volet-fond { position: fixed; inset: 0; z-index: 60; background: rgba(124, 33, 40, 0.6); display: flex; align-items: flex-end; justify-content: center; }
 .ap-volet { background: #FFFFFF; color: #1A1A1A; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; overscroll-behavior: contain;
   border-radius: 22px 22px 0 0; padding: 6px 0 calc(22px + env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3); animation: ap-volet-monte 0.22s ease-out; }
 @keyframes ap-volet-monte { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }

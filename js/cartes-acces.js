@@ -104,10 +104,9 @@
     const lieu = [projet.lieu, projet.ville].filter(Boolean).join(', ') || 'Lieu à préciser';
     const yInfos = CARTE_H - 33, ligneT = titre.taille * 0.3528 * 0.9;
     titre.lignes.forEach((l, i) => { ctx.font = '800 ' + pt(titre.taille) + 'px ' + TITRE; ctx.fillText(l, X(M), Y(yInfos - 4 - (titre.lignes.length - 1 - i) * ligneT)); });
-    ctx.font = '500 ' + pt(9) + 'px ' + TEXTE;
     [[datesProjet(projet), yInfos + 2.5], [lieu, yInfos + 8]].forEach(([t, y]) => {
       ctx.fillStyle = vif; ctx.fillRect(X(M), Y(y - 1.3), px(4.5), px(0.6));
-      ctx.fillStyle = '#ffffff'; ctx.fillText(envelopperLignesCanvas(ctx, t, px(CARTE_L - 2 * M - 30), ctx.font)[0] || t, X(M + 7), Y(y));
+      ctx.fillStyle = '#ffffff'; ctx.fillText(ligneQuiTient(ctx, t, px(CARTE_L - 2 * M - 30)), X(M + 7), Y(y));
     });
     // le numéro
     ctx.font = '800 ' + pt(20) + 'px ' + TITRE; ctx.textAlign = 'right';
@@ -120,6 +119,17 @@
     texteEspaceToile(ctx, 'MODEL · BACKSTAGE', X(M), Y(CARTE_H - 3.4), px(0.9));  // (js/app.js)
     texteEspaceToile(ctx, 'N° ' + c.numero, X(CARTE_L - M), Y(CARTE_H - 3.4), px(0.9), 'right');
     ctx.restore();
+  }
+
+  // une ligne de texte (date, lieu) qui tient dans la largeur : la police rapetisse (9 → 6,5 pt), puis « … » en dernier recours
+  function ligneQuiTient(ctx, texte, largeur) {
+    for (let taille = 9; taille >= 6.5; taille -= 0.5) {
+      ctx.font = '500 ' + pt(taille) + 'px ' + TEXTE;
+      if (ctx.measureText(texte).width <= largeur) return texte;
+    }
+    let t = texte;
+    while (t.length > 1 && ctx.measureText(t + '…').width > largeur) t = t.slice(0, -1);
+    return t.trimEnd() + '…';
   }
 
   // ---------- Le PDF ----------
@@ -181,12 +191,11 @@
     const registreDe = {}; registre.forEach((r) => { registreDe[r.id] = r; });
     const liste = [], vus = {};
     participants.forEach((x) => {
-      let cle, nom, photo = '', fiche = '';
+      let cle, nom, photo = '';
       if (x.model_id) {
         const m = profilDe[x.model_id] || {};
         cle = 'm:' + x.model_id; nom = m.full_name || x.nom;
         if (photos[x.model_id]) photo = photos[x.model_id].url;
-        if (m.published) fiche = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(x.model_id);
       } else {
         const c = carnetDe[x.contact_id] || {};
         cle = c.mannequin_id ? 'r:' + c.mannequin_id : 'c:' + x.contact_id;
@@ -194,7 +203,7 @@
       }
       if (vus[cle]) return;
       vus[cle] = true;
-      liste.push({ cle, nom: sansCivilite(nom) || '?', photo, vignette: photo && urlGrille(photos[x.model_id], true), fiche, chemin: chemins[cle] || '' });
+      liste.push({ cle, nom: sansCivilite(nom) || '?', photo, vignette: photo && urlGrille(photos[x.model_id], true), chemin: chemins[cle] || '' });
     });
     liste.sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
     liste.forEach((c, i) => { c.numero = String(i + 1).padStart(3, '0'); });
@@ -219,9 +228,12 @@
     if (!r.length) return P.entete('Cartes d’événement') + '<div class="carte vide">Cet événement n’existe plus.</div>';
     const projet = r[0], personnes = await confirmees(projet);
     Object.values((ecran && ecran.apercus) || {}).forEach((u) => URL.revokeObjectURL(u));
-    // couleur du voile : lue sur l'affiche du projet (Extension 162) ; sans affiche, noir
-    const auto = (await couleurAffiche(projet.affiche).catch(() => null)) || NOIR_BASE;
-    ecran = { projet, personnes, apercus: {}, auto, logo: (ecran && ecran.projet && ecran.projet.id === projet.id && ecran.logo) || 'aucun', logoPartenaire: (ecran && ecran.projet && ecran.projet.id === projet.id && ecran.logoPartenaire) || null };
+    // couleur du voile : lue sur l'affiche du projet (Extension 162) ; sans affiche, noir. Le même événement
+    // redessiné (photo ajoutée…) garde la couleur lue, la couleur choisie et le logo, sans relire l'affiche.
+    const avant = ecran && ecran.projet && ecran.projet.id === projet.id ? ecran : null;
+    const auto = avant && avant.affiche === projet.affiche ? avant.auto : ((await couleurAffiche(projet.affiche).catch(() => null)) || NOIR_BASE);
+    ecran = { projet, personnes, apercus: {}, auto, affiche: projet.affiche, voile: avant ? avant.voile : null, logo: (avant && avant.logo) || 'aucun', logoPartenaire: (avant && avant.logoPartenaire) || null };
+    if (ecran.logo === 'partenaire') quandPret('ca-logo-partenaire', brancherLogo);
     // photos ajoutées pour les cartes : aperçu dans la liste
     await Promise.all(personnes.filter((c) => c.chemin).map(async (c) => {
       const blob = await P.bd(sb.storage.from(STOCKAGE).download(c.chemin)).catch(() => null);
@@ -239,7 +251,7 @@
         '<fieldset class="ca-logo"><legend>Logo en haut à gauche</legend>' + [['aucun', 'Aucun'], ['agence', 'Logo de l’agence'], ['partenaire', 'Logo du partenaire']].map((o) =>
           '<label><input type="radio" name="ca-logo" value="' + o[0] + '" data-change="carte-logo"' + (ecran.logo === o[0] ? ' checked' : '') + '> ' + o[1] + '</label>').join('') + '</fieldset>' +
         '<div id="ca-logo-partenaire"' + (ecran.logo === 'partenaire' ? '' : ' hidden') + '></div>' +
-        '<label class="fl ca-couleur" for="ca-voile">Couleur du voile<input id="ca-voile" type="color" value="' + P.esc(ecran.auto) + '"></label>' +
+        '<label class="fl ca-couleur" for="ca-voile">Couleur du voile<input id="ca-voile" type="color" data-change="carte-voile" value="' + P.esc(ecran.voile || ecran.auto) + '"></label>' +
         '<p class="doux petit-texte">' + (projet.affiche ? 'Couleur prise sur l’affiche de l’événement ; vous pouvez la changer.' : 'Pas d’affiche jointe à ce projet : voile noir (joignez l’affiche dans Convocations pour prendre ses couleurs).') + '</p>' +
         '<p class="doux petit-texte">' + P.pluriel(personnes.length, 'mannequin a confirmé', 'mannequins ont confirmé') + ' sa présence. Celles qui n’ont pas encore répondu, ou qui sont absentes, n’ont pas de carte.</p>' +
         '<ul class="ca-liste">' + cartes + '</ul>' +
@@ -248,21 +260,30 @@
   }
   // réglages du badge au moment de l'impression : logo choisi, couleur du voile
   async function reglagesBadge() {
-    const voile = String((document.getElementById('ca-voile') || {}).value || ecran.auto || NOIR_BASE);
+    const voile = String((document.getElementById('ca-voile') || {}).value || ecran.voile || ecran.auto || NOIR_BASE);
     let logo = null;
     if (ecran.logo === 'agence') logo = await chargerImageLocale('/assets/logo-header.png').catch(() => null);  // (js/app.js)
     if (ecran.logo === 'partenaire' && ecran.logoPartenaire) logo = await chargerImageHauteRes(ecran.logoPartenaire, 800).catch(() => null);
     return { voile: voile.toLowerCase() === NOIR_BASE ? NOIR_BASE : voile, logo };
   }
+  P.changements['carte-voile'] = (el) => { ecran.voile = el.value; };
+  // zone « Logo du partenaire » : téléversé depuis la galerie (js/image-jointe.js)
+  function brancherLogo(zone) {
+    if (zone.dataset.pret || !window.ImageJointe) return;
+    zone.dataset.pret = '1';
+    window.ImageJointe.brancher(zone, { valeur: ecran.logoPartenaire, surChange: (url) => { ecran.logoPartenaire = url; },
+      aide: 'Le logo du partenaire (de préférence en blanc ou clair, sur fond transparent).' });
+  }
+  // (la page est posée dans l'écran juste après le retour de evenement())
+  function quandPret(id, faire, essais) {
+    const el = document.getElementById(id);
+    if (el) faire(el); else if ((essais = essais === undefined ? 40 : essais) > 0) setTimeout(() => quandPret(id, faire, essais - 1), 50);
+  }
   P.changements['carte-logo'] = (el) => {
     ecran.logo = el.value;
     const zone = document.getElementById('ca-logo-partenaire');
     zone.hidden = el.value !== 'partenaire';
-    if (!zone.hidden && !zone.dataset.pret && window.ImageJointe) {  // (js/image-jointe.js : téléversé depuis la galerie)
-      zone.dataset.pret = '1';
-      window.ImageJointe.brancher(zone, { valeur: ecran.logoPartenaire, surChange: (url) => { ecran.logoPartenaire = url; } });
-      const aide = zone.querySelector('.ij-canaux'); if (aide) aide.textContent = 'Le logo du partenaire (de préférence en blanc ou clair, sur fond transparent).';
-    }
+    if (!zone.hidden) brancherLogo(zone);
   };
   async function fabriquer(cartes, seule, bouton) {
     if (bouton) bouton.disabled = true;

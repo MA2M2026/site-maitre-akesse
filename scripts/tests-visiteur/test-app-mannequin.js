@@ -258,6 +258,10 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/REC-2026-00012/.test(await p.textContent('#ap-volet')) && /\/app\/#paiements$/.test(p.url()), n + '« Mes reçus » : les reçus dans le volet, sans changer de page');
     await p.keyboard.press('Escape'); await p.waitForTimeout(300);
     ok(!(await p.$('#ap-volet')), n + 'Échap ferme le volet');
+    await p.click('.ap-rien-a-payer + .ap-btns [data-payer="recus"]'); await p.waitForSelector('#ap-volet', { timeout: 15000 });
+    await p.evaluate(() => { location.hash = '#evenements'; }); await p.waitForTimeout(500);
+    ok(!(await p.$('#ap-volet')) && !(await p.evaluate(() => document.body.classList.contains('ap-volet-ouvert'))), n + 'retour du téléphone / autre onglet : le volet se ferme (relecture du 11/11/2026)');
+    await p.evaluate(() => { location.hash = '#paiements'; }); await p.waitForTimeout(400);
     // reprise du 1er mars (supabase-reprise-mars.sql) : où elle en est, agence fermée
     Object.assign(d.rpc.mes_mensualites, { mois: avantMois.map((x) => (x.etat === 'a_payer' ? Object.assign({}, x, { etat: 'rodage' }) : x)),
       niveaux: 2, niveau: 1, mois_niveau: 7, reste: 11, faits_avant: 7, termine: false, fermee_jusqu_au: '2027-03-01', prochaine: '2027-03-01' });

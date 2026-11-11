@@ -554,7 +554,6 @@
   function ouvrirVolet(mode) {
     if (!window.PaiementMa2m) { location.href = '/app/mes-paiements.html' + (mode === 'payer' ? '#avance' : ''); return; }
     fermerVolet();
-    let declare = false;
     const fond = document.createElement('div');
     fond.className = 'ap-volet-fond'; fond.id = 'ap-volet';
     fond.dataset.couleurLibre = '';  // (voile sombre derrière le volet : seule exception au rouge et blanc)
@@ -564,12 +563,14 @@
     fond.addEventListener('click', (e) => {
       if (e.target !== fond && !e.target.closest('[data-fermer-volet]')) return;
       fermerVolet();
-      // paiement déclaré : la page Paiements se met à jour (mois « en vérification »)
-      if (declare && etat) sb.rpc('mes_mensualites').then(({ data }) => { if (data && etat) { etat.mensualites = data; afficher(); } }, () => null);
     });
     document.body.appendChild(fond);
     document.body.classList.add('ap-volet-ouvert');
-    window.PaiementMa2m.monter(fond.querySelector('.ap-volet-zone'), { mode, surDeclare: () => { declare = true; } });
+    // paiement déclaré : la page Paiements derrière se met tout de suite à jour (mois « en vérification »), même si
+    // le volet est déjà fermé (le volet n'est pas touché : il est hors de l'écran redessiné)
+    window.PaiementMa2m.monter(fond.querySelector('.ap-volet-zone'), { mode, surDeclare: () => {
+      if (etat) sb.rpc('mes_mensualites').then(({ data }) => { if (data && etat) { etat.mensualites = data; afficher(); } }, () => null);
+    } });
     fond.querySelector('[data-fermer-volet]').focus();
   }
   function fermerVolet() {
@@ -592,6 +593,7 @@
     if (per) { periode = per.dataset.periode; afficher(); return; }
     if (e.target.closest('[data-ma-carte]')) periode = 'avenir';
     if (e.target.closest('[data-deconnexion]')) {
+      fermerVolet();
       await Promise.race([desabonnerCeTelephone().catch(() => null), new Promise((r) => setTimeout(r, 3000))]);
       await sb.auth.signOut({ scope: 'local' }).catch(() => null);  // cet appareil seulement
       etat = null; periode = 'avenir';
@@ -619,7 +621,7 @@
     message(ev.reponse === 'confirme' ? 'Merci ! Votre présence est confirmée.' : 'C’est noté : l’agence est prévenue.');
     afficher();
   });
-  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); const nv = ongletCourant() === 'alertes' && document.querySelector('[data-nouveau]'); if (nv) nv.scrollIntoView({ block: 'center' }); });
+  addEventListener('hashchange', () => { fermerVolet(); afficher(); scrollTo(0, 0); const nv = ongletCourant() === 'alertes' && document.querySelector('[data-nouveau]'); if (nv) nv.scrollIntoView({ block: 'center' }); });
   // de retour dans l'application (notification touchée, autre application) : les nouveaux messages
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !etat) return;

@@ -292,16 +292,6 @@ function bindAuthGate(){
 // Adresse #inscription ou #mot-de-passe-oublie (liens de l'application MA2M Mannequin) : le bon
 // formulaire s'ouvre tout de suite
 const PANNEAUX_PAR_ADRESSE = { '#inscription': 'auth-panneau-inscription', '#mot-de-passe-oublie': 'auth-panneau-mdp-oublie' };
-// Fenêtre « Choisir une photo pour la compcard » : créée une seule fois par le programme (la même
-// sur le site et dans l'application MA2M Mannequin, sans la recopier dans chaque page)
-function fenetreChoixBook(){
-  let modal = document.getElementById('ccBookModal');
-  if (!modal) {
-    document.body.insertAdjacentHTML('beforeend', '<div class="cc-book-modal" id="ccBookModal" aria-hidden="true"><div class="cc-book-dialog" role="dialog" aria-modal="true" aria-labelledby="ccBookTitle"><div class="cc-book-head"><div><span class="editor-kicker">TON BOOK</span><h3 id="ccBookTitle">Choisir une photo pour la compcard</h3><p class="sub">La photo est réutilisée telle quelle. Elle reste dans ton Book.</p></div><button type="button" class="btn ghost small" data-cc-book-close>Fermer</button></div><div class="cc-book-grid" data-cc-book-grid></div></div></div>');
-    modal = document.getElementById('ccBookModal');
-  }
-  return modal;
-}
 function renderAuthGate(){
   const app = document.getElementById('app');
   app.innerHTML = viewAuthGate();
@@ -746,10 +736,6 @@ function render(){
   if (enModeGuide) {
     if (state.meta.statutAffichage === 'en_attente') { app.innerHTML = viewConfirmation(); return; }
     if (state.meta.statutAffichage === 'refuse') { app.innerHTML = viewRefuse(); bindRefuse(); return; }
-    app.innerHTML = viewWizard();
-    bindWizard();
-    marquerChampsARemplir(BLOCS_ETAPES[state.meta.currentStep - 1]);
-    return;
   }
   // (11/11/2026, capture de la propriétaire) profil déjà en ligne : les mêmes 6 étapes que la première fois (avant :
   // l'ancien tableau de bord à blocs), avec l'état du profil en haut et un récapitulatif sans « Soumettre » ; même
@@ -1066,6 +1052,9 @@ function stepPhotos(){
   return '<h2>Photos &amp; compétences</h2><p class="sub">Ajoutez ici les photos de votre Book. Votre photo de profil, votre compcard et votre CV se choisissent dans leurs propres pages de l’application.</p>' +
   '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">CV</span><h3>Compétences mannequin</h3><p>Évaluez-vous honnêtement sur chaque compétence (1 à 5).</p></div></div>' +
     '<div class="grid g3">'+competencesHtml+'</div></section>' +
+  '<section class="documents-section" id="photosAilleurs"><div class="section-title-row"><div><span class="editor-kicker">PHOTO DE PROFIL</span><h3>Photo de profil et couverture</h3>' +
+    '<p>Elles se choisissent dans « Mon profil » de l’application : touchez votre photo ronde ou la couverture.</p></div>' +
+    '<a class="btn ghost small" href="/app/#profil">Ouvrir Mon profil ›</a></div></section>' +
   '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici, c’est parmi elles que vous choisirez ensuite votre photo de profil, votre compcard et votre CV.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
@@ -1353,23 +1342,7 @@ function bindProfilProHandlers(){
 }
 
 /* ------------------------------------------------------- PHOTOS : handlers */
-// Après un retrait de la compcard, Store.setCompcardOrdre(null) renumérote en base les
-// photos suivantes (2→1, 3→2…) : on fait exactement la même chose à l'écran, sinon
-// l'écran garde l'ancienne numérotation et la photo ajoutée ensuite prend un numéro
-// déjà occupé en base (deux photos sur la même case).
-function retirerDeCompcardLocal(photo){
-  photo.compcardOrdre = null;
-  state.photos.book.filter(function(ph){ return ph.compcardOrdre; })
-    .sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; })
-    .forEach(function(ph, i){ ph.compcardOrdre = i+1; });
-}
-
-// Le clic sur une photo de la fenêtre « Choisir dans mon Book » est écouté une seule
-// fois pour toute la page : bindPhotoHandlers() est rappelée à chaque affichage, et
-// l'écouteur était auparavant ajouté à chaque fois (un clic = plusieurs enregistrements).
-let ecouteChoixBookPose = false;
-
-// Une photo du Book reçoit une case de la compcard (1 à 5) ; utilisé par le bloc Photos et l'écran « Ma compcard »
+// Une photo du Book reçoit une case de la compcard (1 à 5) ; écran « Ma compcard »
 async function assignerCompcardSlot(photo, slot){
   if (photo.compcardOrdre) { toast('Cette photo occupe déjà l’emplacement '+photo.compcardOrdre, true); return false; }
   const ok = await Store.setCompcardOrdre(photo.id, slot);
@@ -1566,133 +1539,6 @@ function bindPhotoHandlers(){
       render();
     }
   }); });
-
-  // Sélection directe depuis le Book : chaque photo affiche son propre
-  // bouton "+ Compcard" — pas besoin de passer par le sélecteur de chaque
-  // case une par une. Se place automatiquement dans le premier emplacement
-  // libre (1 à 5) ; un second clic la retire (le badge "COMPCARD n" indique
-  // sa place actuelle).
-  document.querySelectorAll('[data-book-cc-toggle]').forEach(function(btn){ btn.addEventListener('click', async function(e){
-    e.stopPropagation();
-    const id = btn.dataset.bookCcToggle;
-    const photo = s.photos.book.find(function(ph){ return String(ph.id)===String(id); });
-    if (!photo) return;
-    if (photo.compcardOrdre) {
-      const ok = await Store.setCompcardOrdre(photo.id, null);
-      if (ok) { retirerDeCompcardLocal(photo); render(); toast('Retirée de la compcard'); }
-      return;
-    }
-    const occupes = s.photos.book.map(function(ph){ return ph.compcardOrdre; }).filter(Boolean);
-    let slotLibre = null;
-    for (let n=1; n<=5; n++){ if (occupes.indexOf(n)===-1) { slotLibre = n; break; } }
-    if (!slotLibre) { toast('Compcard déjà complète (5/5), retirez-en une avant d’en ajouter une autre', true); return; }
-    if (await assignerCompcardSlot(photo, slotLibre)) { render(); }
-  }); });
-
-  function ouvrirChoixBook(onChoisir){
-    const modal = fenetreChoixBook();
-    const grid = modal.querySelector('[data-cc-book-grid]');
-    grid.innerHTML = s.photos.book.length ? s.photos.book.map(function(ph){
-      return '<button type="button" class="cc-book-choice" data-choix-id="'+ph.id+'"><img src="'+ph.url+'" alt="Photo du Book"><span>Choisir</span></button>';
-    }).join('') : '<div class="cc-book-empty">Ajoutez d’abord des photos à votre Book.</div>';
-    modal.classList.add('open');
-    modal.dataset.onChoisir = '';
-    modal._onChoisir = onChoisir;
-  }
-  function fermerChoixBook(){ const m=document.getElementById('ccBookModal'); if (m) m.classList.remove('open'); }
-
-  // Un seul point de vérité par rôle/emplacement, appelé aussi bien quand la
-  // photo vient d'être choisie dans le Book que quand elle vient d'être
-  // téléversée directement (cahier des charges, règle 13-A : les deux chemins
-  // doivent aboutir au même résultat, sans jamais dupliquer la photo).
-  async function assignerPhotoCv(photo){ const ok = await Store.setRolePhoto('photo_cv', photo.id); if (ok) { s.photos.photoCv=photo; toast('Photo CV définie'); } return ok; }
-  async function assignerPrincipale(photo){ const ok = await Store.setRolePhoto('principale', photo.id); if (ok) { s.photos.principale=photo; toast('Photo de profil définie'); } return ok; }
-  async function assignerPleinPied(photo){ const ok = await Store.setRolePhoto('photo_pleinpied', photo.id); if (ok) { s.photos.pleinPied=photo; toast('Photo plein pied définie'); } return ok; }
-  async function assignerCouverture(photo){ const ok = await Store.setRolePhoto('photo_couverture', photo.id); if (ok) { s.photos.couverture=photo; toast('Photo de couverture définie'); } return ok; }
-
-  document.getElementById('uPhotoCv')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerPhotoCv(photo)) { render(); } });
-  });
-  document.getElementById('uPrincipale')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerPrincipale(photo)) { render(); } });
-  });
-  document.getElementById('uPleinPied')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerPleinPied(photo)) { render(); } });
-  });
-  document.getElementById('uCouverture')?.addEventListener('click', function(){
-    ouvrirChoixBook(async function(photo){ if (await assignerCouverture(photo)) { render(); } });
-  });
-  document.querySelectorAll('[data-couv-pos]').forEach(function(btn){ btn.addEventListener('click', async function(e){
-    e.stopPropagation();
-    if (!s.photos.couverture) return;
-    const pos = btn.dataset.couvPos;
-    const ok = await Store.setCouverturePosition(s.photos.couverture.id, pos);
-    if (ok) { s.photos.couverture.couverturePosition = pos; render(); }
-  }); });
-  (function appliquerCadrageCouverturePreview(){
-    const img = document.querySelector('[data-couv-preview]');
-    if (!img || !s.photos.couverture) return;
-    const pos = s.photos.couverture.couverturePosition || 'center';
-    img.style.objectPosition = pos==='top' ? '50% 0%' : pos==='bottom' ? '50% 100%' : '50% 50%';
-  })();
-  document.querySelectorAll('[data-cc-book]').forEach(function(btn){ btn.addEventListener('click', function(e){
-    e.stopPropagation();
-    const slot = parseInt(btn.dataset.ccBook,10);
-    ouvrirChoixBook(async function(photo){ if (await assignerCompcardSlot(photo, slot)) { render(); } });
-  }); });
-  document.querySelectorAll('[data-clear-cc-slot]').forEach(function(btn){ btn.addEventListener('click', async function(e){
-    e.stopPropagation();
-    const slot = parseInt(btn.dataset.clearCcSlot,10);
-    const photo = s.photos.book.find(function(ph){ return ph.compcardOrdre===slot; });
-    if (!photo) return;
-    const ok = await Store.setCompcardOrdre(photo.id, null);
-    if (ok) { retirerDeCompcardLocal(photo); render(); toast('Emplacement '+slot+' libéré, la photo reste dans le Book'); }
-  }); });
-
-  // Téléversement direct par rôle : la photo est ajoutée au Book (comme toute
-  // autre photo, jamais de bibliothèque parallèle) ET reçoit son rôle en un
-  // seul geste, sans avoir à repasser ensuite par "Choisir dans mon Book".
-  document.querySelectorAll('[data-cc-upload-label]').forEach(function(label){
-    label.addEventListener('click', function(e){ e.stopPropagation(); });
-    const input = label.querySelector('input[type=file]');
-    if (!input) return;
-    const cle = label.dataset.ccUploadLabel;
-    input.addEventListener('change', async function(){
-      const file = input.files && input.files[0];
-      if (!file) return;
-      if (s.photos.book.length >= LIMITE_PHOTOS_BOOK) {
-        input.value = '';
-        toast('Limite de '+LIMITE_PHOTOS_BOOK+' photos atteinte pour ce book. Supprimez une photo avant d’en ajouter une nouvelle.', true);
-        return;
-      }
-      // (11/11/2026) plus de message en haut : la barre d'envoi du bas suit déjà la photo (js/app.js)
-      const item = await Store.uploadPhoto(file);
-      input.value = '';
-      if (!item) return;
-      s.photos.book.push(item);
-      if (cle==='photoCv') await assignerPhotoCv(item);
-      else if (cle==='principale') await assignerPrincipale(item);
-      else if (cle==='pleinPied') await assignerPleinPied(item);
-      else if (cle==='couverture') await assignerCouverture(item);
-      else await assignerCompcardSlot(item, parseInt(cle,10));
-      render();
-    });
-  });
-
-  if (ecouteChoixBookPose) return;
-  ecouteChoixBookPose = true;
-  document.addEventListener('click', function(e){
-    if (e.target.closest('[data-cc-book-close]') || e.target.id==='ccBookModal') fermerChoixBook();
-    const choix = e.target.closest('[data-choix-id]');
-    if (choix) {
-      const modal = document.getElementById('ccBookModal');
-      const photo = state.photos.book.find(function(ph){ return String(ph.id)===String(choix.dataset.choixId); });
-      const surChoix = modal && modal._onChoisir;
-      if (modal) modal._onChoisir = null;
-      if (photo && surChoix) { surChoix(photo); }
-      fermerChoixBook();
-    }
-  });
 }
 
 /* --------------------------------------------------- COMPÉTENCES : handlers
@@ -1763,7 +1609,7 @@ function pointsARemplir(){
     return { id: x.id, principale: meme(x, ph.principale), photo_couverture: meme(x, ph.couverture), created_at: new Date(Date.UTC(2000, 0, 1) + i * 1000).toISOString() };
   });
   const pts = ma2mPointsParBloc(ma2mAnalyserProfil(ligne, photos, toutesExperiences().length, true));
-  const ids = { etudes: 'f-niveau', langues: 'langues', experiences: 'addExp', profil: 'uPrincipale', couverture: 'uCouverture', identiques: 'uCouverture', book: 'book' };
+  const ids = { etudes: 'f-niveau', langues: 'langues', experiences: 'addExp', profil: 'photosAilleurs', couverture: 'photosAilleurs', identiques: 'photosAilleurs', book: 'book' };
   const champs = {};
   MA2M_BLOCS.forEach(function(k){
     champs[k] = [];
