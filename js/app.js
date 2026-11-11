@@ -2027,6 +2027,23 @@ async function envoyerPhotoBook(modelId, fichierOriginal) {
   VERSIONS_PHOTO_BOOK.forEach(([cle], k) => { const v = faites[k]; colonnes['url_' + cle] = v ? v.url : null; colonnes['chemin_' + cle] = v ? v.chemin : null; });
   return colonnes;
 }
+// Une photo choisie dans la galerie du téléphone devient une photo du Book (fiche model_photos) ; partagé par
+// l'Espace mannequin et l'application (« Mon profil » : photo ronde, couverture), 11/11/2026. Renvoie la ligne créée.
+async function insererPhotoBook(modelId, fichier) {
+  const colonnes = await envoyerPhotoBook(modelId, fichier);
+  const { data, error } = await sb.from('model_photos').insert(Object.assign({ model_id: modelId, originale_optimisee: true }, colonnes)).select().single();
+  if (error) throw error;
+  return data;
+}
+// Un seul rôle à la fois par mannequin pour chaque colonne (principale, photo_couverture, photo_cv, photo_pleinpied) :
+// l'ancienne photo perd le rôle, la nouvelle le reçoit. Renvoie l'erreur éventuelle (null si tout va bien).
+async function definirRolePhoto(modelId, colonne, photoId) {
+  const off = await sb.from('model_photos').update({ [colonne]: false }).eq('model_id', modelId).eq(colonne, true);
+  if (off.error) return off.error;
+  if (!photoId) return null;
+  const on = await sb.from('model_photos').update({ [colonne]: true }).eq('id', photoId).eq('model_id', modelId);
+  return on.error || null;
+}
 // Tous les fichiers d'une photo du Book (originale et versions réduites, d'après les colonnes de
 // model_photos), retirés de R2. Partagé le 24/10/2026 (avant, la liste était recopiée à 5 endroits).
 async function supprimerFichiersPhoto(modelId, p) {

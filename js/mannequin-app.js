@@ -76,7 +76,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -87,7 +87,9 @@
       lireMessages(uid),
       sb.rpc('mes_presences'),  // cours du dimanche (chantier 14, supabase-presences.sql) ; absente : rien ne s'affiche
       sb.rpc('mannequin_du_mois_actuelle'),  // (supabase-mannequin-du-mois.sql)
-      sb.rpc('mes_bulletins')  // bulletins trimestriels publiés (supabase-bulletins.sql)
+      sb.rpc('mes_bulletins'),  // bulletins trimestriels publiés (supabase-bulletins.sql)
+      // (11/11/2026, « Mon profil » façon réseau social) adresse publique du book, phrase de la mannequin, demande en cours
+      sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle()
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -98,7 +100,8 @@
       analyse: p ? ma2mAnalyserProfil(p, lesPhotos, nbProjets, p.avecSupp) : null,  // (js/analyse-profil.js)
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
-      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || []
+      messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || [],
+      vitrine: donnees(vitrine) || {}
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -263,24 +266,70 @@
       (periode === 'avenir' && confirmes.length ? '<h2 class="ap-titre-sec">Ma carte d’accès</h2>' + carteAcces(confirmes[0]) +
         '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '');
   }
+  // « Mon profil » façon réseau social (11/11/2026, maquette validée par la propriétaire) : couverture et photo ronde
+  // qu'on touche pour choisir une photo dans la galerie (elle rejoint aussi le Book), chiffres, phrase, boutons
+  // Compcard / Mon CV / Partager mon book, grille de photos de 3 comme sur Instagram.
   function ecranProfil() {
-    const p = etat.profil, a = etat.analyse || { score: 0 };
-    const mesures = [p.height_cm ? (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
-    const vignettes = etat.photos.slice(0, 3);
-    return '<div class="ap-carte ap-ligne haut"><div class="ap-portrait">' + visage(p.full_name) + '</div><div class="ap-plein"><h3 class="ap-ev-titre">' + esc(p.full_name) + '</h3>' +
-      (p.niveau_mannequin ? '<span class="ap-pastille rose">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span> ' : '') +
-      (p.published ? '<span class="ap-pastille vert">Publié</span>' : '<span class="ap-pastille gris">Pas encore en ligne</span>') +
-      '<p class="doux ap-score">Profil complet à ' + a.score + ' %</p><div class="ap-jauge"><i style="width:' + a.score + '%"></i></div></div></div>' +
-      '<h2 class="ap-titre-sec">Photos du Book <span class="doux">(' + etat.photos.length + ')</span></h2>' +
-      '<div class="ap-galerie">' + vignettes.map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
-      '<a href="/app/espace-mannequin.html" aria-label="Ajouter des photos">＋</a></div>' +
-      '<div class="ap-carte ap-liste"><a href="/app/espace-mannequin.html">Identité <span>' + esc(p.city || '') + ' ›</span></a>' +
-      '<a href="/app/espace-mannequin.html">Mensurations <span>' + esc(mesures) + ' ›</span></a>' +
-      '<a href="/app/espace-mannequin.html">Expérience <span>' + etat.nbProjets + ' ' + (etat.nbProjets > 1 ? 'événements' : 'événement') + ' ›</span></a>' +
-      '<a href="/app/espace-mannequin.html">Formation et compétences <span>›</span></a></div>' +
+    const p = etat.profil, a = etat.analyse || { score: 0 }, v = etat.vitrine || {};
+    const mesures = [p.city || '', p.height_cm ? (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
+    const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
+    const url = (x) => (x ? esc(urlPhotoMemeOrigine(x.url_miniature || x.url_petite || x.url)) : '');
+    const r = presencesCalculees();
+    const cours = r && r.ceMois.bilan.comptees ? r.ceMois.bilan.presents + '/' + r.ceMois.bilan.comptees : '–';
+    const etatProfil = p.published ? ['vert', 'Profil en ligne sur le Book'] : v.en_attente_validation ? ['orange', 'En cours de validation par l’agence'] : ['gris', 'Pas encore en ligne'];
+    const champPhoto = (role, texte) => '<input class="ap-cache" type="file" accept="image/*" data-photo-role="' + role + '" aria-label="' + texte + '">';
+    return '<section class="ap-vitrine">' +
+      '<label class="ap-vitrine-couv' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
+        '<span class="ap-vitrine-modif">📷 Couverture</span>' + champPhoto('photo_couverture', 'Changer ma photo de couverture') + '</label>' +
+      '<div class="ap-vitrine-haut"><label class="ap-vitrine-avatar">' + (vues.profil ? '<img src="' + url(vues.profil) + '" alt="">' : '<span>' + esc(initialesDe(p.full_name)) + '</span>') +
+        '<i aria-hidden="true">＋</i>' + champPhoto('principale', 'Changer ma photo de profil') + '</label>' +
+        (p.niveau_mannequin ? '<span class="ap-vitrine-niveau">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span>' : '') +
+        '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div></div>' +
+      '<h1 class="ap-vitrine-nom">' + esc(p.full_name) + '</h1>' + (mesures ? '<p class="ap-vitrine-mesures">' + esc(mesures) + '</p>' : '') +
+      (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
+      '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
+      (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html">Profil complet à ' + a.score + ' % · compléter ›</a>' : '') +
+      '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
+      '<div class="ap-vitrine-raccourcis"><a href="/app/espace-mannequin.html#compcard"><span>🗂️</span>Compcard</a><a href="/app/espace-mannequin.html#cv"><span>📄</span>Mon CV</a><a href="/app/espace-mannequin.html#photos"><span>📸</span>Mes photos</a></div>' +
+      '</section>' +
+      '<div class="ap-vitrine-grille">' + etat.photos.slice().sort((x, y) => String(y.created_at).localeCompare(String(x.created_at))).map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
+        '<label class="ap-vitrine-ajout">＋<span>Ajouter</span>' + champPhoto('', 'Ajouter une photo au Book') + '</label></div>' +
       blocPresences() + blocBulletins() +
-      '<div class="ap-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">✏️ Modifier mon profil</a><a class="ap-btn" href="/app/espace-mannequin.html">🗂️ Compcard et CV</a></div>' +
       '<button type="button" class="ap-lien" data-deconnexion>Se déconnecter</button>';
+  }
+  // Photo choisie dans la galerie depuis « Mon profil » : elle part dans le Book (js/app.js insererPhotoBook) et
+  // reçoit son rôle (photo ronde = principale, couverture) ; vide = simple ajout au Book.
+  const LIMITE_PHOTOS_APP = 60;  // (même limite que l'Espace mannequin)
+  racine.addEventListener('change', async (e) => {
+    const champ = e.target.closest('[data-photo-role]');
+    if (!champ || !champ.files || !champ.files[0] || !etat) return;
+    const fichier = champ.files[0], role = champ.dataset.photoRole;
+    champ.value = '';
+    if (etat.photos.length >= LIMITE_PHOTOS_APP) { message('Limite de ' + LIMITE_PHOTOS_APP + ' photos atteinte : retirez-en une dans « Modifier mon profil ».'); return; }
+    message('Envoi de la photo…');
+    try {
+      const ligne = await insererPhotoBook(etat.uid, fichier);
+      if (role) { const erreur = await definirRolePhoto(etat.uid, role, ligne.id); if (erreur) throw erreur; }
+      const { data } = await sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', etat.uid);
+      if (data) etat.photos = data.filter((x) => x.tri_statut !== 'ecartee');
+      if (!etat.photos.some((x) => x.id === ligne.id)) etat.photos.push(ligne);  // (relecture pas encore à jour : la photo s'affiche tout de suite)
+      if (role) etat.photos.forEach((x) => { x[role] = x.id === ligne.id; });
+      message(role === 'principale' ? 'Nouvelle photo de profil ✨' : role === 'photo_couverture' ? 'Nouvelle couverture ✨' : 'Photo ajoutée à votre Book ✨');
+      afficher();
+    } catch (err) {
+      const brut = (err && err.message) || '';
+      message(/failed to fetch|load failed|network/i.test(brut) ? 'Connexion interrompue pendant l’envoi : réessayez.' : 'La photo n’a pas pu être envoyée : réessayez.');
+      if (window.signalerErreur) window.signalerErreur('Envoi de photo échoué (application)', brut || 'erreur inconnue', (fichier.name || 'photo') + ', ' + Math.round((fichier.size || 0) / 1024) + ' Ko');
+    }
+  });
+  // « Partager mon book » : la feuille de partage du téléphone (WhatsApp, Instagram…), sinon le lien copié
+  async function partagerBook() {
+    const p = etat.profil, v = etat.vitrine || {};
+    if (!p.published) { message('Votre book sera partageable dès que l’agence aura mis votre profil en ligne.'); return; }
+    const lien = 'https://www.maitreakessemodelmanagement.com/' + lienFicheMannequin({ id: etat.uid, slug: v.slug });
+    const texte = 'Mon book chez Maître Akesse Model Management ✨';
+    if (navigator.share) { try { await navigator.share({ title: p.full_name, text: texte, url: lien }); } catch (e) { /* partage annulé */ } return; }
+    try { await navigator.clipboard.writeText(lien); message('Lien de votre book copié : collez-le où vous voulez.'); } catch (e) { message(lien); }
   }
   function ecranPaiements() {
     const m = etat.mensualites;
@@ -394,6 +443,7 @@
   racine.addEventListener('click', async (e) => {
     const notif = e.target.closest('[data-notifications]');
     if (notif) { await activerNotifications(notif); return; }
+    if (e.target.closest('[data-partager-book]')) { await partagerBook(); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');
     if (tout) { programmeOuvert[tout.dataset.programme] = !programmeOuvert[tout.dataset.programme]; afficher(); return; }
     if (per) { periode = per.dataset.periode; afficher(); return; }

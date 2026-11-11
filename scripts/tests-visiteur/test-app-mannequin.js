@@ -166,10 +166,25 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     await p.click('.ap-nav a[href="#accueil"]'); await p.waitForTimeout(400);
     ok(/Vous êtes la mannequin du mois/.test(await p.textContent('#ap-ecran')), n + 'Accueil : « 🏆 Vous êtes la mannequin du mois ! »');
     // 6. Profil
-    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait');
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-vitrine');
     const profil = await p.textContent('#ap-ecran');
-    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Publié/.test(profil) && /Profil complet à \d+ %/.test(profil) && /1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-galerie img')).length === 3,
-      n + 'Mon profil : niveau, en ligne, profil complet en %, mensurations, photos du Book');
+    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Profil en ligne sur le Book/.test(profil) && /Abidjan · 1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-vitrine-grille img')).length === 3,
+      n + 'Mon profil (façon réseau social, 11/11/2026) : niveau, en ligne, mensurations, grille des photos du Book');
+    ok(!!(await p.$('.ap-vitrine-avatar img')) && !!(await p.$('.ap-vitrine-couv input[type=file][data-photo-role="photo_couverture"]')) && !!(await p.$('.ap-vitrine-avatar input[type=file][data-photo-role="principale"]'))
+      && /3\s*photos/.test(await p.textContent('.ap-vitrine-chiffres')) && (await p.$$('.ap-vitrine-raccourcis a')).length === 3,
+      n + 'Mon profil : photo ronde et couverture qu’on touche pour choisir dans la galerie, chiffres, raccourcis Compcard / CV / Photos');
+    // photo ronde touchée : la galerie, puis la photo part dans le Book et devient la photo de profil
+    // stockage des photos simulé (comme test-envoi-photos.js) : rien ne part pour de vrai
+    await p.route(/\/api\/r2-presigner/, (r) => { const c = JSON.parse(r.request().postData() || '{}');
+      if (c.action === 'verifier') return r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: BASE + '/__stockage', publicUrl: BASE + '/scripts/tests-visiteur/medias/photo4.jpg' }) }); });
+    await p.route(/__stockage/, (r) => r.fulfill({ status: 200, body: '' }));
+    await p.setInputFiles('.ap-vitrine-avatar input[type=file]', path.join(__dirname, 'medias/photo4.jpg'));
+    await p.waitForFunction(() => /Nouvelle photo de profil|n’a pas pu être envoyée/.test((document.getElementById('ap-message') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
+    ok(/Nouvelle photo de profil/.test(await p.textContent('#ap-message')) && (await p.$$('.ap-vitrine-grille img')).length === 4,
+      n + 'Mon profil : photo ronde changée depuis la galerie (elle rejoint aussi le Book) [' + (await p.textContent('#ap-message')) + ' · ' + (await p.$$('.ap-vitrine-grille img')).length + ']');
+    await p.click('[data-partager-book]'); await p.waitForTimeout(500);
+    ok(/copié|\/book\/|mannequin\.html\?id=/.test(await p.textContent('#ap-message')), n + 'Mon profil : « Partager mon book » donne le lien du book');
     // cours du dimanche (chantier 14) : en lecture seule, cochés par l'agence
     const moisAvant = P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1), nbAvant = P.dimanchesDuMois(moisAvant).length;
     ok(/Mes cours du dimanche/.test(profil) && (await p.$$('.pr-app-jour')).length === P.dimanchesDuMois(P.jourIso(new Date()).slice(0, 7)).length,
@@ -196,7 +211,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(/\/app\/mes-paiements\.html$/.test(p.url()) && /Paiements/.test(await p.textContent('.ap-nav a.actif')) && /Wave/.test(await p.textContent('#mp-zone')),
       n + 'un lien « Mes paiements » du site : la page de paiement s’ouvre dans l’application (Wave, « J’ai payé »)');
     await capture('4b-paiements-wave');
-    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-portrait', { timeout: 15000 }); // (depuis une page du site)
+    await p.click('.ap-nav a[href="/app/#profil"]'); await p.waitForSelector('.ap-vitrine', { timeout: 15000 }); // (depuis une page du site)
     ok(/\/app\/#profil$/.test(p.url()), n + 'retour à l’application par le menu du bas');
     // 7. Paiements
     await p.click('.ap-nav a[href="#paiements"]'); await p.waitForSelector('.ap-chiffre');
@@ -249,7 +264,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok((await p.getAttribute('.ap-message-agence:not(.nouveau) a.ap-btn.rouge', 'href')) === '/app/#paiements', n + 'un message automatique ouvre la bonne page (Paiements)');
     ok(!(await deborde()), n + 'rien ne dépasse de l’écran');
     // 9. Déconnexion
-    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-portrait'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
+    await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-vitrine'); await p.click('[data-deconnexion]'); await p.waitForSelector('#ap-form-connexion');
     ok(true, n + 'déconnexion : retour à la connexion');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

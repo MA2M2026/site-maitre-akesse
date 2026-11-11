@@ -315,3 +315,47 @@ body.ap-page-profil .step-tab .pastille-rouge { position: absolute; top: -6px; r
   body.ap-page-profil .step-tab .ic { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) { body.ap-page-profil .step-tab { -webkit-transition: none; transition: none; } }
+
+/* ---------- « Mon profil » façon réseau social (11/11/2026, maquette validée par la propriétaire) ----------
+   couverture et photo ronde qu'on touche pour choisir une photo dans la galerie, chiffres, phrase, état du profil,
+   boutons, raccourcis Compcard / CV / Photos, grille de 3 photos comme sur Instagram. */
+.ap-cache { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ap-vitrine { margin: -4px -18px 0; color: #FFFFFF; }
+.ap-vitrine-couv { display: block; position: relative; height: 170px; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, #5A141B, #7C2128); }
+.ap-vitrine-couv img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; display: block; }
+.ap-vitrine-couv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124, 33, 40, 0.05) 30%, var(--fond, #7C2128) 100%); }
+.ap-vitrine-modif { position: absolute; z-index: 2; right: 14px; top: 12px; padding: 5px 11px; border-radius: 20px; background: rgba(90, 20, 27, 0.72); font: 600 11.5px 'Work Sans', sans-serif; }
+.ap-vitrine-haut { position: relative; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 18px; margin-top: -62px; z-index: 2; }
+.ap-vitrine-avatar { position: relative; flex: 0 0 auto; width: 108px; height: 108px; border-radius: 50%; cursor: pointer;
+  border: 4px solid var(--fond, #7C2128); box-shadow: 0 0 0 2px #FFFFFF; background: #5A141B; overflow: visible; }
+.ap-vitrine-avatar img, .ap-vitrine-avatar > span { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center 20%; display: block; }
+.ap-vitrine-avatar > span { display: flex; align-items: center; justify-content: center; font: 600 34px 'Cormorant Garamond', serif; }
+.ap-vitrine-avatar i { position: absolute; right: 0; top: 4px; width: 28px; height: 28px; border-radius: 50%; background: #FFFFFF; color: var(--rouge-mat, #7C2128);
+  font: 700 18px/28px 'Work Sans', sans-serif; text-align: center; font-style: normal; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
+.ap-vitrine-niveau { position: absolute; left: 38px; bottom: -10px; padding: 3px 9px; border-radius: 20px; background: #FFFFFF; color: var(--rouge-mat, #7C2128);
+  font: 700 10px 'Work Sans', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+.ap-vitrine-chiffres { display: flex; gap: 16px; padding-bottom: 6px; }
+.ap-vitrine-chiffres div { text-align: center; font: 500 11px 'Work Sans', sans-serif; opacity: 0.92; }
+.ap-vitrine-chiffres b { display: block; font: 600 23px/1.1 'Cormorant Garamond', serif; }
+.ap-vitrine-nom { margin: 22px 18px 0; font: 600 28px/1.1 'Cormorant Garamond', serif; color: #FFFFFF; }
+.ap-vitrine-mesures { margin: 4px 18px 0; font-size: 13px; opacity: 0.82; }
+.ap-vitrine-phrase { margin: 8px 18px 0; font: italic 500 17px/1.35 'Cormorant Garamond', serif; }
+.ap-vitrine-etat { display: inline-flex; align-items: center; gap: 7px; margin: 10px 18px 0; padding: 5px 12px; border-radius: 20px; background: rgba(255, 255, 255, 0.13); font-size: 12px; }
+.ap-vitrine-etat i { width: 8px; height: 8px; border-radius: 50%; background: #E6E6E6; }
+.ap-vitrine-etat.vert i { background: #7CE38B; } .ap-vitrine-etat.orange i { background: rgb(224, 145, 58); }
+.ap-vitrine-score { display: block; margin: 8px 18px 0; font-size: 12.5px; color: #F3DDE0; text-decoration: underline; text-underline-offset: 3px; }
+.ap-vitrine-btns { display: flex; gap: 8px; margin: 14px 18px 0; }
+.ap-vitrine-btns .ap-btn { flex: 1; margin: 0; min-height: 42px; }
+.ap-vitrine-btns .ap-btn.rouge { background: #FFFFFF; color: var(--rouge-mat, #7C2128); }
+.ap-vitrine-btns button.ap-btn:not(.rouge) { background: rgba(255, 255, 255, 0.14); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.3); }
+.ap-vitrine-raccourcis { display: flex; gap: 8px; margin: 12px 18px 14px; }
+.ap-vitrine-raccourcis a { flex: 1; padding: 10px 4px 9px; border-radius: 14px; text-align: center; text-decoration: none; color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.24); font: 600 12px 'Work Sans', sans-serif; }
+.ap-vitrine-raccourcis span { display: block; font-size: 20px; margin-bottom: 3px; }
+.ap-vitrine-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin: 0 -18px; border-top: 1px solid rgba(255, 255, 255, 0.18); padding-top: 2px; }
+.ap-vitrine-grille img, .ap-vitrine-ajout { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: center 25%; display: block; }
+@supports not (aspect-ratio: 1) { .ap-vitrine-grille img, .ap-vitrine-ajout { height: 44vw; } }
+.ap-vitrine-ajout { display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF; font: 300 34px/1 'Work Sans', sans-serif; }
+.ap-vitrine-ajout span { font: 600 11.5px 'Work Sans', sans-serif; margin-top: 4px; }
+.ap-vitrine-avatar:focus-within, .ap-vitrine-couv:focus-within, .ap-vitrine-ajout:focus-within { outline: 3px solid #FFFFFF; outline-offset: 2px; }

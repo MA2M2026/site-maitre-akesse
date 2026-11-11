@@ -629,12 +629,7 @@ const Store = {
     }, 90000);
     try{
       // Préparation et envoi partagés avec le tableau de bord (js/app.js).
-      const colonnes = await envoyerPhotoBook(currentUser.id, file);
-
-      const { data: row, error: dbErr } = await sb.from('model_photos').insert(Object.assign({
-        model_id: currentUser.id, originale_optimisee:true }, colonnes)).select().single();
-      if (dbErr) throw dbErr;
-      return photoDuBook(row);
+      return photoDuBook(await insererPhotoBook(currentUser.id, file));  // (js/app.js)
     }catch(e){
       // e.message porte le vrai motif quand il vient d'un refus explicite du
       // serveur (ex. limite de photos atteinte) — l'afficher plutôt qu'un
@@ -670,12 +665,8 @@ const Store = {
      que "principale" déjà en production : on désactive l'ancienne avant
      d'activer la nouvelle. */
   async setRolePhoto(colonne, photoId){
-    const { error: eOff } = await sb.from('model_photos').update({ [colonne]: false }).eq('model_id', currentUser.id).eq(colonne, true);
-    if (eOff) { console.error(eOff); toast('Échec de la mise à jour', true); return false; }
-    if (photoId) {
-      const { error: eOn } = await sb.from('model_photos').update({ [colonne]: true }).eq('id', photoId).eq('model_id', currentUser.id);
-      if (eOn) { console.error(eOn); toast('Échec de la mise à jour', true); return false; }
-    }
+    const erreur = await definirRolePhoto(currentUser.id, colonne, photoId);  // (js/app.js)
+    if (erreur) { console.error(erreur); toast('Échec de la mise à jour', true); return false; }
     return true;
   },
 
@@ -1957,6 +1948,11 @@ async function demarrerApresConnexion(){
   await Store.ensureProfileRow();
   state = await Store.load();
   if (!state.meta.currentStep) state.meta.currentStep = 1;
+  // (11/11/2026) raccourcis « Compcard », « Mon CV », « Mes photos » de l'application (onglet Mon profil) : la page
+  // s'ouvre directement sur les photos (étape 5 des 6 étapes, ou bloc Photos une fois le profil validé)
+  if (/^#(compcard|cv|photos)$/.test(location.hash)) {
+    if (state.meta.premierePublicationFaite) state.meta.editBlock = 'photos'; else state.meta.currentStep = 5;
+  }
   render();
 }
 
