@@ -4589,3 +4589,18 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   e-mail, WhatsApp une personne après l'autre). La logique (js/messages-groupes.js) est inchangée.
 - **Informations agence en 3 étapes** (js/admin/site-infos.js : `brouillon.etape`, `data-etape` sur le formulaire
   `.if-form`, les champs gardent ce qui est tapé) : 1 · L'information, 2 · À qui ?, 3 · Message et envoi.
+
+## Application des mannequins : étape « Photos » allégée et paiement dans un volet (11/11/2026, captures de la propriétaire)
+
+- **Étape « Photos » du profil** (`stepPhotos`, js/espace-mannequin.js) : seulement les compétences et la
+  galerie « Photos du Book ». Les cases « photo du CV / de profil / plein pied / de couverture » et le bloc
+  « Les 5 photos de votre compcard » sont retirés : ces choix se font dans leurs pages (« Mon profil »,
+  « Ma compcard », « Mon CV »), pour ne plus mélanger les mannequins. Les données (rôles des photos,
+  ordre de la compcard) ne changent pas. Essai : test-etapes-profil.
+- **Payer sans changer de page** : « Payer avec Wave », « Payer à l'avance », « Mes reçus » et « Tous mes
+  reçus » de l'écran Paiements (js/mannequin-app.js, `ouvrirVolet`) ouvrent un volet par-dessus la page,
+  posé hors de l'écran redessiné (il reste ouvert au retour de Wave). Le contenu vient de
+  js/mes-paiements.js, devenu réutilisable : `window.PaiementMa2m.monter(zone, { mode: 'page' | 'payer' |
+  'recus', surDeclare })` (pas de recopie du paiement). app/mes-paiements.html reste en place (mode
+  « page ») pour les liens des rappels de mensualité. Essai : test-app-mannequin (volet, « J'ai payé » avec
+  le numéro, reçus, fermeture par ✕ et Échap).

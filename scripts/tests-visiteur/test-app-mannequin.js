@@ -222,24 +222,42 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     // 7. Paiements
     await p.click('.ap-nav a[href="#paiements"]'); await p.waitForSelector('.ap-chiffre');
     const paiements = await p.textContent('#ap-ecran');
-    ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && (await p.getAttribute('a.ap-btn.rouge', 'href')) === '/app/mes-paiements.html',
+    ok(/8\s*\/\s*24/.test(paiements) && /mois payés/.test(paiements) && /À payer avant le 5/.test(paiements) && /Border Forum/.test(paiements) && /25 000 F/.test(paiements) && !!(await p.$('.ap-prochain [data-payer="payer"]')),
       n + 'Mes paiements : 8 mois sur 24, cachet reçu, « Payer avec Wave »');
     ok(/AYA KOUASSI/.test(await p.textContent('.ap-cb')) && /10 000 F/.test(await p.textContent('.ap-cb')) && (await p.$$('.ap-mois')).length === 24 && (await p.$$('.ap-mois.paye')).length === 8 && !!(await p.$('.ap-mois.courant.a_payer')) &&
       /Cachet · Border Forum.*\+ 25 000 F/s.test(await p.textContent('.ap-releve')) && /Mensualité d.*Wave/s.test(await p.textContent('.ap-releve')) && /Payer avec Wave/.test(await p.textContent('.ap-prochain')),
       n + 'Paiements « style banque » (11/11/2026) : carte de membre, grille des 24 mois (8 payés, mois en cours entouré), relevé des opérations (cachet + mensualité Wave)');
     ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'Paiements : rien ne dépasse de l’écran');
     await capture('4-paiements');
+    // (11/11/2026, demande de la propriétaire) « Payer avec Wave » : un volet dans la nouvelle page, plus l'ancienne page
+    await p.click('.ap-prochain [data-payer="payer"]'); await p.waitForSelector('#ap-volet [data-mp="wave"]', { timeout: 15000 });
+    ok(/\/app\/#paiements$/.test(p.url()) && /Mensualité ·/.test(await p.textContent('#ap-volet')) && (await p.$$('#ap-volet .mp-calendrier')).length === 0 && await p.isDisabled('#ap-volet [data-mp="paye"]'),
+      n + '« Payer avec Wave » : volet par-dessus la page Paiements (même adresse), mensualité du mois, sans l’ancien calendrier ; « J’ai payé » attend Wave');
+    await p.evaluate(() => { const a = document.querySelector('#ap-volet [data-mp="wave"]'); a.removeAttribute('href'); a.removeAttribute('target'); });  // (sans ouvrir Wave pour de vrai)
+    await p.click('#ap-volet [data-mp="wave"]'); await p.waitForTimeout(500);
+    await p.fill('#ap-volet .mp-num', '+225 07 11 22 33 44');
+    await capture('4a-volet-wave');
+    await p.click('#ap-volet [data-mp="paye"]'); await p.waitForTimeout(800);
+    ok(rpc('mensualite_declarer_avec_numero').some((x) => x.p_numero === '+225 07 11 22 33 44') && /L’agence vérifie votre paiement/.test(await p.textContent('#ap-volet')),
+      n + '« J’ai payé » dans le volet : paiement déclaré avec le numéro, message « l’agence vérifie »');
+    await p.click('#ap-volet [data-fermer-volet]'); await p.waitForTimeout(400);
+    ok(!(await p.$('#ap-volet')) && /\/app\/#paiements$/.test(p.url()), n + 'volet fermé : on reste sur la page Paiements');
     // à jour (rien à payer) : pas de « Payer avec Wave » qui mènerait à une page sans Wave (relevé par la propriétaire, 26/10/2026)
     const avantMois = d.rpc.mes_mensualites.mois;
     d.rpc.mes_mensualites.mois = avantMois.map((x) => (x.etat === 'a_payer' ? Object.assign({}, x, { etat: 'paye' }) : x));
     await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     const aJour = await p.textContent('#ap-ecran');
-    ok(/9\s*\/\s*24/.test(aJour) && /À jour/.test(aJour) && /Rien à payer pour le moment/.test(aJour) && !/Payer avec Wave/.test(aJour) && (await p.getAttribute('.ap-rien-a-payer + .ap-btns a.rouge', 'href')) === '/app/mes-paiements.html#avance' && /Mes mois et mes reçus/.test(aJour),
-      n + 'Mes paiements à jour : « Rien à payer pour le moment », pas de bouton Wave, « Payer à l’avance » et « Mes mois et mes reçus »');
-    await p.click('.ap-rien-a-payer + .ap-btns a.rouge'); await p.waitForSelector('#avance', { timeout: 15000 });
-    ok(/\/app\/mes-paiements\.html#avance$/.test(p.url()) && /Payer à l’avance/.test(await p.textContent('#avance')), n + '« Payer à l’avance » ouvre la carte du paiement à l’avance, dans l’application');
+    ok(/9\s*\/\s*24/.test(aJour) && /À jour/.test(aJour) && /Rien à payer pour le moment/.test(aJour) && !/Payer avec Wave/.test(aJour) && !!(await p.$('.ap-rien-a-payer + .ap-btns [data-payer="payer"]')) && /Mes reçus/.test(aJour),
+      n + 'Mes paiements à jour : « Rien à payer pour le moment », pas de bouton Wave, « Payer à l’avance » et « Mes reçus »');
+    await p.click('.ap-rien-a-payer + .ap-btns [data-payer="payer"]'); await p.waitForSelector('#ap-volet #avance', { timeout: 15000 });
+    ok(/\/app\/#paiements$/.test(p.url()) && /Payer à l’avance/.test(await p.textContent('#ap-volet #avance')) && (await p.$$('#ap-volet .mp-calendrier')).length === 0 && !/Ma formation/.test(await p.textContent('#ap-volet')),
+      n + '« Payer à l’avance » (captures de la propriétaire, 11/11/2026) : s’ouvre dans un volet de la nouvelle page, plus l’ancienne page');
     await capture('4c-paiement-avance');
-    await p.goto(BASE + '/app/#paiements'); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
+    await p.click('.ap-volet-fond', { position: { x: 10, y: 10 } }); await p.waitForTimeout(300);
+    await p.click('.ap-rien-a-payer + .ap-btns [data-payer="recus"]'); await p.waitForSelector('#ap-volet .mp-histo', { timeout: 15000 });
+    ok(/REC-2026-00012/.test(await p.textContent('#ap-volet')) && /\/app\/#paiements$/.test(p.url()), n + '« Mes reçus » : les reçus dans le volet, sans changer de page');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    ok(!(await p.$('#ap-volet')), n + 'Échap ferme le volet');
     // reprise du 1er mars (supabase-reprise-mars.sql) : où elle en est, agence fermée
     Object.assign(d.rpc.mes_mensualites, { mois: avantMois.map((x) => (x.etat === 'a_payer' ? Object.assign({}, x, { etat: 'rodage' }) : x)),
       niveaux: 2, niveau: 1, mois_niveau: 7, reste: 11, faits_avant: 7, termine: false, fermee_jusqu_au: '2027-03-01', prochaine: '2027-03-01' });

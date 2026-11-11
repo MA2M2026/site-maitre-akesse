@@ -1056,53 +1056,24 @@ function photoThumb(item, label){ return (item && item.url) ? ('<img src="'+item
 
 function stepPhotos(){
   const p = state.photos;
-  const compcardPhotos = p.book.filter(function(ph){ return ph.compcardOrdre; }).sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; });
-  const slots = [1,2,3,4,5].map(function(n){
-    const ph = compcardPhotos.find(function(x){ return x.compcardOrdre===n; });
-    const rule = n===1?'PLEIN PIED':n===2?'PORTRAIT':'PHOTO LIBRE';
-    return '<div class="compcard-slot '+(ph?'filled ':'')+'cc-editable-slot" data-cc-slot="'+n+'">' +
-      '<div class="cc-slot-num">'+n+'</div><div class="cc-slot-content">' +
-      (ph?'<img src="'+ph.url+'" alt="Photo compcard '+n+'">':'<span class="cc-slot-plus">＋</span>') +
-      '<div class="cc-slot-label '+(ph?'cc-slot-assigned':'')+'">'+(ph?'Photo sélectionnée':'Aucune photo sélectionnée')+'</div>' +
-      '<small>'+rule+', indication éditoriale, pas une contrainte</small>' +
-      '<div class="cc-source-actions">' +
-        '<button type="button" class="cc-source-btn gold" data-cc-book="'+n+'">Choisir dans mon Book</button>' +
-        '<label class="cc-upload-btn" data-cc-upload-label="'+n+'"><input class="hidden-input" type="file" accept="image/*" id="fCcSlot'+n+'">Téléverser une nouvelle photo</label>' +
-      '</div>' +
-      (ph?'<button type="button" class="cc-remove-assignment" data-clear-cc-slot="'+n+'">Retirer de la compcard</button>':'') +
-      '</div></div>';
-  }).join('');
   const competencesHtml = ORDRE_COMPETENCES.map(function(cle){
     const v = state.competences[cle] || 3;
     return '<div class="field"><label>'+LIBELLES_COMPETENCES[cle]+'</label><input type="range" min="1" max="5" value="'+v+'" data-competence="'+cle+'"></div>';
   }).join('');
-  return '<h2>Photos &amp; compétences</h2><p class="sub">Vos 3 photos principales (CV, profil, plein pied) sont indépendantes de la compcard, une photo du Book choisie pour la compcard n’est jamais dupliquée, elle reçoit simplement son numéro d’emplacement.</p>' +
+  // (11/11/2026, demande de la propriétaire) photos principales et compcard retirées de cette étape : elles ont
+  // leurs propres pages (« Mon profil », « Ma compcard », « Mon CV ») ; ici seulement les compétences et le Book.
+  return '<h2>Photos &amp; compétences</h2><p class="sub">Ajoutez ici les photos de votre Book. Votre photo de profil, votre compcard et votre CV se choisissent dans leurs propres pages de l’application.</p>' +
   '<section class="documents-section"><div class="section-title-row"><div><span class="editor-kicker">CV</span><h3>Compétences mannequin</h3><p>Évaluez-vous honnêtement sur chaque compétence (1 à 5).</p></div></div>' +
     '<div class="grid g3">'+competencesHtml+'</div></section>' +
-  '<div class="photo-principals-grid">' +
-    '<div class="principal-photo-card '+(p.photoCv?'filled':'')+'" id="uPhotoCv">'+photoThumb(p.photoCv,'Photo CV')+'<div class="principal-photo-badge">PHOTO PRINCIPALE CV</div><div class="principal-photo-title">'+(p.photoCv?'Photo CV définie':'Choisir la photo du CV')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4, la photo qui vous représente le mieux</div>' +
-      '<label class="cc-upload-btn" data-cc-upload-label="photoCv"><input class="hidden-input" type="file" accept="image/*" id="fPhotoCv">Téléverser une nouvelle photo</label></div>' +
-    '<div class="principal-photo-card '+(p.principale?'filled':'')+'" id="uPrincipale">'+photoThumb(p.principale,'Photo de profil')+'<div class="principal-photo-badge profile">PHOTO PRINCIPALE PROFIL</div><div class="principal-photo-title">'+(p.principale?'Photo profil définie':'Choisir la photo de profil')+'</div><div class="principal-photo-hint">Portrait, buste ou 3/4, affichée sur votre fiche publique et dans THE BOOK</div>' +
-      '<label class="cc-upload-btn" data-cc-upload-label="principale"><input class="hidden-input" type="file" accept="image/*" id="fPrincipale">Téléverser une nouvelle photo</label></div>' +
-    '<div class="principal-photo-card '+(p.pleinPied?'filled':'')+'" id="uPleinPied">'+photoThumb(p.pleinPied,'Photo plein pied')+'<div class="principal-photo-badge fullbody">PHOTO PLEIN PIED</div><div class="principal-photo-title">'+(p.pleinPied?'Photo plein pied définie':'Choisir la photo plein pied')+'</div><div class="principal-photo-hint">Photo de référence plein pied</div>' +
-      '<label class="cc-upload-btn" data-cc-upload-label="pleinPied"><input class="hidden-input" type="file" accept="image/*" id="fPleinPied">Téléverser une nouvelle photo</label></div>' +
-    '<div class="principal-photo-card '+(p.couverture?'filled':'')+'" id="uCouverture">'+(p.couverture?'<img data-couv-preview src="'+p.couverture.url+'" alt="Photo de couverture">':'')+'<div class="principal-photo-badge cover">PHOTO DE COUVERTURE</div><div class="principal-photo-title">'+(p.couverture?'Photo de couverture définie':'Choisir la photo de couverture')+'</div><div class="principal-photo-hint">Bandeau en haut de votre fiche publique, plutôt une photo large</div>' +
-    (p.couverture ? ('<div class="cc-couv-position"><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='top'?'active':'')+'" data-couv-pos="top">Haut</button><button type="button" class="cc-couv-pos-btn '+((!p.couverture.couverturePosition||p.couverture.couverturePosition==='center')?'active':'')+'" data-couv-pos="center">Centre</button><button type="button" class="cc-couv-pos-btn '+(p.couverture.couverturePosition==='bottom'?'active':'')+'" data-couv-pos="bottom">Bas</button></div>') : '') +
-      '<label class="cc-upload-btn" data-cc-upload-label="couverture"><input class="hidden-input" type="file" accept="image/*" id="fCouverture">Téléverser une nouvelle photo</label></div>' +
-  '</div>' +
-  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici, c’est parmi elles que vous choisirez ensuite vos photos principales et votre compcard.</p></div>' +
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici, c’est parmi elles que vous choisirez ensuite votre photo de profil, votre compcard et votre CV.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
       // Numéro fixe de la photo (Extension 117) : l'agence s'y réfère dans ses messages.
-      return '<div class="book-thumb '+(ph.compcardOrdre?'cc-selected':'')+'" data-book-id="'+ph.id+'">'+photoThumb(ph,'Book')+
+      return '<div class="book-thumb" data-book-id="'+ph.id+'">'+photoThumb(ph,'Book')+
         (ph.numero?('<div class="book-num">N° '+Number(ph.numero)+'</div>'):'') +
-        (ph.compcardOrdre?('<div class="book-slot-tag">COMPCARD '+ph.compcardOrdre+'</div>'):'') +
         '<button class="book-thumb-remove" data-rmbook="'+ph.id+'" title="Supprimer">✕</button>' +
-        '<button class="book-select-btn" data-book-cc-toggle="'+ph.id+'">'+(ph.compcardOrdre?'Retirer de la compcard':'+ Compcard')+'</button>' +
       '</div>';
     }).join('')+'</div></section>' +
-  '<section class="compcard-builder"><div class="section-title-row"><div><span class="editor-kicker">COMPCARD</span><h3>Les 5 photos de votre compcard</h3><p>Choisissez, parmi vos photos du Book, celles qui composent votre compcard.</p></div><span class="cc-rule">'+compcardPhotos.length+' / 5 sélectionnées</span></div>' +
-    '<div class="compcard-slots editable-slots">'+slots+'</div></section>' +
   '<div class="actions-row"><button class="btn ghost" data-goto="4">← Retour</button><button class="btn primary" id="save5">Continuer</button></div>';
 }
 

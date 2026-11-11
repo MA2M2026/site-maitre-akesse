@@ -567,3 +567,23 @@ body.ap-page-profil .scv-apercu img { width: 100%; height: auto; display: block;
 .ap-bulle time { display: block; text-align: right; font-size: 10.5px; color: #6E4F53; margin-top: 4px; }
 .ap-bulle-nv { display: inline-block; margin-bottom: 5px; padding: 2px 8px; border-radius: 10px; background: #7C2128; color: #FFFFFF; font: 700 9.5px 'Work Sans', sans-serif; letter-spacing: .1em; }
 .ap-wa { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 14px; background: #FFFFFF; color: #7C2128; font: 700 14px 'Work Sans', sans-serif; text-decoration: none; box-shadow: var(--ap-ombre); }
+
+/* Volet de paiement (11/11/2026) : « Payer avec Wave », « Payer à l'avance », « Mes reçus » sans quitter la page
+   Paiements ; le contenu est celui de js/mes-paiements.js (styles .mp-* de css/mes-paiements.css) */
+body.ap-volet-ouvert { overflow: hidden; }
+.ap-volet-fond { position: fixed; inset: 0; z-index: 60; background: rgba(20, 6, 8, 0.55); display: flex; align-items: flex-end; justify-content: center; }
+.ap-volet { background: #FFFFFF; color: #1A1A1A; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 22px 22px 0 0; padding: 6px 0 calc(22px + env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3); animation: ap-volet-monte 0.22s ease-out; }
+@keyframes ap-volet-monte { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ap-volet { animation: none; } }
+.ap-volet-tete { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 10px; background: inherit; }
+#ap-volet-titre { margin: 0; font-family: "Cormorant Garamond", Georgia, serif; font-size: 1.7rem; font-weight: 600; color: #7C2128; }
+.ap-volet-fermer { width: 44px; height: 44px; border-radius: 50%; border: 0; background: #F2F2F2; color: #7C2128; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+.ap-volet-zone { padding: 0 16px; }
+.ap-volet .mp-colonne { max-width: none; }
+.ap-volet h2:not(#ap-volet-titre) { font-size: 1rem; font-weight: 700; margin: 10px 0 0; color: #1A1A1A; }
+.ap-volet .btn { display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 14px; border: 1.5px solid #7C2128;
+  background: #FFFFFF; color: #7C2128; font: 700 1rem 'Work Sans', system-ui, sans-serif; text-decoration: none; cursor: pointer; }
+.ap-volet .btn--principal { background: #7C2128; color: #FFFFFF; }
+.ap-volet .btn:disabled { opacity: 0.45; cursor: default; }
+button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer; }

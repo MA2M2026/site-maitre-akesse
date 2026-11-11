@@ -45,6 +45,10 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(/Étape 1 sur 6/.test(await q.textContent('.panel')) && !(await q.$('#submitProfile')), nom + ' : étape incomplète : rien n’est perdu, on reste sur l’étape pour la compléter');
     // étape « Photos » : le bouton mène au récapitulatif
     await q.click('.step-tab[data-goto="5"]'); await q.waitForTimeout(500);
+    // (11/11/2026, captures de la propriétaire) compcard, photo du CV et photo de profil ont leurs propres pages : plus ici
+    const etapePhotos = await q.textContent('.panel');
+    ok(/Photos du Book/.test(etapePhotos) && !/compcard/i.test(etapePhotos.replace(/votre compcard et votre CV/g, '')) && !/Choisir la photo/.test(etapePhotos) && !(await q.$('.compcard-builder, .photo-principals-grid, [data-book-cc-toggle]')),
+      nom + ' : étape « Photos » : seulement les compétences et le Book (plus de compcard, photo du CV ni photo de profil à choisir)');
     await q.click('#allerRecap'); await q.waitForTimeout(600);
     ok(/Récapitulatif/.test(await q.textContent('.panel')) && await q.$('#submitProfile') && !(await q.$('#allerRecap')), nom + ' : le bouton mène au récapitulatif, avec « Soumettre mon profil »');
     ok(!errs.length, nom + ' : aucune erreur ' + errs.join(' | '));
