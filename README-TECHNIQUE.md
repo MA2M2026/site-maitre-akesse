@@ -4589,3 +4589,37 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   e-mail, WhatsApp une personne après l'autre). La logique (js/messages-groupes.js) est inchangée.
 - **Informations agence en 3 étapes** (js/admin/site-infos.js : `brouillon.etape`, `data-etape` sur le formulaire
   `.if-form`, les champs gardent ce qui est tapé) : 1 · L'information, 2 · À qui ?, 3 · Message et envoi.
+
+## Application des mannequins : étape « Photos » allégée et paiement dans un volet (11/11/2026, captures de la propriétaire)
+
+- **Étape « Photos » du profil** (`stepPhotos`, js/espace-mannequin.js) : seulement les compétences et la
+  galerie « Photos du Book ». Les cases « photo du CV / de profil / plein pied / de couverture » et le bloc
+  « Les 5 photos de votre compcard » sont retirés : ces choix se font dans leurs pages (« Mon profil »,
+  « Ma compcard », « Mon CV »), pour ne plus mélanger les mannequins. Les données (rôles des photos,
+  ordre de la compcard) ne changent pas. Essai : test-etapes-profil.
+- **Payer sans changer de page** : « Payer avec Wave », « Payer à l'avance », « Mes reçus » et « Tous mes
+  reçus » de l'écran Paiements (js/mannequin-app.js, `ouvrirVolet`) ouvrent un volet par-dessus la page,
+  posé hors de l'écran redessiné (il reste ouvert au retour de Wave). Le contenu vient de
+  js/mes-paiements.js, devenu réutilisable : `window.PaiementMa2m.monter(zone, { mode: 'page' | 'payer' |
+  'recus', surDeclare })` (pas de recopie du paiement). app/mes-paiements.html reste en place (mode
+  « page ») pour les liens des rappels de mensualité. Essai : test-app-mannequin (volet, « J'ai payé » avec
+  le numéro, reçus, fermeture par ✕ et Échap).
+
+## Badges d'événement, modèle « Couverture » (11/11/2026, modèle validé par la propriétaire)
+
+js/cartes-acces.js : badge 105 × 148,5 mm (quart de A4), 4 par feuille A4 portrait avec traits de coupe, ou un
+badge seul. Photo pleine page, « MODEL » en grand en haut, nom de l'événement en grand, date, lieu, N°.
+Le voile qui monte du bas prend la couleur de l'affiche du projet (`couleurAffiche`, Extension 162), noir
+sans affiche ; modifiable (champ couleur). Logo au choix : aucun (par défaut), agence, ou logo du
+partenaire téléversé (ImageJointe). Plus de ligne « Organisé par » ni de QR code. Essai : test-cartes-acces.
+
+## Profil déjà en ligne : les mêmes 6 étapes (11/11/2026, capture de la propriétaire)
+
+« Modifier mon profil » d'une mannequin déjà publiée ouvrait encore l'ancien tableau de bord à blocs. Désormais
+`render()` (js/espace-mannequin.js) montre à tout le monde les 6 étapes (`viewWizard`) ; pour un profil déjà en
+ligne : l'état du profil en haut (`bandeauStatut`), un texte d'accueil adapté, et un récapitulatif sans « Rendre
+visible » ni « Soumettre » (bouton « Terminé » vers /app/#profil). Même enregistrement (Store.saveBlock) et même
+revalidation par l'agence qu'avant. Retirés : viewDashboard, l'éditeur de blocs (viewBlockEditor, bindBlockPage),
+BLOCKS, reopenDashboardBlock et l'ancien aperçu du CV en superposition (« Mon CV » a sa page). Le petit message
+« Enregistré » (toast) s'écrivait blanc sur blanc : texte foncé (css/espace-mannequin-correctifs.css). Essai :
+test-etapes-profil (parcours « déjà en ligne »).

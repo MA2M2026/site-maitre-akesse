@@ -2,7 +2,7 @@
 // photo choisie dans la galerie, envoyée tout de suite sur Cloudflare R2 (dossier « infos », comme les photos
 // des Informations agence : envoyerImageSite, js/images-site-ecriture.js). Partagé par les Convocations
 // (js/convocations-page.js) et les Messages groupés (js/messages-groupes.js).
-//   ImageJointe.brancher(zone, { valeur, surChange }) : dessine la case dans « zone » et renvoie
+//   ImageJointe.brancher(zone, { valeur, surChange, aide }) : dessine la case dans « zone » et renvoie
 //   { valeur() } ; surChange(url | null) est appelée à chaque choix ou retrait.
 // Dans l'application des mannequins, l'image s'affiche en grand dans le message ; dans les e-mails et les
 // WhatsApp, un lien « Voir l'affiche » est ajouté (avecAffiche, js/messages-convocations.js).
@@ -21,7 +21,7 @@
         ? '<div class="ij-choisie"><img src="' + esc(url) + '" alt="Image jointe"><div><b>Image jointe ✓</b><span class="ij-boutons">' +
           '<button type="button" class="btn petit" data-ij="changer">Changer</button><button type="button" class="btn petit" data-ij="retirer">Retirer</button></span></div></div>'
         : '<button type="button" class="ij-ajouter" data-ij="changer"' + (enCours ? ' disabled' : '') + '>' + (enCours ? 'Envoi de l’image…' : '＋ Ajouter une image depuis la galerie') + '</button>') +
-        '<p class="ij-canaux">' + (texte ? esc(texte) : 'Elle part avec le message : en grand dans l’application ; un lien « Voir l’affiche » dans l’e-mail et le WhatsApp.') + '</p>';
+        '<p class="ij-canaux">' + esc(texte || o.aide || 'Elle part avec le message : en grand dans l’application ; un lien « Voir l’affiche » dans l’e-mail et le WhatsApp.') + '</p>';
       zone.appendChild(fichier);
     };
     zone.addEventListener('click', (e) => {

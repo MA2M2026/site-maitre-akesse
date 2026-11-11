@@ -8,18 +8,22 @@
 // rien n'est à payer, 1 à 3 mois suivants (moisPayablesAvance, js/app.js) en un seul paiement Wave,
 // puis « J'ai payé » les déclare tous ensemble, tout ou rien (mensualites_payer_avance,
 // supabase-paiement-avance.sql : une seule ligne au montant total à vérifier pour l'agence).
+// (11/11/2026, demande de la propriétaire) le même programme sert aussi dans l'application (js/mannequin-app.js) :
+// « Payer avec Wave » et « Payer à l'avance » s'ouvrent dans un volet de la nouvelle page Paiements, sans
+// changer de page — window.PaiementMa2m.monter(zone, { mode: 'payer' | 'recus', surDeclare }).
 (function () {
   'use strict';
-  const zone = document.getElementById('mp-zone');
-  if (!zone) return;
   const LIEN_WAVE = LIEN_WAVE_AGENCE;  // (js/app.js)
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fcfa = window.CachetsMa2m.fcfa;  // (js/cachets-communs.js, chargé avant)
   const nomMois = (d) => MOIS[Number(String(d).slice(5, 7)) - 1] + ' ' + String(d).slice(0, 4);
   const ETATS = { paye: ['Payé', 'ok'], attente: ['En attente de validation', 'alerte'], non_paye: ['Non payé', 'erreur'], a_payer: ['À payer avant le 5', 'info'], a_venir: ['À venir', 'neutre'], conge: ['Congés : pas de mensualité', 'conge'], termine: ['Formation terminée', 'neutre'], rodage: ['Rodage : rien à payer', 'neutre'] };
-  let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
   const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
+  // mode : 'page' (cette page entière), 'payer' (seulement les paiements à faire) ou 'recus' (reçus et cachets)
+  function monter(zone, options) {
+  const mode = (options && options.mode) || 'page', surDeclare = (options && options.surDeclare) || null;
+  let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
 
   async function charger() {
     const { data: s } = await sb.auth.getSession();
@@ -78,6 +82,14 @@
     const mois = donnees.mois || [];
     const ouverts = mois.filter((m) => m.etat === 'a_payer' || m.etat === 'non_paye');
     const courant = mois.find((m) => String(m.mois).slice(0, 7) === new Date().toISOString().slice(0, 7));
+    const bandeauMessage = message ? '<div class="mp-bandeau ' + message[1] + '" role="status">' + esc(message[0]) + '</div>' : '';
+    if (mode === 'payer') {
+      const avance = moisPayablesAvance(mois);  // (js/app.js)
+      zone.innerHTML = bandeauMessage + ouverts.map(carteAPayer).join('') + (avance.length ? carteAvance(avance) : '') +
+        (ouverts.length || avance.length || message ? '' : '<div class="mp-carte mp-doux">Rien à payer pour le moment.</div>');
+      return;
+    }
+    if (mode === 'recus') { zone.innerHTML = historique() + mesCachets() || '<div class="mp-carte mp-doux">Aucun reçu pour le moment.</div>'; return; }
     const { payes, total } = bilanFormation(donnees);  // (js/app.js)
     const situation = situationFormation(donnees);  // (js/app.js : niveau, mois X sur 9, agence fermée)
     const bandeau = !courant ? '' : courant.etat === 'paye' ? '<div class="mp-bandeau vert">À jour pour ' + esc(nomMois(courant.mois)) + '. Merci !</div>'
@@ -87,7 +99,7 @@
       : courant.etat === 'non_paye' ? '<div class="mp-bandeau rouge">Votre paiement de ' + esc(MOIS[Number(String(courant.mois).slice(5, 7)) - 1]) + ' n’est pas encore fait.</div>'
       : '<div class="mp-bandeau bleu">À payer avant le 5 : ' + fcfa(donnees.mensualite) + '</div>';
     zone.innerHTML = '<div class="mp-tete"><h1>Mes paiements</h1><div class="mp-doux">' + esc(donnees.nom || '') + (donnees.mineur ? ' · mineur : les messages vont au parent' : '') + '</div></div>' +
-      (message ? '<div class="mp-bandeau ' + message[1] + '" role="status">' + esc(message[0]) + '</div>' : '') + bandeau +
+      bandeauMessage + bandeau +
       ouverts.map(carteAPayer).join('') +
       (moisPayablesAvance(mois).length ? carteAvance(moisPayablesAvance(mois)) : '') +
       // (« agence fermée » est déjà dans le bandeau du haut : pas répété ici)
@@ -151,6 +163,7 @@
       const nb = mois === 'avance' ? nbAvance : 1;
       donnees = await charger();
       waveOuvert = {}; nbAvance = 1;
+      if (surDeclare) surDeclare();
       afficher(['Merci ! L’agence vérifie votre paiement' + (nb > 1 ? ' (' + nb + ' mois)' : '') + '. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'bleu']);
     } catch (e) {
       afficher([String((e && e.message) || e).replace(/^.*?ERROR:\s*/, '') || 'Connexion impossible. Réessayez.', 'rouge']);
@@ -160,4 +173,8 @@
   // (« Payer à l'avance » de l'application : /app/mes-paiements.html#avance, la carte est dessinée après le chargement)
   const versAvance = () => { const c = location.hash === '#avance' && document.getElementById('avance'); if (c) c.scrollIntoView({ block: 'start' }); };
   charger().then((d) => { donnees = d; afficher(); versAvance(); }, (e) => { donnees = { inscrit: false }; afficher([String((e && e.message) || 'Connexion impossible. Réessayez.'), 'rouge']); });
+  }
+  window.PaiementMa2m = { monter };
+  const zonePage = document.getElementById('mp-zone');
+  if (zonePage) monter(zonePage);
 })();

@@ -2,7 +2,7 @@
 // ordinateur : rubrique « Cartes d'événement » du menu → choisir l'événement → seules les
 // mannequins qui ont CONFIRMÉ leur présence (pas « sans réponse », pas « absente ») → ajouter une
 // photo à celle qui n'en a pas (gardée, stockage privé) → toucher une mannequin : sa carte (PDF A5)
-// → « Toutes les cartes » : deux par feuille A4 couchée. Raccourci depuis l'Agenda.
+// → « Tous les badges » : quatre par feuille A4 (modèle « Couverture », 11/11/2026). Raccourci depuis l'Agenda.
 // Base simulée : rien n'est écrit pour de vrai. APERCU=dossier : garde l'image des feuilles.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admin');
@@ -45,7 +45,8 @@ const pdfDe = async (p, clic) => {
     await p.click('.ca-evenement:has-text("ABIDJAN BORDER FORUM")'); await p.waitForSelector('.ca-liste', { timeout: 15000 });
     const noms = await p.$$eval('.ca-nom', (l) => l.map((x) => x.textContent));
     ok(noms.join('|') === 'AYA KOUASSI|JEAN EXTÉRIEUR|MARIAM TRAORÉ', n + 'seulement les 3 confirmées, sans « Madame / Monsieur », par ordre alphabétique (' + noms.join(', ') + ') — pas celles sans réponse ni l’absente');
-    ok(/N° 002/.test(await p.textContent('.ca-carte:nth-child(2)')) && await p.inputValue('#ca-organisateur') === 'Maître Akesse Model Management', n + 'numéros N° 001, 002… ; « Organisé par » : l’agence par défaut');
+    ok(/N° 002/.test(await p.textContent('.ca-carte:nth-child(2)')) && await p.isChecked('input[name="ca-logo"][value="aucun"]') && /^#[0-9a-f]{6}$/i.test(await p.inputValue('#ca-voile')) && await p.isHidden('#ca-logo-partenaire'),
+      n + 'numéros N° 001, 002… ; badge : aucun logo par défaut, couleur du voile proposée');
     ok((await p.$$('.ca-photo')).length === 1 && /Ajouter une photo/.test(await p.textContent('.ca-carte:nth-child(2)')), n + '« Ajouter une photo » seulement pour celle qui n’en a pas (JEAN EXTÉRIEUR)');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');
     // 2. Ajouter sa photo : gardée dans le stockage privé
@@ -56,19 +57,21 @@ const pdfDe = async (p, clic) => {
     // 3. Toucher une mannequin : sa carte seule (A5)
     d.fichiers = { [depot[1]]: { type: 'image/jpeg', octets: fs.readFileSync(path.join(__dirname, 'medias/photo1.jpg')) } };
     const une = await pdfDe(p, () => p.click('.ca-carte:nth-child(2) [data-action="carte-une"]'));
-    ok(/^%PDF/.test(une.texte) && (une.texte.match(/\/Type \/Page\b/g) || []).length === 1 && /\/MediaBox \[0 0 420\.94\d* 595\.2/.test(une.texte) && /^carte-jean-exterieur-abidjan-border-forum/.test(une.nom),
-      n + 'toucher JEAN EXTÉRIEUR : sa carte seule, une page A5 (' + une.nom + ')');
+    ok(/^%PDF/.test(une.texte) && (une.texte.match(/\/Type \/Page\b/g) || []).length === 1 && /\/MediaBox \[0 0 297\.6\d* 420\.9/.test(une.texte) && /^badge-jean-exterieur-abidjan-border-forum/.test(une.nom),
+      n + 'toucher JEAN EXTÉRIEUR : son badge seul, un quart de A4 (' + une.nom + ')');
     ok(journal.some((j) => j[0] === 'TELECHARGE' && /c-x1\//.test(j[1])), n + 'sa carte prend la photo ajoutée');
-    // 4. Toutes les cartes : deux par feuille A4 couchée
-    await p.fill('#ca-organisateur', 'Maison Ivoire');
+    // 4. Tous les badges : quatre par feuille A4 ; logo du partenaire et couleur choisis
+    await p.check('input[name="ca-logo"][value="partenaire"]'); await p.waitForTimeout(300);
+    ok(await p.isVisible('#ca-logo-partenaire'), n + '« Logo du partenaire » : la zone pour téléverser son logo apparaît');
+    await p.check('input[name="ca-logo"][value="agence"]');
+    await p.fill('#ca-voile', '#1f4e8c');
     const avant = (await p.evaluate(() => window.__feuilles.length));
     const toutes = await pdfDe(p, () => p.click('[data-action="cartes-toutes"]'));
-    ok((toutes.texte.match(/\/Type \/Page\b/g) || []).length === 2 && /\/MediaBox \[0 0 841\.8\d* 595\.2/.test(toutes.texte), n + '« Toutes les cartes » : 3 cartes → 2 feuilles A4 couchées');
-    ok((toutes.texte.match(/mannequin\.html\?id=/g) || []).length === 2, n + 'QR code cliquable vers la fiche, pour les 2 profils publiés seulement');
+    ok((toutes.texte.match(/\/Type \/Page\b/g) || []).length === 1 && /\/MediaBox \[0 0 595\.2\d* 841\.8/.test(toutes.texte) && /^badges-/.test(toutes.nom), n + '« Tous les badges » : 3 badges → 1 feuille A4 (4 par feuille)');
     await p.waitForTimeout(400);
-    ok(/3 cartes prêtes/.test(await p.textContent('body')), n + 'message « 3 cartes prêtes »');
+    ok(/3 badges prêts/.test(await p.textContent('body')), n + 'message « 3 badges prêts »');
     if (process.env.APERCU && !tel) (await p.evaluate(() => window.__feuilles)).forEach((f, i) => fs.writeFileSync(path.join(process.env.APERCU, 'feuille-' + i + '.jpg'), Buffer.from(f.split(',')[1], 'base64')));
-    ok((await p.evaluate(() => window.__feuilles.length)) - avant === 2, n + '2 feuilles dessinées');
+    ok((await p.evaluate(() => window.__feuilles.length)) - avant === 1, n + '1 feuille dessinée');
     // 5. Raccourci depuis l'Agenda
     await p.goto(URL_ADMIN + '#/site/b3c-agenda'); await p.waitForSelector('[data-action="cartes-acces"][data-id="p1"]', { timeout: 15000 });
     await p.click('[data-action="cartes-acces"][data-id="p1"]'); await p.waitForSelector('.ca-liste', { timeout: 15000 });

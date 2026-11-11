@@ -33,6 +33,11 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   ok(await p.evaluate(() => { const r = document.querySelector('.sc-studio').getBoundingClientRect(); return r.right <= innerWidth + 1 && document.documentElement.scrollWidth <= innerWidth + 1; }), 'rien ne dépasse de l’écran (390 px)');
   // case 4 touchée : la galerie, puis la photo rejoint le Book et prend la case
   await p.setInputFiles('[data-sc-case="4"]', path.join(__dirname, 'medias/photo4.jpg'));
+  // (11/11/2026, captures de la propriétaire) plus de rectangle blanc en haut à droite pendant l'envoi : seule la barre du bas
+  await p.waitForSelector('.barre-envoi', { timeout: 5000 }).catch(() => {});
+  ok(!!(await p.$('.barre-envoi')) && !(await p.$$eval('.toast', (l) => l.some((t) => /Envoi de la photo/.test(t.textContent)))),
+    'envoi d’une photo : seulement la barre « Envoi de la photo… » en bas, plus de message en haut à droite');
+  if (process.env.CAPTURES) await p.screenshot({ path: path.join(process.env.CAPTURES, 'compcard-envoi.png') });
   await p.waitForFunction(() => /4 \/ 5/.test((document.querySelector('.sc-prog') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
   ok(/4 \/ 5/.test(await p.textContent('.sc-prog')) && !!(await p.$('.sc-case-4.pleine img')), 'case 4 remplie depuis la galerie : 4 / 5');
   ok(journal.some((j) => j[0] === 'POST' && j[1] === 'model_photos') && journal.some((j) => j[0] === 'PATCH' && j[1] === 'model_photos' && /"compcard_ordre":4/.test(j[3] || '')),

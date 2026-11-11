@@ -6,7 +6,7 @@
 // « Je confirme » / « Je suis absente » (convocation_repondre) et passages du défilé
 // (defile_programme), résumé du profil (analyse partagée : js/analyse-profil.js) et des paiements
 // (mes_mensualites, mes_cachets). Modifier son profil et payer : pages de l'application
-// (app/espace-mannequin.html, app/mes-paiements.html). jourLong : js/app.js.
+// (app/espace-mannequin.html ; payer : volet de js/mes-paiements.js). jourLong : js/app.js.
 (function () {
   'use strict';
   const racine = document.getElementById('app');
@@ -419,14 +419,14 @@
       const nomDe = (x) => MOIS[Number(String(x.mois).slice(5, 7)) - 1] + ' ' + String(x.mois).slice(0, 4);
       const carteProchain = aPayer
         ? '<div class="ap-prochain"><small>PROCHAIN PAIEMENT</small><div class="ap-prochain-ligne"><b>' + fcfa(m.mensualite) + '</b><span>' + esc(nomDe(aPayer)) + ' · ' + (aPayer.etat === 'non_paye' ? 'en retard' : 'avant le 5') + '</span></div>' +
-          '<div class="ap-btns"><a class="ap-btn rouge ap-btn-wave" href="/app/mes-paiements.html"><i aria-hidden="true">~</i>Payer avec Wave</a></div></div>'
+          '<div class="ap-btns"><button type="button" class="ap-btn rouge ap-btn-wave" data-payer="payer"><i aria-hidden="true">~</i>Payer avec Wave</button></div></div>'
         : '<div class="ap-prochain"><small>PROCHAIN PAIEMENT</small>' +
           (prochain && !situation ? '<div class="ap-prochain-ligne"><b>' + fcfa(m.mensualite) + '</b><span>' + esc(nomDe(prochain)) + ' · avant le 5</span></div>' : '') +
           '<p class="ap-rien-a-payer">' + (courant && courant.etat === 'attente' ? 'Votre paiement est en cours de vérification par l’agence.'
             : 'Rien à payer pour le moment.' + (avance ? ' Vous pouvez payer jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance.' : '')) + '</p>' +
-          // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js)
-          '<div class="ap-btns">' + (avance ? '<a class="ap-btn rouge" href="/app/mes-paiements.html#avance">Payer à l’avance</a>' : '') +
-          '<a class="ap-btn" href="/app/mes-paiements.html">Mes mois et mes reçus</a></div></div>';
+          // paiement à l'avance (moisPayablesAvance, js/app.js ; carte « Payer à l'avance » de js/mes-paiements.js, dans un volet)
+          '<div class="ap-btns">' + (avance ? '<button type="button" class="ap-btn rouge" data-payer="payer">Payer à l’avance</button>' : '') +
+          '<button type="button" class="ap-btn" data-payer="recus">Mes reçus</button></div></div>';
       // la grille des mois : ✓ payé, 🌴 congés, ⏳ en vérification, ! en retard ; le mois en cours est entouré
       const ICONE = { paye: '✓', conge: '🌴', attente: '⏳', non_paye: '!', a_payer: '•', rodage: '☆' };
       const grille = mois.map((x, i) => {
@@ -453,7 +453,7 @@
     return haut +
       '<h2 class="ap-titre-sec">Mes opérations</h2>' + (ops.length ? '<div class="ap-releve">' + ops.map((o) =>
         '<div class="ap-op"><em aria-hidden="true">' + o.ic + '</em><span><b>' + esc(o.titre) + '</b><small>' + esc(o.sous) + '</small></span><strong' + (o.plus ? ' class="plus"' : '') + '>' + esc(o.montant) + '</strong></div>').join('') + '</div>' +
-        '<a class="ap-lien-recus" href="/app/mes-paiements.html">Tous mes reçus ›</a>'
+        '<button type="button" class="ap-lien-recus" data-payer="recus">Tous mes reçus ›</button>'
         : '<div class="ap-carte doux">Aucune opération pour le moment.</div>');
   }
   // un message de l'agence : titre, date, texte, photo, fiche jointe, page à ouvrir
@@ -547,17 +547,53 @@
     document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
   }
 
+  // ---------- volet de paiement (11/11/2026) ----------
+  // « Payer avec Wave », « Payer à l'avance », « Mes reçus » : un volet par-dessus la page Paiements, sans changer de
+  // page. Le paiement lui-même (Wave, numéro, « J'ai payé ») est celui de js/mes-paiements.js (window.PaiementMa2m).
+  // Le volet est posé hors de l'écran : il reste ouvert au retour de Wave (l'écran, lui, est redessiné).
+  function ouvrirVolet(mode) {
+    if (!window.PaiementMa2m) { location.href = '/app/mes-paiements.html' + (mode === 'payer' ? '#avance' : ''); return; }
+    fermerVolet();
+    const fond = document.createElement('div');
+    fond.className = 'ap-volet-fond'; fond.id = 'ap-volet';
+    fond.dataset.couleurLibre = '';  // (voile sombre derrière le volet : seule exception au rouge et blanc)
+    fond.innerHTML = '<div class="ap-volet" role="dialog" aria-modal="true" aria-labelledby="ap-volet-titre"><div class="ap-volet-tete">' +
+      '<h2 id="ap-volet-titre">' + (mode === 'recus' ? 'Mes reçus' : 'Payer') + '</h2><button type="button" class="ap-volet-fermer" data-fermer-volet aria-label="Fermer">✕</button></div>' +
+      '<div class="ap-volet-zone mp-colonne"></div></div>';
+    fond.addEventListener('click', (e) => {
+      if (e.target !== fond && !e.target.closest('[data-fermer-volet]')) return;
+      fermerVolet();
+    });
+    document.body.appendChild(fond);
+    document.body.classList.add('ap-volet-ouvert');
+    // paiement déclaré : la page Paiements derrière se met tout de suite à jour (mois « en vérification »), même si
+    // le volet est déjà fermé (le volet n'est pas touché : il est hors de l'écran redessiné)
+    window.PaiementMa2m.monter(fond.querySelector('.ap-volet-zone'), { mode, surDeclare: () => {
+      if (etat) sb.rpc('mes_mensualites').then(({ data }) => { if (data && etat) { etat.mensualites = data; afficher(); } }, () => null);
+    } });
+    fond.querySelector('[data-fermer-volet]').focus();
+  }
+  function fermerVolet() {
+    const v = document.getElementById('ap-volet');
+    if (v) v.remove();
+    document.body.classList.remove('ap-volet-ouvert');
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('ap-volet')) document.querySelector('#ap-volet [data-fermer-volet]').click(); });
+
   // ---------- actions ----------
   racine.addEventListener('toggle', (e) => { const m = e.target.closest && e.target.closest('[data-mini]'); if (m) programmeOuvert['mini-' + m.dataset.mini] = m.open; }, true);
   racine.addEventListener('click', async (e) => {
     const notif = e.target.closest('[data-notifications]');
     if (notif) { await activerNotifications(notif); return; }
     if (e.target.closest('[data-partager-book]')) { await partagerBook(); return; }
+    const payer = e.target.closest('[data-payer]');
+    if (payer) { ouvrirVolet(payer.dataset.payer); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');
     if (tout) { programmeOuvert[tout.dataset.programme] = !programmeOuvert[tout.dataset.programme]; afficher(); return; }
     if (per) { periode = per.dataset.periode; afficher(); return; }
     if (e.target.closest('[data-ma-carte]')) periode = 'avenir';
     if (e.target.closest('[data-deconnexion]')) {
+      fermerVolet();
       await Promise.race([desabonnerCeTelephone().catch(() => null), new Promise((r) => setTimeout(r, 3000))]);
       await sb.auth.signOut({ scope: 'local' }).catch(() => null);  // cet appareil seulement
       etat = null; periode = 'avenir';
@@ -585,7 +621,7 @@
     message(ev.reponse === 'confirme' ? 'Merci ! Votre présence est confirmée.' : 'C’est noté : l’agence est prévenue.');
     afficher();
   });
-  addEventListener('hashchange', () => { afficher(); scrollTo(0, 0); const nv = ongletCourant() === 'alertes' && document.querySelector('[data-nouveau]'); if (nv) nv.scrollIntoView({ block: 'center' }); });
+  addEventListener('hashchange', () => { fermerVolet(); afficher(); scrollTo(0, 0); const nv = ongletCourant() === 'alertes' && document.querySelector('[data-nouveau]'); if (nv) nv.scrollIntoView({ block: 'center' }); });
   // de retour dans l'application (notification touchée, autre application) : les nouveaux messages
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !etat) return;
