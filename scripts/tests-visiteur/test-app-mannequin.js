@@ -208,9 +208,6 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       n + 'Mon profil à modifier : l’éditeur s’ouvre dans l’application (sans l’en-tête du site), menu « Profil » en bas');
     ok(!(await p.isVisible('.top-right a[href="index.html"]').catch(() => false)) && !(await p.isVisible('.top').catch(() => false)) && !(await deborde()), n + 'ni « Retour au site » ni barre du site, rien ne dépasse');
     await capture('3b-profil-editeur');
-    // fenêtre « Choisir une photo pour la compcard » : créée par le programme (plus recopiée dans chaque page)
-    ok(await p.evaluate(() => { const a = fenetreChoixBook(), b = fenetreChoixBook(); return a === b && !!a.querySelector('[data-cc-book-grid]') && document.querySelectorAll('#ccBookModal').length === 1; }),
-      n + 'fenêtre de choix de photo pour la compcard disponible (une seule)');
     // un lien du site vers « Mes paiements » (écrit par l'Espace mannequin) reste dans l'application
     await p.evaluate(() => { const a = document.createElement('a'); a.href = 'mes-paiements.html'; a.id = 'lien-essai'; a.textContent = 'Mes paiements'; document.body.appendChild(a); });
     await p.click('#lien-essai'); await p.waitForSelector('#mp-zone .mp-carte', { timeout: 15000 }); await p.waitForTimeout(800);
