@@ -552,7 +552,7 @@
   // page. Le paiement lui-même (Wave, numéro, « J'ai payé ») est celui de js/mes-paiements.js (window.PaiementMa2m).
   // Le volet est posé hors de l'écran : il reste ouvert au retour de Wave (l'écran, lui, est redessiné).
   function ouvrirVolet(mode) {
-    if (!window.PaiementMa2m) { location.href = '/app/mes-paiements.html' + (mode === 'payer' ? '#avance' : ''); return; }
+    if (!window.PaiementMa2m) { location.href = '/app/mes-paiements.html'; return; }
     fermerVolet();
     const fond = document.createElement('div');
     fond.className = 'ap-volet-fond'; fond.id = 'ap-volet';
@@ -563,6 +563,8 @@
     fond.addEventListener('click', (e) => {
       if (e.target !== fond && !e.target.closest('[data-fermer-volet]')) return;
       fermerVolet();
+      // le clavier revient au bouton qui avait ouvert le volet (redessiné : on le retrouve par son rôle)
+      const retour = document.querySelector('[data-payer="' + mode + '"]'); if (retour) retour.focus();
     });
     document.body.appendChild(fond);
     document.body.classList.add('ap-volet-ouvert');

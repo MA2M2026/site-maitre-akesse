@@ -4632,10 +4632,11 @@ test-etapes-profil (parcours « déjà en ligne »).
 - 6 mensurations essentielles (taille, poitrine, tour de taille, hanches, pointure, yeux ; mesures « à reprendre »
   cachées comme avant) ; le détail complet (et les équivalences) dans « Toutes les mensurations » (`<details>`,
   toujours écrit dans la page, donc lu par Google) ;
-- chapitres collés en haut : Sélection · À propos · Parcours · Book. « Sélection » = les photos de la COMPCARD
+- chapitres collés en haut : Sélection · À propos · Parcours · Book · Contact. « Sélection » = les photos de la COMPCARD
   (`compcard_ordre`, choisies par la mannequin et l'agence) ; jamais de tri automatique (il confondait défilés et
   digitals, retiré le 24/10/2026) ; affichée à partir de 3 photos ;
-- parcours en frise : l'année en grand, 3 projets puis « Voir tous les projets » ;
+- parcours en frise, trié par année (les plus récents d’abord) : 3 projets puis « Voir tous les projets » ; pour un homme,
+  l’entrejambe remplace les hanches dans les 6 mensurations (comme la compcard) ;
 - Book (`js/fiche-mannequin.js`) : 12 photos, puis « Voir les N photos » (`.book-reduit`, `#btn-voir-book`) ;
 - téléphone : barre « Réserver » (→ contact) / « Compcard » (PDF) collée en bas, posée avec le contact
   (`dessin.contact`), HORS de `.reveal` : un `transform` ou un `clip-path` sur un parent « coince » une barre

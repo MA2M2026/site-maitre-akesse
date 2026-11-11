@@ -19,7 +19,7 @@ const tables = {
   model_profiles: [{ id: 'a1', full_name: 'Awa Koné', city: 'Abidjan', height_cm: 178, weight_kg: 55, chest_cm: 80, waist_cm: 61, hips_cm: 90, inseam_cm: 82, shoe_size: '40', eye_color: 'Marron',
     hair_color: 'Noirs', category: 'femme', published: true, slug: 'awa-kone', availability: 'immediate', bio: 'Mannequin passionnée de défilés.', languages: 'Français, anglais', model_types: ['catwalk', 'photo'] }],
   model_photos: photos,
-  model_projects: [2026, 2025, 2024, 2023, 2022].map((a, i) => ({ id: 'x' + i, model_id: 'a1', type_projet: 'Défilé', titre: 'Défilé ' + a, periode: 'Mars ' + a, ville: 'Abidjan', created_at: a + '-03-01T10:00:00Z' })),
+  model_projects: [2026, 2025, 2024, 2023, 2022].map((a, i) => ({ id: 'x' + i, model_id: 'a1', type_projet: 'Défilé', titre: 'Défilé ' + a, periode: 'Mars ' + a, ville: 'Abidjan', created_at: (a === 2026 ? '2019' : a) + '-03-01T10:00:00Z' })),  // (2026 saisi en premier : la fiche doit quand même le montrer en tête)
   bandeau_annonce: [], admins: []
 };
 (async () => {
@@ -43,7 +43,7 @@ const tables = {
     ok(await p.isVisible('.fiche-mesures') && /82 cm/.test(await p.textContent('.fiche-mesures')), n + '« Toutes les mensurations » : le détail complet (entrejambe 82 cm)');
     // 2. chapitres et Sélection (compcard dans l'ordre)
     const chapitres = await p.$$eval('.fiche-onglets a', (l) => l.map((a) => a.textContent.replace(/\s+\d+$/, '').trim()));
-    ok(chapitres.join('|') === (en ? 'Selection|About|Career|Book' : 'Sélection|À propos|Parcours|Book'), n + 'chapitres ' + chapitres.join(' · '));
+    ok(chapitres.join('|') === (en ? 'Selection|About|Career|Book|Contact' : 'Sélection|À propos|Parcours|Book|Contact'), n + 'chapitres ' + chapitres.join(' · '));
     const sel = await p.$$eval('.fiche-edito-photo img', (l) => l.map((i) => i.getAttribute('src')));
     ok(sel.length === 5 && /4-m\.jpg$/.test(sel[0]) && /6-s\.jpg$/.test(sel[1]) && /8-s\.jpg$/.test(sel[4]), n + 'Sélection = les 5 photos de la compcard, dans l’ordre 1 → 5');
     await p.click('.fiche-edito-photo.grande'); await p.waitForTimeout(600);

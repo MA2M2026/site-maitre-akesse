@@ -128,7 +128,6 @@ async function chargerProfilInterne() {
   // médaillon en miniature (~500px). L'originale reste utilisée pour la galerie plein
   // écran et la compcard.
   const photoHero = vues.couverture ? urlLegere(vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
-  const photoAvatar = vues.profil ? urlLegere(vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png';
   // Âge seulement, jamais la date de naissance (décision de la propriétaire, 06/10/2026) :
   // la base calcule l'âge (fonction ages_mannequins, extension 114) et la date n'est plus
   // lisible par les visiteurs (extension 114 installée le 06/10/2026).
@@ -144,7 +143,7 @@ async function chargerProfilInterne() {
 
   const imageDejaLa = contenu.querySelector('[data-couv-img]');
   const apercuDejaLa = contenu.querySelector('.hero-apercu');  // (photo de la carte du Book, posée par le serveur)
-  const dessin = window.RenduFiche.fiche({ profil, photos, projets, age }, { en: EN, urlLegere, photoHero, photoAvatar, selectionne: estDansSelection(id) });
+  const dessin = window.RenduFiche.fiche({ profil, photos, projets, age }, { en: EN, urlLegere, photoHero, selectionne: estDansSelection(id) });
   contenu.innerHTML = dessin.contenu;
   const contactBas = document.getElementById('fiche-contact-bas');
   if (contactBas) contactBas.innerHTML = dessin.contact;
@@ -236,13 +235,6 @@ async function chargerProfilInterne() {
   const urlsPhotos = ordreGalerie.map(p => p.url_moyenne || p.url);
   window.photosLightbox = urlsPhotos;
 
-  const photoPrincipale = document.getElementById('compsheet-photo-clic');
-  const indexPrincipale = vues.profil ? Math.max(0, ordreGalerie.indexOf(vues.profil)) : 0;
-  if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(indexPrincipale));
-  if (photoPrincipale) photoPrincipale.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexPrincipale); }
-  });
-
   // Photo de couverture cliquable (demande de la propriétaire, 28 sept. 2026) :
   // ouvre la galerie plein écran directement sur la photo de couverture, puis
   // on balaie le reste du Book comme depuis la grille.
@@ -281,7 +273,7 @@ async function chargerProfilInterne() {
   });
   // « Compcard » de la barre du bas (téléphone) : le PDF directement
   const compcardBas = document.querySelector('[data-fiche-compcard]');
-  if (compcardBas) compcardBas.addEventListener('click', () => genererFiche('pdf', ficheData, 'btn-telecharger-pdf', 'btn-telecharger-jpeg', EN ? 'en' : undefined));
+  if (compcardBas && btnPdf) compcardBas.addEventListener('click', () => btnPdf.click());
 }
 
 // --- Lightbox plein écran (système partagé, voir js/app.js) ---

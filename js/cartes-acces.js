@@ -231,14 +231,16 @@
     // couleur du voile : lue sur l'affiche du projet (Extension 162) ; sans affiche, noir. Le même événement
     // redessiné (photo ajoutée…) garde la couleur lue, la couleur choisie et le logo, sans relire l'affiche.
     const avant = ecran && ecran.projet && ecran.projet.id === projet.id ? ecran : null;
-    const auto = avant && avant.affiche === projet.affiche ? avant.auto : ((await couleurAffiche(projet.affiche).catch(() => null)) || NOIR_BASE);
-    ecran = { projet, personnes, apercus: {}, auto, affiche: projet.affiche, voile: avant ? avant.voile : null, logo: (avant && avant.logo) || 'aucun', logoPartenaire: (avant && avant.logoPartenaire) || null };
-    if (ecran.logo === 'partenaire') quandPret('ca-logo-partenaire', brancherLogo);
-    // photos ajoutées pour les cartes : aperçu dans la liste
-    await Promise.all(personnes.filter((c) => c.chemin).map(async (c) => {
+    const lectureCouleur = avant && avant.affiche === projet.affiche ? Promise.resolve(avant.auto) : couleurAffiche(projet.affiche).catch(() => null);
+    const apercus = {};
+    // (relecture du 11/11) la couleur de l'affiche et les photos des cartes sont lues EN MÊME TEMPS
+    const [couleurLue] = await Promise.all([lectureCouleur, Promise.all(personnes.filter((c) => c.chemin).map(async (c) => {
       const blob = await P.bd(sb.storage.from(STOCKAGE).download(c.chemin)).catch(() => null);
-      if (blob) ecran.apercus[c.cle] = URL.createObjectURL(blob);
-    }));
+      if (blob) apercus[c.cle] = URL.createObjectURL(blob);
+    }))]);
+    const auto = couleurLue || NOIR_BASE;
+    ecran = { projet, personnes, apercus, auto, affiche: projet.affiche, voile: avant ? avant.voile : null, logo: (avant && avant.logo) || 'aucun', logoPartenaire: (avant && avant.logoPartenaire) || null };
+    if (ecran.logo === 'partenaire') quandPret('ca-logo-partenaire', brancherLogo);
     const cartes = personnes.map((c, i) => '<li class="ca-carte">' +
       '<button type="button" class="ca-faire" data-action="carte-une" data-i="' + i + '" aria-label="Faire la carte de ' + P.esc(c.nom) + '">' +
       P.visage(ecran.apercus[c.cle] || c.vignette, c.nom, 'ca-vis') + '<span class="ca-nom">' + P.esc(c.nom) + '</span><span class="doux">N° ' + c.numero + ' · 🎫 son badge</span></button>' +
@@ -277,7 +279,7 @@
   // (la page est posée dans l'écran juste après le retour de evenement())
   function quandPret(id, faire, essais) {
     const el = document.getElementById(id);
-    if (el) faire(el); else if ((essais = essais === undefined ? 40 : essais) > 0) setTimeout(() => quandPret(id, faire, essais - 1), 50);
+    if (el) faire(el); else if ((essais = essais === undefined ? 200 : essais) > 0) setTimeout(() => quandPret(id, faire, essais - 1), 50);
   }
   P.changements['carte-logo'] = (el) => {
     ecran.logo = el.value;

@@ -4,7 +4,7 @@
 // Outils : js/partage.js (Partage) et js/tailles.js (ma2mBlocEquivalences, ma2mMesuresAReprendre).
 (function (racine) {
   // d : { profil (avec épaules, bras, cou), photos, projets (déjà fusionnés et traduits), age }
-  // o : { en, urlLegere, photoHero, photoAvatar, selectionne }
+  // o : { en, urlLegere, photoHero, selectionne } (photoAvatar : plus utilisé depuis la fiche « premium » du 11/11/2026)
   function fiche(d, o) {
     const EN = !!o.en;
     const T = (fr, en) => (EN ? en : fr);
@@ -59,8 +59,9 @@
       } catch (e) { return null; }
       return null;
     }
-    const profil = d.profil, photos = d.photos || [], projets = d.projets || [], age = d.age || '';
-    const photoHero = o.photoHero, photoAvatar = o.photoAvatar;
+    const profil = d.profil, photos = d.photos || [], age = d.age || '';
+    let projets = d.projets || [];
+    const photoHero = o.photoHero;
     // (08/11/2026) cadrage automatique de la grande photo : le visage au-dessus du nom (js/cadrages-photos.js,
     // écrit par scripts/cadrage-visages.py) ; photo inconnue : le haut, comme avant
     const cadrage = racine.CadragesPhotos ? racine.CadragesPhotos.cadragePhoto(photoHero) : null;
@@ -85,6 +86,9 @@
       </li>`;
   }
 
+  // (relecture du 11/11) « les plus récents » : triés par année (sans année : à la fin, dans l'ordre d'origine)
+  const anneeDe = (p) => Number((String(p.periode || '').match(/(19|20)\d{2}/) || [0])[0]);
+  projets = (projets || []).map((p, i) => [p, i]).sort((a, b) => (anneeDe(b[0]) - anneeDe(a[0])) || (a[1] - b[1])).map((x) => x[0]);
   const blocProjets = (projets && projets.length) ? `
     <section class="fiche-carte fiche-ancre" id="fiche-parcours">
       <h2 class="fiche-carte-titre">${T('Parcours', 'Career')}</h2>
@@ -146,10 +150,12 @@
   const sousTitre = [profil.city, age ? age + ' ' + T('ans', 'years') : ''].filter(Boolean).join(' · ');
   const dispo = profil.availability && libellesDispo[profil.availability] ? `<span class="fiche-dispo">${libellesDispo[profil.availability]}</span>` : '';
   const essentielles = [
-    profil.height_cm ? [T('Taille', 'Height'), profil.height_cm + '<small>cm</small>'] : null,
-    !masquer && profil.chest_cm ? [T('Poitrine', 'Chest'), profil.chest_cm] : null,
-    !masquer && profil.waist_cm ? [T('Tour de taille', 'Waist'), profil.waist_cm] : null,
-    !masquer && profil.hips_cm ? [T('Hanches', 'Hips'), profil.hips_cm] : null,
+    profil.height_cm ? [T('Taille', 'Height'), echapperHtml(profil.height_cm) + '<small>cm</small>'] : null,
+    !masquer && profil.chest_cm ? [T('Poitrine', 'Chest'), echapperHtml(profil.chest_cm)] : null,
+    !masquer && profil.waist_cm ? [T('Tour de taille', 'Waist'), echapperHtml(profil.waist_cm)] : null,
+    profil.category === 'homme'
+      ? (!masquer && profil.inseam_cm ? [T('Entrejambe', 'Inseam'), echapperHtml(profil.inseam_cm)] : null)
+      : (!masquer && profil.hips_cm ? [T('Hanches', 'Hips'), echapperHtml(profil.hips_cm)] : null),
     profil.shoe_size ? [T('Pointure', 'Shoes'), echapperHtml(profil.shoe_size)] : null,
     profil.eye_color ? [T('Yeux', 'Eyes'), echapperHtml(EN ? enAnglais(profil.eye_color) : profil.eye_color)] : null
   ].filter(Boolean);
@@ -222,6 +228,7 @@
         ${blocProfil ? `<a href="#fiche-apropos">${T('À propos', 'About')}</a>` : ''}
         ${blocProjets ? `<a href="#fiche-parcours">${T('Parcours', 'Career')}</a>` : ''}
         ${(photos && photos.length) ? `<a href="#fiche-book">Book <span>${photos.length}</span></a>` : ''}
+        <a href="#fiche-contact">Contact</a>
       </nav>
 
       ${blocSelection}
