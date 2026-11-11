@@ -647,9 +647,11 @@ function champsCompcard(profil, langue) {
 // langue : 'fr' (par défaut) ou 'en' (fiche anglaise en/mannequin.html — même dessin,
 // textes traduits et mesures impériales en plus).
 async function construireCanvasCompcard(ficheData, langue) {
-  const { profil, photos, projets } = ficheData;
+  const { profil, photos } = ficheData;
   const en = langue === 'en';
-  const NOIR = '#060504', BORDEAUX = '#7a1220', BLANC = '#ffffff', GRIS = '#a79f96', ROUGECLAIR = '#cf3b52';
+  // (11/11/2026, compcard « premium » choisie par la propriétaire) fond blanc, rouge mat de l'agence, photos en grand
+  const ROUGE = '#7C2128', BLANC = '#ffffff', ENCRE = '#2a1416', DOUX = '#8a6a6d', FILET = '#e6d6d7';
+  const SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif', SANS = '"Work Sans", Arial, sans-serif';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
   const DPI = 400;
   const ESCALE = DPI / 25.4;
@@ -662,9 +664,9 @@ async function construireCanvasCompcard(ficheData, langue) {
   const ctx = canvas.getContext('2d');
 
   await Promise.all([
-    document.fonts.load('700 100px Arial'),
-    document.fonts.load('500 100px Arial')
-  ]);
+    document.fonts.load('600 100px "Cormorant Garamond"'), document.fonts.load('italic 400 100px "Cormorant Garamond"'),
+    document.fonts.load('600 100px "Work Sans"'), document.fonts.load('500 100px "Work Sans"')
+  ].map((x) => x.catch(() => null)));
   await document.fonts.ready;
 
   // Chaque case garde la photo choisie pour elle ; les cases vides sont complétées
@@ -672,7 +674,7 @@ async function construireCanvasCompcard(ficheData, langue) {
   const choisiesParCase = [1, 2, 3, 4, 5].map(n => { const ph = photos.find(p => p.compcard_ordre === n); return ph ? ph.url : null; });
   const urlsPhotos = completerEmplacementsPhotos(choisiesParCase, photos.map(p => p.url), 5).filter(Boolean);
   const [logo, ...imagesPhotos] = await Promise.all([
-    chargerImageLocale('/assets/logo-dark-bg.png'),
+    chargerImageLocale('/assets/logo-header.png'),  // (logo blanc en largeur, posé sur le cartouche rouge)
     ...urlsPhotos.map((u, i) => chargerImageHauteRes(u, i ? COTE_PETITE_CASE : COTE_MAX_FICHE))
   ]);
 
@@ -696,33 +698,46 @@ async function construireCanvasCompcard(ficheData, langue) {
     ctx.drawImage(image.canvas, sx, sy, sL, sH, px(xMm), px(yMm), px(lMm), px(hMm));
   }
 
-  // --- Fond noir "brillant", effet laqué/miroir : un dégradé diagonal avec un reflet
-  // clair traversant le noir profond, plutôt qu'un aplat plat.
-  const degradeNoir = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  degradeNoir.addColorStop(0, '#0c0a08');
-  degradeNoir.addColorStop(0.22, '#020202');
-  degradeNoir.addColorStop(0.46, '#241f1a');
-  degradeNoir.addColorStop(0.5, '#2e2822');
-  degradeNoir.addColorStop(0.54, '#241f1a');
-  degradeNoir.addColorStop(0.78, '#020202');
-  degradeNoir.addColorStop(1, '#0c0a08');
-  ctx.fillStyle = degradeNoir;
+  // texte espacé (« C O M P C A R D », libellés), lettre par lettre : marche dans tous les navigateurs
+  function texteEspace(texte, x, yy, espaceMm, aligne) {
+    const esp = px(espaceMm), lettres = String(texte).split('');
+    const largeur = lettres.reduce((t, c) => t + ctx.measureText(c).width, 0) + esp * (lettres.length - 1);
+    let xx = aligne === 'right' ? x - largeur : aligne === 'center' ? x - largeur / 2 : x;
+    const avant = ctx.textAlign; ctx.textAlign = 'left';
+    lettres.forEach((c) => { ctx.fillText(c, xx, yy); xx += ctx.measureText(c).width + esp; });
+    ctx.textAlign = avant;
+  }
+  const M = 14, LARGEUR_UTILE = LARGEUR_MM - 2 * M;
+
+  // --- Fond blanc ---
+  ctx.fillStyle = BLANC;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // --- En-tête bordeaux : logo + "COMPCARD" ---
-  const hEntete = 30;
-  ctx.fillStyle = BORDEAUX;
-  ctx.fillRect(0, 0, canvas.width, px(hEntete));
-  if (logo) {
-    const hLogoMm = 19;
-    const wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
-    ctx.drawImage(logo.canvas, px(15), px(6), px(wLogoMm), px(hLogoMm));
-  }
-  ctx.fillStyle = BLANC;
-  ctx.textAlign = 'right';
+  // --- En-tête : logo sur un petit cartouche rouge, « COMPCARD » espacé à droite ---
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `bold ${fpx(30)}px Arial, sans-serif`;
-  ctx.fillText('COMPCARD', px(195), px(20));
+  if (logo) {
+    const hLogoMm = 8.5, wLogoMm = hLogoMm * (logo.largeur / logo.hauteur);
+    ctx.fillStyle = ROUGE;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(px(M), px(11), px(wLogoMm + 6), px(hLogoMm + 4), px(1.2)); else ctx.rect(px(M), px(11), px(wLogoMm + 6), px(hLogoMm + 4));
+    ctx.fill();
+    ctx.drawImage(logo.canvas, px(M + 3), px(13), px(wLogoMm), px(hLogoMm));
+  }
+  ctx.fillStyle = ROUGE;
+  ctx.font = `600 ${fpx(8.5)}px ${SANS}`;
+  texteEspace('COMPCARD', px(LARGEUR_MM - M), px(18.5), 2.2, 'right');
+
+  // --- Nom (grand, élégant) et niveau · ville en italique rouge ---
+  let taillePolice = 40;
+  ctx.font = `600 ${fpx(taillePolice)}px ${SERIF}`;
+  const nom = profil.full_name || (en ? 'Model' : 'Mannequin');
+  while (ctx.measureText(nom).width > px(LARGEUR_UTILE) && taillePolice > 22) { taillePolice -= 2; ctx.font = `600 ${fpx(taillePolice)}px ${SERIF}`; }
+  ctx.fillStyle = ENCRE; ctx.textAlign = 'left';
+  ctx.fillText(nom, px(M), px(39));
+  const niveauMannequin = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
+  ctx.fillStyle = ROUGE;
+  ctx.font = `italic 500 ${fpx(16)}px ${SERIF}`;
+  ctx.fillText([niveauMannequin, profil.city].filter(Boolean).join(' · '), px(M), px(47.5));
 
   // Grande photo EN ENTIER (31/10/2026, demande de la propriétaire : une photo en pied avait la tête
   // ou les pieds coupés) : si la remplir couperait plus de 6 % de la photo, elle est posée entière,
@@ -732,6 +747,9 @@ async function construireCanvasCompcard(ficheData, langue) {
     const ratioImage = image.largeur / image.hauteur, ratioCadre = lMm / hMm;
     const perte = 1 - Math.min(ratioImage / ratioCadre, ratioCadre / ratioImage);
     if (perte < 0.06) { dessinerCouvrant(image, xMm, yMm, lMm, hMm, 'haut'); return; }
+    // (11/11/2026, case haute de la compcard premium) photo plus LARGE que la case : seuls les côtés sont rognés,
+    // jamais la tête ni les pieds ; la photo remplit donc la case (sans bandes) tant qu'il en reste plus de la moitié.
+    if (ratioImage > ratioCadre && perte < 0.5) { dessinerCouvrant(image, xMm, yMm, lMm, hMm); return; }
     // fond : la photo réduite à quelques dizaines de pixels puis agrandie (flou qui marche partout)
     const petit = document.createElement('canvas');
     petit.width = 24; petit.height = Math.max(1, Math.round(24 * hMm / lMm));
@@ -742,7 +760,7 @@ async function construireCanvasCompcard(ficheData, langue) {
     ctx.save();
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(petit, 0, 0, petit.width, petit.height, px(xMm), px(yMm), px(lMm), px(hMm));
-    ctx.fillStyle = 'rgba(6,5,4,0.55)';
+    ctx.fillStyle = 'rgba(90,20,27,0.45)';
     ctx.fillRect(px(xMm), px(yMm), px(lMm), px(hMm));
     ctx.restore();
     // la photo entière, centrée
@@ -750,108 +768,58 @@ async function construireCanvasCompcard(ficheData, langue) {
     ctx.drawImage(image.canvas, 0, 0, image.largeur, image.hauteur, px(xMm + (lMm - l) / 2), px(yMm + (hMm - h) / 2), px(l), px(h));
   }
 
-  // --- Photos : 1 grande + grille de 4 ---
-  const yPhotos = hEntete + 4, hPhotos = 130;
-  dessinerEntiere(imagesPhotos[0], 15, yPhotos, 92, hPhotos);
-
-  const cellulesX = [112, 155.5];
-  const cellulesY = [yPhotos, yPhotos + 67];
-  const lCellule = 39.5, hCellule = 63;
+  // --- Photos : la principale en grand à gauche, les 4 autres à droite (deux tiers de la page) ---
+  const yPhotos = 54, hPhotos = 166, ecart = 2.4;
+  const lGrande = 76, lCellule = (LARGEUR_UTILE - lGrande - 2 * ecart) / 2, hCellule = (hPhotos - ecart) / 2;
+  dessinerEntiere(imagesPhotos[0], M, yPhotos, lGrande, hPhotos);
   let idxGrille = 1;
-  for (const y of cellulesY) {
-    for (const x of cellulesX) {
-      dessinerCouvrant(imagesPhotos[idxGrille], x, y, lCellule, hCellule);
+  for (const yy of [yPhotos, yPhotos + hCellule + ecart]) {
+    for (const xx of [M + lGrande + ecart, M + lGrande + ecart + lCellule + ecart]) {
+      dessinerCouvrant(imagesPhotos[idxGrille], xx, yy, lCellule, hCellule);
       idxGrille++;
     }
   }
 
-  // --- Logo discret au centre, entre les photos : jamais perdu si la fiche est
-  // rognée physiquement (les bords partent en premier, jamais le centre).
-  if (logo) {
-    const hBadgeMm = 20;
-    const wBadgeMm = hBadgeMm * (logo.largeur / logo.hauteur);
-    const centreXmm = (15 + 195) / 2;
-    const centreYmm = yPhotos + hPhotos / 2;
-    ctx.save();
-    ctx.globalAlpha = 0.92;
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = px(2.5);
-    ctx.drawImage(logo.canvas, px(centreXmm - wBadgeMm / 2), px(centreYmm - hBadgeMm / 2), px(wBadgeMm), px(hBadgeMm));
-    ctx.restore();
-  }
-
-  // --- Nom et catégorie (texte blanc, lisible sur fond noir) ---
-  let y = yPhotos + hPhotos + 13;
-  ctx.textAlign = 'left';
-  ctx.fillStyle = BLANC;
-  ctx.font = `bold ${fpx(27)}px Arial, sans-serif`;
-  ctx.fillText((profil.full_name || (en ? 'Model' : 'Mannequin')).toUpperCase(), px(15), px(y));
-  y += 9;
-  const niveauMannequin = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
-  ctx.fillStyle = ROUGECLAIR;
-  ctx.font = `${fpx(13)}px Arial, sans-serif`;
-  ctx.fillText([niveauMannequin, profil.city].filter(Boolean).join(en ? '  ·  ' : ' · '), px(15), px(y));
-
-  // --- Mensurations (grille 3 colonnes) ---
-  y += 11;
+  // --- Mensurations : deux lignes fines sous les photos (libellé espacé, valeur en lettres élégantes) ---
   const champs = champsCompcard(profil, en ? 'en' : 'fr');
-
-  const yGrilleDebut = y;
-  const PITCH = 13;
-  champs.forEach(([label, valeur], i) => {
-    const col = i % 3, ligne = Math.floor(i / 3);
-    const xMm = 15 + col * 60, yy = yGrilleDebut + ligne * PITCH;
-    ctx.fillStyle = GRIS;
-    ctx.font = `${fpx(9.5)}px Arial, sans-serif`;
-    ctx.fillText(label.toUpperCase(), px(xMm), px(yy));
-    ctx.fillStyle = BLANC;
-    ctx.font = `bold ${fpx(13.5)}px Arial, sans-serif`;
-    ctx.fillText(String(valeur), px(xMm), px(yy + 6));
+  const lignes = champs.length > 6 ? [champs.slice(0, 6), champs.slice(6)] : [champs];
+  const filet = (yy) => { ctx.fillStyle = FILET; ctx.fillRect(px(M), px(yy), px(LARGEUR_UTILE), px(0.3)); };
+  let y = yPhotos + hPhotos + 5;
+  filet(y);
+  lignes.forEach((ligne) => {
+    const pas = LARGEUR_UTILE / ligne.length;
+    ligne.forEach(([label, valeur], i) => {
+      const cx = M + pas * (i + 0.5);
+      ctx.fillStyle = DOUX; ctx.font = `600 ${fpx(6.6)}px ${SANS}`;
+      texteEspace(label.toUpperCase(), px(cx), px(y + 6.5), 0.55, 'center');
+      ctx.fillStyle = ENCRE; ctx.font = `600 ${fpx(14)}px ${SERIF}`;
+      let t = String(valeur);
+      while (ctx.measureText(t).width > px(pas - 2) && t.length > 4) t = t.slice(0, -2) + '…';
+      ctx.textAlign = 'center'; ctx.fillText(t, px(cx), px(y + 13.5)); ctx.textAlign = 'left';
+    });
+    y += 17;
+    filet(y);
   });
-  const yFinGrille = yGrilleDebut + Math.ceil(champs.length / 3) * PITCH;
 
-  // --- Pied de page bordeaux : toujours à une hauteur sûre (jamais chevauché ni
-  // coupé), contacts et réseaux sociaux bien visibles quel que soit le nombre
-  // d'informations renseignées sur le profil.
-  const yPiedPage = Math.min(Math.max(yFinGrille + 8, 250), 253);
-
-  // --- Résumé du parcours : seulement si la place restante avant le pied de page
-  // bordeaux est suffisante. Avec un profil ayant les 10 mensurations remplies ET des
-  // projets, cette ligne peut finir à moins de 1mm du pied de page (qui est alors
-  // plafonné à 253mm) — un simple écart de rendu de police selon l'appareil du
-  // visiteur suffirait à les faire se chevaucher. On préfère omettre cette ligne
-  // facultative plutôt que risquer ce chevauchement.
-  if (projets && projets.length && yFinGrille + 3 + 5 < yPiedPage) {
-    ctx.fillStyle = GRIS;
-    ctx.font = `italic ${fpx(9.5)}px Arial, sans-serif`;
-    const pluriel = projets.length > 1 ? 's' : '';
-    ctx.fillText(en ? `${projets.length} completed project${pluriel}, full book on maitreakessemodelmanagement.com`
-      : `${projets.length} projet${pluriel} réalisé${pluriel}, book complet sur maitreakessemodelmanagement.com`, px(15), px(yFinGrille + 3));
-  }
-  const hPiedPage = HAUTEUR_MM - yPiedPage;
-  ctx.fillStyle = BORDEAUX;
+  // --- Pied de page rouge : contact de l'agence ---
+  const yPiedPage = Math.max(y + 5, 271), hPiedPage = HAUTEUR_MM - yPiedPage;
+  ctx.fillStyle = ROUGE;
   ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
   ctx.fillStyle = BLANC;
-  ctx.font = `bold ${fpx(12)}px Arial, sans-serif`;
-  ctx.fillText(en ? 'OFFICIAL MA2M CONTACT' : 'CONTACT OFFICIEL MA2M', px(15), px(yPiedPage + 9));
-  ctx.font = `${fpx(11)}px Arial, sans-serif`;
-  ctx.fillText(MA2M_TELEPHONES.join('   ·   '), px(15), px(yPiedPage + 16.5));
-  ctx.fillText('scoutmodel.ma2m@gmail.com', px(15), px(yPiedPage + 23.5));
-
-  // Réseaux sociaux : icônes vectorielles blanches + le pseudo, sur la même ligne.
+  ctx.font = `700 ${fpx(7.5)}px ${SANS}`;
+  texteEspace(en ? 'BOOKING · MAÎTRE AKESSE MODEL MANAGEMENT' : 'BOOKING · MAÎTRE AKESSE MODEL MANAGEMENT', px(M), px(yPiedPage + 8), 0.9, 'left');
+  ctx.font = `500 ${fpx(9)}px ${SANS}`;
+  ctx.fillText(MA2M_TELEPHONES.join('  ·  ') + '  ·  infos.ma2m@gmail.com', px(M), px(yPiedPage + 14));
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];
-  let xIcone = 15;
-  reseaux.forEach(cle => {
-    dessinerIconeReseau(ctx, cle, px(xIcone + 2.2), px(yPiedPage + 29), px(4.4), BLANC);
-    xIcone += 7.5;
-  });
-  ctx.font = `${fpx(10.5)}px Arial, sans-serif`;
-  ctx.fillText('@maitreakessemodelmanagement', px(xIcone + 3), px(yPiedPage + 30.5));
-
-  ctx.font = `italic ${fpx(7)}px Arial, sans-serif`;
-  ctx.fillText(en
-    ? `Official document generated on ${new Date().toLocaleDateString('en-US')} from maitreakessemodelmanagement.com, all booking requests must go exclusively through the agency.`
-    : `Document officiel généré le ${new Date().toLocaleDateString('fr-FR')} depuis maitreakessemodelmanagement.com, toute demande de booking passe exclusivement par l'agence.`, px(15), px(yPiedPage + hPiedPage - 6));
+  let xIcone = M;
+  reseaux.forEach(cle => { dessinerIconeReseau(ctx, cle, px(xIcone + 1.6), px(yPiedPage + 19), px(3.2), BLANC); xIcone += 5.4; });
+  ctx.fillText('@maitreakessemodelmanagement', px(xIcone + 1.5), px(yPiedPage + 20.2));
+  ctx.textAlign = 'right';
+  ctx.font = `600 ${fpx(9)}px ${SANS}`;
+  ctx.fillText('maitreakessemodelmanagement.com', px(LARGEUR_MM - M), px(yPiedPage + 14));
+  ctx.font = `italic 400 ${fpx(6)}px ${SANS}`;
+  ctx.fillText(en ? 'All booking requests go exclusively through the agency.' : 'Toute demande de booking passe exclusivement par l’agence.', px(LARGEUR_MM - M), px(yPiedPage + 20.2));
+  ctx.textAlign = 'left';
 
   canvas.photosFaibles = photosTropPetites(imagesPhotos.map((image, i) => ({ image, url: urlsPhotos[i], coteMm: i ? hCellule : hPhotos })));
   return canvas;

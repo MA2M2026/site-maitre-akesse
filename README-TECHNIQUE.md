@@ -4497,3 +4497,18 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   inventés et présentés comme exemples, proforma type, agence, contact + QR codes). PDF : `node faire-pdf.js`.
 - **Prospection** : `outils/prospection/` (modèles d'e-mails, plaquette allégée, règles d'envoi dans LISEZMOI.md).
   Liste des destinataires hors dépôt (dépôt public) ; adresses générales publiques uniquement.
+
+## Application des mannequins façon réseau social, compcard premium (11/11/2026, maquettes validées par la propriétaire)
+
+- **Mon profil** (js/mannequin-app.js `ecranProfil`, css/mannequin-app.css `.ap-vitrine-*`) : couverture et photo ronde
+  touchées → galerie du téléphone → la photo rejoint le Book et reçoit son rôle (js/app.js `insererPhotoBook`,
+  `definirRolePhoto`, partagés avec l'Espace mannequin) ; chiffres, phrase, état, « Partager mon book »
+  (feuille de partage du téléphone), raccourcis Compcard / Mon CV / Mes photos, grille de 3 photos.
+- **Ma compcard** (js/espace-mannequin.js `viewStudioCompcard`, adresse `/app/espace-mannequin.html#compcard`) : 5 cases
+  en grand, case touchée → galerie → photo dans le Book et dans la case ; aperçu, PDF, image, envoi WhatsApp.
+- **Compcard premium** (js/app.js `construireCanvasCompcard`) : fond blanc, nom en Cormorant, photos sur deux tiers
+  de la page (grande case : photo plus large que la case → seuls les côtés sont rognés), mesures sur deux lignes
+  fines, pied rouge (infos.ma2m@gmail.com). L'aperçu affiche l'image même de la compcard (identique aux fichiers).
+- **6 étapes en cartes à dessins** (modèle « B ») ; **Extension 161** (supabase-premiere-publication.sql, lancée le
+  11/11) : profils jamais publiés marqués « déjà validés » par le rattrapage de l'Extension 43 remis dans les 6 étapes.
+- Essais : test-app-mannequin.js, test-studio-compcard.js, test-profil-jamais-publie.js, test-compcard-entiere.js.

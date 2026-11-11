@@ -1968,35 +1968,24 @@ function ficheDataDepuisEtat(){
   };
 }
 
-function openCompcard(){
-  const compcardPhotos = state.photos.book.filter(function(ph){ return ph.compcardOrdre; }).sort(function(a,b){ return a.compcardOrdre-b.compcardOrdre; });
-  const slotsChoisis = [1,2,3,4,5].map(function(n){ return compcardPhotos.find(function(ph){ return ph.compcardOrdre===n; }) || null; });
-  // Cases vides complétées automatiquement avec les autres photos du Book (même règle
-  // que le fichier PDF/JPEG, voir completerEmplacementsPhotos dans js/app.js).
-  const urlsSlots = completerEmplacementsPhotos(slotsChoisis.map(function(ph){ return ph ? (ph.urlPleine||ph.url) : null; }), state.photos.book.map(function(ph){ return ph.urlPleine||ph.url; }), 5);
-  const slots = urlsSlots.map(function(u){ return u ? { urlPleine: u } : null; });
-  const cover = slots[0];
-  const sidePhotos = slots.slice(1).map(function(ph){ return ph ? '<img src="'+(ph.urlPleine||ph.url)+'" alt="Photo compcard">' : '<div class="cc-empty-photo"></div>'; }).join('');
-  const d = state.identite, p = state.physique;
-  // mesures incohérentes : non affichées, comme sur la compcard téléchargée (js/tailles.js)
-  const masquer = typeof ma2mMesuresAReprendre === 'function' && ma2mMesuresAReprendre({ category: d.sexe, chest_cm: p.poitrine, waist_cm: p.tourTaille, hips_cm: p.hanches });
+// Aperçu de la compcard (11/11/2026, compcard « premium ») : l'image affichée est LA compcard elle-même, dessinée par
+// construireCanvasCompcard (js/app.js) — l'aperçu et les fichiers PDF / image sont donc toujours identiques.
+async function openCompcard(){
   document.getElementById('overlayContent').innerHTML =
     '<div class="overlay-close"><button id="closeOv">✕</button></div>' +
-    '<div class="compcard-model">' +
-      '<div class="ccm-header"><img class="ccm-logo" src="assets/logo-header.png" alt="Maître Akesse Model Management"><div class="ccm-title">COMPCARD</div></div>' +
-      '<div class="ccm-photo-grid"><div class="ccm-cover">'+(cover?'<img src="'+(cover.urlPleine||cover.url)+'" alt="Photo plein pied compcard">':'<div class="cc-empty-photo">PHOTO PLEIN PIED</div>')+'</div><div class="ccm-side-grid">'+sidePhotos+'</div></div>' +
-      '<div class="ccm-body"><h1>'+echapperHtml(d.nomComplet||'')+'</h1><div class="ccm-meta">'+echapperHtml(libelleNiveauPublic(niveauControle(state.profilPro.niveauMannequin, toutesExperiences(), state.profilPro.anneesExperience)))+'  ·  '+echapperHtml(d.ville||'Abidjan')+'</div>' +
-      '<div class="ccm-measures">' +
-        '<div><span>TAILLE</span><b>'+(p.taille||'—')+' cm</b></div><div><span>POIDS</span><b>'+(p.poids||'—')+' kg</b></div><div><span>POITRINE</span><b>'+(masquer?'—':(p.poitrine||'—')+' cm')+'</b></div>' +
-        '<div><span>TOUR DE TAILLE</span><b>'+(masquer?'—':(p.tourTaille||'—')+' cm')+'</b></div><div><span>BASSIN</span><b>'+(masquer?'—':(p.hanches||p.entrejambe||'—')+' cm')+'</b></div><div><span>POINTURE</span><b>'+(p.pointure||'—')+'</b></div>' +
-        '<div><span>CARNATION</span><b>'+echapperHtml(p.carnation||'—')+'</b></div><div><span>TAILLE VÊTEMENTS</span><b>'+echapperHtml(p.tailleVet||'—')+'</b></div><div><span>YEUX</span><b>'+echapperHtml(p.yeux||'—')+'</b></div><div><span>CHEVEUX</span><b>'+echapperHtml(p.cheveux||'—')+'</b></div>' +
-      '</div></div>' +
-      '<div class="ccm-footer"><b>CONTACT OFFICIEL MA2M</b><div>'+MA2M_TELEPHONES.join(' · ')+'</div><div>'+MA2M_EMAIL+'</div><div>Instagram · Facebook · TikTok · YouTube  @maitreakessemodelmanagement</div><small>Document officiel généré depuis maitreakessemodelmanagement.com, toute demande de booking passe exclusivement par l’agence.</small></div>' +
-    '</div>' +
-    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en JPEG</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
+    '<div class="compcard-model compcard-apercu"><p class="sub">Préparation de votre compcard…</p></div>' +
+    '<div class="cv-actions"><button class="btn ghost small" id="closeOv2">Fermer</button><button class="btn ghost small" id="p20BtnJpeg">Télécharger en image</button><button class="btn primary small" id="p20BtnPdf">Télécharger en PDF</button></div>';
   showOverlay();
   document.getElementById('p20BtnPdf').addEventListener('click', function(){ void genererFiche('pdf', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg', undefined, true); });
   document.getElementById('p20BtnJpeg').addEventListener('click', function(){ void genererFiche('jpeg', ficheDataDepuisEtat(), 'p20BtnPdf', 'p20BtnJpeg', undefined, true); });
+  const zone = document.querySelector('.compcard-apercu');
+  try {
+    const canvas = await construireCanvasCompcard(ficheDataDepuisEtat());
+    if (zone) zone.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg', 0.85) + '" alt="Ma compcard">';
+  } catch (e) {
+    signalerProbleme('Aperçu de la compcard échoué', (e && e.message) || String(e), e && e.stack);
+    if (zone) zone.innerHTML = '<p class="sub">L’aperçu n’a pas pu être préparé. Vous pouvez quand même télécharger la compcard.</p>';
+  }
 }
 
 function showOverlay(){

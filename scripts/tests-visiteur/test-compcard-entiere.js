@@ -22,17 +22,18 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       const photos = [{ url: await photo(l, h), compcard_ordre: 1 }];
       const c = await construireCanvasCompcard({ profil: { full_name: 'Essai' }, photos, projets: [] }, 'fr');
       const e = c.width / 210, x = c.getContext('2d');
-      // case de la grande photo : x 15 → 107 mm, y 34 → 164 mm ; on cherche la tête et les pieds dedans
-      const zone = x.getImageData(Math.round(15 * e), Math.round(34 * e), Math.round(92 * e), Math.round(130 * e));
+      // case de la grande photo (compcard premium, 11/11/2026) : x 14 → 90 mm, y 54 → 220 mm ; on cherche la tête et les pieds dedans
+      const zone = x.getImageData(Math.round(14 * e), Math.round(54 * e), Math.round(76 * e), Math.round(166 * e));
       let tete = 0, pieds = 0, gris = 0;
       for (let i = 0; i < zone.data.length; i += 4 * 97) { const [rr, g, bb] = [zone.data[i], zone.data[i + 1], zone.data[i + 2]];
         if (rr > 200 && g > 90 && g < 170 && bb < 80) tete++; if (g > 150 && rr < 90 && bb < 90) pieds++; }
       // coin haut gauche de la case : fond de photo (case remplie) ou bande assombrie (photo entière)
-      const coin = x.getImageData(Math.round(16 * e), Math.round(35 * e), 1, 1).data;
+      const coin = x.getImageData(Math.round(15 * e), Math.round(55 * e), 1, 1).data;
       gris = coin[0] > 150 && coin[1] > 150 ? 'photo' : 'bande';
       return { tete, pieds, coin: gris };
     };
-    return { pied: await mesure(700, 1600), presque: await mesure(920, 1300) };
+    // (case plus haute qu'avant : une photo en pied très étroite, et une photo presque au format de la case)
+    return { pied: await mesure(500, 1600), presque: await mesure(760, 1640) };
   });
   ok(r.pied.tete > 0 && r.pied.pieds > 0, 'photo en pied : la tête ET les pieds sont sur la compcard');
   ok(r.pied.coin === 'bande', 'photo en pied : posée en entier, bandes floutées sur les côtés');
