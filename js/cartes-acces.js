@@ -1,24 +1,23 @@
 // Cartes d'événement (25/10/2026, demande de la propriétaire) : rubrique « 🎫 Cartes d'événement »
 // de l'Administration. On choisit l'événement (projet de l'Agenda) ; seules les mannequins qui ont
-// CONFIRMÉ leur présence (réponse à la convocation) apparaissent, pour ne jamais faire de carte
-// en désordre. Toucher une mannequin → sa carte (PDF A5) ; « Toutes les cartes » → deux par
-// feuille A4 couchée avec un trait de coupe. Sans photo (extérieure, autre agence, ou de l'agence
-// sans photo dans le Book) : « 📷 Ajouter une photo », gardée pour les prochains événements et
-// servant SEULEMENT aux cartes (stockage privé « cartes-photos », supabase-cartes.sql).
-// La carte : logo, « Former – Révéler – Valoriser », photo (ou initiales), nom, numéro, QR code
-// vers la fiche (profil publié), l'événement (titre, date, lieu, organisé par), bandeau
-// « ACCÈS MANNEQUIN · MA2M ». Dessin sur canvas comme la compcard et le CV (outils de js/app.js :
-// chargerJsPdf, chargerImageHauteRes, chargerImageLocale, chargerQrLib, dessinerQrCanvas,
-// envelopperLignesCanvas, decoderImage).
+// CONFIRMÉ leur présence (réponse à la convocation) apparaissent. Sans photo (extérieure, autre agence, ou de
+// l'agence sans photo dans le Book) : « 📷 Ajouter une photo », gardée pour les prochains événements et servant
+// SEULEMENT aux cartes (stockage privé « cartes-photos », supabase-cartes.sql).
+// (11/11/2026, maquette « G · Couverture » validée par la propriétaire) LE BADGE : un quart de A4 (105 × 148,5 mm),
+// 4 par feuille A4 avec traits de coupe, à glisser dans un étui porté au cou. La photo en pleine page, « MODEL » en
+// très grand, le nom de l'événement en grand (police du site, Big Shoulders), la date et le lieu avec des tirets,
+// le numéro, une bande « MODEL · BACKSTAGE ». Le VOILE qui monte du bas prend la couleur de l'événement, lue sur
+// l'affiche jointe au projet (Convocations, Extension 162) ; sans affiche : noir. Logo au choix : agence,
+// partenaire (téléversé) ou aucun (par défaut). Dessin sur canvas (outils de js/app.js : chargerJsPdf,
+// chargerImageHauteRes, chargerImageLocale, decoderImage, envelopperLignesCanvas, texteEspaceToile).
 (function () {
   'use strict';
   const P = window.Portail;
   if (!P) return;
-  const NOIR = '#0b0908', NOIR2 = '#1d1714', OR = '#c9a96e', IVOIRE = '#f4efe6', BORDEAUX = '#7a1220', GRIS_COUPE = '#9a9a9a';
-  const CARTE_L = 148.5, CARTE_H = 210, DPI = 220;
+  const CARTE_L = 105, CARTE_H = 148.5, DPI = 260, NOIR_BASE = '#0b0606', ROUGE_TIRET = '#E03A3A', GRIS_COUPE = '#9a9a9a';
   const px = (mm) => mm * DPI / 25.4;
   const pt = (n) => n * 0.3528 * DPI / 25.4;  // taille de police en points → pixels
-  const ORGANISATEUR = 'Maître Akesse Model Management';
+  const TITRE = '"Big Shoulders Display", "Arial Narrow", Arial, sans-serif', TEXTE = '"Work Sans", Arial, sans-serif';
   const sansCivilite = (nom) => String(nom || '').replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|m\.)\s+/i, '').trim();
   const dateCourte = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
   function datesProjet(p) {
@@ -27,101 +26,99 @@
     const memeMois = a.getUTCMonth() === b.getUTCMonth() && a.getUTCFullYear() === b.getUTCFullYear();
     return (memeMois ? a.getUTCDate() : dateCourte(p.date_debut).replace(/ \d{4}$/, '')) + ' – ' + dateCourte(p.date_fin);
   }
-
-  // ---------- Dessin d'une carte (x0, y0 en mm sur la feuille) ----------
-  // texte espacé (lettres écartées), centré sur cx ou aligné à gauche
-  function texteEspace(ctx, texte, x, y, ecartMm, centre) {
-    const ecart = px(ecartMm), lettres = [...texte];
-    const largeur = lettres.reduce((s, l) => s + ctx.measureText(l).width, 0) + ecart * (lettres.length - 1);
-    let cx = centre ? x - largeur / 2 : x;
-    lettres.forEach((l) => { ctx.fillText(l, cx, y); cx += ctx.measureText(l).width + ecart; });
-  }
-  // lignes d'un texte dans une largeur, police réduite jusqu'à tenir en maxLignes
-  function ajuster(ctx, texte, largeurMm, taillePt, minPt, maxLignes, police) {
-    let t = taillePt, lignes;
-    for (; t >= minPt; t -= 1) {
-      lignes = envelopperLignesCanvas(ctx, texte, px(largeurMm), police.replace('{t}', pt(t)));
-      if (lignes.length <= maxLignes && lignes.every((l) => ctx.measureText(l).width <= px(largeurMm))) break;
+  // ---------- Couleurs de l'événement (lues sur l'affiche) ----------
+  const hex = (r, g, b) => '#' + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const rgb = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(String(h || '')); const n = m ? parseInt(m[1], 16) : 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  // couleur dominante « vive » de l'affiche (les pixels presque blancs, noirs ou gris comptent peu), assombrie pour le voile
+  async function couleurAffiche(url) {
+    const img = url ? await chargerImageHauteRes(url, 160).catch(() => null) : null;  // (js/app.js)
+    if (!img) return null;
+    const c = img.canvas, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let r = 0, g = 0, b = 0, poids = 0;
+    for (let i = 0; i < d.length; i += 16) {
+      const R = d[i], G = d[i + 1], B = d[i + 2], max = Math.max(R, G, B), min = Math.min(R, G, B), sat = max ? (max - min) / max : 0;
+      if (max < 40 || (max > 235 && sat < 0.12)) continue;
+      const w = sat * sat + 0.02;
+      r += R * w; g += G * w; b += B * w; poids += w;
     }
-    t = Math.max(t, minPt);
-    ctx.font = police.replace('{t}', pt(t));
-    return { lignes: envelopperLignesCanvas(ctx, texte, px(largeurMm), ctx.font).slice(0, maxLignes), taille: t };
+    if (!poids) return null;
+    r /= poids; g /= poids; b /= poids;
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b, k = lum > 70 ? 70 / lum : 1;  // voile assez sombre pour lire le texte blanc
+    return hex(r * k, g * k, b * k);
   }
-  function dessinerCarte(ctx, x0, y0, c, projet, logo, photo) {
-    const X = (mm) => px(x0 + mm), Y = (mm) => px(y0 + mm);
+  // tirets et bande : la couleur du voile éclaircie (vive) ; voile noir : le rouge de l'agence
+  function accent(voile) {
+    if (voile === NOIR_BASE) return ROUGE_TIRET;
+    const [r, g, b] = rgb(voile), max = Math.max(r, g, b, 1), k = 230 / max;
+    return hex(r * k, g * k, b * k);
+  }
+  function ajusterTitre(ctx, texte, largeurPx, max, min, lignesMax) {
+    let t = max, lignes = [];
+    for (; t >= min; t -= 1) {
+      ctx.font = '800 ' + pt(t) + 'px ' + TITRE;
+      lignes = envelopperLignesCanvas(ctx, texte, largeurPx, ctx.font);  // (js/app.js)
+      if (lignes.length <= lignesMax && lignes.every((l) => ctx.measureText(l).width <= largeurPx)) break;
+    }
+    return { lignes: lignes.slice(0, lignesMax), taille: Math.max(t, min) };
+  }
+  // ---------- Dessin d'un badge (x0, y0 en mm sur la feuille) ----------
+  function dessinerCarte(ctx, x0, y0, c, projet, reglages, photo) {
+    const X = (mm) => px(x0 + mm), Y = (mm) => px(y0 + mm), M = 7, voile = reglages.voile || NOIR_BASE, vif = accent(voile);
+    const [vr, vg, vb] = rgb(voile);
     ctx.save();
-    // fond noir profond, légèrement éclairé en haut
-    const fond = ctx.createLinearGradient(0, Y(0), 0, Y(CARTE_H));
-    fond.addColorStop(0, NOIR2); fond.addColorStop(0.55, NOIR); fond.addColorStop(1, NOIR);
-    ctx.fillStyle = fond; ctx.fillRect(X(0), Y(0), px(CARTE_L), px(CARTE_H));
-    // filet doré
-    ctx.strokeStyle = OR; ctx.lineWidth = px(0.35);
-    ctx.strokeRect(X(5), Y(5), px(CARTE_L - 10), px(186));
-    // logo, devise
-    if (logo) { const l = 72, h = l * logo.hauteur / logo.largeur; ctx.drawImage(logo.canvas, X((CARTE_L - l) / 2), Y(12), px(l), px(h)); }
-    ctx.fillStyle = OR; ctx.textBaseline = 'alphabetic';
-    ctx.font = '600 ' + pt(7) + 'px Montserrat, Arial, sans-serif';
-    texteEspace(ctx, 'FORMER  –  RÉVÉLER  –  VALORISER', X(CARTE_L / 2), Y(38), 0.9, true);
-    ctx.fillRect(X(CARTE_L / 2 - 22), Y(41.5), px(44), px(0.3));
-    ctx.font = '600 ' + pt(8.5) + 'px Cinzel, Georgia, serif';
-    texteEspace(ctx, 'MANNEQUIN', X(CARTE_L / 2), Y(49), 1.6, true);
-    ctx.fillStyle = IVOIRE; ctx.font = '700 ' + pt(21) + 'px Cinzel, Georgia, serif';
-    texteEspace(ctx, 'ACCÈS ÉVÉNEMENT', X(CARTE_L / 2), Y(59.5), 0.6, true);
-    // photo (ou initiales) dans un cadre doré
-    const PX = 13, PY = 67, PL = 60, PH = 80;
+    ctx.beginPath(); ctx.rect(X(0), Y(0), px(CARTE_L), px(CARTE_H)); ctx.clip();
+    // la photo en pleine page (le haut du visage gardé), sinon un fond à la couleur de l'événement et les initiales
     if (photo) {
-      const ratio = PL / PH, ri = photo.largeur / photo.hauteur;
+      const ratio = CARTE_L / CARTE_H, ri = photo.largeur / photo.hauteur;
       let sx = 0, sy = 0, sl = photo.largeur, sh = photo.hauteur;
       if (ri > ratio) { sl = photo.hauteur * ratio; sx = (photo.largeur - sl) / 2; } else { sh = photo.largeur / ratio; sy = Math.min((photo.hauteur - sh) * 0.15, photo.hauteur - sh); }
-      ctx.drawImage(photo.canvas, sx, sy, sl, sh, X(PX), Y(PY), px(PL), px(PH));
+      ctx.drawImage(photo.canvas, sx, sy, sl, sh, X(0), Y(0), px(CARTE_L), px(CARTE_H));
     } else {
-      const g = ctx.createLinearGradient(X(PX), Y(PY), X(PX + PL), Y(PY + PH));
-      g.addColorStop(0, BORDEAUX); g.addColorStop(1, '#3a070f');
-      ctx.fillStyle = g; ctx.fillRect(X(PX), Y(PY), px(PL), px(PH));
-      ctx.fillStyle = IVOIRE; ctx.font = '700 ' + pt(54) + 'px Cinzel, Georgia, serif'; ctx.textAlign = 'center';
-      ctx.fillText(P.initiales(c.nom) || '?', X(PX + PL / 2), Y(PY + PH / 2 + 7));
-      ctx.textAlign = 'left';
+      ctx.fillStyle = hex(vr * 1.6 + 30, vg * 1.6 + 10, vb * 1.6 + 12); ctx.fillRect(X(0), Y(0), px(CARTE_L), px(CARTE_H));
+      ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = '800 ' + pt(90) + 'px ' + TITRE; ctx.textAlign = 'center';
+      ctx.fillText(P.initiales(c.nom) || '?', X(CARTE_L / 2), Y(62)); ctx.textAlign = 'left';
     }
-    ctx.strokeStyle = OR; ctx.lineWidth = px(0.6); ctx.strokeRect(X(PX), Y(PY), px(PL), px(PH));
-    // colonne de droite : nom, numéro, QR code
-    const DX = 80, DL = CARTE_L - 13 - DX;
-    ctx.fillStyle = OR; ctx.font = '600 ' + pt(7) + 'px Montserrat, Arial, sans-serif';
-    texteEspace(ctx, 'MANNEQUIN', X(DX), Y(72), 0.9);
-    const nom = ajuster(ctx, c.nom.toUpperCase(), DL, 17, 10, 3, '600 {t}px "Cormorant Garamond", Georgia, serif');
-    ctx.fillStyle = IVOIRE;
-    nom.lignes.forEach((l, i) => ctx.fillText(l, X(DX), Y(80 + i * nom.taille * 0.42)));
-    ctx.fillStyle = OR; ctx.font = '600 ' + pt(7) + 'px Montserrat, Arial, sans-serif';
-    texteEspace(ctx, 'N°', X(DX), Y(c.fiche ? 106 : 118), 0.9);
-    ctx.font = '700 ' + pt(c.fiche ? 24 : 34) + 'px Cinzel, Georgia, serif';
-    ctx.fillText(c.numero, X(DX), Y(c.fiche ? 116 : 132));
-    if (c.fiche && dessinerQrCanvas(ctx, c.fiche, X(DX), Y(PY + PH - 25), px(25), NOIR)) {
-      ctx.fillStyle = OR; ctx.font = '500 ' + pt(5.5) + 'px Montserrat, Arial, sans-serif';
-      ctx.fillText('Sa fiche', X(DX + 27), Y(PY + PH - 3));
+    // le voile qui monte, à la couleur de l'événement ; une ombre légère en haut pour « MODEL » et le logo
+    const v = ctx.createLinearGradient(0, Y(CARTE_H * 0.3), 0, Y(CARTE_H * 0.8));
+    v.addColorStop(0, 'rgba(' + vr + ',' + vg + ',' + vb + ',0)'); v.addColorStop(0.55, 'rgba(' + vr + ',' + vg + ',' + vb + ',.80)'); v.addColorStop(1, 'rgba(' + vr + ',' + vg + ',' + vb + ',.97)');
+    ctx.fillStyle = v; ctx.fillRect(X(0), Y(CARTE_H * 0.3), px(CARTE_L), px(CARTE_H * 0.7));
+    const h = ctx.createLinearGradient(0, Y(0), 0, Y(30));
+    h.addColorStop(0, 'rgba(0,0,0,.45)'); h.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = h; ctx.fillRect(X(0), Y(0), px(CARTE_L), px(30));
+    // repère de la fente du cordon
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = px(0.25);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(X(CARTE_L / 2 - 7), Y(3), px(14), px(2.6), px(1.3)) : ctx.rect(X(CARTE_L / 2 - 7), Y(3), px(14), px(2.6)); ctx.stroke();
+    // logo (au choix) et « MODEL »
+    ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'alphabetic';
+    let logoL = 0;
+    if (reglages.logo) {
+      const l = Math.min(34, 13 * reglages.logo.largeur / reglages.logo.hauteur), hl = l * reglages.logo.hauteur / reglages.logo.largeur;
+      ctx.drawImage(reglages.logo.canvas, X(M), Y(9), px(l), px(hl)); logoL = l;
     }
-    // l'événement
-    ctx.fillStyle = OR; ctx.fillRect(X(13), Y(154), px(CARTE_L - 26), px(0.3));
-    ctx.font = '600 ' + pt(7) + 'px Montserrat, Arial, sans-serif';
-    texteEspace(ctx, 'ÉVÉNEMENT', X(13), Y(160.5), 0.9);
-    const titre = ajuster(ctx, String(projet.titre || '').toUpperCase(), CARTE_L - 26, 15, 9, 2, '600 {t}px "Cormorant Garamond", Georgia, serif');
-    ctx.fillStyle = IVOIRE;
-    titre.lignes.forEach((l, i) => ctx.fillText(l, X(13), Y(167.5 + i * titre.taille * 0.4)));
-    const infos = [['DATE', datesProjet(projet), 13, 36], ['LIEU', [projet.lieu, projet.ville].filter(Boolean).join(', ') || 'À préciser', 52, 42], ['ORGANISÉ PAR', projet.organisateur, 98, 37.5]];
-    const yInfos = titre.lignes.length > 1 ? 179.5 : 176;
-    infos.forEach(([titreInfo, valeur, x, l]) => {
-      ctx.fillStyle = OR; ctx.font = '600 ' + pt(6) + 'px Montserrat, Arial, sans-serif';
-      texteEspace(ctx, titreInfo, X(x), Y(yInfos), 0.6);
-      const v = ajuster(ctx, valeur, l, 8, 6, 2, '600 {t}px Montserrat, Arial, sans-serif');
-      ctx.fillStyle = IVOIRE;
-      v.lignes.forEach((ligne, i) => ctx.fillText(ligne, X(x), Y(yInfos + 4.6 + i * v.taille * 0.42)));
+    ctx.font = '800 ' + pt(42) + 'px ' + TITRE; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = px(2);
+    if (logoL) { ctx.textAlign = 'right'; ctx.fillText('MODEL', X(CARTE_L - M), Y(21)); ctx.textAlign = 'left'; }
+    else ctx.fillText('MODEL', X(M), Y(21));
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    // l'événement en grand, puis la date et le lieu avec leurs tirets
+    const titre = ajusterTitre(ctx, String(projet.titre || '').toUpperCase(), px(CARTE_L - 2 * M), 34, 18, 3);
+    const lieu = [projet.lieu, projet.ville].filter(Boolean).join(', ') || 'Lieu à préciser';
+    const yInfos = CARTE_H - 33, ligneT = titre.taille * 0.3528 * 0.9;
+    titre.lignes.forEach((l, i) => { ctx.font = '800 ' + pt(titre.taille) + 'px ' + TITRE; ctx.fillText(l, X(M), Y(yInfos - 4 - (titre.lignes.length - 1 - i) * ligneT)); });
+    ctx.font = '500 ' + pt(9) + 'px ' + TEXTE;
+    [[datesProjet(projet), yInfos + 2.5], [lieu, yInfos + 8]].forEach(([t, y]) => {
+      ctx.fillStyle = vif; ctx.fillRect(X(M), Y(y - 1.3), px(4.5), px(0.6));
+      ctx.fillStyle = '#ffffff'; ctx.fillText(envelopperLignesCanvas(ctx, t, px(CARTE_L - 2 * M - 30), ctx.font)[0] || t, X(M + 7), Y(y));
     });
-    // bandeau bordeaux
-    ctx.fillStyle = BORDEAUX; ctx.fillRect(X(0), Y(195), px(CARTE_L), px(15));
-    ctx.fillStyle = OR; ctx.fillRect(X(0), Y(195), px(CARTE_L), px(0.5));
-    ctx.fillStyle = IVOIRE; ctx.font = '700 ' + pt(11) + 'px Cinzel, Georgia, serif';
-    texteEspace(ctx, 'ACCÈS MANNEQUIN', X(13), Y(204.6), 0.8);
-    ctx.fillStyle = OR; ctx.textAlign = 'right';
-    ctx.fillText('MA2M', X(CARTE_L - 13), Y(204.6));
-    ctx.textAlign = 'left';
+    // le numéro
+    ctx.font = '800 ' + pt(20) + 'px ' + TITRE; ctx.textAlign = 'right';
+    ctx.fillText('N° ' + c.numero, X(CARTE_L - M), Y(yInfos + 9)); ctx.textAlign = 'left';
+    // la bande du bas
+    const bande = voile === NOIR_BASE ? NOIR_BASE : vif;
+    ctx.fillStyle = bande; ctx.fillRect(X(0), Y(CARTE_H - 9), px(CARTE_L), px(9));
+    const [br, bg, bb] = rgb(bande), clair = 0.299 * br + 0.587 * bg + 0.114 * bb > 150;
+    ctx.fillStyle = clair ? '#1a1206' : '#ffffff'; ctx.font = '700 ' + pt(6.5) + 'px ' + TEXTE;
+    texteEspaceToile(ctx, 'MODEL · BACKSTAGE', X(M), Y(CARTE_H - 3.4), px(0.9));  // (js/app.js)
+    texteEspaceToile(ctx, 'N° ' + c.numero, X(CARTE_L - M), Y(CARTE_H - 3.4), px(0.9), 'right');
     ctx.restore();
   }
 
@@ -134,34 +131,30 @@
     }
     return c.photo ? chargerImageHauteRes(c.photo, COTE_PETITE_CASE) : null;
   }
-  // seule : une carte A5 par page ; sinon deux cartes par feuille A4 couchée, trait de coupe au milieu
-  async function fabriquerPdf(projet, cartes, seule) {
-    await Promise.all([chargerJsPdf(), chargerQrLib().catch(() => null),
-      document.fonts.load('700 40px Cinzel'), document.fonts.load('600 40px Cinzel'), document.fonts.load('600 40px "Cormorant Garamond"'),
-      document.fonts.load('600 40px Montserrat'), document.fonts.load('500 40px Montserrat')]);
-    const logo = await chargerImageLocale('/assets/logo-intro.png');
+  // seule : un badge par page (105 × 148,5 mm) ; sinon 4 badges par feuille A4 portrait, traits de coupe
+  async function fabriquerPdf(projet, cartes, seule, reglages) {
+    await Promise.all([chargerJsPdf(), document.fonts.load('800 40px "Big Shoulders Display"'),
+      document.fonts.load('500 40px "Work Sans"'), document.fonts.load('700 40px "Work Sans"')]);
     const { jsPDF } = window.jspdf;
-    const parFeuille = seule ? 1 : 2, largeur = parFeuille * CARTE_L;
-    const doc = new jsPDF({ unit: 'mm', format: [largeur, CARTE_H], orientation: seule ? 'portrait' : 'landscape' });
+    const L = seule ? CARTE_L : 2 * CARTE_L, H = seule ? CARTE_H : 2 * CARTE_H, parFeuille = seule ? 1 : 4;
+    const doc = new jsPDF({ unit: 'mm', format: [L, H], orientation: 'portrait' });
     for (let i = 0; i < cartes.length; i += parFeuille) {
       const groupe = cartes.slice(i, i + parFeuille);
       const images = await Promise.all(groupe.map(imageDe));
       const feuille = document.createElement('canvas');
-      feuille.width = Math.round(px(largeur)); feuille.height = Math.round(px(CARTE_H));
+      feuille.width = Math.round(px(L)); feuille.height = Math.round(px(H));
       const ctx = feuille.getContext('2d');
       ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, feuille.width, feuille.height);
-      groupe.forEach((c, k) => dessinerCarte(ctx, k * CARTE_L, 0, c, projet, logo, images[k]));
+      groupe.forEach((c, k) => dessinerCarte(ctx, (k % 2) * CARTE_L, Math.floor(k / 2) * CARTE_H, c, projet, reglages, images[k]));
       if (!seule) {
         ctx.strokeStyle = GRIS_COUPE; ctx.lineWidth = px(0.3); ctx.setLineDash([px(2), px(1.5)]);
-        ctx.beginPath(); ctx.moveTo(px(CARTE_L), 0); ctx.lineTo(px(CARTE_L), feuille.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px(CARTE_L), 0); ctx.lineTo(px(CARTE_L), feuille.height); ctx.moveTo(0, px(CARTE_H)); ctx.lineTo(feuille.width, px(CARTE_H)); ctx.stroke();
       }
-      if (i) doc.addPage([largeur, CARTE_H], seule ? 'portrait' : 'landscape');
-      doc.addImage(feuille.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, largeur, CARTE_H);
-      // QR code cliquable dans le PDF aussi
-      groupe.forEach((c, k) => { if (c.fiche) doc.link(k * CARTE_L + 80, 67 + 80 - 25, 25, 25, { url: c.fiche }); });
+      if (i) doc.addPage([L, H], 'portrait');
+      doc.addImage(feuille.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, L, H);
     }
     const slug = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
-    doc.save((seule ? 'carte-' + slug(cartes[0].nom) + '-' : 'cartes-') + slug(projet.titre || 'evenement') + horodatageFichier() + '.pdf');
+    doc.save((seule ? 'badge-' + slug(cartes[0].nom) + '-' : 'badges-') + slug(projet.titre || 'evenement') + horodatageFichier() + '.pdf');
   }
 
   // ---------- Les mannequins confirmées de l'événement ----------
@@ -216,7 +209,7 @@
     const depuis = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
     const projets = await P.bd(sb.from('agenda_projets').select('id, titre, date_debut, date_fin, lieu, ville, annule').gte('date_debut', depuis).eq('annule', false).order('date_debut'));
     return P.entete('Cartes d’événement') +
-      '<p class="doux">Choisissez l’événement : les mannequins qui ont confirmé leur présence apparaissent, touchez-en une pour faire sa carte.</p>' +
+      '<p class="doux">Choisissez l’événement : les mannequins qui ont confirmé leur présence apparaissent, touchez-en une pour faire son badge.</p>' +
       (projets.length ? '<div class="projets-liste">' + projets.map((p, i) => '<a class="projet-carte apparait ca-evenement" style="--i:' + Math.min(i, 10) + '" href="#/site/' + PAGE + '/' + P.esc(p.id) + '">' +
         '<h2>' + P.esc(p.titre) + '</h2><p class="doux">' + P.esc(datesProjet(p) + ([p.lieu, p.ville].filter(Boolean).length ? ' · ' + [p.lieu, p.ville].filter(Boolean).join(', ') : '')) + '</p></a>').join('') + '</div>'
         : '<div class="carte vide">Aucun événement dans l’Agenda pour le moment.</div>');
@@ -226,7 +219,9 @@
     if (!r.length) return P.entete('Cartes d’événement') + '<div class="carte vide">Cet événement n’existe plus.</div>';
     const projet = r[0], personnes = await confirmees(projet);
     Object.values((ecran && ecran.apercus) || {}).forEach((u) => URL.revokeObjectURL(u));
-    ecran = { projet, personnes, apercus: {} };
+    // couleur du voile : lue sur l'affiche du projet (Extension 162) ; sans affiche, noir
+    const auto = (await couleurAffiche(projet.affiche).catch(() => null)) || NOIR_BASE;
+    ecran = { projet, personnes, apercus: {}, auto, logo: (ecran && ecran.projet && ecran.projet.id === projet.id && ecran.logo) || 'aucun', logoPartenaire: (ecran && ecran.projet && ecran.projet.id === projet.id && ecran.logoPartenaire) || null };
     // photos ajoutées pour les cartes : aperçu dans la liste
     await Promise.all(personnes.filter((c) => c.chemin).map(async (c) => {
       const blob = await P.bd(sb.storage.from(STOCKAGE).download(c.chemin)).catch(() => null);
@@ -234,24 +229,47 @@
     }));
     const cartes = personnes.map((c, i) => '<li class="ca-carte">' +
       '<button type="button" class="ca-faire" data-action="carte-une" data-i="' + i + '" aria-label="Faire la carte de ' + P.esc(c.nom) + '">' +
-      P.visage(ecran.apercus[c.cle] || c.vignette, c.nom, 'ca-vis') + '<span class="ca-nom">' + P.esc(c.nom) + '</span><span class="doux">N° ' + c.numero + ' · 🎫 sa carte</span></button>' +
+      P.visage(ecran.apercus[c.cle] || c.vignette, c.nom, 'ca-vis') + '<span class="ca-nom">' + P.esc(c.nom) + '</span><span class="doux">N° ' + c.numero + ' · 🎫 son badge</span></button>' +
       (c.photo && !c.chemin ? '' : '<label class="btn petit ca-photo">📷 ' + (c.chemin ? 'Changer la photo' : 'Ajouter une photo') +
         '<input type="file" accept="image/*" data-change="carte-photo" data-i="' + i + '"></label>') + '</li>').join('');
     return P.entete('Cartes · ' + projet.titre, '<a class="btn" href="#/site/' + PAGE + '">← Choisir un autre événement</a>') +
       '<p class="doux">' + P.esc([datesProjet(projet), [projet.lieu, projet.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · ')) + '</p>' +
-      (personnes.length ? '<div class="carte"><label class="fl" for="ca-organisateur">Organisé par (écrit sur les cartes)<input id="ca-organisateur" maxlength="80" value="' + P.esc((projet.citer_client !== false && projet.client) || ORGANISATEUR) + '"></label>' +
+      (personnes.length ? '<div class="carte"><h2>Le badge</h2>' +
+        // (11/11/2026) logo au choix : l'événement peut être celui d'un partenaire
+        '<fieldset class="ca-logo"><legend>Logo en haut à gauche</legend>' + [['aucun', 'Aucun'], ['agence', 'Logo de l’agence'], ['partenaire', 'Logo du partenaire']].map((o) =>
+          '<label><input type="radio" name="ca-logo" value="' + o[0] + '" data-change="carte-logo"' + (ecran.logo === o[0] ? ' checked' : '') + '> ' + o[1] + '</label>').join('') + '</fieldset>' +
+        '<div id="ca-logo-partenaire"' + (ecran.logo === 'partenaire' ? '' : ' hidden') + '></div>' +
+        '<label class="fl ca-couleur" for="ca-voile">Couleur du voile<input id="ca-voile" type="color" value="' + P.esc(ecran.auto) + '"></label>' +
+        '<p class="doux petit-texte">' + (projet.affiche ? 'Couleur prise sur l’affiche de l’événement ; vous pouvez la changer.' : 'Pas d’affiche jointe à ce projet : voile noir (joignez l’affiche dans Convocations pour prendre ses couleurs).') + '</p>' +
         '<p class="doux petit-texte">' + P.pluriel(personnes.length, 'mannequin a confirmé', 'mannequins ont confirmé') + ' sa présence. Celles qui n’ont pas encore répondu, ou qui sont absentes, n’ont pas de carte.</p>' +
         '<ul class="ca-liste">' + cartes + '</ul>' +
-        '<div class="ligne"><button type="button" class="btn rouge" data-action="cartes-toutes">🖨️ Toutes les cartes (2 par feuille A4)</button></div></div>'
+        '<div class="ligne"><button type="button" class="btn rouge" data-action="cartes-toutes">🖨️ Tous les badges (4 par feuille A4)</button></div></div>'
         : '<div class="carte vide">Aucune mannequin n’a encore confirmé sa présence à cet événement (Convocations : lien « Confirmez votre présence »).</div>');
   }
-  const organisateur = () => String((document.getElementById('ca-organisateur') || {}).value || '').trim() || ORGANISATEUR;
+  // réglages du badge au moment de l'impression : logo choisi, couleur du voile
+  async function reglagesBadge() {
+    const voile = String((document.getElementById('ca-voile') || {}).value || ecran.auto || NOIR_BASE);
+    let logo = null;
+    if (ecran.logo === 'agence') logo = await chargerImageLocale('/assets/logo-header.png').catch(() => null);  // (js/app.js)
+    if (ecran.logo === 'partenaire' && ecran.logoPartenaire) logo = await chargerImageHauteRes(ecran.logoPartenaire, 800).catch(() => null);
+    return { voile: voile.toLowerCase() === NOIR_BASE ? NOIR_BASE : voile, logo };
+  }
+  P.changements['carte-logo'] = (el) => {
+    ecran.logo = el.value;
+    const zone = document.getElementById('ca-logo-partenaire');
+    zone.hidden = el.value !== 'partenaire';
+    if (!zone.hidden && !zone.dataset.pret && window.ImageJointe) {  // (js/image-jointe.js : téléversé depuis la galerie)
+      zone.dataset.pret = '1';
+      window.ImageJointe.brancher(zone, { valeur: ecran.logoPartenaire, surChange: (url) => { ecran.logoPartenaire = url; } });
+      const aide = zone.querySelector('.ij-canaux'); if (aide) aide.textContent = 'Le logo du partenaire (de préférence en blanc ou clair, sur fond transparent).';
+    }
+  };
   async function fabriquer(cartes, seule, bouton) {
     if (bouton) bouton.disabled = true;
     P.message('Fabrication ' + (seule ? 'de la carte…' : 'des cartes… (' + cartes.length + ')'));
     try {
-      await fabriquerPdf(Object.assign({}, ecran.projet, { organisateur: organisateur() }), cartes, seule);
-      P.message(seule ? 'Carte de ' + cartes[0].nom + ' prête : le PDF est téléchargé.' : P.pluriel(cartes.length, 'carte prête', 'cartes prêtes') + ' : le PDF est téléchargé.');
+      await fabriquerPdf(ecran.projet, cartes, seule, await reglagesBadge());
+      P.message(seule ? 'Badge de ' + cartes[0].nom + ' prêt : le PDF est téléchargé.' : P.pluriel(cartes.length, 'badge prêt', 'badges prêts') + ' : le PDF est téléchargé (4 par feuille A4).');
     } finally { if (bouton) bouton.disabled = false; }
   }
   P.actions['carte-une'] = (el) => { const c = ecran && ecran.personnes[Number(el.dataset.i)]; if (c) return fabriquer([c], true, el); };

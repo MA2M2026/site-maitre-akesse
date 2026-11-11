@@ -4604,3 +4604,11 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
   'recus', surDeclare })` (pas de recopie du paiement). app/mes-paiements.html reste en place (mode
   « page ») pour les liens des rappels de mensualité. Essai : test-app-mannequin (volet, « J'ai payé » avec
   le numéro, reçus, fermeture par ✕ et Échap).
+
+## Badges d'événement, modèle « Couverture » (11/11/2026, modèle validé par la propriétaire)
+
+js/cartes-acces.js : badge 105 × 148,5 mm (quart de A4), 4 par feuille A4 portrait avec traits de coupe, ou un
+badge seul. Photo pleine page, « MODEL » en grand en haut, nom de l'événement en grand, date, lieu, N°.
+Le voile qui monte du bas prend la couleur de l'affiche du projet (`couleurAffiche`, Extension 162), noir
+sans affiche ; modifiable (champ couleur). Logo au choix : aucun (par défaut), agence, ou logo du
+partenaire téléversé (ImageJointe). Plus de ligne « Organisé par » ni de QR code. Essai : test-cartes-acces.
