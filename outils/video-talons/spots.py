@@ -163,31 +163,48 @@ def scene(cle, corps, tr='barres'):
     return f'  <section class="scene" data-de="{cle}" data-transition="{tr}">\n{corps}  </section>\n\n'
 
 
-# ---------- Spot 1 : « Votre allure parle avant vous » (femmes de bureau, femmes de pouvoir) — version motion design
+def mois(cle, mots=('décembre', 'janvier', 'février')):
+    """Trois calendriers (décembre, janvier, février) qui se lèvent sur les mots dits."""
+    return ('    <div class="abs mois">' + ''.join(f'<div class="agenda" data-voix="{cle}" data-mot="{m}" data-anim="leve"><b>{n}</b><span>4 dimanches</span></div>'
+            for m, n in zip(mots, ('DÉCEMBRE', 'JANVIER', 'FÉVRIER'))) + '</div>\n')
+
+
+# ---------- Spot 1 : « Votre allure parle avant vous » — style « Intégrer l'agence » (scènes illustrées, images IA dedans)
+def polar(cle, mot, img, leg, x, y, w, h, rot, dx, dy):
+    return (f'    <div class="polar" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px" data-voix="{cle}" data-mot="{mot}" data-anim="nuage" data-rot="{rot}" '
+            f'data-dx="{dx}" data-dy="{dy}"><img src="{img}"><b>{leg}</b></div>\n')
+
+
+def rdv(cle, mot, heure, titre, img):
+    return f'<div class="rdv" data-voix="{cle}" data-mot="{mot}" data-anim="monte"><img src="{img}"><div><b>{heure}</b><span>{titre}</span></div><i data-voix="{cle}" data-mot="{mot}" data-retard="0.5" data-anim="pop"></i></div>'
+
+
 s1 = tete(1, 'Spot 1 Allure', '« Votre allure parle avant vous », femmes de bureau et de pouvoir') \
-    + scene('s1', panneaux('s1', ia(1), retard=-0.6)
-            + bandeau('s1', 'Réunion · Présentation · Rendez-vous', 240, 160, plein=True)
-            + carte('s1', ia(2), 'présentation', 520, 470, 470, 640, 6, 700, -300)
-            + carte('s1', ia(9), 'rendez', 90, 620, 470, 640, -7, -700, 300)
-            + traverse('s1', 'réunion', 'Réunion', 1380, 1, 2.2, 'présentation')
-            + traverse('s1', 'présentation', 'Présentation', 1380, -1, 2.0, 'rendez')
-            + traverse('s1', 'rendez', 'Rendez-vous', 1380, 1, 2.4), 'fondu') \
-    + scene('s2', plan('s2', ia(10), '', 'zoom', 'avance', -0.3)
-            + bandeau('s2', 'Allure', 300, 90) + bandeau('s2', 'Allure', 440, -90)
+    + scene('s1', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s1" data-retard="-0.6" data-anim="reveal">Votre journée</p></div>\n'
+            + '    <div class="abs agenda-jour" data-voix="s1" data-retard="-0.5" data-anim="leve"><h5>Mercredi · Abidjan</h5>'
+            + rdv('s1', 'réunion', '09 H 00', 'Réunion', ia(1)) + rdv('s1', 'présentation', '11 H 30', 'Présentation', ia(2)) + rdv('s1', 'rendez', '15 H 00', 'Rendez-vous important', ia(9)) + '</div>\n'
+            + '    <div class="abs centre-x" style="top:1430px"><p class="grand sur-plan" style="font-size:92px"><em data-voix="s1" data-mot="important" data-anim="reveal">Tout se joue avant<br>de parler.</em></p></div>\n', 'fondu') \
+    + scene('s2', '    <div class="carte-photo" style="left:150px;top:260px;width:780px;height:1040px" data-voix="s2" data-retard="-0.4" data-anim="leve"><img src="' + ia(10) + '"></div>\n'
+            + '    <div class="abs bulle-parole" style="left:600px;top:330px" data-voix="s2" data-retard="-0.1" data-anim="pop" data-finvoix="s2" data-finmot="allure" data-finretard="-0.1">• • •</div>\n'
+            + '    <div class="abs tampon" style="left:520px;top:880px" data-voix="s2" data-mot="parle" data-anim="tampon" data-rot="-8">ALLURE</div>\n'
             + texte('s2', 'Votre allure', 'parle pour vous.', 'allure', 'parle'), 'pousse') \
-    + scene('s3', tiers('s3', [('démarche', ia(11), 'Une démarche assurée'), ('posture', ia(12), 'Une posture droite'), ('talons', ia(16), 'Des talons maîtrisés')])
-            + '    <div class="abs centre-x sur-plan" style="top:1660px;z-index:7"><p class="surtitre" data-voix="s3" data-mot="élégance" data-anim="reveal">L’élégance des femmes qui décident</p></div>\n', 'volet') \
-    + scene('s4', panneaux('s4', ia(26), retard=-0.3, n=5)
-            + bandeau('s4', 'Décembre · Janvier · Février', 250, 140, plein=True)
-            + mois_pilules('s4'), 'pousse') \
-    + scene('s5', plan('s5', ia(15), '', 'gauche', 'glisse', -0.3)
-            + carte('s5', ia(4), 'consacre', 600, 380, 400, 540, 7, 600, -200)
-            + '    <div class="abs dimanches sur-plan" style="top:1150px"><b data-voix="s5" data-mot="consacre" data-anim="reveal">4 dimanches</b><span data-voix="s5" data-mot="mois" data-anim="reveal">par mois</span></div>\n'
-            + '    <div class="abs pastilles-bas"><span class="bouton" data-voix="s5" data-mot="aisance" data-anim="monte">Aisance</span><span class="bouton" data-voix="s5" data-mot="prestance" data-anim="monte">Prestance</span><span class="bouton" data-voix="s5" data-mot="autorité" data-anim="monte">Autorité</span></div>\n') \
-    + prive('s6') + '\n' \
-    + scene('s7', panneaux('s7', ia(25), retard=-0.3, n=7) + empreintes('s7', 'premier', 1060)
-            + traverse('s7', 'puissante', 'Puissante', 820, 1, 3.0)
-            + texte('s7', 'Une femme puissante', 'dès son premier pas.', 'puissante', 'premier'), 'pousse') \
+    + scene('s3', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s3" data-mot="élégance" data-anim="reveal">L’élégance des femmes qui décident</p></div>\n'
+            + polar('s3', 'démarche', ia(11), 'Une démarche assurée', 70, 330, 520, 700, -7, -700, 300)
+            + polar('s3', 'posture', ia(12), 'Une posture droite', 480, 560, 520, 700, 6, 700, -200)
+            + polar('s3', 'talons', ia(16), 'Des talons maîtrisés', 230, 950, 560, 640, -3, 0, 900), 'volet') \
+    + scene('s4', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s4" data-anim="reveal">Cette saison</p></div>\n'
+            + mois('s4') + carte('s4', ia(26), 'février', 640, 1180, 360, 480, 6, 600, 200)
+, 'cercle') \
+    + scene('s5', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s5" data-anim="reveal">4 dimanches par mois</p><p class="grand"><span data-voix="s5" data-mot="marcher" data-anim="reveal">pour marcher avec</span></p></div>\n'
+            + '    <div class="abs" style="left:90px;right:90px;top:640px;display:flex;flex-direction:column;gap:30px;z-index:6">'
+            + ''.join(f'<div class="qualite" data-voix="s5" data-mot="{m}" data-anim="leve"><img src="{ia(n)}"><span>{t}</span></div>' for m, t, n in [('aisance', 'Aisance', 24), ('prestance', 'Prestance', 21), ('autorité', 'Autorité', 25)]) + '</div>\n', 'barres') \
+    + scene('s6', '    <div class="abs legende-tel"><p class="surtitre" data-voix="s6" data-anim="reveal">Cours privé</p><p class="grand"><span data-voix="s6" data-mot="chez" data-anim="reveal">Chez vous</span></p></div>\n'
+            + '    <svg class="abs maison" viewBox="0 0 100 100" style="left:90px;top:560px;width:420px;height:420px"><path d="M12 48 L50 14 L88 48" data-voix="s6" data-mot="chez" data-anim="trace" data-duree="0.8"/><path d="M22 40 L22 88 L78 88 L78 40" data-voix="s6" data-mot="chez" data-retard="0.4" data-anim="trace" data-duree="0.8"/><path d="M42 88 L42 64 L58 64 L58 88" data-voix="s6" data-mot="lieu" data-anim="trace" data-duree="0.6"/></svg>\n'
+            + carte('s6', ia(23), 'chez', 520, 520, 470, 640, 5, 600, -200)
+            + '    <div class="abs lieu" style="left:150px;top:1290px" data-voix="s6" data-mot="lieu" data-anim="monte"><svg viewBox="0 0 100 100"><path d="M50 90 C50 90 22 60 22 40 C22 22 35 10 50 10 C65 10 78 22 78 40 C78 60 50 90 50 90 Z"/><circle cx="50" cy="40" r="10"/></svg>ou au lieu de votre choix</div>\n', 'rideau') \
+    + scene('s7', '    <div class="carte-photo" style="left:250px;top:240px;width:580px;height:800px" data-voix="s7" data-retard="-0.3" data-anim="leve"><img src="' + ia(25) + '"></div>\n'
+            + empreintes('s7', 'premier', 1120)
+            + '    <div class="abs centre-x" style="top:1330px"><p class="grand"><span data-voix="s7" data-mot="puissante" data-anim="reveal">Une femme puissante</span><em data-voix="s7" data-mot="premier" data-anim="reveal">dès son premier pas.</em></p></div>\n', 'pousse') \
     + fin('s8') + pied()
 
 # ---------- Spot 2 : « Mes premiers talons » (jeunes femmes, débutantes)
