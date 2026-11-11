@@ -218,6 +218,20 @@
       P.afficher();
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
+  // (11/11/2026, demande de la propriétaire) mannequin inscrite AVANT l'application (casting, inscription, formation déjà
+  // faits) qui n'a jamais créé son espace : l'inscription est notée « encaissée avant le système » (reprise_inscription,
+  // supabase-reprise-mars.sql : aucune recette en comptabilité), puis son code d'espace est créé (code_espace_creer).
+  // La création du compte elle-même ne change pas (même code ESP-…, même écran « Créer mon compte »).
+  P.actions['code-espace-ancienne'] = async (el) => {
+    if (!confirm((el.dataset.nom || 'Cette mannequin') + ' était déjà inscrite avant l’application ?\n\nSon inscription sera notée « réglée avant l’application » (rien n’est ajouté en comptabilité), puis son code pour créer son espace sera prêt.')) return;
+    el.disabled = true;
+    try {
+      await P.sensible(() => P.rpc('reprise_inscription', { p_id: el.dataset.id, p_choix: 'encaissee', p_montant: 0 }));
+      await P.rpc('code_espace_creer', { p_mannequin: el.dataset.id });
+      P.message('Code de l’espace créé : envoyez-le par WhatsApp.');
+      P.afficher();
+    } catch (e) { el.disabled = false; P.message(P.erreurTexte(e)); }
+  };
   P.actions['code-espace-copier'] = (el) => {
     const texte = el.getAttribute('data-code') || document.getElementById('code-espace-texte').textContent;
     navigator.clipboard.writeText(texte).then(() => { el.textContent = 'Copié !'; }, () => { el.textContent = 'Sélectionnez le code pour le copier'; });
@@ -396,7 +410,7 @@
     if (b) return b;
     return paiement ? (paiement.statut === 'valide' ? 'paye' : 'attente') : jour > 5 ? 'non_paye' : 'a_payer';
   }
-  const NOTE_RODAGE = '<div class="note info">Période de rodage (septembre à novembre 2026) : rien n’est réclamé, pas d’appel ni de relance. Les mensualités reprennent le 1er mars 2027 (« Reprise du 1er mars »).</div>';
+  const NOTE_RODAGE = '<div class="note info">Période de rodage (septembre à novembre 2026) : rien n’est réclamé, pas d’appel ni de relance. Les mensualités continuent à partir du 1er mars 2027 (« Dossiers de formation »).</div>';
   const NOTE_CONGES = '<div class="carte"><h2>Congés</h2><p>Décembre, janvier et février sont des congés : pas de cours, pas de mensualité, pas d’appel ni de relance.</p></div>';
   async function mensualites() {
     const mois = moisCourant();
@@ -484,7 +498,7 @@
     lignes.sort((a, b) => ordre[a.etat] - ordre[b.etat]);
     const ETAT = { a_generer: ['Code à générer', 'alerte'], expire: ['Code expiré', 'erreur'], actif: ['Code actif', 'ok'], non_paye: ['Inscription à enregistrer', 'neutre'] };
     return P.entete('Codes de l’espace mannequin') +
-      '<div class="note info">Le code (ESP-…) permet au mannequin de créer son espace avec son e-mail et son mot de passe ; ses informations du casting sont alors reprises. Il ne sert qu’une fois et reste valable 7 jours. Il ne se génère qu’après une inscription payée et validée.</div>' +
+      '<div class="note info">Le code (ESP-…) permet au mannequin de créer son espace avec son e-mail et son mot de passe ; ses informations du casting sont alors reprises. Il ne sert qu’une fois et reste valable 7 jours. Il ne se génère qu’après une inscription payée et validée. Mannequin déjà inscrite avant l’application : « Inscrite avant l’application : créer son code ».</div>' +
       '<div class="grille chiffres">' + P.chiffre('À générer', lignes.filter((x) => x.etat === 'a_generer').length, 'orange') + P.chiffre('Actifs', lignes.filter((x) => x.etat === 'actif').length, 'vert') +
       P.chiffre('Expirés', lignes.filter((x) => x.etat === 'expire').length, 'rouge') + '</div>' +
       '<div class="carte">' + (lignes.length ? P.tableau(['Mannequin', 'Origine', 'Destinataire', 'État', 'Code', ''], lignes.map((x) => {
@@ -492,7 +506,8 @@
         return '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.origine) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td>' +
           '<td>' + P.pastille(ETAT[x.etat][0], ETAT[x.etat][1]) + (actif ? '<div class="petit-texte doux">jusqu’au ' + P.esc(P.dateHeure(x.code.expire_le)) + '</div>' : '') + '</td>' +
           '<td>' + (actif ? '<b style="letter-spacing:1px">' + P.esc(x.code.code) + '</b>' : '—') + '</td>' +
-          '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Enregistrer son paiement</a>'
+          '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<button class="btn petit rouge" type="button" data-action="code-espace-ancienne" data-id="' + x.m.id + '" data-nom="' + P.esc(x.m.full_name) + '">Inscrite avant l’application : créer son code</button>' +
+            '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Enregistrer son paiement</a>'
             : actif ? '<button class="btn petit" type="button" data-action="code-espace-copier" data-code="' + P.esc(x.code.code) + '">Copier</button>' + (wa ? '<a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(wa) + '">WhatsApp</a>' : '<span class="doux petit-texte">pas de numéro</span>') + '<button class="btn petit" type="button" data-action="code-espace" data-id="' + x.m.id + '">Nouveau code</button>'
             : '<button class="btn petit rouge" type="button" data-action="code-espace" data-id="' + x.m.id + '">Générer le code</button>') +
           (P.moi.role === 'principal' && x.etat === 'non_paye' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + x.m.id + '" aria-label="Supprimer ' + P.esc(x.m.full_name) + '">Supprimer</button>' : '') + '</div></td></tr>';
@@ -637,7 +652,7 @@
     };
     const colonnes = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     // mois de cours déjà faits avant la reprise de mars (saisis dans « Reprise du 1er mars », 08/11/2026)
-    const dejaFaits = (m) => '<td class="deja-faits">' + (m.formation_mois_faits == null ? '<span class="doux" title="Pas encore saisi dans « Reprise du 1er mars »">—</span>'
+    const dejaFaits = (m) => '<td class="deja-faits">' + (m.formation_mois_faits == null ? '<span class="doux" title="Pas encore saisi dans « Dossiers de formation »">—</span>'
       : P.esc(m.formation_mois_faits + ' / ' + (m.formation_niveaux || 2) * 9)) + '</td>';
     return P.entete('Paiements mois par mois · ' + annee, '<button class="btn petit" type="button" data-action="matrice-annee" data-sens="-1">‹ ' + (annee - 1) + '</button><button class="btn petit" type="button" data-action="matrice-annee" data-sens="1">' + (annee + 1) + ' ›</button>') +
       '<div class="ligne">' + P.pastille('✓ payé', 'ok') + P.pastille('… en attente', 'alerte') + P.pastille('✕ non payé', 'erreur') + P.pastille('· à venir', 'neutre') + P.pastille('— avant l’entrée', 'neutre') + P.pastille('○ congés', 'neutre') + P.pastille('◇ formation terminée', 'neutre') + P.pastille('R rodage (jamais réclamé)', 'neutre') + '</div>' +

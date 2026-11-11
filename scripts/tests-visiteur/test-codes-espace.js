@@ -107,6 +107,13 @@ function donnees(role) {
     await p.waitForTimeout(1500);
     ok(e.journal.some((j) => /code_espace_creer/.test(j[1] || '') && /"p_mannequin":"r1"/.test(j[2] || '')), nomEcran + ' : « Générer » appelle la base pour ce mannequin');
     ok(/ESP-NEW234/.test(await t()), nomEcran + ' : le nouveau code s’affiche dans la liste');
+    // (11/11/2026) mannequin inscrite AVANT l'application, sans espace : son code en un appui
+    ok(/Inscrite avant l’application : créer son code/.test(await ligne('TRAORÉ')), nomEcran + ' : ancienne mannequin sans inscription notée : « Inscrite avant l’application : créer son code »');
+    await p.evaluate(() => { const r = Array.from(document.querySelectorAll('tbody tr')).find((y) => y.textContent.includes('TRAORÉ')); r.querySelector('[data-action="code-espace-ancienne"]').click(); });
+    await p.waitForTimeout(1500);
+    const idTraore = await p.evaluate(() => { const r = Array.from(document.querySelectorAll('tbody tr')).find((y) => y.textContent.includes('TRAORÉ')); const b = r && r.querySelector('[data-id]'); return b ? b.dataset.id : ''; });
+    ok(e.journal.some((j) => /reprise_inscription/.test(j[1] || '') && /"p_choix":"encaissee"/.test(j[2] || '')) && e.journal.filter((j) => /code_espace_creer/.test(j[1] || '')).length >= 2,
+      nomEcran + ' : inscription notée « réglée avant l’application », puis son code créé (' + idTraore + ')');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), nomEcran + ' : pas de défilement de côté de la page');
     await p.screenshot({ path: __dirname + '/medias/codes-espace-' + (ecran.width > 860 ? 'pc' : 'tel') + '.png', fullPage: true });
     ok(!e.errs.length, nomEcran + ' : aucune erreur de page ' + e.errs.join(' | '));

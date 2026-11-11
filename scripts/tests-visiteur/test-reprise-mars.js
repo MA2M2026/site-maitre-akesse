@@ -78,10 +78,10 @@ async function paiements(b) {
     // 1. assistant de reprise, avant le 1er mars
     await aller(p, 'paiements/reprise', 'form[data-form="reprise-mannequin"]');
     let t = await texte(p);
-    ok(/Reprise du 1er mars/.test(t) && /1 sur 6 revues/.test(t), n + 'l’assistant s’ouvre : 1 mannequin revue sur 6');
+    ok(/Dossiers de formation/.test(t) && /1 sur 6 revues/.test(t), n + 'l’assistant s’ouvre : 1 mannequin revue sur 6');
     ok(/fermée jusqu’au 1er mars 2027/.test(t) && /10 000 FCFA par mois et 15 000 FCFA/.test(t), n + 'il explique : agence fermée jusqu’au 1er mars, 10 000 et 15 000 pour toutes');
     ok(/il reste 11 mois/.test(t), n + 'une fiche déjà revue : « il reste 11 mois » (7 mois faits sur 18)');
-    ok((await p.$$('nav a[href="#/paiements/reprise"]')).length >= 1 || /Reprise du 1er mars/.test(await p.textContent('body')), n + 'l’entrée « Reprise du 1er mars » est dans le menu');
+    ok((await p.$$('nav a[href="#/paiements/reprise"]')).length >= 1 || /Dossiers de formation/.test(await p.textContent('body')), n + 'l’entrée « Reprise du 1er mars » est dans le menu');
     // une mannequin : 1 niveau, 4 mois faits
     const id = ids[2];
     await p.selectOption('select[form="rp-' + id + '"][name="niveaux"]', '1');

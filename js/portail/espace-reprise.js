@@ -43,12 +43,12 @@
   // ---------- Paiements › Reprise du 1er mars ----------
   async function reprise() {
     let r;
-    try { r = await P.rpc('reprise_etat'); } catch (e) { if (absent(e)) return P.entete('Reprise du 1er mars') + NOTE_ABSENT; throw e; }
+    try { r = await P.rpc('reprise_etat'); } catch (e) { if (absent(e)) return P.entete('Dossiers de formation') + NOTE_ABSENT; throw e; }
     const liste = (r.mannequins || []).filter((m) => m.statut !== 'sorti' || !m.vue_le);
     const vues = liste.filter((m) => m.vue_le).length;
     const sansInscription = (r.mannequins || []).filter((m) => m.statut !== 'sorti' && !m.inscription && !m.inscription_reprise);
     const principal = P.moi.role === 'principal';
-    return P.entete('Reprise du 1er mars', P.pastille(vues + ' sur ' + liste.length + ' revues', vues === liste.length && liste.length ? 'ok' : 'alerte')) +
+    return P.entete('Dossiers de formation', P.pastille(vues + ' sur ' + liste.length + ' revues', vues === liste.length && liste.length ? 'ok' : 'alerte')) +
       '<div class="note info">L’agence est fermée jusqu’au ' + P.esc(dateLongue(r.date_reprise)) + '. Les mensualités de septembre à novembre 2026 ne sont jamais réclamées (« Archives – période de rodage »). La comptabilité est repartie de zéro le 07/11/2026. À partir de mars : 10 000 FCFA par mois et 15 000 FCFA d’inscription, pour toutes.</div>' +
       '<div class="carte"><h2>1. Chaque mannequin, une fois</h2><p class="doux">Pour chacune : son statut, sa formation (1 niveau de 9 mois, ou 2 niveaux), et les mois de cours qu’elle a déjà faits avant la reprise. Le site calcule les mois qui restent.</p>' +
       (liste.length ? P.tableau(['Mannequin', 'Statut', 'Formation', 'Mois déjà faits', ''], liste.map((m) =>
@@ -169,7 +169,7 @@
   E.pages.reprise = reprise;
   E.pages['archives-rodage'] = archives;
   // (juste après le « Tableau du mois », qui reste la page d'arrivée ; les archives en fin de menu)
-  E.nav.splice(E.nav.findIndex((n) => n[0] === 'tableau') + 1 || E.nav.length, 0, ['reprise', 'Reprise du 1er mars']);
+  E.nav.splice(E.nav.findIndex((n) => n[0] === 'tableau') + 1 || E.nav.length, 0, ['reprise', 'Dossiers de formation']);  // (ex-« Reprise du 1er mars », renommé le 11/11/2026 à la demande de la propriétaire)
   E.nav.push(['archives-rodage', 'Archives – période de rodage']);
 
   // ---------- Comptabilité › Clôture guidée ----------
