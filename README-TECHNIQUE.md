@@ -4488,3 +4488,12 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - **Étapes du profil (application)** : les 6 étapes sur UNE ligne, en pastilles numérotées reliées, collées en haut
   de l'écran (css/mannequin-app.css ; blocs de 1/6 sans grille ni flex, noms courts sous 420 px) ; app/sw.js v11.
 - Essais : test-compte-mannequin-serveur.js, test-mdp-provisoire.js, test-etapes-profil.js, test-nouvelle-admin-mannequins.js.
+
+## Offre Entreprises du cours de talons : plaquette et prospection par e-mail (11/11/2026)
+
+- **Plaquette** (validée par la propriétaire) : `outils/plaquette-talons-entreprises/plaquette.html`, 15 pages A4,
+  rouge mat #7C2128 + blanc, structure « pourquoi → comment → combien » (sommaire, besoin, 6 raisons, situations,
+  gains, programme samedi par samedi théorie/pratique, format, tarifs 10→50 participantes, 3 cas pratiques
+  inventés et présentés comme exemples, proforma type, agence, contact + QR codes). PDF : `node faire-pdf.js`.
+- **Prospection** : `outils/prospection/` (modèles d'e-mails, plaquette allégée, règles d'envoi dans LISEZMOI.md).
+  Liste des destinataires hors dépôt (dépôt public) ; adresses générales publiques uniquement.
