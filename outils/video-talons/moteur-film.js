@@ -63,6 +63,10 @@ document.querySelectorAll('[data-anim="mots"]').forEach((el) => {
 document.querySelectorAll('[data-anim="lettres"]').forEach((el) => {
   el.innerHTML = el.textContent.split(/(\s+)/).map((p) => (/^\s+$/.test(p) ? p : '<span class="mot">' + [...p].map((c) => '<span class="lettre">' + c + '</span>').join('') + '</span>')).join('');
 });
+// « reveal » (11/11/2026, typographie de publicité) : chaque ligne (séparée par <br>) sort de derrière un cache
+document.querySelectorAll('[data-anim="reveal"]').forEach((el) => {
+  el.innerHTML = el.innerHTML.split(/<br\s*\/?>/i).map((l) => '<span class="ligne-r"><span class="int">' + l + '</span></span>').join('');
+});
 document.querySelectorAll('[data-anim="bloc"]').forEach((el) => {
   const c = document.createElement('span'); c.className = 'contenu'; c.style.display = 'inline-block';
   while (el.firstChild) c.appendChild(el.firstChild);
@@ -99,7 +103,7 @@ const scenes = [...document.querySelectorAll('.scene')].map((el, i) => {
   return { el, plateau, formes, debut: debutScene(el.dataset.de, el.dataset.demot), transition: el.dataset.transition || 'fondu',
     photos: [...el.querySelectorAll('.photo, .photo-m')],
     elements: [...el.querySelectorAll('[data-voix]')].map((x) => ({ x, t: instant(x), anim: x.dataset.anim || 'monte',
-      mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
+      mots: [...x.querySelectorAll(x.dataset.anim === 'lettres' ? '.lettre' : x.dataset.anim === 'reveal' ? '.int' : '.mot')], contenu: x.querySelector(':scope > .contenu'), balai: x.querySelector(':scope > .balai'),
       onde: x.querySelector(':scope > .onde'), anneau: x.querySelector(':scope > .anneau'), ph: (x.dataset.symbole || x.textContent).length,
       // data-finvoix (+ data-finmot) : l'élément s'efface quand la voix dit ce mot (deux images à la même place, l'une après l'autre)
       tf: x.dataset.finvoix ? instant({ dataset: { voix: x.dataset.finvoix, mot: x.dataset.finmot || '', retard: x.dataset.finretard || 0 } }) : null })) };
@@ -147,6 +151,11 @@ function animer(e, t) {
     case 'grandit': { // la personne grandit, posée au sol (data-depart : taille de départ, 0,85 = 85 %), en data-duree secondes
       const k = lisse((t - e.t) / Number(x.dataset.duree || 1.4)), dep = Number(x.dataset.depart || 0.85); s.opacity = Math.min(1, (t - e.t) * 4);
       s.transformOrigin = '50% 100%'; s.transform = 'scale(' + (dep + (1 - dep) * k) + ')'; break; }
+    case 'reveal': { // ligne par ligne : monte de derrière son cache, décélération « expo », lettres qui se resserrent
+      s.opacity = 1;
+      e.mots.forEach((m, i) => { const u = Math.max(0, Math.min(1, (t - e.t - i * 0.13) / 1.05)), k = u >= 1 ? 1 : 1 - Math.pow(2, -10 * u);
+        m.style.transform = 'translateY(' + (112 * (1 - k)) + '%) skewY(' + (5 * (1 - k)) + 'deg)'; m.style.letterSpacing = (0.16 * (1 - k)) + 'em'; m.style.opacity = u > 0 ? 1 : 0; });
+      break; }
     case 'p25': { // photo en relief « 2.5D » : décor (fond reconstitué) et personnage détouré bougent à des vitesses
       // différentes — la caméra avance dans la scène, le décor glisse derrière la personne qui vient vers nous.
       // data-entree = zoom | gauche | droite | bas | haut | fouet (coup de fouet latéral avec flou de mouvement) ; data-camera = gauche | droite
@@ -200,7 +209,7 @@ function animer(e, t) {
 function avant(e) {
   const s = e.x.style;
   if (e.anim === 'compteur') { const dec = Number(e.x.dataset.decimales || 0), dep = Number(e.x.dataset.depart || 0); e.x.textContent = dec ? dep.toFixed(dec).replace('.', ',') : fmt(dep); return; }
-  if (e.anim === 'mots' || e.anim === 'lettres') { s.opacity = 1; e.mots.forEach((m) => { m.style.opacity = 0; }); return; }
+  if (e.anim === 'mots' || e.anim === 'lettres' || e.anim === 'reveal') { s.opacity = 1; e.mots.forEach((m) => { m.style.opacity = 0; }); return; }
   if (e.anim === 'bloc') { s.opacity = 1; e.contenu.style.opacity = 0; e.balai.style.transform = 'scaleX(0)'; return; }
   if (e.anim === 'ouvre') { s.opacity = 1; s.transform = ''; return; }
   if (e.anim === 'trace') { const L = e.x.getTotalLength(); s.strokeDasharray = L; s.strokeDashoffset = L; return; }

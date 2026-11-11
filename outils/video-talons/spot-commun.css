@@ -74,3 +74,21 @@
 #grain { position: absolute; inset: 0; z-index: 52; pointer-events: none; background: url(ia/grain.png); opacity: 0.08; mix-blend-mode: overlay; }
 #flash { position: absolute; inset: 0; z-index: 53; pointer-events: none; background: #fff; opacity: 0; }
 #fuite { position: absolute; inset: -20%; z-index: 52; pointer-events: none; opacity: 0; mix-blend-mode: screen; background: radial-gradient(ellipse 45% 60% at 70% 40%, rgba(255,170,120,0.55), rgba(255,90,90,0.18) 45%, rgba(0,0,0,0) 70%); }
+
+/* Typographie de publicité (11/11/2026, « les polices font PowerPoint ») : lignes qui se dévoilent, grandes italiques
+   élégantes, capitales fines très espacées */
+@font-face { font-family: 'Montserrat'; font-weight: 500; src: url('../../assets/polices/montserrat-latin-500-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-600-normal.woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('../../assets/polices/montserrat-latin-ext-600-normal.woff2'); unicode-range: U+0100-024F; }
+.ligne-r { display: block; overflow: hidden; padding: 0.04em 0.06em 0.12em; margin: -0.04em -0.06em -0.12em; }
+.ligne-r .int { display: inline-block; will-change: transform; }
+body.mat .texte .grand, body.mat .sur-plan .grand { font: 500 118px/1.02 'Cormorant Garamond', serif; letter-spacing: -0.01em; }
+body.mat .texte .grand em, body.mat .sur-plan .grand em { font-weight: 400; font-style: italic; }
+body.mat .surtitre { font: 600 24px 'Montserrat', sans-serif; letter-spacing: 0.5em; }
+.mot-plan { font: italic 400 210px/0.92 'Cormorant Garamond', serif !important; text-transform: none !important; letter-spacing: -0.02em; }
+.mot-traverse { font: italic 400 300px/0.9 'Cormorant Garamond', serif !important; text-transform: none !important; opacity: 0.92; }
+.legende-luxe { display: inline-flex; align-items: center; gap: 26px; font: 600 30px 'Montserrat', sans-serif; letter-spacing: 0.38em; text-transform: uppercase; text-shadow: 0 4px 24px rgba(40,6,10,0.85); }
+.legende-luxe::before, .legende-luxe::after { content: ""; width: 70px; height: 1px; background: #fff; }
+.dimanches b { font: italic 400 170px/0.95 'Cormorant Garamond', serif !important; }
+.tiers b { font: 600 24px 'Montserrat', sans-serif !important; letter-spacing: 0.3em; text-transform: uppercase; }
+.dimanches b .ligne-r, .dimanches b .int, .tiers b .int { font: inherit; }

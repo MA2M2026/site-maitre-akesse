@@ -70,9 +70,9 @@ def suite(cle, items, haut=False):
         dep = f'data-mot="{mot}"' if mot else 'data-retard="-0.2"'
         fin = f' data-finvoix="{cle}" data-finmot="{nxt}" data-finretard="-0.05"' if nxt else ''
         if haut:
-            h += f'    <div class="abs etiquette-plan" data-voix="{cle}" {dep} data-anim="pop"{fin}><span class="bouton">{texte}</span></div>\n'
+            h += f'    <div class="abs etiquette-plan" data-voix="{cle}" {dep} data-anim="reveal"{fin}><span class="legende-luxe">{texte}</span></div>\n'
         else:
-            h += f'    <div class="abs mot-plan" data-voix="{cle}" {dep} data-anim="pop"{fin}>{texte}</div>\n'
+            h += f'    <div class="abs mot-plan" data-voix="{cle}" {dep} data-anim="reveal"{fin}>{texte}</div>\n'
     return h
 
 
@@ -84,15 +84,15 @@ def empreintes(cle, mot, y=1150):
 def mois_pilules(cle, mots=('décembre', 'janvier', 'février'), haut=1240):
     noms = ('Décembre', 'Janvier', 'Février')
     return f'    <div class="abs pastilles-bas" style="top:{haut}px;bottom:auto;flex-direction:column;align-items:center;gap:22px">' + ''.join(
-        f'<span class="bouton" data-voix="{cle}" data-mot="{m}" data-anim="pop">{n} · 4 dimanches</span>' for m, n in zip(mots, noms)) + '</div>\n'
+        f'<span class="bouton" data-voix="{cle}" data-mot="{m}" data-anim="monte">{n} · 4 dimanches</span>' for m, n in zip(mots, noms)) + '</div>\n'
 
 
 def prive(cle, img=23):
     """Cours privé : la coach à domicile, en grand plan, avec l'épingle « ou au lieu de votre choix »."""
     return f'''  <section class="scene" data-de="{cle}" data-transition="rideau">
-{plan(cle, ia(img), '', 'droite', 'recule', -0.3)}    <div class="texte sur-plan"><p class="surtitre" data-voix="{cle}" data-anim="glisse">Cours privé</p>
-      <p class="grand"><span data-voix="{cle}" data-mot="chez" data-anim="lettres">Nous venons chez vous</span></p></div>
-    <div class="abs lieu" style="left:90px;top:1720px" data-voix="{cle}" data-mot="lieu" data-anim="pop"><svg viewBox="0 0 100 100"><path d="M50 90 C50 90 22 60 22 40 C22 22 35 10 50 10 C65 10 78 22 78 40 C78 60 50 90 50 90 Z"/><circle cx="50" cy="40" r="10"/></svg>ou au lieu de votre choix</div>
+{plan(cle, ia(img), '', 'droite', 'recule', -0.3)}    <div class="texte sur-plan"><p class="surtitre" data-voix="{cle}" data-anim="reveal">Cours privé</p>
+      <p class="grand"><span data-voix="{cle}" data-mot="chez" data-anim="reveal">Nous venons chez vous</span></p></div>
+    <div class="abs lieu" style="left:90px;top:1720px" data-voix="{cle}" data-mot="lieu" data-anim="monte"><svg viewBox="0 0 100 100"><path d="M50 90 C50 90 22 60 22 40 C22 22 35 10 50 10 C65 10 78 22 78 40 C78 60 50 90 50 90 Z"/><circle cx="50" cy="40" r="10"/></svg>ou au lieu de votre choix</div>
   </section>
 '''
 
@@ -144,19 +144,19 @@ def fin(cle, mot_site='site', sous='Décembre · Janvier · Février', bouton='J
     murs = ''.join(f'<div class="photo-m"><img src="{ia(MUR[i % len(MUR)])}"></div>' for i in range(54))
     return f'''  <section class="scene" data-de="{cle}" data-transition="cercle">
     <div class="mosaique mur" data-pas="0.02">{murs}</div>
-    <div class="texte centre milieu" style="margin-top:-120px"><img class="logo-spot" data-voix="{cle}" data-anim="pop" src="../../assets/logo-intro.png" alt="">
-      <p class="surtitre" data-voix="{cle}" data-anim="glisse">Atelier Talons &amp; Élégance</p>
-      <p class="moyen"><em data-voix="{cle}" data-retard="0.3" data-anim="mots">{sous}</em></p>
-      <span class="bouton" data-voix="{cle}" data-retard="0.5" data-anim="pop">{bouton}<i></i></span></div>
-    <div class="abs fin-url" data-voix="{cle}" data-mot="{mot_site}" data-anim="pop">maitreakessemodelmanagement.com</div>
-    <div class="abs fin-tel" data-voix="{cle}" data-mot="{mot_site}" data-retard="0.3" data-anim="pop"><small>Tél. / WhatsApp</small><span>05 45 65 66 87</span></div>
+    <div class="texte centre milieu" style="margin-top:-120px"><img class="logo-spot" data-voix="{cle}" data-anim="reveal" src="../../assets/logo-intro.png" alt="">
+      <p class="surtitre" data-voix="{cle}" data-anim="reveal">Atelier Talons &amp; Élégance</p>
+      <p class="moyen"><em data-voix="{cle}" data-retard="0.3" data-anim="reveal">{sous}</em></p>
+      <span class="bouton" data-voix="{cle}" data-retard="0.5" data-anim="monte">{bouton}<i></i></span></div>
+    <div class="abs fin-url" data-voix="{cle}" data-mot="{mot_site}" data-anim="reveal">maitreakessemodelmanagement.com</div>
+    <div class="abs fin-tel" data-voix="{cle}" data-mot="{mot_site}" data-retard="0.3" data-anim="reveal"><small>Tél. / WhatsApp</small><span>05 45 65 66 87</span></div>
   </section>
 '''
 
 
 def texte(cle, haut, bas, mot1, mot2, surtitre=''):
-    st = f'<p class="surtitre" data-voix="{cle}" data-anim="glisse">{surtitre}</p>' if surtitre else ''
-    return f'''    <div class="texte sur-plan">{st}<p class="grand"><span data-voix="{cle}" data-mot="{mot1}" data-anim="lettres">{haut}</span><br><em data-voix="{cle}" data-mot="{mot2}" data-anim="lettres">{bas}</em></p></div>\n'''
+    st = f'<p class="surtitre" data-voix="{cle}" data-anim="reveal">{surtitre}</p>' if surtitre else ''
+    return f'''    <div class="texte sur-plan">{st}<p class="grand"><span data-voix="{cle}" data-mot="{mot1}" data-anim="reveal">{haut}</span><em data-voix="{cle}" data-mot="{mot2}" data-anim="reveal">{bas}</em></p></div>\n'''
 
 
 def scene(cle, corps, tr='barres'):
@@ -176,14 +176,14 @@ s1 = tete(1, 'Spot 1 Allure', '« Votre allure parle avant vous », femmes de bu
             + bandeau('s2', 'Allure', 300, 90) + bandeau('s2', 'Allure', 440, -90)
             + texte('s2', 'Votre allure', 'parle pour vous.', 'allure', 'parle'), 'pousse') \
     + scene('s3', tiers('s3', [('démarche', ia(11), 'Une démarche assurée'), ('posture', ia(12), 'Une posture droite'), ('talons', ia(16), 'Des talons maîtrisés')])
-            + '    <div class="abs centre-x sur-plan" style="top:1660px;z-index:7"><p class="surtitre" data-voix="s3" data-mot="élégance" data-anim="glisse">L’élégance des femmes qui décident</p></div>\n', 'volet') \
+            + '    <div class="abs centre-x sur-plan" style="top:1660px;z-index:7"><p class="surtitre" data-voix="s3" data-mot="élégance" data-anim="reveal">L’élégance des femmes qui décident</p></div>\n', 'volet') \
     + scene('s4', panneaux('s4', ia(26), retard=-0.3, n=5)
             + bandeau('s4', 'Décembre · Janvier · Février', 250, 140, plein=True)
             + mois_pilules('s4'), 'pousse') \
     + scene('s5', plan('s5', ia(15), '', 'gauche', 'glisse', -0.3)
             + carte('s5', ia(4), 'consacre', 600, 380, 400, 540, 7, 600, -200)
-            + '    <div class="abs dimanches sur-plan" style="top:1150px"><b data-voix="s5" data-mot="consacre" data-anim="pop">4 dimanches</b><span data-voix="s5" data-mot="mois" data-anim="mots">par mois</span></div>\n'
-            + '    <div class="abs pastilles-bas"><span class="bouton" data-voix="s5" data-mot="aisance" data-anim="pop">Aisance</span><span class="bouton" data-voix="s5" data-mot="prestance" data-anim="pop">Prestance</span><span class="bouton" data-voix="s5" data-mot="autorité" data-anim="pop">Autorité</span></div>\n') \
+            + '    <div class="abs dimanches sur-plan" style="top:1150px"><b data-voix="s5" data-mot="consacre" data-anim="reveal">4 dimanches</b><span data-voix="s5" data-mot="mois" data-anim="reveal">par mois</span></div>\n'
+            + '    <div class="abs pastilles-bas"><span class="bouton" data-voix="s5" data-mot="aisance" data-anim="monte">Aisance</span><span class="bouton" data-voix="s5" data-mot="prestance" data-anim="monte">Prestance</span><span class="bouton" data-voix="s5" data-mot="autorité" data-anim="monte">Autorité</span></div>\n') \
     + prive('s6') + '\n' \
     + scene('s7', panneaux('s7', ia(25), retard=-0.3, n=7) + empreintes('s7', 'premier', 1060)
             + traverse('s7', 'puissante', 'Puissante', 820, 1, 3.0)
@@ -193,16 +193,16 @@ s1 = tete(1, 'Spot 1 Allure', '« Votre allure parle avant vous », femmes de bu
 # ---------- Spot 2 : « Mes premiers talons » (jeunes femmes, débutantes)
 s2 = tete(2, 'Spot 2 Premiers talons', '« Mes premiers talons », jeunes femmes et débutantes') \
     + scene('s1', plan('s1', ia(13), '', 'zoom', 'avance', -0.6)
-            + '    <div class="abs mot-plan" data-voix="s1" data-mot="talons" data-anim="pop">Les talons ?</div>\n'
-            + '    <div class="abs centre-x sur-plan" style="top:1520px"><p class="moyen"><em data-voix="s1" data-mot="pieds" data-anim="mots">mais vos pieds, un peu moins…</em></p></div>\n', 'fondu') \
+            + '    <div class="abs mot-plan" data-voix="s1" data-mot="talons" data-anim="reveal">Les talons ?</div>\n'
+            + '    <div class="abs centre-x sur-plan" style="top:1520px"><p class="moyen"><em data-voix="s1" data-mot="pieds" data-anim="reveal">mais vos pieds, un peu moins…</em></p></div>\n', 'fondu') \
     + scene('s2', suite('s2', [('', ia(14), 'Vous hésitez ?', 'gauche', 'glisse'), ('chancelez', ia(16), 'Vous chancelez ?', 'droite', 'monte')])) \
     + scene('s3', plan('s3', ia(4), '', 'zoom', 'recule', -0.3)
-            + '    <div class="abs centre-x" style="top:1250px"><p class="surtitre sur-plan" data-voix="s3" data-anim="glisse">Bonne nouvelle</p><br><div class="tampon" style="display:inline-block" data-voix="s3" data-mot="apprend" data-anim="tampon" data-rot="-8">ÇA S’APPREND !</div></div>\n', 'cercle') \
+            + '    <div class="abs centre-x" style="top:1250px"><p class="surtitre sur-plan" data-voix="s3" data-anim="reveal">Bonne nouvelle</p><br><div class="tampon" style="display:inline-block" data-voix="s3" data-mot="apprend" data-anim="tampon" data-rot="-8">ÇA S’APPREND !</div></div>\n', 'cercle') \
     + scene('s4', suite('s4', [('équilibre', ia(11), 'L’équilibre', 'gauche', 'monte'), ('posture', ia(12), 'La posture', 'droite', 'recule'), ('pas', ia(16), 'Le bon pas', 'bas', 'descend')], haut=True)
-            + '    <div class="abs legende-tel sur-plan"><p class="surtitre" data-voix="s4" data-mot="bases" data-anim="glisse">On commence par les bases</p></div>\n', 'volet') \
+            + '    <div class="abs legende-tel sur-plan"><p class="surtitre" data-voix="s4" data-mot="bases" data-anim="reveal">On commence par les bases</p></div>\n', 'volet') \
     + scene('s5', plan('s5', ia(15), '', 'bas', 'avance', -0.3) + empreintes('s5', 'confiance', 1060) + texte('s5', 'Dimanche après dimanche,', 'la confiance arrive.', 'dimanche', 'confiance')) \
     + scene('s6', plan('s6', ia(26), '', 'zoom', 'glisse', -0.3) + mois_pilules('s6', haut=1180)
-            + '    <div class="abs centre-x sur-plan" style="top:1610px"><p class="moyen"><em data-voix="s6" data-mot="ambiance" data-anim="mots">dans une ambiance bienveillante</em></p></div>\n', 'cercle') \
+            + '    <div class="abs centre-x sur-plan" style="top:1610px"><p class="moyen"><em data-voix="s6" data-mot="ambiance" data-anim="reveal">dans une ambiance bienveillante</em></p></div>\n', 'cercle') \
     + prive('s7') + '\n' \
     + scene('s8', plan('s8', ia(21), '', 'zoom', 'recule', -0.3) + texte('s8', 'Bientôt, c’est vous', 'qu’on regarde passer.', 'bientôt', 'regarde')) \
     + fin('s9') + pied()
@@ -211,13 +211,13 @@ s2 = tete(2, 'Spot 2 Premiers talons', '« Mes premiers talons », jeunes femmes
 s3 = tete(3, 'Spot 3 Grands jours', '« Prête pour les grands jours », fêtes, mariages, galas') \
     + scene('s1', suite('s1', [('', ia(17), 'Réveillon', 'zoom', 'avance'), ('mariage', ia(18), 'Mariage', 'gauche', 'monte'), ('gala', ia(19), 'Gala', 'droite', 'recule'), ('saint', ia(20), 'Saint-Valentin', 'bas', 'avance')]), 'fondu') \
     + scene('s2', plan('s2', ia(26), '', 'zoom', 'glisse', -0.3) + mois_pilules('s2', ('décembre', 'février', 'grandes'), 1180)
-            + '    <div class="abs centre-x sur-plan" style="top:1610px"><p class="moyen"><em data-voix="s2" data-mot="occasions" data-anim="mots">les grandes occasions s’enchaînent</em></p></div>\n') \
+            + '    <div class="abs centre-x sur-plan" style="top:1610px"><p class="moyen"><em data-voix="s2" data-mot="occasions" data-anim="reveal">les grandes occasions s’enchaînent</em></p></div>\n') \
     + scene('s3', plan('s3', ia(22), '', 'gauche', 'avance', -0.3)
-            + '    <div class="abs pastilles-bas" style="top:1260px;bottom:auto"><span class="bouton" data-voix="s3" data-mot="robe" data-anim="pop">La robe ✓</span><span class="bouton" data-voix="s3" data-mot="talons" data-anim="pop">Les talons ✓</span></div>\n'
-            + '    <div class="abs centre-x sur-plan" style="top:1450px"><p class="grand"><em data-voix="s3" data-mot="démarche" data-anim="lettres">Et la démarche ?</em></p></div>\n', 'volet') \
+            + '    <div class="abs pastilles-bas" style="top:1260px;bottom:auto"><span class="bouton" data-voix="s3" data-mot="robe" data-anim="monte">La robe ✓</span><span class="bouton" data-voix="s3" data-mot="talons" data-anim="monte">Les talons ✓</span></div>\n'
+            + '    <div class="abs centre-x sur-plan" style="top:1450px"><p class="grand"><em data-voix="s3" data-mot="démarche" data-anim="reveal">Et la démarche ?</em></p></div>\n', 'volet') \
     + scene('s4', suite('s4', [('robe', ia(24), 'Marcher en robe longue', 'gauche', 'glisse'), ('escalier', ia(5), 'Descendre un escalier', 'bas', 'descend'), ('briller', ia(14), 'Briller toute la soirée', 'droite', 'avance')], haut=True), 'cercle') \
     + scene('s5', plan('s5', ia(4), '', 'zoom', 'recule', -0.3)
-            + '    <div class="abs dimanches sur-plan" style="top:1180px"><b style="font-size:120px" data-voix="s5" data-mot="quatre" data-anim="pop">4 dimanches par mois</b><span data-voix="s5" data-mot="trois" data-anim="mots">pendant trois mois</span></div>\n') \
+            + '    <div class="abs dimanches sur-plan" style="top:1180px"><b style="font-size:120px" data-voix="s5" data-mot="quatre" data-anim="reveal">4 dimanches par mois</b><span data-voix="s5" data-mot="trois" data-anim="reveal">pendant trois mois</span></div>\n') \
     + prive('s6') + '\n' \
     + scene('s7', plan('s7', ia(21), '', 'zoom', 'avance', -0.3) + texte('s7', 'Cette saison,', 'une entrée remarquée.', 'saison', 'entrée')) \
     + fin('s8') + pied()
@@ -225,18 +225,18 @@ s3 = tete(3, 'Spot 3 Grands jours', '« Prête pour les grands jours », fêtes,
 # ---------- Spot 4 : « Trois mois, douze dimanches » (le programme)
 s4 = tete(4, 'Spot 4 Programme', '« Trois mois, douze dimanches », le programme') \
     + scene('s1', plan('s1', ia(26), '', 'zoom', 'avance', -0.6)
-            + '    <div class="abs mot-plan" style="top:1080px" data-voix="s1" data-mot="trois" data-anim="pop">3 mois</div>\n'
-            + '    <div class="abs mot-plan" style="top:1260px;font-size:130px" data-voix="s1" data-mot="douze" data-anim="pop">12 dimanches</div>\n'
-            + '    <div class="abs centre-x sur-plan" style="top:1450px"><p class="grand"><em data-voix="s1" data-mot="nouvelle" data-anim="lettres">une nouvelle démarche</em></p></div>\n', 'fondu') \
+            + '    <div class="abs mot-plan" style="top:1080px" data-voix="s1" data-mot="trois" data-anim="reveal">3 mois</div>\n'
+            + '    <div class="abs mot-plan" style="top:1260px;font-size:130px" data-voix="s1" data-mot="douze" data-anim="reveal">12 dimanches</div>\n'
+            + '    <div class="abs centre-x sur-plan" style="top:1450px"><p class="grand"><em data-voix="s1" data-mot="nouvelle" data-anim="reveal">une nouvelle démarche</em></p></div>\n', 'fondu') \
     + ''.join(scene(c, plan(c, ia(img), '', en, cam, -0.3)
-                    + f'    <div class="abs mot-plan" data-voix="{c}" data-mot="{m}" data-anim="pop">{nom}</div>\n'
-                    + f'    <div class="abs etiquette-plan" data-voix="{c}" data-mot="{m}" data-retard="0.5" data-anim="pop"><span class="bouton">{lib}</span></div>\n', tr)
+                    + f'    <div class="abs mot-plan" data-voix="{c}" data-mot="{m}" data-anim="reveal">{nom}</div>\n'
+                    + f'    <div class="abs etiquette-plan" data-voix="{c}" data-mot="{m}" data-retard="0.5" data-anim="reveal"><span class="legende-luxe">{lib}</span></div>\n', tr)
               for c, m, nom, lib, img, en, cam, tr in [('s2', 'décembre', 'Décembre', 'Posture · équilibre · port de tête', 4, 'gauche', 'recule', 'barres'),
                                                        ('s3', 'janvier', 'Janvier', 'Fluidité · assurance', 24, 'droite', 'glisse', 'volet'),
                                                        ('s4', 'février', 'Février', 'Élégance · présence', 5, 'bas', 'descend', 'rideau')]) \
     + scene('s5', plan('s5', ia(25), '', 'zoom', 'recule', -0.3) + empreintes('s5', 'rapproche', 1000) + texte('s5', 'Chaque dimanche vous rapproche', 'de la femme que vous voulez être.', 'rapproche', 'femme'), 'cercle') \
     + scene('s6', suite('s6', [('débutante', ia(13), 'Débutante', 'gauche', 'avance'), ('aise', ia(10), 'Déjà à l’aise', 'droite', 'monte')], haut=True)
-            + '    <div class="abs legende-tel sur-plan"><p class="surtitre" data-voix="s6" data-mot="place" data-anim="glisse">Une place pour vous</p></div>\n', 'volet') \
+            + '    <div class="abs legende-tel sur-plan"><p class="surtitre" data-voix="s6" data-mot="place" data-anim="reveal">Une place pour vous</p></div>\n', 'volet') \
     + prive('s7') + '\n' \
     + fin('s8') + pied()
 
@@ -249,11 +249,11 @@ s5 = tete(5, 'Spot 5 Entreprises', '« L\'élégance au travail », offre Entrep
     + scene('s3', plan('s3', ia(8), '', 'zoom', 'recule', -0.3) + texte('s3', 'Dans vos locaux,', 'un programme sur mesure.', 'locaux', 'mesure', 'Atelier Talons & Élégance'), 'cercle') \
     + ''.join(scene(c, plan(c, ia(img), '', en, cam, -0.3)
                     + f'    <div class="abs centre-x" style="top:1180px"><div class="tampon" style="display:inline-block;font-size:96px" data-voix="{c}" data-mot="{m}" data-anim="tampon" data-rot="-6">{t}</div></div>\n'
-                    + f'    <div class="abs centre-x sur-plan" style="top:1420px;padding:0 70px"><p class="grand"><em data-voix="{c}" data-retard="0.4" data-anim="lettres">{d}</em></p></div>\n', 'volet' if k % 2 else 'rideau')
+                    + f'    <div class="abs centre-x sur-plan" style="top:1420px;padding:0 70px"><p class="grand"><em data-voix="{c}" data-retard="0.4" data-anim="reveal">{d}</em></p></div>\n', 'volet' if k % 2 else 'rideau')
               for k, (c, m, t, d, img, en, cam) in enumerate(modules)) \
     + scene('s8', plan('s8', ia(31), '', 'zoom', 'avance', -0.3)
-            + '    <div class="abs centre-x sur-plan" style="top:1120px"><p class="grand"><span data-voix="s8" data-mot="résultat" data-anim="lettres">Résultat</span></p></div>\n'
-            + '    <div class="abs pastilles-bas" style="top:1290px;bottom:auto;flex-direction:column;align-items:center;gap:20px"><span class="bouton" data-voix="s8" data-mot="équipes" data-anim="pop">Des équipes plus assurées</span><span class="bouton" data-voix="s8" data-mot="accueil" data-anim="pop">Un accueil plus professionnel</span><span class="bouton" data-voix="s8" data-mot="image" data-anim="pop">Une image renforcée</span></div>\n') \
+            + '    <div class="abs centre-x sur-plan" style="top:1120px"><p class="grand"><span data-voix="s8" data-mot="résultat" data-anim="reveal">Résultat</span></p></div>\n'
+            + '    <div class="abs pastilles-bas" style="top:1290px;bottom:auto;flex-direction:column;align-items:center;gap:20px"><span class="bouton" data-voix="s8" data-mot="équipes" data-anim="monte">Des équipes plus assurées</span><span class="bouton" data-voix="s8" data-mot="accueil" data-anim="monte">Un accueil plus professionnel</span><span class="bouton" data-voix="s8" data-mot="image" data-anim="monte">Une image renforcée</span></div>\n') \
     + fin('s9', mot_site='whatsapp', sous='Offre Entreprises · sur devis', bouton='Demander un devis') + pied('Entreprises')
 
 for n, h in [(1, s1), (2, s2), (3, s3), (4, s4), (5, s5)]:
