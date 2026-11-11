@@ -1346,3 +1346,10 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .av-envoyer span { flex: 1; font: 700 16px var(--av-texte); }
 .av-envoyer small { display: block; font-weight: 400; font-size: 12.5px; color: #F3DDE0; }
 .av-envoyer i { font-style: normal; font-size: 24px; }
+
+/* Messages groupés en 3 étapes (11/11/2026 ; js/admin/site-messages-groupes.js) */
+.ecran-mg .mg-etape { display: none; }
+.ecran-mg[data-etape="1"] .mg-etape[data-mg="1"], .ecran-mg[data-etape="2"] .mg-etape[data-mg="2"], .ecran-mg[data-etape="3"] .mg-etape[data-mg="3"] { display: flex; flex-direction: column; gap: 12px; }
+.ecran-mg .mg-etape { padding: 18px; border-radius: var(--av-rayon); background: var(--av-carte); box-shadow: var(--av-ombre); }
+.ecran-mg .mg-etapes button { cursor: pointer; }
+.ecran-mg .mg-etape .mg-grille { padding: 0; box-shadow: none; }

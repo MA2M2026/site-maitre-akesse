@@ -4584,3 +4584,6 @@ Demande de la propriétaire : des mannequins n'ont plus accès à l'e-mail de le
 - **Paiements et Comptabilité rangés** (js/admin/blocs-index.js, chargé en dernier dans admin/index.html) : page d'entrée
   `#/paiements/accueil`, `#/compta/accueil` (rubriques groupées avec icône et explication, outils rares repliés),
   menu de côté limité au groupe de la rubrique (`P.groupeBloc`, js/admin/coque.js). Une rubrique sans groupe va dans « Autres ».
+- **Messages groupés en 3 étapes** (« Écrire à des candidates » ; js/messages-groupes-gabarit.js, étapes menées par
+  js/admin/site-messages-groupes.js, `data-etape` sur `#ecran-mg`) : 1 · À qui ?, 2 · Le message, 3 · Envoyer (résumé,
+  e-mail, WhatsApp une personne après l'autre). La logique (js/messages-groupes.js) est inchangée.

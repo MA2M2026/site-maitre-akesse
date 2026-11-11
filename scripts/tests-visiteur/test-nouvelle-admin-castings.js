@@ -161,11 +161,17 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok((await p.$$('.mg-personne')).length === 1 && /YAO KOUASSI/.test(await p.textContent('#mg-liste')), n + 'Messages groupés : destinataires chargés (retenues de l’agence)');
     await p.evaluate(() => { window.open = () => null; });
     const mailsAvant = journal.filter((j) => j[0] === 'EMAIL').length;
+    // (11/11/2026) trois étapes : À qui ? → Le message → Envoyer
+    await p.click('.mg-etape[data-mg="1"] [data-mg-etape="2"]'); await p.waitForTimeout(300);
+    ok(await p.isVisible('#mg-message') && !(await p.isVisible('#mg-charger')), n + 'Messages groupés : étape 2 « Le message » seule à l’écran');
     if (/\[à compléter\]/.test(await p.textContent('#mg-apercu').catch(() => ''))) { await p.fill('#mg-lieu', 'Studio MA2M'); }
     // (11/11/2026) « Ajouter une image » : l'image choisie, un lien « Voir l'affiche » dans l'e-mail, l'image dans l'application
     await p.setInputFiles('#mg-image input[type=file]', require('path').join(__dirname, 'medias/photo4.jpg'));
     await p.waitForSelector('#mg-image .ij-choisie img', { timeout: 15000 }).catch(() => {});
     ok(/Image jointe/.test(await p.textContent('#mg-image')), n + 'Messages groupés : image jointe depuis la galerie');
+    await p.waitForTimeout(1500);  // (le bandeau « Envoi de la photo… » disparaît)
+    await p.$eval('.mg-etape[data-mg="2"] [data-mg-etape="3"]', (b) => b.click()); await p.waitForTimeout(300);
+    ok(/1 personne/.test(await p.textContent('#mg-resume-envoi')) && /avec l’image/.test(await p.textContent('#mg-resume-envoi')), n + 'Messages groupés : étape 3, le résumé (1 personne, avec l’image)');
     await p.click('#mg-email'); await p.waitForTimeout(2500);
     ok(journal.filter((j) => j[0] === 'EMAIL').length === mailsAvant + 1, n + 'Messages groupés : e-mail envoyé');
     const dernier = journal.filter((j) => j[0] === 'EMAIL').pop() || [];
