@@ -4769,3 +4769,4 @@ recettes, dépenses, virements, paiements du personnel), devis/factures, impôts
 comptes de trésorerie, accès du comptable et « Trésorerie aujourd'hui » (liste `.soldes`) passent en cartes.
 Restent en tableaux, exprès : grilles de chiffres (Paiements mois par mois, Paramètres, Archives, Rapport des cachets).
 Sécurité (12/11/2026) : demandes d'accès, comptes et rôles, délégations et appareils en cartes (js/portail/securite.js). Le Journal d'audit reste un tableau (lecture ligne à ligne).
+Traductions anglaises (12/11/2026) : une carte par texte (à traduire d'abord).

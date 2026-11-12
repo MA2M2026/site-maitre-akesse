@@ -53,11 +53,10 @@
     return P.entete('Traductions anglaises') +
       '<p class="doux">Les textes de l’Administration s’affichent en anglais sur les pages anglaises du site. Sans traduction, le français reste. ' +
       (reste ? '<b>' + P.pluriel(reste, 'texte', 'textes') + ' à traduire.</b>' : '<b>Tout est traduit ✅</b>') + '</p>' +
-      P.tableau(['Texte', 'Français', 'État', ''], textes.map((t) =>
-        '<tr><td><b>' + P.esc(t.origine) + '</b><div class="petit-texte doux">' + P.esc(t.champ) + '</div></td>' +
-        '<td class="petit-texte">' + P.esc(apercu(t.fr).slice(0, 110)) + '</td>' +
-        '<td>' + (t.en ? P.pastille('Traduit', 'ok') : P.pastille('À traduire', 'alerte')) + '</td>' +
-        '<td><a class="btn" href="#/site/' + PAGE + '/' + t.cle + '">' + (t.en ? 'Corriger' : 'Traduire') + '</a></td></tr>'));
+      // (12/11/2026, « premium partout ») une carte par texte : à traduire d'abord (liseré orange), puis traduits (vert)
+      P.cartesPersonnes(textes.map((t) => ({ tete: '<b class="pers-libelle">' + P.esc(t.origine) + '</b>', sous: [t.champ, apercu(t.fr).slice(0, 110)],
+        etat: t.en ? ['Traduit', 'ok'] : ['À traduire', 'alerte'], ton: t.en ? 'ok' : 'alerte',
+        actions: '<a class="btn petit' + (t.en ? '' : ' rouge') + '" href="#/site/' + PAGE + '/' + t.cle + '">' + (t.en ? 'Corriger' : 'Traduire') + '</a>' })), 'Aucun texte à traduire.');
   }
 
   async function fiche(cle) {
