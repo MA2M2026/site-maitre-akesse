@@ -18,6 +18,10 @@ function donnees(role) {
       staff_profiles: [{ user_id: 'admin-1', nom: 'Maître Akesse', email: 'admin@test.ci', role, actif: true, cree_le: '2026-10-19', appareils: [] }],
       staff_module_grants: [], staff_devices: [], audit_log: [],
       model_profiles: profils,
+      // (12/11/2026) registre des messages envoyés (supabase-messages-candidats.sql)
+      messages_candidats: [
+        { candidature_id: 'c1', sorte: 'convocation', canal: 'whatsapp', modele: 'convocation', envoye_le: '2026-11-11T10:05:00Z' },
+        { candidature_id: 'c1', sorte: 'information', canal: 'email', modele: 'retenue', envoye_le: '2026-11-10T09:00:00Z' }],
       casting_applications: [
         { id: 'c4', full_name: 'PETITE AMA', email: 'ama@test.ci', phone: '+225 0101010101', genre: 'femme', civilite: 'Mademoiselle', date_naissance: '2013-03-03', type_candidature: 'projet', projet_nom: 'CASTING CACAO',
           status: 'nouvelle', created_at: '2026-10-22T08:00:00Z', city: 'Cocody', experience_mannequin: 'non', height_cm: 158, parent_nom: 'Madame Ama Mère', parent_telephone: '0707070707', parent_email: 'mere@test.ci',

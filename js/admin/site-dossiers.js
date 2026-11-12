@@ -119,6 +119,48 @@
   const visageDossier = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</span>';
 
+  // ---------- Messages déjà envoyés (12/11/2026, registre messages_candidats, js/messages-candidats.js) ----------
+  const SORTES = { information: ['✓', 'Prévenue'], convocation: ['📨', 'Convoquée'], relance: ['🔁', 'Relancée'], contact: ['💬', 'Contactée sur WhatsApp'], libre: ['✉️', 'Message envoyé'] };
+  const jourMois = (d) => new Date(d).toLocaleDateString('fr-FR', { timeZone: 'Africa/Abidjan', day: '2-digit', month: '2-digit' });
+  // { idCandidature: [lignes, la plus récente d'abord] } ; null si le fichier SQL n'est pas encore collé (rien affiché :
+  // « Aucun message envoyé » serait faux, des messages sont déjà partis avant le registre)
+  async function suiviMessages(ids) {
+    if (!ids.length) return {};
+    const lignes = await P.bd(sb.from('messages_candidats').select('candidature_id, sorte, canal, modele, envoye_le').in('candidature_id', ids).order('envoye_le', { ascending: false })).catch(() => null);
+    if (!lignes) return null;
+    const par = {};
+    lignes.forEach((l) => { (par[l.candidature_id] = par[l.candidature_id] || []).push(l); });
+    return par;
+  }
+  // sur la carte : la dernière fois pour chaque sorte (information, convocation, relance), sinon « aucun message »
+  function resumeSuivi(lignes) {
+    if (!lignes || !lignes.length) return '<span class="dossier-suivi aucun">Aucun message envoyé</span>';
+    const vues = {};
+    lignes.forEach((l) => { const s = l.sorte === 'libre' || l.sorte === 'contact' ? 'contact' : l.sorte; if (!vues[s]) vues[s] = l.envoye_le; });
+    return '<span class="dossier-suivi">' + ['information', 'convocation', 'relance', 'contact'].filter((s) => vues[s])
+      .map((s) => '<span>' + SORTES[s][0] + ' ' + P.esc(SORTES[s][1] + ' le ' + jourMois(vues[s])) + '</span>').join('') + '</span>';
+  }
+  async function blocMessagesEnvoyes(id) {
+    const suivi = await suiviMessages([id]);
+    if (!suivi) return '';
+    const lignes = suivi[id] || [];
+    return '<section class="carte"><h2>Messages envoyés</h2>' + (lignes.length ? '<ul class="messages-envoyes">' + lignes.map((l) => {
+      const m = l.modele && messageCandidatParCle(l.modele);
+      return '<li><b>' + SORTES[l.sorte][0] + ' ' + P.esc(m ? m.libelle.replace(/^\S+\s/, '') : SORTES[l.sorte][1]) + '</b><small>' +
+        P.esc((l.canal === 'email' ? 'E-mail' : 'WhatsApp') + ' · ' + P.dateEtHeure(l.envoye_le)) + '</small></li>';
+    }).join('') + '</ul>' : '<p class="doux">Aucun message envoyé pour le moment.</p>') + '</section>';
+  }
+  // ce qui part depuis la fiche, l'étude et les cartes est noté (WhatsApp : au moment où il s'ouvre, message prêt)
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a#dos-notif-wa, a#dos-wa-ouvrir, a.dossier-wa[data-candidature]');
+    if (!a) return;
+    if (a.classList.contains('dossier-wa')) return noterMessageCandidat(a.dataset.candidature, null, 'whatsapp', 'contact');
+    if (!fiche || fiche.source !== 'casting') return;
+    if (a.id === 'dos-notif-wa') return noterMessageCandidat(fiche.d.id, fiche.cleNotif, 'whatsapp');
+    const v = (document.getElementById('dos-wa-modele') || {}).value || '';
+    noterMessageCandidat(fiche.d.id, v.indexOf('c:') === 0 ? v.slice(2) : null, 'whatsapp');
+  });
+
   // ---------- Liste ----------
   async function liste(source) {
     const conf = SOURCES[source], e = etat(source);
@@ -131,7 +173,7 @@
     const { data, count, error } = await q.range(0, e.pages * PAR_PAGE - 1);
     if (error) throw error;
     const dossiers = data || [];
-    const photos = await photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({}));
+    const [photos, suivi] = await Promise.all([photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({})), source === 'casting' ? suiviMessages(dossiers.map((d) => d.id)) : {}]);
     const pastille = (s) => {
       const compte = s === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[s] || 0);
       return '<button type="button" class="btn petit' + (e.filtre === s ? ' actif' : '') + '" data-action="dossiers-filtre" data-source="' + source + '" data-filtre="' + P.esc(s) + '"' +
@@ -147,8 +189,8 @@
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
         '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (age !== null && age < 18 ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
-        P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + '</span></a>' +
-        (wa ? '<a class="dossier-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
+        P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
+        (wa ? '<a class="dossier-wa"' + (source === 'casting' ? ' data-candidature="' + P.esc(d.id) + '"' : '') + ' href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
         '</article>';
     };
     // (12/11/2026, demande de la propriétaire) regroupées par jour d'arrivée, les plus récentes en haut, dans chaque filtre
@@ -282,7 +324,7 @@
       '<p class="doux">' + P.esc(conf.reçue + P.dateEtHeure(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
       blocPhotos(source) +
-      '<div class="fiche-grille"><div class="fiche-col">' + blocStatut(source) + blocWhatsApp(source) + (await blocCode()) + '</div>' +
+      '<div class="fiche-grille"><div class="fiche-col">' + blocStatut(source) + blocWhatsApp(source) + (await blocCode()) + (source === 'casting' ? await blocMessagesEnvoyes(d.id) : '') + '</div>' +
       '<div class="fiche-col"><section class="carte"><h2>Informations</h2>' + blocChamps(source, d) +
       (d.message ? '<blockquote class="message-dossier">' + P.esc(d.message) + '</blockquote>' : '') + '</section>' +
       (source === 'recruteur' ? await blocMannequinsChoisis() : '') +
@@ -333,7 +375,8 @@
   P.actions['dossier-wa-email'] = () => {
     const texte = document.getElementById('dos-wa-texte').value, st = document.getElementById('dos-wa-statut');
     if (/\[(date|heure|lieu) à préciser\]/.test(texte)) { st.textContent = 'Remplissez la date, l’heure et le lieu avant d’envoyer.'; return; }
-    return envoyerEmail(texte, st);
+    const v = (document.getElementById('dos-wa-modele') || {}).value || '';
+    return envoyerEmail(texte, st).then((ok) => { if (ok && fiche && fiche.source === 'casting') noterMessageCandidat(fiche.d.id, v.indexOf('c:') === 0 ? v.slice(2) : null, 'email'); return ok; });
   };
   // Changement de statut : enregistré, puis premier message proposé et e-mail parti tout seul
   // (partagé par la fiche et le mode « étudier une à une », 11/11/2026)
@@ -347,6 +390,7 @@
   async function notifier(source, d, nouveau, zone) {
     const cle = PREMIER[source] && PREMIER[source][nouveau];
     if (!cle) { zone.innerHTML = ''; return; }
+    if (fiche) fiche.cleNotif = cle;
     const texte = personnaliserMessage(texteMessageCandidat(messageCandidatParCle(cle), d, typeCandidature(d)), d, {}, () => '');
     const wa = lienWaTexte(source, d, texte), c = contacts(source, d);
     zone.innerHTML = '<div class="notification apparait"><p class="doux petit-texte">Message pour ce nouveau statut (modifiable avant envoi) :' + P.esc(noteParent(source, d)) + '</p>' +
@@ -357,7 +401,10 @@
     if (c.email) {
       const st = document.getElementById('dos-notif-statut');
       st.textContent = 'Envoi automatique de l’e-mail en cours…';
-      if (await envoyerEmail(texte, st)) st.textContent = 'E-mail envoyé automatiquement à ' + c.email + '. Vous pouvez le modifier et le renvoyer, ou prévenir aussi sur WhatsApp.';
+      if (await envoyerEmail(texte, st)) {
+        st.textContent = 'E-mail envoyé automatiquement à ' + c.email + '. Vous pouvez le modifier et le renvoyer, ou prévenir aussi sur WhatsApp.';
+        if (source === 'casting') noterMessageCandidat(d.id, cle, 'email');
+      }
     }
   }
   P.actions['dossier-statut'] = async (el) => {
@@ -483,7 +530,9 @@
       (P.etat.etude && P.etat.etude.i + 1 < P.etat.etude.ids.length ? ETUDE[source].suivant : 'Terminer ›') + '</button></div>';
     if (!garde) await notifier(source, d, nouveau, document.getElementById('dos-notification'));
   };
-  P.actions['dossier-notif-email'] = () => envoyerEmail(document.getElementById('dos-notif-texte').value, document.getElementById('dos-notif-statut'));
+  P.actions['dossier-notif-email'] = async () => {
+    if (await envoyerEmail(document.getElementById('dos-notif-texte').value, document.getElementById('dos-notif-statut')) && fiche && fiche.source === 'casting') noterMessageCandidat(fiche.d.id, fiche.cleNotif, 'email');
+  };
   async function rafraichirCode() {
     const ancien = document.querySelector('.fiche-col .carte.code-zone');
     const html = await blocCode();

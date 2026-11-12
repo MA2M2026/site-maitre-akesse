@@ -241,6 +241,23 @@ ${DRESS_CODE}
 ))((...args) => entreeMessage('inscription', ...args));
 
 function messageCandidatParCle(cle) { return MESSAGES_CANDIDATS.find(m => m.cle === cle) || null; }
+
+// ---------- Registre des messages envoyés aux candidat(e)s (12/11/2026, supabase-messages-candidats.sql) ----------
+// « Que le système nous dise s'il a déjà reçu un message : l'information "vous êtes retenu", la convocation, la
+// relance » (la propriétaire). Une ligne par e-mail envoyé ou WhatsApp ouvert avec le message prêt. Tant que le fichier
+// SQL n'est pas collé, l'écriture échoue sans bruit et rien ne s'affiche.
+function sorteMessageCandidat(cle) {
+  if (!cle) return 'libre';
+  if (cle === 'convocation' || cle === 'ins_formation') return 'convocation';
+  if (cle === 'rappel' || /relance/.test(cle)) return 'relance';
+  const m = messageCandidatParCle(cle);
+  return m && m.premier ? 'information' : 'libre';
+}
+function noterMessageCandidat(candidatureId, cle, canal, sorte) {
+  if (!candidatureId || typeof sb === 'undefined' || !sb) return;
+  sb.from('messages_candidats').insert({ candidature_id: candidatureId, sorte: sorte || sorteMessageCandidat(cle), canal, modele: cle ? String(cle).slice(0, 60) : null })
+    .then(() => {}, () => {});
+}
 function typeCandidature(d) { return d && d.type_candidature === 'projet' ? 'projet' : 'agence'; }
 
 // {date}, {heure}, {lieu} : rdv = { date: 'AAAA-MM-JJ', heure, lieu } ; une valeur vide
