@@ -4794,3 +4794,16 @@ js/cours-talons.js (étape 3 : « un instant » tant que la préparation n'est p
 (liste, fiche, étude une à une). Cours de talons : déjà « Inscrite le … » avec l’heure. Drive : `nomDossierPersonne`
 (scripts/apps-script-photos-drive.gs) nomme le dossier « Awa Koné — 12/11/2026 à 14h49 » (heure d’Abidjan) ; À REDÉPLOYER
 par la propriétaire dans script.google.com (voir l’en-tête du fichier).
+
+## Envois fiables : reprise automatique et notification (12/11/2026)
+
+`EnvoiFiable` (js/app.js) : pendant l'envoi, le dossier (photos prêtes, vidéo, étapes déjà franchies) est gardé dans le
+téléphone (IndexedDB « ma2m-envois », 7 jours au plus). Formulaire de candidature (`envoyerMedias(etat)`, clé
+« candidature ») et cours de talons (`terminerInscription(etat)`, clé « cours-talons ») : à chaque étape franchie
+(photos arrivées, vidéo arrivée, agence prévenue) l'état est réenregistré ; à l'ouverture de la page, un envoi coupé
+reprend tout seul (`window.MA2M_REPRISE_ICI`) ; sur les autres pages, bandeau `.envoi-a-finir` « Terminer l'envoi ».
+Notification « Candidature envoyée ✓ » / « Inscription envoyée ✓ » par le service de fond si la personne est sur une
+autre application (autorisation demandée à l'appui sur « Envoyer »). Limites : un site ne peut pas envoyer de
+WhatsApp tout seul, ni continuer une fois la page fermée (la reprise termine le travail au retour).
+Administration : `P.connexionEnDoute` / `P.noteConnexionExpiree` (js/portail/noyau.js) : « Votre connexion a expiré »
+au lieu de faux « 0 » (Candidatures, Demandes recruteurs). Essais : test-envoi-reprise.js, test-connexion-expiree.js.

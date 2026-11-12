@@ -3288,3 +3288,8 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
   body:has(.fiche-barre) { --ma2m-installer-bas: 0px; }
 }
 @media print { .fiche-barre { display: none; } }
+
+/* Envoi pas terminé (12/11/2026, EnvoiFiable, js/app.js) : bandeau en bas des pages du site */
+.envoi-a-finir { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9000; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-radius: 14px; background: #FFFFFF; color: #7C2128; border: 1.5px solid #7C2128; box-shadow: 0 10px 30px rgba(124, 33, 40, .25); font-weight: 600; font-size: 14px; }
+.envoi-a-finir a { flex: none; padding: 8px 14px; border-radius: 999px; background: #7C2128; color: #FFFFFF; text-decoration: none; }

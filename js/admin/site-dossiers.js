@@ -156,7 +156,8 @@
     // CHAQUE filtre (Nouvelles, Retenues, Refusées, À revoir, En attente, Toutes), pas seulement les nouvelles
     const aEtudier = e.filtre === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[e.filtre] || 0);
     const etudier = boutonEtude(source, e.filtre, aEtudier);
-    return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres + etudier +
+    const alerteConnexion = !total && await P.connexionEnDoute() ? P.noteConnexionExpiree() : '';
+    return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + alerteConnexion + filtres + etudier +
       (cartes ? '<div class="dossiers-grille' + (source === 'recruteur' ? ' sans-visage' : '') + '">' + cartes + '</div>' + plus :
         '<div class="carte vide">Aucun dossier « ' + P.esc(e.filtre === 'toutes' ? 'toutes' : conf.libelles[e.filtre]) + ' » pour le moment.</div>');
   }
