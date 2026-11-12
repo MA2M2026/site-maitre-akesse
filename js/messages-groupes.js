@@ -69,7 +69,11 @@ window.demarrerMessagesGroupes = function () {
     } catch (e) { return {}; }
   }
   function dejaFaits(canal) { return new Set(Object.keys(datesEnvoi(canal))); }
-  function noterFait(canal, id) { const o = datesEnvoi(canal); o[id] = new Date().toISOString(); try { localStorage.setItem(cleSuivi(canal), JSON.stringify(o)); } catch (e) {} }
+  function noterFait(canal, id) {
+    const o = datesEnvoi(canal); o[id] = new Date().toISOString(); try { localStorage.setItem(cleSuivi(canal), JSON.stringify(o)); } catch (e) {}
+    // (12/11/2026) candidatures : noté aussi dans le registre partagé (js/messages-candidats.js), visible sur leurs fiches
+    if (table() === 'casting' && (canal === 'wa' || canal === 'email')) noterMessageCandidat(id, $('mg-type').value, canal === 'wa' ? 'whatsapp' : 'email');
+  }
   function dateCourte(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
 
   // Date, heure et lieu proposés : dimanche suivant, puis les dernières valeurs saisies.

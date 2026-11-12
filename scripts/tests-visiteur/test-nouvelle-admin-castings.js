@@ -45,8 +45,27 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await capture(p, 'candidatures' + suffixe);
     await p.click('.segments .btn[data-filtre="toutes"]'); await p.waitForTimeout(900);
     ok((await p.$$('.dossier-carte')).length === 4, n + 'filtre « Toutes » : les 4 dossiers (aucun mis à part)');
+    // (12/11/2026, demande de la propriétaire) regroupées par jour d'arrivée, les plus récentes en haut
+    { const jours = await p.$$eval('.jour-groupe', (l) => l.map((g) => ({ titre: g.querySelector('.jour-titre').childNodes[0].textContent.trim(), nb: Number(g.querySelector('.jour-titre .nb').textContent),
+        cartes: g.querySelectorAll('.dossier-carte').length, dates: [...g.querySelectorAll('.dossier-meta')].map((m) => (m.textContent.match(/(\d{2})\/(\d{2})\/(\d{4})/) || []).slice(1).reverse().join('-')) })));
+      const ordre = jours.map((j) => j.dates[0]);
+      ok(jours.length >= 2 && jours.every((j) => j.nb === j.cartes && new Set(j.dates).size === 1) && ordre.every((x, i) => !i || x < ordre[i - 1]),
+        n + 'candidatures regroupées par jour, le plus récent en haut : ' + jours.map((j) => j.titre + ' (' + j.nb + ')').join(' · ')); }
     // (12/11/2026, demande de la propriétaire) chaque candidature montre la date ET l'heure de réception
     ok((await p.$$eval('.dossier-carte .dossier-meta', (l) => l.map((x) => x.textContent))).every((t) => /\d{2}\/\d{2}\/\d{4} à \d{1,2} h \d{2}/.test(t)), n + 'chaque candidature : date et heure de réception (« 12/11/2026 à 14 h 49 »)');
+    // (12/11/2026, demande de la propriétaire) messages déjà envoyés : visibles sur la carte, notés quand ils partent
+    { const suivi = await p.$$eval('.dossier-carte', (l) => Object.fromEntries(l.map((c) => [c.querySelector('.dossier-nom').textContent.trim().split(' ').slice(0, 2).join(' '), (c.querySelector('.dossier-suivi') || {}).textContent || ''])));
+      ok(/Prévenue le 10\/11/.test(suivi['AWA KONÉ']) && /Convoquée le 11\/11/.test(suivi['AWA KONÉ']) && /Aucun message envoyé/.test(suivi['BINTOU TRAORÉ']),
+        n + 'cartes : « ✓ Prévenue le 10/11 · 📨 Convoquée le 11/11 » pour AWA, « Aucun message envoyé » pour les autres');
+      const avant = ecrits(journal, 'POST', 'messages_candidats').length;
+      const lien = await p.$('.dossier-carte a.dossier-wa[data-candidature="c2"]');
+      if (lien) { await lien.evaluate((x) => x.addEventListener('click', (e) => e.preventDefault(), { once: true })); await lien.click(); await p.waitForTimeout(600); }
+      const note = ecrits(journal, 'POST', 'messages_candidats').slice(avant)[0];
+      ok(!!lien && note && /"candidature_id":"c2"/.test(note[3]) && /"sorte":"contact"/.test(note[3]) && /"canal":"whatsapp"/.test(note[3]), n + 'appui sur « WhatsApp » d’une carte : noté dans le registre (contact WhatsApp)'); }
+    await p.click('.dossier-carte .dossier-lien[href$="/c1"]'); await p.waitForSelector('.messages-envoyes', { timeout: 10000 }).catch(() => {});
+    ok(/Retenue : 1er message[\s\S]*E-mail · 10\/11\/2026 à/.test(await p.textContent('.messages-envoyes').catch(() => '')) && /convocation/i.test(await p.textContent('.messages-envoyes').catch(() => '')),
+      n + 'fiche : « Messages envoyés » (convocation, information retenue), avec canal, date et heure');
+    await p.goto(URL_ADMIN + '#/site/b2-candidatures'); await p.waitForSelector('.dossier-carte'); await p.waitForTimeout(800);
     await p.click('.segments .btn[data-filtre="nouvelle"]'); await p.waitForTimeout(900);
 
     // 2. Fiche d'une mineure
@@ -117,6 +136,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     const patch = ecrits(journal, 'PATCH', 'casting_applications').slice(patchsAvant).pop();
     ok(patch && /"status":"en étude"/.test(patch[3]) && /à revoir/.test(await p.textContent('.etude-resultat h2')) && await p.isVisible('#dos-notif-texte'),
       n + '« À revoir » : enregistré, « … à revoir plus tard », le message est prêt');
+    ok(ecrits(journal, 'POST', 'messages_candidats').some((j) => /"sorte":"information"/.test(j[3]) && /"canal":"email"/.test(j[3]) && /"modele":"etude"/.test(j[3])), n + 'l’e-mail parti tout seul après la décision est noté dans le registre (information)');
     ok(!!(await p.$('#dos-notif-wa')) || /e-mail/i.test(await p.textContent('#dos-notif-statut')), n + 'après la décision : WhatsApp prêt ou e-mail envoyé');
     await capture(p, 'etude-decision' + suffixe);
     await p.click('.etude-suivant'); await p.waitForTimeout(1500);
@@ -216,6 +236,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(/1 personne/.test(await p.textContent('#mg-resume-envoi')) && /avec l’image/.test(await p.textContent('#mg-resume-envoi')), n + 'Messages groupés : étape 3, le résumé (1 personne, avec l’image)');
     await p.click('#mg-email'); await p.waitForTimeout(2500);
     ok(journal.filter((j) => j[0] === 'EMAIL').length === mailsAvant + 1, n + 'Messages groupés : e-mail envoyé');
+    await p.waitForTimeout(400);
+    ok(ecrits(journal, 'POST', 'messages_candidats').some((j) => /"canal":"email"/.test(j[3]) && /"sorte":"(convocation|information|relance|libre)"/.test(j[3])), n + 'Messages groupés : l’e-mail est noté dans le registre de la candidate');
     const dernier = journal.filter((j) => j[0] === 'EMAIL').pop() || [];
     const appMg = journal.filter((j) => j[0] === 'rpc' && j[1] === 'app_messages_envoyer').map((j) => JSON.parse(j[2] || '{}')).pop() || {};
     ok(/Voir l’affiche/.test(String(dernier[1])) && /^https:\/\/.+\/site\/infos\/.+\.jpg$/.test(appMg.p_image || '') && !/Voir l’affiche/.test(appMg.p_texte || ''),

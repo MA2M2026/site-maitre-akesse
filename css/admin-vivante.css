@@ -1427,3 +1427,15 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 /* retards sur les cartes (relecture du 12/11/2026) : fond rouge pâle, comme les anciennes lignes */
 .pers-carte.ligne-retard, .pers-carte.en-retard { background: var(--erreur-fond, #FDECEC); }
 .pers-coche .pers-fait { font: 600 12.5px var(--av-texte); color: #2E7D32; }
+/* Candidatures et demandes regroupées par jour d'arrivée (12/11/2026) */
+.jour-groupe { margin: 6px 0 22px; }
+.jour-titre { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font: 500 24px var(--av-titre); color: #FFFFFF; }
+.jour-titre .nb { display: inline-block; min-width: 26px; padding: 2px 9px; border-radius: 999px; background: #FFFFFF; color: #7C2128; font: 700 13px var(--av-texte); text-align: center; }
+/* Messages déjà envoyés aux candidates (12/11/2026, registre messages_candidats) */
+.dossier-suivi { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; font: 600 11.5px var(--av-texte); }
+.dossier-suivi span { padding: 3px 8px; border-radius: 999px; background: #FFFFFF; color: #1E5E22; border: 1px solid #2E7D32; }
+.dossier-suivi.aucun { padding: 3px 8px; border-radius: 999px; background: #FFFFFF; color: #7C2128; border: 1px solid rgba(124, 33, 40, .35); }
+.messages-envoyes { list-style: none; margin: 0; padding: 0; }
+.messages-envoyes li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid #F1E4E6; }
+.messages-envoyes li:last-child { border-bottom: 0; }
+.messages-envoyes small { color: #6b5254; }

@@ -4807,3 +4807,19 @@ autre application (autorisation demandée à l'appui sur « Envoyer »). Limites
 WhatsApp tout seul, ni continuer une fois la page fermée (la reprise termine le travail au retour).
 Administration : `P.connexionEnDoute` / `P.noteConnexionExpiree` (js/portail/noyau.js) : « Votre connexion a expiré »
 au lieu de faux « 0 » (Candidatures, Demandes recruteurs). Essais : test-envoi-reprise.js, test-connexion-expiree.js.
+
+## Candidatures regroupées par jour d’arrivée (12/11/2026)
+
+`P.parJour(elements, dateDe)` et `P.titreJour(cle)` (js/portail/noyau.js) : sections « Aujourd’hui », « Hier », « Lundi 10 novembre »
+(heure d’Abidjan), les plus récentes en haut, dans chaque filtre (js/admin/site-dossiers.js, `.jour-groupe`, `.jour-titre`).
+Essai : test-nouvelle-admin-castings.js.
+
+## Messages déjà envoyés aux candidates (12/11/2026)
+
+`supabase-messages-candidats.sql` (À COLLER par la propriétaire) : table `messages_candidats` (sorte information /
+convocation / relance / contact / libre, canal, modèle, date ; lecture et ajout par les administrateurs, ni modification ni
+effacement). `sorteMessageCandidat` / `noterMessageCandidat` (js/messages-candidats.js) : notés quand un e-mail part
+(décision, fiche, Messages groupés) ou quand WhatsApp s’ouvre (fiche, étude, cartes, Messages groupés).
+js/admin/site-dossiers.js : `suiviMessages`, `resumeSuivi` (sur chaque carte : « ✓ Prévenue le … · 📨 Convoquée le … ·
+🔁 Relancée le … » ou « Aucun message envoyé »), `blocMessagesEnvoyes` (historique sur la fiche). Tant que le fichier n’est
+pas collé : rien ne s’affiche (pas de faux « aucun message »). Essai : test-nouvelle-admin-castings.js.
