@@ -875,12 +875,6 @@ details.aide > p { margin: 8px 0 0; }
 .btn[data-action$="supprimer"], button[data-supprimer], .btn-supprimer, [data-action="publication-supprimer"], [data-action="partenaire-supprimer"], [data-action="mannequin-supprimer"], [data-action="dossier-supprimer"] {
   color: var(--rouge-mat) !important; border-color: var(--rouge-mat-a45) !important; background: var(--blanc-pur) !important; margin-left: 6px;   /* fond blanc, écriture rouge mat, partout */
 }
-/* champs « fichier » : le bouton du navigateur prend l'allure des boutons de la maison */
-input[type="file"] { font: inherit; font-size: 14px; color: var(--av-gris); max-width: 100%; }
-input[type="file"]::file-selector-button {
-  font: inherit; font-weight: 600; font-size: 14px; margin-right: 12px; padding: 10px 18px; border-radius: 99px; cursor: pointer;
-  border: 1px solid var(--av-lignes); background: var(--av-carte); color: var(--av-encre);
-}
 /* les visages sont toujours des boîtes (sinon, dans un lien, ils perdaient leur taille : ruban de l'accueil) */
 .vis { display: block; }
 /* fiche d'un dossier sur téléphone : statut, puis les informations, puis WhatsApp ; deux photos entières par ligne */
@@ -1365,3 +1359,11 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .if-etapes button { cursor: pointer; }
 .ecran-mg .mg-etape { color: #2a1416; }
 .ecran-mg .mg-etape .mg-resume, .ecran-mg .mg-etape .tdb-9, .ecran-mg .mg-etape .mg-consigne, .ecran-mg .mg-etape .mg-sous-titre { color: #5b4547; }
+
+/* (12/11/2026, nouvelle présentation) champs « choisir un fichier » de toute l'administration : le bouton du navigateur
+   (gris par défaut) prend le style des boutons de l'agence ; le nom du fichier choisi reste écrit à côté */
+input[type="file"] { max-width: 100%; font: 400 14px var(--av-texte); color: #4A3639; }
+input[type="file"]::file-selector-button { margin-right: 12px; padding: 10px 18px; border: 0; border-radius: 999px; background: #7C2128; color: #FFFFFF;
+  font: 700 13px var(--av-texte); cursor: pointer; transition: background 0.2s ease; }
+input[type="file"]::file-selector-button:hover { background: #5A141B; }
+input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3px; border-radius: 8px; }
