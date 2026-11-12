@@ -26,7 +26,7 @@
     const visages = await P.photosCouverture(d.mannequins.map((m) => m.compte).filter(Boolean)).catch(() => ({}));
     const parId = new Map((d.bulletins || []).map((b) => [b.mannequin, b]));
     const pres = new Map(), annulees = periode ? (periode.annulees || []).map((a) => a.dimanche) : [];
-    (periode ? periode.presences : []).forEach((p) => { if (!pres.has(p.mannequin)) pres.set(p.mannequin, {}); pres.get(p.mannequin)[p.dimanche] = p.etat; });
+    ((periode && periode.presences) || []).forEach((p) => { if (!pres.has(p.mannequin)) pres.set(p.mannequin, {}); pres.get(p.mannequin)[p.dimanche] = p.etat; });
     const aujourdhui = C.jourIso(new Date()), estFutur = choisi.debut > aujourdhui.slice(0, 7);
     const fiches = d.mannequins.map((m) => {
       const b = parId.get(m.id) || { notes: {}, appreciation: '', publie: false };
