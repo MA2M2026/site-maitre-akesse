@@ -3294,3 +3294,94 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
   padding: 12px 16px; border-radius: 14px; background: #FFFFFF; color: #7C2128; border: 1.5px solid #7C2128; box-shadow: 0 10px 30px rgba(124, 33, 40, .25); font-weight: 600; font-size: 14px; }
 .envoi-a-finir a { flex: none; padding: 8px 14px; border-radius: 999px; background: #7C2128; color: #FFFFFF; text-decoration: none; }
 .lien-annuler-envoi { display: inline-block; margin-left: 10px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+/* ==========================================================================================================
+   The Book premium (12/11/2026, maquette validée par la propriétaire) — mannequins.html, en/mannequins.html
+   Titre sobre ; une barre (catégorie + recherche intelligente, suggestions) collée sous l'en-tête ; deux chapitres
+   Main Board / New Faces ; chaque mannequin en COUVERTURE : grande photo, voile noir pur et laqué qui monte du bas,
+   niveau, nom en grandes lettres, taille · ville ; petit « + » discret (✓ rouge une fois choisie).
+   ========================================================================================================== */
+.book-v2 .book-ouverture { padding: 2.6rem 0 1.2rem; }
+.book-v2 .book-ouverture h1 { margin: 0.35rem 0 0.4rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(3.4rem, 9vw, 6.4rem); line-height: 0.95; letter-spacing: -0.01em; text-transform: none; }
+.book-v2 .book-ouverture h1 em { font-style: italic; font-weight: 400; }
+.book-v2 .book-chapo { margin: 0; max-width: 40rem; font-size: 0.98rem; color: var(--c-rgba-255-255-255-0_78); }
+/* la barre : collée sous l'en-tête quand on défile */
+.book-v2 .book-barre { position: sticky; top: 84px; z-index: 50; background: #7C2128; border-bottom: 1px solid rgba(255, 255, 255, 0.18); padding: 0.75rem 0; }
+.book-v2 .book-barre-int { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+.book-v2 .book-segments { display: flex; flex-wrap: nowrap; gap: 0.35rem; margin: 0; }
+.book-v2 .book-recherche { flex: 1 1 260px; min-width: 0; display: flex; align-items: center; gap: 0.55rem; padding: 0 1rem; border-radius: 999px; background: #FFFFFF; }
+.book-v2 .book-loupe { width: 15px; height: 15px; flex: none; border: 2px solid #7C2128; border-radius: 50%; position: relative; }
+.book-v2 .book-loupe::after { content: ''; position: absolute; width: 2px; height: 7px; background: #7C2128; right: -4px; bottom: -6px; transform: rotate(-45deg); }
+/* (les champs du site ont un cadre imposé avec !important : retiré ici, la pilule blanche sert de cadre) */
+.book-v2 .book-recherche input { flex: 1; min-width: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; outline: 0; background: transparent !important; padding: 0.8rem 0; font: 500 1rem var(--police, sans-serif); color: #7C2128; -webkit-text-fill-color: #7C2128; }
+.book-v2 .book-recherche input::placeholder { color: #8a6b6e; -webkit-text-fill-color: #8a6b6e; opacity: 1; }
+.book-v2 .book-recherche input::-webkit-search-cancel-button { filter: grayscale(1); }
+.book-v2 .book-recherche:focus-within { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35); }
+.book-v2 .book-suggestions { padding-top: 0.8rem; }
+.book-v2 .book-suggestions[hidden] { display: none; }
+.book-v2 .book-sug-groupe { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.55rem; }
+.book-v2 .book-sug-titre { width: 5.4rem; font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--c-rgba-255-255-255-0_78); }
+.book-v2 .book-sug { min-height: 0 !important; padding: 0.4rem 0.85rem !important; font-size: 0.82rem !important; }
+.book-v2 .filtres-bilan { margin-top: 1.2rem; }
+/* chapitres */
+.book-v2 #grille.medaillon-grille { display: block; }
+.book-v2 .book-chapitre { padding: 1.6rem 0 0.6rem; }
+.book-v2 .book-chapitre-tete { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem 0.9rem; }
+.book-v2 .book-chapitre-tete h2 { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(2.2rem, 5vw, 3rem); line-height: 1; text-transform: none; letter-spacing: 0; color: #FFFFFF; }
+.book-v2 .book-chapitre-nb { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-rgba-255-255-255-0_78); }
+.book-v2 .book-chapitre-pres { margin: 0.3rem 0 1.1rem; font-size: 0.92rem; color: var(--c-rgba-255-255-255-0_78); }
+.book-v2 .book-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 0.7rem; }
+@media (min-width: 720px) { .book-v2 .book-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem 1.1rem; } }
+@media (min-width: 1080px) { .book-v2 .book-grille { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.6rem 1.2rem; } }
+/* la couverture */
+.book-v2 #grille .medaillon-carte { display: block; text-align: left; }
+.book-v2 #grille .medaillon-carte > a { display: block; }
+.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: #000; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
+.book-v2 #grille .medaillon-carte img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; filter: none; transform: none; }
+.book-v2 #grille .medaillon-carte:hover img, .book-v2 #grille .medaillon-carte:focus-within img { filter: none; transform: scale(1.03); }
+/* voile noir pur et laqué : du noir profond en bas, un reflet lumineux en diagonale et un fin liseré de lumière */
+.book-v2 #grille .medaillon-photo::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.06) 34%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.94) 78%, #000 100%); }
+.book-v2 #grille .medaillon-photo::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: 2; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(112deg, rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0.14) 40%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0) 60%),
+              linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 2px); }
+.book-v2 #grille .book-carte-legende { z-index: 3; padding: 0 0.9rem 0.9rem; background: none; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
+.book-v2 #grille .medaillon-niveau { display: flex; align-items: center; gap: 0.45rem; font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: #FFFFFF; margin-bottom: 0.25rem; }
+.book-v2 #grille .medaillon-niveau::before { content: ''; width: 14px; height: 2px; background: #D1172F; }
+.book-v2 #grille .medaillon-nom { margin: 0; font-family: 'Big Shoulders Display', 'Arial Narrow', sans-serif; font-weight: 800; font-size: clamp(1.45rem, 6.2vw, 2.1rem); line-height: 0.92; letter-spacing: 0.005em; text-transform: uppercase; color: #FFFFFF; overflow-wrap: anywhere; }
+.book-v2 #grille .medaillon-info { display: block; margin-top: 0.4rem; font-size: 0.74rem; letter-spacing: 0.06em; text-transform: none; color: #F3DDE0; }
+/* le « + » : petit rond discret (zone de toucher plus grande que le rond) ; ✓ rouge une fois choisie */
+.book-v2 #grille .medaillon-carte .btn-selection { --bouton-rayon: 50%; position: absolute; top: 0.6rem; right: 0.6rem; z-index: 4; width: 28px; height: 28px; min-height: 0; padding: 0;
+  display: grid; place-items: center; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.82); color: #7C2128; -webkit-text-fill-color: #7C2128;
+  font: 500 17px/1 var(--police, sans-serif); letter-spacing: 0; text-transform: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+.book-v2 #grille .medaillon-carte .btn-selection::before { content: ''; position: absolute; inset: -9px; }
+.book-v2 #grille .medaillon-carte .btn-selection.est-selectionne { background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
+.book-v2 #grille .medaillon-carte:has(.est-selectionne) .medaillon-photo { outline: 3px solid #FFFFFF; outline-offset: 3px; }
+@media (max-width: 640px) {
+  .book-v2 .book-ouverture { padding: 1.8rem 0 0.8rem; }
+  .book-v2 .book-barre-int { gap: 0.55rem; }
+  .book-v2 .book-segments { width: 100%; }
+  .book-v2 .book-segments .filtre-btn { flex: 1; }
+  .book-v2 .book-recherche { flex-basis: 100%; }
+  .book-v2 #grille .book-carte-legende { padding: 0 0.7rem 0.75rem; }
+  .book-v2 #grille .medaillon-info { font-size: 0.7rem; }
+}
+/* la sélection : barre blanche en bas de l'écran (toutes les pages publiques ; js/selection.js) */
+.panier-widget.panier-barre { left: 50%; right: auto; transform: translateX(-50%); bottom: 14px; width: min(640px, calc(100% - 24px)); justify-content: space-between; gap: 0.8rem;
+  padding: 0.55rem 0.55rem 0.55rem 1.1rem; border-radius: 999px; background: #FFFFFF; color: #7C2128; box-shadow: 0 14px 40px rgba(40, 6, 10, 0.45); font-size: 0.92rem; font-weight: 700; letter-spacing: 0; text-decoration: none; }
+/* (les anciennes pastilles rondes « .panier-widget span » ne s'appliquent pas aux textes de la barre) */
+.panier-widget.panier-barre span { display: inline; width: auto; height: auto; background: none; color: inherit; border-radius: 0; font-size: inherit; }
+.panier-widget.panier-barre .panier-texte { display: inline-flex; align-items: center; gap: 0.35rem; }
+.panier-widget.panier-barre .panier-go { display: inline-block; width: auto; height: auto; border-radius: 999px; background: #7C2128; color: #FFFFFF; padding: 0.7rem 1.1rem; font-size: 0.88rem; white-space: nowrap; }
+/* (12/11/2026) avec le relief (js/relief.js, css/relief.css) : les couvertures restent DROITES au défilement (pas de
+   « mur courbé », qui penchait les cartes) ; elles se tournent seulement vers la souris (ordinateur) ou suivent
+   l'inclinaison du téléphone, et gardent leur voile noir laqué (le reflet du relief ne le remplace plus) */
+html.relief .book-v2 #grille .medaillon-photo { transform: perspective(900px) rotateX(calc(var(--relief-rx) + var(--relief-ox, 0deg))) rotateY(calc(var(--relief-ry) + var(--relief-oy, 0deg))); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
+html.relief .book-v2 #grille .medaillon-photo::after { opacity: 1; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.06) 34%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.94) 78%, #000 100%); }
+html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
+/* (12/11/2026) barre de sélection sur une seule ligne, même sur un petit téléphone */
+.panier-widget.panier-barre .panier-texte { white-space: nowrap; }
+@media (max-width: 420px) {
+  .panier-widget.panier-barre { font-size: 0.8rem; gap: 0.5rem; padding-left: 0.9rem; }
+  .panier-widget.panier-barre .panier-go { padding: 0.65rem 0.85rem; font-size: 0.8rem; }
+}

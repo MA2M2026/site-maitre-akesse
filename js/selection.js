@@ -34,6 +34,8 @@ function majWidgetSelection() {
   if (!compteur) return;
   const n = obtenirSelection().length;
   compteur.textContent = n;
+  const mot = document.getElementById('ma2m-panier-mot');
+  if (mot) mot.textContent = document.documentElement.lang === 'en' ? (n > 1 ? 'profiles selected' : 'profile selected') : (n > 1 ? 'profils sélectionnés' : 'profil sélectionné');
   document.getElementById('ma2m-panier-widget').style.display = n > 0 ? 'flex' : 'none';
 }
 
@@ -46,9 +48,11 @@ function injecterWidgetPanier() {
   widget.id = 'ma2m-panier-widget';
   widget.href = 'selection.html';
   widget.className = 'panier-widget';
-  widget.innerHTML = estAnglais
-    ? `My Selection <span id="ma2m-panier-compte">0</span>`
-    : `Ma sélection <span id="ma2m-panier-compte">0</span>`;
+  // (12/11/2026, The Book premium) barre blanche en bas : « 2 profils sélectionnés · Demander un casting › »
+  widget.className = 'panier-widget panier-barre';
+  widget.setAttribute('data-bouton-libre', '');
+  widget.innerHTML = '<span class="panier-texte"><span id="ma2m-panier-compte">0</span> <span id="ma2m-panier-mot">' + (estAnglais ? 'profiles selected' : 'profils sélectionnés') + '</span></span>' +
+    '<span class="panier-go">' + (estAnglais ? 'Request a casting ›' : 'Demander un casting ›') + '</span>';
   document.body.appendChild(widget);
   majWidgetSelection();
 }

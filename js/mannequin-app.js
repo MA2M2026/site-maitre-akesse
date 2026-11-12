@@ -322,7 +322,7 @@
   // Compcard / Mon CV / Partager mon book, grille de photos de 3 comme sur Instagram.
   function ecranProfil() {
     const p = etat.profil, a = etat.analyse || { score: 0 }, v = etat.vitrine || {};
-    const mesures = [p.city || '', p.height_cm ? (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
+    const mesures = [p.city || '', window.Partage.enMetres(p.height_cm), [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
     const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
     const url = (x) => (x ? esc(urlPhotoMemeOrigine(x.url_miniature || x.url_petite || x.url)) : '');
     const r = presencesCalculees();

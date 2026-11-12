@@ -30,7 +30,7 @@
   // Paiements à valider (js/portail/espace-paiements.js) : même écran, mêmes gestes.
   P.etude = {
     LIMITE: 500,  // (une file plus longue s'étudie en plusieurs fois)
-    taille: (cm) => (Number(cm) > 0 ? (Number(cm) / 100).toFixed(2).replace('.', ',') + ' m' : ''),
+    taille: (cm) => window.Partage.enMetres(cm),  // (js/partage.js)
     // une photo qui s'agrandit d'un appui (les adresses de la file sont dans P.etude.galerie)
     diapo: (url, nom, i) => '<button type="button" class="etude-photo" data-action="etude-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       '<span class="vis"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +

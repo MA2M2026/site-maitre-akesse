@@ -814,7 +814,8 @@ async function bookRempli(url, anglais, requete) {
     d.photos.forEach((ph) => { photoDe[ph.model_id] = photoLegere(ph.url_petite && telephone ? ph.url_petite : ph.url); });
     const R = globalThis.RenduBook, liste = R.ordonner(d.profils.slice());
     const libelle = anglais ? 'Add to my selection' : 'Ajouter à ma sélection';
-    const cartes = liste.map((p, rang) => R.carte(p, rang, { en: anglais, photo: photoDe[p.id] || '/assets/logo-dark-bg.png', selectionne: false, libelle })).join('');
+    // (12/11/2026) deux chapitres, Main Board puis New Faces (js/rendu-book.js, les mêmes que la page)
+    const cartes = R.chapitres(liste, anglais, (p, rang) => R.carte(p, rang, { en: anglais, photo: photoDe[p.id] || '/assets/logo-dark-bg.png', selectionne: false, libelle }));
     return html.replace('<div id="grille" class="medaillon-grille" data-place-reservee></div>', () => R.bandeauMdm(d.mdm, anglais) + '<div id="grille" class="medaillon-grille" data-serveur="1">' + cartes + '</div>')
       .replace('<span id="f-compte"></span>', () => '<span id="f-compte">' + R.compte(liste.length, anglais) + '</span>');
   });
