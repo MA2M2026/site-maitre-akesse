@@ -99,21 +99,24 @@
       P.chiffre('On nous doit', P.fcfa(reste(creances)), creances.some((d) => d.retard) ? 'orange' : '') + P.chiffre('Nous devons', P.fcfa(reste(dues)), dues.some((d) => d.retard) ? 'rouge' : '') + '</div>' +
       '<div class="grille deux"><div class="carte"><h2>Recettes par catégorie</h2>' + barres('recette', rec, false) + '</div>' +
       '<div class="carte"><h2>Dépenses par catégorie</h2>' + barres('depense', dep, true) + '</div></div>' +
-      '<div class="carte"><h2>Trésorerie aujourd’hui</h2>' + P.tableau(['Compte', '#Solde'], soldes.map((s) =>
-        '<tr><td>' + P.esc(s.nom) + '</td><td class="nombre' + (s.solde < 0 ? ' rouge' : '') + '">' + P.fcfa(s.solde) + '</td></tr>')) + '</div>';
+      // (12/11/2026) les soldes en liste claire, le montant en grand
+      '<div class="carte"><h2>Trésorerie aujourd’hui</h2><ul class="soldes">' + soldes.map((s) =>
+        '<li><span>' + P.esc(s.nom) + '</span><b class="' + (s.solde < 0 ? 'rouge' : '') + '">' + P.fcfa(s.solde) + '</b></li>').join('') + '</ul></div>';
   }
 
   // ---------- Liste d'écritures (recettes, dépenses, virements) ----------
-  function lignes(liste, nomsComptes) {
-    return liste.map((e) => '<tr' + (e.annule ? ' class="annulee"' : '') + '><td>' + P.date(e.date_op) + '</td>' +
-      '<td><b>' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<div class="petit-texte doux tiers"><span data-visage-nom="' + P.esc(e.tiers) + '"></span>' + P.esc(e.tiers) + '</div>' : '') +
-      (e.annule ? '<div class="petit-texte">' + P.pastille('Annulée', 'erreur') + ' ' + P.esc(e.motif_annulation) + '</div>' : '') + '</td>' +
-      '<td>' + P.esc(categorie(e)) + (e.source === 'espace2' ? ' ' + P.pastille('Suivi des paiements · automatique', 'info') : '') + '</td>' +
-      '<td>' + P.esc(nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + P.esc(nomsComptes[e.compte_dest_id] || '—') : '') + '</td>' +
-      '<td class="nombre">' + P.fcfa(e.montant) + '</td>' +
-      '<td><div class="ligne">' + (e.justificatif ? '<button class="btn petit" type="button" data-action="compta-justif-voir" data-id="' + e.id + '">Justificatif</button>' :
+  // (12/11/2026, « premium partout ») une carte par écriture : libellé (et tiers avec sa photo), date · catégorie ·
+  // compte, montant, état ; annulée = barrée, avec son motif (P.cartesPersonnes, js/admin/coque.js)
+  function lignes(liste, nomsComptes, vide) {
+    return P.cartesPersonnes(liste.map((e) => ({
+      tete: '<b class="pers-libelle">' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<span class="petit-texte doux tiers"><span data-visage-nom="' + P.esc(e.tiers) + '"></span>' + P.esc(e.tiers) + '</span>' : ''),
+      sous: [P.date(e.date_op), categorie(e), (nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + (nomsComptes[e.compte_dest_id] || '—') : ''), e.annule && e.motif_annulation ? 'Motif : ' + e.motif_annulation : ''],
+      montant: P.fcfa(e.montant), classe: e.annule ? 'annulee' : '', ton: e.annule ? 'erreur' : 'neutre',
+      etat: e.annule ? ['Annulée', 'erreur'] : e.source === 'espace2' ? ['Suivi des paiements · automatique', 'info'] : null,
+      actions: (e.justificatif ? '<button class="btn petit" type="button" data-action="compta-justif-voir" data-id="' + e.id + '">Justificatif</button>' :
         (!e.annule && e.source === 'manuel' ? '<button class="btn petit" type="button" data-action="compta-justif-joindre" data-id="' + e.id + '">Joindre</button>' : '')) +
-      (!e.annule && e.source === 'manuel' ? '<button class="btn petit" type="button" data-action="compta-annuler" data-id="' + e.id + '">Annuler</button>' : '') + '</div></td></tr>');
+        (!e.annule && e.source === 'manuel' ? '<button class="btn petit" type="button" data-action="compta-annuler" data-id="' + e.id + '">Annuler</button>' : '')
+    })), vide || 'Aucune écriture ce mois-ci.');
   }
   const optionsComptes = (liste) => liste.map((c) => '<option value="' + c.id + '">' + P.esc(c.nom) + '</option>').join('');
   const optionsCategories = (cats) => Object.keys(cats).map((k) => '<option value="' + k + '">' + P.esc(cats[k]) + '</option>').join('');
@@ -140,7 +143,7 @@
         '<label class="fl" for="cp-tiers">' + (recette ? 'Client' : 'Fournisseur ou bénéficiaire') + ' (facultatif)<input id="cp-tiers" name="tiers" maxlength="120"></label>' +
         '<label class="fl" for="cp-justif">Justificatif (photo ou PDF, 10 Mo au plus)' + (recette ? '' : ', recommandé') + '<input id="cp-justif" name="justificatif" type="file" accept="image/*,application/pdf"></label>' +
         '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer</button></div></form>' +
-        P.tableau(['Date', 'Libellé', 'Catégorie', 'Compte', '#Montant', ''], lignes(liste, noms));
+        lignes(liste, noms, recette ? 'Aucune recette ce mois-ci.' : 'Aucune dépense ce mois-ci.');
     };
   }
 
@@ -233,7 +236,7 @@
       '<label class="fl" for="vi-vers">Vers<select id="vi-vers" name="compte_dest_id" required>' + optionsComptes(actifs.slice(1).concat(actifs.slice(0, 1))) + '</select></label>' +
       '<label class="fl large" for="vi-libelle">Libellé<input id="vi-libelle" name="libelle" required maxlength="200" placeholder="Ex. : retrait Wave pour la caisse"></label>' +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer le virement</button></div></form>' +
-      '<div class="carte"><h2>Virements · ' + P.esc(P.mois(m)) + '</h2>' + choixMois() + P.tableau(['Date', 'Libellé', 'Catégorie', 'Comptes', '#Montant', ''], lignes(virements, noms)) + '</div>' +
+      '<section class="pers-section"><h2>Virements · ' + P.esc(P.mois(m)) + '</h2>' + choixMois() + lignes(virements, noms, 'Aucun virement ce mois-ci.') + '</section>' +
       '<form class="carte f" data-form="compta-compte"><h2>Ajouter un compte</h2>' +
       '<label class="fl" for="co-nom">Nom<input id="co-nom" name="nom" required maxlength="80" placeholder="Ex. : Banque SGCI, Orange Money"></label>' +
       '<label class="fl" for="co-type">Type<select id="co-type" name="type">' + Object.keys(TYPES_COMPTE).filter((k) => k !== 'caisse').map((k) => '<option value="' + k + '">' + TYPES_COMPTE[k] + '</option>').join('') + '</select></label>' +

@@ -127,9 +127,11 @@
         '<label class="fl large" for="pe-libelle">Libellé<input id="pe-libelle" name="libelle" required maxlength="200" placeholder="Ex. : salaire d’octobre, prestation photo du 12/10"></label>' +
         champJustif('pe-justif') + '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer le paiement</button></div></form>'
         : '<div class="note">Ajoutez d’abord les personnes (personnel ou prestataire) dans le <a href="#/compta/carnet">carnet</a>.</div>') +
-      '<div class="carte"><h2>Par personne</h2>' + P.tableau(['Personne', 'Type', '#Payé ce mois'], gens.map((x) =>
-        '<tr><td>' + P.esc(x.nom) + (x.actif ? '' : ' ' + P.pastille('Ne travaille plus avec l’agence', 'neutre')) + '</td><td>' + TYPES[x.type] + '</td><td class="nombre">' + P.fcfa(total(x.id)) + '</td></tr>')) + '</div>' +
-      P.tableau(['Date', 'Libellé', 'Catégorie', 'Compte', '#Montant', ''], C.lignes(payes, noms));
+      // (12/11/2026, « premium partout ») une carte par personne, puis les paiements du mois
+      '<section class="pers-section"><h2>Par personne</h2>' + P.cartesPersonnes(gens.map((x) => ({
+        tete: '<span class="pers-sigle"><span data-visage-nom="' + P.esc(x.nom) + '"></span></span><b class="pers-libelle">' + P.esc(x.nom) + '</b>', sous: [TYPES[x.type], x.actif ? '' : 'Ne travaille plus avec l’agence'],
+        montant: P.fcfa(total(x.id)), etat: total(x.id) ? ['Payé ce mois', 'ok'] : null, ton: total(x.id) ? 'ok' : 'neutre' })), 'Personne dans le carnet.') + '</section>' +
+      '<section class="pers-section"><h2>Paiements du mois</h2>' + C.lignes(payes, noms, 'Aucun paiement ce mois-ci.') + '</section>';
   }
   P.formulaires['compta-payer-personne'] = async (f) => {
     const montant = montantDe(f);

@@ -1414,3 +1414,13 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .pers-coche input { width: 20px; height: 20px; accent-color: #7C2128; }
 .pers-carte:has(.pers-coche) .pers-tete { padding-right: 92px; }
 .pers-alerte { margin: 0; color: #B3261E; font: 600 13px var(--av-texte); }
+/* écritures comptables en cartes (12/11/2026) */
+.pers-libelle { font: 600 15.5px var(--av-texte); color: #2a1416; overflow-wrap: anywhere; }
+.pers-tete .tiers { display: inline-flex; align-items: center; gap: 6px; }
+.pers-tete .tiers .vis { width: 22px; height: 22px; font-size: 10px; }
+.pers-carte.annulee .pers-libelle, .pers-carte.annulee .pers-montant { text-decoration: line-through; opacity: .6; }
+.pers-tete .pers-sigle:empty { display: none; }
+.soldes { list-style: none; margin: 0; padding: 0; }
+.soldes li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F1E4E6; }
+.soldes li:last-child { border-bottom: 0; }
+.soldes b { font: 600 22px var(--av-titre); font-variant-numeric: lining-nums tabular-nums; } .soldes b.rouge { color: #B3261E; }

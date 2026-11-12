@@ -161,10 +161,10 @@ function donnees(role) {
     ok(envoi(journal, 'PATCH', 'compta_ecritures').length === avantAnnul, nomEcran + ' : annulation abandonnée → rien n’est envoyé');
     p.once('dialog', (dl) => dl.accept('Saisi deux fois'));
     await p.click('[data-action="compta-annuler"][data-id="e3"]'); await p.waitForTimeout(800);
-    await p.waitForSelector('tr.annulee', { timeout: 5000 }).catch(() => {});  // (téléphone chargé : la liste redessinée peut arriver après 800 ms)
+    await p.waitForSelector('.annulee', { timeout: 5000 }).catch(() => {});  // (téléphone chargé : la liste redessinée peut arriver après 800 ms)
     const annul = envoi(journal, 'PATCH', 'compta_ecritures')[avantAnnul] || {};
     ok(annul.annule === true && annul.motif_annulation === 'Saisi deux fois', nomEcran + ' : annulation envoyée avec son motif');
-    ok(await p.isVisible('tr.annulee') && (await texte(p)).includes('Saisi deux fois'), nomEcran + ' : l’écriture annulée reste visible, barrée, avec le motif');
+    ok(await p.isVisible('.annulee') && (await texte(p)).includes('Saisi deux fois'), nomEcran + ' : l’écriture annulée reste visible, barrée, avec le motif');
 
     // Trésorerie : virement, compte ajouté, solde de départ
     await aller(p, 'tresorerie'); t = await texte(p);
