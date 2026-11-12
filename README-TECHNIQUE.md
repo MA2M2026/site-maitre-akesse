@@ -4770,3 +4770,10 @@ comptes de trésorerie, accès du comptable et « Trésorerie aujourd'hui » (li
 Restent en tableaux, exprès : grilles de chiffres (Paiements mois par mois, Paramètres, Archives, Rapport des cachets).
 Sécurité (12/11/2026) : demandes d'accès, comptes et rôles, délégations et appareils en cartes (js/portail/securite.js). Le Journal d'audit reste un tableau (lecture ligne à ligne).
 Traductions anglaises (12/11/2026) : une carte par texte (à traduire d'abord).
+
+## Expériences de la mannequin : pas de limite, bouton aussi en bas (12/11/2026)
+
+`js/espace-mannequin.js` (étape 4) : sous la liste, « N expériences ajoutées · ajoutez-en autant que vous voulez » et
+« + Ajouter une autre expérience » (`#addExpBas`), comme le bouton du haut (`ajouterExperience`) ; la nouvelle ligne
+s'ouvre au milieu de l'écran, le curseur dans « Nom ». Il n'y a jamais eu de limite : avec 3 expériences, le bouton du haut
+sortait de l'écran. Essai : `test-espace-experiences.js`.

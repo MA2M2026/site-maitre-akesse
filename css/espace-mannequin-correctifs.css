@@ -149,3 +149,7 @@ html { background: var(--fond); }
    fond blanc (rectangle vide en haut à droite) : texte foncé */
 .toast { color: #1A1A1A; font-weight: 600; }
 .toast.err { color: #7C2128; }
+
+/* (12/11/2026) Expériences : le nombre et le bouton « Ajouter une autre expérience » en bas de la liste */
+.exp-compte { margin: 14px 0 6px; font-size: 13.5px; color: var(--encre-douce, #655D56); text-align: center; }
+#addExpBas { display: block; margin: 0 auto 16px; }
