@@ -185,10 +185,14 @@ input[type="checkbox"], input[type="radio"] { width: auto; min-height: 0; accent
 textarea { min-height: 90px; resize: vertical; }
 .doux { color: var(--av-gris); }
 .petit-texte { font-size: 12px; }
-.note { background: var(--alerte-fond); color: var(--alerte-texte); border-radius: var(--av-rayon-petit); padding: 12px 16px; font-size: 14px; }
-.note.ok { background: var(--ok-fond); color: var(--ok-texte); }
-.note.erreur { background: var(--erreur-fond); color: var(--erreur-texte); }
-.note.info { background: var(--info-fond); color: var(--info-texte); }
+/* Encadrés d'explication (12/11/2026, nouvelle présentation demandée par la propriétaire) : carte blanche avec un trait
+   de couleur à gauche, dans les couleurs de l'agence (avant : fonds bleu ou jaune). « À savoir » : trait rouge clair ;
+   « Attention » : trait rouge MA2M ; « Fait » : vert ; « Erreur » : rouge vif. */
+.note { background: #FFFFFF; color: #3A2326; border-left: 4px solid #7C2128; border-radius: var(--av-rayon-petit); padding: 12px 16px; font-size: 14px; line-height: 1.5; box-shadow: 0 6px 18px rgba(60, 10, 16, 0.12); }
+.note.ok { background: #FFFFFF; color: #1B5E20; border-left-color: #2E7D32; }
+.note.erreur { background: #FFFFFF; color: #8E1B22; border-left-color: #C62828; }
+.note.info { background: #FFFFFF; color: #4A3639; border-left-color: rgba(124, 33, 40, 0.35); }
+.note a { color: #7C2128; font-weight: 700; }
 .segments { display: flex; flex-wrap: wrap; gap: 8px; }
 .segments .btn.actif { background: var(--sombre); border-color: var(--sombre); color: var(--sombre-encre); }
 

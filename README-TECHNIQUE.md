@@ -4688,3 +4688,8 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
   `moisDe` des archives protégé. Essai `test-paiements-compta-robustes.js` : les 34 rubriques de Paiements et
   Comptabilité, téléphone et ordinateur, sans page cassée, « NaN » / « undefined », débordement ni erreur. Outil
   `photos-paiements-compta.js` (CAPTURES=dossier, SEULES=rubriques) pour photographier ces rubriques.
+- 12/11, nouvelle présentation de toute l'administration (demande de la propriétaire : « change l'interface de toute
+  l'administration, paiement comme comptabilité ») : choix du mois de la Comptabilité « ‹ novembre 2026 › » (barre
+  `.pr-barre` des Bulletins, `P.actions['compta-mois']`, pas de mois futur) au lieu du champ calendrier en anglais +
+  « Afficher » ; encadrés `.note` (info, alerte, ok, erreur) en cartes blanches à trait de couleur à gauche
+  (css/admin-vivante.css) au lieu des fonds bleu / jaune.

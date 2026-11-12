@@ -264,7 +264,9 @@ function donnees(role) {
 
     // Autre mois
     await aller(p, 'mois');
-    await p.fill('#cp-mois', '2026-09'); await p.click('form[data-form="compta-mois"] [type=submit]'); await p.waitForTimeout(800);
+    // (12/11/2026) « ‹ mois › » : on recule jusqu'à septembre 2026
+    for (let i = 0; i < 24 && !(await texte(p)).includes('septembre 2026'); i++) { await p.click('[data-action="compta-mois"][data-pas="-1"]'); await p.waitForTimeout(500); }
+    ok(await p.isDisabled('[data-action="compta-mois"][data-pas="1"]') === false, nomEcran + ' : « › » permet de revenir vers le mois en cours');
     ok((await texte(p)).includes('septembre 2026'), nomEcran + ' : choix du mois affiché');
     ok(!errs.length, nomEcran + ' : aucune erreur de page ' + errs.join(' | '));
     await ctx.close();
