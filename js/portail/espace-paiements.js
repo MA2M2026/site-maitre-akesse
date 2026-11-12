@@ -598,30 +598,33 @@
     const nb = (e) => lignes.filter((x) => x.e === e).length;
     const montrees = lignes.filter((x) => filtre === 'tous' || (filtre === 'inscrits' ? x.inscrit : !x.inscrit));
     const FILTRES_GROUPE = [['tous', 'Tous'], ['inscrits', 'Inscrits sur le site'], ['non_inscrits', 'Non inscrits']];
-    return P.entete('Tableau du mois · ' + libelleMois(mois)) + (E && E.conges.has(mois) ? NOTE_CONGES : lignes.some((x) => x.e === 'rodage') ? NOTE_RODAGE : '') +
-      '<div class="grille chiffres">' + P.chiffre('Attendu', P.fcfa(attendu)) + P.chiffre('Validé', P.fcfa(valide), 'vert') +
-      P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') +
-      P.chiffre('Taux de recouvrement', taux + ' %') + '</div>' +
-      '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
-      P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div>' +
-      (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé <span class="petit-texte">(étape d’installation : « supabase-suivi-mannequins.sql »)</span>. En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
-      '<form class="carte f" data-form="suivi-ajouter"><h2>Mannequins suivis</h2><p class="doux">Choisissez dans la liste les mannequins à suivre ce mois-ci. Retirer un mannequin du tableau ne supprime rien.</p>' +
+    // (12/11/2026, « premium partout ») en haut le taux en grand et la barre en couleurs ; une carte par mannequin
+    const ajout = '<form class="f" data-form="suivi-ajouter"><p class="doux">Choisissez les mannequins à suivre ce mois-ci. Retirer un mannequin du tableau ne supprime rien.</p>' +
         // choix par la photo (P.choixVisages, js/admin/coque.js, 23/10/2026)
         P.choixVisages({ id: 'suivi-choix', nom: 'mannequin', libelle: 'Mannequin', sorte: 'registre',
           autres: proposes.length > 1 ? [['__tous__', 'Tous les mannequins actifs', '★']] : [],
           items: proposes.map((m) => ({ id: m.id, nom: m.full_name, note: m.user_id ? '' : 'non inscrit sur le site' })) }) +
         '<div class="ligne"><button class="btn rouge" type="submit">Ajouter au tableau</button>' +
-        '<a class="btn" href="#/paiements/ajouter">＋ Nouveau mannequin</a></div></form>' +
+        '<a class="btn" href="#/paiements/ajouter">＋ Nouveau mannequin</a></div></form>';
+    const actions = (x) => (x.e === 'attente' ? '<a class="btn petit rouge" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : RIEN_DU(x.e) ? '<span class="doux">Rien à payer</span>' : '<a class="btn petit rouge" href="#/paiements/mensualites">Relancer</a>') +
+      '<button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button>';
+    return P.entete('Tableau du mois · ' + libelleMois(mois)) + (E && E.conges.has(mois) ? NOTE_CONGES : lignes.some((x) => x.e === 'rodage') ? NOTE_RODAGE : '') +
+      '<section class="carte chiffre tm-hero apparait"><div class="tm-taux"><div class="l">Taux de recouvrement</div><div class="v">' + taux + ' %</div></div>' +
+        '<div class="tm-detail"><p><b>' + P.esc(P.fcfa(valide)) + '</b> encaissés sur ' + P.esc(P.fcfa(attendu)) + '</p>' +
+        P.barreParts([[valide, 'ok', 'Validé'], [attente, 'alerte', 'En attente'], [nonPaye + aPayer, 'erreur', jour > 5 ? 'Non payé' : 'À payer']], attendu) +
+        '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
+        P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div></div></section>' +
+      '<div class="grille chiffres quatre">' + P.chiffre('Attendu', P.fcfa(attendu)) + P.chiffre('Validé', P.fcfa(valide), 'vert') +
+      P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') + '</div>' +
+      (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé <span class="petit-texte">(étape d’installation : « supabase-suivi-mannequins.sql »)</span>. En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
+      // le choix des mannequins suivis, rangé dans un volet (ouvert d'office quand le tableau est vide)
+      '<details class="carte volet-ajout"' + (suivis.length ? '' : ' open') + '><summary>＋ Ajouter un mannequin au tableau' + (proposes.length ? ' <span class="nb">' + proposes.length + '</span>' : '') + '</summary>' + ajout + '</details>' +
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
-      '<div class="carte">' + (montrees.length ? P.tableau(['Mannequin', 'Groupe', '#Montant', 'Statut', 'Action'], montrees.map((x) =>
+      P.cartesPersonnes(montrees.map((x) => ({
         // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
-        '<tr' + (x.e === 'non_paye' ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) +
-        (x.destinataire && x.destinataire !== x.m.full_name ? '<div class="petit-texte doux">Message à : ' + P.esc(x.destinataire) + '</div>' : '') + '</td>' +
-        '<td>' + (x.inscrit ? 'Inscrit sur le site' : 'Non inscrit') + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td>' +
-        '<td>' + P.pastille(ETATS[x.e][0], ETATS[x.e][1]) + '</td>' +
-        '<td>' + (x.e === 'attente' ? '<a class="btn petit" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : RIEN_DU(x.e) ? '<span class="doux">Rien à payer</span>' : '<a class="btn petit" href="#/paiements/mensualites">Relancer</a>') +
-        ' <button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button></td></tr>'))
-        : '<p class="doux">' + (suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : choisissez un mannequin dans la liste ci-dessus.') + '</p>') + '</div>';
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.inscrit ? 'Inscrit sur le site' : 'Non inscrit', x.destinataire && x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : ''],
+        montant: P.fcfa(x.montant), etat: ETATS[x.e], ton: ETATS[x.e][1], classe: x.e === 'non_paye' ? 'ligne-retard' : '', actions: actions(x)
+      })), suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : ajoutez un mannequin avec le volet ci-dessus.');
   }
   // Liste des mannequins suivis : colonne agence_mannequins.suivi (partagée entre tous les appareils et toutes les pages)
   async function changerSuivi(ids, suivi) {

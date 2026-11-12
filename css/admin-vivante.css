@@ -1382,3 +1382,28 @@ input[type="file"]::file-selector-button { margin-right: 12px; padding: 10px 18p
   font: 700 13px var(--av-texte); cursor: pointer; transition: background 0.2s ease; }
 input[type="file"]::file-selector-button:hover { background: #5A141B; }
 input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3px; border-radius: 8px; }
+
+/* ---------- Cartes de personnes et barre en couleurs (12/11/2026, « premium partout » ; P.cartesPersonnes, js/admin/coque.js) ---------- */
+.pers-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; margin: 12px 0; }
+.pers-carte { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; color: #2a1416; box-shadow: var(--av-ombre); border-left: 5px solid rgba(124, 33, 40, .25); }
+.pers-carte.ton-ok { border-left-color: #2E7D32; } .pers-carte.ton-alerte { border-left-color: #C77700; } .pers-carte.ton-erreur { border-left-color: #C62828; }
+.pers-tete { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; row-gap: 2px; align-items: center; min-width: 0; }
+.pers-tete > :not(.visage-lien) { grid-column: 2; }
+.pers-tete > .visage-lien { grid-row: 1 / span 2; }
+.pers-tete > .visage-lien .vis { width: 48px; height: 48px; }
+.pers-tete a { font: 600 16px var(--av-texte); color: #2a1416; overflow-wrap: anywhere; }
+.pers-tete small { color: #6b5254; font-size: 12.5px; }
+.pers-milieu { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.pers-montant { font: 600 22px var(--av-titre); font-variant-numeric: lining-nums tabular-nums; }
+.pers-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.barre-parts { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: #F1E4E6; margin: 10px 0; }
+.barre-parts i { display: block; height: 100%; } .barre-parts i.ok { background: #2E7D32; } .barre-parts i.alerte { background: #E0A100; } .barre-parts i.erreur { background: #C62828; }
+.tm-hero { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
+.tm-hero .tm-taux .v { font-size: clamp(48px, 7vw, 72px); }
+.tm-hero .tm-detail p { margin: 0; font-size: 15px; } .tm-hero .tm-detail b { font-size: 18px; }
+@media (max-width: 560px) { .tm-hero { grid-template-columns: 1fr; gap: 6px; } }
+.grille.chiffres.quatre { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.volet-ajout > summary { cursor: pointer; font: 600 15px var(--av-texte); color: #7C2128; list-style: none; }
+.volet-ajout > summary::-webkit-details-marker { display: none; }
+.volet-ajout[open] > summary { margin-bottom: 10px; }
+.volet-ajout .nb { display: inline-block; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: #7C2128; color: #FFFFFF; font-size: 12px; text-align: center; }

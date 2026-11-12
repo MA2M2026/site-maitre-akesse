@@ -4750,3 +4750,12 @@ même en revenant en arrière ; les dossiers supprimés entre-temps ne sont pas 
 
 `js/admin/site-bulletins.js` : une réponse de `presences_periode` sans `presences` ne casse plus la page. L'essai
 `test-paiements-compta-robustes.js` ouvre désormais les 81 rubriques (Site, Paiements, Comptabilité, Sécurité).
+
+## « Premium partout » : cartes de personnes au lieu des tableaux (12/11/2026)
+
+`js/admin/coque.js` : `P.cartesPersonnes(items, vide)` (une carte par personne : photo + nom via `P.lienFiche`,
+sous-titres, montant, pastille d'état, boutons, liseré de couleur `ton-ok/alerte/erreur`) et `P.barreParts(parts,
+total)` (barre en couleurs). Styles `.pers-*`, `.barre-parts`, `.tm-hero`, `.volet-ajout` (css/admin-vivante.css) ;
+`.pers-carte` est un bloc blanc (css/jetons.css : boutons rouges à écriture blanche).
+Premier écran : Tableau du mois (`tableauDuMois`, js/portail/espace-paiements.js) : taux en grand + barre, chiffres,
+« ＋ Ajouter un mannequin au tableau » dans un volet (ouvert d'office si le tableau est vide), une carte par mannequin.

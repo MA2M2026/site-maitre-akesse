@@ -74,6 +74,19 @@
     }, { passive: true });
   };
 
+  // ---------- Cartes de personnes, au lieu des tableaux à lignes (12/11/2026, « premium partout ») ----------
+  // items : { tete (le nom, souvent P.lienFiche : la photo s'y pose), sous [textes], montant, etat [texte, ton], actions (HTML),
+  //           ton (ok / alerte / erreur / neutre : liseré de couleur), classe }
+  P.cartesPersonnes = (items, vide) => (items.length ? '<div class="pers-grille">' + items.map((x, i) =>
+    '<article class="pers-carte apparait ton-' + (x.ton || 'neutre') + (x.classe ? ' ' + x.classe : '') + '" style="--i:' + Math.min(i, 14) + '">' +
+      '<div class="pers-tete">' + x.tete + (x.sous && x.sous.filter(Boolean).length ? '<small>' + x.sous.filter(Boolean).map(P.esc).join(' · ') + '</small>' : '') + '</div>' +
+      '<div class="pers-milieu">' + (x.montant !== undefined && x.montant !== null ? '<b class="pers-montant">' + P.esc(x.montant) + '</b>' : '') + (x.etat ? P.pastille(x.etat[0], x.etat[1]) : '') + '</div>' +
+      (x.actions ? '<div class="pers-actions">' + x.actions + '</div>' : '') + '</article>').join('') + '</div>'
+    : '<div class="carte vide">' + P.esc(vide || 'Personne pour le moment.') + '</div>');
+  // Barre d'avancement en couleurs : parts [[valeur, ton, libellé]] sur un total
+  P.barreParts = (parts, total) => '<div class="barre-parts" role="img" aria-label="' + P.esc(parts.map((x) => x[2] + ' ' + (total ? Math.round(x[0] * 100 / total) : 0) + ' %').join(', ')) + '">' +
+    parts.filter((x) => x[0] > 0 && total).map((x) => '<i class="' + x[1] + '" style="width:' + (x[0] * 100 / total).toFixed(2) + '%"></i>').join('') + '</div>';
+
   // ---------- Convoquer une sélection (24/10/2026, demande de la propriétaire) ----------
   // Sélection d'un client (Demandes recruteurs) ou de l'agence (Mannequins, cases à cocher) : une
   // petite fenêtre crée le projet dans l'Agenda avec ces mannequins (caché du site public), puis

@@ -96,14 +96,14 @@ function donnees(role) {
       ok(mot.test(tp) && /Aucun mannequin suivi pour l’instant/.test(tp) && !/KONÉ AWA|ROXANE/.test(tp.replace(/Aucun mannequin suivi.*/, '')) || (mot.test(tp) && /Aucun mannequin suivi/.test(tp)), nomEcran + ' : « ' + page + ' » ne montre aucun mannequin tant que personne n’est suivi, et le dit');
     }
     await p.evaluate(() => { location.hash = '#/paiements/tableau'; }); await p.waitForTimeout(900);
-    await p.click('.cvi-item[data-valeur="__tous__"]'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
+    await p.evaluate(() => { const d = document.querySelector('.volet-ajout'); if (d) d.open = true; }); await p.click('.cvi-item[data-valeur="__tous__"]'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
     const un = await p.$$eval('.choix-visages .cvi-item', (o) => o.length);
     ok(un === 0, nomEcran + ' : « Tous les mannequins actifs » ajoute tout le monde à la liste');
     const nbLignes = (await p.$$('[data-action="suivi-retirer"]')).length;
     p.once('dialog', (dl) => dl.accept());
     await p.click('[data-action="suivi-retirer"]'); await p.waitForTimeout(800);
     ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes - 1, nomEcran + ' : « Retirer » enlève une ligne du tableau');
-    await p.click('.cvi-item:not([data-valeur="__tous__"])'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
+    await p.evaluate(() => { const d = document.querySelector('.volet-ajout'); if (d) d.open = true; }); await p.click('.cvi-item:not([data-valeur="__tous__"])'); await p.click('form[data-form="suivi-ajouter"] [type=submit]'); await p.waitForTimeout(1000);
     ok((await p.$$('[data-action="suivi-retirer"]')).length === nbLignes, nomEcran + ' : on peut remettre le mannequin retiré');
     for (const page of ['codes', 'registre']) {
       await p.evaluate((h) => { location.hash = '#/paiements/' + h; }, page); await p.waitForTimeout(900);
@@ -125,7 +125,7 @@ function donnees(role) {
     ok(/MADAME KOUAME \(parent\)/.test(tx), nomEcran + ' : le destinataire d’un mineur est son parent');
     ok(/Inscrit sur le site/.test(tx) && /Non inscrit/.test(tx), nomEcran + ' : groupe inscrit / non inscrit');
     ok(!/ANCIEN SORTI/.test(tx), nomEcran + ' : un mannequin sorti n’apparaît pas');
-    if (apres5) ok((await p.$$('tr.ligne-retard')).length === 2, nomEcran + ' : les deux lignes non payées sont en rouge pâle');
+    if (apres5) ok((await p.$$('.pers-carte.ligne-retard')).length === 2, nomEcran + ' : les deux lignes non payées sont en rouge pâle');
     await p.screenshot({ path: __dirname + '/medias/tableau-du-mois-' + (ecran.width > 860 ? 'pc' : 'tel') + '.png' });
     await p.click('[data-action="tableau-filtre"][data-filtre="inscrits"]'); await p.waitForTimeout(800);
     const tf = await t();
