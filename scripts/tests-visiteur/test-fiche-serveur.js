@@ -67,7 +67,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifiée à chaque visite (le serveur la garde 3 minutes au plus)');
     // étape A (01/11/2026) : le contenu principal est écrit dans le HTML, avant tout programme
     const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-    ok(/<div id="contenu"[^>]*>\s*<div class="reveal visible">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm[< ]/.test(visible) && /<dd>19 (ans|years)<\/dd>/.test(visible) && !/fiche-en-chargement/.test(visible),
+    ok(/<div id="contenu"[^>]*>\s*<div class="reveal visible[^"]*">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm[< ]/.test(visible) && /<dd>19 (ans|years)<\/dd>/.test(visible) && !/fiche-en-chargement/.test(visible),
       chemin + ' : fiche complète (nom, taille, âge) écrite dans le HTML avant tout programme');
   }
   nomPiege = true;

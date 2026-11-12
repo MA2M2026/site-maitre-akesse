@@ -59,7 +59,8 @@
       } catch (e) { return null; }
       return null;
     }
-    const profil = d.profil, photos = d.photos || [], projets = d.projets || [], age = d.age || '';
+    const profil = d.profil, photos = d.photos || [], age = d.age || '';
+    let projets = d.projets || [];
     const photoHero = o.photoHero, photoAvatar = o.photoAvatar;
     // (08/11/2026) cadrage automatique de la grande photo : le visage au-dessus du nom (js/cadrages-photos.js,
     // écrit par scripts/cadrage-visages.py) ; photo inconnue : le haut, comme avant
@@ -67,21 +68,31 @@
     const libellesDispo = EN
       ? { immediate: 'Available immediately', rdv: 'By appointment', mobile: 'Available to travel' }
       : { immediate: 'Disponible immédiatement', rdv: 'Sur rendez-vous', mobile: 'Mobile pour déplacements' };
-  const NB_PROJETS_APERCU = 5;
+  // (11/11/2026, fiche « premium », maquette validée par la propriétaire) parcours en frise : l'année en grand,
+  // les 3 plus récents d'abord, puis « Voir tous les projets »
+  const NB_PROJETS_APERCU = 3;
   function ligneProjetHtml(p) {
     const lieu = [p.lieu, p.ville, p.pays].filter(Boolean).join(', '); // lieu : salle, hôtel… (Extension 139)
     const meta = [p.periode, lieu, p.agence ? '' : p.promoteur].filter(Boolean).map(echapperHtml).join(' · ');
+    const annee = (String(p.periode || '').match(/(19|20)\d{2}/) || [''])[0];
     return `
       <li class="fiche-projet">
-        <span class="fiche-projet-type">${echapperHtml(p.type_projet)}</span>
-        ${p.titre ? `<span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>` : ''}
-        ${meta ? `<span class="fiche-projet-meta">${meta}</span>` : ''}
+        <span class="fiche-projet-annee" aria-hidden="true">${echapperHtml(annee)}</span>
+        <span class="fiche-projet-corps">
+          <span class="fiche-projet-type">${echapperHtml(p.type_projet)}</span>
+          ${p.titre ? `<span class="fiche-projet-titre">${echapperHtml(p.titre)}</span>` : ''}
+          ${meta ? `<span class="fiche-projet-meta">${meta}</span>` : ''}
+        </span>
       </li>`;
   }
 
+  // (relecture du 11/11) « les plus récents » : triés par année (sans année : à la fin, dans l'ordre d'origine)
+  const anneeDe = (p) => Number((String(p.periode || '').match(/(19|20)\d{2}/) || [0])[0]);
+  projets = (projets || []).map((p, i) => [p, i]).sort((a, b) => (anneeDe(b[0]) - anneeDe(a[0])) || (a[1] - b[1])).map((x) => x[0]);
   const blocProjets = (projets && projets.length) ? `
     <section class="fiche-carte fiche-ancre" id="fiche-parcours">
-      <h2 class="fiche-carte-titre">${T('Parcours', 'Career')} <span>${projets.length} ${T('projet', 'project')}${projets.length > 1 ? 's' : ''}</span></h2>
+      <h2 class="fiche-carte-titre">${T('Parcours', 'Career')}</h2>
+      <p class="fiche-sous-titre">${projets.length} ${T('projet', 'project')}${projets.length > 1 ? 's' : ''} · ${T('les plus récents', 'most recent')}</p>
       <ol class="fiche-projets">
         ${projets.slice(0, NB_PROJETS_APERCU).map(ligneProjetHtml).join('')}
       </ol>
@@ -127,19 +138,60 @@
   // par le serveur ne doit JAMAIS disparaître : avant, la fiche redessinée repartait d'un bloc invisible
   // (« reveal ») qui revenait en fondu ≈ 1 s après. Le bloc est visible d'emblée, et l'image déjà affichée
   // (même adresse) est gardée telle quelle au lieu d'être rechargée.
+  // (11/11/2026, fiche « premium », maquette validée par la propriétaire) :
+  //  - arrivée : la grande photo ; sur ordinateur, le nom, les mensurations et les boutons à droite, sur le rouge ;
+  //  - 6 mensurations essentielles en grand, le détail complet dans « Toutes les mensurations » (toujours dans la page) ;
+  //  - chapitres Sélection · À propos · Parcours · Book ; « Sélection » = les 5 photos de la compcard (choisies par la
+  //    mannequin et l'agence, jamais par un tri automatique, qui se trompait) ;
+  //  - sur téléphone, « Réserver » et « Compcard » toujours visibles en bas de l'écran.
+  const nom = profil.full_name || T('Mannequin', 'Model');
+  const categorie = profil.category === 'homme' ? T('Homme', 'Man') : profil.category === 'femme' ? T('Femme', 'Woman') : 'New Face';
+  const niveau = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
+  const sousTitre = [profil.city, age ? age + ' ' + T('ans', 'years') : ''].filter(Boolean).join(' · ');
+  const dispo = profil.availability && libellesDispo[profil.availability] ? `<span class="fiche-dispo">${libellesDispo[profil.availability]}</span>` : '';
+  const essentielles = [
+    profil.height_cm ? [T('Taille', 'Height'), echapperHtml(profil.height_cm) + '<small>cm</small>'] : null,
+    !masquer && profil.chest_cm ? [T('Poitrine', 'Chest'), echapperHtml(profil.chest_cm)] : null,
+    !masquer && profil.waist_cm ? [T('Tour de taille', 'Waist'), echapperHtml(profil.waist_cm)] : null,
+    profil.category === 'homme'
+      ? (!masquer && profil.inseam_cm ? [T('Entrejambe', 'Inseam'), echapperHtml(profil.inseam_cm)] : null)
+      : (!masquer && profil.hips_cm ? [T('Hanches', 'Hips'), echapperHtml(profil.hips_cm)] : null),
+    profil.shoe_size ? [T('Pointure', 'Shoes'), echapperHtml(profil.shoe_size)] : null,
+    profil.eye_color ? [T('Yeux', 'Eyes'), echapperHtml(EN ? enAnglais(profil.eye_color) : profil.eye_color)] : null
+  ].filter(Boolean);
+  const selection = (photos || []).filter((x) => x.compcard_ordre).sort((a, b) => a.compcard_ordre - b.compcard_ordre).slice(0, 5);
+  const blocSelection = selection.length >= 3 ? `
+    <section class="fiche-selection fiche-ancre" id="fiche-selection">
+      <h2 class="fiche-carte-titre">${T('Sélection', 'Selection')}</h2>
+      <p class="fiche-sous-titre">${T('Les photos de sa compcard, choisies avec l’agence', 'Comp card photos, chosen with the agency')}</p>
+      <div class="fiche-edito">
+        ${selection.map((x, i) => `<button type="button" class="fiche-edito-photo${i === 0 ? ' grande' : ''}" data-photo-index="${photos.indexOf(x)}" aria-label="${T('Voir la photo en grand', 'View photo full size')}"><img src="${echapperHtml(urlLegere(i === 0 ? (x.url_moyenne || x.url) : (x.url_miniature || x.url)))}" loading="lazy" alt=""></button>`).join('')}
+      </div>
+    </section>` : '';
   const contenuHtml = `
-    <div class="reveal visible">
+    <div class="reveal visible fiche-v2">
+      <div class="fiche-haut">
       <div class="profil-hero-fullbleed profil-hero--avatar${(photos && photos.length) ? ' cliquable' : ''}${cadrage ? ' cadrage-' + cadrage : ''}" id="couverture-clic"${(photos && photos.length) ? ' role="button" tabindex="0" aria-label="' + T('Ouvrir la galerie photo', 'Open the photo gallery') + '"' : ''}>
         <img data-couv-img src="${echapperHtml(photoHero)}" alt="" fetchpriority="high">
         <div class="profil-hero-scrim"></div>
         <div class="profil-hero-contenu">
-          <div class="eyebrow eyebrow--clair">${profil.category === 'homme' ? T('Homme', 'Man') : profil.category === 'femme' ? T('Femme', 'Woman') : 'New Face'}</div>
-          <h1>${echapperHtml(profil.full_name || T('Mannequin', 'Model'))}</h1>
-          <p>${echapperHtml([libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience)), profil.city].filter(Boolean).join(' · '))}</p>
+          <div class="eyebrow eyebrow--clair">${[categorie, niveau].filter(Boolean).map(echapperHtml).join(' · ')}</div>
+          <h1>${echapperHtml(nom)}</h1>
+          <p>${echapperHtml(sousTitre)}</p>
+          ${dispo}
         </div>
       </div>
-      <div class="fiche-entete">
-        <div class="profil-avatar fiche-avatar cliquable" id="compsheet-photo-clic" role="button" tabindex="0" aria-label="${T('Voir la photo en grand', 'View photo full size')}"><img src="${echapperHtml(photoAvatar)}" alt="${echapperHtml(profil.full_name || '')}"></div>
+      <div class="fiche-panneau">
+        ${photoAvatar ? `<button type="button" class="fiche-avatar cliquable" id="compsheet-photo-clic" aria-label="${T('Voir la photo de profil en grand', 'View profile photo full size')}"><img src="${echapperHtml(photoAvatar)}" alt="${echapperHtml(nom)}"></button>` : ''}
+        <div class="fiche-panneau-tete" aria-hidden="true">
+          <div class="eyebrow eyebrow--clair">${[categorie, niveau].filter(Boolean).map(echapperHtml).join(' · ')}</div>
+          <div class="fiche-panneau-nom">${echapperHtml(nom)}</div>
+          <p>${echapperHtml([sousTitre, profil.languages].filter(Boolean).join(' · '))}</p>
+          ${dispo}
+        </div>
+        ${essentielles.length ? `<div class="fiche-mens" aria-hidden="true">${essentielles.map(([l, v]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>` : ''}
+        <details class="fiche-mens-tout">
+          <summary>${T('Toutes les mensurations', 'All measurements')}</summary>
         <dl class="fiche-mesures" aria-label="${T('Mensurations', 'Measurements')}">
           ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}${T('Âge', 'Age')}</dt><dd>${age} ${T('ans', 'years')}</dd></div>` : ''}
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}${T('Taille', 'Height')}</dt><dd>${profil.height_cm} cm${imperial(enPieds(profil.height_cm))}</dd></div>` : ''}
@@ -156,8 +208,8 @@
           ${profil.eye_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('yeux')}${T('Yeux', 'Eyes')}</dt><dd>${echapperHtml(EN ? enAnglais(profil.eye_color) : profil.eye_color)}</dd></div>` : ''}
           ${profil.hair_color ? `<div class="fiche-mesure"><dt>${iconeMensuration('cheveux')}${T('Cheveux', 'Hair')}</dt><dd>${echapperHtml(EN ? enAnglais(profil.hair_color) : profil.hair_color)}</dd></div>` : ''}
         </dl>
-      </div>
-      ${ma2mBlocEquivalences(profil, EN)}
+        ${ma2mBlocEquivalences(profil, EN)}
+        </details>
 
       <div class="fiche-actions no-print">
         <button id="btn-select-fiche" class="btn btn--principal"></button>
@@ -169,13 +221,18 @@
           </div>
         </div>
       </div>
+      </div>
+      </div>
 
       <nav class="fiche-onglets no-print" aria-label="${T('Sections de la fiche', 'Profile sections')}">
+        ${blocSelection ? `<a href="#fiche-selection">${T('Sélection', 'Selection')}</a>` : ''}
         ${blocProfil ? `<a href="#fiche-apropos">${T('À propos', 'About')}</a>` : ''}
         ${blocProjets ? `<a href="#fiche-parcours">${T('Parcours', 'Career')}</a>` : ''}
-        ${(photos && photos.length) ? `<a href="#fiche-book">Photos <span>${photos.length}</span></a>` : ''}
+        ${(photos && photos.length) ? `<a href="#fiche-book">Book <span>${photos.length}</span></a>` : ''}
         <a href="#fiche-contact">Contact</a>
       </nav>
+
+      ${blocSelection}
 
       <div class="fiche-grille${(blocProfil && (blocProjets || blocVideo)) ? '' : ' fiche-grille--une'}">
         <div class="fiche-col">
@@ -192,7 +249,13 @@
 
   // Contact officiel : tout en bas de la page, après le Book (demande de la
   // propriétaire, 28 sept. 2026) — on parcourt d'abord les photos, puis on contacte.
+  // (la barre « Réserver / Compcard » du téléphone est posée avec le contact, hors de la fiche : un effet d'apparition
+  // de la fiche la « coinçait » au milieu de la page au lieu du bas de l'écran)
   const contactHtml = `
+      <div class="fiche-barre no-print">
+        <a class="fiche-barre-reserver" href="#fiche-contact">${T('Réserver', 'Book this model')}</a>
+        <button type="button" class="fiche-barre-compcard" data-fiche-compcard>${T('↓ Compcard', '↓ Comp card')}</button>
+      </div>
       <section class="fiche-contact-bas fiche-ancre" id="fiche-contact">
         <div class="fiche-contact-entete">
           <span class="fiche-contact-rond"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>

@@ -4623,3 +4623,35 @@ revalidation par l'agence qu'avant. Retirés : viewDashboard, l'éditeur de bloc
 BLOCKS, reopenDashboardBlock et l'ancien aperçu du CV en superposition (« Mon CV » a sa page). Le petit message
 « Enregistré » (toast) s'écrivait blanc sur blanc : texte foncé (css/espace-mannequin-correctifs.css). Essai :
 test-etapes-profil (parcours « déjà en ligne »).
+
+## Fiche publique « premium » des mannequins (11/11/2026, maquette validée par la propriétaire)
+
+`js/rendu-fiche.js` (partagé par la page et par le serveur `middleware.js`) dessine la fiche `.fiche-v2` :
+- arrivée : grande photo ; sur ordinateur (≥ 1000 px), panneau rouge à droite (nom, ville, âge, langues,
+  disponibilité, mensurations, boutons) ; sur téléphone, le nom sur la photo puis le panneau rouge dessous ;
+- 6 mensurations essentielles (taille, poitrine, tour de taille, hanches, pointure, yeux ; mesures « à reprendre »
+  cachées comme avant) ; le détail complet (et les équivalences) dans « Toutes les mensurations » (`<details>`,
+  toujours écrit dans la page, donc lu par Google) ;
+- chapitres collés en haut : Sélection · À propos · Parcours · Book · Contact. « Sélection » = les photos de la COMPCARD
+  (`compcard_ordre`, choisies par la mannequin et l'agence) ; jamais de tri automatique (il confondait défilés et
+  digitals, retiré le 24/10/2026) ; affichée à partir de 3 photos ;
+- parcours en frise, trié par année (les plus récents d’abord) : 3 projets puis « Voir tous les projets » ; pour un homme,
+  l’entrejambe remplace les hanches dans les 6 mensurations (comme la compcard) ;
+- Book (`js/fiche-mannequin.js`) : 12 photos, puis « Voir les N photos » (`.book-reduit`, `#btn-voir-book`) ;
+- téléphone : barre « Réserver » (→ contact) / « Compcard » (PDF) collée en bas, posée avec le contact
+  (`dessin.contact`), HORS de `.reveal` : un `transform` ou un `clip-path` sur un parent « coince » une barre
+  fixe au milieu de la page. Le fond blanc d'un bord à l'autre utilise `border-image` pour la même raison.
+Styles : fin de `css/style.css` (seulement rouge MA2M et blanc). Après tout changement : `scripts/css-critique.mjs`
+(avec `scripts/serveur-local.mjs`), `versionner.py`, `verifier-csp.py`. Essais : `test-fiche-premium.js` (nouveau),
+`test-fiche-serveur.js`, `test-pages-publiques.js` (ouvre « Toutes les mensurations » et « Voir tous les projets »).
+
+## 12/11/2026 (nuit) : retour à l'ancien CV, photo de profil sur la fiche
+
+- **CV** : à la demande de la propriétaire, retour à l'ancien modèle (colonne sombre à gauche, celui d'avant le « CV
+  premium » du 11/11) : `construireCanvasCv`, `dessinerIconeMcvCanvas`, `dessinerQrCanvas` de `js/app.js` remis
+  tels qu'avant le commit 5abd0d0. L'écran « Mon CV » de l'application reste (il montre l'ancien modèle).
+- **Fiche publique** : la photo de profil (`principale`) est toujours visible, en rond (`.fiche-avatar`,
+  `#compsheet-photo-clic`, s'ouvre en grand) : sur téléphone à droite, à cheval sur la grande photo ; sur
+  ordinateur au-dessus du nom. Le bandeau « Appli MA2M » passe au-dessus de la barre « Réserver / Compcard ».
+- **Sélection et Book** : « Sélection » = les photos de la compcard (choisies par la mannequin dans « Ma compcard »,
+  ou par l'agence) ; « Book » = toutes les photos (la Sélection y est aussi). Aucun tri automatique.

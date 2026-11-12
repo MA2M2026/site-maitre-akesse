@@ -1055,7 +1055,7 @@ function stepPhotos(){
   '<section class="documents-section" id="photosAilleurs"><div class="section-title-row"><div><span class="editor-kicker">PHOTO DE PROFIL</span><h3>Photo de profil et couverture</h3>' +
     '<p>Elles se choisissent dans « Mon profil » de l’application : touchez votre photo ronde ou la couverture.</p></div>' +
     '<a class="btn ghost small" href="/app/#profil">Ouvrir Mon profil ›</a></div></section>' +
-  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez vos photos ici, c’est parmi elles que vous choisirez ensuite votre photo de profil, votre compcard et votre CV.</p></div>' +
+  '<section class="book-section"><div class="section-title-row"><div><span class="editor-kicker">GALERIE</span><h3>Photos du Book</h3><p>Ajoutez ici les photos de votre Book : l’agence et les clients les voient sur votre fiche.</p></div>' +
     '<label class="book-multi-upload" for="fBook">＋ Ajouter des photos<input class="hidden-input" type="file" accept="image/*" id="fBook" multiple></label></div>' +
     '<div class="book-grid">'+p.book.map(function(ph){
       // Numéro fixe de la photo (Extension 117) : l'agence s'y réfère dans ses messages.

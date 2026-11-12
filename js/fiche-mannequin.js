@@ -128,7 +128,8 @@ async function chargerProfilInterne() {
   // médaillon en miniature (~500px). L'originale reste utilisée pour la galerie plein
   // écran et la compcard.
   const photoHero = vues.couverture ? urlLegere(vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
-  const photoAvatar = vues.profil ? urlLegere(vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png';
+  // (12/11/2026, demande de la propriétaire) la photo de profil, toujours visible en rond sur la fiche
+  const photoAvatar = vues.profil ? urlLegere(vues.profil.url_miniature || vues.profil.url) : '';
   // Âge seulement, jamais la date de naissance (décision de la propriétaire, 06/10/2026) :
   // la base calcule l'âge (fonction ages_mannequins, extension 114) et la date n'est plus
   // lisible par les visiteurs (extension 114 installée le 06/10/2026).
@@ -236,12 +237,9 @@ async function chargerProfilInterne() {
   const urlsPhotos = ordreGalerie.map(p => p.url_moyenne || p.url);
   window.photosLightbox = urlsPhotos;
 
+  // photo de profil (rond) : la galerie plein écran sur cette photo
   const photoPrincipale = document.getElementById('compsheet-photo-clic');
-  const indexPrincipale = vues.profil ? Math.max(0, ordreGalerie.indexOf(vues.profil)) : 0;
-  if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(indexPrincipale));
-  if (photoPrincipale) photoPrincipale.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirLightbox(indexPrincipale); }
-  });
+  if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(vues.profil ? Math.max(0, ordreGalerie.indexOf(vues.profil)) : 0));
 
   // Photo de couverture cliquable (demande de la propriétaire, 28 sept. 2026) :
   // ouvre la galerie plein écran directement sur la photo de couverture, puis
@@ -262,6 +260,26 @@ async function chargerProfilInterne() {
     div.querySelector('img').addEventListener('click', () => ouvrirLightbox(index));
     galerie.appendChild(div);
   });
+
+  // (11/11/2026, fiche « premium ») le Book montre d'abord 12 photos, puis « Voir les N photos »
+  const BOOK_APERCU = 12;
+  const ancienBouton = document.getElementById('btn-voir-book');
+  if (ancienBouton) ancienBouton.remove();
+  galerie.classList.toggle('book-reduit', ordreGalerie.length > BOOK_APERCU);
+  if (ordreGalerie.length > BOOK_APERCU) {
+    const voir = document.createElement('button');
+    voir.type = 'button'; voir.id = 'btn-voir-book'; voir.className = 'fiche-voir-book no-print';
+    voir.textContent = T('Voir les ' + ordreGalerie.length + ' photos', 'See all ' + ordreGalerie.length + ' photos');
+    voir.addEventListener('click', () => { galerie.classList.remove('book-reduit'); voir.remove(); });
+    galerie.after(voir);
+  }
+  // photos de la « Sélection » (compcard) : la galerie plein écran sur cette photo
+  contenu.querySelectorAll('[data-photo-index]').forEach((b) => {
+    b.addEventListener('click', () => ouvrirLightbox(Math.max(0, Number(b.dataset.photoIndex) || 0)));
+  });
+  // « Compcard » de la barre du bas (téléphone) : le PDF directement
+  const compcardBas = document.querySelector('[data-fiche-compcard]');
+  if (compcardBas && btnPdf) compcardBas.addEventListener('click', () => btnPdf.click());
 }
 
 // --- Lightbox plein écran (système partagé, voir js/app.js) ---
