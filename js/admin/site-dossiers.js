@@ -80,8 +80,8 @@
   }
   const dateFr = (d) => new Date(d).toLocaleDateString('fr-FR', { timeZone: 'Africa/Abidjan' });
   function meta(source, d) {
-    if (source === 'recruteur') return [d.project_type, d.company, dateFr(d.created_at)].filter(Boolean).join(' · ');
-    return [typeDe(d), d.experience_mannequin === 'non' ? 'Débutant·e' : null, d.city, dateFr(d.created_at)].filter(Boolean).join(' · ');
+    if (source === 'recruteur') return [d.project_type, d.company, P.dateEtHeure(d.created_at)].filter(Boolean).join(' · ');
+    return [typeDe(d), d.experience_mannequin === 'non' ? 'Débutant·e' : null, d.city, P.dateEtHeure(d.created_at)].filter(Boolean).join(' · ');
   }
   async function compter(conf, statut) {
     let q = sb.from(conf.table).select('id', { count: 'exact', head: true });
@@ -275,7 +275,7 @@
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
       '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h1>' +
-      '<p class="doux">' + P.esc(conf.reçue + dateFr(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
+      '<p class="doux">' + P.esc(conf.reçue + P.dateEtHeure(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
       blocPhotos(source) +
       '<div class="fiche-grille"><div class="fiche-col">' + blocStatut(source) + blocWhatsApp(source) + (await blocCode()) + '</div>' +
@@ -420,7 +420,7 @@
     const video = /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view$/.test(String(d.video_url || ''));
     return {
       diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
-      nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + dateFr(d.created_at)],
+      nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + P.dateEtHeure(d.created_at)],
       infos: [d.height_cm ? '📏 ' + P.etude.taille(d.height_cm) : '', d.city ? '📍 ' + d.city : '',
         d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
         mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''],
@@ -435,7 +435,7 @@
     return {
       diapos: choisis.map((m) => '<div class="etude-photo etude-choisi">' + visageDossier(photos[m.model_id] || '', m.model_name_snapshot || 'Mannequin') +
         '<span class="etude-choisi-nom">' + P.esc(m.model_name_snapshot || 'Mannequin') + (m.model_height_snapshot ? ' · ' + P.esc(m.model_height_snapshot) + ' cm' : '') + '</span></div>'),
-      nom: nomDe('recruteur', d), sous: [d.company && d.company !== nomDe('recruteur', d) ? d.company : '', 'reçue le ' + dateFr(d.created_at)],
+      nom: nomDe('recruteur', d), sous: [d.company && d.company !== nomDe('recruteur', d) ? d.company : '', 'reçue le ' + P.dateEtHeure(d.created_at)],
       infos: [d.project_type ? '🎬 ' + d.project_type : '', d.event_date ? '📅 ' + dateFr(d.event_date) : '', d.city ? '📍 ' + d.city : '',
         choisis.length ? '👠 ' + P.pluriel(choisis.length, 'mannequin choisi', 'mannequins choisis') : '👠 Aucun mannequin choisi'],
       lien: wa ? '<a id="etude-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Répondre sur WhatsApp</a>' : ''

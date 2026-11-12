@@ -92,7 +92,7 @@ function doPost(e) {
     // — créé automatiquement s'il n'existe pas encore, réutilisé sinon.
     var dossierCategorie = obtenirOuCreerSousDossier(dossierRacine, nomSousDossierPour(data));
 
-    var nomDossier = (data.nom || 'Candidat') + ' — ' + new Date().toLocaleString('fr-FR');
+    var nomDossier = nomDossierPersonne(data);
     var dossierCandidat = dossierCategorie.createFolder(nomDossier);
 
     var liensPhotos = [];
@@ -229,7 +229,14 @@ function dossierDeLaPersonne(dossierRacine, data) {
     } catch (e) {}
   }
   var dossierCategorie = obtenirOuCreerSousDossier(dossierRacine, nomSousDossierPour(data));
-  return dossierCategorie.createFolder((data.nom || 'Candidat') + ' — ' + new Date().toLocaleString('fr-FR'));
+  return dossierCategorie.createFolder(nomDossierPersonne(data));
+}
+
+// (12/11/2026, demande de la propriétaire : voir dans le Drive à quelle heure la personne a postulé) nom du dossier de
+// la personne : « Awa Koné — 12/11/2026 à 14h49 », à l'heure d'Abidjan (avant : new Date().toLocaleString('fr-FR'),
+// qui dépend du réglage du programme et pouvait donner une autre heure ou un format illisible)
+function nomDossierPersonne(data) {
+  return (data.nom || 'Candidat') + ' — ' + Utilities.formatDate(new Date(), 'Africa/Abidjan', "dd/MM/yyyy 'à' HH'h'mm");
 }
 
 function nomSousDossierPour(data) {

@@ -2997,6 +2997,28 @@ async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
   return reduireEnJpeg(fichier, coteMax, qualite);
 }
 
+// Photo d'un formulaire (candidature, cours de talons) PRÉPARÉE DÈS QU'ELLE EST CHOISIE (12/11/2026 : deux candidates
+// d'Intégrer l'agence ont eu « Photo 1 : illisible » à l'envoi, après 8 minutes de formulaire : certains Android ne
+// laissent plus lire une photo de la galerie (Google Photos, nuage) quelques minutes après le choix). Convertie (HEIC),
+// réduite (1600 px) et COPIÉE EN MÉMOIRE tout de suite : à l'envoi, plus rien à relire sur le téléphone, et c'est
+// plus léger. Lève une erreur si la photo est déjà illisible (la personne la choisit à nouveau).
+async function preparerPhotoEnvoi(fichier) {
+  const prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  if (prete !== fichier) return prete;
+  return new File([await fichier.arrayBuffer()], fichier.name || 'photo.jpg', { type: fichier.type || 'image/jpeg' });
+}
+// Prépare une liste de photos choisies : { pretes: [File], illisibles: [noms] } (les illisibles sont laissées de côté)
+async function preparerPhotosEnvoi(fichiers) {
+  const pretes = [], illisibles = [];
+  for (const f of fichiers) {
+    try { pretes.push(await preparerPhotoEnvoi(f)); } catch (e) { illisibles.push(f.name || 'photo'); }
+  }
+  return { pretes, illisibles };
+}
+const textePhotosIllisibles = (illisibles) => illisibles.length ? T(
+  `${illisibles.length > 1 ? illisibles.length + ' photos n’ont' : '1 photo n’a'} pas pu être ${illisibles.length > 1 ? 'lues' : 'lue'} par le téléphone : choisissez-${illisibles.length > 1 ? 'les' : 'la'} à nouveau (depuis la galerie, de préférence).`,
+  `${illisibles.length > 1 ? illisibles.length + ' photos' : '1 photo'} could not be read by your phone: please choose ${illisibles.length > 1 ? 'them' : 'it'} again (from your gallery, preferably).`) : '';
+
 function fichierEnBase64(fichier) {
   return new Promise((resolve, reject) => {
     const lecteur = new FileReader();

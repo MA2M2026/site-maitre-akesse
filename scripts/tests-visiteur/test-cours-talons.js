@@ -91,6 +91,8 @@ async function navigateur() {
     await p.click('#ct-suivant');
     ok(/photo/i.test(await p.textContent('#ct-msg')), n + 'étape 3 : sans photos, un message les demande');
     await p.setInputFiles('#ct-photos', [1, 2, 3, 4, 0, 1].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
+    // (12/11/2026) les photos sont lues et allégées dès le choix : on attend la fin de la préparation
+    await p.waitForFunction(() => !/Préparation|Preparing/.test(document.getElementById('ct-photos-info').textContent) && document.querySelectorAll('#ct-photos-apercu img').length, null, { timeout: 15000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 5 && /sur 5|out of 5/.test(await p.textContent('#ct-photos-info')), n + '6 photos choisies : 5 gardées au maximum');
     for (const k of [5, 4, 3]) await p.click('#ct-photos-apercu figure:nth-child(' + k + ') button');
     ok(/3 minutes/.test(await p.textContent('.ct-etape[data-etape="3"]')), n + 'vidéo : « 3 minutes maximum » annoncé');

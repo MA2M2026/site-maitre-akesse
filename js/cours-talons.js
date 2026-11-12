@@ -106,6 +106,7 @@
       }
     }
     if (n === 3) {
+      if (nbPhotosEnPreparation) return erreur(T('Vos photos sont en cours de préparation : un instant, puis appuyez à nouveau.', 'Your photos are being prepared: wait a moment, then tap again.'), $('ct-photos'));
       if (photos.length < PHOTOS_MIN) return erreur(T('Ajoutez 2 à 5 photos.', 'Please add 2 to 5 photos.'), $('ct-photos'));
       if (!video && !videoEnPreparation) return erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video'));
     }
@@ -132,12 +133,21 @@
     info.className = 'ct-info' + (photos.length && photos.length < PHOTOS_MIN ? ' err' : '');
     info.textContent = photos.length ? T(`${photos.length} photo${photos.length > 1 ? 's' : ''} sur ${PHOTOS_MAX}.`, `${photos.length} photo${photos.length > 1 ? 's' : ''} out of ${PHOTOS_MAX}.`) : '';
   }
+  // (12/11/2026) chaque photo est lue et allégée DÈS QU'ELLE EST CHOISIE (preparerPhotosEnvoi, js/app.js)
+  let photosEnPreparation = Promise.resolve(), nbPhotosEnPreparation = 0;
   $('ct-photos').addEventListener('change', (e) => {
     const nouvelles = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type || '') || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name || ''));
-    photos = photos.concat(nouvelles).slice(0, PHOTOS_MAX);
-    mediasChanges();
     e.target.value = '';
-    rafraichirPhotos();
+    $('ct-photos-info').textContent = T('Préparation des photos…', 'Preparing the photos…');
+    nbPhotosEnPreparation++;
+    const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(nouvelles)).then(({ pretes, illisibles }) => {
+      nbPhotosEnPreparation--;
+      photos = photos.concat(pretes).slice(0, PHOTOS_MAX);
+      mediasChanges();
+      rafraichirPhotos();
+      if (illisibles.length) { const info = $('ct-photos-info'); info.className = 'ct-info err'; info.textContent += ' ' + textePhotosIllisibles(illisibles); }
+    });
+    photosEnPreparation = travail.catch(() => { nbPhotosEnPreparation = Math.max(0, nbPhotosEnPreparation - 1); });
   });
 
   // ---------- vidéo (3 minutes au plus, allégée sur l'appareil si elle est lourde)
@@ -195,6 +205,7 @@
     else ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
     if (videoEnPreparation) await videoEnPreparation;
+    await photosEnPreparation;
     if (!video) return false;
     const nom = $('ct-nom').value.trim(), tel = composerTelephone($('ct-indicatif'), $('ct-telephone'));
     const infosDrive = { nom, email: '', phone: tel, type: 'projet', projet: 'Cours de talons' };
@@ -203,7 +214,7 @@
       for (let i = 0; i < photos.length; i++) {
         majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
         try {
-          base64.push(await fichierEnBase64(await redimensionnerImage(await convertirSiHeic(photos[i]), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI)));
+          base64.push(await fichierEnBase64(photos[i]));  // (déjà prête en mémoire depuis le choix)
           rangs.push(i);
           majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
         } catch (err) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : illisible', ': unreadable')); }

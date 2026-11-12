@@ -33,6 +33,13 @@
   P.date = (d) => { if (!d) return '—'; const s = String(d).slice(0, 10).split('-'); return s[2] + '/' + s[1] + '/' + s[0]; };
   // (12/11/2026, grande revue) une date vide ou illisible donne « — » au lieu de casser la page (« Invalid time value »)
   // ou d'écrire « NaN undefined »
+  // (12/11/2026, demande de la propriétaire : savoir à quelle heure la personne a postulé) « 12/11/2026 à 14 h 49 »
+  P.dateEtHeure = (d) => {
+    const t = d ? new Date(d) : null;
+    if (!t || isNaN(t)) return '—';
+    const h = t.toLocaleTimeString('fr-FR', { timeZone: 'Africa/Abidjan', hour: '2-digit', minute: '2-digit' }).split(':');
+    return t.toLocaleDateString('fr-FR', { timeZone: 'Africa/Abidjan' }) + ' à ' + Number(h[0]) + ' h ' + h[1];
+  };
   P.dateHeure = (d) => { const t = d ? new Date(d) : null; return t && !isNaN(t) ? t.toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', dateStyle: 'short', timeStyle: 'short' }) : '—'; };
   P.mois = (d) => { const s = String(d || '').slice(0, 7).split('-'); return /^\d{4}$/.test(s[0]) && MOIS[Number(s[1]) - 1] ? MOIS[Number(s[1]) - 1] + ' ' + s[0] : '—'; };
   P.moisCourant = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' }).slice(0, 7) + '-01';
