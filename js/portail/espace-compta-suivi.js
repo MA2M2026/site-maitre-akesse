@@ -34,8 +34,6 @@
       const visibles = liste.filter((d) => tout || (!d.annule && d.reste > 0));
       P.etat.comptaListe = liste;
       const proposes = carnet.filter((x) => x.type === (creance ? 'client' : 'fournisseur'));
-      const statut = (d) => d.annule ? P.pastille('Annulée', 'erreur') : !d.reste ? P.pastille('Payé', 'ok') : d.retard ? P.pastille('En retard', 'erreur') :
-        P.pastille(d.regle ? 'Payé en partie' : 'À payer', d.regle ? 'alerte' : 'info');
       const bouton = (action, d, libelle) => '<button class="btn petit" type="button" data-action="' + action + '" data-table="compta_dettes" data-id="' + d.id + '">' + libelle + '</button>';
       return P.entete(creance ? 'Ce qu’on nous doit' : 'Ce qu’on doit') +
         '<div class="grille chiffres">' + P.chiffre(creance ? 'Reste à encaisser' : 'Reste à payer', P.fcfa(liste.reduce((s, d) => s + d.reste, 0)), creance ? 'vert' : 'rouge') +
@@ -52,13 +50,16 @@
           : '<div class="note">Ajoutez d’abord un ' + (creance ? 'client' : 'fournisseur') + ' dans le <a href="#/compta/carnet">carnet</a>.</div>') +
         '<div class="segments"><button class="btn petit' + (tout ? '' : ' actif') + '" type="button" data-action="compta-dettes-tout" data-sens="' + sens + '" data-tout="">Restant à ' + (creance ? 'encaisser' : 'payer') + '</button>' +
         '<button class="btn petit' + (tout ? ' actif' : '') + '" type="button" data-action="compta-dettes-tout" data-sens="' + sens + '" data-tout="1">Tout l’historique</button></div>' +
-        P.tableau([creance ? 'Client' : 'Fournisseur', 'Libellé', 'Échéance', '#Montant', '#Reste', 'État', ''], visibles.map((d) =>
-          '<tr' + (d.annule ? ' class="annulee"' : d.retard ? ' class="en-retard"' : '') + '><td><b>' + P.esc(noms[d.tiers_id] || '—') + '</b></td>' +
-          '<td>' + P.esc(d.libelle) + '<div class="petit-texte doux">' + P.date(d.date_op) + (d.avoirs ? ' · avoirs ' + P.fcfa(d.avoirs) : '') + (d.annule ? ' · ' + P.esc(d.motif_annulation) : '') + '</div></td>' +
-          '<td>' + P.date(d.echeance) + '</td><td class="nombre">' + P.fcfa(d.montant) + '</td><td class="nombre">' + P.fcfa(d.reste) + '</td><td>' + statut(d) + '</td>' +
-          '<td><div class="ligne">' + (d.reste > 0 ? '<button class="btn petit rouge" type="button" data-action="compta-regler" data-id="' + d.id + '">' + (creance ? 'Encaisser' : 'Payer') + '</button>' + bouton('compta-echeance', d, 'Échéance') : '') +
-          (d.justificatif ? bouton('compta-justif-voir', d, 'Justificatif') : !d.annule ? bouton('compta-justif-joindre', d, 'Joindre') : '') +
-          (!d.annule && !d.regle && !d.facture ? bouton('compta-annuler', d, 'Annuler') : '') + '</div></td></tr>'));
+        // (12/11/2026, « premium partout ») une carte par dette ou créance : le reste en grand
+        P.cartesPersonnes(visibles.map((d) => {
+          const e = d.annule ? ['Annulée', 'erreur'] : !d.reste ? ['Payé', 'ok'] : d.retard ? ['En retard', 'erreur'] : [d.regle ? 'Payé en partie' : 'À payer', d.regle ? 'alerte' : 'info'];
+          return { tete: '<b class="pers-libelle">' + P.esc(noms[d.tiers_id] || '—') + '</b>', classe: d.annule ? 'annulee' : d.retard ? 'en-retard' : '', ton: e[1] === 'info' ? 'neutre' : e[1],
+            sous: [d.libelle, P.date(d.date_op) + (d.avoirs ? ' · avoirs ' + P.fcfa(d.avoirs) : ''), 'échéance : ' + P.date(d.echeance), d.reste !== d.montant ? 'sur ' + P.fcfa(d.montant) : '', d.annule && d.motif_annulation ? 'Motif : ' + d.motif_annulation : ''],
+            montant: P.fcfa(d.reste), etat: e,
+            actions: (d.reste > 0 ? '<button class="btn petit rouge" type="button" data-action="compta-regler" data-id="' + d.id + '">' + (creance ? 'Encaisser' : 'Payer') + '</button>' + bouton('compta-echeance', d, 'Échéance') : '') +
+              (d.justificatif ? bouton('compta-justif-voir', d, 'Justificatif') : !d.annule ? bouton('compta-justif-joindre', d, 'Joindre') : '') +
+              (!d.annule && !d.regle && !d.facture ? bouton('compta-annuler', d, 'Annuler') : '') };
+        }), creance ? 'Personne ne nous doit rien.' : 'Nous ne devons rien.');
     };
   }
   P.actions['compta-dettes-tout'] = (el) => { P.etat['dettesTout' + el.getAttribute('data-sens')] = !!el.getAttribute('data-tout'); P.afficher(); };
@@ -160,11 +161,11 @@
       '<label class="fl" for="ma-serie">Numéro de série (facultatif)<input id="ma-serie" name="numero_serie" maxlength="80"></label>' +
       '<label class="fl" for="ma-lieu">Où il se trouve (facultatif)<input id="ma-lieu" name="emplacement" maxlength="120" placeholder="Ex. : studio"></label>' +
       champJustif('ma-justif') + '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer l’achat</button></div></form>' +
-      P.tableau(['Matériel', 'Achat', '#Prix', 'État', ''], liste.map((x) =>
-        '<tr' + (x.etat === 'sorti' ? ' class="annulee"' : '') + '><td><b>' + P.esc(x.designation) + '</b><div class="petit-texte doux">' + P.esc([x.numero_serie, x.emplacement].filter(Boolean).join(' · ')) + '</div></td>' +
-        '<td>' + P.date(x.date_achat) + '</td><td class="nombre">' + P.fcfa(x.montant) + '</td><td>' + P.pastille(ETATS[x.etat][0], ETATS[x.etat][1]) +
-        (x.etat === 'sorti' ? '<div class="petit-texte doux">' + P.date(x.date_sortie) + ' · ' + P.esc(x.motif_sortie) + '</div>' : '') + '</td>' +
-        '<td>' + (x.etat === 'sorti' ? '' : '<button class="btn petit" type="button" data-action="compta-materiel-modifier" data-id="' + x.id + '">Modifier</button>') + '</td></tr>'));
+      // (12/11/2026, « premium partout ») une carte par matériel
+      P.cartesPersonnes(liste.map((x) => ({ tete: '<b class="pers-libelle">' + P.esc(x.designation) + '</b>', classe: x.etat === 'sorti' ? 'annulee' : '', ton: ETATS[x.etat][1] === 'info' ? 'neutre' : ETATS[x.etat][1],
+        sous: ['acheté le ' + P.date(x.date_achat), x.numero_serie || '', x.emplacement || '', x.etat === 'sorti' ? 'sorti le ' + P.date(x.date_sortie) + ' · ' + (x.motif_sortie || '') : ''],
+        montant: P.fcfa(x.montant), etat: ETATS[x.etat],
+        actions: x.etat === 'sorti' ? '' : '<button class="btn petit" type="button" data-action="compta-materiel-modifier" data-id="' + x.id + '">Modifier</button>' })), 'Aucun matériel enregistré.');
   }
   P.formulaires['compta-materiel'] = async (f) => {
     const montant = montantDe(f);
@@ -214,9 +215,9 @@
     return P.entete('Carnet') +
       '<div class="note info">Les clients, fournisseurs, membres du personnel et prestataires de l’agence. Les mannequins n’y figurent pas : ils sont dans le registre du Suivi des paiements.</div>' +
       '<form class="carte f" data-form="compta-tiers"><h2>Ajouter au carnet</h2>' + champsTiers(null) + '<div class="large ligne"><button class="btn rouge" type="submit">Ajouter</button></div></form>' +
-      P.tableau(['Nom', 'Type', 'Téléphone', 'E-mail', ''], liste.map((x) => '<tr><td><b>' + P.esc(x.nom) + '</b>' + (x.actif ? '' : ' ' + P.pastille('Plus actif', 'neutre')) + '</td>' +
-        '<td>' + TYPES[x.type] + '</td><td>' + P.esc(x.telephone || '—') + '</td><td>' + P.esc(x.email || '—') + '</td>' +
-        '<td><button class="btn petit" type="button" data-action="compta-tiers-modifier" data-id="' + x.id + '">Modifier</button></td></tr>'));
+      // (12/11/2026, « premium partout ») une carte par personne ou entreprise
+      P.cartesPersonnes(liste.map((x) => ({ tete: '<b class="pers-libelle">' + P.esc(x.nom) + '</b>', sous: [TYPES[x.type], x.telephone || '', x.email || ''],
+        etat: x.actif ? null : ['Plus actif', 'neutre'], actions: '<button class="btn petit" type="button" data-action="compta-tiers-modifier" data-id="' + x.id + '">Modifier</button>' })), 'Le carnet est vide.');
   }
   const lireTiers = (f) => ({ nom: t(f, 'nom'), telephone: t(f, 'telephone'), email: t(f, 'email'), notes: t(f, 'notes') });
   P.formulaires['compta-tiers'] = async (f) => {
