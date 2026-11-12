@@ -17,7 +17,7 @@ const SORTIE = process.env.CAPTURES || path.join(__dirname, 'captures');
     await brancher(p, donnees('principal'), []); await photosLocales(p);
     await seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForTimeout(1500);
     const liste = await p.evaluate(() => ['paiements', 'compta'].flatMap((esp) => ((window.Portail.espaces[esp] || {}).nav || []).filter((n) => n[0]).map((n) => [esp, n[0], n[1]])));
-    for (const [esp, id] of liste) {
+    for (const [esp, id] of liste.filter((x) => !process.env.SEULES || process.env.SEULES.split(',').includes(x[1]))) {
       await p.goto('http://127.0.0.1:' + PORT + '/admin/#/' + esp + '/' + id); await p.waitForTimeout(1800);
       await p.screenshot({ path: path.join(SORTIE, nom + '-' + esp + '-' + id + '.png') });
     }
@@ -25,4 +25,5 @@ const SORTIE = process.env.CAPTURES || path.join(__dirname, 'captures');
     await ctx.close();
   }
   await b.close();
+  process.exit(0);  // (le petit serveur de pages s'arrête avec)
 })();

@@ -31,8 +31,10 @@
   // Âge en années à partir d'une date 'AAAA-MM-JJ' (null si absente)
   P.age = (d) => window.ageMannequin(d);  // js/messages-mensualites.js
   P.date = (d) => { if (!d) return '—'; const s = String(d).slice(0, 10).split('-'); return s[2] + '/' + s[1] + '/' + s[0]; };
-  P.dateHeure = (d) => d ? new Date(d).toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', dateStyle: 'short', timeStyle: 'short' }) : '—';
-  P.mois = (d) => { const s = String(d).slice(0, 7).split('-'); return MOIS[Number(s[1]) - 1] + ' ' + s[0]; };
+  // (12/11/2026, grande revue) une date vide ou illisible donne « — » au lieu de casser la page (« Invalid time value »)
+  // ou d'écrire « NaN undefined »
+  P.dateHeure = (d) => { const t = d ? new Date(d) : null; return t && !isNaN(t) ? t.toLocaleString('fr-FR', { timeZone: 'Africa/Abidjan', dateStyle: 'short', timeStyle: 'short' }) : '—'; };
+  P.mois = (d) => { const s = String(d || '').slice(0, 7).split('-'); return /^\d{4}$/.test(s[0]) && MOIS[Number(s[1]) - 1] ? MOIS[Number(s[1]) - 1] + ' ' + s[0] : '—'; };
   P.moisCourant = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' }).slice(0, 7) + '-01';
   P.aujourdhui = () => new Date().toLocaleDateString('fr-CA', { timeZone: 'Africa/Abidjan' });
   // Une partie pas encore activée dans Supabase (table ou fonction absente) : motif = noms propres à

@@ -19,7 +19,7 @@
   // (fonction inconnue de la base : fichier SQL pas encore collé ; toute autre erreur est montrée telle quelle)
   const absent = (e) => /PGRST202|Could not find the function|schema cache/i.test(String(e && (e.code || '')) + ' ' + String(e && (e.message || e)));
   const nombre = (v) => { const n = Number(String(v == null ? '' : v).replace(/\s/g, '')); return Number.isFinite(n) ? Math.round(n) : NaN; };
-  const dateLongue = (iso) => { const s = String(iso).slice(0, 10); return (s.slice(8, 10) === '01' ? '1er' : String(Number(s.slice(8, 10)))) + ' ' + P.mois(s).toLowerCase(); };
+  const dateLongue = (iso) => { const s = String(iso || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return ''; return (s.slice(8, 10) === '01' ? '1er' : String(Number(s.slice(8, 10)))) + ' ' + P.mois(s).toLowerCase(); };
 
   // Comptage des comptes (bilan d'ouverture et clôture) : un champ « montant compté » et une raison si écart
   function champsComptage(lignes) {
@@ -49,7 +49,7 @@
     const sansInscription = (r.mannequins || []).filter((m) => m.statut !== 'sorti' && !m.inscription && !m.inscription_reprise);
     const principal = P.moi.role === 'principal';
     return P.entete('Dossiers de formation', P.pastille(vues + ' sur ' + liste.length + ' revues', vues === liste.length && liste.length ? 'ok' : 'alerte')) +
-      '<div class="note info">L’agence est fermée jusqu’au ' + P.esc(dateLongue(r.date_reprise)) + '. Les mensualités de septembre à novembre 2026 ne sont jamais réclamées (« Archives – période de rodage »). La comptabilité est repartie de zéro le 07/11/2026. À partir de mars : 10 000 FCFA par mois et 15 000 FCFA d’inscription, pour toutes.</div>' +
+      '<div class="note info">L’agence est fermée jusqu’' + (dateLongue(r.date_reprise) ? 'au ' + P.esc(dateLongue(r.date_reprise)) : 'à la reprise') + '. Les mensualités de septembre à novembre 2026 ne sont jamais réclamées (« Archives – période de rodage »). La comptabilité est repartie de zéro le 07/11/2026. À partir de mars : 10 000 FCFA par mois et 15 000 FCFA d’inscription, pour toutes.</div>' +
       '<div class="carte"><h2>1. Chaque mannequin, une fois</h2><p class="doux">Pour chacune : son statut, sa formation (1 niveau de 9 mois, ou 2 niveaux), et les mois de cours qu’elle a déjà faits avant la reprise. Le site calcule les mois qui restent.</p>' +
       (liste.length ? P.tableau(['Mannequin', 'Statut', 'Formation', 'Mois déjà faits', ''], liste.map((m) =>
         '<tr><td>' + P.lienFiche(m.id, m.nom) + (m.vue_le ? '<div class="petit-texte doux">revue le ' + P.esc(P.date(m.vue_le)) + (m.mois_faits !== null ? ' · il reste ' + Math.max(0, m.niveaux * 9 - m.mois_faits) + ' mois' : '') + '</div>' : '') + '</td>' +
@@ -123,8 +123,9 @@
         '<tr><td>' + P.esc(P.date(p.le)) + '</td><td>' + P.esc(p.nom) + '</td><td>' + P.esc(pour(p)) + '</td><td class="nombre">' + (p.montant ? P.fcfa(p.montant) : '—') + '</td><td>' + P.esc(p.statut === 'valide' ? 'Validé' : p.statut === 'declare' ? 'En attente' : 'Refusé') + '</td></tr>')) + '</div>';
   }
   function moisDe(a) {
-    const l = [];
-    for (let d = String(a.debut).slice(0, 10); d <= String(a.fin).slice(0, 10);) { l.push(d); const [y, m] = d.split('-').map(Number); d = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10); }
+    const l = [], ok = (x) => /^\d{4}-\d{2}-\d{2}/.test(String(x || ''));
+    if (!ok(a.debut) || !ok(a.fin)) return l;  // (12/11/2026, grande revue) dates absentes : pas de tableau, la page reste lisible
+    for (let d = String(a.debut).slice(0, 10); d <= String(a.fin).slice(0, 10) && l.length < 60;) { l.push(d); const [y, m] = d.split('-').map(Number); d = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10); }
     return l;
   }
   const pour = (p) => (p.objet === 'inscription' ? 'Inscription' : p.mois ? 'Mensualité de ' + P.mois(p.mois).toLowerCase() : 'Mensualité');

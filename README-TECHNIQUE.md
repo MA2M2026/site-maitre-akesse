@@ -4683,3 +4683,8 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
   message » : `.av-recherche` passe au-dessus (z-index 30) ; liste des résultats limitée en hauteur et défilante
   (au-dessus du menu du bas sur téléphone). `test-nouvelle-admin.js` vérifie que chaque résultat visible n'est
   recouvert par rien.
+- 12/11 : `P.dateHeure` et `P.mois` (js/portail/noyau.js) donnent « — » pour une date vide ou illisible (avant :
+  « Invalid time value » cassait « Archives – période de rodage », « NaN undefined » dans « Dossiers de formation ») ;
+  `moisDe` des archives protégé. Essai `test-paiements-compta-robustes.js` : les 34 rubriques de Paiements et
+  Comptabilité, téléphone et ordinateur, sans page cassée, « NaN » / « undefined », débordement ni erreur. Outil
+  `photos-paiements-compta.js` (CAPTURES=dossier, SEULES=rubriques) pour photographier ces rubriques.
