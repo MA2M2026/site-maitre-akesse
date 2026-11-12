@@ -4841,3 +4841,13 @@ chapitres **Main Board** (niveau « Professionnel ») et **New Faces**.
 - Relief (`js/relief.js`) : sur les couvertures, pas de « mur courbé » au défilement (cartes droites) ; elles se tournent
   seulement vers la souris ou suivent l'inclinaison du téléphone (`html.relief .book-v2` dans css/style.css).
 - Essais : test-recherche-book.js (réécrit), test-book-serveur.js, test-relief.js.
+
+## Chiffre d'affaires et TVA à part (Comptabilité, 12/11/2026)
+
+Demande de la propriétaire : voir l'argent encaissé, le chiffre d'affaires et la TVA séparément. `js/portail/espace-compta.js` :
+`separerTva(ttc, taux)` (hors taxes = encaissé × 100 / (100 + taux), arrondi ; TVA = le reste), `chiffreAffaires(liste, taux)`
+(recettes non annulées du mois par catégorie, sans les régularisations), `carteTva` sur le Tableau de bord et l'écran Recettes
+(chiffres + tableau par catégorie ; sur téléphone, une ligne par catégorie). Taux : `compta_reglages.tva_taux` (Identité de
+l'agence, 18 % par défaut). Avant le mode légal : « TVA prévue » (prévision) ; après : « TVA à reverser », à valider par le
+comptable. Aucun changement de la base. Exposés dans `P.compta` (separerTva, chiffreAffaires, reglageTva) pour les étapes
+suivantes (moyens de paiement, reçus de cachet, paiements des clients). Essai : test-comptabilite.js.

@@ -74,6 +74,38 @@
   // Impôts : paiements (dépenses « impots ») et règle « payé » = dépense liée, non annulée
   const paiementsImpots = () => P.bd(sb.from('compta_ecritures').select('id, date_op, annule').eq('categorie', 'impots'));
   const paiementImpot = (i, paiements) => (i.ecriture_id && paiements.find((e) => e.id === i.ecriture_id && !e.annule)) || null;
+  // ---------- Chiffre d'affaires et TVA (12/11/2026, demande de la propriétaire) ----------
+  // Chaque somme encaissée est TVA comprise : chiffre d'affaires hors taxes et TVA séparés au taux des Réglages
+  // (Identité de l'agence, 18 % par défaut). Avant le mode légal : simple prévision (l'agence n'encaisse pas encore
+  // de TVA) ; après : la TVA à reverser, à valider par le comptable. Les régularisations (écarts de comptage) ne sont
+  // pas du chiffre d'affaires.
+  const HORS_CA = ['regularisation'];
+  const separerTva = (ttc, taux) => { const t = Number(taux) || 0, ht = Math.round(ttc * 100 / (100 + t)); return { ttc, ht, tva: ttc - ht }; };
+  function chiffreAffaires(liste, taux) {
+    const recettes = liste.filter((e) => e.sens === 'recette' && !e.annule && HORS_CA.indexOf(e.categorie) === -1);
+    const parCat = {};
+    recettes.forEach((e) => { parCat[e.categorie] = (parCat[e.categorie] || 0) + e.montant; });
+    const lignes = Object.keys(parCat).map((k) => Object.assign({ categorie: k, nom: RECETTES[k] || k }, separerTva(parCat[k], taux))).sort((a, b) => b.ttc - a.ttc);
+    const total = lignes.reduce((t, l) => ({ ttc: t.ttc + l.ttc, ht: t.ht + l.ht, tva: t.tva + l.tva }), { ttc: 0, ht: 0, tva: 0 });
+    return { lignes, total };
+  }
+  const tauxTexte = (taux) => String(Number(taux) || 0).replace('.', ',') + ' %';
+  function carteTva(liste, reglage) {
+    const taux = reglage.tva_taux == null ? 18 : reglage.tva_taux, legal = !!reglage.mode_legal;
+    const { lignes, total } = chiffreAffaires(liste, taux);
+    return '<div class="carte carte-tva"><h2>Chiffre d’affaires et TVA · ' + P.esc(P.mois(moisChoisi())) + '</h2>' +
+      '<div class="grille chiffres">' + P.chiffre('Encaissé (TVA comprise)', P.fcfa(total.ttc)) + P.chiffre('Chiffre d’affaires hors taxes', P.fcfa(total.ht), 'vert') +
+      P.chiffre(legal ? 'TVA à reverser (' + tauxTexte(taux) + ')' : 'TVA prévue (' + tauxTexte(taux) + ')', P.fcfa(total.tva), legal ? 'rouge' : '') + '</div>' +
+      (lignes.length ? '<table class="tableau-tva"><thead><tr><th>Catégorie</th><th>Encaissé</th><th>Hors taxes</th><th>TVA</th></tr></thead><tbody>' +
+        lignes.map((l) => '<tr><td>' + P.esc(l.nom) + '</td><td data-l="Encaissé">' + P.fcfa(l.ttc) + '</td><td data-l="Hors taxes">' + P.fcfa(l.ht) + '</td><td data-l="TVA">' + P.fcfa(l.tva) + '</td></tr>').join('') +
+        '</tbody><tfoot><tr><th>Total</th><th data-l="Encaissé">' + P.fcfa(total.ttc) + '</th><th data-l="Hors taxes">' + P.fcfa(total.ht) + '</th><th data-l="TVA">' + P.fcfa(total.tva) + '</th></tr></tfoot></table>'
+        : '<p class="doux">Aucune recette ce mois-ci.</p>') +
+      '<p class="doux petit-texte">' + (legal ? 'TVA calculée sur l’argent encaissé ce mois-ci, au taux de ' + tauxTexte(taux) + '. Montant à valider par le comptable avant la déclaration.'
+        : 'Prévision : l’agence n’est pas encore immatriculée, elle ne reverse pas encore de TVA. Ces chiffres montrent ce qu’elle reverserait au taux de ' + tauxTexte(taux) + ' ; ils deviendront la TVA à déclarer dès l’activation du mode légal.') + '</p></div>';
+  }
+  async function reglageTva() {
+    try { const r = await sb.from('compta_reglages').select('mode_legal, tva_taux').eq('id', 1).maybeSingle(); return (r && r.data) || {}; } catch (e) { return {}; }  // (réglages indisponibles : prévision à 18 %)
+  }
   const totaux = (liste, sens) => liste.filter((e) => e.sens === sens && !e.annule).reduce((s, e) => s + e.montant, 0);
 
   // ---------- Tableau du mois ----------
@@ -88,8 +120,7 @@
       return l.length ? l.map((c) => P.barre(RECETTES[c[0]] || DEPENSES[c[0]] || AUTRES[c[0]] || c[0], c[1], total, rouge)).join('') : '<p class="doux">Rien pour le moment.</p>';
     };
     const sansJustif = liste.filter((e) => e.sens === 'depense' && !e.annule && !e.justificatif).length;
-    let legal = false;
-    try { const r = await sb.from('compta_reglages').select('mode_legal').eq('id', 1).maybeSingle(); legal = !!(r && r.data && r.data.mode_legal); } catch (e) { /* réglages indisponibles : on affiche le mode non fiscal */ }
+    const reglage = await reglageTva(), legal = !!reglage.mode_legal;
     const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal (factures officielles)' : 'Factures internes, non déclarées') + '</h2><p class="doux">' +
       (legal ? 'Factures complètes, TVA et FNE actives.' : 'Les factures sont des documents internes « non fiscaux ». La FNE et la TVA sont prévues et s’activeront avec le mode légal.') +
       '</p><a class="btn petit rouge" href="#/compta/identite">' + (legal ? 'Voir l’identité de l’agence' : 'Identité de l’agence →') + '</a></div>';
@@ -97,6 +128,7 @@
       '<div class="grille chiffres">' + P.chiffre('Recettes du mois', P.fcfa(rec), 'vert') + P.chiffre('Dépenses du mois', P.fcfa(dep), 'rouge') +
       P.chiffre('Résultat du mois', P.fcfa(rec - dep), rec - dep < 0 ? 'rouge' : '') + P.chiffre('Dépenses sans justificatif', sansJustif, sansJustif ? 'orange' : '') +
       P.chiffre('On nous doit', P.fcfa(reste(creances)), creances.some((d) => d.retard) ? 'orange' : '') + P.chiffre('Nous devons', P.fcfa(reste(dues)), dues.some((d) => d.retard) ? 'rouge' : '') + '</div>' +
+      carteTva(liste, reglage) +
       '<div class="grille deux"><div class="carte"><h2>Recettes par catégorie</h2>' + barres('recette', rec, false) + '</div>' +
       '<div class="carte"><h2>Dépenses par catégorie</h2>' + barres('depense', dep, true) + '</div></div>' +
       // (12/11/2026) les soldes en liste claire, le montant en grand
@@ -126,13 +158,13 @@
     const recette = sens === 'recette';
     return async () => {
       const m = moisChoisi();
-      const [liste, cpts] = await Promise.all([ecritures(m, sens), comptes(true)]);
+      const [liste, cpts, reglage] = await Promise.all([ecritures(m, sens), comptes(true), recette ? reglageTva() : null]);
       const noms = {};
       cpts.forEach((c) => { noms[c.id] = c.nom; });
       P.etat.comptaListe = liste;
       const actifs = cpts.filter((c) => c.actif);
       return P.entete((recette ? 'Recettes · ' : 'Dépenses · ') + P.mois(m), choixMois()) +
-        '<div class="grille chiffres">' + P.chiffre(recette ? 'Total des recettes' : 'Total des dépenses', P.fcfa(totaux(liste, sens)), recette ? 'vert' : 'rouge') + '</div>' +
+        (recette ? carteTva(liste, reglage) : '<div class="grille chiffres">' + P.chiffre('Total des dépenses', P.fcfa(totaux(liste, sens)), 'rouge') + '</div>') +
         (recette ? '<div class="note info">Les inscriptions et mensualités validées dans le Suivi des paiements arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
         '<form class="carte f" data-form="compta-ecrire" data-sens="' + sens + '"><h2>' + (recette ? 'Nouvelle recette' : 'Nouvelle dépense') + '</h2>' +
         '<label class="fl" for="cp-date">Date<input id="cp-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +
@@ -303,7 +335,7 @@
   // sinon sa photo cherchée par son nom ; et la table des cachets pas encore créée
   const nomMannequin = (id, nom) => (id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(id, nom) : '<span data-visage-nom="' + P.esc(nom) + '"></span><b>' + P.esc(nom) + '</b>');
   const cachetsAbsents = (e) => /cachets_mannequins|PGRST205|42P01|does not exist/.test(String((e && (e.code + ' ' + e.message)) || e));
-  P.compta = { nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
+  P.compta = { separerTva, chiffreAffaires, reglageTva, nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],
