@@ -4734,3 +4734,14 @@ qui défilent, âge, ville, mineure signalée, bio), puis Refuser (raison, geste
 (`validation-publier`). « Plus tard » (`validation-plus-tard`, `P.etat.validationsDeCote`) n'écrit rien. Les points
 sous les photos : `P.suivrePointsEtude` (partagé par js/admin/site-dossiers.js).
 Test : `test-nouvelle-admin-mannequins.js` (partie 6).
+
+## Étudier une à une : morceaux communs `P.etude` (12/11/2026, relecture)
+
+`js/admin/coque.js` : `P.etude` fabrique l'écran d'étude pour les quatre rubriques (Candidatures, Demandes
+recruteurs, Validations en attente, Paiements à valider) : `lancer` / `aJour` (bouton de la liste), `page`,
+`quitter`, `haut` (photos qui défilent avec leurs points, ou un « centre » comme le montant), `diapo` (photo qui
+s'agrandit d'un appui, adresses dans `P.etude.galerie`, action `etude-photo-voir`), `infos`, `decision`, `fin`,
+`taille`, `suivrePoints`, et « Plus tard » (`plusTard`, `deCote`, `vider`, action `etude-plus-tard`). Une file
+s'étudie par paquets de `P.etude.LIMITE` (500). Candidatures / recruteurs : la file suit le filtre de la liste
+même en revenant en arrière ; les dossiers supprimés entre-temps ne sont pas comptés. Paiement en espèces :
+« Vérifiez d'abord que cet argent a bien été reçu en espèces » (et non Wave Business).

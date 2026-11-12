@@ -154,12 +154,15 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(900);
       const r = await p.evaluate(() => ({ nom: document.querySelector('.etude-voile b').textContent, photos: document.querySelectorAll('.etude-piste .vis img').length, infos: document.querySelector('.etude-infos').innerText,
         choix: [...document.querySelectorAll('.etude-choix')].map((b) => b.dataset.action + ':' + b.dataset.id).join(), deborde: document.documentElement.scrollWidth > innerWidth + 1 }));
-      ok(r.nom === 'NOUVELLE FACE' && r.photos === 2 && /Mineure/.test(r.infos) && r.choix === 'validation-refuser:v1,validation-plus-tard:v1,validation-publier:v1' && !r.deborde,
+      ok(r.nom === 'NOUVELLE FACE' && r.photos === 2 && /Mineure/.test(r.infos) && r.choix === 'validation-refuser:v1,etude-plus-tard:v1,validation-publier:v1' && !r.deborde,
         n + 'validations : NOUVELLE FACE en grand, 2 photos, mineure signalée, Refuser / Plus tard / Publier');
       await capture(p, 'etude-validation' + suffixe);
+      await p.click('.etude-photo'); await p.waitForTimeout(700);
+      ok(await p.evaluate(() => { const l = document.getElementById('lightbox-global'); return !!l && l.classList.contains('active'); }), n + 'validations : la photo s’agrandit d’un appui');
+      await p.keyboard.press('Escape'); await p.waitForTimeout(400);
       const n0 = ecrits(journal, 'PATCH', 'model_profiles').length;
-      await p.click('[data-action="validation-plus-tard"]'); await p.waitForSelector('.etude-fin', { timeout: 15000 });
-      ok(ecrits(journal, 'PATCH', 'model_profiles').length === n0 && /mise\(s\) de côté/.test(await p.textContent('.etude-fin')), n + 'validations : « Plus tard » met de côté sans rien écrire');
+      await p.click('[data-action="etude-plus-tard"]'); await p.waitForSelector('.etude-fin', { timeout: 15000 });
+      ok(ecrits(journal, 'PATCH', 'model_profiles').length === n0 && /1 fiche mise de côté/.test(await p.textContent('.etude-fin')), n + 'validations : « Plus tard » met de côté sans rien écrire');
       await p.click('.etude-quitter'); await p.waitForSelector('.validation-photos'); await p.waitForTimeout(600); }
     await p.click('[data-action="validation-refuser"]'); await p.fill('#vr-raison', 'Ajoutez une photo de face.'); await p.click('form[data-form="validation-refuser"] [type=submit]'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'PATCH', 'model_profiles').some((j) => /Ajoutez une photo de face/.test(j[3]) && /"en_attente_validation":false/.test(j[3])), n + 'refus avec la raison, visible par la mannequin');

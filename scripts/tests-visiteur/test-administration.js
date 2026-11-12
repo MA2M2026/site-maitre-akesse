@@ -257,10 +257,10 @@ function donnees(role) {
         await pr.click('.etude-lancer'); await pr.waitForSelector('.etude-decision', { timeout: 6000 }).catch(() => {});
         const et = await pr.evaluate(() => ({ somme: (document.querySelector('.etude-somme-corps') || {}).innerText || '', nom: (document.querySelector('.etude-voile b') || {}).textContent || '',
           choix: [...document.querySelectorAll('.etude-choix')].map((b) => b.dataset.action + ':' + b.dataset.id), deborde: document.documentElement.scrollWidth > innerWidth + 1 }));
-        ok(/25 000 FCFA/.test(et.somme) && /Inscription/.test(et.somme) && et.nom === 'YAO KOUASSI' && et.choix.join() === 'paiement-refuser:pi3,paiement-plus-tard:pi3,paiement-valider:pi3' && !et.deborde,
+        ok(/25 000 FCFA/.test(et.somme) && /Inscription/.test(et.somme) && et.nom === 'YAO KOUASSI' && et.choix.join() === 'paiement-refuser:pi3,etude-plus-tard:pi3,paiement-valider:pi3' && !et.deborde,
           nomEcran + ' (' + role + ') : paiement en grand (25 000 FCFA, YAO KOUASSI), Refuser / Plus tard / Valider');
         const n0 = r.journal.length;
-        await pr.click('[data-action="paiement-plus-tard"]'); await pr.waitForSelector('.etude-fin', { timeout: 6000 }).catch(() => {});
+        await pr.click('[data-action="etude-plus-tard"]'); await pr.waitForSelector('.etude-fin', { timeout: 6000 }).catch(() => {});
         ok(/mis de côté/.test(await texte(pr)) && !r.journal.slice(n0).some((j) => ['POST', 'PATCH', 'DELETE', 'EMAIL'].includes(j[0]) || (j[0] === 'rpc' && j[1] === 'paiement_decider')), nomEcran + ' (' + role + ') : « Plus tard » : mis de côté, rien n’est écrit');
         await pr.click('.etude-quitter'); await pr.waitForSelector('[data-action="paiement-valider"]', { timeout: 6000 }).catch(() => {}); }
       r.d.rpc.paiement_decider = (x) => ({ nom: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', objet: 'inscription', mois: null, montant: 25000, recu: x });

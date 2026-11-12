@@ -376,18 +376,19 @@
   // sans les dossiers mis « à part »), pour les Candidatures ET les Demandes recruteurs.
   const accord = (d, f, m) => (d.genre === 'homme' || d.civilite === 'Monsieur' ? m : f);
   // Ce qui change d'une rubrique à l'autre : textes (« les 3 retenues », « la demande vue »…) et décisions proposées
+  // (l'écran lui-même : P.etude, js/admin/coque.js)
   const ETUDE = {
     casting: {
       groupes: { nouvelle: ['nouvelle candidature', 'nouvelles'], retenue: ['candidature retenue', 'retenues'], 'refusée': ['candidature refusée', 'refusées'],
         'en étude': ['candidature « À revoir »', 'candidatures « À revoir »'], 'en attente': ['candidature « En attente »', 'candidatures « En attente »'], toutes: ['candidature', 'candidatures'] },
       choix: [['refusée', 'non', '✕', 'Refuser'], ['en étude', 'revoir', '⏸', 'À revoir'], ['retenue', 'oui', '✓', 'Retenir']],
-      aucuneNouvelle: 'Aucune nouvelle candidature à étudier<small>Dès qu’une candidature arrive, elle s’étudie ici, une à une, en grand</small>',
+      aucuneNouvelle: ['Aucune nouvelle candidature à étudier', 'Dès qu’une candidature arrive, elle s’étudie ici, une à une, en grand'], mot: 'candidature',
       suivant: 'Candidature suivante ›', aucun: 'Aucune candidature à étudier', etudie: 'Candidature étudiée', retour: 'Retour aux candidatures'
     },
     recruteur: {
       groupes: { nouvelle: ['nouvelle demande', 'nouvelles demandes'], vue: ['demande vue', 'demandes vues'], 'traitée': ['demande traitée', 'demandes traitées'], toutes: ['demande', 'demandes'] },
       choix: [['vue', 'revoir', '⏸', 'Plus tard'], ['traitée', 'oui', '✓', 'Traitée']],
-      aucuneNouvelle: 'Aucune nouvelle demande à étudier<small>Dès qu’un recruteur écrit, sa demande s’étudie ici, une à une, en grand</small>',
+      aucuneNouvelle: ['Aucune nouvelle demande à étudier', 'Dès qu’un recruteur écrit, sa demande s’étudie ici, une à une, en grand'], mot: 'demande',
       suivant: 'Demande suivante ›', aucun: 'Aucune demande à étudier', etudie: 'Demande étudiée', retour: 'Retour aux demandes'
     }
   };
@@ -395,34 +396,35 @@
   // bouton « ▶ Étudier … » de la liste (ou, s'il n'y a rien, la même place avec « Aucune … à étudier »)
   function boutonEtude(source, filtre, n) {
     const conf = SOURCES[source], E = ETUDE[source];
-    if (n) return '<button type="button" class="etude-lancer apparait" data-action="etude-demarrer" data-source="' + source + '"><em aria-hidden="true">▶</em><span>Étudier ' +
-      P.esc(groupeEtude(source, filtre, n)) + '<small>Une à une, en grand, décision en un geste</small></span></button>';
+    // (une file de plus de P.etude.LIMITE dossiers s'étudie en plusieurs fois : le bouton annonce ce qui sera montré)
+    if (n) return P.etude.lancer({ action: 'etude-demarrer', source }, 'Étudier ' + groupeEtude(source, filtre, Math.min(n, P.etude.LIMITE)), 'Une à une, en grand, décision en un geste');
     // (12/11/2026, remarque de la propriétaire : sans nouvelle, la page semblait être l'ancienne) toujours la même place
-    return '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>' + (filtre === conf.defaut ? E.aucuneNouvelle
-      : 'Aucune ' + P.esc(source === 'casting' ? 'candidature' : 'demande') + ' « ' + P.esc(filtre === 'toutes' ? 'Toutes' : conf.libelles[filtre] || filtre) + ' » à étudier<small>Choisissez un autre filtre pour étudier une à une, en grand</small>') + '</span></div>';
+    return filtre === conf.defaut ? P.etude.aJour(E.aucuneNouvelle[0], E.aucuneNouvelle[1])
+      : P.etude.aJour('Aucune ' + E.mot + ' « ' + (filtre === 'toutes' ? 'Toutes' : conf.libelles[filtre] || filtre) + ' » à étudier', 'Choisissez un autre filtre pour étudier une à une, en grand');
   }
   async function chargerEtude(source) {
     const conf = SOURCES[source], filtre = etat(source).filtre;
     let q = sb.from(conf.table).select('id').order('created_at', { ascending: false });
     if (filtre !== 'toutes') q = q.eq(conf.champStatut, filtre);
     else if (conf.aPart.length) q = q.not(conf.champStatut, 'in', '(' + conf.aPart.map((x) => '"' + x + '"').join(',') + ')');
-    const l = await P.bd(q.limit(200));
-    P.etat.etude = { source, ids: l.map((x) => x.id), i: 0, filtre };
+    const l = await P.bd(q.limit(P.etude.LIMITE));
+    P.etat.etude = { source, ids: l.map((x) => x.id), i: 0, filtre, sautes: 0 };
   }
   P.actions['etude-demarrer'] = async (el) => { const source = el.dataset.source || 'casting'; await chargerEtude(source); location.hash = '#/site/' + SOURCES[source].page + '/etude'; };
   P.actions['etude-suivant'] = () => { if (P.etat.etude) P.etat.etude.i += 1; return P.afficher(); };
   // le haut de l'étude (photos qui défilent + nom) et les petites étiquettes, propres à chaque rubrique
   async function hautCandidature(d) {
     fiche.photos = (await photosDe(SOURCES.casting, [d.id]).catch(() => ({})))[d.id] || [];
+    P.etude.galerie = fiche.photos.map((x) => x.affiche);
     const age = ageDe(d), mineur = age !== null && age < 18;
     const video = /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view$/.test(String(d.video_url || ''));
     return {
-      images: fiche.photos.map((x, i) => '<button type="button" class="etude-photo" data-action="dossier-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' + visageDossier(x.affiche, d.full_name) + '</button>'),
+      diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
       nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + dateFr(d.created_at)],
-      infos: [d.height_cm ? '📏 ' + (Number(d.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', d.city ? '📍 ' + d.city : '',
+      infos: [d.height_cm ? '📏 ' + P.etude.taille(d.height_cm) : '', d.city ? '📍 ' + d.city : '',
         d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
         mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''],
-      lien: video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : '', plus: ''
+      lien: video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : ''
     };
   }
   // (12/11/2026) recruteur : les mannequins qu'il a choisis défilent en grand, et sa réponse WhatsApp est prête
@@ -431,43 +433,36 @@
     const photos = await P.photosCouverture(choisis.map((m) => m.model_id).filter(Boolean)).catch(() => ({}));
     const wa = lienWaTexte('recruteur', d, MODELES_LIBRES.recruteur_merci.texte(d));
     return {
-      images: choisis.map((m) => '<div class="etude-photo etude-choisi">' + visageDossier(photos[m.model_id] || '', m.model_name_snapshot || 'Mannequin') +
+      diapos: choisis.map((m) => '<div class="etude-photo etude-choisi">' + visageDossier(photos[m.model_id] || '', m.model_name_snapshot || 'Mannequin') +
         '<span class="etude-choisi-nom">' + P.esc(m.model_name_snapshot || 'Mannequin') + (m.model_height_snapshot ? ' · ' + P.esc(m.model_height_snapshot) + ' cm' : '') + '</span></div>'),
       nom: nomDe('recruteur', d), sous: [d.company && d.company !== nomDe('recruteur', d) ? d.company : '', 'reçue le ' + dateFr(d.created_at)],
       infos: [d.project_type ? '🎬 ' + d.project_type : '', d.event_date ? '📅 ' + dateFr(d.event_date) : '', d.city ? '📍 ' + d.city : '',
-        choisis.length ? '👠 ' + choisis.length + ' mannequin' + (choisis.length > 1 ? 's choisis' : ' choisi') : '👠 Aucun mannequin choisi'],
-      lien: wa ? '<a id="etude-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Répondre sur WhatsApp</a>' : '', plus: ''
+        choisis.length ? '👠 ' + P.pluriel(choisis.length, 'mannequin choisi', 'mannequins choisis') : '👠 Aucun mannequin choisi'],
+      lien: wa ? '<a id="etude-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Répondre sur WhatsApp</a>' : ''
     };
   }
   async function pageEtude(source) {
     let e = P.etat.etude;
-    if (!e || e.source !== source) { await chargerEtude(source); e = P.etat.etude; }  // (adresse ouverte directement)
-    const conf = SOURCES[source], E = ETUDE[source], retour = '<a class="etude-quitter" href="#/site/' + conf.page + '">‹ Quitter</a>';
+    // (adresse ouverte directement, ou retour arrière après un changement de filtre : la file suit le filtre de la liste)
+    if (!e || e.source !== source || e.filtre !== etat(source).filtre) { await chargerEtude(source); e = P.etat.etude; }
+    const conf = SOURCES[source], E = ETUDE[source], page = '#/site/' + conf.page;
     if (e.i >= e.ids.length) {
       fiche = null;
-      return '<div class="etude"><div class="etude-haut">' + retour + '</div><div class="etude-fin apparait"><div class="etude-gros" aria-hidden="true">🎉</div>' +
-        '<h1>' + P.esc(e.ids.length ? (e.ids.length > 1 ? 'Vous avez étudié ' + groupeEtude(source, e.filtre, e.ids.length) : E.etudie) : E.aucun) + '</h1><p class="doux">Bravo, la file est à jour.</p>' +
-        '<a class="btn rouge" href="#/site/' + conf.page + '">' + E.retour + '</a></div></div>';
+      const vus = e.ids.length - (e.sautes || 0);  // (dossiers supprimés entre-temps : pas comptés)
+      return P.etude.fin(page, vus ? (vus > 1 ? 'Vous avez étudié ' + groupeEtude(source, e.filtre, vus) : E.etudie) : E.aucun, 'Bravo, la file est à jour.', E.retour);
     }
     const d = await P.bd(sb.from(conf.table).select('*').eq('id', e.ids[e.i]).maybeSingle());
-    if (!d) { e.i += 1; return pageEtude(source); }
+    if (!d) { e.i += 1; e.sautes = (e.sautes || 0) + 1; return pageEtude(source); }
     fiche = { source, d, photos: [] };
     const h = await (source === 'casting' ? hautCandidature(d) : hautRecruteur(d));
     const statut = d[conf.champStatut], groupe = (E.groupes[e.filtre] || E.groupes.toutes)[1];
-    const infos = h.infos.filter(Boolean).map((x) => '<span>' + P.esc(x) + '</span>').join('') + h.lien;
     // (12/11/2026) en étudiant les retenues, refusées… le choix déjà pris s'appelle « Garder » : rien ne change, aucun message
-    const choix = ([st, classe, signe, texte]) => '<button type="button" class="etude-choix ' + classe + (statut === st ? ' actuel' : '') + '" data-action="etude-decider" data-statut="' + P.esc(st) + '"' +
-      (statut === st ? ' aria-current="true"' : '') + '><em aria-hidden="true">' + signe + '</em>' + (statut === st ? 'Garder' : texte) + '</button>';
-    return '<div class="etude"><div class="etude-haut">' + retour + '<span>' + P.esc(groupe.charAt(0).toUpperCase() + groupe.slice(1)) + ' · ' + (e.i + 1) + ' / ' + e.ids.length + '</span></div>' +
-      '<div class="etude-photos apparait">' + (h.images.length ? '<div class="etude-piste" id="etude-piste">' + h.images.join('') + '</div>' +
-          (h.images.length > 1 ? '<div class="etude-points" aria-hidden="true">' + h.images.map((x, i) => '<i' + (i ? '' : ' class="actif"') + '></i>').join('') + '</div>' : '')
-        : '<div class="etude-piste">' + visageDossier('', h.nom) + '</div>') +
-        '<div class="etude-voile"><b>' + P.esc(h.nom) + '</b><small>' + P.esc(h.sous.filter(Boolean).join(' · ')) + '</small></div></div>' +
-      (infos ? '<div class="etude-infos">' + infos + '</div>' : '') +
+    return P.etude.page(P.etude.quitter(page), groupe.charAt(0).toUpperCase() + groupe.slice(1) + ' · ' + (e.i + 1 - (e.sautes || 0)) + ' / ' + (e.ids.length - (e.sautes || 0)),
+      P.etude.haut(h.diapos, h.nom, h.sous) + P.etude.infos(h.infos, h.lien) +
       (d.message ? '<blockquote class="etude-mot">« ' + P.esc(d.message) + ' »</blockquote>' : '') +
       (statut !== conf.defaut ? '<p class="etude-actuel">Aujourd’hui : ' + P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + '</p>' : '') +
-      '<div class="etude-decision' + (E.choix.length === 2 ? ' deux' : '') + '" id="etude-decision">' + E.choix.map(choix).join('') + '</div>' +
-      '<a class="etude-fiche" data-visage href="#/site/' + conf.page + '/' + P.esc(encodeURIComponent(d.id)) + '">Voir la fiche complète</a></div>';
+      P.etude.decision(E.choix.map(([st, classe, signe, texte]) => [classe, signe, statut === st ? 'Garder' : texte, { action: 'etude-decider', statut: st }, statut === st])) +
+      '<a class="etude-fiche" data-visage href="' + page + '/' + P.esc(encodeURIComponent(d.id)) + '">Voir la fiche complète</a>');
   }
   P.actions['etude-decider'] = async (el) => {
     if (!fiche || !ETUDE[fiche.source]) return;
@@ -484,16 +479,6 @@
       (P.etat.etude && P.etat.etude.i + 1 < P.etat.etude.ids.length ? ETUDE[source].suivant : 'Terminer ›') + '</button></div>';
     if (!garde) await notifier(source, d, nouveau, document.getElementById('dos-notification'));
   };
-  // les points sous les photos suivent la photo affichée (partagé : Validations en attente, js/admin/site-mannequins.js)
-  P.suivrePointsEtude = apresEtude;
-  function apresEtude() {
-    const piste = document.getElementById('etude-piste'), points = document.querySelectorAll('.etude-points i');
-    if (!piste || !points.length) return;
-    piste.addEventListener('scroll', () => {
-      const n = Math.round(piste.scrollLeft / Math.max(1, piste.clientWidth));
-      points.forEach((x, i) => x.classList.toggle('actif', i === n));
-    }, { passive: true });
-  }
   P.actions['dossier-notif-email'] = () => envoyerEmail(document.getElementById('dos-notif-texte').value, document.getElementById('dos-notif-statut'));
   async function rafraichirCode() {
     const ancien = document.querySelector('.fiche-col .carte.code-zone');
@@ -561,7 +546,7 @@
       : args && args[0] ? pageFiche(source, decodeURIComponent(args[0])) : liste(source));
     P.espaces.site.apres[conf.page] = () => {
       const morceaux = location.hash.split('/');
-      if (morceaux[3] === 'etude') apresEtude(); else if (morceaux.length > 3) apresFiche(); else fiche = null;
+      if (morceaux[3] === 'etude') P.etude.suivrePoints(); else if (morceaux.length > 3) apresFiche(); else fiche = null;
     };
   });
 })();
