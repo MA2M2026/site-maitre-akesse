@@ -4669,3 +4669,10 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
 - Observatory : A+ (130). SonarCloud : 4 petits défauts apparus le 11/11 corrigés (propriété `font-style` écrasée par
   `font` dans css/admin-vivante.css et css/mannequin-app.css ; condition inutile dans la compcard de js/app.js ;
   `openCompcard()` sans `void`) — en ligne avec la prochaine mise en ligne.
+- Suite de la revue (12/11 matin, compte d'essai passé « Administrateur du site » par la propriétaire ; un compte n'a
+  qu'un rôle à la fois) : 42 rubriques de l'Administration du site visitées sur ordinateur et téléphone, sans erreur ni
+  débordement. Corrigé : « Traductions anglaises » lisait `model_profiles` avec `*` (refusé : colonnes privées
+  protégées), les présentations des mannequins manquaient ; désormais `id, full_name, bio` (essai `test-traductions.js`).
+  Journal des erreurs : la demande du code à 6 chiffres avant une action sensible (`AUTH_RECENTE`, suivie de la demande
+  de code et d'un nouvel essai par `P.sensible`) n'est plus comptée comme une erreur (`js/surveillance.js` ; essai
+  `test-surveillance-auth-recente.js`).

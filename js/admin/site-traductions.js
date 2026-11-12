@@ -11,14 +11,15 @@
   const PAGE = 'b3c-traductions';
   const PAS_ACTIVE = '<div class="carte vide">Les traductions anglaises ne sont pas encore activées : exécutez une fois le fichier supabase-traductions.sql dans Supabase.</div>';
   const nonActive = P.pasActivee('traductions_en|traduction_');  // (js/portail/noyau.js)
-  // d'où viennent les textes : [table, champs, libellé, sélection, titre de la ligne]
+  // d'où viennent les textes : [table, champs, libellé, sélection, titre de la ligne, colonnes lues (« * » par défaut)]
   const SOURCES = [
     ['actualites', ['titre', 'commentaire'], 'Actualité', (q) => q.order('created_at', { ascending: false }), (l) => l.titre],
     ['evenements', ['titre', 'lieu', 'description'], 'Événement', (q) => q.order('created_at', { ascending: false }), (l) => l.titre],
     ['agenda_projets', ['titre', 'lieu', 'description'], 'Agenda', (q) => q.eq('visible', true).order('date_debut', { ascending: false }).limit(60), (l) => l.titre],
     ['partenaires', ['structure', 'evenement', 'role', 'description'], 'Partenaire', (q) => q.order('created_at', { ascending: false }), (l) => l.structure || l.nom],
     ['mot_responsable', ['titre', 'message'], 'Mot du fondateur', (q) => q, () => 'Mot du fondateur'],
-    ['model_profiles', ['bio'], 'Présentation', (q) => q.eq('published', true).order('full_name'), (l) => l.full_name],
+    // (12/11/2026, grande revue) seulement les colonnes utiles : « * » est refusé, les colonnes privées des fiches étant protégées
+    ['model_profiles', ['bio'], 'Présentation', (q) => q.eq('published', true).order('full_name'), (l) => l.full_name, 'id, full_name, bio'],
     ['model_projects', ['type_projet'], 'Type d’expérience', (q) => q.limit(1000), () => 'Fiches des mannequins']
   ];
   const NOMS_CHAMPS = { titre: 'titre', commentaire: 'texte', lieu: 'lieu', description: 'texte', structure: 'nom', evenement: 'événement', role: 'rôle', message: 'message', bio: 'présentation', type_projet: 'type' };
@@ -27,8 +28,8 @@
   let ecrit = null;    // { t, editeur }
 
   async function charger() {
-    const lectures = await Promise.all(SOURCES.map(([table, champs, , choix]) =>
-      P.bd(choix(sb.from(table).select('*'))).catch(() => [])));
+    const lectures = await Promise.all(SOURCES.map(([table, champs, , choix, , colonnes]) =>
+      P.bd(choix(sb.from(table).select(colonnes || '*'))).catch(() => [])));
     const vus = new Map();
     lectures.forEach((lignes, i) => {
       const [, champs, libelle, , titre] = SOURCES[i];
