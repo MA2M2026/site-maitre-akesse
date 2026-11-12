@@ -4807,3 +4807,9 @@ autre application (autorisation demandée à l'appui sur « Envoyer »). Limites
 WhatsApp tout seul, ni continuer une fois la page fermée (la reprise termine le travail au retour).
 Administration : `P.connexionEnDoute` / `P.noteConnexionExpiree` (js/portail/noyau.js) : « Votre connexion a expiré »
 au lieu de faux « 0 » (Candidatures, Demandes recruteurs). Essais : test-envoi-reprise.js, test-connexion-expiree.js.
+
+## Candidatures regroupées par jour d’arrivée (12/11/2026)
+
+`P.parJour(elements, dateDe)` et `P.titreJour(cle)` (js/portail/noyau.js) : sections « Aujourd’hui », « Hier », « Lundi 10 novembre »
+(heure d’Abidjan), les plus récentes en haut, dans chaque filtre (js/admin/site-dossiers.js, `.jour-groupe`, `.jour-titre`).
+Essai : test-nouvelle-admin-castings.js.

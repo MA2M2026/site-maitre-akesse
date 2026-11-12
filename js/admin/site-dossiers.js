@@ -139,7 +139,7 @@
     };
     const filtres = '<div class="segments">' + ['toutes'].concat(conf.statuts.filter((s) => !conf.aPart.includes(s))).map(pastille).join('') +
       (conf.aPart.length ? '<span class="a-part">À part :</span>' + conf.aPart.map(pastille).join('') : '') + '</div>';
-    const cartes = dossiers.map((d, i) => {
+    const carte = (d, i) => {
       const c = contacts(source, d), wa = lienWa(c.phone), age = source === 'casting' ? ageDe(d) : null, ph = (photos[d.id] || [])[0];
       const statut = d[conf.champStatut];
       return '<article class="dossier-carte apparait" style="--i:' + Math.min(i, 12) + '">' +
@@ -150,14 +150,18 @@
         P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + '</span></a>' +
         (wa ? '<a class="dossier-wa" href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
         '</article>';
-    }).join('');
+    };
+    // (12/11/2026, demande de la propriétaire) regroupées par jour d'arrivée, les plus récentes en haut, dans chaque filtre
+    const cartes = P.parJour(dossiers, (d) => d.created_at).map((g) => '<section class="jour-groupe"><h2 class="jour-titre">' + P.esc(g.titre) +
+      ' <span class="nb">' + g.elements.length + '</span></h2><div class="dossiers-grille' + (source === 'recruteur' ? ' sans-visage' : '') + '">' +
+      g.elements.map((d) => carte(d, dossiers.indexOf(d))).join('') + '</div></section>').join('');
     const plus = count > dossiers.length ? '<button type="button" class="btn" data-action="dossiers-plus" data-source="' + source + '">Voir plus (' + (count - dossiers.length) + ' de plus)</button>' : '';
     // (11/11/2026, maquette validée) étudier une à une, en grand ; (12/11/2026, « Les 2 » de la propriétaire) pour
     // CHAQUE filtre (Nouvelles, Retenues, Refusées, À revoir, En attente, Toutes), pas seulement les nouvelles
     const aEtudier = e.filtre === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[e.filtre] || 0);
     const etudier = boutonEtude(source, e.filtre, aEtudier);
     return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres + etudier +
-      (cartes ? '<div class="dossiers-grille' + (source === 'recruteur' ? ' sans-visage' : '') + '">' + cartes + '</div>' + plus :
+      (cartes ? cartes + plus :
         '<div class="carte vide">Aucun dossier « ' + P.esc(e.filtre === 'toutes' ? 'toutes' : conf.libelles[e.filtre]) + ' » pour le moment.</div>');
   }
   P.actions['dossiers-filtre'] = (el) => { const e = etat(el.dataset.source); e.filtre = el.dataset.filtre; e.pages = 1; return P.afficher(); };

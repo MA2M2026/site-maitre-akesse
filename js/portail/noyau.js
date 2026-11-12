@@ -47,6 +47,29 @@
   };
   P.noteConnexionExpiree = () => '<div class="note erreur" role="alert"><strong>Votre connexion a expiré</strong> : la base ne montre plus rien tant que vous ne vous êtes pas reconnectée (les données sont intactes). ' +
     '<button type="button" class="btn petit rouge" data-action="deconnexion">Se reconnecter</button></div>';
+  // (12/11/2026, demande de la propriétaire : « classer par date : ceux qui ont postulé le même jour dans la même
+  // catégorie, les nouveaux en haut ») jour d'Abidjan d'une date, et son titre : « Aujourd'hui », « Hier »,
+  // « Lundi 10 novembre », « Lundi 10 novembre 2025 » (autre année)
+  const jourAbidjan = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'Africa/Abidjan' });  // AAAA-MM-JJ
+  P.titreJour = (cle) => {
+    const auj = jourAbidjan(Date.now()), hier = jourAbidjan(Date.now() - 864e5);
+    if (cle === auj) return 'Aujourd’hui';
+    if (cle === hier) return 'Hier';
+    const t = new Date(cle + 'T12:00:00Z');
+    const texte = t.toLocaleDateString('fr-FR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: cle.slice(0, 4) === auj.slice(0, 4) ? undefined : 'numeric' });
+    return texte.charAt(0).toUpperCase() + texte.slice(1);
+  };
+  // éléments (déjà triés du plus récent au plus ancien) → [{ cle, titre, elements }]
+  P.parJour = (elements, dateDe) => {
+    const groupes = [];
+    elements.forEach((x) => {
+      const cle = dateDe(x) ? jourAbidjan(dateDe(x)) : 'inconnu';
+      let g = groupes[groupes.length - 1];
+      if (!g || g.cle !== cle) { g = { cle, titre: cle === 'inconnu' ? 'Date inconnue' : P.titreJour(cle), elements: [] }; groupes.push(g); }
+      g.elements.push(x);
+    });
+    return groupes;
+  };
   P.dateEtHeure = (d) => {
     const t = d ? new Date(d) : null;
     if (!t || isNaN(t)) return '—';

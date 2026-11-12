@@ -45,6 +45,12 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await capture(p, 'candidatures' + suffixe);
     await p.click('.segments .btn[data-filtre="toutes"]'); await p.waitForTimeout(900);
     ok((await p.$$('.dossier-carte')).length === 4, n + 'filtre « Toutes » : les 4 dossiers (aucun mis à part)');
+    // (12/11/2026, demande de la propriétaire) regroupées par jour d'arrivée, les plus récentes en haut
+    { const jours = await p.$$eval('.jour-groupe', (l) => l.map((g) => ({ titre: g.querySelector('.jour-titre').childNodes[0].textContent.trim(), nb: Number(g.querySelector('.jour-titre .nb').textContent),
+        cartes: g.querySelectorAll('.dossier-carte').length, dates: [...g.querySelectorAll('.dossier-meta')].map((m) => (m.textContent.match(/(\d{2})\/(\d{2})\/(\d{4})/) || []).slice(1).reverse().join('-')) })));
+      const ordre = jours.map((j) => j.dates[0]);
+      ok(jours.length >= 2 && jours.every((j) => j.nb === j.cartes && new Set(j.dates).size === 1) && ordre.every((x, i) => !i || x < ordre[i - 1]),
+        n + 'candidatures regroupées par jour, le plus récent en haut : ' + jours.map((j) => j.titre + ' (' + j.nb + ')').join(' · ')); }
     // (12/11/2026, demande de la propriétaire) chaque candidature montre la date ET l'heure de réception
     ok((await p.$$eval('.dossier-carte .dossier-meta', (l) => l.map((x) => x.textContent))).every((t) => /\d{2}\/\d{2}\/\d{4} à \d{1,2} h \d{2}/.test(t)), n + 'chaque candidature : date et heure de réception (« 12/11/2026 à 14 h 49 »)');
     await p.click('.segments .btn[data-filtre="nouvelle"]'); await p.waitForTimeout(900);
