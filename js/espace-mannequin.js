@@ -1401,7 +1401,7 @@ function bindStudioCompcard(){
     if (!state.photos.book.some(function(ph){ return ph.compcardOrdre; })) { toast('Choisissez d’abord au moins une photo de compcard.', true); return false; }
     return true;
   };
-  document.getElementById('scVoir').addEventListener('click', function(){ if (pret()) openCompcard(); });
+  document.getElementById('scVoir').addEventListener('click', function(){ if (pret()) void openCompcard(); });
   document.getElementById('scPdf').addEventListener('click', function(){ if (pret()) void genererFiche('pdf', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
   document.getElementById('scJpeg').addEventListener('click', function(){ if (pret()) void genererFiche('jpeg', ficheDataDepuisEtat(), 'scPdf', 'scJpeg', undefined, true); });
   document.getElementById('scWhatsapp').addEventListener('click', function(){ if (pret()) void partagerToile(this, construireCanvasCompcard, ficheDataDepuisEtat(), 'compcard', 'Ma compcard'); });

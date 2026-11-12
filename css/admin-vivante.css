@@ -1187,7 +1187,7 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .tu em { font-style: normal; font-size: 24px; }
 .tu .nom { display: block; margin-top: 6px; font: 600 21px/1.1 var(--av-titre); }
 .tu small { display: block; margin-top: 2px; font-size: 12px; color: #6E4F53; }
-.tu i { position: absolute; top: 12px; right: 12px; font-style: normal; padding: 2px 8px; border-radius: 20px; background: #7C2128; color: #FFFFFF; font: 700 11px var(--av-texte); }
+.tu i { position: absolute; top: 12px; right: 12px; padding: 2px 8px; border-radius: 20px; background: #7C2128; color: #FFFFFF; font: 700 11px var(--av-texte); font-style: normal; }
 .tu.discret { background: rgba(255, 255, 255, .1); color: #FFFFFF; box-shadow: none; }
 .tu.discret small { color: #F3DDE0; }
 /* la page d'une tuile */

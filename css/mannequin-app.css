@@ -87,7 +87,7 @@ html { -webkit-text-size-adjust: 100%; }
 .ap-passage b { font: 600 21px/1 'Cormorant Garamond', Georgia, serif; min-width: 54px; }
 .ap-passage span { flex: 1; min-width: 0; }
 .ap-passage small { display: block; font-size: 11.5px; opacity: .8; }
-.ap-passage i { font-style: normal; font: 700 10.5px 'Work Sans', sans-serif; padding: 4px 9px; border-radius: 20px; background: #F3DDE0; color: #7C2128; white-space: nowrap; }
+.ap-passage i { font: 700 10.5px 'Work Sans', sans-serif; font-style: normal; padding: 4px 9px; border-radius: 20px; background: #F3DDE0; color: #7C2128; white-space: nowrap; }
 .sombre .ap-passage { background: var(--blanc-a07); }
 .sombre .ap-passage b { color: var(--sombre-rouge-texte); }
 .ap-passages .ap-btn, .ap-carte > .ap-btn { flex: none; margin-top: 10px; width: 100%; }

@@ -4655,3 +4655,17 @@ Styles : fin de `css/style.css` (seulement rouge MA2M et blanc). Après tout cha
   ordinateur au-dessus du nom. Le bandeau « Appli MA2M » passe au-dessus de la barre « Réserver / Compcard ».
 - **Sélection et Book** : « Sélection » = les photos de la compcard (choisies par la mannequin dans « Ma compcard »,
   ou par l'agence) ; « Book » = toutes les photos (la Sélection y est aussi). Aucun tri automatique.
+
+## Grande revue du 12/11/2026 (2 h GMT)
+
+Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` sur la machine, jamais dans le dépôt) :
+`connexion-admin.js` (ESSAI ADMIN MA2M : mot de passe, code à 6 chiffres, code d'appareil) et `compte-mannequin.js`
+(ESSAI MA2M, fiche du registre « compte d'essai » sans téléphone, profil jamais publié). Visites en LECTURE SEULE.
+- Administration : le compte d'essai a le rôle « Responsable des encaissements » (Paiements seulement) : les 16
+  rubriques de Paiements visitées sur ordinateur et téléphone, sans erreur ni débordement (2,5 à 5 s par page).
+- Application : 5 onglets, volet Paiements, 6 étapes du profil, Ma compcard, Mon CV (ancien modèle) : sans erreur.
+- Site public et 5 fiches (homme / femme, avec et sans compcard, 10 à 48 photos), FR / EN, téléphone / ordinateur :
+  sans erreur ni débordement ni image cassée ; photo de profil, 6 mensurations, barre du bas collée, « Voir les N photos ».
+- Observatory : A+ (130). SonarCloud : 4 petits défauts apparus le 11/11 corrigés (propriété `font-style` écrasée par
+  `font` dans css/admin-vivante.css et css/mannequin-app.css ; condition inutile dans la compcard de js/app.js ;
+  `openCompcard()` sans `void`) — en ligne avec la prochaine mise en ligne.
