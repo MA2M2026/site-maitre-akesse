@@ -1397,7 +1397,7 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .pers-montant { font: 600 22px var(--av-titre); font-variant-numeric: lining-nums tabular-nums; }
 .pers-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .barre-parts { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: #F1E4E6; margin: 10px 0; }
-.barre-parts i { display: block; height: 100%; } .barre-parts i.ok { background: #2E7D32; } .barre-parts i.alerte { background: #E0A100; } .barre-parts i.erreur { background: #C62828; }
+.barre-parts i { display: block; height: 100%; } .barre-parts i.ok { background: #2E7D32; } .barre-parts i.alerte { background: rgba(124, 33, 40, .4); }  /* (rouge pâle : la charte n’admet ni doré ni brun) */ .barre-parts i.erreur { background: #C62828; }
 .tm-hero { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
 .tm-hero .tm-taux .v { font-size: clamp(48px, 7vw, 72px); }
 .tm-hero .tm-detail p { margin: 0; font-size: 15px; } .tm-hero .tm-detail b { font-size: 18px; }
