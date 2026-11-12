@@ -315,7 +315,7 @@
   // avec un motif ; le mannequin (son parent s'il est mineur) en est prévenu par e-mail et WhatsApp.
   const libelleMois = (d) => { const p = String(d || '').split('-'); return p.length > 1 ? P.MOIS[Number(p[1]) - 1] + ' ' + p[0] : ''; };
   const objetPaiement = (p) => p.objet === 'inscription' ? 'Inscription' : 'Mensualité de ' + libelleMois(p.mois);
-  async function aValider() {
+  async function paiementsDeclares() {
     const liste = await P.bd(sb.from('paiements_mannequins').select('*, mannequin:agence_mannequins(full_name, telephone)')
       .eq('statut', 'declare').order('declare_le', { ascending: true }));
     // une inscription déclarée (15 000) et son 1er mois (10 000) : une seule ligne, 25 000
@@ -324,7 +324,17 @@
       const g = groupes.find((x) => x.mannequin_id === p.mannequin_id && x.declare_le === p.declare_le);
       if (g) { g.total += p.montant || 0; if (p.objet === 'inscription') g.principal = p; } else groupes.push({ mannequin_id: p.mannequin_id, declare_le: p.declare_le, principal: p, total: p.montant || 0 });
     });
-    return P.entete('Paiements à valider', P.pastille(groupes.length + ' en attente', groupes.length ? 'alerte' : 'ok')) +
+    return groupes;
+  }
+  async function aValider(args) {
+    if (args && args[0] === 'etude') return etudePaiements();
+    const groupes = await paiementsDeclares();
+    P.etat.paiementsDeCote = [];  // (« Plus tard » ne vaut que pour une étude)
+    // (12/11/2026, « Les 2 » de la propriétaire) même étude « une à une, en grand » que les Candidatures
+    const etudier = groupes.length ? '<a class="etude-lancer apparait" href="#/paiements/a-valider/etude"><em aria-hidden="true">▶</em><span>Vérifier ' +
+        (groupes.length > 1 ? 'les ' + groupes.length + ' paiements' : 'le paiement') + ' un à un<small>En grand, du plus ancien au plus récent, décision en un geste</small></span></a>'
+      : '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>Aucun paiement à vérifier<small>Dès qu’un mannequin appuie sur « J’ai payé », il se vérifie ici, un à un, en grand</small></span></div>';
+    return P.entete('Paiements à valider', P.pastille(groupes.length + ' en attente', groupes.length ? 'alerte' : 'ok')) + etudier +
       '<div class="note info">Vérifiez chaque paiement dans Wave Business avant de valider. Le plus ancien est en haut.</div>' +
       P.tableau(['Mannequin', 'Objet', '#Montant', 'Déclaré le', ''], groupes.map((g) => {
         const p = g.principal;
@@ -335,6 +345,36 @@
           '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + p.id + '">Refuser</button></td></tr>';
       }));
   }
+  // Un paiement à la fois, en grand (12/11/2026) : le plus ancien d'abord. « Valider » et « Refuser » sont les mêmes
+  // gestes que dans le tableau (confirmation, motif, message prêt) ; après chaque décision la page se redessine et montre
+  // le suivant. « Plus tard » le met de côté pour cette fois (rien n'est écrit).
+  async function etudePaiements() {
+    const deCote = P.etat.paiementsDeCote = P.etat.paiementsDeCote || [];
+    const tous = await paiementsDeclares(), restants = tous.filter((g) => !deCote.includes(g.principal.id));
+    const retour = '<a class="etude-quitter" href="#/paiements/a-valider">‹ Quitter</a>';
+    if (!restants.length) {
+      P.etat.paiementsDeCote = [];
+      return '<div class="etude"><div class="etude-haut">' + retour + '</div><div class="etude-fin apparait"><div class="etude-gros" aria-hidden="true">🎉</div>' +
+        '<h1>' + (tous.length ? 'Les autres paiements attendent votre retour' : 'Tous les paiements sont vérifiés') + '</h1><p class="doux">' +
+        (tous.length ? tous.length + ' mis de côté avec « Plus tard ».' : 'Bravo, la file est à jour.') + '</p><a class="btn rouge" href="#/paiements/a-valider">Retour aux paiements</a></div></div>';
+    }
+    const g = restants[0], p = g.principal, nom = (p.mannequin && p.mannequin.full_name) || 'Mannequin';
+    const infos = ['📅 Déclaré le ' + P.dateHeure(p.declare_le), p.mode === 'wave' ? '🌊 Wave' : p.mode === 'especes' ? '💵 Espèces' : '',
+      p.mannequin && p.mannequin.telephone ? '📞 ' + p.mannequin.telephone : ''].filter(Boolean).map((x) => '<span>' + P.esc(x) + '</span>').join('');
+    return '<div class="etude etude-paiement"><div class="etude-haut">' + retour + '<span>Paiements · 1 / ' + restants.length + (deCote.length ? ' (+' + deCote.length + ' plus tard)' : '') + '</span></div>' +
+      '<div class="etude-photos etude-somme apparait"><div class="etude-somme-corps">' + '<span class="etude-somme-visage" data-visage-nom="' + P.esc(nom) + '">' + P.visage('', nom, 'rond-vis') + '</span>' +  // (sa photo du registre s'y pose : js/admin/coque.js)
+        
+        '<strong>' + P.esc(P.fcfa(g.total)) + '</strong><span>' + P.esc(objetPaiement(p)) + (p.objet === 'inscription' && g.total > (p.montant || 0) ? ' · dont 1er mois de formation' : '') + '</span></div>' +
+        '<div class="etude-voile"><b>' + P.esc(nom) + '</b><small>En attente de validation</small></div></div>' +
+      '<div class="etude-infos">' + infos + '</div>' +
+      '<p class="etude-actuel">Retrouvez d’abord ce paiement dans Wave Business.</p>' +
+      '<div class="etude-decision" id="etude-decision">' +
+        '<button type="button" class="etude-choix non" data-action="paiement-refuser" data-id="' + P.esc(p.id) + '"><em aria-hidden="true">✕</em>Refuser</button>' +
+        '<button type="button" class="etude-choix revoir" data-action="paiement-plus-tard" data-id="' + P.esc(p.id) + '"><em aria-hidden="true">⏸</em>Plus tard</button>' +
+        '<button type="button" class="etude-choix oui" data-action="paiement-valider" data-id="' + P.esc(p.id) + '"><em aria-hidden="true">✓</em>Valider</button></div>' +
+      '<a class="etude-fiche" data-visage href="#/paiements/fiche/' + P.esc(encodeURIComponent(p.mannequin_id)) + '">Voir la fiche du mannequin</a></div>';
+  }
+  P.actions['paiement-plus-tard'] = (el) => { (P.etat.paiementsDeCote = P.etat.paiementsDeCote || []).push(el.getAttribute('data-id')); return P.afficher(); };
   // Destinataire des messages : le parent pour un mineur, la personne elle-même sinon
   // (r : ligne du registre, ou réponse de paiement_decider avec « nom »)
   function destinataire(r) {

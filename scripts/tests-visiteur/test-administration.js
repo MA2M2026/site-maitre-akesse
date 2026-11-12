@@ -251,6 +251,18 @@ function donnees(role) {
       const aValider = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
       ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*En attente de validation.*25 000 FCFA/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
       ok((await pr.textContent('.lateral .nav[href="#/paiements/a-valider"]')).includes('1'), nomEcran + ' (' + role + ') : compteur des paiements à valider dans le menu');
+      // (12/11/2026, « Les 2 » de la propriétaire) vérifier un à un, en grand : montant, mannequin, trois décisions ;
+      // « Plus tard » met de côté sans rien écrire
+      { ok(/Vérifier le paiement un à un/.test(await pr.textContent('.etude-lancer')), nomEcran + ' (' + role + ') : bouton « ▶ Vérifier le paiement un à un »');
+        await pr.click('.etude-lancer'); await pr.waitForSelector('.etude-decision', { timeout: 6000 }).catch(() => {});
+        const et = await pr.evaluate(() => ({ somme: (document.querySelector('.etude-somme-corps') || {}).innerText || '', nom: (document.querySelector('.etude-voile b') || {}).textContent || '',
+          choix: [...document.querySelectorAll('.etude-choix')].map((b) => b.dataset.action + ':' + b.dataset.id), deborde: document.documentElement.scrollWidth > innerWidth + 1 }));
+        ok(/25 000 FCFA/.test(et.somme) && /Inscription/.test(et.somme) && et.nom === 'YAO KOUASSI' && et.choix.join() === 'paiement-refuser:pi3,paiement-plus-tard:pi3,paiement-valider:pi3' && !et.deborde,
+          nomEcran + ' (' + role + ') : paiement en grand (25 000 FCFA, YAO KOUASSI), Refuser / Plus tard / Valider');
+        const n0 = r.journal.length;
+        await pr.click('[data-action="paiement-plus-tard"]'); await pr.waitForSelector('.etude-fin', { timeout: 6000 }).catch(() => {});
+        ok(/mis de côté/.test(await texte(pr)) && !r.journal.slice(n0).some((j) => ['POST', 'PATCH', 'DELETE', 'EMAIL'].includes(j[0]) || (j[0] === 'rpc' && j[1] === 'paiement_decider')), nomEcran + ' (' + role + ') : « Plus tard » : mis de côté, rien n’est écrit');
+        await pr.click('.etude-quitter'); await pr.waitForSelector('[data-action="paiement-valider"]', { timeout: 6000 }).catch(() => {}); }
       r.d.rpc.paiement_decider = (x) => ({ nom: 'YAO KOUASSI', telephone: '0505050505', email: 'yao@test.ci', objet: 'inscription', mois: null, montant: 25000, recu: x });
       pr.once('dialog', (dl) => dl.accept());
       await pr.click('[data-action="paiement-valider"]'); await pr.waitForSelector('#fenetre a[href^="https://wa.me/"]', { timeout: 6000 }).catch(() => {});

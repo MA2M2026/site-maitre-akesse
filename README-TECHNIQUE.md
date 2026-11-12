@@ -4714,3 +4714,14 @@ rubrique (`hautCandidature`, `hautRecruteur`). Recruteur : les mannequins choisi
 (`.etude-choisi`), projet / date / ville, « 💬 Répondre sur WhatsApp » (modèle « Remerciement de la demande »), deux
 décisions (`.etude-decision.deux`) : « Plus tard » (= Vue) et « Traitée » ; aucun message automatique.
 Test : `test-nouvelle-admin-castings.js` (partie 6).
+
+## Paiements à valider : vérifier un à un, en grand (12/11/2026)
+
+`js/portail/espace-paiements.js` : `paiementsDeclares()` (groupes inscription + 1er mois) sert la liste et l'étude ;
+`aValider(args)` montre « ▶ Vérifier les N paiements un à un » (ou « Aucun paiement à vérifier ») et l'adresse
+`#/paiements/a-valider/etude` ouvre `etudePaiements()` : le plus ancien en grand (photo du registre via
+`data-visage-nom`, montant, objet, date, Wave, téléphone), puis Refuser / Plus tard / Valider. Refuser et Valider sont
+les actions habituelles (`paiement-refuser`, `paiement-valider` : confirmation, motif, message prêt) ; la page se
+redessine et montre le suivant. « Plus tard » (`paiement-plus-tard`) met de côté pour cette étude
+(`P.etat.paiementsDeCote`, vidé en revenant à la liste) sans rien écrire. Styles `.etude-somme*` (css/admin-vivante.css).
+Test : `test-administration.js` (« Vérifier le paiement un à un », « Plus tard » sans écriture).

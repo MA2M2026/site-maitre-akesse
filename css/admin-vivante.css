@@ -1320,6 +1320,12 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .etude-choix:active { transform: scale(.96); }
 /* (12/11/2026) Demandes recruteurs : deux décisions, et les mannequins choisis qui défilent avec leur nom en haut */
 .etude-decision.deux { grid-template-columns: repeat(2, 1fr); }
+/* (12/11/2026) Paiements à valider, un à un : le montant en grand à la place des photos */
+.etude-somme-corps { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: min(46vh, 380px); padding: 28px 16px 96px; color: #FFFFFF; text-align: center; }
+.etude-somme-corps strong { font: 600 44px/1.05 var(--av-titre); }
+.etude-somme-corps > span:last-child { font: 600 15px var(--av-texte); color: #F3DDE0; }
+.etude-somme-visage .vis { width: 96px; height: 96px; border-radius: 50%; font-size: 32px; }
+a.etude-lancer { text-decoration: none; }
 .etude-choisi { position: relative; cursor: default; }
 .etude-choisi-nom { position: absolute; top: 22px; left: 12px; padding: 5px 10px; border-radius: 999px; background: #FFFFFF; color: #7C2128; font: 700 12.5px var(--av-texte); }
 .etude-choix:disabled { opacity: .6; cursor: wait; }
