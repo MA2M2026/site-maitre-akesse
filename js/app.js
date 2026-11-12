@@ -835,7 +835,7 @@ async function construireCanvasCompcard(ficheData, langue) {
   ctx.fillRect(0, px(yPiedPage), canvas.width, px(hPiedPage));
   ctx.fillStyle = BLANC;
   ctx.font = `700 ${fpx(7.5)}px ${SANS}`;
-  texteEspace(en ? 'BOOKING · MAÎTRE AKESSE MODEL MANAGEMENT' : 'BOOKING · MAÎTRE AKESSE MODEL MANAGEMENT', px(M), px(yPiedPage + 8), 0.9, 'left');
+  texteEspace('BOOKING · MAÎTRE AKESSE MODEL MANAGEMENT', px(M), px(yPiedPage + 8), 0.9, 'left');
   ctx.font = `500 ${fpx(9)}px ${SANS}`;
   ctx.fillText(MA2M_TELEPHONES.join('  ·  ') + '  ·  infos.ma2m@gmail.com', px(M), px(yPiedPage + 14));
   const reseaux = ['instagram', 'facebook', 'tiktok', 'youtube'];

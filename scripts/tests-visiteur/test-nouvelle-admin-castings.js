@@ -120,9 +120,49 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('.etude-suivant'); await p.waitForTimeout(1500);
     ok(nbNouvelles > 1 ? new RegExp('2 / ' + nbNouvelles).test(await p.textContent('.etude-haut')) : /étudiées/.test(await p.textContent('#contenu')), n + '« Candidature suivante » : la suivante s’affiche');
     await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
+    // (12/11/2026, remarque de la propriétaire) la place de l'étude reste toujours visible : bouton, ou « aucune nouvelle »
+    { const zone = await p.textContent('.etude-lancer').catch(() => ''); const restent = Number(((await p.textContent('#contenu')).match(/Nouvelle\s*(\d+)/) || [0, -1])[1]);
+      ok(restent === 0 ? /Aucune nouvelle candidature à étudier/.test(zone) : /Étudier/.test(zone), n + 'retour à la liste : l’étude reste à sa place (' + (restent === 0 ? '« Aucune nouvelle candidature à étudier »' : 'bouton « Étudier »') + ')'); }
+    // (12/11/2026, « Les 2 » de la propriétaire) étudier une à une avec CHAQUE filtre : ici les « Retenue » ; le choix déjà
+    // pris s'appelle « Garder » : rien n'est écrit, aucun message ne part
+    await p.click('[data-action="dossiers-filtre"][data-filtre="retenue"]'); await p.waitForSelector('[data-filtre="retenue"][aria-pressed="true"]'); await p.waitForTimeout(800);
+    { const nbRet = Number(((await p.textContent('[data-filtre="retenue"] .nb')) || '0').trim()), zone = await p.textContent('.etude-lancer');
+      ok(nbRet > 0 && new RegExp(nbRet > 1 ? 'Étudier les ' + nbRet + ' retenues' : 'Étudier la candidature retenue').test(zone), n + 'filtre « Retenue » : bouton « ▶ Étudier » (' + nbRet + ')');
+      await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
+      const r = await p.evaluate(() => ({ haut: document.querySelector('.etude-haut').innerText, actuel: [...document.querySelectorAll('.etude-choix.actuel')].map((b) => b.dataset.statut + ':' + b.innerText.replace(/\s+/g, ' ').trim()), ligne: (document.querySelector('.etude-actuel') || {}).innerText || '' }));
+      ok(new RegExp('Retenues · 1 / ' + nbRet).test(r.haut) && r.actuel.length === 1 && /^retenue:.*Garder/.test(r.actuel[0]) && /Retenue/.test(r.ligne), n + 'étude des retenues : « Retenues · 1 / ' + nbRet + ' », « Aujourd’hui : Retenue », choix « Garder »');
+      await capture(p, 'etude-retenues' + suffixe);
+      const avantGarder = ecrits(journal, 'PATCH', 'casting_applications').length + ecrits(journal, 'POST', 'functions').length;
+      await p.click('.etude-choix.actuel'); await p.waitForSelector('.etude-resultat', { timeout: 15000 }); await p.waitForTimeout(1200);
+      ok(ecrits(journal, 'PATCH', 'casting_applications').length + ecrits(journal, 'POST', 'functions').length === avantGarder && /rien ne change/.test(await p.textContent('.etude-resultat h2')) && !(await p.$('#dos-notif-texte')),
+        n + '« Garder » : rien n’est écrit, aucun message, « rien ne change »');
+      await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
+      ok(await p.isVisible('[data-filtre="retenue"][aria-pressed="true"]'), n + '« Quitter » : retour sur le filtre « Retenue »'); }
 
     // 6. Demandes recruteurs
     await p.goto(URL_ADMIN + '#/site/b2-recruteurs'); await p.waitForSelector('.dossiers-grille'); await p.waitForTimeout(800);
+    // (12/11/2026, « Les 2 » de la propriétaire) étudier les demandes une à une, en grand : mannequins choisis qui défilent,
+    // réponse WhatsApp prête, deux décisions ; « Plus tard » enregistre « Vue » ; rien d'autre n'est écrit
+    { ok(/Étudier (les \d+ nouvelles demandes|la nouvelle demande)/.test(await p.textContent('.etude-lancer')), n + 'recruteurs : bouton « ▶ Étudier la nouvelle demande »');
+      await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(900);
+      const r = await p.evaluate(() => ({ url: location.hash, haut: document.querySelector('.etude-haut').innerText, nom: document.querySelector('.etude-voile b').textContent,
+        choisis: [...document.querySelectorAll('.etude-choisi-nom')].map((x) => x.textContent), choix: [...document.querySelectorAll('.etude-choix')].map((b) => b.innerText.replace(/\s+/g, ' ').trim()),
+        wa: (document.getElementById('etude-wa') || {}).href || '', infos: document.querySelector('.etude-infos').innerText, deborde: document.documentElement.scrollWidth > innerWidth + 1 }));
+      ok(/b2-recruteurs\/etude$/.test(r.url) && /Nouvelles demandes · 1 \/ \d/.test(r.haut) && /Koffi Marc/.test(r.nom) && r.choisis.length === 2 && /AYA KOUASSI · 178 cm/.test(r.choisis.join('|')),
+        n + 'étude recruteur : Koffi Marc en grand, ses 2 mannequins choisis défilent (' + r.choisis.join(', ') + ')');
+      ok(r.choix.length === 2 && /Plus tard/.test(r.choix[0]) && /Traitée/.test(r.choix[1]) && /wa\.me\/2250505050505\?text=/.test(r.wa) && /Défilé/.test(r.infos) && !r.deborde,
+        n + 'étude recruteur : « Plus tard » / « Traitée », réponse WhatsApp prête, projet affiché, rien ne dépasse');
+      await capture(p, 'etude-recruteur' + suffixe);
+      const avant = ecrits(journal, 'PATCH', 'recruiter_requests').length;
+      await p.click('.etude-choix.revoir'); await p.waitForSelector('.etude-resultat', { timeout: 15000 }); await p.waitForTimeout(900);
+      const pt = ecrits(journal, 'PATCH', 'recruiter_requests').slice(avant);
+      ok(pt.length === 1 && /"status":"vue"/.test(pt[0][3]) && /à reprendre plus tard/.test(await p.textContent('.etude-resultat h2')) && !(await p.$('#dos-notif-texte')),
+        n + 'étude recruteur : « Plus tard » enregistre « Vue », sans message automatique');
+      await p.click('.etude-suivant'); await p.waitForTimeout(1200);
+      ok(/étudi/i.test(await p.textContent('#contenu')) && await p.isVisible('.etude-fin'), n + 'étude recruteur : fin de la file');
+      await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide'); await p.waitForTimeout(600);
+      ok(/Aucune nouvelle demande à étudier/.test(await p.textContent('.etude-lancer')), n + 'recruteurs : « Aucune nouvelle demande à étudier » à la même place');
+      await p.click('[data-action="dossiers-filtre"][data-filtre="toutes"]'); await p.waitForSelector('[data-filtre="toutes"][aria-pressed="true"]'); await p.waitForTimeout(800); }
     ok(/Koffi Marc.*Défilé.*Maison Ivoire/.test(await p.textContent('.dossier-carte')), n + 'demande recruteur listée (contact, projet, entreprise)');
     await p.click('.dossier-carte .dossier-lien'); await p.waitForSelector('.choisis'); await p.waitForTimeout(800);
     ok((await p.$$('.choisi')).length === 2 && (await p.$$('.choisi .vis img')).length === 2 && /AYA KOUASSI.*178 cm/.test(await p.textContent('.choisis')), n + 'mannequins choisis par le recruteur, avec leurs visages');

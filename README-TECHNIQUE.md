@@ -4655,3 +4655,93 @@ Styles : fin de `css/style.css` (seulement rouge MA2M et blanc). Après tout cha
   ordinateur au-dessus du nom. Le bandeau « Appli MA2M » passe au-dessus de la barre « Réserver / Compcard ».
 - **Sélection et Book** : « Sélection » = les photos de la compcard (choisies par la mannequin dans « Ma compcard »,
   ou par l'agence) ; « Book » = toutes les photos (la Sélection y est aussi). Aucun tri automatique.
+
+## Grande revue du 12/11/2026 (2 h GMT)
+
+Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` sur la machine, jamais dans le dépôt) :
+`connexion-admin.js` (ESSAI ADMIN MA2M : mot de passe, code à 6 chiffres, code d'appareil) et `compte-mannequin.js`
+(ESSAI MA2M, fiche du registre « compte d'essai » sans téléphone, profil jamais publié). Visites en LECTURE SEULE.
+- Administration : le compte d'essai a le rôle « Responsable des encaissements » (Paiements seulement) : les 16
+  rubriques de Paiements visitées sur ordinateur et téléphone, sans erreur ni débordement (2,5 à 5 s par page).
+- Application : 5 onglets, volet Paiements, 6 étapes du profil, Ma compcard, Mon CV (ancien modèle) : sans erreur.
+- Site public et 5 fiches (homme / femme, avec et sans compcard, 10 à 48 photos), FR / EN, téléphone / ordinateur :
+  sans erreur ni débordement ni image cassée ; photo de profil, 6 mensurations, barre du bas collée, « Voir les N photos ».
+- Observatory : A+ (130). SonarCloud : 4 petits défauts apparus le 11/11 corrigés (propriété `font-style` écrasée par
+  `font` dans css/admin-vivante.css et css/mannequin-app.css ; condition inutile dans la compcard de js/app.js ;
+  `openCompcard()` sans `void`) — en ligne avec la prochaine mise en ligne.
+- Suite de la revue (12/11 matin, compte d'essai passé « Administrateur du site » par la propriétaire ; un compte n'a
+  qu'un rôle à la fois) : 42 rubriques de l'Administration du site visitées sur ordinateur et téléphone, sans erreur ni
+  débordement. Corrigé : « Traductions anglaises » lisait `model_profiles` avec `*` (refusé : colonnes privées
+  protégées), les présentations des mannequins manquaient ; désormais `id, full_name, bio` (essai `test-traductions.js`).
+  Journal des erreurs : la demande du code à 6 chiffres avant une action sensible (`AUTH_RECENTE`, suivie de la demande
+  de code et d'un nouvel essai par `P.sensible`) n'est plus comptée comme une erreur (`js/surveillance.js` ; essai
+  `test-surveillance-auth-recente.js`).
+- 12/11 (capture de la propriétaire) : menu « Compcard » de la fiche (PDF / JPEG) blanc sur blanc et caché sous la
+  rangée des chapitres : fond blanc, boutons rouges, au-dessus (`.fiche-v2 .fiche-telecharger-menu`, z-index 40).
+  `test-fiche-premium.js` appuie maintenant sur « Compcard » et vérifie PDF et JPEG (visibles, lisibles, rien par-dessus).
+- 12/11 (capture de la propriétaire) : recherche de l'accueil de l'Administration, résultats cachés sous « Envoyer un
+  message » : `.av-recherche` passe au-dessus (z-index 30) ; liste des résultats limitée en hauteur et défilante
+  (au-dessus du menu du bas sur téléphone). `test-nouvelle-admin.js` vérifie que chaque résultat visible n'est
+  recouvert par rien.
+- 12/11 : `P.dateHeure` et `P.mois` (js/portail/noyau.js) donnent « — » pour une date vide ou illisible (avant :
+  « Invalid time value » cassait « Archives – période de rodage », « NaN undefined » dans « Dossiers de formation ») ;
+  `moisDe` des archives protégé. Essai `test-paiements-compta-robustes.js` : les 34 rubriques de Paiements et
+  Comptabilité, téléphone et ordinateur, sans page cassée, « NaN » / « undefined », débordement ni erreur. Outil
+  `photos-paiements-compta.js` (CAPTURES=dossier, SEULES=rubriques) pour photographier ces rubriques.
+- 12/11, nouvelle présentation de toute l'administration (demande de la propriétaire : « change l'interface de toute
+  l'administration, paiement comme comptabilité ») : choix du mois de la Comptabilité « ‹ novembre 2026 › » (barre
+  `.pr-barre` des Bulletins, `P.actions['compta-mois']`, pas de mois futur) au lieu du champ calendrier en anglais +
+  « Afficher » ; encadrés `.note` (info, alerte, ok, erreur) en cartes blanches à trait de couleur à gauche
+  (css/admin-vivante.css) au lieu des fonds bleu / jaune.
+- 12/11 (remarque de la propriétaire : « ça affiche une ancienne version ») : sans nouvelle candidature, la liste des
+  Candidatures n'affichait plus le grand bouton « Étudier les nouvelles » et ressemblait à l'ancienne page ; la place
+  reste désormais visible : « ✓ Aucune nouvelle candidature à étudier » (`.etude-a-jour`, js/admin/site-dossiers.js).
+
+## Candidatures : étudier une à une avec CHAQUE filtre (12/11/2026, « Les 2 » de la propriétaire)
+
+`js/admin/site-dossiers.js` : le bouton « ▶ Étudier … » suit le filtre choisi (Nouvelles, Retenues, Refusées, À revoir,
+En attente, Toutes ; « Toutes » = comme la liste, sans les dossiers « à part »). `chargerEtude()` lit le filtre de la liste
+(`etat('casting').filtre`) et le garde dans `P.etat.etude.filtre` ; textes par groupe dans `GROUPES_ETUDE` / `groupeEtude()`.
+En haut de l'étude : « Retenues · 1 / 4 ». Pour un dossier déjà décidé, « Aujourd'hui : Retenue » et le choix déjà pris
+devient « Garder » (`.etude-choix.actuel`) : rien n'est écrit, aucun message ne part (« rien ne change »).
+Test : `test-nouvelle-admin-castings.js` (filtre « Retenue », « Garder » sans écriture, « Quitter » revient au filtre).
+
+## Demandes recruteurs : étudier une à une, en grand (12/11/2026)
+
+L'étude de `js/admin/site-dossiers.js` est commune aux deux rubriques : `ETUDE[source]` (textes, décisions),
+`boutonEtude()`, `chargerEtude(source)`, `pageEtude(source)` (adresse `#/site/<page>/etude`), et le haut propre à chaque
+rubrique (`hautCandidature`, `hautRecruteur`). Recruteur : les mannequins choisis défilent en grand avec leur nom
+(`.etude-choisi`), projet / date / ville, « 💬 Répondre sur WhatsApp » (modèle « Remerciement de la demande »), deux
+décisions (`.etude-decision.deux`) : « Plus tard » (= Vue) et « Traitée » ; aucun message automatique.
+Test : `test-nouvelle-admin-castings.js` (partie 6).
+
+## Paiements à valider : vérifier un à un, en grand (12/11/2026)
+
+`js/portail/espace-paiements.js` : `paiementsDeclares()` (groupes inscription + 1er mois) sert la liste et l'étude ;
+`aValider(args)` montre « ▶ Vérifier les N paiements un à un » (ou « Aucun paiement à vérifier ») et l'adresse
+`#/paiements/a-valider/etude` ouvre `etudePaiements()` : le plus ancien en grand (photo du registre via
+`data-visage-nom`, montant, objet, date, Wave, téléphone), puis Refuser / Plus tard / Valider. Refuser et Valider sont
+les actions habituelles (`paiement-refuser`, `paiement-valider` : confirmation, motif, message prêt) ; la page se
+redessine et montre le suivant. « Plus tard » (`paiement-plus-tard`) met de côté pour cette étude
+(`P.etat.paiementsDeCote`, vidé en revenant à la liste) sans rien écrire. Styles `.etude-somme*` (css/admin-vivante.css).
+Test : `test-administration.js` (« Vérifier le paiement un à un », « Plus tard » sans écriture).
+
+## Validations en attente : vérifier les fiches une à une, en grand (12/11/2026)
+
+`js/admin/site-mannequins.js` : `validations(args)` montre « ▶ Vérifier les N fiches une à une » (ou « Aucune fiche à
+vérifier ») ; `#/site/b2-validations/etude` ouvre `etudeValidations()` : la plus ancienne en grand (toutes ses photos
+qui défilent, âge, ville, mineure signalée, bio), puis Refuser (raison, geste habituel) / Plus tard / Publier
+(`validation-publier`). « Plus tard » (`validation-plus-tard`, `P.etat.validationsDeCote`) n'écrit rien. Les points
+sous les photos : `P.suivrePointsEtude` (partagé par js/admin/site-dossiers.js).
+Test : `test-nouvelle-admin-mannequins.js` (partie 6).
+
+## Étudier une à une : morceaux communs `P.etude` (12/11/2026, relecture)
+
+`js/admin/coque.js` : `P.etude` fabrique l'écran d'étude pour les quatre rubriques (Candidatures, Demandes
+recruteurs, Validations en attente, Paiements à valider) : `lancer` / `aJour` (bouton de la liste), `page`,
+`quitter`, `haut` (photos qui défilent avec leurs points, ou un « centre » comme le montant), `diapo` (photo qui
+s'agrandit d'un appui, adresses dans `P.etude.galerie`, action `etude-photo-voir`), `infos`, `decision`, `fin`,
+`taille`, `suivrePoints`, et « Plus tard » (`plusTard`, `deCote`, `vider`, action `etude-plus-tard`). Une file
+s'étudie par paquets de `P.etude.LIMITE` (500). Candidatures / recruteurs : la file suit le filtre de la liste
+même en revenant en arrière ; les dossiers supprimés entre-temps ne sont pas comptés. Paiement en espèces :
+« Vérifiez d'abord que cet argent a bien été reçu en espèces » (et non Wave Business).

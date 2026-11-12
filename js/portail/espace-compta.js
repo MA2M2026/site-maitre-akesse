@@ -27,11 +27,19 @@
     const [a, m] = mois.split('-').map(Number);
     return [mois, new Date(Date.UTC(a, m, 1)).toISOString().slice(0, 10)];
   }
-  const choixMois = () => '<form class="ligne" data-form="compta-mois"><label class="fl" for="cp-mois">Mois<input id="cp-mois" name="mois" type="month" value="' +
-    moisChoisi().slice(0, 7) + '" max="' + P.aujourdhui().slice(0, 7) + '"></label><button class="btn" type="submit">Afficher</button></form>';
-  P.formulaires['compta-mois'] = (f) => {
-    const m = String(f.get('mois') || '');
-    if (/^\d{4}-\d{2}$/.test(m)) P.etat.moisCompta = m + '-01';
+  // (12/11/2026, nouvelle présentation demandée par la propriétaire) « ‹ novembre 2026 › » au lieu du champ calendrier en
+  // anglais et du bouton « Afficher » ; même barre que les Bulletins et la Liste de présence (.pr-barre) ; pas de mois futur
+  const choixMois = () => {
+    const m = moisChoisi().slice(0, 7), dernier = m >= P.aujourdhui().slice(0, 7);
+    return '<div class="carte pr-barre choix-mois" role="group" aria-label="Mois"><button type="button" class="btn petit" data-action="compta-mois" data-pas="-1" aria-label="Mois précédent">‹</button>' +
+      '<h2><span class="pr-mois">' + P.esc(P.mois(m)) + '</span></h2>' +
+      '<button type="button" class="btn petit" data-action="compta-mois" data-pas="1" aria-label="Mois suivant"' + (dernier ? ' disabled' : '') + '>›</button></div>';
+  };
+  P.actions['compta-mois'] = (el) => {
+    const [a, m] = moisChoisi().slice(0, 7).split('-').map(Number);
+    const suivant = new Date(Date.UTC(a, m - 1 + Number(el.dataset.pas || 0), 1)).toISOString().slice(0, 10);
+    if (suivant.slice(0, 7) > P.aujourdhui().slice(0, 7)) return;
+    P.etat.moisCompta = suivant;
     P.afficher();
   };
 

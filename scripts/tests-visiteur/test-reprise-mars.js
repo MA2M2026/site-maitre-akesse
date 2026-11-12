@@ -152,9 +152,10 @@ async function cloture(b) {
     d.rpc.compta_cloturer_complet = (x) => { d.tables.compta_clotures.push({ mois: x.p_mois, recettes: 65000, depenses: 20000, nb_ecritures: 3, note: x.p_note, cloture_le: AUJ + 'T10:00:00Z' }); return { mois: x.p_mois }; };
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, BASE + '/admin/'); await p.waitForTimeout(800);
-    await aller(p, 'compta/cloture-guidee', '#cp-mois');
+    await aller(p, 'compta/cloture-guidee', '[data-action="compta-mois"]');
+    ok(await p.isDisabled('[data-action="compta-mois"][data-pas="1"]'), n + 'pas de mois futur : « › » grisé sur le mois en cours');
     ok(/n’est pas terminé/.test(await texte(p)), n + 'le mois en cours ne se clôture pas, et c’est dit');
-    await p.fill('#cp-mois', PASSE.slice(0, 7)); await p.click('form[data-form="compta-mois"] [type=submit]');
+    await p.click('[data-action="compta-mois"][data-pas="-1"]');  // (le mois passé : « ‹ »)
     await p.waitForSelector('form[data-form="cloture-guidee"]', { timeout: 6000 }).catch(() => {});
     let t = await texte(p);
     ok(/1 paiement\(s\) « J’ai payé » à vérifier/.test(t) && await p.isDisabled('form[data-form="cloture-guidee"] button[type=submit]'), n + 'un paiement « J’ai payé » en attente bloque la clôture');

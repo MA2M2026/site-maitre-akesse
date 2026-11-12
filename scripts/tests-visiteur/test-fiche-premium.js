@@ -45,6 +45,14 @@ const tables = {
     ok(!(await p.isVisible('.fiche-mesures')), n + 'le détail des mensurations est replié');
     await p.click('.fiche-mens-tout > summary');
     ok(await p.isVisible('.fiche-mesures') && /82 cm/.test(await p.textContent('.fiche-mesures')), n + '« Toutes les mensurations » : le détail complet (entrejambe 82 cm)');
+    // (12/11/2026, capture de la propriétaire) « Compcard » du panneau : PDF et JPEG visibles, lisibles, rien par-dessus
+    await p.$eval('#btn-compcard', (x) => x.scrollIntoView({ block: 'center', behavior: 'instant' })); await p.waitForTimeout(200);
+    await p.click('#btn-compcard'); await p.waitForTimeout(300);
+    const menu = await p.$$eval('#menu-compcard button', (l) => l.map((x) => { const r = x.getBoundingClientRect(), c = getComputedStyle(x);
+      const dessus = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { texte: x.textContent.trim(), vu: r.height > 20, lisible: c.color !== c.backgroundColor && c.webkitTextFillColor !== c.backgroundColor, libre: dessus === x || x.contains(dessus) }; }));
+    ok(menu.length === 2 && menu.every((m) => m.vu && m.lisible && m.libre), n + '« Compcard » : PDF et JPEG visibles, lisibles, rien par-dessus (' + JSON.stringify(menu) + ')');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(200);
     // 2. chapitres et Sélection (compcard dans l'ordre)
     const chapitres = await p.$$eval('.fiche-onglets a', (l) => l.map((a) => a.textContent.replace(/\s+\d+$/, '').trim()));
     ok(chapitres.join('|') === (en ? 'Selection|About|Career|Book|Contact' : 'Sélection|À propos|Parcours|Book|Contact'), n + 'chapitres ' + chapitres.join(' · '));

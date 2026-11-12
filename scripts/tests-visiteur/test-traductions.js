@@ -47,11 +47,14 @@ const TRADUCTIONS = [{ cle: cle('CASTING NEWFACE'), en: 'NEW FACE CASTING' }, { 
     d.tables.mot_responsable = [{ id: 'principal', nom: 'Franck Akesse', titre: 'Fondateur', message: 'Bienvenue chez MA2M.', photo_url: null }];
     d.tables.traductions_en = TRADUCTIONS;
     d.rpc.traduction_enregistrer = null;
+    // (12/11/2026, grande revue) la présentation d'une mannequin publiée : la vraie base refuse « * » sur les fiches
+    d.tables.model_profiles = (d.tables.model_profiles || []).concat([{ id: 'mq-trad', full_name: 'AWA TRADUCTION', published: true, bio: 'Passionnée de défilés depuis toujours.' }]);
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForSelector('.accueil-tete');
     await p.goto('http://127.0.0.1:' + PORT + '/admin/#/site/b3c-traductions'); await p.waitForSelector('#contenu .entete', { timeout: 8000 });
     const t = await p.textContent('#contenu');
     ok(/Traductions anglaises/.test(t) && /à traduire/.test(t) && /Traduit/.test(t), n + 'la liste : textes traduits et à traduire');
+    ok(/Présentation · AWA TRADUCTION/.test(t) && /Passionnée de défilés/.test(t), n + 'la présentation d’une mannequin publiée est dans la liste (colonnes utiles seulement, la base refuse « * »)');
     const etats = await p.$$eval('#contenu tbody tr td:nth-child(3)', (l) => l.map((x) => x.textContent.trim()));
     ok(etats[0] === 'À traduire' && etats[etats.length - 1] === 'Traduit', n + 'les textes à traduire d’abord');
     // traduire le mot du fondateur (texte simple)

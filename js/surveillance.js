@@ -316,6 +316,10 @@
           // le code du site de sa lecture. Sans elle, un « 400 » ne dit pas quoi corriger.
           const message = methode + ' ' + nomCourt(url) + ' → ' + rep.status;
           rep.clone().text().then(function (corps) {
+            // (12/11/2026, grande revue) « AUTH_RECENTE » : la base demande le code à 6 chiffres avant une action sensible
+            // (accepter un compte, changer un rôle, supprimer…) ; l'Administration affiche alors la demande de code et
+            // recommence (P.sensible, js/portail/noyau.js) : sécurité voulue, pas une panne.
+            if (/AUTH_RECENTE/.test(corps || '')) return;
             signaler('Requête en échec', message, (corps ? 'Réponse : ' + corps.slice(0, 300) + ' · ' : '') + url);
           }, function () {
             signaler('Requête en échec', message, url);

@@ -25,6 +25,55 @@
   document.addEventListener('load', (e) => {
     if (e.target.tagName === 'IMG' && e.target.parentNode && e.target.parentNode.classList && e.target.parentNode.classList.contains('vis')) e.target.classList.add('charge');
   }, true);
+  // ---------- Étudier une à une, en grand (12/11/2026) : morceaux communs ----------
+  // Candidatures et Demandes recruteurs (js/admin/site-dossiers.js), Validations en attente (site-mannequins.js),
+  // Paiements à valider (js/portail/espace-paiements.js) : même écran, mêmes gestes.
+  P.etude = {
+    LIMITE: 500,  // (une file plus longue s'étudie en plusieurs fois)
+    taille: (cm) => (Number(cm) > 0 ? (Number(cm) / 100).toFixed(2).replace('.', ',') + ' m' : ''),
+    // une photo qui s'agrandit d'un appui (les adresses de la file sont dans P.etude.galerie)
+    diapo: (url, nom, i) => '<button type="button" class="etude-photo" data-action="etude-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
+      '<span class="vis"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
+      (url ? '<img src="' + P.esc(url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</span></button>',
+    galerie: [],
+    // le grand cadre : diapositives qui défilent (avec leurs points), sinon « centre » (ex. le montant), sinon les initiales
+    haut: (diapos, nom, sous, centre) => '<div class="etude-photos apparait' + (centre ? ' etude-somme' : '') + '">' +
+      (diapos.length ? '<div class="etude-piste" id="etude-piste">' + diapos.join('') + '</div>' +
+          (diapos.length > 1 ? '<div class="etude-points" aria-hidden="true">' + diapos.map((x, i) => '<i' + (i ? '' : ' class="actif"') + '></i>').join('') + '</div>' : '')
+        : centre || '<div class="etude-piste">' + P.visage('', nom) + '</div>') +
+      '<div class="etude-voile"><b>' + P.esc(nom) + '</b><small>' + P.esc(sous.filter(Boolean).join(' · ')) + '</small></div></div>',
+    infos: (l, apres) => { const h = l.filter(Boolean).map((x) => '<span>' + P.esc(x) + '</span>').join('') + (apres || ''); return h ? '<div class="etude-infos">' + h + '</div>' : ''; },
+    // choix : [classe (non / revoir / oui), signe, texte, attributs { action, id, statut… }, actuel]
+    decision: (choix) => '<div class="etude-decision' + (choix.length === 2 ? ' deux' : '') + '" id="etude-decision">' + choix.map(([classe, signe, texte, attrs, actuel]) =>
+      '<button type="button" class="etude-choix ' + classe + (actuel ? ' actuel" aria-current="true' : '') + '"' +
+      Object.keys(attrs).map((k) => ' data-' + k + '="' + P.esc(attrs[k]) + '"').join('') + '><em aria-hidden="true">' + signe + '</em>' + P.esc(texte) + '</button>').join('') + '</div>',
+    page: (retour, compteur, corps) => '<div class="etude"><div class="etude-haut">' + retour + (compteur ? '<span>' + P.esc(compteur) + '</span>' : '') + '</div>' + corps + '</div>',
+    quitter: (href) => '<a class="etude-quitter" href="' + P.esc(href) + '">‹ Quitter</a>',
+    fin: (retourHref, titre, texte, bouton) => P.etude.page(P.etude.quitter(retourHref), '', '<div class="etude-fin apparait"><div class="etude-gros" aria-hidden="true">🎉</div>' +
+      '<h1>' + P.esc(titre) + '</h1><p class="doux">' + P.esc(texte) + '</p><a class="btn rouge" href="' + P.esc(retourHref) + '">' + P.esc(bouton) + '</a></div>'),
+    // bouton de la liste (href : l'adresse de l'étude, ou attrs d'une action) ; sans rien à étudier, la même place, « à jour »
+    lancer: (cible, titre, sous) => (typeof cible === 'string' ? '<a class="etude-lancer apparait" href="' + P.esc(cible) + '">'
+        : '<button type="button" class="etude-lancer apparait"' + Object.keys(cible).map((k) => ' data-' + k + '="' + P.esc(cible[k]) + '"').join('') + '>') +
+      '<em aria-hidden="true">▶</em><span>' + P.esc(titre) + '<small>' + P.esc(sous) + '</small></span>' + (typeof cible === 'string' ? '</a>' : '</button>'),
+    aJour: (titre, sous) => '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>' + P.esc(titre) + '<small>' + P.esc(sous) + '</small></span></div>',
+    // file « le plus ancien d'abord » (Paiements, Validations) : « Plus tard » met de côté pour cette étude, sans rien
+    // écrire ; la liste mise de côté se vide en revenant à la liste de la rubrique (P.etude.vider)
+    deCote: (cle) => (P.etat['etudeDeCote-' + cle] = P.etat['etudeDeCote-' + cle] || []),
+    vider: (cle) => { P.etat['etudeDeCote-' + cle] = []; },
+    plusTard: (cle, id) => ['revoir', '⏸', 'Plus tard', { action: 'etude-plus-tard', cle, id }]
+  };
+  P.actions['etude-plus-tard'] = (el) => { P.etude.deCote(el.dataset.cle).push(el.dataset.id); return P.afficher(); };
+  P.actions['etude-photo-voir'] = (el) => { if (typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(P.etude.galerie, Number(el.dataset.index)); };
+  // les points sous les photos suivent la photo affichée (à appeler après l'affichage d'une étude)
+  P.etude.suivrePoints = () => {
+    const piste = document.getElementById('etude-piste'), points = document.querySelectorAll('.etude-points i');
+    if (!piste || !points.length) return;
+    piste.addEventListener('scroll', () => {
+      const n = Math.round(piste.scrollLeft / Math.max(1, piste.clientWidth));
+      points.forEach((x, i) => x.classList.toggle('actif', i === n));
+    }, { passive: true });
+  };
+
   // ---------- Convoquer une sélection (24/10/2026, demande de la propriétaire) ----------
   // Sélection d'un client (Demandes recruteurs) ou de l'agence (Mannequins, cases à cocher) : une
   // petite fenêtre crée le projet dans l'Agenda avec ces mannequins (caché du site public), puis
