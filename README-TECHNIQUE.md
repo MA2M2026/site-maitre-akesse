@@ -4787,3 +4787,10 @@ relues 8 minutes après le choix) : les vidéos sont arrivées, pas les photos. 
 COPIÉE EN MÉMOIRE dès qu'elle est choisie ; une photo déjà illisible est signalée tout de suite. Utilisé par
 js/formulaire-candidature.js (Intégrer l'agence, castings : `preparerPuis`, l'envoi attend `photosEnPreparation`) et
 js/cours-talons.js (étape 3 : « un instant » tant que la préparation n'est pas finie). Essai : test-photos-pretes.js.
+
+## Date ET heure de réception (12/11/2026)
+
+`P.dateEtHeure` (js/portail/noyau.js) : « 12/11/2026 à 14 h 49 », heure d’Abidjan ; Candidatures et Demandes recruteurs
+(liste, fiche, étude une à une). Cours de talons : déjà « Inscrite le … » avec l’heure. Drive : `nomDossierPersonne`
+(scripts/apps-script-photos-drive.gs) nomme le dossier « Awa Koné — 12/11/2026 à 14h49 » (heure d’Abidjan) ; À REDÉPLOYER
+par la propriétaire dans script.google.com (voir l’en-tête du fichier).

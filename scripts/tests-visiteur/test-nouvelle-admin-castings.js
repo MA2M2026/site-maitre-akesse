@@ -45,6 +45,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await capture(p, 'candidatures' + suffixe);
     await p.click('.segments .btn[data-filtre="toutes"]'); await p.waitForTimeout(900);
     ok((await p.$$('.dossier-carte')).length === 4, n + 'filtre « Toutes » : les 4 dossiers (aucun mis à part)');
+    // (12/11/2026, demande de la propriétaire) chaque candidature montre la date ET l'heure de réception
+    ok((await p.$$eval('.dossier-carte .dossier-meta', (l) => l.map((x) => x.textContent))).every((t) => /\d{2}\/\d{2}\/\d{4} à \d{1,2} h \d{2}/.test(t)), n + 'chaque candidature : date et heure de réception (« 12/11/2026 à 14 h 49 »)');
     await p.click('.segments .btn[data-filtre="nouvelle"]'); await p.waitForTimeout(900);
 
     // 2. Fiche d'une mineure
