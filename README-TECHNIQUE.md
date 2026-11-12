@@ -4696,3 +4696,12 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
 - 12/11 (remarque de la propriétaire : « ça affiche une ancienne version ») : sans nouvelle candidature, la liste des
   Candidatures n'affichait plus le grand bouton « Étudier les nouvelles » et ressemblait à l'ancienne page ; la place
   reste désormais visible : « ✓ Aucune nouvelle candidature à étudier » (`.etude-a-jour`, js/admin/site-dossiers.js).
+
+## Candidatures : étudier une à une avec CHAQUE filtre (12/11/2026, « Les 2 » de la propriétaire)
+
+`js/admin/site-dossiers.js` : le bouton « ▶ Étudier … » suit le filtre choisi (Nouvelles, Retenues, Refusées, À revoir,
+En attente, Toutes ; « Toutes » = comme la liste, sans les dossiers « à part »). `chargerEtude()` lit le filtre de la liste
+(`etat('casting').filtre`) et le garde dans `P.etat.etude.filtre` ; textes par groupe dans `GROUPES_ETUDE` / `groupeEtude()`.
+En haut de l'étude : « Retenues · 1 / 4 ». Pour un dossier déjà décidé, « Aujourd'hui : Retenue » et le choix déjà pris
+devient « Garder » (`.etude-choix.actuel`) : rien n'est écrit, aucun message ne part (« rien ne change »).
+Test : `test-nouvelle-admin-castings.js` (filtre « Retenue », « Garder » sans écriture, « Quitter » revient au filtre).

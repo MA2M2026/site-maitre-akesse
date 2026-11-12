@@ -152,11 +152,15 @@
         '</article>';
     }).join('');
     const plus = count > dossiers.length ? '<button type="button" class="btn" data-action="dossiers-plus" data-source="' + source + '">Voir plus (' + (count - dossiers.length) + ' de plus)</button>' : '';
-    // (11/11/2026, maquette validée) étudier les nouvelles une à une, en grand
-    const etudier = source === 'casting' && nb.nouvelle ? '<button type="button" class="etude-lancer apparait" data-action="etude-demarrer"><em aria-hidden="true">▶</em><span>Étudier ' +
-      (nb.nouvelle > 1 ? 'les ' + nb.nouvelle + ' nouvelles' : 'la nouvelle candidature') + '<small>Une à une, en grand, décision en un geste</small></span></button>'
+    // (11/11/2026, maquette validée) étudier une à une, en grand ; (12/11/2026, « Les 2 » de la propriétaire) pour
+    // CHAQUE filtre (Nouvelles, Retenues, Refusées, À revoir, En attente, Toutes), pas seulement les nouvelles
+    const aEtudier = source === 'casting' ? (e.filtre === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[e.filtre] || 0)) : 0;
+    const etudier = source === 'casting' && aEtudier ? '<button type="button" class="etude-lancer apparait" data-action="etude-demarrer"><em aria-hidden="true">▶</em><span>Étudier ' +
+      groupeEtude(e.filtre, aEtudier) + '<small>Une à une, en grand, décision en un geste</small></span></button>'
       // (12/11/2026, remarque de la propriétaire : sans nouvelle, la page semblait être l'ancienne) toujours la même place
-      : source === 'casting' ? '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>Aucune nouvelle candidature à étudier<small>Dès qu’une candidature arrive, elle s’étudie ici, une à une, en grand</small></span></div>' : '';
+      : source === 'casting' ? '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>' +
+        (e.filtre === 'nouvelle' ? 'Aucune nouvelle candidature à étudier<small>Dès qu’une candidature arrive, elle s’étudie ici, une à une, en grand</small>'
+          : 'Aucune candidature ' + P.esc(GROUPES_ETUDE[e.filtre] ? '« ' + conf.libelles[e.filtre] + ' »' : '') + ' à étudier<small>Choisissez un autre filtre pour étudier une à une, en grand</small>') + '</span></div>' : '';
     return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres + etudier +
       (cartes ? '<div class="dossiers-grille' + (source === 'recruteur' ? ' sans-visage' : '') + '">' + cartes + '</div>' + plus :
         '<div class="carte vide">Aucun dossier « ' + P.esc(e.filtre === 'toutes' ? 'toutes' : conf.libelles[e.filtre]) + ' » pour le moment.</div>');
@@ -374,13 +378,23 @@
   // Les nouvelles candidatures en grand, l'une après l'autre : photos qui défilent, l'essentiel, trois
   // décisions (Refuser, À revoir, Retenir) ; après la décision, le message prêt (e-mail parti tout seul,
   // WhatsApp en un appui), puis la suivante. La liste des candidatures à étudier est fixée au départ.
+  // (12/11/2026) la file suit le filtre choisi dans la liste : nouvelles, retenues, refusées, à revoir, en attente ou toutes
+  // (« toutes » = comme la liste : sans les dossiers mis « à part »)
   async function chargerEtude() {
-    const l = await P.bd(sb.from('casting_applications').select('id').eq('status', 'nouvelle').order('created_at', { ascending: false }).limit(100));
-    P.etat.etude = { ids: l.map((x) => x.id), i: 0 };
+    const conf = SOURCES.casting, filtre = etat('casting').filtre;
+    let q = sb.from(conf.table).select('id').order('created_at', { ascending: false });
+    if (filtre !== 'toutes') q = q.eq(conf.champStatut, filtre);
+    else if (conf.aPart.length) q = q.not(conf.champStatut, 'in', '(' + conf.aPart.map((x) => '"' + x + '"').join(',') + ')');
+    const l = await P.bd(q.limit(200));
+    P.etat.etude = { ids: l.map((x) => x.id), i: 0, filtre };
   }
   P.actions['etude-demarrer'] = async () => { await chargerEtude(); location.hash = '#/site/b2-candidatures/etude'; };
   P.actions['etude-suivant'] = () => { if (P.etat.etude) P.etat.etude.i += 1; return P.afficher(); };
   const accord = (d, f, m) => (d.genre === 'homme' || d.civilite === 'Monsieur' ? m : f);
+  // « les 3 retenues », « la candidature « À revoir » »… (bouton, haut de l'étude et fin de la file)
+  const GROUPES_ETUDE = { nouvelle: ['nouvelle candidature', 'nouvelles'], retenue: ['candidature retenue', 'retenues'], 'refusée': ['candidature refusée', 'refusées'],
+    'en étude': ['candidature « À revoir »', 'candidatures « À revoir »'], 'en attente': ['candidature « En attente »', 'candidatures « En attente »'], toutes: ['candidature', 'candidatures'] };
+  function groupeEtude(filtre, n) { const g = GROUPES_ETUDE[filtre] || GROUPES_ETUDE.toutes; return n > 1 ? 'les ' + n + ' ' + g[1] : 'la ' + g[0]; }
   async function pageEtude() {
     const e = P.etat.etude;
     if (!e) { await chargerEtude(); return pageEtude(); }  // (adresse ouverte directement)
@@ -388,7 +402,7 @@
     if (e.i >= e.ids.length) {
       fiche = null;
       return '<div class="etude"><div class="etude-haut">' + retour + '</div><div class="etude-fin apparait"><div class="etude-gros" aria-hidden="true">🎉</div>' +
-        '<h1>' + (e.ids.length ? 'Toutes les nouvelles sont étudiées' : 'Aucune nouvelle candidature') + '</h1><p class="doux">Bravo, la file est à jour.</p>' +
+        '<h1>' + P.esc(e.ids.length ? (e.ids.length > 1 ? 'Vous avez étudié ' + groupeEtude(e.filtre, e.ids.length) : 'Candidature étudiée') : 'Aucune candidature à étudier') + '</h1><p class="doux">Bravo, la file est à jour.</p>' +
         '<a class="btn rouge" href="#/site/' + conf.page + '">Retour aux candidatures</a></div></div>';
     }
     const d = await P.bd(sb.from(conf.table).select('*').eq('id', e.ids[e.i]).maybeSingle());
@@ -402,7 +416,10 @@
       d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
       mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''
     ].filter(Boolean).map((x) => '<span>' + P.esc(x) + '</span>').join('') + (video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : '');
-    return '<div class="etude"><div class="etude-haut">' + retour + '<span>' + (e.i + 1) + ' / ' + e.ids.length + '</span></div>' +
+    const groupe = (GROUPES_ETUDE[e.filtre] || GROUPES_ETUDE.toutes)[1];
+    const choix = (statut, classe, signe, texte) => '<button type="button" class="etude-choix ' + classe + (d.status === statut ? ' actuel' : '') + '" data-action="etude-decider" data-statut="' + statut + '"' +
+      (d.status === statut ? ' aria-current="true"' : '') + '><em aria-hidden="true">' + signe + '</em>' + (d.status === statut ? 'Garder' : texte) + '</button>';
+    return '<div class="etude"><div class="etude-haut">' + retour + '<span>' + P.esc(groupe.charAt(0).toUpperCase() + groupe.slice(1)) + ' · ' + (e.i + 1) + ' / ' + e.ids.length + '</span></div>' +
       '<div class="etude-photos apparait">' + (ph.length ? '<div class="etude-piste" id="etude-piste">' + ph.map((x, i) =>
           '<button type="button" class="etude-photo" data-action="dossier-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' + visageDossier(x.affiche, d.full_name) + '</button>').join('') + '</div>' +
           (ph.length > 1 ? '<div class="etude-points" aria-hidden="true">' + ph.map((x, i) => '<i' + (i ? '' : ' class="actif"') + '></i>').join('') + '</div>' : '')
@@ -410,23 +427,26 @@
         '<div class="etude-voile"><b>' + P.esc(nomDe('casting', d)) + '</b><small>' + P.esc([age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + dateFr(d.created_at)].filter(Boolean).join(' · ')) + '</small></div></div>' +
       (infos ? '<div class="etude-infos">' + infos + '</div>' : '') +
       (d.message ? '<blockquote class="etude-mot">« ' + P.esc(d.message) + ' »</blockquote>' : '') +
+      // (12/11/2026) en étudiant les retenues, refusées… le choix déjà pris s'appelle « Garder » : rien ne change, aucun message
+      (d.status !== 'nouvelle' ? '<p class="etude-actuel">Aujourd’hui : ' + P.pastille(conf.libelles[d.status] || d.status || '', TONS[d.status]) + '</p>' : '') +
       '<div class="etude-decision" id="etude-decision">' +
-        '<button type="button" class="etude-choix non" data-action="etude-decider" data-statut="refusée"><em aria-hidden="true">✕</em>Refuser</button>' +
-        '<button type="button" class="etude-choix revoir" data-action="etude-decider" data-statut="en étude"><em aria-hidden="true">⏸</em>À revoir</button>' +
-        '<button type="button" class="etude-choix oui" data-action="etude-decider" data-statut="retenue"><em aria-hidden="true">✓</em>Retenir</button></div>' +
+        choix('refusée', 'non', '✕', 'Refuser') + choix('en étude', 'revoir', '⏸', 'À revoir') + choix('retenue', 'oui', '✓', 'Retenir') + '</div>' +
       '<a class="etude-fiche" data-visage href="#/site/' + conf.page + '/' + P.esc(encodeURIComponent(d.id)) + '">Voir la fiche complète</a></div>';
   }
   P.actions['etude-decider'] = async (el) => {
     if (!fiche || fiche.source !== 'casting') return;
     const d = fiche.d, nouveau = el.dataset.statut, zone = document.getElementById('etude-decision');
     zone.querySelectorAll('button').forEach((b) => { b.disabled = true; });
-    if (d.status !== nouveau && !(await enregistrerStatut('casting', d, nouveau))) { zone.querySelectorAll('button').forEach((b) => { b.disabled = false; }); return; }
+    const avant = d.status;
+    if (avant !== nouveau && !(await enregistrerStatut('casting', d, nouveau))) { zone.querySelectorAll('button').forEach((b) => { b.disabled = false; }); return; }
     const prenom = String(d.full_name || '').trim().split(/\s+/)[0] || 'Elle';
-    const titre = { retenue: ['✅', prenom + ' est ' + accord(d, 'retenue', 'retenu')], 'en étude': ['⏸', prenom + ' : à revoir plus tard'], 'refusée': ['✕', 'Candidature de ' + prenom + ' non retenue'] }[nouveau];
+    const garde = avant === nouveau;
+    const titre = garde ? ['👌', prenom + ' : rien ne change (' + (SOURCES.casting.libelles[nouveau] || nouveau) + ')']
+      : { retenue: ['✅', prenom + ' est ' + accord(d, 'retenue', 'retenu')], 'en étude': ['⏸', prenom + ' : à revoir plus tard'], 'refusée': ['✕', 'Candidature de ' + prenom + ' non retenue'] }[nouveau];
     zone.outerHTML = '<div class="etude-resultat apparait"><div class="etude-gros" aria-hidden="true">' + titre[0] + '</div><h2>' + P.esc(titre[1]) + '</h2>' +
       '<div id="dos-notification"></div><button type="button" class="btn rouge etude-suivant" data-action="etude-suivant">' +
       (P.etat.etude && P.etat.etude.i + 1 < P.etat.etude.ids.length ? 'Candidature suivante ›' : 'Terminer ›') + '</button></div>';
-    await notifier('casting', d, nouveau, document.getElementById('dos-notification'));
+    if (!garde) await notifier('casting', d, nouveau, document.getElementById('dos-notification'));
   };
   // les points sous les photos suivent la photo affichée
   function apresEtude() {

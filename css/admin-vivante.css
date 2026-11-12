@@ -1323,6 +1323,9 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .etude-choix.non { color: #7C2128; }
 .etude-choix.revoir { color: #9A560B; }
 .etude-choix.oui { color: #24603A; }
+/* (12/11/2026) étude des retenues, refusées… : le choix déjà pris (« Garder ») est entouré */
+.etude-choix.actuel { box-shadow: inset 0 0 0 2px currentColor, var(--av-ombre); }
+.etude-actuel { margin: 0; text-align: center; font: 600 13px var(--av-texte); color: #F3DDE0; }
 .etude-fiche { align-self: center; color: #F3DDE0; font-size: 13px; }
 .etude-resultat, .etude-fin { padding: 18px; border-radius: 20px; background: #FFFFFF; color: #2a1416; text-align: center; box-shadow: var(--av-ombre); }
 .etude-resultat h2, .etude-fin h1 { margin: 4px 0 10px; font: 600 26px/1.15 var(--av-titre); }

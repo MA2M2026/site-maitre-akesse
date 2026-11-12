@@ -123,6 +123,21 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // (12/11/2026, remarque de la propriétaire) la place de l'étude reste toujours visible : bouton, ou « aucune nouvelle »
     { const zone = await p.textContent('.etude-lancer').catch(() => ''); const restent = Number(((await p.textContent('#contenu')).match(/Nouvelle\s*(\d+)/) || [0, -1])[1]);
       ok(restent === 0 ? /Aucune nouvelle candidature à étudier/.test(zone) : /Étudier/.test(zone), n + 'retour à la liste : l’étude reste à sa place (' + (restent === 0 ? '« Aucune nouvelle candidature à étudier »' : 'bouton « Étudier »') + ')'); }
+    // (12/11/2026, « Les 2 » de la propriétaire) étudier une à une avec CHAQUE filtre : ici les « Retenue » ; le choix déjà
+    // pris s'appelle « Garder » : rien n'est écrit, aucun message ne part
+    await p.click('[data-action="dossiers-filtre"][data-filtre="retenue"]'); await p.waitForSelector('[data-filtre="retenue"][aria-pressed="true"]'); await p.waitForTimeout(800);
+    { const nbRet = Number(((await p.textContent('[data-filtre="retenue"] .nb')) || '0').trim()), zone = await p.textContent('.etude-lancer');
+      ok(nbRet > 0 && new RegExp(nbRet > 1 ? 'Étudier les ' + nbRet + ' retenues' : 'Étudier la candidature retenue').test(zone), n + 'filtre « Retenue » : bouton « ▶ Étudier » (' + nbRet + ')');
+      await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
+      const r = await p.evaluate(() => ({ haut: document.querySelector('.etude-haut').innerText, actuel: [...document.querySelectorAll('.etude-choix.actuel')].map((b) => b.dataset.statut + ':' + b.innerText.replace(/\s+/g, ' ').trim()), ligne: (document.querySelector('.etude-actuel') || {}).innerText || '' }));
+      ok(new RegExp('Retenues · 1 / ' + nbRet).test(r.haut) && r.actuel.length === 1 && /^retenue:.*Garder/.test(r.actuel[0]) && /Retenue/.test(r.ligne), n + 'étude des retenues : « Retenues · 1 / ' + nbRet + ' », « Aujourd’hui : Retenue », choix « Garder »');
+      await capture(p, 'etude-retenues' + suffixe);
+      const avantGarder = ecrits(journal, 'PATCH', 'casting_applications').length + ecrits(journal, 'POST', 'functions').length;
+      await p.click('.etude-choix.actuel'); await p.waitForSelector('.etude-resultat', { timeout: 15000 }); await p.waitForTimeout(1200);
+      ok(ecrits(journal, 'PATCH', 'casting_applications').length + ecrits(journal, 'POST', 'functions').length === avantGarder && /rien ne change/.test(await p.textContent('.etude-resultat h2')) && !(await p.$('#dos-notif-texte')),
+        n + '« Garder » : rien n’est écrit, aucun message, « rien ne change »');
+      await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
+      ok(await p.isVisible('[data-filtre="retenue"][aria-pressed="true"]'), n + '« Quitter » : retour sur le filtre « Retenue »'); }
 
     // 6. Demandes recruteurs
     await p.goto(URL_ADMIN + '#/site/b2-recruteurs'); await p.waitForSelector('.dossiers-grille'); await p.waitForTimeout(800);
