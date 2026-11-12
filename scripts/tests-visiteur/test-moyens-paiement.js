@@ -41,7 +41,7 @@ const sansEspaces = (x) => x.replace(/[  ]/g, ' ');
     await s.ctx.close();
     // 2. moyens allumés
     s = await mannequin(ecran, ALLUMES); const p = s.p;
-    ok(await p.$$eval('.mp-moyens .mp-moyen', (l) => l.map((x) => x.textContent).join('|')) === 'Wave|Orange Money|Carte bancaire (Visa)|Virement bancaire' && /Bientôt : MTN Money, Moov Money/.test(await s.t()), nomEcran + ' : les 4 moyens allumés au choix, les 2 autres « bientôt »');
+    ok(await p.$$eval('.mp-moyens .mp-moyen', (l) => l.map((x) => x.textContent.replace(/^✓ /, '')).join('|')) === 'Wave|Orange Money|Carte bancaire (Visa)|Virement bancaire' && /Bientôt : MTN Money, Moov Money/.test(await s.t()), nomEcran + ' : les 4 moyens allumés au choix, les 2 autres « bientôt »');
     await p.click('.mp-moyen[data-moyen="orange_money"]'); await p.waitForTimeout(200);
     ok(/Envoyez 10 000 FCFA par Orange Money au 07 11 22 33 44 \(au nom de MA2M\)/.test(await s.t()) && !(await p.$('[data-mp=wave]')), nomEcran + ' : Orange Money → numéro de l’agence et montant affichés');
     ok(await p.isDisabled('[data-mp=paye]'), nomEcran + ' : « J’ai payé » attend le numéro du payeur');

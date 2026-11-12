@@ -49,8 +49,10 @@
 .mp-mois.conge { background: #FFFFFF; color: #595959; border: 1px dashed #B9B9B9; }
 /* Moyens de paiement (12/11/2026, js/moyens-paiement.js) : choix en pastilles, puis où payer */
 .mp-moyens { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.2rem 0 0.1rem; }
-.mp-moyen { min-height: 40px; padding: 0.45rem 0.85rem; border-radius: 999px; font-size: 0.85rem; }
-.mp-moyen.choisi { outline: 2px solid currentColor; outline-offset: 2px; font-weight: 700; }
+.mp-moyen { min-height: 40px; padding: 0.45rem 1rem; border-radius: 999px; border: 1.5px solid #7C2128; background: #FFFFFF; color: #7C2128; -webkit-text-fill-color: #7C2128;
+  font-family: inherit; font-weight: 600; font-size: 0.85rem; line-height: 1.2; letter-spacing: 0; text-transform: none; box-shadow: none; cursor: pointer; }
+.mp-moyen.choisi { background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
+.mp-moyen:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
 .mp-consigne { padding: 0.7rem 0.85rem; border-radius: 12px; border: 1px solid var(--lignes); background: var(--blanc-pur, #FFFFFF); }
 .mp-consigne p { margin: 0 0 0.3rem; }
 .mp-numero { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; overflow-wrap: anywhere; user-select: all; }

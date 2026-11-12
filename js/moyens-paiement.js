@@ -28,7 +28,7 @@
   function choix(moyens, choisi, cle) {
     const allumes = moyens.map((m) => m.code), bientot = PREPARES.filter((c) => c !== 'wave' && allumes.indexOf(c) < 0).map(nom);
     return (moyens.length > 1 ? '<div class="mp-moyens" role="group" aria-label="Moyen de paiement">' + moyens.map((m) =>
-      '<button type="button" class="mp-moyen' + (m.code === choisi ? ' choisi' : '') + '" data-moyen="' + esc(m.code) + '" data-mois="' + esc(cle) + '" aria-pressed="' + (m.code === choisi) + '">' + esc(m.nom || nom(m.code)) + '</button>').join('') + '</div>'
+      '<button type="button" data-bouton-libre class="mp-moyen' + (m.code === choisi ? ' choisi' : '') + '" data-moyen="' + esc(m.code) + '" data-mois="' + esc(cle) + '" aria-pressed="' + (m.code === choisi) + '">' + (m.code === choisi ? '✓ ' : '') + esc(m.nom || nom(m.code)) + '</button>').join('') + '</div>'
       : '<p class="mp-petit">Moyen de paiement : <b>' + esc(nom(choisi)) + '</b></p>') +
       (bientot.length ? '<p class="mp-petit">Bientôt : ' + esc(bientot.join(', ')) + '.</p>' : '');
   }
