@@ -1424,3 +1424,4 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .soldes li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F1E4E6; }
 .soldes li:last-child { border-bottom: 0; }
 .soldes b { font: 600 22px var(--av-titre); font-variant-numeric: lining-nums tabular-nums; } .soldes b.rouge { color: #B3261E; }
+.pers-actions select { min-height: 36px; border-radius: 10px; padding: 4px 8px; }
