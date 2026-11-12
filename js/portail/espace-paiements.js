@@ -462,13 +462,14 @@
       '<div class="grille chiffres">' + P.chiffre('Payé', compte('paye'), 'vert') + P.chiffre('En attente de validation', compte('attente'), 'orange') +
       P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', compte('non_paye') + compte('a_payer'), 'rouge') + '</div>' +
       '<div class="note info">Le 1er : cochez les mannequins à appeler (décochez ceux qui ne paient plus), puis envoyez l’appel. Le 3 et le 5, les relances partent toutes seules par e-mail aux personnes appelées qui n’ont pas payé ; pour WhatsApp, utilisez « Relances WhatsApp ». Un mannequin qui ne paie plus : passez sa fiche en « Suspendu » ou « Sorti ». La formation compte 18 mois de cours ; décembre, janvier et février sont des congés sans mensualité.</div>' +
-      '<form data-form="mensualites-appel" class="carte"><h2>Appel du mois</h2>' +
-      P.tableau(['', 'Mannequin', '#Mensualité', 'Ce mois', 'Appel'], actifs.map((m) => {
+      // (12/11/2026, « premium partout ») une carte par mannequin, la case « Appeler » en haut à droite
+      '<form data-form="mensualites-appel" class="pers-section"><h2>Appel du mois</h2>' +
+      P.cartesPersonnes(actifs.map((m) => {
         const e = etat(m), a = appele(m), coche = !a && (e === 'a_payer' || e === 'non_paye');
-        return '<tr><td><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || !['a_payer', 'non_paye'].includes(e) ? ' disabled' : '') + '></td>' +
-          '<td>' + P.lienFiche(m.id, m.full_name, m.user_id) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
-          '<td>' + P.pastille(ETATS[e][0], ETATS[e][1]) + '</td><td class="petit-texte">' + (a ? 'envoyé le ' + P.dateHeure(a.appel_le) + (a.relance3_le ? ' · relancé le 3' : '') + (a.relance5_le ? ' · relancé le 5' : '') : '—') + '</td></tr>';
-      })) + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Envoyer l’appel aux personnes cochées</button>' +
+        return { tete: P.lienFiche(m.id, m.full_name, m.user_id), montant: P.fcfa(m.mensualite), etat: ETATS[e], ton: ETATS[e][1],
+          sous: [a ? 'appel envoyé le ' + P.dateHeure(a.appel_le) + (a.relance3_le ? ' · relancé le 3' : '') + (a.relance5_le ? ' · relancé le 5' : '') : ''],
+          coche: '<label><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || !['a_payer', 'non_paye'].includes(e) ? ' disabled' : '') + '> Appeler</label>' };
+      }), 'Aucun mannequin suivi ce mois-ci.') + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Envoyer l’appel aux personnes cochées</button>' +
       (relance ? '<button class="btn" type="button" data-action="mensualites-whatsapp" data-type="' + relance + '">Relances WhatsApp (' + (relance === 'relance5' ? 'dernière relance' : 'relance du 3') + ')</button>' : '') + '</div></form>';
   }
   // File d'envoi WhatsApp : un lien par personne, envoyé en un geste chacun

@@ -1408,3 +1408,8 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .volet-ajout[open] > summary { margin-bottom: 10px; }
 .volet-ajout .nb { display: inline-block; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: #7C2128; color: #FFFFFF; font-size: 12px; text-align: center; }
 .pers-section > h2 { margin: 22px 0 4px; font: 500 26px var(--av-titre); color: #FFFFFF; }
+.pers-carte { position: relative; }
+.pers-coche { position: absolute; top: 12px; right: 14px; }
+.pers-coche label { display: inline-flex; align-items: center; gap: 6px; font: 600 13px var(--av-texte); color: #7C2128; cursor: pointer; }
+.pers-coche input { width: 20px; height: 20px; accent-color: #7C2128; }
+.pers-carte:has(.pers-coche) .pers-tete { padding-right: 92px; }
