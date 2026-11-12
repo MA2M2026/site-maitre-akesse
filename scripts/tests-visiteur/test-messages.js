@@ -89,7 +89,7 @@ function donnees(role) {
     ok((await p.$$('[data-action="msg-modele"]')).length === 6, nomEcran + ' : 6 modèles (appel, relances, non reçu, confirmé, libre)');
     ok(/\{prenom\}/.test(await p.inputValue('#msg-texte')), nomEcran + ' : le modèle montre ses variables');
     // filtre par défaut : pas encore payé → KONÉ et KOUAME, pas ROXANE (qui a payé)
-    const noms = await p.$$eval('input[name="msg-ids"]', (l) => l.map((x) => x.closest('tr').textContent));
+    const noms = await p.$$eval('input[name="msg-ids"]', (l) => l.map((x) => x.closest('.pers-carte').textContent));
     ok(noms.length === 2 && !noms.some((x) => /ROXANE/.test(x)), nomEcran + ' : « pas encore payé » exclut ceux qui ont payé');
     ok(!noms.some((x) => /BAMBA/.test(x)), nomEcran + ' : « pas encore payé » exclut aussi la preuve envoyée en attente de validation (pas de relance)');
     ok(noms.some((x) => /MADAME KOUAME \(parent\)/.test(x)), nomEcran + ' : le destinataire d’un mineur est son parent');
