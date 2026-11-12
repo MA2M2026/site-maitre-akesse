@@ -15,17 +15,35 @@
   // annoncée dès la première seconde), sinon l'ancienne adresse (01/11/2026 : la fiche ouverte depuis une
   // carte arrivait vide, ≈ 3,6 s avant la photo, mesuré sur le site en ligne)
   const lienFiche = (m, en) => (m.slug && /^[a-z0-9-]{1,80}$/.test(m.slug) ? (en ? '/en' : '') + '/book/' + m.slug : 'mannequin.html?id=' + encodeURIComponent(m.id));
-  // o : { en, photo, selectionne, libelle } (libelle : texte du bouton « + »)
+  // Niveau public d'un profil (« Professionnel » = Main Board, sinon New Face) : js/partage.js, partagé avec le serveur
+  const niveauDe = (p) => { const N = racine.Partage; return N ? N.niveauNormalise(p.niveau_mannequin, p.years_experience) : (p.niveau_mannequin === 'Professionnel' ? 'Professionnel' : 'New Face'); };
+  // (12/11/2026, maquette validée par la propriétaire) chaque mannequin en COUVERTURE : grande photo, voile noir laqué
+  // qui monte du bas, niveau, nom en grandes lettres, taille · ville ; petit « + » discret pour la sélection (✓ une fois
+  // choisie). o : { en, photo, selectionne, libelle } (libelle : texte du bouton « + »)
   function carte(profil, rang, o) {
     const nom = profil.full_name || (o.en ? 'Model' : 'Mannequin');
+    const niveau = niveauDe(profil) === 'Professionnel' ? 'Main Board' : 'New Face';
     return '<div class="medaillon-carte reveal">' +
-      '<button class="btn-selection' + (o.selectionne ? ' est-selectionne' : '') + '" data-id="' + echapper(profil.id) + '" title="' + echapper(o.libelle) + '" aria-label="' + echapper(o.libelle) + '">' + (o.selectionne ? '✓' : '+') + '</button>' +
+      '<button class="btn-selection' + (o.selectionne ? ' est-selectionne' : '') + '" data-bouton-libre data-id="' + echapper(profil.id) + '" title="' + echapper(o.libelle) + '" aria-label="' + echapper(o.libelle) + '">' + (o.selectionne ? '✓' : '+') + '</button>' +
       '<a href="' + echapper(lienFiche(profil, o.en)) + '" class="u-flex-col-centre"><div class="medaillon-photo">' +
       // (08/11/2026 : alt vide, le nom est écrit juste dessous dans le même lien — lu une seule fois)
       '<img src="' + echapper(o.photo) + '" alt=""' + (rang < 5 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"') + '>' +
-      '<div class="book-carte-legende"><div class="medaillon-nom">' + echapper(nom) + '</div>' +
-      '<div class="medaillon-info">' + echapper(profil.city || '') + (profil.height_cm ? ' · ' + echapper(profil.height_cm) + ' cm' : '') + '</div></div>' +
+      '<div class="book-carte-legende"><div class="medaillon-niveau">' + niveau + '</div><div class="medaillon-nom">' + echapper(nom) + '</div>' +
+      '<div class="medaillon-info">' + echapper([racine.Partage.enMetres(profil.height_cm, o.en), profil.city || ''].filter(Boolean).join(' · ')) + '</div></div>' +
       '</div></a></div>';
+  }
+  // Deux chapitres (12/11/2026, choix de la propriétaire) : Main Board, puis New Faces ; dans chacun, l'ordre reçu
+  const repartir = (liste) => ({ main: liste.filter((p) => niveauDe(p) === 'Professionnel'), nouveaux: liste.filter((p) => niveauDe(p) !== 'Professionnel') });
+  const dansLOrdre = (liste) => { const r = repartir(liste); return r.main.concat(r.nouveaux); };
+  // dessiner(profil, rang) : la carte ; rang compté sur toute la page (les 5 premières photos chargées d'abord)
+  function chapitres(liste, en, dessiner) {
+    const r = repartir(liste);
+    let rang = 0;
+    const chapitre = (cle, titre, pres, l) => (l.length ? '<section class="book-chapitre" data-chapitre="' + cle + '"><div class="book-chapitre-tete"><h2>' + titre + '</h2>' +
+      '<span class="book-chapitre-nb">' + l.length + (en ? (l.length > 1 ? ' models' : ' model') : (l.length > 1 ? ' mannequins' : ' mannequin')) + '</span></div>' +
+      '<p class="book-chapitre-pres">' + pres + '</p><div class="book-grille">' + l.map((p) => dessiner(p, rang++)).join('') + '</div></section>' : '');
+    return chapitre('main', 'Main Board', en ? 'The agency’s established models.' : 'Les mannequins confirmées de l’agence.', r.main) +
+      chapitre('new', 'New Faces', en ? 'New faces to discover.' : 'Les nouveaux visages à découvrir.', r.nouveaux);
   }
   // bandeau « Mannequin du mois » en haut du Book (chantier 14) : seulement si sa fiche est publiée (slug)
   function bandeauMdm(d, en) {
@@ -66,5 +84,5 @@
   const vitrineDe = (profils, ids) => { if (!Array.isArray(ids)) return profils; const permises = new Set(ids); return profils.filter((p) => permises.has(p.id)); };
   // décalage de chaque groupe de visiteurs (0 à 5), réparti sur toute la liste quelle que soit sa longueur
   const decalageGroupe = (groupe, n) => (n ? Math.floor((groupe * n) / 6) : 0);
-  racine.RenduBook = { vitrineDe, decalageGroupe, echapper, lienFiche, bandeauMdm, ordonner, carte, compte, vignetteAccueil, categorieAccueil, infoUne, nombreAccueil, visagesAccueil };
+  racine.RenduBook = { vitrineDe, decalageGroupe, echapper, lienFiche, bandeauMdm, ordonner, carte, chapitres, repartir, dansLOrdre, niveauDe, compte, vignetteAccueil, categorieAccueil, infoUne, nombreAccueil, visagesAccueil };
 })(typeof window !== 'undefined' ? window : globalThis);

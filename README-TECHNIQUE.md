@@ -4823,3 +4823,21 @@ effacement). `sorteMessageCandidat` / `noterMessageCandidat` (js/messages-candid
 js/admin/site-dossiers.js : `suiviMessages`, `resumeSuivi` (sur chaque carte : « ✓ Prévenue le … · 📨 Convoquée le … ·
 🔁 Relancée le … » ou « Aucun message envoyé »), `blocMessagesEnvoyes` (historique sur la fiche). Tant que le fichier n’est
 pas collé : rien ne s’affiche (pas de faux « aucun message »). Essai : test-nouvelle-admin-castings.js.
+
+## The Book premium : couvertures et recherche intelligente (12/11/2026)
+
+Maquette validée par la propriétaire. `mannequins.html` / `en/mannequins.html` (`<main class="book-v2">`) : titre sobre
+(`.book-ouverture`), UNE barre collée sous l'en-tête (`.book-barre` : Tous / Femmes / Hommes + `#f-recherche`), puis deux
+chapitres **Main Board** (niveau « Professionnel ») et **New Faces**.
+- Dessin partagé page + serveur : `js/rendu-book.js` → `carte()` (couverture : photo, voile noir laqué, niveau, nom en
+  Big Shoulders, « 1,75 m · Ville », petit « + » qui devient ✓), `chapitres()`, `repartir()`, `dansLOrdre()`, `niveauDe()`.
+  `middleware.js` écrit les mêmes chapitres d'avance.
+- Recherche : `comprendreRecherche(texte)` (js/mannequins.js) comprend la taille (« 1m75 », « 1,75 », « 175 », « ms75 »
+  → à 2 cm près ; « plus de 1m80 », « moins de 1m70 »), les mensurations (« bassin 97 », « poitrine 88 », « 86-62-90 »),
+  la pointure, la taille de vêtement (« S », « taille M »), yeux, cheveux, catégorie, niveau, « disponible » ; les autres
+  mots cherchent dans le nom, la ville, le teint, les langues (FR/EN, sans accents). Suggestions (`#book-suggestions`)
+  au toucher de la barre vide, refermées dès qu'on tape ou qu'on choisit. Plus de panneau de mesures ni de boutons de niveau.
+- Sélection : `js/selection.js`, barre blanche en bas « N profils sélectionnés · Demander un casting › » (`.panier-barre`).
+- Relief (`js/relief.js`) : sur les couvertures, pas de « mur courbé » au défilement (cartes droites) ; elles se tournent
+  seulement vers la souris ou suivent l'inclinaison du téléphone (`html.relief .book-v2` dans css/style.css).
+- Essais : test-recherche-book.js (réécrit), test-book-serveur.js, test-relief.js.

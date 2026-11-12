@@ -190,6 +190,7 @@
 :root {
   --voile-photo-a00: rgba(0, 0, 0, 0);
   --voile-photo-a04: rgba(0, 0, 0, 0.04);
+  --voile-photo-a06: rgba(0, 0, 0, 0.06);
   --voile-photo-a18: rgba(0, 0, 0, 0.18);
   --voile-photo-a25: rgba(0, 0, 0, 0.25);
   --voile-photo-a35: rgba(0, 0, 0, 0.35);
@@ -207,6 +208,7 @@
   --voile-photo-a85: rgba(0, 0, 0, 0.85);
   --voile-photo-a90: rgba(0, 0, 0, 0.9);
   --voile-photo-a92: rgba(0, 0, 0, 0.92);
+  --voile-photo-a94: rgba(0, 0, 0, 0.94);
   --voile-photo-a100: rgba(0, 0, 0, 1);
 }
 

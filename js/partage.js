@@ -403,6 +403,14 @@
     return deriverNiveauMannequin(anneesExperience);
   }
   function libelleNiveauPublic(niveau) { return niveau === 'Professionnel' ? 'Main Board' : 'New Face'; }
+  // Taille en mètres : « 1,75 m » (anglais : « 1.75 m ») ; vide sans taille. UNE copie (The Book, page et serveur ;
+  // étude de l'administration ; « Mon profil » de l'application) — 12/11/2026, avant recopiée trois fois.
+  function enMetres(cm, en) {
+    const n = Number(cm);
+    if (!(n > 0)) return '';
+    const t = (n / 100).toFixed(2);
+    return (en ? t : t.replace('.', ',')) + ' m';
+  }
   function enPieds(cm) {
     const pouces = cm / 2.54; let pieds = Math.floor(pouces / 12); let reste = Math.round((pouces - pieds * 12) * 2) / 2;
     if (reste >= 12) { pieds += 1; reste -= 12; }
@@ -483,7 +491,7 @@
     const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
     return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
   }
-  racine.Partage = { rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
+  racine.Partage = { rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enMetres, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
     Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
     lienFicheMannequin, lieuProjet, dateLieuProjet, ma2mCompteParType, nombreTypeAgenda, projetsAvecNoms };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };
