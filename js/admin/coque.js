@@ -79,7 +79,7 @@
   //           ton (ok / alerte / erreur / neutre : liseré de couleur), classe, coche (HTML d'une case à cocher, en haut à droite),
   //           alertes [textes en rouge, ⚠] }
   P.cartesPersonnes = (items, vide) => (items.length ? '<div class="pers-grille">' + items.map((x, i) =>
-    '<article class="pers-carte apparait ton-' + (x.ton || 'neutre') + (x.classe ? ' ' + x.classe : '') + '" style="--i:' + Math.min(i, 14) + '">' +
+    '<article class="pers-carte apparait ton-' + (!x.ton || x.ton === 'info' ? 'neutre' : x.ton) + (x.coche ? ' avec-coche' : '') + (x.classe ? ' ' + x.classe : '') + '" style="--i:' + Math.min(i, 14) + '">' +
       (x.coche ? '<div class="pers-coche">' + x.coche + '</div>' : '') + '<div class="pers-tete">' + x.tete + (x.sous && x.sous.filter(Boolean).length ? '<small>' + x.sous.filter(Boolean).map(P.esc).join(' · ') + '</small>' : '') + '</div>' +
       '<div class="pers-milieu">' + (x.montant !== undefined && x.montant !== null ? '<b class="pers-montant">' + P.esc(x.montant) + '</b>' : '') + (x.etat ? P.pastille(x.etat[0], x.etat[1]) : '') + '</div>' +
       (x.alertes && x.alertes.length ? x.alertes.map((a) => '<p class="pers-alerte" role="alert">⚠ ' + P.esc(a) + '</p>').join('') : '') +

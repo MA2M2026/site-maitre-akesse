@@ -241,7 +241,7 @@
       // (12/11/2026, « premium partout ») une carte par échéance, rouge si en retard
       P.cartesPersonnes(liste.map((i) => {
         const p = paye(i), etat = i.annule ? ['Annulé', 'erreur'] : p ? ['Payé', 'ok'] : retard(i) ? ['En retard', 'erreur'] : ['À payer', 'info'];
-        return { tete: '<b class="pers-libelle">' + P.esc(i.nom) + '</b>', classe: i.annule ? 'annulee' : retard(i) ? 'en-retard' : '', ton: etat[1] === 'info' ? 'neutre' : etat[1],
+        return { tete: '<b class="pers-libelle">' + P.esc(i.nom) + '</b>', classe: i.annule ? 'annulee' : retard(i) ? 'en-retard' : '', ton: etat[1],
           sous: [i.periode || '', 'date limite : ' + P.date(i.echeance), i.annule && i.motif_annulation ? 'Motif : ' + i.motif_annulation : ''], montant: P.fcfa(i.montant), etat,
           actions: !i.annule && !p ? bouton('compta-impot-payer', i.id, 'Payer', true) + bouton('compta-impot-modifier', i.id, 'Modifier') + bouton('compta-impot-annuler', i.id, 'Annuler') : '' };
       }), 'Aucun impôt ni taxe dans l’échéancier.') + '<template id="im-comptes">' + C.optionsComptes(cpts) + '</template>';

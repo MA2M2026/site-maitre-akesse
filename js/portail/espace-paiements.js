@@ -468,7 +468,7 @@
         const e = etat(m), a = appele(m), coche = !a && (e === 'a_payer' || e === 'non_paye');
         return { tete: P.lienFiche(m.id, m.full_name, m.user_id), montant: P.fcfa(m.mensualite), etat: ETATS[e], ton: ETATS[e][1],
           sous: [a ? 'appel envoyé le ' + P.dateHeure(a.appel_le) + (a.relance3_le ? ' · relancé le 3' : '') + (a.relance5_le ? ' · relancé le 5' : '') : ''],
-          coche: '<label><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + (a || !['a_payer', 'non_paye'].includes(e) ? ' disabled' : '') + '> Appeler</label>' };
+          coche: a ? '<span class="pers-fait">Appel envoyé ✓</span>' : ['a_payer', 'non_paye'].includes(e) ? '<label><input type="checkbox" name="ids" value="' + m.id + '" aria-label="Appeler ' + P.esc(m.full_name) + '"' + (coche ? ' checked' : '') + '> Appeler</label>' : '' };
       }), 'Aucun mannequin suivi ce mois-ci.') + '<div class="ligne" style="margin-top:12px"><button class="btn rouge" type="submit">Envoyer l’appel aux personnes cochées</button>' +
       (relance ? '<button class="btn" type="button" data-action="mensualites-whatsapp" data-type="' + relance + '">Relances WhatsApp (' + (relance === 'relance5' ? 'dernière relance' : 'relance du 3') + ')</button>' : '') + '</div></form>';
   }
@@ -573,6 +573,8 @@
   // Page d'accueil de l'espace : attendu, validé, en attente, non payé, taux de recouvrement,
   // puis une ligne par mannequin actif (lignes non payées en rouge pâle). Même règle de statut que
   // « Mensualités du mois » : non payé seulement après le 5.
+  // « Message à : … » seulement quand le message part vers quelqu'un d'autre (le parent d'un mineur)
+  const messageA = (x) => (x.destinataire && x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : '');
   async function tableauDuMois() {
     const mois = moisCourant();
     const [tousActifs, paiements, E] = await Promise.all([
@@ -621,11 +623,11 @@
       P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') + '</div>' +
       (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé <span class="petit-texte">(étape d’installation : « supabase-suivi-mannequins.sql »)</span>. En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
       // le choix des mannequins suivis, rangé dans un volet (ouvert d'office quand le tableau est vide)
-      '<details class="carte volet-ajout"' + (suivis.length ? '' : ' open') + '><summary>＋ Ajouter un mannequin au tableau' + (proposes.length ? ' <span class="nb">' + proposes.length + '</span>' : '') + '</summary>' + ajout + '</details>' +
+      '<details class="carte volet-ajout"' + (!suivis.length || P.etat.voletAjout ? ' open' : '') + '><summary>＋ Ajouter un mannequin au tableau' + (proposes.length ? ' <span class="nb">' + proposes.length + '</span>' : '') + '</summary>' + ajout + '</details>' +
       '<div class="segments" role="group" aria-label="Groupe">' + FILTRES_GROUPE.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="tableau-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
       P.cartesPersonnes(montrees.map((x) => ({
         // (le destinataire n'est montré que s'il diffère : le parent d'une mineure)
-        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.inscrit ? 'Inscrit sur le site' : 'Non inscrit', x.destinataire && x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : ''],
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.inscrit ? 'Inscrit sur le site' : 'Non inscrit', messageA(x)],
         montant: P.fcfa(x.montant), etat: ETATS[x.e], ton: ETATS[x.e][1], classe: x.e === 'non_paye' ? 'ligne-retard' : '', actions: actions(x)
       })), suivis.length ? 'Aucun mannequin dans ce groupe.' : 'Le tableau est vide : ajoutez un mannequin avec le volet ci-dessus.');
   }
@@ -641,6 +643,7 @@
     await P.afficher();
   }
   P.formulaires['suivi-ajouter'] = async (f) => {
+    P.etat.voletAjout = true;  // (le volet reste ouvert pour ajouter le suivant)
     const choix = String(f.get('mannequin') || '');
     if (!choix) return P.message('Choisissez d’abord un mannequin dans la liste.');
     if (choix === '__tous__') {
@@ -764,14 +767,14 @@
       '<div class="ligne"><button class="btn rouge" type="button" data-action="recap-export" data-format="pdf">Télécharger en PDF</button><button class="btn" type="button" data-action="recap-export" data-format="xlsx">Télécharger en Excel</button></div>' +
       // (12/11/2026, « premium partout ») trois groupes de cartes : à valider, non payé, payé
       (d.attente.length ? '<section class="pers-section"><h2>Preuve reçue, à valider</h2>' + P.cartesPersonnes(d.attente.map((x) => ({
-        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : ''], montant: P.fcfa(x.m.mensualite || 0), etat: ['Preuve reçue', 'alerte'], ton: 'alerte',
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [messageA(x)], montant: P.fcfa(x.m.mensualite || 0), etat: ['Preuve reçue', 'alerte'], ton: 'alerte',
         actions: '<a class="btn petit rouge" href="#/paiements/a-valider">Valider</a>' }))) + '</section>' : '') +
       '<section class="pers-section"><h2>Non payé</h2>' + P.cartesPersonnes(d.pas.map((x) => ({
         tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), classe: x.affilee ? 'ligne-retard' : '', ton: x.affilee ? 'erreur' : 'neutre',
-        sous: [x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : '', x.retard ? x.retard + ' j de retard' : '', x.affilee ? P.pluriel(x.affilee, 'mois d’affilée', 'mois d’affilée') : ''],
+        sous: [messageA(x), x.retard ? x.retard + ' j de retard' : '', x.affilee ? P.pluriel(x.affilee, 'mois d’affilée', 'mois d’affilée') : ''],
         montant: P.fcfa(x.du), etat: x.affilee ? ['Non payé', 'erreur'] : ['À payer avant le 5', 'info'], actions: wa(x) })), 'Personne n’est en retard.') + '</section>' +
       '<section class="pers-section"><h2>Payé</h2>' + P.cartesPersonnes(d.ont.map((x) => ({
-        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : ''], montant: P.fcfa(x.m.mensualite || 0), etat: ['Payé', 'ok'], ton: 'ok' })),
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [messageA(x)], montant: P.fcfa(x.m.mensualite || 0), etat: ['Payé', 'ok'], ton: 'ok' })),
         'Personne n’a encore payé ce mois-ci.') + '</section>' +
       '<div class="note info">Ce récapitulatif est calculé en direct. Une fois le mois terminé, figez-le dans « Mois figés » pour le garder tel quel.</div>';
   }

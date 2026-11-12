@@ -49,7 +49,7 @@
       P.cartesPersonnes(lignes.map((l) => {
         const e = ETATS_RAPP[(l.r && l.r.etat) || 'a_verifier'], vu = l.r && (l.r.reference_paiement || l.r.montant_recu);
         return { tete: P.lienFiche(l.p.mannequin_id, l.p.mannequin && l.p.mannequin.full_name), classe: l.alertes.length ? 'ligne-retard' : '', ton: l.alertes.length ? 'erreur' : e[1],
-          sous: [(l.p.objet === 'inscription' ? 'Inscription' : 'Mensualité') + ' · ' + P.dateHeure(l.g.declare_le), 'Payeur : ' + ((l.r && l.r.numero_payeur) || 'Non communiqué'),
+          sous: [(l.p.objet === 'inscription' ? 'Inscription' : 'Mensualité') + ' · ' + P.dateHeure(l.g.declare_le), (l.p.mannequin && l.p.mannequin.telephone) ? 'Son numéro : ' + l.p.mannequin.telephone : '', 'Payeur : ' + ((l.r && l.r.numero_payeur) || 'Non communiqué'),
             'Vu dans Wave : ' + (vu ? (l.r.reference_paiement || '—') + (l.r.montant_recu ? ' · ' + P.fcfa(l.r.montant_recu) : '') : 'à saisir'), l.r && l.r.note ? 'Note : ' + l.r.note : ''],
           montant: P.fcfa(l.g.total), etat: e, alertes: l.alertes,
           actions: '<button class="btn petit" type="button" data-action="rapprochement-ouvrir" data-id="' + l.p.id + '">Rapprocher</button>' +

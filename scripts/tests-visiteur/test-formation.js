@@ -89,7 +89,8 @@ async function administration(b) {
     // appel du mois
     await p.goto(BASE + '/admin/#/paiements/mensualites'); await p.waitForSelector('form[data-form="mensualites-appel"]', { timeout: 8000 }).catch(() => {});
     const r0 = await p.$('input[name="ids"][value="r0"]');
-    ok(r0 && await r0.isDisabled() && !(await r0.isChecked()) && /Formation terminée/.test(await p.textContent('.contenu')), n + 'appel du mois : formation terminée → pas cochée, impossible à appeler');
+    // (12/11/2026, cartes) rien à réclamer : pas de case « Appeler » du tout
+    ok((!r0 || (await r0.isDisabled() && !(await r0.isChecked()))) && /Formation terminée/.test(await p.textContent('.contenu')), n + 'appel du mois : formation terminée → pas de case à cocher, impossible à appeler');
     ok(await p.isChecked('input[name="ids"][value="r4"]').catch(() => false), n + 'appel du mois : une mannequin en formation reste cochée');
     // paiements mois par mois
     await p.goto(BASE + '/admin/#/paiements/matrice'); await p.waitForSelector('.matrice, .tableau', { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(600);

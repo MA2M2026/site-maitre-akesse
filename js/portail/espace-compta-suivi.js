@@ -53,9 +53,9 @@
         // (12/11/2026, « premium partout ») une carte par dette ou créance : le reste en grand
         P.cartesPersonnes(visibles.map((d) => {
           const e = d.annule ? ['Annulée', 'erreur'] : !d.reste ? ['Payé', 'ok'] : d.retard ? ['En retard', 'erreur'] : [d.regle ? 'Payé en partie' : 'À payer', d.regle ? 'alerte' : 'info'];
-          return { tete: '<b class="pers-libelle">' + P.esc(noms[d.tiers_id] || '—') + '</b>', classe: d.annule ? 'annulee' : d.retard ? 'en-retard' : '', ton: e[1] === 'info' ? 'neutre' : e[1],
-            sous: [d.libelle, P.date(d.date_op) + (d.avoirs ? ' · avoirs ' + P.fcfa(d.avoirs) : ''), 'échéance : ' + P.date(d.echeance), d.reste !== d.montant ? 'sur ' + P.fcfa(d.montant) : '', d.annule && d.motif_annulation ? 'Motif : ' + d.motif_annulation : ''],
-            montant: P.fcfa(d.reste), etat: e,
+          return { tete: '<b class="pers-libelle">' + P.esc(noms[d.tiers_id] || '—') + '</b>', classe: d.annule ? 'annulee' : d.retard ? 'en-retard' : '', ton: e[1],
+            sous: [d.libelle, P.date(d.date_op) + (d.avoirs ? ' · avoirs ' + P.fcfa(d.avoirs) : ''), 'échéance : ' + P.date(d.echeance), !d.annule && d.reste !== d.montant ? 'reste, sur ' + P.fcfa(d.montant) : '', d.annule && d.motif_annulation ? 'Motif : ' + d.motif_annulation : ''],
+            montant: P.fcfa(d.annule ? d.montant : d.reste), etat: e,
             actions: (d.reste > 0 ? '<button class="btn petit rouge" type="button" data-action="compta-regler" data-id="' + d.id + '">' + (creance ? 'Encaisser' : 'Payer') + '</button>' + bouton('compta-echeance', d, 'Échéance') : '') +
               (d.justificatif ? bouton('compta-justif-voir', d, 'Justificatif') : !d.annule ? bouton('compta-justif-joindre', d, 'Joindre') : '') +
               (!d.annule && !d.regle && !d.facture ? bouton('compta-annuler', d, 'Annuler') : '') };
@@ -130,7 +130,7 @@
         : '<div class="note">Ajoutez d’abord les personnes (personnel ou prestataire) dans le <a href="#/compta/carnet">carnet</a>.</div>') +
       // (12/11/2026, « premium partout ») une carte par personne, puis les paiements du mois
       '<section class="pers-section"><h2>Par personne</h2>' + P.cartesPersonnes(gens.map((x) => ({
-        tete: '<span class="pers-sigle"><span data-visage-nom="' + P.esc(x.nom) + '"></span></span><b class="pers-libelle">' + P.esc(x.nom) + '</b>', sous: [TYPES[x.type], x.actif ? '' : 'Ne travaille plus avec l’agence'],
+        tete: '<b class="pers-libelle">' + P.esc(x.nom) + '</b>', sous: [TYPES[x.type], x.actif ? '' : 'Ne travaille plus avec l’agence'],
         montant: P.fcfa(total(x.id)), etat: total(x.id) ? ['Payé ce mois', 'ok'] : null, ton: total(x.id) ? 'ok' : 'neutre' })), 'Personne dans le carnet.') + '</section>' +
       '<section class="pers-section"><h2>Paiements du mois</h2>' + C.lignes(payes, noms, 'Aucun paiement ce mois-ci.') + '</section>';
   }
@@ -162,7 +162,7 @@
       '<label class="fl" for="ma-lieu">Où il se trouve (facultatif)<input id="ma-lieu" name="emplacement" maxlength="120" placeholder="Ex. : studio"></label>' +
       champJustif('ma-justif') + '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer l’achat</button></div></form>' +
       // (12/11/2026, « premium partout ») une carte par matériel
-      P.cartesPersonnes(liste.map((x) => ({ tete: '<b class="pers-libelle">' + P.esc(x.designation) + '</b>', classe: x.etat === 'sorti' ? 'annulee' : '', ton: ETATS[x.etat][1] === 'info' ? 'neutre' : ETATS[x.etat][1],
+      P.cartesPersonnes(liste.map((x) => ({ tete: '<b class="pers-libelle">' + P.esc(x.designation) + '</b>', classe: x.etat === 'sorti' ? 'annulee' : '', ton: ETATS[x.etat][1],
         sous: ['acheté le ' + P.date(x.date_achat), x.numero_serie || '', x.emplacement || '', x.etat === 'sorti' ? 'sorti le ' + P.date(x.date_sortie) + ' · ' + (x.motif_sortie || '') : ''],
         montant: P.fcfa(x.montant), etat: ETATS[x.etat],
         actions: x.etat === 'sorti' ? '' : '<button class="btn petit" type="button" data-action="compta-materiel-modifier" data-id="' + x.id + '">Modifier</button>' })), 'Aucun matériel enregistré.');

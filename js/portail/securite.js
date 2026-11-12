@@ -25,9 +25,8 @@
     return P.entete('Comptes et rôles', P.pastille('Administrateur principal seul', 'neutre')) +
       (Array.isArray(demandes) ? carteDemandes(demandes) : '<div class="carte"><h2>Demandes d’accès</h2><p class="doux">Pas encore activées : il faut d’abord coller le fichier <b>supabase-demandes-acces.sql</b> dans Supabase.</p></div>') +
       // (12/11/2026, « premium partout ») une carte par compte de l'équipe
-      P.cartesPersonnes(liste.map((s) => ({ tete: '<b class="pers-libelle">' + P.esc(s.nom) + '</b>', sous: [s.email, 'depuis le ' + P.date(s.cree_le)],
+      P.cartesPersonnes(liste.map((s) => ({ tete: '<b class="pers-libelle">' + P.esc(s.nom) + '</b>', sous: [P.ROLES[s.role] || s.role, s.email, 'depuis le ' + P.date(s.cree_le)],
         etat: s.actif ? ['Actif', 'ok'] : ['Coupé', 'erreur'], ton: s.actif ? 'ok' : 'erreur',
-        montant: s.role === 'principal' ? P.ROLES.principal : null,
         actions: s.role === 'principal' ? '<span class="doux petit-texte">compte unique, non supprimable</span>' :
           '<select data-change="securite-role" data-id="' + s.user_id + '" aria-label="Rôle de ' + P.esc(s.nom) + '">' +
             ['site', 'caisse', 'compta'].map((r) => '<option value="' + r + '"' + (r === s.role ? ' selected' : '') + '>' + P.esc(P.ROLES[r]) + '</option>').join('') + '</select>' +

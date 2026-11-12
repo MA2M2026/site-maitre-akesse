@@ -4777,3 +4777,4 @@ Traductions anglaises (12/11/2026) : une carte par texte (à traduire d'abord).
 « + Ajouter une autre expérience » (`#addExpBas`), comme le bouton du haut (`ajouterExperience`) ; la nouvelle ligne
 s'ouvre au milieu de l'écran, le curseur dans « Nom ». Il n'y a jamais eu de limite : avec 3 expériences, le bouton du haut
 sortait de l'écran. Essai : `test-espace-experiences.js`.
+Relecture (12/11/2026) : retards en rouge pâle sur les cartes, téléphone du mannequin dans le Rapprochement, volet « Ajouter » qui reste ouvert après un ajout (`P.etat.voletAjout`), case « Appeler » seulement quand on peut appeler (sinon « Appel envoyé ✓ »), `messageA` commun, liseré « info » réglé une fois dans `P.cartesPersonnes`, classe `avec-coche` (sans :has), rôle en texte (Sécurité), montant d'une dette annulée.

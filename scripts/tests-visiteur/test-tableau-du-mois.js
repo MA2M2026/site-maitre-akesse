@@ -125,7 +125,7 @@ function donnees(role) {
     ok(/MADAME KOUAME \(parent\)/.test(tx), nomEcran + ' : le destinataire d’un mineur est son parent');
     ok(/Inscrit sur le site/.test(tx) && /Non inscrit/.test(tx), nomEcran + ' : groupe inscrit / non inscrit');
     ok(!/ANCIEN SORTI/.test(tx), nomEcran + ' : un mannequin sorti n’apparaît pas');
-    if (apres5) ok((await p.$$('.pers-carte.ligne-retard')).length === 2, nomEcran + ' : les deux lignes non payées sont en rouge pâle');
+    if (apres5) ok((await p.$$eval('.pers-carte.ligne-retard', (l) => l.filter((x) => getComputedStyle(x).backgroundColor !== 'rgb(255, 255, 255)').length)) === 2, nomEcran + ' : les deux cartes non payées sont en rouge pâle');
     await p.screenshot({ path: __dirname + '/medias/tableau-du-mois-' + (ecran.width > 860 ? 'pc' : 'tel') + '.png' });
     await p.click('[data-action="tableau-filtre"][data-filtre="inscrits"]'); await p.waitForTimeout(800);
     const tf = await t();
