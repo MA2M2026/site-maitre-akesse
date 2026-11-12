@@ -335,14 +335,15 @@
       : P.etude.aJour('Aucun paiement à vérifier', 'Dès qu’un mannequin appuie sur « J’ai payé », il se vérifie ici, un à un, en grand');
     return P.entete('Paiements à valider', P.pastille(groupes.length + ' en attente', groupes.length ? 'alerte' : 'ok')) + etudier +
       '<div class="note info">Vérifiez chaque paiement dans Wave Business avant de valider. Le plus ancien est en haut.</div>' +
-      P.tableau(['Mannequin', 'Objet', '#Montant', 'Déclaré le', ''], groupes.map((g) => {
+      // (12/11/2026, « premium partout ») une carte par paiement
+      P.cartesPersonnes(groupes.map((g) => {
         const p = g.principal;
-        return '<tr><td>' + P.lienFiche(p.mannequin_id, p.mannequin && p.mannequin.full_name) + '<div class="petit-texte doux">' + P.esc((p.mannequin && p.mannequin.telephone) || '') + '</div></td>' +
-          '<td>' + P.esc(objetPaiement(p)) + (p.objet === 'inscription' && g.total > (p.montant || 0) ? '<div class="petit-texte doux">dont 1er mois de formation</div>' : '') + '<div>' + P.pastille('En attente de validation', 'alerte') + '</div></td>' +
-          '<td class="nombre">' + P.fcfa(g.total) + '</td><td>' + P.dateHeure(p.declare_le) + '</td>' +
-          '<td class="ligne"><button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + p.id + '">Valider</button>' +
-          '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + p.id + '">Refuser</button></td></tr>';
-      }));
+        return { tete: P.lienFiche(p.mannequin_id, p.mannequin && p.mannequin.full_name), ton: 'alerte',
+          sous: [objetPaiement(p) + (p.objet === 'inscription' && g.total > (p.montant || 0) ? ' (dont 1er mois de formation)' : ''), 'déclaré le ' + P.dateHeure(p.declare_le), (p.mannequin && p.mannequin.telephone) || ''],
+          montant: P.fcfa(g.total), etat: ['En attente de validation', 'alerte'],
+          actions: '<button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + p.id + '">Valider</button>' +
+            '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + p.id + '">Refuser</button>' };
+      }), 'Aucun paiement à valider.');
   }
   // Un paiement à la fois, en grand (12/11/2026) : le plus ancien d'abord. « Valider » et « Refuser » sont les mêmes
   // gestes que dans le tableau (confirmation, motif, message prêt) ; après chaque décision la page se redessine et montre
@@ -529,17 +530,18 @@
       '<div class="note info">Le code (ESP-…) permet au mannequin de créer son espace avec son e-mail et son mot de passe ; ses informations du casting sont alors reprises. Il ne sert qu’une fois et reste valable 7 jours. Il ne se génère qu’après une inscription payée et validée. Mannequin déjà inscrite avant l’application : « Inscrite avant l’application : créer son code ».</div>' +
       '<div class="grille chiffres">' + P.chiffre('À générer', lignes.filter((x) => x.etat === 'a_generer').length, 'orange') + P.chiffre('Actifs', lignes.filter((x) => x.etat === 'actif').length, 'vert') +
       P.chiffre('Expirés', lignes.filter((x) => x.etat === 'expire').length, 'rouge') + '</div>' +
-      '<div class="carte">' + (lignes.length ? P.tableau(['Mannequin', 'Origine', 'Destinataire', 'État', 'Code', ''], lignes.map((x) => {
+      // (12/11/2026, « premium partout ») une carte par mannequin, le code en grand
+      P.cartesPersonnes(lignes.map((x) => {
         const d = destinataire(x.m), actif = x.etat === 'actif', wa = actif ? messageCodeEspace(x.m, x.code).wa : null;
-        return '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.origine) + '</td><td>' + P.esc(d.mineur ? d.nom + ' (parent)' : d.nom) + '</td>' +
-          '<td>' + P.pastille(ETAT[x.etat][0], ETAT[x.etat][1]) + (actif ? '<div class="petit-texte doux">jusqu’au ' + P.esc(P.dateHeure(x.code.expire_le)) + '</div>' : '') + '</td>' +
-          '<td>' + (actif ? '<b style="letter-spacing:1px">' + P.esc(x.code.code) + '</b>' : '—') + '</td>' +
-          '<td><div class="ligne">' + (x.etat === 'non_paye' ? '<button class="btn petit rouge" type="button" data-action="code-espace-ancienne" data-id="' + x.m.id + '" data-nom="' + P.esc(x.m.full_name) + '">Inscrite avant l’application : créer son code</button>' +
+        return { tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), ton: ETAT[x.etat][1],
+          sous: [x.origine, d.mineur ? 'Message à : ' + d.nom + ' (parent)' : '', actif ? 'valable jusqu’au ' + P.dateHeure(x.code.expire_le) : ''],
+          montant: actif ? x.code.code : null, etat: ETAT[x.etat],
+          actions: (x.etat === 'non_paye' ? '<button class="btn petit rouge" type="button" data-action="code-espace-ancienne" data-id="' + x.m.id + '" data-nom="' + P.esc(x.m.full_name) + '">Inscrite avant l’application : créer son code</button>' +
             '<a class="btn petit" href="#/paiements/fiche/' + x.m.id + '">Enregistrer son paiement</a>'
             : actif ? '<button class="btn petit" type="button" data-action="code-espace-copier" data-code="' + P.esc(x.code.code) + '">Copier</button>' + (wa ? '<a class="btn petit rouge" target="_blank" rel="noopener" href="' + P.esc(wa) + '">WhatsApp</a>' : '<span class="doux petit-texte">pas de numéro</span>') + '<button class="btn petit" type="button" data-action="code-espace" data-id="' + x.m.id + '">Nouveau code</button>'
             : '<button class="btn petit rouge" type="button" data-action="code-espace" data-id="' + x.m.id + '">Générer le code</button>') +
-          (P.moi.role === 'principal' && x.etat === 'non_paye' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + x.m.id + '" aria-label="Supprimer ' + P.esc(x.m.full_name) + '">Supprimer</button>' : '') + '</div></td></tr>';
-      })) : '<p class="doux">Tous les mannequins actifs ont déjà leur espace.</p>') + '</div>';
+          (P.moi.role === 'principal' && x.etat === 'non_paye' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + x.m.id + '" aria-label="Supprimer ' + P.esc(x.m.full_name) + '">Supprimer</button>' : '') };
+      }), 'Tous les mannequins actifs ont déjà leur espace.');
   }
 
   // ---------- Mannequins suivis (une seule liste pour tout l'espace 2) ----------
@@ -759,17 +761,17 @@
       '<div class="grille chiffres">' + P.chiffre('Payé', d.ont.length, 'vert') + P.chiffre('Preuve reçue, à valider', d.attente.length, 'orange') + P.chiffre('Non payé', d.pas.length, 'rouge') + P.chiffre('Montant dû', P.fcfa(total), 'rouge') + '</div>' +
       (total ? '<p class="doux">dont ' + libelleMois(d.cible) + ' : <b>' + P.fcfa(duMois) + '</b> · dont mois précédents : <b>' + P.fcfa(total - duMois) + '</b></p>' : '') +
       '<div class="ligne"><button class="btn rouge" type="button" data-action="recap-export" data-format="pdf">Télécharger en PDF</button><button class="btn" type="button" data-action="recap-export" data-format="xlsx">Télécharger en Excel</button></div>' +
-      (d.attente.length ? '<div class="carte"><h2>Preuve reçue, à valider</h2>' + P.tableau(['Mannequin', 'Destinataire', '#Montant', 'Action'], d.attente.map((x) =>
-        '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td>' +
-        '<td><a class="btn petit" href="#/paiements/a-valider">Valider</a></td></tr>')) + '</div>' : '') +
-      '<div class="carte"><h2>Non payé</h2>' + (d.pas.length ? P.tableau(['Mannequin', 'Destinataire', '#Retard (j)', '#Mois d’affilée', '#Montant dû', 'Statut', 'Action'], d.pas.map((x) =>
-        '<tr' + (x.affilee ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.destinataire) + '</td>' +
-        '<td class="nombre">' + x.retard + '</td><td class="nombre">' + x.affilee + '</td><td class="nombre">' + P.fcfa(x.du) + '</td>' +
-        '<td>' + (x.affilee ? P.pastille('Non payé', 'erreur') : P.pastille('À payer avant le 5', 'info')) + '</td><td>' + wa(x) + '</td></tr>'))
-        : '<p class="doux">Personne n’est en retard.</p>') + '</div>' +
-      '<div class="carte"><h2>Payé</h2>' + (d.ont.length ? P.tableau(['Mannequin', 'Destinataire', '#Montant'], d.ont.map((x) =>
-        '<tr><td>' + P.lienFiche(x.m.id, x.m.full_name, x.m.user_id) + '</td><td>' + P.esc(x.destinataire) + '</td><td class="nombre">' + P.fcfa(x.m.mensualite || 0) + '</td></tr>'))
-        : '<p class="doux">Personne n’a encore payé ce mois-ci.</p>') + '</div>' +
+      // (12/11/2026, « premium partout ») trois groupes de cartes : à valider, non payé, payé
+      (d.attente.length ? '<section class="pers-section"><h2>Preuve reçue, à valider</h2>' + P.cartesPersonnes(d.attente.map((x) => ({
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : ''], montant: P.fcfa(x.m.mensualite || 0), etat: ['Preuve reçue', 'alerte'], ton: 'alerte',
+        actions: '<a class="btn petit rouge" href="#/paiements/a-valider">Valider</a>' }))) + '</section>' : '') +
+      '<section class="pers-section"><h2>Non payé</h2>' + P.cartesPersonnes(d.pas.map((x) => ({
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), classe: x.affilee ? 'ligne-retard' : '', ton: x.affilee ? 'erreur' : 'neutre',
+        sous: [x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : '', x.retard ? x.retard + ' j de retard' : '', x.affilee ? P.pluriel(x.affilee, 'mois d’affilée', 'mois d’affilée') : ''],
+        montant: P.fcfa(x.du), etat: x.affilee ? ['Non payé', 'erreur'] : ['À payer avant le 5', 'info'], actions: wa(x) })), 'Personne n’est en retard.') + '</section>' +
+      '<section class="pers-section"><h2>Payé</h2>' + P.cartesPersonnes(d.ont.map((x) => ({
+        tete: P.lienFiche(x.m.id, x.m.full_name, x.m.user_id), sous: [x.destinataire !== x.m.full_name ? 'Message à : ' + x.destinataire : ''], montant: P.fcfa(x.m.mensualite || 0), etat: ['Payé', 'ok'], ton: 'ok' })),
+        'Personne n’a encore payé ce mois-ci.') + '</section>' +
       '<div class="note info">Ce récapitulatif est calculé en direct. Une fois le mois terminé, figez-le dans « Mois figés » pour le garder tel quel.</div>';
   }
   P.actions['recap-mois'] = (el) => { P.etat.moisRecap = isoMois(indexMois(P.etat.moisRecap || moisCourant()) + Number(el.getAttribute('data-sens'))); P.afficher(); };

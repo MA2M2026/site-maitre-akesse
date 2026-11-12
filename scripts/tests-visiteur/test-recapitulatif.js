@@ -88,19 +88,20 @@ function donnees(role) {
     ok(/^1/.test(await val('Payé')), nomEcran + ' : Payé = 1 (ROXANE) ' + await val('Payé'));
     // trois groupes (22/10/2026) : la preuve reçue de KOUAME n'est plus un impayé
     ok(/^2/.test(await val('Preuve reçue, à valider')) && /^2/.test(await val('Non payé')), nomEcran + ' : Preuve reçue, à valider = 2 (KOUAME, DIABATÉ) ; Non payé = 2 (KONÉ, et DIABATÉ pour le mois d’avant)');
-    const impayes = await p.$$eval('.carte', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); return c ? c.innerText : ''; });
+    const impayes = await p.$$eval('.pers-section', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); return c ? c.innerText : ''; });
     ok(/KONÉ AWA/.test(impayes) && !/KOUAME/.test(impayes), nomEcran + ' : la liste « Non payé » ne contient pas la preuve en attente');
-    const sali = await p.$$eval('.carte', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); const r = c && [...c.querySelectorAll('tr')].find((y) => y.textContent.includes('DIABATÉ')); return r ? [...r.querySelectorAll('td')].map((x) => x.textContent.trim()) : []; });
-    ok(sali[3] === '1' && /^10000/.test((sali[4] || '').replace(/\s|\u202f|\u00a0/g, '')), nomEcran + ' : preuve du mois en attente, mais le mois d’avant reste dû (1 mois, 10 000) ' + sali.join('|'));
+    // (12/11/2026, cartes) la carte de DIABATÉ dans « Non payé » : 1 mois d'affilée, 10 000 dus
+    const sali = await p.$$eval('.pers-section', (l) => { const c = l.find((x) => (x.querySelector('h2') || {}).textContent === 'Non payé'); const r = c && [...c.querySelectorAll('.pers-carte')].find((y) => y.textContent.includes('DIABATÉ')); return r ? r.innerText.replace(/\s|\u202f|\u00a0/g, ' ') : ''; });
+    ok(/1 mois d’affilée/.test(sali) && /10 000 FCFA/.test(sali.replace(/ +/g, ' ').replace(/(\d) (\d{3})/g, '$1 $2')), nomEcran + ' : preuve du mois en attente, mais le mois d’avant reste dû (1 mois, 10 000) ' + sali.slice(0, 120));
     const apres5 = now.getDate() > 5;
     // KONÉ (jamais payé depuis son entrée), KOUAME (preuve reçue), pas « entrée plus tard » (pas encore dû)
     ok(/KONÉ AWA/.test(tx) && /KOUAME JEAN/.test(tx) && !/ENTRÉE PLUS TARD/.test(tx), nomEcran + ' : la liste des impayés exclut celui qui n’est pas encore entré');
     ok(/MADAME KOUAME \(parent\)/.test(tx), nomEcran + ' : le destinataire d’un mineur est son parent');
     if (apres5) {
       ok(/^[0-9]+FCFA/.test(await val('Montant dû')) && parseInt(await val('Montant dû'), 10) >= 60000, nomEcran + ' : montant dû affiché ' + await val('Montant dû'));
-      const kone = await p.$$eval('tr', (rows) => { const r = rows.find((y) => y.textContent.includes('KONÉ AWA')); return Array.from(r.querySelectorAll('td')).map((c) => c.textContent.trim()); });
-      ok(kone[3] === '3' && /^60/.test(kone[4].replace(/\s|\u202f|\u00a0/g, '')), nomEcran + ' : KONÉ = 3 mois d’affilée × 20 000 = 60 000 ' + kone.join('|'));
-      ok(Number(kone[2]) >= 1, nomEcran + ' : jours de retard comptés ' + kone[2]);
+      const kone = await p.$$eval('.pers-carte', (l) => { const r = l.find((y) => y.textContent.includes('KONÉ AWA')); return r ? r.innerText.replace(/\s|\u202f|\u00a0/g, ' ') : ''; });
+      ok(/3 mois d’affilée/.test(kone) && /60 000/.test(kone.replace(/ +/g, ' ')), nomEcran + ' : KONÉ = 3 mois d’affilée × 20 000 = 60 000 ' + kone.slice(0, 120));
+      ok(/[1-9]\d* j de retard/.test(kone), nomEcran + ' : jours de retard comptés');
       ok(/dont .* : 20 000 FCFA · dont mois précédents : 50 000 FCFA/.test(tx.replace(/\u202f|\u00a0/g, ' ')), nomEcran + ' : montant dû coupé en deux (ce mois-ci / mois précédents)');
     }
     ok(await p.isVisible('a.btn:has-text("Relancer")'), nomEcran + ' : bouton « Relancer » (WhatsApp)');

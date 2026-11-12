@@ -248,8 +248,8 @@ function donnees(role) {
         lignesPaye[1].objet === 'mensualite' && lignesPaye[1].montant === 10000 && /^\d{4}-\d{2}-01$/.test(lignesPaye[1].mois), nomEcran + ' (' + role + ') : espèces validées par l’agence : 15 000 d’inscription + 10 000 du 1er mois');
       // paiements à valider (cahier v2.4, 5.2) : orange, l'agence valide ou refuse avec motif
       await pr.goto(url + '#/paiements/a-valider'); await pr.waitForSelector('[data-action="paiement-valider"]', { timeout: 6000 }).catch(() => {});
-      const aValider = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
-      ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*En attente de validation.*25 000 FCFA/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
+      const aValider = await pr.$$eval('.pers-carte', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
+      ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*25 000 FCFA.*En attente de validation/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
       ok((await pr.textContent('.lateral .nav[href="#/paiements/a-valider"]')).includes('1'), nomEcran + ' (' + role + ') : compteur des paiements à valider dans le menu');
       // (12/11/2026, « Les 2 » de la propriétaire) vérifier un à un, en grand : montant, mannequin, trois décisions ;
       // « Plus tard » met de côté sans rien écrire

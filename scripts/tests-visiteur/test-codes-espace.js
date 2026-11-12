@@ -94,7 +94,7 @@ function donnees(role) {
     ok(/MADAME KOUAME \(parent\)/.test(tx), nomEcran + ' : le destinataire d’un mineur est son parent');
     const val = (lib) => p.$$eval('.carte.chiffre', (l, x) => { const c = l.find((y) => y.querySelector('.l').textContent.trim() === x); return c ? c.querySelector('.v').textContent.trim() : null; }, lib);
     ok(await val('À générer') === '1' && await val('Actifs') === '1' && await val('Expirés') === '1', nomEcran + ' : compteurs À générer 1 / Actifs 1 / Expirés 1');
-    const ligne = (nom) => p.$$eval('tbody tr', (rows, x) => { const r = rows.find((y) => y.textContent.includes(x)); return r ? r.innerText.replace(/\s+/g, ' ') : ''; }, nom);
+    const ligne = (nom) => p.$$eval('.pers-carte', (rows, x) => { const r = rows.find((y) => y.textContent.includes(x)); return r ? r.innerText.replace(/\s+/g, ' ') : ''; }, nom);
     ok(/Code à générer/.test(await ligne('KONÉ AWA')) && /Générer le code/.test(await ligne('KONÉ AWA')), nomEcran + ' : inscription payée sans code → « Générer le code »');
     ok(/Code actif/.test(await ligne('KOUAME')) && /ESP-AAAAAA/.test(await ligne('KOUAME')), nomEcran + ' : code actif affiché avec sa date de fin');
     ok(/Inscription à enregistrer/.test(await ligne('TRAORÉ')) && !/Générer le code/.test(await ligne('TRAORÉ')), nomEcran + ' : pas de code sans inscription payée');
@@ -103,15 +103,15 @@ function donnees(role) {
     const wa = decodeURIComponent((await p.getAttribute('a.btn:has-text("WhatsApp")', 'href')) || '');
     ok(/^https:\/\/wa\.me\/2250101010101/.test(wa) && wa.includes('ESP-AAAAAA') && /Bonjour MADAME KOUAME/.test(wa) && /de KOUAME JEAN/.test(wa), nomEcran + ' : WhatsApp au parent, avec le code et le nom de l’enfant');
     // générer pour KONÉ AWA
-    await p.evaluate(() => { const r = Array.from(document.querySelectorAll('tbody tr')).find((y) => y.textContent.includes('KONÉ AWA')); r.querySelector('[data-action="code-espace"]').click(); });
+    await p.evaluate(() => { const r = Array.from(document.querySelectorAll('.pers-carte')).find((y) => y.textContent.includes('KONÉ AWA')); r.querySelector('[data-action="code-espace"]').click(); });
     await p.waitForTimeout(1500);
     ok(e.journal.some((j) => /code_espace_creer/.test(j[1] || '') && /"p_mannequin":"r1"/.test(j[2] || '')), nomEcran + ' : « Générer » appelle la base pour ce mannequin');
     ok(/ESP-NEW234/.test(await t()), nomEcran + ' : le nouveau code s’affiche dans la liste');
     // (11/11/2026) mannequin inscrite AVANT l'application, sans espace : son code en un appui
     ok(/Inscrite avant l’application : créer son code/.test(await ligne('TRAORÉ')), nomEcran + ' : ancienne mannequin sans inscription notée : « Inscrite avant l’application : créer son code »');
-    await p.evaluate(() => { const r = Array.from(document.querySelectorAll('tbody tr')).find((y) => y.textContent.includes('TRAORÉ')); r.querySelector('[data-action="code-espace-ancienne"]').click(); });
+    await p.evaluate(() => { const r = Array.from(document.querySelectorAll('.pers-carte')).find((y) => y.textContent.includes('TRAORÉ')); r.querySelector('[data-action="code-espace-ancienne"]').click(); });
     await p.waitForTimeout(1500);
-    const idTraore = await p.evaluate(() => { const r = Array.from(document.querySelectorAll('tbody tr')).find((y) => y.textContent.includes('TRAORÉ')); const b = r && r.querySelector('[data-id]'); return b ? b.dataset.id : ''; });
+    const idTraore = await p.evaluate(() => { const r = Array.from(document.querySelectorAll('.pers-carte')).find((y) => y.textContent.includes('TRAORÉ')); const b = r && r.querySelector('[data-id]'); return b ? b.dataset.id : ''; });
     ok(e.journal.some((j) => /reprise_inscription/.test(j[1] || '') && /"p_choix":"encaissee"/.test(j[2] || '')) && e.journal.filter((j) => /code_espace_creer/.test(j[1] || '')).length >= 2,
       nomEcran + ' : inscription notée « réglée avant l’application », puis son code créé (' + idTraore + ')');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), nomEcran + ' : pas de défilement de côté de la page');

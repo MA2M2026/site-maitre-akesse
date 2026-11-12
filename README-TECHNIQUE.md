@@ -4759,3 +4759,6 @@ total)` (barre en couleurs). Styles `.pers-*`, `.barre-parts`, `.tm-hero`, `.vol
 `.pers-carte` est un bloc blanc (css/jetons.css : boutons rouges à écriture blanche).
 Premier écran : Tableau du mois (`tableauDuMois`, js/portail/espace-paiements.js) : taux en grand + barre, chiffres,
 « ＋ Ajouter un mannequin au tableau » dans un volet (ouvert d'office si le tableau est vide), une carte par mannequin.
+Suite (12/11/2026) : Registre des mannequins, Paiements à valider (liste), Codes de l'espace mannequin et Récapitulatif
+de fin de mois (sections `.pers-section` « Preuve reçue, à valider » / « Non payé » / « Payé ») passent aussi en
+`P.cartesPersonnes`. « Message à : … » n'apparaît que lorsque le message part vers un parent.
