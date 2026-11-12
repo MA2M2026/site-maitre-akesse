@@ -79,6 +79,9 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     // la recherche : une rubrique, puis une mannequin par son nom
     await p.fill('#av-recherche', 'convoc'); await p.waitForTimeout(500);
     ok(/Convocations/.test(await p.textContent('#av-resultats')), n + 'recherche « convoc » : la rubrique Convocations');
+    // (12/11/2026, capture de la propriétaire) les résultats sont VISIBLES : rien par-dessus (« Envoyer un message » les cachait)
+    const libres = await p.$$eval('#av-resultats a', (l) => l.filter((x) => { const r = x.getBoundingClientRect(), z = document.getElementById('av-resultats').getBoundingClientRect(); return r.bottom <= Math.min(innerHeight, z.bottom) && r.top >= z.top; }).map((x) => { const r = x.getBoundingClientRect(); const d = document.elementFromPoint(r.left + 20, r.top + r.height / 2); return !!d && (d === x || x.contains(d)) ? true : 'sous ' + (d ? d.tagName + '.' + String(d.className).slice(0, 30) : 'rien') + ' à ' + Math.round(r.top); }));
+    ok(libres.length > 0 && libres.every((v) => v === true), n + 'recherche : chaque résultat est visible et rien ne le recouvre (' + libres.join(',') + ')');
     const nomCherche = await p.evaluate(async () => { const r = await sb.from('model_profiles').select('full_name').eq('published', true).limit(1); return ((r.data || [])[0] || {}).full_name || ''; });
     await p.fill('#av-recherche', nomCherche.split(' ').slice(-1)[0]); await p.waitForTimeout(900);
     ok(!!nomCherche && (await p.textContent('#av-resultats')).includes(nomCherche) && !!(await p.$('#av-resultats a[href^="#/site/b2-mannequins-publies/"]')), n + 'recherche d’une mannequin par son nom (' + nomCherche + ')');

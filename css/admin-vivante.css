@@ -1161,11 +1161,12 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .accueil-apaise .accueil-tete .date .bj { display: inline; color: inherit; }
 .accueil-apaise .accueil-tete .date em { display: inline; font-style: italic; font-weight: 500; color: #F3DDE0; }
 .accueil-apaise .accueil-tete .bonjour { max-width: none; color: #F3DDE0; }
-.av-recherche { position: relative; }
+.av-recherche { position: relative; z-index: 30; }  /* (12/11/2026, capture de la propriétaire) les résultats passaient sous « Envoyer un message » */
 .av-recherche input { width: 100%; min-height: 48px; padding: 12px 16px; border: 0; border-radius: 14px; background: #FFFFFF; color: #2a1416; font: 400 15px var(--av-texte); }
-.av-resultats { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); border-radius: 16px; overflow: hidden; background: #FFFFFF; color: #2a1416; box-shadow: var(--av-ombre-forte); }
+.av-resultats { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); border-radius: 16px; overflow: hidden auto; max-height: min(60vh, 460px); overscroll-behavior: contain; background: #FFFFFF; color: #2a1416; box-shadow: var(--av-ombre-forte); }
 .av-resultats a { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid #F2F2F2; text-decoration: none; font-weight: 600; font-size: 14px; }
 .av-resultats a:first-child { border-top: 0; }
+@media (max-width: 700px) { .av-resultats { max-height: min(48vh, 400px); } }  /* (au-dessus du menu du bas du téléphone) */
 .av-resultats em { font-style: normal; }
 .av-resultats p { margin: 0; padding: 12px 16px; color: #6E4F53; font-size: 14px; }
 .tu-titre { margin: 6px 0 -6px; font: 700 11px var(--av-texte); letter-spacing: .25em; text-transform: uppercase; color: #F3DDE0; }

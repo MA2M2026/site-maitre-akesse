@@ -4679,3 +4679,7 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
 - 12/11 (capture de la propriétaire) : menu « Compcard » de la fiche (PDF / JPEG) blanc sur blanc et caché sous la
   rangée des chapitres : fond blanc, boutons rouges, au-dessus (`.fiche-v2 .fiche-telecharger-menu`, z-index 40).
   `test-fiche-premium.js` appuie maintenant sur « Compcard » et vérifie PDF et JPEG (visibles, lisibles, rien par-dessus).
+- 12/11 (capture de la propriétaire) : recherche de l'accueil de l'Administration, résultats cachés sous « Envoyer un
+  message » : `.av-recherche` passe au-dessus (z-index 30) ; liste des résultats limitée en hauteur et défilante
+  (au-dessus du menu du bas sur téléphone). `test-nouvelle-admin.js` vérifie que chaque résultat visible n'est
+  recouvert par rien.
