@@ -4851,3 +4851,19 @@ Demande de la propriétaire : voir l'argent encaissé, le chiffre d'affaires et 
 l'agence, 18 % par défaut). Avant le mode légal : « TVA prévue » (prévision) ; après : « TVA à reverser », à valider par le
 comptable. Aucun changement de la base. Exposés dans `P.compta` (separerTva, chiffreAffaires, reglageTva) pour les étapes
 suivantes (moyens de paiement, reçus de cachet, paiements des clients). Essai : test-comptabilite.js.
+
+## Moyens de paiement des mannequins (12/11/2026)
+
+Demande de la propriétaire : Wave, Orange Money, MTN Money, Moov Money, carte bancaire (Visa) et virement, préparés dès
+maintenant. Base : **`supabase-moyens-paiement.sql`** (À COLLER par la propriétaire) : table `moyens_paiement` (allumé,
+numéro, lien, RIB, titulaire, phrase ; garde-fous : un moyen allumé doit dire où payer), `moyens_paiement_publics()`
+(moyens allumés, aussi sans compte), `paiements_mannequins.mode` élargi, `paiements_preciser_moyen(p_moyen)` (après
+« J'ai payé », note le moyen sur SES paiements en attente déclarés depuis 10 min ; les fonctions de déclaration ne
+changent pas), `compta_compte_du_mode` (espèces → caisse, Wave → Wave, Orange/MTN/Moov → « Autre mobile money »,
+carte/virement → banque, sinon Wave) utilisé par `compta_depuis_espace2`.
+Partagé : `js/moyens-paiement.js` (`window.MoyensPaiement` : noms, `charger`, `choix`, `consigne`), chargé par
+app/mes-paiements.html, app/index.html et admin/index.html. « Mes paiements » (js/mes-paiements.js, site et application) :
+choix en pastilles, Wave et carte par leur lien, Orange/MTN/Moov et virement par le numéro ou le RIB affiché. Administration
+> Paiements > Paramètres : « Moyens de paiement des mannequins » (Modifier : administrateur principal, code récent).
+Paiements à valider : le moyen déclaré est affiché. Sans le fichier collé : Wave seul, comme avant.
+Prochaines étapes : la page d'inscription et les cours de marche avec le même choix. Essai : test-moyens-paiement.js.

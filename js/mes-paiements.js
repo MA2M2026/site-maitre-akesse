@@ -24,6 +24,10 @@
   function monter(zone, options) {
   const mode = (options && options.mode) || 'page', surDeclare = (options && options.surDeclare) || null;
   let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
+  // (12/11/2026) moyens de paiement allumés par l'agence (js/moyens-paiement.js) et moyen choisi pour chaque paiement
+  const MP = window.MoyensPaiement;
+  let moyens = [{ code: 'wave', nom: 'Wave' }], moyenChoisi = {};
+  const moyenDe = (cle) => moyens.find((m) => m.code === moyenChoisi[cle]) || moyens[0];
 
   async function charger() {
     const { data: s } = await sb.auth.getSession();
@@ -41,6 +45,7 @@
     // (les trois en même temps : une connexion lente n'attend qu'une fois)
     // (liens Wave du montant d'un mois, et de 2 et 3 mois si le paiement à l'avance est proposé)
     const montants = Array.from({ length: Math.max(1, moisPayablesAvance(d.mois).length) }, (_, i) => (i + 1) * Number(d.mensualite));
+    if (MP) MP.charger(sb).then((l) => { moyens = l; if (donnees) afficher(); });
     const [mesRecus, mesCachets, ...liens] = await Promise.allSettled([sb.rpc('mes_recus'), sb.rpc('mes_cachets')]
       .concat(montants.map((m) => sb.rpc('lien_paiement', { p_type: 'mensualite', p_montant: m }))));
     const donneesDe = (x) => (x.status === 'fulfilled' && !x.value.error ? x.value.data : null);
@@ -51,14 +56,21 @@
   }
   // lien Wave des Paramètres de l'agence pour ce montant, sinon le lien de secours au bon montant
   const adresseWave = (montant) => liensWave[Number(montant)] || (LIEN_WAVE + Number(montant));
-  // Wave, numéro du payeur, « J'ai payé » (cle : le mois, ou « avance » pour plusieurs mois)
+  // Moyen choisi, où payer, numéro du payeur, « J'ai payé » (cle : le mois, ou « avance » pour plusieurs mois).
+  // Wave et carte : on passe d'abord par le lien ; Orange, MTN, Moov et virement : le numéro ou le RIB est affiché.
+  const parLien = (code) => code === 'wave' || code === 'carte';
+  const peutDeclarer = (cle) => (!parLien(moyenDe(cle).code) || waveOuvert[cle]) && numeroValide(numeros[cle]);
   function blocPaiement(cle, montant) {
-    return '<p class="mp-petit">Moyen de paiement : <b>Wave</b> · Orange Money, MTN Money et Moov Money : bientôt.</p>' +
-      '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>' +
-      '<label class="mp-petit" for="mp-num-' + esc(cle) + '">Numéro mobile money qui paie</label>' +
+    const m = moyenDe(cle), code = m.code, mobile = code === 'wave' || (MP && MP.MOBILE.indexOf(code) >= 0);
+    const ou = code === 'wave' ? '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>'
+      : MP ? MP.consigne(m, montant).replace('data-mp="lien"', 'data-mp="lien" data-mois="' + esc(cle) + '"') : '';
+    const apres = code === 'wave' ? 'Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.'
+      : 'Après avoir payé, revenez ici, indiquez ' + (mobile ? 'le numéro qui a payé' : 'votre numéro de téléphone') + ', puis appuyez sur « J’ai payé ». L’agence vérifie la réception avant de valider.';
+    return (MP ? MP.choix(moyens, code, cle) : '<p class="mp-petit">Moyen de paiement : <b>Wave</b></p>') + ou +
+      '<label class="mp-petit" for="mp-num-' + esc(cle) + '">' + (mobile ? 'Numéro mobile money qui paie' : 'Votre numéro de téléphone') + '</label>' +
       '<input class="mp-num" id="mp-num-' + esc(cle) + '" data-num="' + esc(cle) + '" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+225 07 00 00 00 00" value="' + esc(numeros[cle] || '') + '">' +
-      '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (waveOuvert[cle] && numeroValide(numeros[cle]) ? '' : ' disabled') + '>2 · J’ai payé</button>' +
-      '<p class="mp-petit">Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.</p>' +
+      '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (peutDeclarer(cle) ? '' : ' disabled') + '>' + (parLien(code) ? '2 · ' : '') + 'J’ai payé</button>' +
+      '<p class="mp-petit">' + apres + '</p>' +
       '<p class="mp-petit">Paiement en espèces ? Remettez-le à l’agence : il apparaîtra ici dès que l’agence l’aura validé.</p>';
   }
   function carteAPayer(m) {
@@ -142,13 +154,15 @@
     if (!c) return;
     numeros[c.getAttribute('data-num')] = c.value;
     const b = zone.querySelector('[data-mp="paye"][data-mois="' + c.getAttribute('data-num') + '"]');
-    if (b) b.disabled = !(waveOuvert[c.getAttribute('data-num')] && numeroValide(c.value));
+    if (b) b.disabled = !peutDeclarer(c.getAttribute('data-num'));
   });
   zone.addEventListener('click', async (ev) => {
+    const choixMoyen = ev.target.closest('[data-moyen]');
+    if (choixMoyen) { moyenChoisi[choixMoyen.getAttribute('data-mois')] = choixMoyen.getAttribute('data-moyen'); waveOuvert[choixMoyen.getAttribute('data-mois')] = false; afficher(); return; }
     const el = ev.target.closest('[data-mp]');
     if (!el) return;
     const mois = el.getAttribute('data-mois');
-    if (el.getAttribute('data-mp') === 'wave') { waveOuvert[mois] = true; setTimeout(() => afficher(), 300); return; }
+    if (el.getAttribute('data-mp') === 'wave' || el.getAttribute('data-mp') === 'lien') { waveOuvert[mois] = true; setTimeout(() => afficher(), 300); return; }
     el.disabled = true;
     const numero = String(numeros[mois] || '').trim();
     try {
@@ -160,9 +174,12 @@
         if (error && error.code === 'PGRST202') ({ error } = await sb.rpc('mensualite_declarer', { p_mois: mois }));
       }
       if (error) throw error;
+      // moyen autre que Wave : noté sur le(s) paiement(s) qui vienne(nt) d'être déclaré(s) (sans bloquer si la base ne le sait pas encore)
+      const moyen = moyenDe(mois).code;
+      if (moyen !== 'wave') { try { await sb.rpc('paiements_preciser_moyen', { p_moyen: moyen }); } catch (e) { /* noté Wave : l'agence corrige au besoin */ } }
       const nb = mois === 'avance' ? nbAvance : 1;
       donnees = await charger();
-      waveOuvert = {}; nbAvance = 1;
+      waveOuvert = {}; moyenChoisi = {}; nbAvance = 1;
       if (surDeclare) surDeclare();
       afficher(['Merci ! L’agence vérifie votre paiement' + (nb > 1 ? ' (' + nb + ' mois)' : '') + '. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'bleu']);
     } catch (e) {
