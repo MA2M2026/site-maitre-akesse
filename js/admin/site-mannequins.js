@@ -381,13 +381,19 @@
   P.actions['mannequin-cv'] = (el) => genererCvFichier(el.dataset.format, donneesCv, 'cv-pdf', 'cv-jpeg');
 
   // ---------- Validations en attente ----------
-  async function validations() {
+  async function validations(args) {
+    if (args && args[0] === 'etude') return etudeValidations();
+    P.etat.validationsDeCote = [];  // (« Plus tard » ne vaut que pour une étude)
     const profils = await P.bd(sb.from('model_profiles').select('id, full_name, city, category').eq('en_attente_validation', true).order('created_at', { ascending: true }));
     await completerProfilsPrives(profils);
     const photos = profils.length ? await P.bd(sb.from('model_photos').select('model_id, url_miniature, url, created_at').in('model_id', profils.map((p) => p.id)).order('created_at', { ascending: true })) : [];
     const parId = {};
     photos.forEach((p) => { (parId[p.model_id] = parId[p.model_id] || []).push(p.url_miniature || p.url); });
     return P.entete('Validations en attente', '<span class="doux">' + (profils.length ? profils.length + ' en attente' : 'Aucune') + '</span>') +
+      // (12/11/2026, « Les 2 » de la propriétaire) même étude « une à une, en grand » que les Candidatures
+      (profils.length ? '<a class="etude-lancer apparait" href="#/site/b2-validations/etude"><em aria-hidden="true">▶</em><span>Vérifier ' + (profils.length > 1 ? 'les ' + profils.length + ' fiches' : 'la fiche') +
+        ' une à une<small>Photos en grand, décision en un geste</small></span></a>'
+        : '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>Aucune fiche à vérifier<small>Dès qu’une mannequin soumet sa fiche, elle se vérifie ici, une à une, en grand</small></span></div>') +
       '<p class="doux">Les fiches remplies par les mannequins dans leur Espace : vérifiez les photos, puis publiez au Book ou refusez avec une raison.</p>' +
       (profils.length ? profils.map((p, i) => {
         const age = P.age(p.date_naissance), mes = (parId[p.id] || []).slice(0, 4);
@@ -399,6 +405,39 @@
           '<button type="button" class="btn" data-action="validation-refuser" data-id="' + P.esc(p.id) + '" data-nom="' + P.esc(p.full_name || '') + '">Refuser</button></div></div></article>';
       }).join('') : '<div class="carte vide">Aucune fiche en attente de validation pour le moment.</div>');
   }
+  // Une fiche à la fois, en grand (12/11/2026) : la plus ancienne d'abord. « Valider et publier » et « Refuser » (raison
+  // obligatoire pour qu'elle corrige) sont les gestes habituels ; la page se redessine et montre la suivante. « Plus tard »
+  // la met de côté pour cette fois (rien n'est écrit).
+  async function etudeValidations() {
+    const deCote = P.etat.validationsDeCote = P.etat.validationsDeCote || [];
+    const tous = await P.bd(sb.from('model_profiles').select('id, full_name, city, category, bio, height_cm, created_at').eq('en_attente_validation', true).order('created_at', { ascending: true }));
+    const restants = tous.filter((p) => !deCote.includes(p.id)), retour = '<a class="etude-quitter" href="#/site/b2-validations">‹ Quitter</a>';
+    if (!restants.length) {
+      P.etat.validationsDeCote = [];
+      return '<div class="etude"><div class="etude-haut">' + retour + '</div><div class="etude-fin apparait"><div class="etude-gros" aria-hidden="true">🎉</div>' +
+        '<h1>' + (tous.length ? 'Les autres fiches attendent votre retour' : 'Toutes les fiches sont vérifiées') + '</h1><p class="doux">' +
+        (tous.length ? tous.length + ' mise(s) de côté avec « Plus tard ».' : 'Bravo, la file est à jour.') + '</p><a class="btn rouge" href="#/site/b2-validations">Retour aux validations</a></div></div>';
+    }
+    const p = restants[0];
+    await completerProfilsPrives([p]);
+    const photos = await P.bd(sb.from('model_photos').select('url_moyenne, url_miniature, url').eq('model_id', p.id).order('created_at', { ascending: true }));
+    const age = P.age(p.date_naissance), mineur = age !== null && age !== undefined && age < 18, nom = p.full_name || 'Sans nom';
+    const infos = [p.height_cm ? '📏 ' + (Number(p.height_cm) / 100).toFixed(2).replace('.', ',') + ' m' : '', p.city ? '📍 ' + p.city : '', '📸 ' + photos.length + ' photo' + (photos.length > 1 ? 's' : ''),
+      mineur ? '👧 ' + (p.category === 'femme' ? 'Mineure' : 'Mineur') : ''].filter(Boolean).map((x) => '<span>' + P.esc(x) + '</span>').join('');
+    return '<div class="etude"><div class="etude-haut">' + retour + '<span>Fiches · 1 / ' + restants.length + (deCote.length ? ' (+' + deCote.length + ' plus tard)' : '') + '</span></div>' +
+      '<div class="etude-photos apparait">' + (photos.length ? '<div class="etude-piste" id="etude-piste">' + photos.map((x) => '<div class="etude-photo etude-choisi">' + P.visage(x.url_moyenne || x.url || x.url_miniature, nom) + '</div>').join('') + '</div>' +
+          (photos.length > 1 ? '<div class="etude-points" aria-hidden="true">' + photos.map((x, i) => '<i' + (i ? '' : ' class="actif"') + '></i>').join('') + '</div>' : '')
+        : '<div class="etude-piste">' + P.visage('', nom) + '</div>') +
+        '<div class="etude-voile"><b>' + P.esc(nom) + '</b><small>' + P.esc([age !== null && age !== undefined ? age + ' ans' : '', p.category, p.created_at ? 'inscrite le ' + P.date(p.created_at) : ''].filter(Boolean).join(' · ')) + '</small></div></div>' +
+      '<div class="etude-infos">' + infos + '</div>' +
+      (p.bio ? '<blockquote class="etude-mot">« ' + P.esc(p.bio) + ' »</blockquote>' : '') +
+      '<div class="etude-decision" id="etude-decision">' +
+        '<button type="button" class="etude-choix non" data-action="validation-refuser" data-id="' + P.esc(p.id) + '" data-nom="' + P.esc(nom) + '"><em aria-hidden="true">✕</em>Refuser</button>' +
+        '<button type="button" class="etude-choix revoir" data-action="validation-plus-tard" data-id="' + P.esc(p.id) + '"><em aria-hidden="true">⏸</em>Plus tard</button>' +
+        '<button type="button" class="etude-choix oui" data-action="validation-publier" data-id="' + P.esc(p.id) + '"><em aria-hidden="true">✓</em>Publier</button></div>' +
+      '<a class="etude-fiche" data-visage href="#/site/' + PAGE + '/' + P.esc(encodeURIComponent(p.id)) + '">Voir la fiche complète</a></div>';
+  }
+  P.actions['validation-plus-tard'] = (el) => { (P.etat.validationsDeCote = P.etat.validationsDeCote || []).push(el.dataset.id); return P.afficher(); };
   P.actions['validation-publier'] = async (el) => {
     el.disabled = true;
     const r = await P.bd(sb.from('model_profiles').update({ published: true }).eq('id', el.dataset.id).select('id'));
@@ -449,5 +488,6 @@
   P.espaces.site.pages[PAGE] = (args) => (args && args[0] ? (args[1] === 'cv' ? cv(decodeURIComponent(args[0])) : fiche(decodeURIComponent(args[0]))) : liste());
   P.espaces.site.apres[PAGE] = () => { if (/\/cv$/.test(location.hash)) void apresCv(); };
   P.espaces.site.pages['b2-validations'] = validations;
+  P.espaces.site.apres['b2-validations'] = () => { if (/\/etude$/.test(location.hash) && P.suivrePointsEtude) P.suivrePointsEtude(); };
   P.espaces.site.pages['b3c-vedette-admin'] = vedette;
 })();

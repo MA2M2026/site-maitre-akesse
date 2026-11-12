@@ -484,7 +484,8 @@
       (P.etat.etude && P.etat.etude.i + 1 < P.etat.etude.ids.length ? ETUDE[source].suivant : 'Terminer ›') + '</button></div>';
     if (!garde) await notifier(source, d, nouveau, document.getElementById('dos-notification'));
   };
-  // les points sous les photos suivent la photo affichée
+  // les points sous les photos suivent la photo affichée (partagé : Validations en attente, js/admin/site-mannequins.js)
+  P.suivrePointsEtude = apresEtude;
   function apresEtude() {
     const piste = document.getElementById('etude-piste'), points = document.querySelectorAll('.etude-points i');
     if (!piste || !points.length) return;

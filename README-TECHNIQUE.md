@@ -4725,3 +4725,12 @@ les actions habituelles (`paiement-refuser`, `paiement-valider` : confirmation, 
 redessine et montre le suivant. « Plus tard » (`paiement-plus-tard`) met de côté pour cette étude
 (`P.etat.paiementsDeCote`, vidé en revenant à la liste) sans rien écrire. Styles `.etude-somme*` (css/admin-vivante.css).
 Test : `test-administration.js` (« Vérifier le paiement un à un », « Plus tard » sans écriture).
+
+## Validations en attente : vérifier les fiches une à une, en grand (12/11/2026)
+
+`js/admin/site-mannequins.js` : `validations(args)` montre « ▶ Vérifier les N fiches une à une » (ou « Aucune fiche à
+vérifier ») ; `#/site/b2-validations/etude` ouvre `etudeValidations()` : la plus ancienne en grand (toutes ses photos
+qui défilent, âge, ville, mineure signalée, bio), puis Refuser (raison, geste habituel) / Plus tard / Publier
+(`validation-publier`). « Plus tard » (`validation-plus-tard`, `P.etat.validationsDeCote`) n'écrit rien. Les points
+sous les photos : `P.suivrePointsEtude` (partagé par js/admin/site-dossiers.js).
+Test : `test-nouvelle-admin-mannequins.js` (partie 6).
