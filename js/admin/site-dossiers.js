@@ -154,7 +154,9 @@
     const plus = count > dossiers.length ? '<button type="button" class="btn" data-action="dossiers-plus" data-source="' + source + '">Voir plus (' + (count - dossiers.length) + ' de plus)</button>' : '';
     // (11/11/2026, maquette validée) étudier les nouvelles une à une, en grand
     const etudier = source === 'casting' && nb.nouvelle ? '<button type="button" class="etude-lancer apparait" data-action="etude-demarrer"><em aria-hidden="true">▶</em><span>Étudier ' +
-      (nb.nouvelle > 1 ? 'les ' + nb.nouvelle + ' nouvelles' : 'la nouvelle candidature') + '<small>Une à une, en grand, décision en un geste</small></span></button>' : '';
+      (nb.nouvelle > 1 ? 'les ' + nb.nouvelle + ' nouvelles' : 'la nouvelle candidature') + '<small>Une à une, en grand, décision en un geste</small></span></button>'
+      // (12/11/2026, remarque de la propriétaire : sans nouvelle, la page semblait être l'ancienne) toujours la même place
+      : source === 'casting' ? '<div class="etude-lancer etude-a-jour apparait" role="status"><em aria-hidden="true">✓</em><span>Aucune nouvelle candidature à étudier<small>Dès qu’une candidature arrive, elle s’étudie ici, une à une, en grand</small></span></div>' : '';
     return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres + etudier +
       (cartes ? '<div class="dossiers-grille' + (source === 'recruteur' ? ' sans-visage' : '') + '">' + cartes + '</div>' + plus :
         '<div class="carte vide">Aucun dossier « ' + P.esc(e.filtre === 'toutes' ? 'toutes' : conf.libelles[e.filtre]) + ' » pour le moment.</div>');

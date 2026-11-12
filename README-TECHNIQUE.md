@@ -4693,3 +4693,6 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
   `.pr-barre` des Bulletins, `P.actions['compta-mois']`, pas de mois futur) au lieu du champ calendrier en anglais +
   « Afficher » ; encadrés `.note` (info, alerte, ok, erreur) en cartes blanches à trait de couleur à gauche
   (css/admin-vivante.css) au lieu des fonds bleu / jaune.
+- 12/11 (remarque de la propriétaire : « ça affiche une ancienne version ») : sans nouvelle candidature, la liste des
+  Candidatures n'affichait plus le grand bouton « Étudier les nouvelles » et ressemblait à l'ancienne page ; la place
+  reste désormais visible : « ✓ Aucune nouvelle candidature à étudier » (`.etude-a-jour`, js/admin/site-dossiers.js).

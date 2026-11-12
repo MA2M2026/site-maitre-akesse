@@ -120,6 +120,9 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('.etude-suivant'); await p.waitForTimeout(1500);
     ok(nbNouvelles > 1 ? new RegExp('2 / ' + nbNouvelles).test(await p.textContent('.etude-haut')) : /étudiées/.test(await p.textContent('#contenu')), n + '« Candidature suivante » : la suivante s’affiche');
     await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
+    // (12/11/2026, remarque de la propriétaire) la place de l'étude reste toujours visible : bouton, ou « aucune nouvelle »
+    { const zone = await p.textContent('.etude-lancer').catch(() => ''); const restent = Number(((await p.textContent('#contenu')).match(/Nouvelle\s*(\d+)/) || [0, -1])[1]);
+      ok(restent === 0 ? /Aucune nouvelle candidature à étudier/.test(zone) : /Étudier/.test(zone), n + 'retour à la liste : l’étude reste à sa place (' + (restent === 0 ? '« Aucune nouvelle candidature à étudier »' : 'bouton « Étudier »') + ')'); }
 
     // 6. Demandes recruteurs
     await p.goto(URL_ADMIN + '#/site/b2-recruteurs'); await p.waitForSelector('.dossiers-grille'); await p.waitForTimeout(800);
