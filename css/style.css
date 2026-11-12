@@ -3193,6 +3193,12 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
 /* panneau rouge : mensurations essentielles et boutons (sur ordinateur aussi le nom, à droite de la photo) */
 .fiche-panneau { background: #7C2128; color: #FFFFFF; width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: 22px 20px 20px; box-sizing: border-box; }
 .fiche-panneau-tete { display: none; }
+/* photo de profil (12/11/2026, demande de la propriétaire) : toujours visible, en rond ; sur téléphone à cheval sur la
+   grande photo et le panneau rouge, sur ordinateur au-dessus du nom */
+.fiche-panneau { position: relative; }
+.fiche-avatar { display: block; width: 92px; height: 92px; padding: 0; margin: -68px 0 12px auto; border-radius: 50%; overflow: hidden; border: 3px solid #FFFFFF;
+  background: #FFFFFF; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28); cursor: zoom-in; position: relative; z-index: 2; }
+.fiche-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
 .fiche-mens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
 .fiche-mens b { display: block; font: 800 clamp(1.8rem, 8vw, 2.3rem)/1 'Big Shoulders Display', sans-serif; color: #FFFFFF; overflow-wrap: anywhere; }
 .fiche-mens b small { font-size: 0.5em; font-weight: 700; margin-left: 2px; }
@@ -3210,7 +3216,7 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
 .fiche-v2 .fiche-telecharger { width: 100%; }
 /* chapitres : collés en haut quand on descend */
 .fiche-v2 .fiche-onglets { position: sticky; top: 0; z-index: 20; background: #FFFFFF; gap: 8px; margin: 0 -20px 6px; padding: 10px 20px; border-top: 0; border-bottom: 1px solid rgba(124, 33, 40, 0.14); }
-.fiche-v2 .fiche-onglets a { padding: 8px 15px; border: 1px solid rgba(124, 33, 40, 0.18); border-radius: 999px; color: #7C2128; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: none; font-weight: 600; }
+.fiche-v2 .fiche-onglets a { padding: 8px 15px; border: 1px solid #7C2128; border-radius: 999px; color: #7C2128; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: none; font-weight: 600; }
 .fiche-v2 .fiche-onglets a::after { display: none; }
 .fiche-v2 .fiche-onglets a:first-child { background: #7C2128; color: #FFFFFF; border-color: #7C2128; }
 .fiche-v2 .fiche-onglets a:first-child span { color: #FFFFFF; }
@@ -3253,6 +3259,7 @@ body:has(.fiche-v2) #fiche-book .book-photo-carte img { width: 100%; height: 100
 body:has(.fiche-barre) { padding-bottom: 76px; }
 html:has(.fiche-barre) { scroll-padding-bottom: 96px; scroll-padding-top: 70px; }
 body:has(.fiche-barre) .whatsapp-flottant { bottom: 88px; }
+body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli MA2M » au-dessus de la barre (css/installation.css) */
 /* ordinateur : la photo à gauche, le panneau rouge à droite (nom, mensurations, boutons) */
 @media (min-width: 1000px) {
   .fiche-v2 .fiche-haut { display: grid; grid-template-columns: 58fr 42fr; width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
@@ -3260,6 +3267,7 @@ body:has(.fiche-barre) .whatsapp-flottant { bottom: 88px; }
   .fiche-v2 .profil-hero-contenu { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .fiche-v2 .fiche-panneau { width: auto; margin: 0; display: flex; flex-direction: column; justify-content: center; padding: 48px clamp(32px, 4vw, 64px); }
   .fiche-panneau-tete { display: block; }
+  .fiche-avatar { width: 108px; height: 108px; margin: 0 0 18px; }
   .fiche-panneau-tete p { color: #FFFFFF; opacity: 0.92; margin: 0; }
   .fiche-panneau-nom { font: 800 clamp(3.6rem, 6.2vw, 6rem)/0.9 'Big Shoulders Display', sans-serif; text-transform: uppercase; color: #FFFFFF; margin: 12px 0 10px; }
   .fiche-mens { margin-top: 26px; }
@@ -3271,5 +3279,6 @@ body:has(.fiche-barre) .whatsapp-flottant { bottom: 88px; }
   .fiche-barre { display: none; }
   body:has(.fiche-barre) { padding-bottom: 0; }
   body:has(.fiche-barre) .whatsapp-flottant { bottom: 2rem; }
+  body:has(.fiche-barre) { --ma2m-installer-bas: 0px; }
 }
 @media print { .fiche-barre { display: none; } }

@@ -4,7 +4,7 @@
 // Outils : js/partage.js (Partage) et js/tailles.js (ma2mBlocEquivalences, ma2mMesuresAReprendre).
 (function (racine) {
   // d : { profil (avec épaules, bras, cou), photos, projets (déjà fusionnés et traduits), age }
-  // o : { en, urlLegere, photoHero, selectionne } (photoAvatar : plus utilisé depuis la fiche « premium » du 11/11/2026)
+  // o : { en, urlLegere, photoHero, photoAvatar, selectionne }
   function fiche(d, o) {
     const EN = !!o.en;
     const T = (fr, en) => (EN ? en : fr);
@@ -61,7 +61,7 @@
     }
     const profil = d.profil, photos = d.photos || [], age = d.age || '';
     let projets = d.projets || [];
-    const photoHero = o.photoHero;
+    const photoHero = o.photoHero, photoAvatar = o.photoAvatar;
     // (08/11/2026) cadrage automatique de la grande photo : le visage au-dessus du nom (js/cadrages-photos.js,
     // écrit par scripts/cadrage-visages.py) ; photo inconnue : le haut, comme avant
     const cadrage = racine.CadragesPhotos ? racine.CadragesPhotos.cadragePhoto(photoHero) : null;
@@ -182,6 +182,7 @@
         </div>
       </div>
       <div class="fiche-panneau">
+        ${photoAvatar ? `<button type="button" class="fiche-avatar cliquable" id="compsheet-photo-clic" aria-label="${T('Voir la photo de profil en grand', 'View profile photo full size')}"><img src="${echapperHtml(photoAvatar)}" alt="${echapperHtml(nom)}"></button>` : ''}
         <div class="fiche-panneau-tete" aria-hidden="true">
           <div class="eyebrow eyebrow--clair">${[categorie, niveau].filter(Boolean).map(echapperHtml).join(' · ')}</div>
           <div class="fiche-panneau-nom">${echapperHtml(nom)}</div>

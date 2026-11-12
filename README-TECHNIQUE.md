@@ -4644,3 +4644,14 @@ test-etapes-profil (parcours « déjà en ligne »).
 Styles : fin de `css/style.css` (seulement rouge MA2M et blanc). Après tout changement : `scripts/css-critique.mjs`
 (avec `scripts/serveur-local.mjs`), `versionner.py`, `verifier-csp.py`. Essais : `test-fiche-premium.js` (nouveau),
 `test-fiche-serveur.js`, `test-pages-publiques.js` (ouvre « Toutes les mensurations » et « Voir tous les projets »).
+
+## 12/11/2026 (nuit) : retour à l'ancien CV, photo de profil sur la fiche
+
+- **CV** : à la demande de la propriétaire, retour à l'ancien modèle (colonne sombre à gauche, celui d'avant le « CV
+  premium » du 11/11) : `construireCanvasCv`, `dessinerIconeMcvCanvas`, `dessinerQrCanvas` de `js/app.js` remis
+  tels qu'avant le commit 5abd0d0. L'écran « Mon CV » de l'application reste (il montre l'ancien modèle).
+- **Fiche publique** : la photo de profil (`principale`) est toujours visible, en rond (`.fiche-avatar`,
+  `#compsheet-photo-clic`, s'ouvre en grand) : sur téléphone à droite, à cheval sur la grande photo ; sur
+  ordinateur au-dessus du nom. Le bandeau « Appli MA2M » passe au-dessus de la barre « Réserver / Compcard ».
+- **Sélection et Book** : « Sélection » = les photos de la compcard (choisies par la mannequin dans « Ma compcard »,
+  ou par l'agence) ; « Book » = toutes les photos (la Sélection y est aussi). Aucun tri automatique.

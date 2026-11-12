@@ -38,6 +38,10 @@ const tables = {
     const mens = await p.$$eval('.fiche-mens > div', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
     ok(mens.length === 6 && /178/.test(mens[0]) && /Marron|Brown/.test(mens[5]), n + '6 mensurations essentielles (' + mens.join(' | ') + ')');
     ok(/Awa Koné/.test(await p.textContent('h1')) && /(Disponible immédiatement|Available immediately)/.test(await p.textContent('.fiche-v2')), n + 'nom en grand et « Disponible immédiatement »');
+    // (12/11/2026, demande de la propriétaire) la photo de profil toujours visible, en rond, sans cacher « Disponible »
+    const rond = await p.evaluate(() => { const a = document.querySelector('.fiche-avatar img'); if (!a) return null; const r = a.getBoundingClientRect(), d = [...document.querySelectorAll('.fiche-dispo')].find((x) => x.offsetParent);
+      const q = d && d.getBoundingClientRect(); return { src: a.getAttribute('src'), vu: r.width > 60, chevauche: !!q && !(r.right <= q.left || r.left >= q.right || r.bottom <= q.top || r.top >= q.bottom) }; });
+    ok(rond && /0-s\.jpg$/.test(rond.src) && rond.vu && !rond.chevauche, n + 'photo de profil en rond, visible, sans cacher « Disponible » (' + JSON.stringify(rond) + ')');
     ok(!(await p.isVisible('.fiche-mesures')), n + 'le détail des mensurations est replié');
     await p.click('.fiche-mens-tout > summary');
     ok(await p.isVisible('.fiche-mesures') && /82 cm/.test(await p.textContent('.fiche-mesures')), n + '« Toutes les mensurations » : le détail complet (entrejambe 82 cm)');

@@ -128,6 +128,8 @@ async function chargerProfilInterne() {
   // médaillon en miniature (~500px). L'originale reste utilisée pour la galerie plein
   // écran et la compcard.
   const photoHero = vues.couverture ? urlLegere(vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
+  // (12/11/2026, demande de la propriétaire) la photo de profil, toujours visible en rond sur la fiche
+  const photoAvatar = vues.profil ? urlLegere(vues.profil.url_miniature || vues.profil.url) : '';
   // Âge seulement, jamais la date de naissance (décision de la propriétaire, 06/10/2026) :
   // la base calcule l'âge (fonction ages_mannequins, extension 114) et la date n'est plus
   // lisible par les visiteurs (extension 114 installée le 06/10/2026).
@@ -143,7 +145,7 @@ async function chargerProfilInterne() {
 
   const imageDejaLa = contenu.querySelector('[data-couv-img]');
   const apercuDejaLa = contenu.querySelector('.hero-apercu');  // (photo de la carte du Book, posée par le serveur)
-  const dessin = window.RenduFiche.fiche({ profil, photos, projets, age }, { en: EN, urlLegere, photoHero, selectionne: estDansSelection(id) });
+  const dessin = window.RenduFiche.fiche({ profil, photos, projets, age }, { en: EN, urlLegere, photoHero, photoAvatar, selectionne: estDansSelection(id) });
   contenu.innerHTML = dessin.contenu;
   const contactBas = document.getElementById('fiche-contact-bas');
   if (contactBas) contactBas.innerHTML = dessin.contact;
@@ -234,6 +236,10 @@ async function chargerProfilInterne() {
   // 24/10/2026) étant réservée aux CV et compcards
   const urlsPhotos = ordreGalerie.map(p => p.url_moyenne || p.url);
   window.photosLightbox = urlsPhotos;
+
+  // photo de profil (rond) : la galerie plein écran sur cette photo
+  const photoPrincipale = document.getElementById('compsheet-photo-clic');
+  if (photoPrincipale) photoPrincipale.addEventListener('click', () => ouvrirLightbox(vues.profil ? Math.max(0, ordreGalerie.indexOf(vues.profil)) : 0));
 
   // Photo de couverture cliquable (demande de la propriétaire, 28 sept. 2026) :
   // ouvre la galerie plein écran directement sur la photo de couverture, puis
