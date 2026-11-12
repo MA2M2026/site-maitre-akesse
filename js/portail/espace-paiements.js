@@ -57,15 +57,15 @@
       '<form class="ligne" data-form="registre-chercher"><label class="fl" for="rg-cherche" style="flex:1;min-width:200px">Rechercher (nom, téléphone, e-mail)' +
       '<input id="rg-cherche" name="cherche" value="' + P.esc(P.etat.chercheRegistre || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +
       '<div class="segments">' + FILTRES.map((f) => '<button class="btn petit' + (f[0] === filtre ? ' actif' : '') + '" type="button" data-action="registre-filtre" data-filtre="' + f[0] + '">' + P.esc(f[1]) + '</button>').join('') + '</div>' +
-      P.tableau(['Mannequin', 'Téléphone', 'Inscription', '#Mensualité', 'Statut', ''], liste.map((m) => {
-        const e = etatInscription(m, m.inscription);
-        return '<tr><td>' + P.lienFiche(m.id, m.full_name, m.user_id) + (P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18 ? ' ' + P.pastille('Mineur', 'info') : '') +
-          '<div class="petit-texte doux">' + (m.user_id ? 'Compte sur le site' : 'Ajouté à la main') + '</div></td>' +
-          '<td>' + P.esc(m.telephone || '—') + (sansNom(m) && m.email ? '<div class="petit-texte doux">' + P.esc(m.email) + '</div>' : '') + '</td><td>' + P.pastille(e[0], e[1]) + '</td><td class="nombre">' + P.fcfa(m.mensualite) + '</td>' +
-          '<td>' + P.pastille(STATUTS[m.statut], m.statut === 'actif' ? 'neutre' : 'alerte') + '</td>' +
-          '<td><div class="ligne"><a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a>' +
-          (P.moi.role === 'principal' && !m.user_id && e[1] === 'erreur' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '" aria-label="Supprimer ' + P.esc(m.full_name) + '">Supprimer</button>' : '') + '</div></td></tr>';
-      }));
+      // (12/11/2026, « premium partout ») une carte par mannequin, liseré selon l'inscription
+      P.cartesPersonnes(liste.map((m) => {
+        const e = etatInscription(m, m.inscription), mineur = P.age(m.date_naissance) !== null && P.age(m.date_naissance) < 18;
+        return { tete: P.lienFiche(m.id, m.full_name, m.user_id), ton: e[1] === 'ok' ? 'ok' : e[1],
+          sous: [m.user_id ? 'Compte sur le site' : 'Ajouté à la main', mineur ? 'Mineur' : '', m.telephone || '', sansNom(m) && m.email ? m.email : '', m.statut !== 'actif' ? STATUTS[m.statut] : ''],
+          montant: P.fcfa(m.mensualite) + ' / mois', etat: e,
+          actions: '<a class="btn petit" href="#/paiements/fiche/' + m.id + '">Ouvrir</a>' +
+            (P.moi.role === 'principal' && !m.user_id && e[1] === 'erreur' ? '<button class="btn petit" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '" aria-label="Supprimer ' + P.esc(m.full_name) + '">Supprimer</button>' : '') };
+      }), 'Aucun mannequin ne correspond.');
   }
   P.formulaires['registre-chercher'] = (f) => { P.etat.chercheRegistre = String(f.get('cherche')).trim(); P.afficher(); };
   P.actions['registre-filtre'] = (el) => { P.etat.filtreRegistre = el.getAttribute('data-filtre'); P.afficher(); };
