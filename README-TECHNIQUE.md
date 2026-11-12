@@ -4676,3 +4676,6 @@ Comptes d'essai (accord de la propriétaire, secrets dans `/root/.ma2m-essai/` s
   Journal des erreurs : la demande du code à 6 chiffres avant une action sensible (`AUTH_RECENTE`, suivie de la demande
   de code et d'un nouvel essai par `P.sensible`) n'est plus comptée comme une erreur (`js/surveillance.js` ; essai
   `test-surveillance-auth-recente.js`).
+- 12/11 (capture de la propriétaire) : menu « Compcard » de la fiche (PDF / JPEG) blanc sur blanc et caché sous la
+  rangée des chapitres : fond blanc, boutons rouges, au-dessus (`.fiche-v2 .fiche-telecharger-menu`, z-index 40).
+  `test-fiche-premium.js` appuie maintenant sur « Compcard » et vérifie PDF et JPEG (visibles, lisibles, rien par-dessus).

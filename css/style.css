@@ -3214,6 +3214,12 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
 .fiche-v2 .fiche-actions #btn-select-fiche { background: #FFFFFF; color: #7C2128; border-color: #FFFFFF; }
 .fiche-v2 .fiche-actions #btn-compcard { background: transparent; color: #FFFFFF; border-color: #FFFFFF; }
 .fiche-v2 .fiche-telecharger { width: 100%; }
+/* (12/11/2026, capture de la propriétaire) menu « Compcard » : PDF / JPEG lisibles (blanc sur blanc avant) et au-dessus
+   de la rangée des chapitres (qui passait par-dessus) */
+.fiche-v2 .fiche-telecharger-menu { z-index: 40; background: #FFFFFF; border: 1.5px solid #7C2128; padding: 6px; gap: 4px; box-shadow: 0 18px 40px rgba(94, 18, 25, 0.35); }
+.fiche-v2 .fiche-telecharger-menu button { background: #FFFFFF; color: #7C2128; -webkit-text-fill-color: #7C2128; border: 1.5px solid #7C2128; border-radius: 10px;
+  min-height: 46px; font: 700 0.9rem 'Work Sans', sans-serif; letter-spacing: 0.08em; text-align: center; }
+.fiche-v2 .fiche-telecharger-menu button:hover, .fiche-v2 .fiche-telecharger-menu button:focus-visible { background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
 /* chapitres : collés en haut quand on descend */
 .fiche-v2 .fiche-onglets { position: sticky; top: 0; z-index: 20; background: #FFFFFF; gap: 8px; margin: 0 -20px 6px; padding: 10px 20px; border-top: 0; border-bottom: 1px solid rgba(124, 33, 40, 0.14); }
 .fiche-v2 .fiche-onglets a { padding: 8px 15px; border: 1px solid #7C2128; border-radius: 999px; color: #7C2128; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: none; font-weight: 600; }
