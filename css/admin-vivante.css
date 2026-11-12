@@ -1413,3 +1413,4 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .pers-coche label { display: inline-flex; align-items: center; gap: 6px; font: 600 13px var(--av-texte); color: #7C2128; cursor: pointer; }
 .pers-coche input { width: 20px; height: 20px; accent-color: #7C2128; }
 .pers-carte:has(.pers-coche) .pers-tete { padding-right: 92px; }
+.pers-alerte { margin: 0; color: #B3261E; font: 600 13px var(--av-texte); }

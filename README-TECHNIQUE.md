@@ -4762,3 +4762,5 @@ Premier écran : Tableau du mois (`tableauDuMois`, js/portail/espace-paiements.j
 Suite (12/11/2026) : Registre des mannequins, Paiements à valider (liste), Codes de l'espace mannequin et Récapitulatif
 de fin de mois (sections `.pers-section` « Preuve reçue, à valider » / « Non payé » / « Payé ») passent aussi en
 `P.cartesPersonnes`. « Message à : … » n'apparaît que lorsque le message part vers un parent.
+Suite : Mensualités du mois (case « Appeler » : `coche` de `P.cartesPersonnes`), Messages et relances (case « Écrire »),
+Rapprochement Wave (alertes en rouge : `alertes` de `P.cartesPersonnes`, `.pers-alerte`).

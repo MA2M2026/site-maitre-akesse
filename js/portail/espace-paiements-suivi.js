@@ -45,18 +45,17 @@
     const etat = nbAlertes ? [nbAlertes + ' à regarder', 'erreur'] : nbAttente ? [nbAttente + ' à vérifier', 'alerte'] : ['Rien à vérifier', 'ok'];
     return P.entete('Rapprochement Wave', P.pastille(etat[0], etat[1])) +
       '<div class="note info">Comparez chaque déclaration avec Wave Business : numéro du payeur, référence et montant. Quand tout correspond, « Valider ». Sinon, notez « Introuvable » ou « Précision demandée », avec une note.</div>' +
-      P.tableau(['Mannequin', 'Déclaré', 'Numéro du payeur', 'Vu dans Wave', 'État', ''], lignes.map((l) => {
-        const e = ETATS_RAPP[(l.r && l.r.etat) || 'a_verifier'];
-        return '<tr' + (l.alertes.length ? ' class="ligne-retard"' : '') + '><td>' + P.lienFiche(l.p.mannequin_id, l.p.mannequin && l.p.mannequin.full_name) + '<div class="petit-texte doux">' + P.esc((l.p.mannequin && l.p.mannequin.telephone) || '') + '</div></td>' +
-          '<td class="nombre">' + P.fcfa(l.g.total) + '<div class="petit-texte doux">' + P.esc(l.p.objet === 'inscription' ? 'Inscription' : 'Mensualité') + ' · ' + P.dateHeure(l.g.declare_le) + '</div></td>' +
-          '<td>' + P.esc((l.r && l.r.numero_payeur) || 'Non communiqué') + '</td>' +
-          '<td>' + (l.r && (l.r.reference_paiement || l.r.montant_recu) ? P.esc(l.r.reference_paiement || '—') + (l.r.montant_recu ? '<div class="petit-texte">' + P.fcfa(l.r.montant_recu) + '</div>' : '') : '<span class="doux">à saisir</span>') + '</td>' +
-          '<td>' + P.pastille(e[0], e[1]) + (l.r && l.r.note ? '<div class="petit-texte doux">' + P.esc(l.r.note) + '</div>' : '') +
-          l.alertes.map((a) => '<div class="petit-texte" style="color:var(--erreur-texte,#a00)" role="alert">⚠ ' + P.esc(a) + '</div>').join('') + '</td>' +
-          '<td class="ligne"><button class="btn petit" type="button" data-action="rapprochement-ouvrir" data-id="' + l.p.id + '">Rapprocher</button>' +
-          '<button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + l.p.id + '">Valider</button>' +
-          '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + l.p.id + '">Refuser</button></td></tr>';
-      }));
+      // (12/11/2026, « premium partout ») une carte par déclaration, les alertes en rouge
+      P.cartesPersonnes(lignes.map((l) => {
+        const e = ETATS_RAPP[(l.r && l.r.etat) || 'a_verifier'], vu = l.r && (l.r.reference_paiement || l.r.montant_recu);
+        return { tete: P.lienFiche(l.p.mannequin_id, l.p.mannequin && l.p.mannequin.full_name), classe: l.alertes.length ? 'ligne-retard' : '', ton: l.alertes.length ? 'erreur' : e[1],
+          sous: [(l.p.objet === 'inscription' ? 'Inscription' : 'Mensualité') + ' · ' + P.dateHeure(l.g.declare_le), 'Payeur : ' + ((l.r && l.r.numero_payeur) || 'Non communiqué'),
+            'Vu dans Wave : ' + (vu ? (l.r.reference_paiement || '—') + (l.r.montant_recu ? ' · ' + P.fcfa(l.r.montant_recu) : '') : 'à saisir'), l.r && l.r.note ? 'Note : ' + l.r.note : ''],
+          montant: P.fcfa(l.g.total), etat: e, alertes: l.alertes,
+          actions: '<button class="btn petit" type="button" data-action="rapprochement-ouvrir" data-id="' + l.p.id + '">Rapprocher</button>' +
+            '<button class="btn rouge petit" type="button" data-action="paiement-valider" data-id="' + l.p.id + '">Valider</button>' +
+            '<button class="btn petit" type="button" data-action="paiement-refuser" data-id="' + l.p.id + '">Refuser</button>' };
+      }), 'Aucune déclaration à rapprocher.');
   }
   P.actions['rapprochement-ouvrir'] = async (el) => {
     const id = el.getAttribute('data-id');
