@@ -141,6 +141,28 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
 
     // 6. Demandes recruteurs
     await p.goto(URL_ADMIN + '#/site/b2-recruteurs'); await p.waitForSelector('.dossiers-grille'); await p.waitForTimeout(800);
+    // (12/11/2026, « Les 2 » de la propriétaire) étudier les demandes une à une, en grand : mannequins choisis qui défilent,
+    // réponse WhatsApp prête, deux décisions ; « Plus tard » enregistre « Vue » ; rien d'autre n'est écrit
+    { ok(/Étudier (les \d+ nouvelles demandes|la nouvelle demande)/.test(await p.textContent('.etude-lancer')), n + 'recruteurs : bouton « ▶ Étudier la nouvelle demande »');
+      await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(900);
+      const r = await p.evaluate(() => ({ url: location.hash, haut: document.querySelector('.etude-haut').innerText, nom: document.querySelector('.etude-voile b').textContent,
+        choisis: [...document.querySelectorAll('.etude-choisi-nom')].map((x) => x.textContent), choix: [...document.querySelectorAll('.etude-choix')].map((b) => b.innerText.replace(/\s+/g, ' ').trim()),
+        wa: (document.getElementById('etude-wa') || {}).href || '', infos: document.querySelector('.etude-infos').innerText, deborde: document.documentElement.scrollWidth > innerWidth + 1 }));
+      ok(/b2-recruteurs\/etude$/.test(r.url) && /Nouvelles demandes · 1 \/ \d/.test(r.haut) && /Koffi Marc/.test(r.nom) && r.choisis.length === 2 && /AYA KOUASSI · 178 cm/.test(r.choisis.join('|')),
+        n + 'étude recruteur : Koffi Marc en grand, ses 2 mannequins choisis défilent (' + r.choisis.join(', ') + ')');
+      ok(r.choix.length === 2 && /Plus tard/.test(r.choix[0]) && /Traitée/.test(r.choix[1]) && /wa\.me\/2250505050505\?text=/.test(r.wa) && /Défilé/.test(r.infos) && !r.deborde,
+        n + 'étude recruteur : « Plus tard » / « Traitée », réponse WhatsApp prête, projet affiché, rien ne dépasse');
+      await capture(p, 'etude-recruteur' + suffixe);
+      const avant = ecrits(journal, 'PATCH', 'recruiter_requests').length;
+      await p.click('.etude-choix.revoir'); await p.waitForSelector('.etude-resultat', { timeout: 15000 }); await p.waitForTimeout(900);
+      const pt = ecrits(journal, 'PATCH', 'recruiter_requests').slice(avant);
+      ok(pt.length === 1 && /"status":"vue"/.test(pt[0][3]) && /à reprendre plus tard/.test(await p.textContent('.etude-resultat h2')) && !(await p.$('#dos-notif-texte')),
+        n + 'étude recruteur : « Plus tard » enregistre « Vue », sans message automatique');
+      await p.click('.etude-suivant'); await p.waitForTimeout(1200);
+      ok(/étudi/i.test(await p.textContent('#contenu')) && await p.isVisible('.etude-fin'), n + 'étude recruteur : fin de la file');
+      await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide'); await p.waitForTimeout(600);
+      ok(/Aucune nouvelle demande à étudier/.test(await p.textContent('.etude-lancer')), n + 'recruteurs : « Aucune nouvelle demande à étudier » à la même place');
+      await p.click('[data-action="dossiers-filtre"][data-filtre="toutes"]'); await p.waitForSelector('[data-filtre="toutes"][aria-pressed="true"]'); await p.waitForTimeout(800); }
     ok(/Koffi Marc.*Défilé.*Maison Ivoire/.test(await p.textContent('.dossier-carte')), n + 'demande recruteur listée (contact, projet, entreprise)');
     await p.click('.dossier-carte .dossier-lien'); await p.waitForSelector('.choisis'); await p.waitForTimeout(800);
     ok((await p.$$('.choisi')).length === 2 && (await p.$$('.choisi .vis img')).length === 2 && /AYA KOUASSI.*178 cm/.test(await p.textContent('.choisis')), n + 'mannequins choisis par le recruteur, avec leurs visages');

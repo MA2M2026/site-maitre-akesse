@@ -4705,3 +4705,12 @@ En attente, Toutes ; « Toutes » = comme la liste, sans les dossiers « à part
 En haut de l'étude : « Retenues · 1 / 4 ». Pour un dossier déjà décidé, « Aujourd'hui : Retenue » et le choix déjà pris
 devient « Garder » (`.etude-choix.actuel`) : rien n'est écrit, aucun message ne part (« rien ne change »).
 Test : `test-nouvelle-admin-castings.js` (filtre « Retenue », « Garder » sans écriture, « Quitter » revient au filtre).
+
+## Demandes recruteurs : étudier une à une, en grand (12/11/2026)
+
+L'étude de `js/admin/site-dossiers.js` est commune aux deux rubriques : `ETUDE[source]` (textes, décisions),
+`boutonEtude()`, `chargerEtude(source)`, `pageEtude(source)` (adresse `#/site/<page>/etude`), et le haut propre à chaque
+rubrique (`hautCandidature`, `hautRecruteur`). Recruteur : les mannequins choisis défilent en grand avec leur nom
+(`.etude-choisi`), projet / date / ville, « 💬 Répondre sur WhatsApp » (modèle « Remerciement de la demande »), deux
+décisions (`.etude-decision.deux`) : « Plus tard » (= Vue) et « Traitée » ; aucun message automatique.
+Test : `test-nouvelle-admin-castings.js` (partie 6).

@@ -1318,6 +1318,10 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .etude-decision { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .etude-choix { min-height: 84px; border: 0; border-radius: 18px; background: #FFFFFF; font: 700 14px var(--av-texte); cursor: pointer; box-shadow: var(--av-ombre); transition: transform .15s var(--av-courbe); }
 .etude-choix:active { transform: scale(.96); }
+/* (12/11/2026) Demandes recruteurs : deux décisions, et les mannequins choisis qui défilent avec leur nom en haut */
+.etude-decision.deux { grid-template-columns: repeat(2, 1fr); }
+.etude-choisi { position: relative; cursor: default; }
+.etude-choisi-nom { position: absolute; top: 22px; left: 12px; padding: 5px 10px; border-radius: 999px; background: #FFFFFF; color: #7C2128; font: 700 12.5px var(--av-texte); }
 .etude-choix:disabled { opacity: .6; cursor: wait; }
 .etude-choix em { display: block; margin-bottom: 4px; font-style: normal; font-size: 24px; }
 .etude-choix.non { color: #7C2128; }
