@@ -3336,12 +3336,12 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 /* la couverture */
 .book-v2 #grille .medaillon-carte { display: block; text-align: left; }
 .book-v2 #grille .medaillon-carte > a { display: block; }
-.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: #000; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
+.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: var(--noir); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
 .book-v2 #grille .medaillon-carte img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; filter: none; transform: none; }
 .book-v2 #grille .medaillon-carte:hover img, .book-v2 #grille .medaillon-carte:focus-within img { filter: none; transform: scale(1.03); }
 /* voile noir pur et laqué : du noir profond en bas, un reflet lumineux en diagonale et un fin liseré de lumière */
 .book-v2 #grille .medaillon-photo::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.06) 34%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.94) 78%, #000 100%); }
+  background: linear-gradient(180deg, var(--voile-photo-a00) 0%, var(--voile-photo-a06) 34%, var(--voile-photo-a62) 58%, var(--voile-photo-a94) 78%, var(--voile-photo-a100) 100%); }
 .book-v2 #grille .medaillon-photo::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: 2; pointer-events: none; mix-blend-mode: screen;
   background: linear-gradient(112deg, rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0.14) 40%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0) 60%),
               linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 2px); }
@@ -3377,7 +3377,7 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
    « mur courbé », qui penchait les cartes) ; elles se tournent seulement vers la souris (ordinateur) ou suivent
    l'inclinaison du téléphone, et gardent leur voile noir laqué (le reflet du relief ne le remplace plus) */
 html.relief .book-v2 #grille .medaillon-photo { transform: perspective(900px) rotateX(calc(var(--relief-rx) + var(--relief-ox, 0deg))) rotateY(calc(var(--relief-ry) + var(--relief-oy, 0deg))); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
-html.relief .book-v2 #grille .medaillon-photo::after { opacity: 1; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.06) 34%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.94) 78%, #000 100%); }
+html.relief .book-v2 #grille .medaillon-photo::after { opacity: 1; background: linear-gradient(180deg, var(--voile-photo-a00) 0%, var(--voile-photo-a06) 34%, var(--voile-photo-a62) 58%, var(--voile-photo-a94) 78%, var(--voile-photo-a100) 100%); }
 html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
 /* (12/11/2026) barre de sélection sur une seule ligne, même sur un petit téléphone */
 .panier-widget.panier-barre .panier-texte { white-space: nowrap; }
