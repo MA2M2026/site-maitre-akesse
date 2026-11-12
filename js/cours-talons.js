@@ -193,28 +193,27 @@
   // ---------- envoi des photos et de la vidéo vers Drive (au clic sur « Envoyer », jauges visibles)
   // Attend d'abord la fin de la préparation de la vidéo (rien ne part si elle est refusée) ; ne renvoie pas ce qui
   // est déjà arrivé. Renvoie false si la vidéo manque, sinon met à jour dejaEnvoye.
-  async function envoyerMedias() {
+  // (12/11/2026) l'inscription est GARDÉE DANS LE TÉLÉPHONE pendant l'envoi (EnvoiFiable, js/app.js) : si l'envoi est
+  // coupé (page fermée, réseau perdu), il reprend tout seul quand la personne revient sur cette page.
+  // etat : { ligne (l'inscription, sans photos ni vidéo), montant (texte), photos (prêtes), video, d (déjà arrivé), page }
+  async function envoyerMedias(etat) {
     envoiEnCours = true;
     $('ct-envoi-jauges').classList.remove('u-hidden');
-    const d = dejaEnvoye;
+    const d = etat.d, liste = etat.photos || [];
     const boite = $('ct-jauges-photos'); boite.textContent = '';
-    const ids = photos.map((f, i) => { boite.appendChild(creerJauge('ct-jauge-photo-' + (i + 1))); return 'ct-jauge-photo-' + (i + 1); });
+    const ids = liste.map((f, i) => { boite.appendChild(creerJauge('ct-jauge-photo-' + (i + 1))); return 'ct-jauge-photo-' + (i + 1); });
     const nomPhoto = (i) => T('Photo ', 'Photo ') + (i + 1);
     const photosArrivees = () => jaugesPhotosArrivees(ids, d.rangs, d.liens.length, nomPhoto);  // (js/app.js)
     if (d.liens.length) photosArrivees();
     else ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
-    if (videoEnPreparation) await videoEnPreparation;
-    await photosEnPreparation;
-    if (!video) return false;
-    const nom = $('ct-nom').value.trim(), tel = composerTelephone($('ct-indicatif'), $('ct-telephone'));
-    const infosDrive = { nom, email: '', phone: tel, type: 'projet', projet: 'Cours de talons' };
+    const infosDrive = { nom: etat.ligne.nom, email: '', phone: etat.ligne.telephone, type: 'projet', projet: 'Cours de talons' };
     if (!d.liens.length) {
       const base64 = [], rangs = [];
-      for (let i = 0; i < photos.length; i++) {
+      for (let i = 0; i < liste.length; i++) {
         majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
         try {
-          base64.push(await fichierEnBase64(photos[i]));  // (déjà prête en mémoire depuis le choix)
+          base64.push(await fichierEnBase64(liste[i]));  // (déjà prête en mémoire depuis le choix)
           rangs.push(i);
           majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
         } catch (err) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : illisible', ': unreadable')); }
@@ -228,10 +227,12 @@
       arreter();
       d.liens = r.liens || []; d.rangs = rangs; d.dossier = r.dossier || null;
       photosArrivees();
+      if (d.liens.length) await EnvoiFiable.garder('cours-talons', etat);
     }
-    if (!d.video) d.video = await envoyerVideoAvecJauge(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, video, 'ct-jauge-video');
-    else majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
-    return true;
+    if (!d.video) {
+      d.video = await envoyerVideoAvecJauge(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, dossier: d.dossier }, etat.video, 'ct-jauge-video');
+      if (d.video) await EnvoiFiable.garder('cours-talons', etat);
+    } else majJauge('ct-jauge-video', 100, T('Vidéo : envoyée ✓', 'Video: sent ✓'));
   }
 
   // ---------- envoi
@@ -257,9 +258,9 @@
     };
   }
   const NOMS_FORMULES = { groupe: 'En groupe (4 dimanches)', prive_salle: 'Privé dans la salle', prive_exterieur: 'Privé à l’extérieur' };
-  function resume(l) {
+  function resume(l, montantTexte) {
     return [`Inscription aux cours de talons${EN ? ' (site en anglais)' : ''}`,
-      `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? '' : ' · ' + l.nb_seances + ' séance(s)'} · ${fcfa(montant())}`,
+      `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? '' : ' · ' + l.nb_seances + ' séance(s)'} · ${montantTexte}`,
       `Nom : ${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',
@@ -268,56 +269,70 @@
       l.photos.length ? 'Photos : ' + l.photos.join(' ') : 'Photos : non reçues', 'Vidéo : ' + (l.video || 'non reçue')].filter(Boolean).join('\n');
   }
 
+  async function terminerInscription(etat) {
+    afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… Vous pouvez passer sur une autre application : l’envoi continue, et s’il est coupé, il reprendra quand vous reviendrez sur cette page.', 'Sending your photos and video… You can switch to another app: sending continues, and if it is interrupted it will resume when you come back to this page.'), 'ok');
+    await envoyerMedias(etat);
+    afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
+    const envoi = { liens: etat.d.liens.slice() }, lienVideo = etat.d.video;
+    // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
+    const ligne = Object.assign({}, etat.ligne, { photos: envoi.liens, video: lienVideo || null });
+    const { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
+    const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(ligne, etat.montant));
+    if (error && !error.pasPret) {
+      afficherMsg(msg, T('Une erreur est survenue. Réessayez, ou envoyez votre inscription sur WhatsApp.', 'An error occurred. Please try again, or send your sign-up on WhatsApp.'), 'err');
+      const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' ' + T('Envoyer sur WhatsApp', 'Send on WhatsApp'); msg.appendChild(a);
+      return;
+    }
+    if (!error) envoyerNotificationEmail({ name: ligne.nom + ' (cours de talons)', telephone: ligne.telephone, email: '', message: resume(ligne, etat.montant) });
+    await EnvoiFiable.oublier('cours-talons');
+    EnvoiFiable.prevenir(T('Inscription envoyée ✓', 'Sign-up sent ✓'), T('Merci ! Votre inscription aux cours de talons est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your heels class sign-up has reached Maître Akesse Model Management.'), etat.page);
+    if (window.jouerSon) window.jouerSon('envoi');
+    msg.className = 'form-msg'; msg.textContent = '';
+    const merci = $('ct-merci');
+    merci.classList.remove('u-hidden');
+    merci.textContent = '';
+    const p1 = document.createElement('p');
+    p1.textContent = error
+      ? T('Merci ! Les inscriptions en ligne ouvrent très bientôt : touchez le bouton ci-dessous pour envoyer votre inscription à l’agence sur WhatsApp.', 'Thank you! Online sign-ups open very soon: tap the button below to send your sign-up to the agency on WhatsApp.')
+      : (ligne.decision === 'maintenant'
+        ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement Wave, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your Wave payment, it confirms your place on WhatsApp.')
+        : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
+    merci.appendChild(p1);
+    if (envoi.liens.length && lienVideo) {
+      const pOk = document.createElement('p');
+      const nb = envoi.liens.length, manque = (etat.photos || []).length - nb;
+      pOk.textContent = '✓ ' + T(`${nb > 1 ? 'Vos ' + nb + ' photos' : 'Votre photo'} et votre vidéo sont bien arrivées à l’agence.`, `Your ${nb > 1 ? nb + ' photos' : 'photo'} and your video have reached the agency.`)
+        + (manque > 0 ? ' ' + T(`(${manque} photo${manque > 1 ? 's' : ''} illisible${manque > 1 ? 's' : ''} : envoyez-la${manque > 1 ? 's' : ''} sur WhatsApp si besoin.)`, `(${manque} unreadable photo${manque > 1 ? 's' : ''}: send ${manque > 1 ? 'them' : 'it'} on WhatsApp if needed.)`) : '');
+      merci.appendChild(pOk);
+    }
+    if (error) { const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.className = 'btn btn--principal'; a.textContent = T('Envoyer sur WhatsApp', 'Send on WhatsApp'); merci.appendChild(a); }
+    if (!envoi.liens.length || !lienVideo) {
+      const p2 = document.createElement('p');
+      p2.textContent = T('Vos photos ou votre vidéo n’ont pas pu partir (connexion instable ?) : envoyez-les sur WhatsApp au +225 05 45 65 66 87 avec votre nom.', 'Your photos or video could not be sent (unstable connection?): please send them on WhatsApp to +225 05 45 65 66 87 with your name.');
+      merci.appendChild(p2);
+    }
+    form.querySelectorAll('.ct-etape, .ct-boutons').forEach((el) => el.classList.add('u-hidden'));
+    if (typeof merci.scrollIntoView === 'function') merci.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     for (const n of [1, 2, 3]) if (!etapeValide(n)) { montrer(n); etapeValide(n); return; }
     if (!decision()) return erreur(T('Choisissez : payer maintenant ou plus tard.', 'Please choose: pay now or later.'));
     if (!$('ct-consentement').checked) return erreur(T('Cochez la case pour accepter la politique de confidentialité.', 'Please tick the box to accept the privacy policy.'), $('ct-consentement'));
+    EnvoiFiable.demanderNotifications();  // (12/11/2026 : « Inscription envoyée ✓ » si elle passe sur une autre application)
     const btn = $('ct-envoyer'); btn.disabled = true; $('ct-retour').disabled = true;
     try {
       if (!video && !videoEnPreparation) { montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
-      // 1) photos puis vidéo vers Drive, sous les yeux de la personne (ce qui est déjà arrivé n'est pas renvoyé)
-      afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… gardez la page ouverte.', 'Sending your photos and video… please keep this page open.'), 'ok');
-      if (!(await envoyerMedias())) { envoiEnCours = false; montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
-      afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
-      const envoi = { liens: dejaEnvoye.liens.slice() }, lienVideo = dejaEnvoye.video;
-      // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
-      const ligne = Object.assign({ id: idInscription }, ligneInscription(envoi.liens, lienVideo));
-      const { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
-      const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(ligne));
-      if (error && !error.pasPret) {
-        afficherMsg(msg, T('Une erreur est survenue. Réessayez, ou envoyez votre inscription sur WhatsApp.', 'An error occurred. Please try again, or send your sign-up on WhatsApp.'), 'err');
-        const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' ' + T('Envoyer sur WhatsApp', 'Send on WhatsApp'); msg.appendChild(a);
-        return;
-      }
-      if (!error) envoyerNotificationEmail({ name: ligne.nom + ' (cours de talons)', telephone: ligne.telephone, email: '', message: resume(ligne) });
-      if (window.jouerSon) window.jouerSon('envoi');
-      msg.className = 'form-msg'; msg.textContent = '';
-      const merci = $('ct-merci');
-      merci.classList.remove('u-hidden');
-      merci.textContent = '';
-      const p1 = document.createElement('p');
-      p1.textContent = error
-        ? T('Merci ! Les inscriptions en ligne ouvrent très bientôt : touchez le bouton ci-dessous pour envoyer votre inscription à l’agence sur WhatsApp.', 'Thank you! Online sign-ups open very soon: tap the button below to send your sign-up to the agency on WhatsApp.')
-        : (ligne.decision === 'maintenant'
-          ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement Wave, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your Wave payment, it confirms your place on WhatsApp.')
-          : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
-      merci.appendChild(p1);
-      if (envoi.liens.length && lienVideo) {
-        const pOk = document.createElement('p');
-        const nb = envoi.liens.length, manque = photos.length - nb;
-        pOk.textContent = '✓ ' + T(`${nb > 1 ? 'Vos ' + nb + ' photos' : 'Votre photo'} et votre vidéo sont bien arrivées à l’agence.`, `Your ${nb > 1 ? nb + ' photos' : 'photo'} and your video have reached the agency.`)
-          + (manque > 0 ? ' ' + T(`(${manque} photo${manque > 1 ? 's' : ''} illisible${manque > 1 ? 's' : ''} : envoyez-la${manque > 1 ? 's' : ''} sur WhatsApp si besoin.)`, `(${manque} unreadable photo${manque > 1 ? 's' : ''}: send ${manque > 1 ? 'them' : 'it'} on WhatsApp if needed.)`) : '');
-        merci.appendChild(pOk);
-      }
-      if (error) { const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.className = 'btn btn--principal'; a.textContent = T('Envoyer sur WhatsApp', 'Send on WhatsApp'); merci.appendChild(a); }
-      if (!envoi.liens.length || !lienVideo) {
-        const p2 = document.createElement('p');
-        p2.textContent = T('Vos photos ou votre vidéo n’ont pas pu partir (connexion instable ?) : envoyez-les sur WhatsApp au +225 05 45 65 66 87 avec votre nom.', 'Your photos or video could not be sent (unstable connection?): please send them on WhatsApp to +225 05 45 65 66 87 with your name.');
-        merci.appendChild(p2);
-      }
-      form.querySelectorAll('.ct-etape, .ct-boutons').forEach((el) => el.classList.add('u-hidden'));
-      if (typeof merci.scrollIntoView === 'function') merci.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // (le message et les jauges d'abord : la préparation de la vidéo peut prendre un moment)
+      envoiEnCours = true; $('ct-envoi-jauges').classList.remove('u-hidden');
+      afficherMsg(msg, T('Préparation de votre vidéo…', 'Preparing your video…'), 'ok');
+      if (videoEnPreparation) await videoEnPreparation;
+      await photosEnPreparation;
+      if (!video) { envoiEnCours = false; montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      const etat = { ligne: Object.assign({ id: idInscription }, ligneInscription([], null)), montant: fcfa(montant()), photos, video, d: dejaEnvoye, page: location.pathname };
+      await EnvoiFiable.garder('cours-talons', etat);
+      await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), true);
     } finally {
       btn.disabled = false; $('ct-retour').disabled = false;
     }
@@ -325,4 +340,19 @@
 
   majFormule();
   montrer(1, false);  // (sans défilement au chargement)
+  // Reprise d'un envoi coupé (12/11/2026) : l'inscription gardée dans le téléphone se termine toute seule
+  window.MA2M_REPRISE_ICI = 'cours-talons';
+  (async () => {
+    const etat = await EnvoiFiable.lire('cours-talons');
+    if (!etat || !etat.ligne) return;
+    const btn = $('ct-envoyer'); btn.disabled = true;
+    montrer(4, false);
+    afficherMsg(msg, T('Votre inscription n’avait pas fini de s’envoyer : nous terminons l’envoi…', 'Your sign-up had not finished sending: we are finishing it…'), 'ok');
+    if (typeof msg.scrollIntoView === 'function') msg.scrollIntoView({ block: 'center' });
+    const annuler = document.createElement('button');
+    annuler.type = 'button'; annuler.className = 'lien-annuler-envoi'; annuler.textContent = T('Annuler cet envoi', 'Cancel this submission');
+    annuler.addEventListener('click', async () => { await EnvoiFiable.oublier('cours-talons'); location.reload(); });
+    msg.appendChild(annuler);
+    try { await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), false); } finally { btn.disabled = false; }
+  })();
 })();

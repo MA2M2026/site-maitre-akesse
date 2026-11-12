@@ -34,6 +34,19 @@
   // (12/11/2026, grande revue) une date vide ou illisible donne « — » au lieu de casser la page (« Invalid time value »)
   // ou d'écrire « NaN undefined »
   // (12/11/2026, demande de la propriétaire : savoir à quelle heure la personne a postulé) « 12/11/2026 à 14 h 49 »
+  // (12/11/2026, capture de la propriétaire : « tout est 0 » dans Candidatures sur la tablette) quand la connexion a
+  // expiré ou que la double authentification n'est plus valable, la base ne montre plus rien, sans erreur : une
+  // liste vide affiche alors ce message au lieu de faux « 0 ». Ne touche pas à la connexion : la lit seulement.
+  P.connexionEnDoute = async () => {
+    try {
+      const s = (await sb.auth.getSession()).data.session;
+      if (!s) return true;
+      const niveau = (await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data;
+      return !niveau || niveau.currentLevel !== 'aal2';
+    } catch (e) { return true; }  // (on ne sait pas : mieux vaut proposer de se reconnecter que montrer de faux 0)
+  };
+  P.noteConnexionExpiree = () => '<div class="note erreur" role="alert"><strong>Votre connexion a expiré</strong> : la base ne montre plus rien tant que vous ne vous êtes pas reconnectée (les données sont intactes). ' +
+    '<button type="button" class="btn petit rouge" data-action="deconnexion">Se reconnecter</button></div>';
   P.dateEtHeure = (d) => {
     const t = d ? new Date(d) : null;
     if (!t || isNaN(t)) return '—';
@@ -595,9 +608,10 @@
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');
     try {
       if (esp.avant) await esp.avant();
-      const html = await esp.pages[pageValide](morceaux.slice(2));
+      const [html, doute] = await Promise.all([esp.pages[pageValide](morceaux.slice(2)), P.connexionEnDoute()]);
       if (n !== rendu) return; // l'utilisateur est déjà ailleurs
-      app().innerHTML = P.coque(module, pageValide, html);
+      // (12/11/2026) connexion expirée : la base ne montre plus rien ; on le dit en haut de CHAQUE rubrique
+      app().innerHTML = P.coque(module, pageValide, (doute ? P.noteConnexionExpiree() : '') + html);
       if (esp.apres && esp.apres[pageValide]) esp.apres[pageValide]();
     } catch (e) {
       if (n !== rendu) return;

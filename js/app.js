@@ -3019,6 +3019,85 @@ const textePhotosIllisibles = (illisibles) => illisibles.length ? T(
   `${illisibles.length > 1 ? illisibles.length + ' photos n’ont' : '1 photo n’a'} pas pu être ${illisibles.length > 1 ? 'lues' : 'lue'} par le téléphone : choisissez-${illisibles.length > 1 ? 'les' : 'la'} à nouveau (depuis la galerie, de préférence).`,
   `${illisibles.length > 1 ? illisibles.length + ' photos' : '1 photo'} could not be read by your phone: please choose ${illisibles.length > 1 ? 'them' : 'it'} again (from your gallery, preferably).`) : '';
 
+// ---------- Envois fiables (12/11/2026, demande de la propriétaire : « même si la personne quitte la page, que ça
+// s'envoie quand même, et qu'une notification dise candidature envoyée ») ----------
+// Pendant l'envoi des photos et de la vidéo, le dossier (photos déjà allégées, vidéo) est GARDÉ DANS LE TÉLÉPHONE
+// (IndexedDB) : si l'envoi est coupé (page fermée, réseau perdu, téléphone en veille), il reprend tout seul la
+// prochaine fois que la personne ouvre la page du formulaire ; sur les autres pages du site, un bandeau l'y invite.
+// Quand l'envoi finit alors que la personne est sur une autre application, le téléphone affiche une notification
+// (si elle l'a acceptée : demande faite au moment d'appuyer sur « Envoyer »). Un site ne peut pas envoyer un message
+// WhatsApp tout seul, ni continuer à envoyer une fois la page fermée : c'est la reprise qui termine le travail.
+const EnvoiFiable = (() => {
+  const BASE = 'ma2m-envois', MAGASIN = 'envois', DUREE_MAX = 7 * 24 * 3600 * 1000;
+  const ouvrir = () => new Promise((ok, ko) => {
+    const r = indexedDB.open(BASE, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(MAGASIN);
+    r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+  });
+  async function operation(mode, faire) {
+    const db = await ouvrir();
+    return new Promise((ok, ko) => {
+      const t = db.transaction(MAGASIN, mode), req = faire(t.objectStore(MAGASIN));
+      t.oncomplete = () => { db.close(); ok(req.result); };
+      t.onerror = t.onabort = () => { db.close(); ko(t.error); };
+    });
+  }
+  // les photos et la vidéo sont gardées UNE fois (clé « …:fichiers ») ; l'état (petit) est réécrit à chaque étape.
+  // Renvoie false si le téléphone refuse (plus de place) : la reprise n'existera pas, l'envoi continue quand même.
+  async function garder(cle, valeur) {
+    if (!window.indexedDB) return false;
+    const { photos, video, ...etat } = valeur;
+    try {
+      if (!valeur.fichiersGardes) { await operation('readwrite', (m) => m.put({ photos, video }, cle + ':fichiers')); valeur.fichiersGardes = true; etat.fichiersGardes = true; }
+      await operation('readwrite', (m) => m.put(Object.assign(etat, { garde_le: Date.now() }), cle));
+      return true;
+    } catch (e) { return false; }
+  }
+  const oublier = (cle) => (window.indexedDB ? Promise.all([operation('readwrite', (m) => m.delete(cle)), operation('readwrite', (m) => m.delete(cle + ':fichiers'))]).catch(() => {}) : Promise.resolve());
+  async function lire(cle) {
+    if (!window.indexedDB) return null;
+    const v = await operation('readonly', (m) => m.get(cle)).catch(() => null);
+    if (!v) return null;
+    if (Date.now() - (v.garde_le || 0) > DUREE_MAX) { await oublier(cle); return null; }  // (trop ancien : oublié)
+    const f = await operation('readonly', (m) => m.get(cle + ':fichiers')).catch(() => null);
+    return Object.assign(v, f || {});
+  }
+  // un seul onglet à la fois envoie un même dossier (sinon : photos, vidéo et e-mail en double). « attendre » : l'envoi
+  // lancé à la main attend son tour ; la reprise automatique, elle, renonce si un autre onglet est déjà en train d'envoyer.
+  function seul(cle, faire, attendre) {
+    if (!navigator.locks) return faire();
+    return navigator.locks.request('ma2m-envoi-' + cle, { ifAvailable: !attendre }, (verrou) => (verrou ? faire() : null));
+  }
+  // à appeler pendant l'appui sur « Envoyer » (le téléphone n'accepte la question qu'à ce moment-là)
+  function demanderNotifications() {
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch (e) { /* téléphone sans notifications */ }
+  }
+  // notification seulement si la personne n'a plus la page sous les yeux (sinon, le message à l'écran suffit)
+  async function prevenir(titre, texte, adresse) {
+    try {
+      if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
+      const options = { body: texte, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: 'ma2m-envoi', data: { url: adresse || location.pathname } };
+      const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.showNotification(titre, options); else new Notification(titre, options);
+    } catch (e) { /* notification refusée par le téléphone : rien de plus */ }
+  }
+  return { garder, lire, oublier, seul, demanderNotifications, prevenir };
+})();
+// Bandeau sur les autres pages : « votre candidature n'a pas fini de s'envoyer » (le formulaire, lui, reprend tout seul :
+// il pose window.MA2M_REPRISE_ICI)
+window.addEventListener('load', async () => {
+  if (pageAdministration() || pageApplicationMannequin()) return;
+  const enAttente = [];
+  // (la page qui reprend elle-même un envoi pose window.MA2M_REPRISE_ICI = sa clé : pas de bandeau pour celle-là)
+  for (const cle of ['candidature', 'cours-talons']) { if (window.MA2M_REPRISE_ICI === cle) continue; const e = await EnvoiFiable.lire(cle); if (e && e.page) enAttente.push(e); }
+  if (!enAttente.length || document.getElementById('envoi-a-finir')) return;
+  const b = document.createElement('div');
+  b.id = 'envoi-a-finir'; b.className = 'envoi-a-finir'; b.setAttribute('role', 'status');
+  b.innerHTML = '<span>' + T('Votre envoi n’est pas terminé : vos photos ou votre vidéo attendent encore.', 'Your submission is not finished: your photos or video are still waiting.') + '</span>' +
+    '<a href="' + echapperHtml(enAttente[0].page) + '">' + T('Terminer l’envoi', 'Finish sending') + '</a>';
+  document.body.appendChild(b);
+});
+
 function fichierEnBase64(fichier) {
   return new Promise((resolve, reject) => {
     const lecteur = new FileReader();
