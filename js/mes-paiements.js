@@ -45,7 +45,6 @@
     // (les trois en même temps : une connexion lente n'attend qu'une fois)
     // (liens Wave du montant d'un mois, et de 2 et 3 mois si le paiement à l'avance est proposé)
     const montants = Array.from({ length: Math.max(1, moisPayablesAvance(d.mois).length) }, (_, i) => (i + 1) * Number(d.mensualite));
-    if (MP) MP.charger(sb).then((l) => { moyens = l; if (donnees) afficher(); });
     const [mesRecus, mesCachets, ...liens] = await Promise.allSettled([sb.rpc('mes_recus'), sb.rpc('mes_cachets')]
       .concat(montants.map((m) => sb.rpc('lien_paiement', { p_type: 'mensualite', p_montant: m }))));
     const donneesDe = (x) => (x.status === 'fulfilled' && !x.value.error ? x.value.data : null);
@@ -63,10 +62,11 @@
   function blocPaiement(cle, montant) {
     const m = moyenDe(cle), code = m.code, mobile = code === 'wave' || (MP && MP.MOBILE.indexOf(code) >= 0);
     const ou = code === 'wave' ? '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>'
-      : MP ? MP.consigne(m, montant).replace('data-mp="lien"', 'data-mp="lien" data-mois="' + esc(cle) + '"') : '';
+      : '';
+    const phrase = MP ? MP.consigne(m, montant, cle) : '';
     const apres = code === 'wave' ? 'Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.'
       : 'Après avoir payé, revenez ici, indiquez ' + (mobile ? 'le numéro qui a payé' : 'votre numéro de téléphone') + ', puis appuyez sur « J’ai payé ». L’agence vérifie la réception avant de valider.';
-    return (MP ? MP.choix(moyens, code, cle) : '<p class="mp-petit">Moyen de paiement : <b>Wave</b></p>') + ou +
+    return (MP ? MP.choix(moyens, code, cle) : '<p class="mp-petit">Moyen de paiement : <b>Wave</b></p>') + ou + phrase +
       '<label class="mp-petit" for="mp-num-' + esc(cle) + '">' + (mobile ? 'Numéro mobile money qui paie' : 'Votre numéro de téléphone') + '</label>' +
       '<input class="mp-num" id="mp-num-' + esc(cle) + '" data-num="' + esc(cle) + '" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+225 07 00 00 00 00" value="' + esc(numeros[cle] || '') + '">' +
       '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (peutDeclarer(cle) ? '' : ' disabled') + '>' + (parLien(code) ? '2 · ' : '') + 'J’ai payé</button>' +
@@ -168,15 +168,14 @@
     try {
       let error;
       // à l'avance : tous les mois choisis en une fois, tout ou rien (un seul paiement Wave)
-      if (mois === 'avance') ({ error } = await sb.rpc('mensualites_payer_avance', { p_nb: nbAvance, p_numero: numero }));
+      // (moyen autre que Wave : les mêmes fonctions avec le moyen, qui le notent sur ce paiement — supabase-moyens-paiement.sql)
+      const moyen = moyenDe(mois).code, avecMoyen = moyen === 'wave' ? {} : { p_moyen: moyen };
+      if (mois === 'avance') ({ error } = await sb.rpc('mensualites_payer_avance', Object.assign({ p_nb: nbAvance, p_numero: numero }, avecMoyen)));
       else {
-        ({ error } = await sb.rpc('mensualite_declarer_avec_numero', { p_mois: mois, p_numero: numero }));
+        ({ error } = await sb.rpc('mensualite_declarer_avec_numero', Object.assign({ p_mois: mois, p_numero: numero }, avecMoyen)));
         if (error && error.code === 'PGRST202') ({ error } = await sb.rpc('mensualite_declarer', { p_mois: mois }));
       }
       if (error) throw error;
-      // moyen autre que Wave : noté sur le(s) paiement(s) qui vienne(nt) d'être déclaré(s) (sans bloquer si la base ne le sait pas encore)
-      const moyen = moyenDe(mois).code;
-      if (moyen !== 'wave') { try { await sb.rpc('paiements_preciser_moyen', { p_moyen: moyen }); } catch (e) { /* noté Wave : l'agence corrige au besoin */ } }
       const nb = mois === 'avance' ? nbAvance : 1;
       donnees = await charger();
       waveOuvert = {}; moyenChoisi = {}; nbAvance = 1;
@@ -189,7 +188,8 @@
   afficher();
   // (« Payer à l'avance » de l'application : /app/mes-paiements.html#avance, la carte est dessinée après le chargement)
   const versAvance = () => { const c = location.hash === '#avance' && document.getElementById('avance'); if (c) c.scrollIntoView({ block: 'start' }); };
-  charger().then((d) => { donnees = d; afficher(); versAvance(); }, (e) => { donnees = { inscrit: false }; afficher([String((e && e.message) || 'Connexion impossible. Réessayez.'), 'rouge']); });
+  // (moyens allumés chargés en même temps que la page, une seule fois : jamais un nouvel affichage qui effacerait un message)
+  Promise.all([charger(), MP ? MP.charger(sb) : null]).then(([d, l]) => { if (l) moyens = l; donnees = d; afficher(); versAvance(); }, (e) => { donnees = { inscrit: false }; afficher([String((e && e.message) || 'Connexion impossible. Réessayez.'), 'rouge']); });
   }
   window.PaiementMa2m = { monter };
   const zonePage = document.getElementById('mp-zone');

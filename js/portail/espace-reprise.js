@@ -140,7 +140,7 @@
         mannequins: [['Mannequin', 'Statut', 'Mensualité (FCFA)'].concat(mois.map((m) => P.mois(m)))].concat((a.mannequins || []).map((m) =>
           [m.nom, STATUTS[m.statut] || m.statut, Number(m.mensualite || 0)].concat(mois.map((x) => ETATS_ARCHIVE[(m.etats || {})[x]] || '—')))),
         paiements: [['Date', 'Mannequin', 'Pour', 'Montant (FCFA)', 'Mode', 'État']].concat((a.paiements || []).map((p) =>
-          [P.date(p.le), p.nom, pour(p), Number(p.montant || 0), p.mode === 'avant_systeme' ? 'Avant le nouveau système' : p.mode || '', p.statut === 'valide' ? 'Validé' : p.statut === 'declare' ? 'En attente' : 'Refusé'])),
+          [P.date(p.le), p.nom, pour(p), Number(p.montant || 0), (window.MoyensPaiement ? window.MoyensPaiement.nom(p.mode) : p.mode) || '', p.statut === 'valide' ? 'Validé' : p.statut === 'declare' ? 'En attente' : 'Refusé'])),
         ecritures: [['Date', 'Sens', 'Libellé', 'Compte', 'Montant (FCFA)', 'Annulée']].concat((a.ecritures || []).map((e) =>
           [P.date(e.date), SENS[e.sens] || e.sens, e.libelle, e.compte, Number(e.montant), e.annule ? 'Oui' : ''])),
         tresorerie: [['Compte', 'Solde au début', 'Entrées', 'Sorties', 'Solde à la fin']].concat((a.tresorerie || []).map((c) =>

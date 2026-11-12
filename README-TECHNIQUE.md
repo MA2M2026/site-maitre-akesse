@@ -4857,10 +4857,11 @@ suivantes (moyens de paiement, reçus de cachet, paiements des clients). Essai :
 Demande de la propriétaire : Wave, Orange Money, MTN Money, Moov Money, carte bancaire (Visa) et virement, préparés dès
 maintenant. Base : **`supabase-moyens-paiement.sql`** (À COLLER par la propriétaire) : table `moyens_paiement` (allumé,
 numéro, lien, RIB, titulaire, phrase ; garde-fous : un moyen allumé doit dire où payer), `moyens_paiement_publics()`
-(moyens allumés, aussi sans compte), `paiements_mannequins.mode` élargi, `paiements_preciser_moyen(p_moyen)` (après
-« J'ai payé », note le moyen sur SES paiements en attente déclarés depuis 10 min ; les fonctions de déclaration ne
-changent pas), `compta_compte_du_mode` (espèces → caisse, Wave → Wave, Orange/MTN/Moov → « Autre mobile money »,
-carte/virement → banque, sinon Wave) utilisé par `compta_depuis_espace2`.
+(moyens allumés, aussi sans compte), `paiements_mannequins.mode` élargi, `mensualite_declarer_avec_numero(mois, numéro,
+moyen)` et `mensualites_payer_avance(nb, numéro, moyen)` (les fonctions d'avant déclarent, puis `paiements_noter_moyen`
+pose le moyen sur les paiements créés par CET appel : même `declare_le` = now()), `compta_type_du_mode` (espèces → caisse,
+Wave → Wave, Orange/MTN/Moov → « Autre mobile money », carte/virement → banque ; sans compte actif de ce type : Wave,
+noté au journal) utilisé par `compta_depuis_espace2` (même version dans supabase-administration.sql). Garde-fous : administrateur principal, code récent, journal d'audit.
 Partagé : `js/moyens-paiement.js` (`window.MoyensPaiement` : noms, `charger`, `choix`, `consigne`), chargé par
 app/mes-paiements.html, app/index.html et admin/index.html. « Mes paiements » (js/mes-paiements.js, site et application) :
 choix en pastilles, Wave et carte par leur lien, Orange/MTN/Moov et virement par le numéro ou le RIB affiché. Administration

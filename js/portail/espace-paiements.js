@@ -283,7 +283,9 @@
     const montant = el.getAttribute('data-montant'), mode = el.getAttribute('data-mode');
     P.fenetre('<h2>Corriger le paiement</h2><form class="f" data-form="paiement-corriger" data-id="' + P.esc(el.getAttribute('data-id')) + '">' +
       '<label class="fl" for="pc-montant">Montant reçu (FCFA)<input id="pc-montant" name="montant" type="number" min="1" step="1" required value="' + P.esc(montant) + '"></label>' +
-      '<label class="fl" for="pc-mode">Moyen<select id="pc-mode" name="mode"><option value="wave"' + (mode === 'wave' ? ' selected' : '') + '>Wave</option><option value="especes"' + (mode === 'especes' ? ' selected' : '') + '>Espèces</option></select></label>' +
+      // (12/11/2026) tous les moyens : un paiement Orange, carte ou virement garde son moyen quand on corrige seulement le montant
+      '<label class="fl" for="pc-mode">Moyen<select id="pc-mode" name="mode">' + Object.keys(MODES).filter((k) => k !== 'avant_systeme' || mode === k).map((k) =>
+        '<option value="' + P.esc(k) + '"' + (mode === k ? ' selected' : '') + '>' + P.esc(MODES[k]) + '</option>').join('') + '</select></label>' +
       '<label class="fl large" for="pc-motif">Pourquoi cette correction ? (obligatoire)<textarea id="pc-motif" name="motif" required rows="3"></textarea></label>' +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer la correction</button><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div></form>');
   };

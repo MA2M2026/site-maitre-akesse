@@ -2,7 +2,7 @@
 // supabase-moyens-paiement.sql), comme une vraie personne, téléphone et ordinateur, base SIMULÉE :
 //  - « Mes paiements » : sans le fichier de la base, Wave seul et les autres « bientôt » ;
 //  - moyens allumés : choix en pastilles ; Orange Money → numéro de l'agence affiché, « J'ai payé » sans lien,
-//    puis le moyen est noté (paiements_preciser_moyen) ; virement → RIB ; carte → lien d'abord ;
+//    « J'ai payé » envoie le moyen (mensualite_declarer_avec_numero avec p_moyen) ; virement → RIB ; carte → lien d'abord ;
 //  - Administration > Paramètres : les 6 moyens, « Modifier » (numéro, allumé) enregistré ; un rôle non principal
 //    ne voit pas « Modifier » ;
 //  - Paiements à valider : le moyen déclaré est affiché.
@@ -30,7 +30,7 @@ const sansEspaces = (x) => x.replace(/[  ]/g, ' ');
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript((s) => { localStorage.setItem('sb-dfhghgmwmxiguhtxtsle-auth-token', JSON.stringify(s)); }, SESSION);
     await brancher(p, { tables: {}, rpc: { mes_mensualites: () => ({ inscrit: true, nom: 'KONÉ AWA', mensualite: 10000, statut: 'actif', mineur: false, mois: MOIS }),
-      mes_recus: () => [], mes_cachets: () => [], mensualite_declarer_avec_numero: null, paiements_preciser_moyen: 1, ...(moyens ? { moyens_paiement_publics: moyens } : {}) } }, journal);
+      mes_recus: () => [], mes_cachets: () => [], mensualite_declarer_avec_numero: null, ...(moyens ? { moyens_paiement_publics: moyens } : {}) } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/app/mes-paiements.html'); await p.waitForSelector('.mp-calendrier', { timeout: 8000 }); await p.waitForTimeout(400);
     return { ctx, p, errs, journal, t: async () => sansEspaces(await p.evaluate(() => document.getElementById('mp-zone').innerText)) };
   };
@@ -50,9 +50,9 @@ const sansEspaces = (x) => x.replace(/[  ]/g, ' ');
     const pales = (await lirePageEntiere(p)).map((x) => x.texte.slice(0, 25)); ok(!pales.length, nomEcran + ' : textes lisibles ' + pales.join(' | '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), nomEcran + ' : rien ne dépasse sur le côté');
     await p.click('[data-mp=paye]'); await p.waitForTimeout(800);
-    const declare = s.journal.find((j) => j[0] === 'rpc' && j[1] === 'mensualite_declarer_avec_numero'), precise = s.journal.find((j) => j[0] === 'rpc' && j[1] === 'paiements_preciser_moyen');
-    ok(declare && JSON.parse(declare[2]).p_numero === '07 01 02 03 04' && precise && JSON.parse(precise[2]).p_moyen === 'orange_money' && s.journal.indexOf(precise) > s.journal.indexOf(declare) && /L’agence vérifie/.test(await s.t()),
-      nomEcran + ' : « J’ai payé » déclaré, puis le moyen « Orange Money » noté');
+    const declare = s.journal.find((j) => j[0] === 'rpc' && j[1] === 'mensualite_declarer_avec_numero');
+    ok(declare && JSON.parse(declare[2]).p_numero === '07 01 02 03 04' && JSON.parse(declare[2]).p_moyen === 'orange_money' && /L’agence vérifie/.test(await s.t()),
+      nomEcran + ' : « J’ai payé » déclaré avec le moyen « Orange Money »');
     await s.ctx.close();
     // 3. virement (RIB) et carte (lien d'abord) ; Wave ne note rien de plus
     s = await mannequin(ecran, ALLUMES);
@@ -68,7 +68,8 @@ const sansEspaces = (x) => x.replace(/[  ]/g, ' ');
     await s.p.click('.mp-moyen[data-moyen="wave"]'); await s.p.waitForTimeout(200);
     await s.p.locator('[data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.addEventListener('click', (e) => e.preventDefault()); });
     await s.p.click('[data-mp=wave]'); await s.p.waitForTimeout(500); await s.p.click('[data-mp=paye]'); await s.p.waitForTimeout(800);
-    ok(s.journal.some((j) => j[1] === 'mensualite_declarer_avec_numero') && !s.journal.some((j) => j[1] === 'paiements_preciser_moyen'), nomEcran + ' : Wave : déclaré sans rien noter de plus (Wave par défaut)');
+    const w = s.journal.find((j) => j[1] === 'mensualite_declarer_avec_numero');
+    ok(w && !('p_moyen' in JSON.parse(w[2])), nomEcran + ' : Wave : déclaré comme avant, sans moyen (Wave par défaut)');
     ok(!s.errs.length, nomEcran + ' : aucune erreur de page ' + s.errs.join(' | '));
     await s.ctx.close();
   }
