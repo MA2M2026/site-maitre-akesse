@@ -493,7 +493,12 @@ async function envoyerMedias(etat) {
   // même dossier Drive ; son lien est ensuite rattaché à la candidature.
   let lienVideo = null;
   if (etat.videoFaite) lienVideo = etat.lienVideo || null;
-  else {
+  else if (etat.lienVideo) {
+    // (vidéo déjà sur Drive, page coupée avant de la rattacher au dossier : on ne fait que la rattacher)
+    lienVideo = etat.lienVideo;
+    const { error: erreurVideo } = await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
+    if (!erreurVideo) { etat.videoFaite = true; await EnvoiFiable.garder('candidature', etat); }
+  } else {
     afficherMsg(msg, T('Envoi de votre vidéo… Vous pouvez passer sur une autre application : l’envoi continue, et s’il est coupé, il reprendra quand vous reviendrez sur cette page.', 'Sending your video… You can switch to another app: sending continues, and if it is interrupted it will resume when you come back to this page.'), 'ok');
     try {
       lienVideo = await envoyerVideoAvecJauge(URL_SCRIPT_PHOTOS_CASTING, {
@@ -501,10 +506,11 @@ async function envoyerMedias(etat) {
         type: PARCOURS, projet: projetNom || '', dossier: dossierDrive
       }, videoChoisie, 'ca-jauge-video');
       if (lienVideo) {
-        etat.videoFaite = true; etat.lienVideo = lienVideo; await EnvoiFiable.garder('candidature', etat);
+        etat.lienVideo = lienVideo; await EnvoiFiable.garder('candidature', etat);
         const { error: erreurVideo } = await sb.rpc('ajouter_video_candidature', { p_id: candidature.id, p_url: lienVideo });
         // (la vidéo est sur Drive et son lien part dans l'e-mail à l'agence ; on note seulement l'échec de l'ajout au dossier)
         if (erreurVideo && window.signalerErreur) window.signalerErreur('Vidéo non ajoutée au dossier de candidature', erreurVideo.message || String(erreurVideo), lienVideo);
+      else { etat.videoFaite = true; await EnvoiFiable.garder('candidature', etat); }
       }
     } catch (e) {
       lienVideo = null;
@@ -514,6 +520,12 @@ async function envoyerMedias(etat) {
 
   }
 
+  if (etat.agencePrevenue && !etat.agenceComplete && etat.photosFaites && etat.videoFaite) {
+    // (envoi repris : l'agence avait reçu un premier e-mail incomplet ; elle apprend que tout est arrivé)
+    envoyerNotificationEmail({ name: candidature.full_name, telephone: candidature.phone, email: candidature.email,
+      message: 'Complément de candidature : les photos et la vidéo de ' + candidature.full_name + ' sont maintenant arrivées (envoi repris automatiquement).' + (lienVideo ? '\nVidéo : ' + lienVideo : '') });
+    etat.agenceComplete = true; await EnvoiFiable.garder('candidature', etat);
+  }
   if (!etat.agencePrevenue) {
     envoyerNotificationEmail({
       name: candidature.full_name,
@@ -521,7 +533,7 @@ async function envoyerMedias(etat) {
       email: candidature.email,
       message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
     });
-    etat.agencePrevenue = true; await EnvoiFiable.garder('candidature', etat);
+    etat.agencePrevenue = true; etat.agenceComplete = !!(etat.photosFaites && etat.videoFaite); await EnvoiFiable.garder('candidature', etat);
   }
 
   if (window.jouerSon) window.jouerSon('envoi');
@@ -529,7 +541,10 @@ async function envoyerMedias(etat) {
   if (nbPhotosEchouees) soucis.push(T(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''}`, `${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's' : ''} could not be sent`));
   if (!lienVideo) soucis.push(T('votre vidéo n\'a pas pu être envoyée, envoyez-la sur WhatsApp au +225 05 45 65 66 87 en indiquant votre nom', 'your video could not be sent, please send it on WhatsApp to +225 05 45 65 66 87 with your name'));
   const complet = etat.photosFaites && etat.videoFaite;
-  if (!complet) soucis.push(T('le reste repartira tout seul quand vous reviendrez sur cette page', 'the rest will be sent automatically when you come back to this page'));
+  etat.essais = (etat.essais || 0) + 1;
+  const reprendra = !complet && etat.essais < 3 && etat.fichiersGardes;
+  if (reprendra) { soucis.length = 0; soucis.push(T('l’envoi n’est pas terminé (connexion instable ?) : il repartira tout seul quand vous reviendrez sur cette page', 'sending is not finished (unstable connection?): it will resume automatically when you come back to this page')); await EnvoiFiable.garder('candidature', etat); }
+  else if (!complet) await EnvoiFiable.oublier('candidature');  // (3 essais : on n'insiste plus, la consigne WhatsApp reste affichée)
   afficherMsg(msg, soucis.length
     ? T(`Candidature envoyée, mais ${soucis.join(' ; ')} (connexion instable ?). Le reste du dossier est bien enregistré.`, `Application sent, but ${soucis.join('; ')} (unstable connection?). The rest of your application has been saved.`)
     : T('Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.'), 'ok');
@@ -641,7 +656,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   // (12/11/2026) le dossier est gardé dans le téléphone pendant l'envoi : s'il est coupé, il reprend tout seul
   const etat = { candidature, projetNom, mineur, parcours: PARCOURS, photos: fichiersPhotos, video: videoChoisie, page: location.pathname, photosFaites: false };
   await EnvoiFiable.garder('candidature', etat);
-  await envoyerMedias(etat);
+  await EnvoiFiable.seul('candidature', () => envoyerMedias(etat), true);
   document.getElementById('form-casting').reset();
   document.getElementById('ca-bloc-parent').style.display = 'none';
   if (PARCOURS === 'projet') document.getElementById('ca-bloc-projet-autre').style.display = 'none';
@@ -663,13 +678,19 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 });
 
 // Reprise d'un envoi coupé (12/11/2026) : à l'ouverture de la page, s'il reste des photos ou une vidéo à envoyer
-window.MA2M_REPRISE_ICI = true;
+window.MA2M_REPRISE_ICI = 'candidature';
 (async () => {
   const etat = await EnvoiFiable.lire('candidature');
   if (!etat || !etat.candidature) return;
   const msg = document.getElementById('ca-msg'), btn = document.getElementById('btn-envoyer');
+  const prenom = String(etat.candidature.full_name || '').trim().split(/\s+/)[0];
   btn.disabled = true;
-  afficherMsg(msg, T('Votre candidature n’avait pas fini de s’envoyer : nous terminons l’envoi de vos photos et de votre vidéo…', 'Your application had not finished sending: we are finishing sending your photos and video…'), 'ok');
+  afficherMsg(msg, T(`La candidature de ${prenom} n’avait pas fini de s’envoyer : nous terminons l’envoi de ses photos et de sa vidéo…`, `${prenom}'s application had not finished sending: we are finishing sending the photos and video…`), 'ok');
+  // (téléphone partagé, ou envoi déjà fait autrement) : « Annuler cet envoi »
+  const annuler = document.createElement('button');
+  annuler.type = 'button'; annuler.className = 'lien-annuler-envoi'; annuler.textContent = T('Annuler cet envoi', 'Cancel this submission');
+  annuler.addEventListener('click', async () => { await EnvoiFiable.oublier('candidature'); location.reload(); });
+  msg.appendChild(annuler);
   msg.scrollIntoView({ block: 'center' });
-  try { await envoyerMedias(etat); } finally { btn.disabled = false; }
+  try { await EnvoiFiable.seul('candidature', () => envoyerMedias(etat), false); } finally { btn.disabled = false; }
 })();

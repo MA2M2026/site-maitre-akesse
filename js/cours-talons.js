@@ -324,12 +324,15 @@
     const btn = $('ct-envoyer'); btn.disabled = true; $('ct-retour').disabled = true;
     try {
       if (!video && !videoEnPreparation) { montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      // (le message et les jauges d'abord : la préparation de la vidéo peut prendre un moment)
+      envoiEnCours = true; $('ct-envoi-jauges').classList.remove('u-hidden');
+      afficherMsg(msg, T('Préparation de votre vidéo…', 'Preparing your video…'), 'ok');
       if (videoEnPreparation) await videoEnPreparation;
       await photosEnPreparation;
-      if (!video) { montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      if (!video) { envoiEnCours = false; montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
       const etat = { ligne: Object.assign({ id: idInscription }, ligneInscription([], null)), montant: fcfa(montant()), photos, video, d: dejaEnvoye, page: location.pathname };
       await EnvoiFiable.garder('cours-talons', etat);
-      await terminerInscription(etat);
+      await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), true);
     } finally {
       btn.disabled = false; $('ct-retour').disabled = false;
     }
@@ -338,7 +341,7 @@
   majFormule();
   montrer(1, false);  // (sans défilement au chargement)
   // Reprise d'un envoi coupé (12/11/2026) : l'inscription gardée dans le téléphone se termine toute seule
-  window.MA2M_REPRISE_ICI = true;
+  window.MA2M_REPRISE_ICI = 'cours-talons';
   (async () => {
     const etat = await EnvoiFiable.lire('cours-talons');
     if (!etat || !etat.ligne) return;
@@ -346,6 +349,10 @@
     montrer(4, false);
     afficherMsg(msg, T('Votre inscription n’avait pas fini de s’envoyer : nous terminons l’envoi…', 'Your sign-up had not finished sending: we are finishing it…'), 'ok');
     if (typeof msg.scrollIntoView === 'function') msg.scrollIntoView({ block: 'center' });
-    try { await terminerInscription(etat); } finally { btn.disabled = false; }
+    const annuler = document.createElement('button');
+    annuler.type = 'button'; annuler.className = 'lien-annuler-envoi'; annuler.textContent = T('Annuler cet envoi', 'Cancel this submission');
+    annuler.addEventListener('click', async () => { await EnvoiFiable.oublier('cours-talons'); location.reload(); });
+    msg.appendChild(annuler);
+    try { await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), false); } finally { btn.disabled = false; }
   })();
 })();

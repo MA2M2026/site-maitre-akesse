@@ -3042,13 +3042,31 @@ const EnvoiFiable = (() => {
       t.onerror = t.onabort = () => { db.close(); ko(t.error); };
     });
   }
-  const garder = (cle, valeur) => (window.indexedDB ? operation('readwrite', (m) => m.put(Object.assign({}, valeur, { garde_le: Date.now() }), cle)).catch(() => {}) : Promise.resolve());
-  const oublier = (cle) => (window.indexedDB ? operation('readwrite', (m) => m.delete(cle)).catch(() => {}) : Promise.resolve());
+  // les photos et la vidéo sont gardées UNE fois (clé « …:fichiers ») ; l'état (petit) est réécrit à chaque étape.
+  // Renvoie false si le téléphone refuse (plus de place) : la reprise n'existera pas, l'envoi continue quand même.
+  async function garder(cle, valeur) {
+    if (!window.indexedDB) return false;
+    const { photos, video, ...etat } = valeur;
+    try {
+      if (!valeur.fichiersGardes) { await operation('readwrite', (m) => m.put({ photos, video }, cle + ':fichiers')); valeur.fichiersGardes = true; etat.fichiersGardes = true; }
+      await operation('readwrite', (m) => m.put(Object.assign(etat, { garde_le: Date.now() }), cle));
+      return true;
+    } catch (e) { return false; }
+  }
+  const oublier = (cle) => (window.indexedDB ? Promise.all([operation('readwrite', (m) => m.delete(cle)), operation('readwrite', (m) => m.delete(cle + ':fichiers'))]).catch(() => {}) : Promise.resolve());
   async function lire(cle) {
     if (!window.indexedDB) return null;
     const v = await operation('readonly', (m) => m.get(cle)).catch(() => null);
-    if (v && Date.now() - (v.garde_le || 0) > DUREE_MAX) { await oublier(cle); return null; }  // (trop ancien : oublié)
-    return v || null;
+    if (!v) return null;
+    if (Date.now() - (v.garde_le || 0) > DUREE_MAX) { await oublier(cle); return null; }  // (trop ancien : oublié)
+    const f = await operation('readonly', (m) => m.get(cle + ':fichiers')).catch(() => null);
+    return Object.assign(v, f || {});
+  }
+  // un seul onglet à la fois envoie un même dossier (sinon : photos, vidéo et e-mail en double). « attendre » : l'envoi
+  // lancé à la main attend son tour ; la reprise automatique, elle, renonce si un autre onglet est déjà en train d'envoyer.
+  function seul(cle, faire, attendre) {
+    if (!navigator.locks) return faire();
+    return navigator.locks.request('ma2m-envoi-' + cle, { ifAvailable: !attendre }, (verrou) => (verrou ? faire() : null));
   }
   // à appeler pendant l'appui sur « Envoyer » (le téléphone n'accepte la question qu'à ce moment-là)
   function demanderNotifications() {
@@ -3063,14 +3081,15 @@ const EnvoiFiable = (() => {
       if (reg) await reg.showNotification(titre, options); else new Notification(titre, options);
     } catch (e) { /* notification refusée par le téléphone : rien de plus */ }
   }
-  return { garder, lire, oublier, demanderNotifications, prevenir };
+  return { garder, lire, oublier, seul, demanderNotifications, prevenir };
 })();
 // Bandeau sur les autres pages : « votre candidature n'a pas fini de s'envoyer » (le formulaire, lui, reprend tout seul :
 // il pose window.MA2M_REPRISE_ICI)
 window.addEventListener('load', async () => {
-  if (window.MA2M_REPRISE_ICI || pageAdministration() || pageApplicationMannequin()) return;
+  if (pageAdministration() || pageApplicationMannequin()) return;
   const enAttente = [];
-  for (const cle of ['candidature', 'cours-talons']) { const e = await EnvoiFiable.lire(cle); if (e && e.page) enAttente.push(e); }
+  // (la page qui reprend elle-même un envoi pose window.MA2M_REPRISE_ICI = sa clé : pas de bandeau pour celle-là)
+  for (const cle of ['candidature', 'cours-talons']) { if (window.MA2M_REPRISE_ICI === cle) continue; const e = await EnvoiFiable.lire(cle); if (e && e.page) enAttente.push(e); }
   if (!enAttente.length || document.getElementById('envoi-a-finir')) return;
   const b = document.createElement('div');
   b.id = 'envoi-a-finir'; b.className = 'envoi-a-finir'; b.setAttribute('role', 'status');

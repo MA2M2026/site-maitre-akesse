@@ -41,9 +41,9 @@
     try {
       const s = (await sb.auth.getSession()).data.session;
       if (!s) return true;
-      const jeton = JSON.parse(atob(s.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      return jeton.aal !== 'aal2' || (jeton.exp && jeton.exp * 1000 < Date.now());
-    } catch (e) { return false; }
+      const niveau = (await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data;
+      return !niveau || niveau.currentLevel !== 'aal2';
+    } catch (e) { return true; }  // (on ne sait pas : mieux vaut proposer de se reconnecter que montrer de faux 0)
   };
   P.noteConnexionExpiree = () => '<div class="note erreur" role="alert"><strong>Votre connexion a expiré</strong> : la base ne montre plus rien tant que vous ne vous êtes pas reconnectée (les données sont intactes). ' +
     '<button type="button" class="btn petit rouge" data-action="deconnexion">Se reconnecter</button></div>';
@@ -608,9 +608,10 @@
     app().innerHTML = P.coque(module, pageValide, '<div class="chargement">Chargement…</div>');
     try {
       if (esp.avant) await esp.avant();
-      const html = await esp.pages[pageValide](morceaux.slice(2));
+      const [html, doute] = await Promise.all([esp.pages[pageValide](morceaux.slice(2)), P.connexionEnDoute()]);
       if (n !== rendu) return; // l'utilisateur est déjà ailleurs
-      app().innerHTML = P.coque(module, pageValide, html);
+      // (12/11/2026) connexion expirée : la base ne montre plus rien ; on le dit en haut de CHAQUE rubrique
+      app().innerHTML = P.coque(module, pageValide, (doute ? P.noteConnexionExpiree() : '') + html);
       if (esp.apres && esp.apres[pageValide]) esp.apres[pageValide]();
     } catch (e) {
       if (n !== rendu) return;
