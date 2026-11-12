@@ -1433,7 +1433,7 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .jour-titre .nb { display: inline-block; min-width: 26px; padding: 2px 9px; border-radius: 999px; background: #FFFFFF; color: #7C2128; font: 700 13px var(--av-texte); text-align: center; }
 /* Messages déjà envoyés aux candidates (12/11/2026, registre messages_candidats) */
 .dossier-suivi { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; font: 600 11.5px var(--av-texte); }
-.dossier-suivi span { padding: 3px 8px; border-radius: 999px; background: #EAF5EA; color: #1E5E22; }
+.dossier-suivi span { padding: 3px 8px; border-radius: 999px; background: #FFFFFF; color: #1E5E22; border: 1px solid #2E7D32; }
 .dossier-suivi.aucun { padding: 3px 8px; border-radius: 999px; background: #FFFFFF; color: #7C2128; border: 1px solid rgba(124, 33, 40, .35); }
 .messages-envoyes { list-style: none; margin: 0; padding: 0; }
 .messages-envoyes li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid #F1E4E6; }
