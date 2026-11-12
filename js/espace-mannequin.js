@@ -1036,6 +1036,10 @@ function stepExperience(){
       doublonsExperiences().map(function(e){ return '<li>'+echapperHtml([e.type, e.nom, e.annee].filter(Boolean).join(' · '))+'</li>'; }).join('') +
       '</ul><button type="button" class="exp-remove" id="supprDoublons">Supprimer '+(nbDoublons>1 ? 'ces doublons' : 'ce doublon')+'</button></div>' : '') +
     '<div id="expList">'+listHtml+'</div>' +
+    // (12/11/2026, remarque de la propriétaire : avec 3 expériences remplies, le bouton du haut sortait de l'écran et on
+    // croyait ne pas pouvoir en ajouter plus) le nombre, et le même bouton en bas de la liste ; pas de limite
+    (state.experiences.length - nbDoublons > 0 ? '<p class="exp-compte">'+(state.experiences.length - nbDoublons)+(state.experiences.length - nbDoublons > 1 ? ' expériences ajoutées' : ' expérience ajoutée')+' · ajoutez-en autant que vous voulez</p>' +
+      '<button class="btn ghost small p20-12" id="addExpBas">+ Ajouter une autre expérience</button>' : '') +
     '<div class="actions-row"><button class="btn ghost" data-goto="3">← Retour</button><button class="btn primary" id="save4">Continuer</button></div>';
 }
 
@@ -1281,11 +1285,17 @@ function bindWizard(){
 /* -------------------------------------------------- EXPÉRIENCE : handlers */
 function bindExperienceHandlers(){
   const s = state;
-  document.getElementById('addExp')?.addEventListener('click', async function(){
+  // les deux boutons « Ajouter » (haut et bas de la liste) : la nouvelle expérience s'ouvre à l'écran, prête à remplir
+  async function ajouterExperience(){
     const draft = { type:'Défilé', nom:'', lieu:'', annee:new Date().getFullYear().toString(), pays:'', salle:'', promoteur:'' };
     const saved = await Store.addExperience(draft);
-    if (saved) { s.experiences.push(saved); render(); }
-  });
+    if (!saved) return;
+    s.experiences.push(saved); render();
+    const i = s.experiences.length - 1, carte = document.querySelector('.exp-card[data-exp="'+i+'"]');
+    if (carte) { carte.scrollIntoView({ block: 'center', behavior: 'smooth' }); const nom = carte.querySelector('[data-expf="nom"]'); if (nom) nom.focus({ preventScroll: true }); }
+  }
+  document.getElementById('addExp')?.addEventListener('click', ajouterExperience);
+  document.getElementById('addExpBas')?.addEventListener('click', ajouterExperience);
   document.getElementById('supprDoublons')?.addEventListener('click', async function(){
     const doublons = doublonsExperiences();
     if (!doublons.length || !confirm('Supprimer '+doublons.length+(doublons.length>1 ? ' lignes en double' : ' ligne en double')+' ? Les projets ajoutés par l’agence restent.')) return;

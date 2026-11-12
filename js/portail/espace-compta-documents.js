@@ -52,7 +52,8 @@
         '<div class="large ligne"><button class="btn rouge" type="submit">Créer le document</button></div></form>'
         : '<div class="note">Ajoutez d’abord un client dans le <a href="#/compta/carnet">carnet</a>.</div>') +
       '<div class="segments">' + Object.entries(FILTRES).map((x) => '<button class="btn petit' + (x[0] === filtre ? ' actif' : '') + '" type="button" data-action="compta-doc-filtre" data-filtre="' + x[0] + '">' + P.esc(x[1]) + '</button>').join('') + '</div>' +
-      P.tableau(['Numéro', 'Client', 'Date', '#Total', 'État', ''], liste.map((d) => {
+      // (12/11/2026, « premium partout ») une carte par document
+      P.cartesPersonnes(liste.map((d) => {
         const actions = [bouton('compta-doc-pdf', d.id, 'PDF')];
         if (!d.annule && d.type !== 'recu') actions.push(bouton('compta-doc-envoyer', d.id, 'Envoyer', true));
         if (!d.annule && (d.type === 'devis' || d.type === 'proforma') && d.etat !== 'facture') {
@@ -64,12 +65,12 @@
         if (d.fiscal && !d.fne_reference && (d.type === 'facture' || d.type === 'avoir')) actions.push(bouton('compta-doc-fne', d.id, 'N° FNE'));
         if (!d.annule && ['devis', 'proforma', 'recu'].indexOf(d.type) !== -1) actions.push(bouton('compta-doc-annuler', d.id, 'Annuler'));
         const origine = d.origine_id && docs.find((x) => x.id === d.origine_id);
-        return '<tr' + (d.annule ? ' class="annulee"' : '') + '><td><b>' + P.esc(d.numero) + '</b><div class="petit-texte doux">' + TYPES[d.type] + (d.fiscal ? '' : ' · non fiscal') +
-          (origine ? ' · ' + P.esc(origine.numero) : '') + (d.fne_reference ? ' · FNE ' + P.esc(d.fne_reference) : '') + '</div></td>' +
-          '<td>' + P.esc((d.destinataire || {}).nom || '') + '</td><td>' + P.date(d.date_doc) + '</td><td class="nombre">' + P.fcfa(d.total_ttc) + '</td>' +
-          '<td>' + (d.annule ? P.pastille('Annulé', 'erreur') + '<div class="petit-texte">' + P.esc(d.motif_annulation) + '</div>' : P.pastille(ETATS[d.etat][0], ETATS[d.etat][1])) + '</td>' +
-          '<td><div class="ligne">' + actions.join('') + '</div></td></tr>';
-      }));
+        const etat = d.annule ? ['Annulé', 'erreur'] : ETATS[d.etat];
+        return { tete: '<b class="pers-libelle">' + P.esc(d.numero) + '</b>', classe: d.annule ? 'annulee' : '', ton: d.annule ? 'erreur' : etat[1],
+          sous: [TYPES[d.type] + (d.fiscal ? '' : ' · non fiscal') + (origine ? ' · ' + origine.numero : '') + (d.fne_reference ? ' · FNE ' + d.fne_reference : ''),
+            (d.destinataire || {}).nom || '', P.date(d.date_doc), d.annule && d.motif_annulation ? 'Motif : ' + d.motif_annulation : ''],
+          montant: P.fcfa(d.total_ttc), etat, actions: actions.join('') };
+      }), 'Aucun document pour ce filtre.');
   }
   // champs propres à chaque type (data-pour="types…")
   P.changements['compta-doc-type'] = (el) => {
@@ -237,13 +238,13 @@
       '<label class="fl" for="im-repet">Répéter<select id="im-repet" name="repeter"><option value="1">Une seule fois</option><option value="m">Chaque mois (12 mois)</option>' +
         '<option value="t">Chaque trimestre (4 trimestres)</option><option value="a">Chaque année (3 ans)</option></select></label>' +
       '<div class="large ligne"><button class="btn rouge" type="submit">Ajouter à l’échéancier</button></div></form>' +
-      P.tableau(['Impôt ou taxe', 'Date limite', '#Montant', 'État', ''], liste.map((i) => {
-        const p = paye(i);
-        return '<tr' + (i.annule ? ' class="annulee"' : retard(i) ? ' class="en-retard"' : '') + '><td><b>' + P.esc(i.nom) + '</b>' + (i.periode ? '<div class="petit-texte doux">' + P.esc(i.periode) + '</div>' : '') +
-          (i.annule ? '<div class="petit-texte">' + P.esc(i.motif_annulation) + '</div>' : '') + '</td><td>' + P.date(i.echeance) + '</td><td class="nombre">' + P.fcfa(i.montant) + '</td>' +
-          '<td>' + (i.annule ? P.pastille('Annulé', 'erreur') : p ? P.pastille('Payé', 'ok') : retard(i) ? P.pastille('En retard', 'erreur') : P.pastille('À payer', 'info')) + '</td>' +
-          '<td><div class="ligne">' + (!i.annule && !p ? bouton('compta-impot-payer', i.id, 'Payer', true) + bouton('compta-impot-modifier', i.id, 'Modifier') + bouton('compta-impot-annuler', i.id, 'Annuler') : '') + '</div></td></tr>';
-      })) + '<template id="im-comptes">' + C.optionsComptes(cpts) + '</template>';
+      // (12/11/2026, « premium partout ») une carte par échéance, rouge si en retard
+      P.cartesPersonnes(liste.map((i) => {
+        const p = paye(i), etat = i.annule ? ['Annulé', 'erreur'] : p ? ['Payé', 'ok'] : retard(i) ? ['En retard', 'erreur'] : ['À payer', 'info'];
+        return { tete: '<b class="pers-libelle">' + P.esc(i.nom) + '</b>', classe: i.annule ? 'annulee' : retard(i) ? 'en-retard' : '', ton: etat[1],
+          sous: [i.periode || '', 'date limite : ' + P.date(i.echeance), i.annule && i.motif_annulation ? 'Motif : ' + i.motif_annulation : ''], montant: P.fcfa(i.montant), etat,
+          actions: !i.annule && !p ? bouton('compta-impot-payer', i.id, 'Payer', true) + bouton('compta-impot-modifier', i.id, 'Modifier') + bouton('compta-impot-annuler', i.id, 'Annuler') : '' };
+      }), 'Aucun impôt ni taxe dans l’échéancier.') + '<template id="im-comptes">' + C.optionsComptes(cpts) + '</template>';
   }
   const MOIS_COURTS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
   P.formulaires['compta-impot'] = async (f) => {

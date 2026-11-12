@@ -39,5 +39,14 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
   r.restants = await p.evaluate(() => state.experiences.map(e => e.nom));
   const ok = r.champs && r.facultatif && r.envoi === "Studio Lumière | Côte d'Ivoire | Styliste Awa | 03/09/2025" && r.agence.length === 1 && r.etape && r.doublon === 2 && r.masques && r.nomsDoublons === 2 && /x1/.test(r.supprimes) && /x3/.test(r.supprimes) && !/x2/.test(r.supprimes) && JSON.stringify(r.restants) === '["Shooting perso"]' && JSON.stringify(r.cv) === '["CACAO FASHION SHOW","Shooting perso"]' && !errs.length;
   console.log((ok ? '✓' : '❌ ÉCHEC') + ' Espace mannequin, expériences de l’agence : ' + JSON.stringify(r) + ' | erreurs : ' + JSON.stringify(errs.slice(0, 3)));
-  if (!ok) process.exitCode = 1; await b.close(); srv.kill();
+  // (12/11/2026, remarque de la propriétaire : « on ne peut ajouter que 3 expériences ») pas de limite : le nombre et le
+  // bouton « + Ajouter une autre expérience » en bas de la liste, qui ajoute bien une ligne de plus
+  const bas = await p.evaluate(() => { const c = document.querySelector('.panel') || document.getElementById('app'); c.innerHTML = stepExperience(); bindExperienceHandlers();
+    return { compte: (document.querySelector('.exp-compte') || {}).textContent || '', bouton: !!document.getElementById('addExpBas'),
+      apresListe: !!document.querySelector('#expList ~ #addExpBas'), avant: state.experiences.length }; });
+  await p.click('#addExpBas').catch(() => {}); await p.waitForTimeout(800);
+  const ajout = journal.filter(j => j[0] === 'POST' && j[1] === 'model_projects').length;
+  const ok2 = /1 expérience ajoutée/.test(bas.compte) && bas.bouton && bas.apresListe && ajout >= 1;
+  console.log((ok2 ? '✓' : '❌ ÉCHEC') + ' Espace mannequin : le nombre d’expériences et « + Ajouter une autre expérience » en bas de la liste (pas de limite) ' + JSON.stringify(bas) + ' · ajout envoyé : ' + ajout);
+  if (!ok || !ok2) process.exitCode = 1; await b.close(); srv.kill();
 })();

@@ -89,7 +89,8 @@ async function administration(b) {
     // appel du mois
     await p.goto(BASE + '/admin/#/paiements/mensualites'); await p.waitForSelector('form[data-form="mensualites-appel"]', { timeout: 8000 }).catch(() => {});
     const r0 = await p.$('input[name="ids"][value="r0"]');
-    ok(r0 && await r0.isDisabled() && !(await r0.isChecked()) && /Formation terminée/.test(await p.textContent('.contenu')), n + 'appel du mois : formation terminée → pas cochée, impossible à appeler');
+    // (12/11/2026, cartes) rien à réclamer : pas de case « Appeler » du tout
+    ok((!r0 || (await r0.isDisabled() && !(await r0.isChecked()))) && /Formation terminée/.test(await p.textContent('.contenu')), n + 'appel du mois : formation terminée → pas de case à cocher, impossible à appeler');
     ok(await p.isChecked('input[name="ids"][value="r4"]').catch(() => false), n + 'appel du mois : une mannequin en formation reste cochée');
     // paiements mois par mois
     await p.goto(BASE + '/admin/#/paiements/matrice'); await p.waitForSelector('.matrice, .tableau', { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(600);
@@ -104,7 +105,7 @@ async function administration(b) {
     // récapitulatif : une mannequin dont la formation est finie garde ses mois impayés d'avant la fin
     await p.goto(BASE + '/admin/#/paiements/recapitulatif'); await p.waitForTimeout(1800);
     const nomR0 = d.tables.agence_mannequins[0].full_name;
-    const nonPaye = await p.evaluate(() => [...document.querySelectorAll('.contenu .carte')].filter((c) => /Non payé/.test((c.querySelector('h2') || {}).textContent || '')).map((c) => c.innerText).join(' '));
+    const nonPaye = await p.evaluate(() => [...document.querySelectorAll('.contenu .carte, .contenu .pers-section')].filter((c) => /Non payé/.test((c.querySelector('h2') || {}).textContent || '')).map((c) => c.innerText).join(' '));
     ok(nonPaye.includes(nomR0), n + 'récapitulatif : formation terminée, mais ses mois impayés d’avant restent dus (« Non payé »)');
     // scénario 2 : le mois en cours est un mois de congé
     scenario = 'conges';

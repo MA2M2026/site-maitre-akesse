@@ -55,10 +55,10 @@ const TRADUCTIONS = [{ cle: cle('CASTING NEWFACE'), en: 'NEW FACE CASTING' }, { 
     const t = await p.textContent('#contenu');
     ok(/Traductions anglaises/.test(t) && /à traduire/.test(t) && /Traduit/.test(t), n + 'la liste : textes traduits et à traduire');
     ok(/Présentation · AWA TRADUCTION/.test(t) && /Passionnée de défilés/.test(t), n + 'la présentation d’une mannequin publiée est dans la liste (colonnes utiles seulement, la base refuse « * »)');
-    const etats = await p.$$eval('#contenu tbody tr td:nth-child(3)', (l) => l.map((x) => x.textContent.trim()));
+    const etats = await p.$$eval('#contenu .pers-carte .pastille', (l) => l.map((x) => x.textContent.trim()));
     ok(etats[0] === 'À traduire' && etats[etats.length - 1] === 'Traduit', n + 'les textes à traduire d’abord');
     // traduire le mot du fondateur (texte simple)
-    const ligne = p.locator('#contenu tbody tr', { hasText: 'Bienvenue chez MA2M.' });
+    const ligne = p.locator('#contenu .pers-carte', { hasText: 'Bienvenue chez MA2M.' });
     await ligne.locator('a.btn').click(); await p.waitForSelector('#tr-en', { timeout: 8000 });
     ok(/Bienvenue chez MA2M\./.test(await p.textContent('#contenu')), n + 'l’écran montre le texte français');
     await p.fill('#tr-en', 'Welcome to MA2M.'); await p.click('form[data-form="traduction-enregistrer"] button[type="submit"]'); await p.waitForTimeout(1000);

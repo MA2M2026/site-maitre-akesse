@@ -4745,3 +4745,36 @@ s'agrandit d'un appui, adresses dans `P.etude.galerie`, action `etude-photo-voir
 s'étudie par paquets de `P.etude.LIMITE` (500). Candidatures / recruteurs : la file suit le filtre de la liste
 même en revenant en arrière ; les dossiers supprimés entre-temps ne sont pas comptés. Paiement en espèces :
 « Vérifiez d'abord que cet argent a bien été reçu en espèces » (et non Wave Business).
+
+## Bulletins trimestriels : page robuste (12/11/2026)
+
+`js/admin/site-bulletins.js` : une réponse de `presences_periode` sans `presences` ne casse plus la page. L'essai
+`test-paiements-compta-robustes.js` ouvre désormais les 81 rubriques (Site, Paiements, Comptabilité, Sécurité).
+
+## « Premium partout » : cartes de personnes au lieu des tableaux (12/11/2026)
+
+`js/admin/coque.js` : `P.cartesPersonnes(items, vide)` (une carte par personne : photo + nom via `P.lienFiche`,
+sous-titres, montant, pastille d'état, boutons, liseré de couleur `ton-ok/alerte/erreur`) et `P.barreParts(parts,
+total)` (barre en couleurs). Styles `.pers-*`, `.barre-parts`, `.tm-hero`, `.volet-ajout` (css/admin-vivante.css) ;
+`.pers-carte` est un bloc blanc (css/jetons.css : boutons rouges à écriture blanche).
+Premier écran : Tableau du mois (`tableauDuMois`, js/portail/espace-paiements.js) : taux en grand + barre, chiffres,
+« ＋ Ajouter un mannequin au tableau » dans un volet (ouvert d'office si le tableau est vide), une carte par mannequin.
+Suite (12/11/2026) : Registre des mannequins, Paiements à valider (liste), Codes de l'espace mannequin et Récapitulatif
+de fin de mois (sections `.pers-section` « Preuve reçue, à valider » / « Non payé » / « Payé ») passent aussi en
+`P.cartesPersonnes`. « Message à : … » n'apparaît que lorsque le message part vers un parent.
+Suite : Mensualités du mois (case « Appeler » : `coche` de `P.cartesPersonnes`), Messages et relances (case « Écrire »),
+Rapprochement Wave (alertes en rouge : `alertes` de `P.cartesPersonnes`, `.pers-alerte`).
+Comptabilité (12/11/2026) : écritures (`lignes(liste, noms, vide)` d'espace-compta.js, partagé via `P.compta.lignes` :
+recettes, dépenses, virements, paiements du personnel), devis/factures, impôts, créances et dettes, matériel, carnet,
+comptes de trésorerie, accès du comptable et « Trésorerie aujourd'hui » (liste `.soldes`) passent en cartes.
+Restent en tableaux, exprès : grilles de chiffres (Paiements mois par mois, Paramètres, Archives, Rapport des cachets).
+Sécurité (12/11/2026) : demandes d'accès, comptes et rôles, délégations et appareils en cartes (js/portail/securite.js). Le Journal d'audit reste un tableau (lecture ligne à ligne).
+Traductions anglaises (12/11/2026) : une carte par texte (à traduire d'abord).
+
+## Expériences de la mannequin : pas de limite, bouton aussi en bas (12/11/2026)
+
+`js/espace-mannequin.js` (étape 4) : sous la liste, « N expériences ajoutées · ajoutez-en autant que vous voulez » et
+« + Ajouter une autre expérience » (`#addExpBas`), comme le bouton du haut (`ajouterExperience`) ; la nouvelle ligne
+s'ouvre au milieu de l'écran, le curseur dans « Nom ». Il n'y a jamais eu de limite : avec 3 expériences, le bouton du haut
+sortait de l'écran. Essai : `test-espace-experiences.js`.
+Relecture (12/11/2026) : retards en rouge pâle sur les cartes, téléphone du mannequin dans le Rapprochement, volet « Ajouter » qui reste ouvert après un ajout (`P.etat.voletAjout`), case « Appeler » seulement quand on peut appeler (sinon « Appel envoyé ✓ »), `messageA` commun, liseré « info » réglé une fois dans `P.cartesPersonnes`, classe `avec-coche` (sans :has), rôle en texte (Sécurité), montant d'une dette annulée.

@@ -13,22 +13,25 @@
   function carteDemandes(demandes) {
     const attente = demandes.filter((d) => d.statut === 'en_attente');
     return '<div class="carte"><h2>Demandes d’accès</h2><p class="doux">Une nouvelle personne de l’équipe crée elle-même son compte (« Créer mon compte » sur l’écran de connexion) ; vous êtes prévenue par e-mail. Elle n’a aucun accès tant que vous n’avez pas accepté. À sa première connexion, elle active sa double authentification.</p>' +
-      (attente.length ? P.tableau(['Personne', 'Demandée le', 'Rôle', ''], attente.map((d) => '<tr><td><b>' + P.esc(d.nom) + '</b><div class="petit-texte doux">' + P.esc(d.email) + (d.telephone ? ' · ' + P.esc(d.telephone) : '') + '</div></td>' +
-        '<td>' + P.dateHeure(d.cree_le) + '</td><td><select id="role-' + P.esc(d.id) + '" aria-label="Rôle de ' + P.esc(d.nom) + '">' + ROLES_DEMANDE.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('') + '</select></td>' +
-        '<td class="ligne"><button class="btn rouge petit" data-action="demande-accepter" data-id="' + P.esc(d.id) + '">Accepter</button><button class="btn petit" data-action="demande-refuser" data-id="' + P.esc(d.id) + '" data-nom="' + P.esc(d.nom) + '">Refuser</button></td></tr>'))
+      // (12/11/2026, « premium partout ») une carte par demande, le rôle à choisir dessus
+      (attente.length ? P.cartesPersonnes(attente.map((d) => ({ tete: '<b class="pers-libelle">' + P.esc(d.nom) + '</b>', sous: [d.email, d.telephone || '', 'demandée le ' + P.dateHeure(d.cree_le)],
+        ton: 'alerte', etat: ['En attente', 'alerte'],
+        actions: '<select id="role-' + P.esc(d.id) + '" aria-label="Rôle de ' + P.esc(d.nom) + '">' + ROLES_DEMANDE.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('') + '</select>' +
+          '<button class="btn rouge petit" data-action="demande-accepter" data-id="' + P.esc(d.id) + '">Accepter</button><button class="btn petit" data-action="demande-refuser" data-id="' + P.esc(d.id) + '" data-nom="' + P.esc(d.nom) + '">Refuser</button>' })))
         : '<p class="doux">Aucune demande en attente.</p>') + '</div>';
   }
   async function comptes() {
     const [liste, demandes] = await Promise.all([P.bd(sb.from('staff_profiles').select('*').order('cree_le')), P.rpc('portail_demandes_liste').catch(() => null)]);
     return P.entete('Comptes et rôles', P.pastille('Administrateur principal seul', 'neutre')) +
       (Array.isArray(demandes) ? carteDemandes(demandes) : '<div class="carte"><h2>Demandes d’accès</h2><p class="doux">Pas encore activées : il faut d’abord coller le fichier <b>supabase-demandes-acces.sql</b> dans Supabase.</p></div>') +
-      P.tableau(['Personne', 'Rôle', 'Accès', 'Depuis', 'Actions'], liste.map((s) => '<tr><td><b>' + P.esc(s.nom) + '</b><div class="petit-texte doux">' + P.esc(s.email) + '</div></td>' +
-        '<td>' + (s.role === 'principal' ? P.esc(P.ROLES.principal) : '<select data-change="securite-role" data-id="' + s.user_id + '" aria-label="Rôle de ' + P.esc(s.nom) + '">' +
-          ['site', 'caisse', 'compta'].map((r) => '<option value="' + r + '"' + (r === s.role ? ' selected' : '') + '>' + P.esc(P.ROLES[r]) + '</option>').join('') + '</select>') + '</td>' +
-        '<td>' + P.pastille(s.actif ? 'Actif' : 'Coupé', s.actif ? 'ok' : 'erreur') + '</td><td>' + P.date(s.cree_le) + '</td><td class="ligne">' +
-        (s.role === 'principal' ? '<span class="doux petit-texte">compte unique, non supprimable</span>' :
+      // (12/11/2026, « premium partout ») une carte par compte de l'équipe
+      P.cartesPersonnes(liste.map((s) => ({ tete: '<b class="pers-libelle">' + P.esc(s.nom) + '</b>', sous: [P.ROLES[s.role] || s.role, s.email, 'depuis le ' + P.date(s.cree_le)],
+        etat: s.actif ? ['Actif', 'ok'] : ['Coupé', 'erreur'], ton: s.actif ? 'ok' : 'erreur',
+        actions: s.role === 'principal' ? '<span class="doux petit-texte">compte unique, non supprimable</span>' :
+          '<select data-change="securite-role" data-id="' + s.user_id + '" aria-label="Rôle de ' + P.esc(s.nom) + '">' +
+            ['site', 'caisse', 'compta'].map((r) => '<option value="' + r + '"' + (r === s.role ? ' selected' : '') + '>' + P.esc(P.ROLES[r]) + '</option>').join('') + '</select>' +
           '<button class="btn petit" data-action="securite-actif" data-id="' + s.user_id + '" data-actif="' + (s.actif ? '1' : '0') + '">' + (s.actif ? 'Couper l’accès' : 'Rétablir') + '</button>' +
-          '<button class="btn petit" data-action="securite-mfa" data-id="' + s.user_id + '" data-nom="' + P.esc(s.nom) + '">Réinitialiser la double authentification</button>') + '</td></tr>'));
+          '<button class="btn petit" data-action="securite-mfa" data-id="' + s.user_id + '" data-nom="' + P.esc(s.nom) + '">Réinitialiser la double authentification</button>' })), 'Aucun compte.');
   }
   P.actions['demande-accepter'] = async (el) => {
     const id = el.getAttribute('data-id'), role = (document.getElementById('role-' + id) || {}).value || 'site';
@@ -81,8 +84,10 @@
       '<form class="carte f" data-form="securite-deleguer"><label class="fl" for="dl-qui">Personne<select id="dl-qui" name="user_id">' + personnes.map((p) => '<option value="' + p.user_id + '">' + P.esc(p.nom) + ' (' + P.esc(P.ROLES[p.role]) + ')</option>').join('') + '</select></label>' +
       '<label class="fl" for="dl-mod">Accès accordé<select id="dl-mod" name="module">' + Object.keys(MODULES).map((k) => '<option value="' + k + '">' + P.esc(MODULES[k]) + '</option>').join('') + '</select></label>' +
       '<label class="fl" for="dl-fin">Date de fin (facultative)<input id="dl-fin" name="fin" type="date"></label><button class="btn rouge" type="submit">Accorder</button></form>' +
-      P.tableau(['Personne', 'Accès', 'Depuis', 'Jusqu’au', 'État', ''], liste.map((g) => '<tr><td><b>' + P.esc(g.personne ? g.personne.nom : '—') + '</b></td><td>' + P.esc(MODULES[g.module]) + '</td><td>' + P.date(g.debut) + '</td><td>' + (g.fin ? P.date(g.fin) : '—') + '</td>' +
-        '<td>' + P.pastille(enCours(g) ? 'En cours' : 'Terminée', enCours(g) ? 'ok' : 'neutre') + '</td><td>' + (enCours(g) ? '<button class="btn petit" data-action="securite-revoquer" data-id="' + g.id + '">Révoquer</button>' : '') + '</td></tr>'));
+      // (12/11/2026, « premium partout ») une carte par délégation
+      P.cartesPersonnes(liste.map((g) => ({ tete: '<b class="pers-libelle">' + P.esc(g.personne ? g.personne.nom : '—') + '</b>', sous: [MODULES[g.module], 'depuis le ' + P.date(g.debut), g.fin ? 'jusqu’au ' + P.date(g.fin) : ''],
+        etat: enCours(g) ? ['En cours', 'ok'] : ['Terminée', 'neutre'], ton: enCours(g) ? 'ok' : 'neutre',
+        actions: enCours(g) ? '<button class="btn petit" data-action="securite-revoquer" data-id="' + g.id + '">Révoquer</button>' : '' })), 'Aucune délégation.');
   }
   P.formulaires['securite-deleguer'] = async (f) => {
     const moi = (await sb.auth.getUser()).data.user.id;
@@ -102,9 +107,13 @@
     // (appareil de confiance, Extension 149 : 30 jours après une connexion complète, avec un code à 4 chiffres)
     const confiance = (a) => !a.revoque && a.confiance_jusqua && new Date(a.confiance_jusqua) > new Date();
     return P.entete('Appareils et sessions') + '<div class="note info">Chaque appareil où le portail est utilisé apparaît ici. Révoquer un appareil coupe son accès immédiatement, même si l’application reste installée. Les sessions se verrouillent après 15 minutes sans activité et durent 8 heures au plus ; sur un appareil « de confiance » (30 jours après une connexion complète, avec son code à 4 chiffres), le mot de passe et le code à 4 chiffres suffisent pour revenir.</div>' +
-      P.tableau(['Personne', 'Appareil', 'Première utilisation', 'Dernière activité', 'Confiance', 'État', ''], liste.map((a) => '<tr><td><b>' + P.esc(a.personne ? a.personne.nom : '—') + '</b></td><td>' + P.esc(a.libelle || a.appareil.slice(0, 8)) + (a.appareil === ici ? ' <span class="petit-texte doux">(cet appareil)</span>' : '') + '</td><td>' + P.dateHeure(a.installe_le) + '</td><td>' + P.dateHeure(a.derniere_activite) + '</td>' +
-        '<td>' + (confiance(a) ? 'jusqu’au ' + P.esc(P.date(a.confiance_jusqua)) + (a.appareil === ici ? ' <button class="btn petit" data-action="oublier-appareil">Oublier cet appareil</button>' : '') : '<span class="doux">—</span>') + '</td>' +
-        '<td>' + P.pastille(a.revoque ? 'Révoqué' : 'Autorisé', a.revoque ? 'erreur' : 'ok') + '</td><td><button class="btn petit" data-action="securite-appareil" data-id="' + a.id + '" data-revoque="' + (a.revoque ? '1' : '0') + '">' + (a.revoque ? 'Rétablir' : 'Révoquer') + '</button></td></tr>'));
+      // (12/11/2026, « premium partout ») une carte par appareil
+      P.cartesPersonnes(liste.map((a) => ({ tete: '<b class="pers-libelle">' + P.esc(a.personne ? a.personne.nom : '—') + '</b>',
+        sous: [(a.libelle || a.appareil.slice(0, 8)) + (a.appareil === ici ? ' (cet appareil)' : ''), 'depuis le ' + P.dateHeure(a.installe_le), 'dernière activité : ' + P.dateHeure(a.derniere_activite),
+          confiance(a) ? 'Confiance jusqu’au ' + P.date(a.confiance_jusqua) : ''],
+        etat: a.revoque ? ['Révoqué', 'erreur'] : ['Autorisé', 'ok'], ton: a.revoque ? 'erreur' : 'ok',
+        actions: (confiance(a) && a.appareil === ici ? '<button class="btn petit" data-action="oublier-appareil">Oublier cet appareil</button>' : '') +
+          '<button class="btn petit" data-action="securite-appareil" data-id="' + a.id + '" data-revoque="' + (a.revoque ? '1' : '0') + '">' + (a.revoque ? 'Rétablir' : 'Révoquer') + '</button>' })), 'Aucun appareil.');
   }
   P.actions['securite-appareil'] = async (el) => {
     await P.sensible(() => P.bd(sb.from('staff_devices').update({ revoque: el.getAttribute('data-revoque') !== '1' }).eq('id', el.getAttribute('data-id'))));

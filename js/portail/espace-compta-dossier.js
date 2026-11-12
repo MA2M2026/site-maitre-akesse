@@ -182,10 +182,11 @@
     return P.entete('Accès du comptable', P.pastille('Administrateur principal seul', 'neutre')) +
       '<div class="note info">Le comptable reçoit un lien d’invitation par e-mail, choisit son mot de passe et active sa double authentification. Il ne voit aucun nom de mannequin. Vous pouvez couper son accès à tout moment : l’accès est alors fermé immédiatement.</div>' +
       '<div class="carte"><h2>Comptable' + (liste.length > 1 ? 's' : '') + '</h2>' +
-      (liste.length ? P.tableau(['Personne', 'Accès', 'Depuis', ''], liste.map((c) => '<tr><td><b>' + P.esc(c.nom) + '</b><div class="petit-texte doux">' + P.esc(c.email) + '</div></td>' +
-        '<td>' + P.pastille(c.actif ? 'Actif' : 'Coupé', c.actif ? 'ok' : 'erreur') + '</td><td>' + P.date(c.cree_le) + '</td>' +
-        '<td><button class="btn petit' + (c.actif ? '' : ' rouge') + '" type="button" data-action="securite-actif" data-id="' + c.user_id + '" data-actif="' + (c.actif ? '1' : '0') + '">' + (c.actif ? 'Couper l’accès' : 'Rétablir') + '</button></td></tr>'))
-        : '<p class="doux">Aucun comptable invité pour l’instant.</p>') +
+      // (12/11/2026, « premium partout ») une carte par comptable
+      P.cartesPersonnes(liste.map((c) => ({ tete: '<b class="pers-libelle">' + P.esc(c.nom) + '</b>', sous: [c.email, 'depuis le ' + P.date(c.cree_le)],
+        etat: c.actif ? ['Actif', 'ok'] : ['Coupé', 'erreur'], ton: c.actif ? 'ok' : 'erreur',
+        actions: '<button class="btn petit' + (c.actif ? '' : ' rouge') + '" type="button" data-action="securite-actif" data-id="' + c.user_id + '" data-actif="' + (c.actif ? '1' : '0') + '">' + (c.actif ? 'Couper l’accès' : 'Rétablir') + '</button>' })),
+        'Aucun comptable invité pour l’instant.') +
       '<div class="ligne"><a class="btn rouge" href="#/securite/comptes">Inviter le comptable</a></div></div>';
   }
   esp.pages.acces = acces;

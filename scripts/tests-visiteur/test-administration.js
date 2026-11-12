@@ -213,13 +213,13 @@ function donnees(role) {
       const pr = r.p;
       await pr.waitForSelector('#cx-code'); await pr.fill('#cx-code', '123456'); await pr.click('form[data-form="code"] [type=submit]');
       await pr.waitForSelector('.tu, .lateral', { timeout: 6000 }).catch(() => {});
-      await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.tableau tbody tr', { timeout: 6000 }).catch(() => {});
-      const lignes = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
+      await pr.goto(url + '#/paiements/registre'); await pr.waitForSelector('.pers-carte', { timeout: 6000 }).catch(() => {});
+      const lignes = await pr.$$eval('.pers-carte', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
       ok(lignes.length === 4 && lignes.some((x) => /ROXANE OUATTARA.*Inscription déjà effectuée sur le site/.test(x)) && lignes.some((x) => /KONÉ AWA.*Inscription à enregistrer/.test(x)) && lignes.some((x) => /YAO KOUASSI.*En attente de validation/.test(x)),
         nomEcran + ' (' + role + ') : registre = comptes du site + ajoutés à la main, couleurs d’inscription');
       if (role === 'principal') {
         await pr.click('[data-action="registre-filtre"][data-filtre="non_paye"]'); await pr.waitForTimeout(500);
-        ok((await pr.$$('.tableau tbody tr')).length === 1, nomEcran + ' : filtre « Inscription à enregistrer »');
+        ok((await pr.$$('.pers-carte')).length === 1, nomEcran + ' : filtre « Inscription à enregistrer »');
         // ajout à la main : un mineur sans parent est refusé
         await pr.goto(url + '#/paiements/ajouter'); await pr.waitForSelector('#mq-nom');
         await pr.fill('#mq-nom', 'Petit Franck'); await pr.fill('#mq-naissance', '2014-05-05'); await pr.click('form[data-form="registre-ajouter"] [type=submit]'); await pr.waitForTimeout(600);
@@ -248,8 +248,8 @@ function donnees(role) {
         lignesPaye[1].objet === 'mensualite' && lignesPaye[1].montant === 10000 && /^\d{4}-\d{2}-01$/.test(lignesPaye[1].mois), nomEcran + ' (' + role + ') : espèces validées par l’agence : 15 000 d’inscription + 10 000 du 1er mois');
       // paiements à valider (cahier v2.4, 5.2) : orange, l'agence valide ou refuse avec motif
       await pr.goto(url + '#/paiements/a-valider'); await pr.waitForSelector('[data-action="paiement-valider"]', { timeout: 6000 }).catch(() => {});
-      const aValider = await pr.$$eval('.tableau tbody tr', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
-      ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*En attente de validation.*25 000 FCFA/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
+      const aValider = await pr.$$eval('.pers-carte', (l) => l.map((x) => x.innerText.replace(/\s+/g, ' ')));
+      ok(aValider.length === 1 && /YAO KOUASSI.*Inscription.*25 000 FCFA.*En attente de validation/.test(aValider[0]), nomEcran + ' (' + role + ') : « J’ai payé » → une ligne orange de 25 000 FCFA à valider');
       ok((await pr.textContent('.lateral .nav[href="#/paiements/a-valider"]')).includes('1'), nomEcran + ' (' + role + ') : compteur des paiements à valider dans le menu');
       // (12/11/2026, « Les 2 » de la propriétaire) vérifier un à un, en grand : montant, mannequin, trois décisions ;
       // « Plus tard » met de côté sans rien écrire

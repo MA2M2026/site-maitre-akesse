@@ -112,7 +112,7 @@ async function paiements(b) {
     ok(!pales.length, n + 'assistant : textes lisibles ' + pales.slice(0, 3).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
 
     // 3. le rodage n'est jamais réclamé
-    await aller(p, 'paiements/tableau', '.tableau');
+    await aller(p, 'paiements/tableau', '.pers-grille, .carte.vide');
     t = await texte(p);
     ok(/Rodage : jamais réclamé/.test(t) && /Attendu\s*0 FCFA/i.test(t) && /période de rodage/i.test(t) && !/Relancer/.test(t), n + 'tableau du mois : « Rodage : jamais réclamé », rien d’attendu, pas de relance');
     await aller(p, 'paiements/matrice', '.matrice'); await p.waitForTimeout(400);
