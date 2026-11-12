@@ -4764,3 +4764,7 @@ de fin de mois (sections `.pers-section` « Preuve reçue, à valider » / « No
 `P.cartesPersonnes`. « Message à : … » n'apparaît que lorsque le message part vers un parent.
 Suite : Mensualités du mois (case « Appeler » : `coche` de `P.cartesPersonnes`), Messages et relances (case « Écrire »),
 Rapprochement Wave (alertes en rouge : `alertes` de `P.cartesPersonnes`, `.pers-alerte`).
+Comptabilité (12/11/2026) : écritures (`lignes(liste, noms, vide)` d'espace-compta.js, partagé via `P.compta.lignes` :
+recettes, dépenses, virements, paiements du personnel), devis/factures, impôts, créances et dettes, matériel, carnet,
+comptes de trésorerie, accès du comptable et « Trésorerie aujourd'hui » (liste `.soldes`) passent en cartes.
+Restent en tableaux, exprès : grilles de chiffres (Paiements mois par mois, Paramètres, Archives, Rapport des cachets).

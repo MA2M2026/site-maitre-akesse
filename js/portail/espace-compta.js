@@ -243,10 +243,11 @@
       '<label class="fl" for="co-solde">Solde de départ (FCFA)<input id="co-solde" name="solde_initial" type="number" inputmode="numeric" step="1" value="0"></label>' +
       '<label class="fl" for="co-date">À la date du<input id="co-date" name="date_initiale" type="date" value="' + P.aujourdhui() + '"></label>' +
       '<div class="large ligne"><button class="btn" type="submit">Ajouter le compte</button></div></form>' +
-      '<div class="carte"><h2>Soldes de départ</h2><p class="doux petit-texte">Le solde de chaque compte = solde de départ + recettes − dépenses ± virements depuis cette date.</p>' +
-      P.tableau(['Compte', 'Type', '#Solde de départ', 'Date', ''], cpts.map((c) => '<tr><td>' + P.esc(c.nom) + (c.actif ? '' : ' ' + P.pastille('Fermé', 'neutre')) + '</td><td>' + P.esc(TYPES_COMPTE[c.type] || c.type) +
-        '</td><td class="nombre">' + P.fcfa(c.solde_initial) + '</td><td>' + P.date(c.date_initiale) + '</td>' +
-        '<td><button class="btn petit" type="button" data-action="compta-compte-modifier" data-id="' + c.id + '">Modifier</button></td></tr>')) + '</div>';
+      // (12/11/2026, « premium partout ») une carte par compte
+      '<section class="pers-section"><h2>Soldes de départ</h2><p class="doux petit-texte">Le solde de chaque compte = solde de départ + recettes − dépenses ± virements depuis cette date.</p>' +
+      P.cartesPersonnes(cpts.map((c) => ({ tete: '<b class="pers-libelle">' + P.esc(c.nom) + '</b>', sous: [TYPES_COMPTE[c.type] || c.type, 'au ' + P.date(c.date_initiale)],
+        montant: P.fcfa(c.solde_initial), etat: c.actif ? null : ['Fermé', 'neutre'],
+        actions: '<button class="btn petit" type="button" data-action="compta-compte-modifier" data-id="' + c.id + '">Modifier</button>' })), 'Aucun compte.') + '</section>';
   }
   // Solde de départ (au premier jour d'utilisation : ce qu'il y a vraiment en caisse, sur Wave…)
   // et fermeture d'un compte qui ne sert plus (il reste dans l'historique)
