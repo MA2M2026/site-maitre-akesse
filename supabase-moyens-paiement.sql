@@ -1,21 +1,23 @@
 -- =====================================================================================================
 -- Moyens de paiement des mannequins (12/11/2026, demande de la propriétaire) — À COLLER UNE FOIS dans
--- Supabase (SQL Editor). Rien n'est effacé ; peut être recollé sans risque.
+-- Supabase (SQL Editor). Rien n’est effacé , peut être recollé sans risque.
 -- Six moyens préparés : Wave, Orange Money, MTN Money, Moov Money, carte bancaire (Visa), virement.
--- Chacun s'allume dans l'Administration (Paramètres > Moyens de paiement) avec son numéro, son lien ou son RIB,
--- le jour où l'agence a le compte correspondant : aucune modification du site n'est alors nécessaire.
--- Aujourd'hui : seul Wave est allumé (les liens Wave des Paramètres restent utilisés).
+-- Chacun s’allume dans l’Administration (Paramètres > Moyens de paiement) avec son numéro, son lien ou son RIB,
+-- le jour où l’agence a le compte correspondant : aucune modification du site n’est alors nécessaire.
+-- Aujourd’hui : seul Wave est allumé (les liens Wave des Paramètres restent utilisés).
 -- =====================================================================================================
 
+-- Colonnes : numero = numéro qui reçoit (mobile money) , titulaire = au nom de , lien = paiement par carte (https) ,
+-- rib = banque et RIB (virement) , consignes = phrase affichée aux mannequins.
 create table if not exists moyens_paiement (
   code text primary key check (code in ('wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement')),
   nom text not null,
   actif boolean not null default false,
-  numero text check (numero is null or numero ~ '^[0-9+ ]{6,20}$'),   -- numéro marchand ou de réception (mobile money)
-  titulaire text check (titulaire is null or length(titulaire) <= 120),   -- au nom de…
-  lien text check (lien is null or lien ~ '^https://[^\s]+$'),           -- lien de paiement (carte bancaire)
-  rib text check (rib is null or length(rib) <= 300),                     -- banque, IBAN / RIB (virement)
-  consignes text check (consignes is null or length(consignes) <= 400),   -- phrase affichée aux mannequins
+  numero text check (numero is null or numero ~ '^[0-9+ ]{6,20}$'),
+  titulaire text check (titulaire is null or length(titulaire) <= 120),
+  lien text check (lien is null or lien ~ '^https://[^\s]+$'),
+  rib text check (rib is null or length(rib) <= 300),
+  consignes text check (consignes is null or length(consignes) <= 400),
   ordre int not null default 0,
   maj_le timestamptz not null default now(),
   maj_par uuid references auth.users(id)
@@ -31,11 +33,11 @@ create policy moyens_paiement_lecture on moyens_paiement for select using (porta
 drop policy if exists moyens_paiement_modif on moyens_paiement;
 create policy moyens_paiement_modif on moyens_paiement for update using (portail_est_principal()) with check (portail_est_principal());
 
--- garde-fous : un moyen allumé doit dire où payer ; qui a modifié et quand
+-- garde-fous : un moyen allumé doit dire où payer , qui a modifié et quand
 create or replace function moyens_paiement_garde_fous()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  -- (comme les liens Wave : administrateur principal, avec un code récent — changer où arrive l'argent est sensible)
+  -- (comme les liens Wave : administrateur principal, avec un code récent — changer où arrive l’argent est sensible)
   if not portail_est_principal() then raise exception 'Seul l''administrateur principal peut modifier les moyens de paiement.'; end if;
   perform portail_exiger_auth_recente();
   if NEW.code <> OLD.code then raise exception 'Le code d''un moyen ne change pas.'; end if;
@@ -49,12 +51,12 @@ end;
 $$;
 drop trigger if exists moyens_paiement_garde_fous on moyens_paiement;
 create trigger moyens_paiement_garde_fous before update on moyens_paiement for each row execute function moyens_paiement_garde_fous();
--- journal d'audit : toute modification est tracée (numéro, RIB, lien…)
+-- journal d’audit : toute modification est tracée (numéro, RIB, lien…)
 drop trigger if exists audit_moyens_paiement on moyens_paiement;
 create trigger audit_moyens_paiement after insert or update or delete on moyens_paiement for each row execute function audit_ecriture();
 grant select, update on moyens_paiement to authenticated;
 
--- Moyens allumés, pour les pages de paiement (aussi la page d'inscription, sans compte)
+-- Moyens allumés, pour les pages de paiement (aussi la page d’inscription, sans compte)
 create or replace function moyens_paiement_publics()
 returns jsonb language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object('code', code, 'nom', nom, 'numero', numero, 'titulaire', titulaire, 'lien', lien,
@@ -69,9 +71,9 @@ alter table paiements_mannequins drop constraint if exists paiements_mannequins_
 alter table paiements_mannequins add constraint paiements_mannequins_mode_check
   check (mode in ('wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement', 'especes', 'avant_systeme'));
 
--- « J'ai payé » avec le moyen choisi : les fonctions existantes déclarent (mode « wave »), puis le moyen est posé
+-- « J’ai payé » avec le moyen choisi : les fonctions existantes déclarent (mode « wave »), puis le moyen est posé
 -- sur les paiements créés PAR CET APPEL — même transaction, donc même « declare_le » (= now()) — et seulement ceux
--- de la mannequin connectée. (Les paiements ne se modifient que par une décision : ma2m.decision, local à l'appel.)
+-- de la mannequin connectée. (Les paiements ne se modifient que par une décision : ma2m.decision, local à l’appel.)
 create or replace function paiements_noter_moyen(p_moyen text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
@@ -108,10 +110,10 @@ $$;
 revoke all on function mensualites_payer_avance(int, text, text) from public, anon;
 grant execute on function mensualites_payer_avance(int, text, text) to authenticated;
 
--- Comptabilité : la recette va sur le bon compte (espèces → caisse ; Wave → Wave ; Orange, MTN, Moov → compte
--- « Autre mobile money » ; carte et virement → banque). Sans compte ACTIF de ce type : le compte Wave (ou la caisse),
+-- Comptabilité : la recette va sur le bon compte (espèces → caisse , Wave → Wave , Orange, MTN, Moov → compte
+-- « Autre mobile money » , carte et virement → banque). Sans compte ACTIF de ce type : le compte Wave (ou la caisse),
 -- et une ligne au journal pour que le comptable crée le bon compte et corrige.
--- (Même version dans supabase-administration.sql, pour qu'un nouveau collage de ce fichier ne la remplace pas.)
+-- (Même version dans supabase-administration.sql, pour qu’un nouveau collage de ce fichier ne la remplace pas.)
 create or replace function compta_type_du_mode(p_mode text)
 returns text language sql immutable as $$
   select case p_mode when 'especes' then 'caisse' when 'wave' then 'wave' when 'carte' then 'banque' when 'virement' then 'banque'
@@ -139,7 +141,7 @@ begin
     select id into compte from compta_comptes where type = compta_type_du_mode(NEW.mode) order by actif desc, cree_le limit 1;
   end if;
   if compte is null then
-    -- (ne bloque jamais la validation dans l'espace 2 ; les garde-fous des comptes l'empêchent)
+    -- (ne bloque jamais la validation dans l’espace 2 , les garde-fous des comptes l’empêchent)
     perform journaliser('Comptabilité : paiement validé sans compte pour le recevoir (' || NEW.mode || ')',
                         'paiements_mannequins', NEW.id::text, null, null);
     return NEW;
