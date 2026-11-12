@@ -86,5 +86,6 @@ window.MA2M_ERREURS_CORRIGEES = [
   { motif: '/api/trier-photo', corrige_le: '2100-01-01T00:00:00Z', note: 'Tri des photos par IA retiré du site le 07/10 : anciens signalements' },
   { motif: '/api/code-protege → 502', corrige_le: '2026-10-11T16:52:02Z', note: '« Créer mon compte » réparé le 11/10 (Extensions 133-134)' },
   { motif: '[Erreur JavaScript] The I/O read operation failed', corrige_le: '2026-10-12T12:17:00Z', note: 'Vidéo illisible sur le téléphone pendant son allègement : déjà rattrapée par le formulaire (signalée « Vidéo non allégée »), plus comptée en double' },
+  { motif: 'blob:https://www.maitreakessemodelmanagement.com/', corrige_le: '2026-11-12T23:59:00Z', note: 'Photos de candidature devenues illisibles sur Android quelques minutes après le choix (« Photo 1 : illisible ») : lues et allégées dès le choix depuis le 12/11 (preparerPhotoEnvoi, js/app.js)' },
   { motif: '/en/mannequins:479', corrige_le: '2026-10-07T23:59:00Z', note: 'Code ajouté par la traduction automatique (ligne qui n’existe pas dans la page) : ignoré par le journal depuis le 07/10' },
 ];

@@ -4778,3 +4778,12 @@ Traductions anglaises (12/11/2026) : une carte par texte (à traduire d'abord).
 s'ouvre au milieu de l'écran, le curseur dans « Nom ». Il n'y a jamais eu de limite : avec 3 expériences, le bouton du haut
 sortait de l'écran. Essai : `test-espace-experiences.js`.
 Relecture (12/11/2026) : retards en rouge pâle sur les cartes, téléphone du mannequin dans le Rapprochement, volet « Ajouter » qui reste ouvert après un ajout (`P.etat.voletAjout`), case « Appeler » seulement quand on peut appeler (sinon « Appel envoyé ✓ »), `messageA` commun, liseré « info » réglé une fois dans `P.cartesPersonnes`, classe `avec-coche` (sans :has), rôle en texte (Sécurité), montant d'une dette annulée.
+
+## Photos des formulaires lues dès le choix (12/11/2026)
+
+Deux candidates d'Intégrer l'agence ont eu « Photo 1 : illisible » à l'envoi (Android, photos de la galerie / du nuage
+relues 8 minutes après le choix) : les vidéos sont arrivées, pas les photos. `preparerPhotoEnvoi` /
+`preparerPhotosEnvoi` / `textePhotosIllisibles` (js/app.js) : chaque photo est convertie (HEIC), réduite (1600 px) et
+COPIÉE EN MÉMOIRE dès qu'elle est choisie ; une photo déjà illisible est signalée tout de suite. Utilisé par
+js/formulaire-candidature.js (Intégrer l'agence, castings : `preparerPuis`, l'envoi attend `photosEnPreparation`) et
+js/cours-talons.js (étape 3 : « un instant » tant que la préparation n'est pas finie). Essai : test-photos-pretes.js.

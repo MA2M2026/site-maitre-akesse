@@ -241,6 +241,8 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
 let photosSelectionnees = [];
 let indexPhotoARemplacer = null;
 
+const adressesApercu = new WeakMap();
+const adresseApercu = (f) => { if (!adressesApercu.has(f)) adressesApercu.set(f, URL.createObjectURL(f)); return adressesApercu.get(f); };
 function rafraichirApercuPhotos() {
   const compteur = document.getElementById('ca-photos-compteur');
   const apercu = document.getElementById('ca-photos-apercu');
@@ -254,7 +256,7 @@ function rafraichirApercuPhotos() {
 
   apercu.innerHTML = photosSelectionnees.map((f, i) => `
     <div class="ca-photo-vignette ca-20">
-      <img src="${URL.createObjectURL(f)}" class="ca-21" alt="Photo ${i + 1}">
+      <img src="${adresseApercu(f)}" class="ca-21" alt="Photo ${i + 1}">
       <button type="button" class="ca-photo-remplacer ca-22" data-index="${i}" title="${T('Remplacer cette photo', 'Replace this photo')}">⇄</button>
       <button type="button" class="ca-photo-suppr ca-23" data-index="${i}" title="${T('Supprimer cette photo', 'Remove this photo')}">✕</button>
     </div>
@@ -297,19 +299,31 @@ function fermerVisionneuse() { document.getElementById('ca-visionneuse').classLi
 document.getElementById('ca-visionneuse').addEventListener('click', fermerVisionneuse);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerVisionneuse(); });
 
+// (12/11/2026) chaque photo est lue et allégée DÈS QU'ELLE EST CHOISIE (preparerPhotosEnvoi, js/app.js) : à l'envoi,
+// plus rien à relire sur le téléphone. photosEnPreparation : l'envoi attend la fin de la préparation.
+let photosEnPreparation = Promise.resolve();
+function preparerPuis(fichiers, ranger) {
+  const compteur = document.getElementById('ca-photos-compteur');
+  compteur.textContent = T('Préparation des photos…', 'Preparing the photos…');
+  const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(fichiers)).then(({ pretes, illisibles }) => {
+    ranger(pretes);
+    rafraichirApercuPhotos();
+    if (illisibles.length) { compteur.textContent += ' ' + textePhotosIllisibles(illisibles); compteur.style.color = 'var(--rouge)'; }
+  });
+  photosEnPreparation = travail.catch(() => {});
+}
 document.getElementById('ca-photos').addEventListener('change', (e) => {
-  photosSelectionnees.push(...Array.from(e.target.files || []));
+  const fichiers = Array.from(e.target.files || []);
   e.target.value = '';
-  rafraichirApercuPhotos();
+  preparerPuis(fichiers, (pretes) => { photosSelectionnees.push(...pretes); });
 });
 
 document.getElementById('ca-photo-remplacement').addEventListener('change', (e) => {
-  const fichier = e.target.files[0];
+  const fichier = e.target.files[0], rang = indexPhotoARemplacer;
   e.target.value = '';
-  if (!fichier || indexPhotoARemplacer === null) return;
-  photosSelectionnees[indexPhotoARemplacer] = fichier;
   indexPhotoARemplacer = null;
-  rafraichirApercuPhotos();
+  if (!fichier || rang === null) return;
+  preparerPuis([fichier], (pretes) => { if (pretes[0]) photosSelectionnees[rang] = pretes[0]; });
 });
 
 // Liste « Taille » selon le genre (taille minimale, mineurs exemptés) : js/app.js.
@@ -426,6 +440,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     return;
   }
 
+  await photosEnPreparation;  // (photos encore en préparation : on attend, quelques secondes)
   const fichiersPhotos = photosSelectionnees;
   const minPhotos = photosMin();
   if (fichiersPhotos.length < minPhotos) {
@@ -508,9 +523,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
     for (let i = 0; i < fichiersPhotos.length; i++) {
       majJauge(idsPhotos[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
       try {
-        const fichierConverti = await convertirSiHeic(fichiersPhotos[i]);
-        const fichier = await redimensionnerImage(fichierConverti, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
-        photosBase64.push(await fichierEnBase64(fichier));
+        photosBase64.push(await fichierEnBase64(fichiersPhotos[i]));  // (déjà prête en mémoire depuis le choix)
         rangsEnvoyes.push(i);
         majJauge(idsPhotos[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
       } catch (e) {
