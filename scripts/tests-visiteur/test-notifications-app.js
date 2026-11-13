@@ -51,6 +51,12 @@ const appeler = async (corps, secret) => {
   await appeler({ table: 'messages_contact', record: { id: 'c1', nom: 'Marie', message: 'Bonjour' } });
   ok(envois.length === 1 && envois[0].endpoint === 'https://push.exemple/admin' && appels.some((a) => /notifications_reglages/.test(a.url)) && !appels.some((a) => /app_push_abonnements/.test(a.url)),
     'Administration : ses notifications restent les mêmes (ses téléphones, ses réglages)');
+  // (13/11/2026) inscription au cours de talons : notification aux téléphones de l'Administration
+  envois.length = 0; appels.length = 0;
+  await appeler({ table: 'cours_talons', record: { id: 't1', nom: 'Karidja Karamoko', formule: 'groupe', decision: 'plus_tard', photos: ['https://drive.google.com/x'] } });
+  ok(envois.length === 1 && envois[0].endpoint === 'https://push.exemple/admin' && /cours de talons/.test(envois[0].payload.titre) && /Karidja Karamoko · en groupe/.test(envois[0].payload.texte) &&
+    envois[0].payload.url === '/admin/#/site/b2-cours-talons' && appels.some((x) => /notifications_reglages\?cle=in\.\(evenement_cours_talons/.test(x.url)),
+    'cours de talons : notification sur les téléphones de l’Administration (nom, formule, ouvre la page Cours de talons)');
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);
 })();

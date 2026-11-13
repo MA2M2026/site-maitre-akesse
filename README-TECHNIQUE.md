@@ -4968,3 +4968,15 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
   photos de l'agence déjà choisies pour ces pages, jamais de mineure). La nouvelle photo vient au-dessus puis
   l'ancienne disparaît (pas de trou) ; seulement quand la section est à l'écran ; rien ne bouge si le visiteur demande
   moins d'animations. Test : `test-diaporama-luxe.js` (aussi le fond noir de l'accueil).
+
+## Cours de talons : photos affichées et notification sur le téléphone (13/11/2026, signalement de la propriétaire)
+
+- **Photos** : la fiche d'une inscription (Administration › Cours de talons, `js/admin/site-cours-talons.js`) AFFICHE
+  désormais ses photos (Google Drive), comme les candidatures casting, et chacune s'agrandit d'un appui
+  (`ouvrirGalerieLightbox`). Outil commun `P.visageDistant` (js/admin/coque.js), aussi utilisé par les dossiers de
+  candidature (js/admin/site-dossiers.js). La vidéo de la marche reste un bouton vers Google Drive.
+- **Notification** : les inscriptions au cours de talons n'avaient jamais été branchées sur les notifications du
+  téléphone (seul l'e-mail partait). `api/notifications-webhook.js` gère maintenant la table `cours_talons`
+  (« 👠 Nouvelle inscription au cours de talons », nom et formule, ouvre la page Cours de talons) ; le déclencheur est
+  dans `supabase-notif-cours-talons.sql` (à coller par la propriétaire ; réutilise `notifier_push_notification`, aucun
+  secret à remplir). Tests : `test-notifications-app.js`, `test-admin-cours-talons.js`.

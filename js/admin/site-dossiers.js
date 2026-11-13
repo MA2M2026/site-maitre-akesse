@@ -116,8 +116,7 @@
     return une;
   };
   // Visage d'un dossier (photo jointe, sinon initiales) ; l'adresse est déjà prête (pas de urlLegere)
-  const visageDossier = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
-    (url ? '<img src="' + P.esc(url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</span>';
+  const visageDossier = P.visageDistant;  // (js/admin/coque.js, commun avec les cours de talons)
 
   // ---------- Messages déjà envoyés (12/11/2026, registre messages_candidats, js/messages-candidats.js) ----------
   const SORTES = { information: ['✓', 'Prévenue'], convocation: ['📨', 'Convoquée'], relance: ['🔁', 'Relancée'], contact: ['💬', 'Contactée sur WhatsApp'], libre: ['✉️', 'Message envoyé'] };

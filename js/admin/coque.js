@@ -12,6 +12,10 @@
   P.pluriel = (n, un, plusieurs) => n + ' ' + (n > 1 ? plusieurs : un);
   // (la civilité devant le nom ne compte pas : « Mademoiselle GRÂCE YAO » → GY)
   P.initiales = initialesNom;  // (js/app.js)
+  // (13/11/2026) photo hébergée ailleurs (Google Drive : candidatures casting, cours de talons), telle quelle,
+  // sans envoyer l'adresse de la page (Drive refuse sinon certaines vignettes)
+  P.visageDistant = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
+    (url ? '<img src="' + P.esc(url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</span>';
   P.visage = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(urlLegere(url)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
   // Grille de cases à cocher avec visages (Programmation défilé, Informations agence) : un titre, le

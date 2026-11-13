@@ -1,7 +1,7 @@
 // Fonction serverless Vercel — reçoit l'appel du déclencheur Supabase (voir
 // Extension 107, supabase-extension.sql) juste après l'enregistrement d'une
-// candidature casting, d'une demande d'intégration, d'une demande recruteur
-// ou d'un message visiteur, et envoie une vraie notification push aux
+// candidature casting, d'une demande d'intégration, d'une demande recruteur,
+// d'une inscription au cours de talons (13/11/2026) ou d'un message visiteur, et envoie une vraie notification push aux
 // téléphones de l'administration abonnés (Grand 3, N-5 à N-14).
 // Depuis le 26/10/2026, aussi chaque nouveau message de l'application des mannequins
 // (app_messages, supabase-app-messages.sql) : notification aux SEULS téléphones de la
@@ -47,6 +47,17 @@ function construireNotification(table, record) {
       titre: "⭐ Nouvelle demande d'intégration",
       texte: record.full_name || 'Candidat',
       url: '/admin/#/site/b2-candidatures/' + record.id
+    };
+  }
+  // (13/11/2026, demande de la propriétaire) inscription à l'Atelier Talons & Élégance
+  // (déclencheur : supabase-notif-cours-talons.sql)
+  if (table === 'cours_talons') {
+    const formules = { groupe: 'en groupe', prive_salle: 'privé en salle', prive_exterieur: 'privé à l’extérieur' };
+    return {
+      cle: 'evenement_cours_talons',
+      titre: '👠 Nouvelle inscription au cours de talons',
+      texte: (record.nom || 'Une élève') + (formules[record.formule] ? ' · ' + formules[record.formule] : '') + (record.decision === 'maintenant' ? ' · a payé, à vérifier' : ''),
+      url: '/admin/#/site/b2-cours-talons'
     };
   }
   if (table === 'recruiter_requests') {
