@@ -3072,8 +3072,8 @@ const EnvoiFiable = (() => {
   function demanderNotifications() {
     // (SonarCloud 13/11/2026 : pas de « try » autour d'une promesse ; les anciens navigateurs répondent sans promesse)
     if (!('Notification' in window) || Notification.permission !== 'default') return;
-    const reponse = Notification.requestPermission();
-    if (reponse && typeof reponse.catch === 'function') reponse.catch(() => {});
+    // (une erreur, même immédiate, devient un refus de promesse : jamais d'erreur qui bloquerait « Envoyer »)
+    new Promise((fini) => { fini(Notification.requestPermission()); }).catch(() => {});
   }
   // notification seulement si la personne n'a plus la page sous les yeux (sinon, le message à l'écran suffit)
   async function prevenir(titre, texte, adresse) {
