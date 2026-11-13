@@ -61,26 +61,26 @@
   const peutDeclarer = (cle) => (!parLien(moyenDe(cle).code) || waveOuvert[cle]) && numeroValide(numeros[cle]);
   function blocPaiement(cle, montant) {
     const m = moyenDe(cle), code = m.code, mobile = code === 'wave' || (MP && MP.MOBILE.indexOf(code) >= 0);
-    const ou = code === 'wave' ? '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>'
+    const ou = code === 'wave' ? '<a class="btn btn--principal pp-gros" data-bouton-libre data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>'
       : '';
     const phrase = MP ? MP.consigne(m, montant, cle) : '';
     const apres = code === 'wave' ? 'Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.'
       : 'Après avoir payé, revenez ici, indiquez ' + (mobile ? 'le numéro qui a payé' : 'votre numéro de téléphone') + ', puis appuyez sur « J’ai payé ». L’agence vérifie la réception avant de valider.';
-    return (MP ? MP.choix(moyens, code, cle) : '<p class="mp-petit">Moyen de paiement : <b>Wave</b></p>') + ou + phrase +
-      '<label class="mp-petit" for="mp-num-' + esc(cle) + '">' + (mobile ? 'Numéro mobile money qui paie' : 'Votre numéro de téléphone') + '</label>' +
+    // (13/11/2026, maquette premium validée) tuiles du moyen, où payer, numéro du payeur, grand bouton « J'ai payé »
+    return (MP ? MP.choix(moyens, code, cle) : '') + '<div class="mp-pp-suite">' + ou + phrase +
+      '<label class="mp-petit" for="mp-num-' + esc(cle) + '">' + (mobile ? 'Numéro mobile money qui a payé' : 'Votre numéro de téléphone') + '</label>' +
       '<input class="mp-num" id="mp-num-' + esc(cle) + '" data-num="' + esc(cle) + '" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+225 07 00 00 00 00" value="' + esc(numeros[cle] || '') + '">' +
-      '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (peutDeclarer(cle) ? '' : ' disabled') + '>' + (parLien(code) ? '2 · ' : '') + 'J’ai payé</button>' +
-      '<p class="mp-petit">' + apres + '</p>' +
-      '<p class="mp-petit">Paiement en espèces ? Remettez-le à l’agence : il apparaîtra ici dès que l’agence l’aura validé.</p>';
+      '<button class="btn btn--principal pp-gros mp-pp-payer" data-bouton-libre type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (peutDeclarer(cle) ? '' : ' disabled') + '>' + (parLien(code) ? '2 · ' : '') + 'J’ai payé</button>' +
+      '<p class="mp-petit">' + apres + ' Espèces : à remettre à l’agence, le paiement apparaît ici une fois validé.</p></div>';
   }
   function carteAPayer(m) {
-    return '<div class="mp-carte"><div class="mp-ligne"><span><b>Mensualité · ' + esc(nomMois(m.mois)) + '</b></span><b class="mp-montant">' + fcfa(donnees.mensualite) + '</b></div>' +
-      blocPaiement(m.mois, donnees.mensualite) + '</div>';
+    return '<div class="pp-blanc mp-pp"><span class="pp-s">Mensualité · ' + esc(nomMois(m.mois)) + '</span><div class="pp-montant"><b class="mp-montant">' + fcfa(donnees.mensualite) + '</b>' +
+      (m.etat === 'non_paye' ? '<span>en retard</span>' : '<span>avant le 5</span>') + '</div>' + blocPaiement(m.mois, donnees.mensualite) + '</div>';
   }
   function carteAvance(liste) {
     nbAvance = Math.min(Math.max(1, nbAvance), liste.length);
     const choisis = liste.slice(0, nbAvance), total = nbAvance * Number(donnees.mensualite);
-    return '<div class="mp-carte" id="avance"><div class="mp-ligne"><span><b>Payer à l’avance</b></span><b class="mp-montant">' + fcfa(total) + '</b></div>' +
+    return '<div class="pp-blanc mp-pp" id="avance"><span class="pp-s">Payer à l’avance</span><div class="pp-montant"><b class="mp-montant">' + fcfa(total) + '</b><span>' + nbAvance + ' mois</span></div>' +
       '<p class="mp-petit">Jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance, au même prix, en un seul paiement.</p>' +
       '<label class="mp-petit" for="mp-avance-nb">Nombre de mois</label>' +
       '<select class="mp-num" id="mp-avance-nb" data-avance-nb>' + liste.map((m, i) => '<option value="' + (i + 1) + '"' + (i + 1 === nbAvance ? ' selected' : '') + '>' + (i + 1) + ' mois · ' + fcfa((i + 1) * Number(donnees.mensualite)) + '</option>').join('') + '</select>' +

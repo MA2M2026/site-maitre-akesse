@@ -37,13 +37,13 @@ const sansEspaces = (x) => x.replace(/[  ]/g, ' ');
   for (const [nomEcran, ecran] of [['téléphone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     // 1. fichier de la base pas encore collé : Wave seul, comme avant
     let s = await mannequin(ecran, null);
-    ok(!(await s.p.$('.mp-moyens')) && await s.p.$('[data-mp=wave]') && /Bientôt : Orange Money, MTN Money, Moov Money, Carte bancaire \(Visa\), Virement bancaire/.test(await s.t()), nomEcran + ' : sans la base, Wave seul et les 5 autres « bientôt »');
+    ok(await s.p.$('[data-mp=wave]') && (await s.p.$$eval('.pp-moyen', (l) => l.map((x) => (x.disabled ? '-' : '+') + [...x.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim()).join('|'))) === '+Wave|-Orange Money · bientôt|-MTN Money · bientôt|-Moov Money · bientôt|-Carte bancaire · bientôt|-Virement bancaire · bientôt', nomEcran + ' : sans la base, Wave seul, les 5 autres en tuiles « bientôt » (non cliquables)');
     await s.ctx.close();
     // 2. moyens allumés
     s = await mannequin(ecran, ALLUMES); const p = s.p;
-    ok(await p.$$eval('.mp-moyens .mp-moyen', (l) => l.map((x) => x.textContent.replace(/^✓ /, '')).join('|')) === 'Wave|Orange Money|Carte bancaire (Visa)|Virement bancaire' && /Bientôt : MTN Money, Moov Money/.test(await s.t()), nomEcran + ' : les 4 moyens allumés au choix, les 2 autres « bientôt »');
-    await p.click('.mp-moyen[data-moyen="orange_money"]'); await p.waitForTimeout(200);
-    ok(/Envoyez 10 000 FCFA par Orange Money au 07 11 22 33 44 \(au nom de MA2M\)/.test(await s.t()) && !(await p.$('[data-mp=wave]')), nomEcran + ' : Orange Money → numéro de l’agence et montant affichés');
+    ok(await p.$$eval('.pp-moyen:not([disabled])', (l) => l.map((x) => [...x.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim()).join('|')) === 'Wave|Orange Money|Carte bancaire (Visa)|Virement bancaire' && (await p.$$eval('.pp-moyen[disabled]', (l) => l.length)) === 2, nomEcran + ' : les 4 moyens allumés au choix, les 2 autres « bientôt »');
+    await p.click('.pp-moyen[data-moyen="orange_money"]'); await p.waitForTimeout(200);
+    ok(/Envoyez 10 000 FCFA par Orange Money au numéro de l’agence \(au nom de MA2M\) :\s*07 11 22 33 44\s*Copier/.test(await s.t()) && !(await p.$('[data-mp=wave]')), nomEcran + ' : Orange Money → numéro de l’agence et montant affichés');
     ok(await p.isDisabled('[data-mp=paye]'), nomEcran + ' : « J’ai payé » attend le numéro du payeur');
     await p.fill('.mp-num', '07 01 02 03 04'); ok(!(await p.isDisabled('[data-mp=paye]')), nomEcran + ' : Orange Money : « J’ai payé » s’ouvre sans passer par un lien');
     const boutons = (await p.evaluate(verifierBoutons)).map((x) => x.texte); ok(!boutons.length, nomEcran + ' : boutons au modèle rouge ' + boutons.join(' | '));
@@ -56,16 +56,16 @@ const sansEspaces = (x) => x.replace(/[  ]/g, ' ');
     await s.ctx.close();
     // 3. virement (RIB) et carte (lien d'abord) ; Wave ne note rien de plus
     s = await mannequin(ecran, ALLUMES);
-    await s.p.click('.mp-moyen[data-moyen="virement"]'); await s.p.waitForTimeout(200);
+    await s.p.click('.pp-moyen[data-moyen="virement"]'); await s.p.waitForTimeout(200);
     ok(/Virez 10 000 FCFA à MA2M SARL/.test(await s.t()) && /CI000 00000/.test(await s.t()) && /Votre numéro de téléphone/.test(await s.t()), nomEcran + ' : virement → banque et RIB affichés');
-    await s.p.click('.mp-moyen[data-moyen="carte"]'); await s.p.waitForTimeout(200);
+    await s.p.click('.pp-moyen[data-moyen="carte"]'); await s.p.waitForTimeout(200);
     ok(await s.p.getAttribute('[data-mp=lien]', 'href') === 'https://paiement.exemple.ci/ma2m', nomEcran + ' : carte → lien de paiement');
     await s.p.fill('.mp-num', '07 01 02 03 04');
     ok(await s.p.isDisabled('[data-mp=paye]'), nomEcran + ' : carte : « J’ai payé » attend le passage par le lien');
     await s.p.locator('[data-mp=lien]').evaluate((a) => { a.removeAttribute('target'); a.addEventListener('click', (e) => e.preventDefault()); });
     await s.p.click('[data-mp=lien]'); await s.p.waitForTimeout(500);
     ok(!(await s.p.isDisabled('[data-mp=paye]')), nomEcran + ' : carte : après le lien, « J’ai payé » s’ouvre');
-    await s.p.click('.mp-moyen[data-moyen="wave"]'); await s.p.waitForTimeout(200);
+    await s.p.click('.pp-moyen[data-moyen="wave"]'); await s.p.waitForTimeout(200);
     await s.p.locator('[data-mp=wave]').evaluate((a) => { a.removeAttribute('target'); a.addEventListener('click', (e) => e.preventDefault()); });
     await s.p.click('[data-mp=wave]'); await s.p.waitForTimeout(500); await s.p.click('[data-mp=paye]'); await s.p.waitForTimeout(800);
     const w = s.journal.find((j) => j[1] === 'mensualite_declarer_avec_numero');

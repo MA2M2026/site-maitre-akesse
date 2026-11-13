@@ -1439,21 +1439,6 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 .messages-envoyes li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid #F1E4E6; }
 .messages-envoyes li:last-child { border-bottom: 0; }
 .messages-envoyes small { color: #6b5254; }
-/* Chiffre d'affaires et TVA du mois (Comptabilité, 12/11/2026) : tableau par catégorie, lisible sur téléphone */
-.carte-tva .grille.chiffres { margin: 0.4rem 0 0.8rem; }
-.tableau-tva { width: 100%; min-width: 0; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
-.tableau-tva th, .tableau-tva td { padding: 0.5rem 0.4rem; text-align: right; border-bottom: 1px solid rgba(124, 33, 40, 0.12); }
-.tableau-tva th:first-child, .tableau-tva td:first-child { text-align: left; }
-.tableau-tva thead th { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; color: #6B1B22; }
-.tableau-tva tfoot th { font-weight: 700; border-bottom: 0; }
-/* téléphone : une ligne par catégorie, les trois montants dessous avec leur nom (data-l) */
-@media (max-width: 600px) {
-  .tableau-tva, .tableau-tva tbody, .tableau-tva tfoot { display: block; }
-  .tableau-tva thead { display: none; }
-  .tableau-tva tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 0.5rem; padding: 0.55rem 0; border-bottom: 1px solid rgba(124, 33, 40, 0.12); }
-  .tableau-tva th, .tableau-tva td { border: 0; padding: 0.15rem 0; text-align: left; overflow-wrap: anywhere; }
-  .tableau-tva tr > :first-child { grid-column: 1 / -1; font-weight: 600; }
-  .tableau-tva td[data-l]::before, .tableau-tva th[data-l]::before { content: attr(data-l); display: block; font-size: 0.7rem; color: #6B1B22; font-weight: 500; }
-  .tableau-tva tfoot tr { border-bottom: 0; }
-}
-.tableau-tva tfoot th { text-transform: none; letter-spacing: 0; font-size: inherit; color: inherit; }
+/* Chiffre d'affaires et TVA, moyens de paiement : css/paiements-premium.css (13/11/2026) */
+.carte-tva { margin: 0 0 14px; max-width: 760px; }
+.carte-moyens { margin: 0 0 14px; max-width: 760px; }

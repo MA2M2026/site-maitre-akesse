@@ -90,18 +90,27 @@
     return { lignes, total };
   }
   const tauxTexte = (taux) => String(Number(taux) || 0).replace('.', ',') + ' %';
+  // (13/11/2026, maquette premium validée) carte façon carte bancaire (chiffre d'affaires hors taxes), deux tuiles (TVA à
+  // mettre de côté ou à reverser ; TVA déjà reversée ce mois, dépenses « Impôts et taxes » dont le libellé parle de TVA),
+  // puis le relevé par catégorie (css/paiements-premium.css)
   function carteTva(liste, reglage) {
     const taux = reglage.tva_taux == null ? 18 : reglage.tva_taux, legal = !!reglage.mode_legal;
     const { lignes, total } = chiffreAffaires(liste, taux);
-    return '<div class="carte carte-tva"><h2>Chiffre d’affaires et TVA · ' + P.esc(P.mois(moisChoisi())) + '</h2>' +
-      '<div class="grille chiffres">' + P.chiffre('Encaissé (TVA comprise)', P.fcfa(total.ttc)) + P.chiffre('Chiffre d’affaires hors taxes', P.fcfa(total.ht), 'vert') +
-      P.chiffre(legal ? 'TVA à reverser (' + tauxTexte(taux) + ')' : 'TVA prévue (' + tauxTexte(taux) + ')', P.fcfa(total.tva), legal ? 'rouge' : '') + '</div>' +
-      (lignes.length ? '<table class="tableau-tva"><thead><tr><th>Catégorie</th><th>Encaissé</th><th>Hors taxes</th><th>TVA</th></tr></thead><tbody>' +
-        lignes.map((l) => '<tr><td>' + P.esc(l.nom) + '</td><td data-l="Encaissé">' + P.fcfa(l.ttc) + '</td><td data-l="Hors taxes">' + P.fcfa(l.ht) + '</td><td data-l="TVA">' + P.fcfa(l.tva) + '</td></tr>').join('') +
-        '</tbody><tfoot><tr><th>Total</th><th data-l="Encaissé">' + P.fcfa(total.ttc) + '</th><th data-l="Hors taxes">' + P.fcfa(total.ht) + '</th><th data-l="TVA">' + P.fcfa(total.tva) + '</th></tr></tfoot></table>'
-        : '<p class="doux">Aucune recette ce mois-ci.</p>') +
-      '<p class="doux petit-texte">' + (legal ? 'TVA calculée sur l’argent encaissé ce mois-ci, au taux de ' + tauxTexte(taux) + '. Montant à valider par le comptable avant la déclaration.'
-        : 'Prévision : l’agence n’est pas encore immatriculée, elle ne reverse pas encore de TVA. Ces chiffres montrent ce qu’elle reverserait au taux de ' + tauxTexte(taux) + ' ; ils deviendront la TVA à déclarer dès l’activation du mode légal.') + '</p></div>';
+    const nb = liste.filter((e) => e.sens === 'recette' && !e.annule && HORS_CA.indexOf(e.categorie) === -1).length;
+    const reversee = liste.filter((e) => e.sens === 'depense' && !e.annule && e.categorie === 'impots' && /tva/i.test(e.libelle || '')).reduce((n, e) => n + e.montant, 0);
+    const F = (n) => P.fcfa(n).replace(/\s?FCFA$/, '') + ' <small>F</small>';
+    return '<section class="carte-tva" aria-label="Chiffre d’affaires et TVA"><div class="pp-cb"><div class="pp-cb-tete"><img src="/assets/logo-header.png" alt="" width="86" height="26"><span>Hors taxes</span></div>' +
+      '<div class="pp-cb-grand">' + F(total.ht) + '</div><div class="pp-cb-sous">Chiffre d’affaires hors taxes · ' + P.esc(P.mois(moisChoisi())) + '</div>' +
+      '<div class="pp-cb-bas"><div><b>Encaissé (TVA comprise)</b>' + P.fcfa(total.ttc) + '</div><div><b>TVA ' + tauxTexte(taux) + '</b>' + P.fcfa(total.tva) + '</div><div><b>Recettes</b>' + nb + '</div></div></div>' +
+      '<div class="pp-tuiles"><div class="pp-tuile"><div class="pp-ch">' + F(total.tva) + '</div><div class="pp-dx">' + (legal ? 'TVA à reverser (' + tauxTexte(taux) + ')' : 'TVA prévue (' + tauxTexte(taux) + '), à mettre de côté') + '</div>' +
+        '<span class="pp-pastille' + (legal ? '' : ' gris') + '">' + (legal ? 'À déclarer' : 'Prévision') + '</span></div>' +
+        '<div class="pp-tuile"><div class="pp-ch">' + F(reversee) + '</div><div class="pp-dx">TVA déjà reversée ce mois</div><span class="pp-pastille' + (reversee >= total.tva ? ' vert' : ' gris') + '">' + (reversee >= total.tva ? 'À jour' : 'Reste ' + P.fcfa(total.tva - reversee)) + '</span></div></div>' +
+      '<div class="pp-titre">Par catégorie</div>' +
+      (lignes.length ? '<div class="pp-releve tableau-tva">' + lignes.map((l) => '<div class="pp-op"><em aria-hidden="true">' + P.esc(l.nom.slice(0, 2).toUpperCase()) + '</em><span>' + P.esc(l.nom) +
+        '<small>Hors taxes ' + P.fcfa(l.ht) + ' · TVA ' + P.fcfa(l.tva) + '</small></span><strong>' + P.fcfa(l.ttc) + '</strong></div>').join('') + '</div>'
+        : '<div class="pp-releve"><div class="pp-op"><span>Aucune recette ce mois-ci.</span></div></div>') +
+      '<p class="pp-legende">' + (legal ? 'TVA calculée sur l’argent encaissé ce mois-ci, au taux de ' + tauxTexte(taux) + '. Montant à valider par le comptable avant la déclaration.'
+        : 'Prévision : l’agence n’est pas encore immatriculée, elle ne reverse pas encore de TVA. Dès le mode légal, la tuile devient « TVA à reverser ».') + '</p></section>';
   }
   async function reglageTva() {
     try { const r = await sb.from('compta_reglages').select('mode_legal, tva_taux').eq('id', 1).maybeSingle(); return (r && r.data) || {}; } catch (e) { return {}; }  // (réglages indisponibles : prévision à 18 %)
@@ -158,8 +167,9 @@
   const MOYENS = window.MoyensPaiement ? window.MoyensPaiement.TOUS : ['wave', 'especes'];
   const TYPE_DU_MOYEN = { especes: 'caisse', wave: 'wave', carte: 'banque', virement: 'banque', cheque: 'banque' };
   const nomMoyen = (k) => (window.MoyensPaiement ? window.MoyensPaiement.nom(k) : k);
-  const champMoyen = (id, compteId, recette) => '<label class="fl" for="' + id + '">' + (recette ? 'Payé par le client avec' : 'Payé avec') + '<select id="' + id + '" name="moyen" data-change="compta-moyen" data-compte="' + compteId + '">' +
-    '<option value="">Choisir</option>' + MOYENS.map((k) => '<option value="' + k + '">' + P.esc(nomMoyen(k)) + '</option>').join('') + '</select></label>';
+  // (13/11/2026, maquette premium validée) le choix en tuiles (js/moyens-paiement.js), le champ caché « moyen » prévient
+  const champMoyen = (id, compteId, recette) => '<div class="fl large"><span class="pp-s">' + (recette ? 'Payé par le client avec' : 'Payé avec') + '</span>' +
+    (window.MoyensPaiement ? window.MoyensPaiement.tuiles('moyen', '', 'id="' + id + '" data-change="compta-moyen" data-compte="' + compteId + '"', MOYENS) : '') + '</div>';
   P.changements['compta-moyen'] = (el) => {
     const sel = document.getElementById(el.getAttribute('data-compte')), type = TYPE_DU_MOYEN[el.value] || (el.value ? 'mobile_money' : '');
     const o = sel && type && [...sel.options].find((x) => x.getAttribute('data-type') === type);
@@ -168,14 +178,14 @@
     else if (sel && type) P.message('Aucun compte « ' + ({ caisse: 'Caisse', wave: 'Wave', banque: 'Banque', mobile_money: 'Autre mobile money' }[type] || type) + ' » : choisissez le compte qui reçoit l’argent, ou créez-le dans Trésorerie.');
   };
   // « dont TVA » d'une somme encaissée (prévision avant le mode légal)
-  const noteTva = (id) => '<p class="doux petit-texte large" id="' + id + '" role="status"></p>';
+  const noteTva = (id) => '<p class="pp-tva large" id="' + id + '" role="status"></p>';
   P.changements['compta-tva-somme'] = async (el) => {
     const z = document.getElementById(el.getAttribute('data-note')), m = Math.round(Number(el.value) || 0);
     if (!z) return;
     if (!(m > 0)) { z.textContent = ''; return; }
     // (réglage relu à chaque ouverture d'écran ou de fenêtre : un changement de taux ou le mode légal est pris aussitôt)
     const r = await (P.etat.reglageTva || (P.etat.reglageTva = reglageTva())), taux = r.tva_taux == null ? 18 : r.tva_taux, x = separerTva(m, taux);
-    z.textContent = 'Dont chiffre d’affaires hors taxes ' + P.fcfa(x.ht) + ' et TVA ' + P.fcfa(x.tva) + ' (' + tauxTexte(taux) + (r.mode_legal ? ', à reverser)' : ', prévision)');
+    z.innerHTML = '<span>Dont hors taxes <b>' + P.fcfa(x.ht) + '</b></span><span>TVA ' + tauxTexte(taux) + ' <b>' + P.fcfa(x.tva) + '</b>' + (r.mode_legal ? ' (à reverser)' : ' (prévision)') + '</span>';
   };
   const optionsCategories = (cats) => Object.keys(cats).map((k) => '<option value="' + k + '">' + P.esc(cats[k]) + '</option>').join('');
 
@@ -184,13 +194,14 @@
     const recette = sens === 'recette';
     return async () => {
       const m = moisChoisi();
-      const [liste, cpts, reglage] = await Promise.all([ecritures(m, sens), comptes(true), recette ? (P.etat.reglageTva = reglageTva()) : null]);
+      // (recettes : toutes les écritures du mois pour la carte, qui compte aussi la TVA déjà reversée)
+      const [liste, cpts, reglage, tout] = await Promise.all([ecritures(m, sens), comptes(true), recette ? (P.etat.reglageTva = reglageTva()) : null, recette ? ecritures(m) : null]);
       const noms = {};
       cpts.forEach((c) => { noms[c.id] = c.nom; });
       P.etat.comptaListe = liste;
       const actifs = cpts.filter((c) => c.actif);
       return P.entete((recette ? 'Recettes · ' : 'Dépenses · ') + P.mois(m), choixMois()) +
-        (recette ? carteTva(liste, reglage) : '<div class="grille chiffres">' + P.chiffre('Total des dépenses', P.fcfa(totaux(liste, sens)), 'rouge') + '</div>') +
+        (recette ? carteTva(tout, reglage) : '<div class="grille chiffres">' + P.chiffre('Total des dépenses', P.fcfa(totaux(liste, sens)), 'rouge') + '</div>') +
         (recette ? '<div class="note info">Les inscriptions et mensualités validées dans le Suivi des paiements arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
         '<form class="carte f" data-form="compta-ecrire" data-sens="' + sens + '"><h2>' + (recette ? 'Nouvelle recette' : 'Nouvelle dépense') + '</h2>' +
         '<label class="fl" for="cp-date">Date<input id="cp-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +

@@ -61,7 +61,7 @@ async function navigateur() {
       lien_paiement: (c) => (c.p_montant === 20000 ? 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=20000' : null), mes_recus: () => [], mes_cachets: () => [], mensualites_payer_avance: 3 } }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/app/mes-paiements.html#avance'); await p.waitForSelector('#avance', { timeout: 8000 });
     const carte = () => p.evaluate(() => document.getElementById('avance').innerText.replace(/\u202f|\u00a0/g, ' '));
-    ok(/Payer à l’avance/.test(await carte()) && /20 000 FCFA/.test(await carte()) && (await p.$$('#mp-avance-nb option')).length === 3 && !(await p.$('[data-mp=wave]:not([data-mois=avance])')),
+    ok(/Payer à l’avance/i.test(await carte()) && /20 000 FCFA/.test(await carte()) && (await p.$$('#mp-avance-nb option')).length === 3 && !(await p.$('[data-mp=wave]:not([data-mois=avance])')),
       nomEcran + ' : à jour → « Payer à l’avance » (1 à 3 mois), pas d’autre paiement proposé');
     await p.selectOption('#mp-avance-nb', '3'); await p.waitForTimeout(300);
     ok(/60 000 FCFA/.test(await carte()) && ((await carte()).match(/Mois payés : (.*)/) || ['', ''])[1].split(', ').length === 3 && /amount=60000$/.test(await p.getAttribute('#avance [data-mp=wave]', 'href')),

@@ -1,0 +1,72 @@
+/* Paiements premium (13/11/2026, maquette validée par la propriétaire : « applique-la partout ») — le style de
+   « Mes paiements » de l'application (carte façon carte bancaire, tuiles chiffrées, relevé, choix en tuiles), UNE fois
+   pour : Comptabilité (chiffre d'affaires et TVA, encaisser), Administration (moyens de paiement), « Mes paiements »
+   (site et application), inscription et cours de talons. Classes pp-*. */
+.pp-cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; color: #FFFFFF;
+  background: linear-gradient(135deg, #5A141B 0%, #8A2530 55%, #5A141B 100%); box-shadow: 0 22px 40px -18px rgba(90, 20, 27, .9); }
+.pp-cb::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, .07); }
+.pp-cb::after { content: ''; position: absolute; left: -40px; bottom: -90px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255, 255, 255, .05); }
+.pp-cb > * { position: relative; z-index: 1; }
+.pp-cb-tete { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pp-cb-tete img { height: 26px; width: auto; display: block; }
+.pp-cb-tete span { font: 600 9px 'Work Sans', sans-serif; letter-spacing: .3em; text-transform: uppercase; }
+.pp-cb-grand { font: 600 40px/1 'Cormorant Garamond', Georgia, serif; margin: 24px 0 4px; color: #FFFFFF; }
+.pp-cb-grand small { font-size: 22px; }
+.pp-cb-sous { font: 500 12.5px 'Work Sans', sans-serif; color: #F3DDE0; }
+.pp-cb-bas { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin-top: 18px; font: 500 13px 'Work Sans', sans-serif; color: #FFFFFF; }
+.pp-cb-bas b { display: block; font-size: 9px; font-weight: 700; letter-spacing: .2em; color: #F3DDE0; margin-bottom: 3px; text-transform: uppercase; }
+.pp-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pp-tuile { border-radius: 16px; padding: 14px; background: #8A3540; color: #FFFFFF; }
+.pp-tuile .pp-ch { font: 600 28px/1.05 'Cormorant Garamond', Georgia, serif; }
+.pp-tuile .pp-ch small { font-size: 18px; color: #F3DDE0; }
+.pp-tuile .pp-dx { color: #F3DDE0; font-size: 12.5px; margin: 2px 0 8px; }
+.pp-pastille { display: inline-block; padding: 5px 11px; border-radius: 999px; font: 600 11.5px 'Work Sans', sans-serif; background: #FFFFFF; color: #7C2128; }
+.pp-pastille.vert { background: #E3F1E6; color: #24603A; }
+.pp-pastille.gris { background: #F2F2F2; color: #5b4547; }
+.pp-titre { font: 700 10px 'Work Sans', sans-serif; letter-spacing: .24em; text-transform: uppercase; color: #F3DDE0; margin: 16px 2px 8px; }
+.pp-releve { border-radius: 18px; overflow: hidden; background: #FFFFFF; color: #2a1416; box-shadow: 0 14px 30px -18px rgba(40, 6, 10, .6); }
+.pp-op { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-top: 1px solid #F2F2F2; width: 100%; box-sizing: border-box; text-align: left; }
+.pp-op:first-child { border-top: 0; }
+button.pp-op { border: 0; border-top: 1px solid #F2F2F2; background: #FFFFFF; color: #2a1416; font: inherit; cursor: pointer; }
+button.pp-op:first-child { border-top: 0; }
+.pp-op em { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; background: #F3DDE0; display: flex; align-items: center; justify-content: center; font: 700 12px 'Work Sans', sans-serif; font-style: normal; color: #7C2128; }
+.pp-op > span { flex: 1; min-width: 0; font: 600 13.5px 'Work Sans', sans-serif; overflow-wrap: anywhere; }
+.pp-op > span small { display: block; font-weight: 400; color: #6E4F53; font-size: 11.5px; margin-top: 2px; }
+.pp-op strong { font: 700 14px 'Work Sans', sans-serif; white-space: nowrap; }
+.pp-blanc { border-radius: 18px; padding: 16px; background: #FFFFFF; color: #2a1416; box-shadow: 0 14px 30px -18px rgba(40, 6, 10, .6); }
+.pp-s { display: block; font: 700 9.5px 'Work Sans', sans-serif; letter-spacing: .2em; color: #6E4F53; text-transform: uppercase; }
+.pp-montant { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
+.pp-montant b { font: 600 30px/1.1 'Cormorant Garamond', Georgia, serif; }
+.pp-montant span { font-size: 13px; color: #5b4547; }
+/* choix du moyen en tuiles (✓ rouge sur la tuile choisie ; « bientôt » estompé, non cliquable) */
+.pp-choix { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.pp-moyen { display: flex; align-items: center; gap: 9px; min-height: 52px; border: 1.5px solid #EADCDD; border-radius: 14px; padding: 9px 11px; background: #FFFFFF;
+  color: #2a1416; -webkit-text-fill-color: #2a1416; font: 600 13px/1.2 'Work Sans', sans-serif; text-align: left; letter-spacing: 0; text-transform: none; box-shadow: none; cursor: pointer; }
+.pp-moyen i { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 9px; background: #F3DDE0; color: #7C2128; -webkit-text-fill-color: #7C2128; display: grid; place-items: center; font: 700 10.5px 'Work Sans', sans-serif; font-style: normal; }
+.pp-moyen.choisi { border-color: #7C2128; box-shadow: inset 0 0 0 2px #7C2128; }
+.pp-moyen.choisi::after { content: '✓'; margin-left: auto; flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; display: grid; place-items: center; font-size: 12px; }
+.pp-moyen.bientot { opacity: .5; cursor: default; }
+.pp-moyen:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
+.pp-consigne { margin-top: 12px; border-radius: 14px; background: #FBF4F5; color: #2a1416; padding: 12px 14px; font-size: 13.5px; line-height: 1.45; }
+.pp-consigne p { margin: 0; }
+.pp-num { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; font: 700 20px 'Work Sans', sans-serif; letter-spacing: .04em; color: #7C2128; overflow-wrap: anywhere; }
+.pp-num button { flex: none; font: 600 12px 'Work Sans', sans-serif; border: 0; background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; border-radius: 999px; padding: 8px 13px; cursor: pointer; letter-spacing: 0; text-transform: none; }
+.pp-tva { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #FBF4F5; font-size: 12.5px; color: #5b4547; }
+.pp-tva:empty { display: none; }
+.pp-tva b { color: #2a1416; }
+.pp-legende { color: #F3DDE0; font-size: 12px; line-height: 1.45; margin: 10px 2px 0; }
+.pp-sur-blanc .pp-legende, .pp-blanc .pp-legende { color: #6E4F53; }
+@media (max-width: 360px) { .pp-choix { grid-template-columns: 1fr; } .pp-cb-grand { font-size: 34px; } }
+/* « Mes paiements » : la suite de la carte (où payer, numéro, grand bouton) */
+.mp-pp { margin-bottom: 12px; }
+.mp-pp .mp-pp-suite { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.mp-pp .mp-pp-suite > .btn { width: 100%; justify-content: center; }
+.mp-pp .mp-pp-payer { min-height: 50px; border-radius: 14px; font-size: 15px; }
+.mp-pp .mp-num { border-radius: 12px; }
+.mp-pp .pp-legende { color: #6E4F53; }
+.mp-pp .mp-petit, .mp-pp label.mp-petit, .mp-pp p.mp-petit { color: #6E4F53; -webkit-text-fill-color: #6E4F53; }
+.pp-consigne, .pp-consigne p, .pp-consigne b { color: #2a1416; -webkit-text-fill-color: #2a1416; }
+/* grand bouton rouge plein (« Payer avec Wave », « J'ai payé », « Encaisser ») ; estompé tant qu'il n'est pas permis */
+.pp-gros { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; box-sizing: border-box; border: 0; border-radius: 14px; padding: 14px 16px;
+  background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; font: 700 15px 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; text-decoration: none; box-shadow: none; cursor: pointer; }
+.pp-gros:disabled, .pp-gros[aria-disabled="true"] { background: #C49AA0; cursor: default; }

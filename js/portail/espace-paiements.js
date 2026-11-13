@@ -979,13 +979,19 @@
     try { liste = await P.bd(sb.from('moyens_paiement').select('*').order('ordre')); } catch (e) { liste = null; }
     if (!liste) return '<div class="carte"><h2>Moyens de paiement</h2><div class="note info">Wave seul pour l’instant. Orange Money, MTN Money, Moov Money, carte bancaire et virement sont prêts : ils s’activent après l’étape d’installation « supabase-moyens-paiement.sql ».</div></div>';
     P.etat.moyensPaiement = liste;
-    const ou = (m) => m.code === 'wave' ? 'Liens Wave ci-dessous' : m.code === 'carte' ? (m.lien || 'Lien à indiquer') : m.code === 'virement' ? (m.rib || 'RIB à indiquer') : (m.numero || 'Numéro à indiquer');
-    return '<div class="carte"><h2>Moyens de paiement des mannequins</h2><p class="doux">Les mannequins choisissent parmi les moyens allumés. Allumez un moyen le jour où l’agence a le compte correspondant.</p>' +
-      P.cartesPersonnes(liste.map((m) => ({
-        tete: '<b>' + P.esc(m.nom) + '</b>', sous: [ou(m), m.titulaire ? 'Au nom de ' + m.titulaire : ''],
-        etat: m.actif ? ['Allumé', 'ok'] : ['Éteint', 'neutre'], ton: m.actif ? 'ok' : 'neutre',
-        actions: principal ? '<button class="btn petit" type="button" data-action="moyen-modifier" data-code="' + P.esc(m.code) + '">Modifier</button>' : ''
-      })), 'Aucun moyen.') + (principal ? '' : '<div class="note info">Seul l’administrateur principal peut modifier les moyens de paiement.</div>') + '</div>';
+    // (13/11/2026, maquette premium validée) carte façon carte bancaire, puis deux relevés : allumés, prêts à allumer
+    const MP = window.MoyensPaiement, ou = (m) => m.code === 'wave' ? 'Liens Wave Business' : m.code === 'carte' ? (m.lien || 'Lien de paiement à indiquer') : m.code === 'virement' ? (m.rib || 'RIB à indiquer') : (m.numero || 'Numéro à indiquer');
+    const allumes = liste.filter((m) => m.actif), eteints = liste.filter((m) => !m.actif);
+    const ligne = (m) => '<' + (principal ? 'button type="button" data-bouton-libre data-action="moyen-modifier" data-code="' + P.esc(m.code) + '"' : 'div') + ' class="pp-op">' +
+      '<em aria-hidden="true">' + ((MP && MP.ABR[m.code]) || '•') + '</em><span>' + P.esc(m.nom) + '<small>' + P.esc(ou(m) + (m.titulaire ? ' · au nom de ' + m.titulaire : '')) + '</small></span>' +
+      '<b class="pp-pastille ' + (m.actif ? 'vert' : 'gris') + '">' + (m.actif ? 'Allumé' : 'Éteint') + '</b></' + (principal ? 'button' : 'div') + '>';
+    const famille = (codes) => allumes.filter((m) => codes.indexOf(m.code) >= 0).map((m) => m.nom.replace(/ \(Visa\)$/, '')).join(', ') || 'bientôt';
+    return '<section class="carte-moyens" aria-label="Moyens de paiement des mannequins"><div class="pp-cb"><div class="pp-cb-tete"><img src="/assets/logo-header.png" alt="" width="86" height="26"><span>Encaissements</span></div>' +
+      '<div class="pp-cb-grand">' + allumes.length + ' <small>/ ' + liste.length + '</small></div><div class="pp-cb-sous">Moyens de paiement des mannequins allumés</div>' +
+      '<div class="pp-cb-bas"><div><b>Mobile money</b>' + P.esc(famille(['wave', 'orange_money', 'mtn_money', 'moov_money'])) + '</div><div><b>Banque</b>' + P.esc(famille(['carte', 'virement'])) + '</div></div></div>' +
+      (allumes.length ? '<div class="pp-titre">Allumés</div><div class="pp-releve">' + allumes.map(ligne).join('') + '</div>' : '') +
+      (eteints.length ? '<div class="pp-titre">Prêts, à allumer</div><div class="pp-releve">' + eteints.map(ligne).join('') + '</div>' : '') +
+      '<p class="pp-legende">' + (principal ? 'Un toucher sur un moyen : son numéro (ou lien, ou RIB) et « Allumé », le jour où l’agence a le compte.' : 'Seul l’administrateur principal peut modifier les moyens de paiement.') + '</p></section>';
   }
   P.actions['moyen-modifier'] = (el) => {
     const m = (P.etat.moyensPaiement || []).find((x) => x.code === el.getAttribute('data-code'));

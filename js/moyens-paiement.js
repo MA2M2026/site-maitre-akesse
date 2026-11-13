@@ -25,33 +25,65 @@
     } catch (e) { return [{ code: 'wave', nom: 'Wave' }]; }
   }
 
-  // boutons de choix (seulement s'il y a plus d'un moyen) ; cle : le paiement concerné ; puis les moyens « bientôt »
+  // (13/11/2026, maquette premium validée) initiales dans la pastille de chaque tuile
+  const ABR = { wave: 'W', orange_money: 'OM', mtn_money: 'MTN', moov_money: 'MV', carte: 'CB', virement: 'VB', cheque: 'CH', especes: 'ES' };
+  const tuile = (code, libelle, choisi, attrs, bientot) => '<button type="button" data-bouton-libre class="pp-moyen' + (choisi ? ' choisi' : '') + (bientot ? ' bientot' : '') + '" ' + attrs +
+    ' aria-pressed="' + !!choisi + '"' + (bientot ? ' disabled' : '') + '><i aria-hidden="true">' + (ABR[code] || '•') + '</i>' + esc(libelle) + '</button>';
+
+  // « Mes paiements » : les moyens allumés en tuiles, puis les autres « bientôt » (estompés) ; cle : le paiement concerné
   // (Wave n'est jamais annoncé « bientôt » : s'il est éteint, c'est un choix de l'agence)
   function choix(moyens, choisi, cle) {
-    const allumes = moyens.map((m) => m.code), bientot = PREPARES.filter((c) => c !== 'wave' && allumes.indexOf(c) < 0).map(nom);
-    return (moyens.length > 1 ? '<div class="mp-moyens" role="group" aria-label="Moyen de paiement">' + moyens.map((m) =>
-      '<button type="button" data-bouton-libre class="mp-moyen' + (m.code === choisi ? ' choisi' : '') + '" data-moyen="' + esc(m.code) + '" data-mois="' + esc(cle) + '" aria-pressed="' + (m.code === choisi) + '">' + (m.code === choisi ? '✓ ' : '') + esc(m.nom || nom(m.code)) + '</button>').join('') + '</div>'
-      : '<p class="mp-petit">Moyen de paiement : <b>' + esc(nom(choisi)) + '</b></p>') +
-      (bientot.length ? '<p class="mp-petit">Bientôt : ' + esc(bientot.join(', ')) + '.</p>' : '');
+    const allumes = moyens.map((m) => m.code), bientot = PREPARES.filter((c) => c !== 'wave' && allumes.indexOf(c) < 0);
+    if (moyens.length < 2 && !bientot.length) return '';
+    return '<div class="pp-choix" role="group" aria-label="Moyen de paiement">' +
+      moyens.map((m) => tuile(m.code, m.nom || nom(m.code), m.code === choisi, 'data-moyen="' + esc(m.code) + '" data-mois="' + esc(cle) + '"')).join('') +
+      bientot.map((c) => tuile(c, nom(c).replace(/ \(Visa\)$/, '') + ' · bientôt', false, 'data-bientot="' + c + '"', true)).join('') + '</div>';
   }
+
+  // formulaires de l'agence (encaisser, recette, payer un cachet) : tuiles + champ caché « nom » (codes : TOUS par défaut) ;
+  // attrsChamp : attributs du champ caché (ex. data-change pour réagir au choix)
+  function tuiles(nomChamp, choisi, attrsChamp, codes) {
+    return '<div class="pp-choix" role="group" aria-label="Moyen de paiement" data-pp-champ="' + esc(nomChamp) + '">' +
+      '<input type="hidden" name="' + esc(nomChamp) + '" value="' + esc(choisi || '') + '" ' + (attrsChamp || '') + '>' +
+      (codes || TOUS).map((c) => tuile(c, nom(c), c === choisi, 'data-pp-moyen="' + c + '"')).join('') + '</div>';
+  }
+  // un toucher sur une tuile d'un formulaire : elle est choisie, le champ caché prend sa valeur et prévient (change)
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('[data-pp-moyen]');
+    const zone = b && b.closest('[data-pp-champ]');
+    if (!zone) return;
+    zone.querySelectorAll('[data-pp-moyen]').forEach((x) => { x.classList.toggle('choisi', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+    const champ = zone.querySelector('input[type=hidden]');
+    champ.value = b.getAttribute('data-pp-moyen');
+    champ.dispatchEvent(new Event('change', { bubbles: true }));
+  });
 
   // où et comment payer (Wave : seulement la phrase de l'agence, son lien est dans js/mes-paiements.js) ; cle : le
   // paiement concerné (porté par le lien de la carte, pour ouvrir « J'ai payé » ensuite)
   function consigne(m, montant, cle) {
     if (!m) return '';
-    const libre = m.consignes ? '<p class="mp-petit">' + esc(m.consignes) + '</p>' : '';
+    const libre = m.consignes ? '<p class="pp-legende">' + esc(m.consignes) + '</p>' : '';
+    const copier = (v) => '<div class="pp-num"><span>' + esc(v || '') + '</span><button type="button" data-bouton-libre data-pp-copier="' + esc(v || '') + '">Copier</button></div>';
     if (MOBILE.indexOf(m.code) >= 0) {
-      return '<div class="mp-consigne"><p>Envoyez <b>' + fcfa(montant) + '</b> par ' + esc(m.nom || nom(m.code)) + ' au <b class="mp-numero">' + esc(m.numero || '') + '</b>' +
-        (m.titulaire ? ' (au nom de ' + esc(m.titulaire) + ')' : '') + '.</p>' + libre + '</div>';
+      return '<div class="pp-consigne"><p>Envoyez <b>' + fcfa(montant) + '</b> par ' + esc(m.nom || nom(m.code)) + ' au numéro de l’agence' +
+        (m.titulaire ? ' (au nom de ' + esc(m.titulaire) + ')' : '') + ' :</p>' + copier(m.numero) + '</div>' + libre;
     }
     if (m.code === 'carte') {
-      return '<a class="btn btn--principal" data-mp="lien" data-mois="' + esc(cle) + '" href="' + esc(m.lien || '#') + '" target="_blank" rel="noopener">1 · Payer ' + fcfa(montant) + ' par carte</a>' + libre;
+      return '<a class="btn btn--principal pp-gros" data-bouton-libre data-mp="lien" data-mois="' + esc(cle) + '" href="' + esc(m.lien || '#') + '" target="_blank" rel="noopener">1 · Payer ' + fcfa(montant) + ' par carte</a>' + libre;
     }
     if (m.code === 'virement') {
-      return '<div class="mp-consigne"><p>Virez <b>' + fcfa(montant) + '</b>' + (m.titulaire ? ' à ' + esc(m.titulaire) : '') + ' :</p><p class="mp-numero">' + esc(m.rib || '') + '</p>' + libre + '</div>';
+      return '<div class="pp-consigne"><p>Virez <b>' + fcfa(montant) + '</b>' + (m.titulaire ? ' à ' + esc(m.titulaire) : '') + ' :</p>' + copier(m.rib) + '</div>' + libre;
     }
     return libre;
   }
+  // « Copier » : le numéro ou le RIB dans le presse-papiers
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('[data-pp-copier]');
+    if (!b) return;
+    const texte = b.textContent;
+    const fini = (t) => { b.textContent = t; setTimeout(() => { if (b.isConnected) b.textContent = texte; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(b.getAttribute('data-pp-copier')).then(() => fini('Copié ✓'), () => fini('Copier'));
+  });
 
-  window.MoyensPaiement = { NOMS, PREPARES, MOBILE, TOUS, nom, charger, choix, consigne };
+  window.MoyensPaiement = { NOMS, PREPARES, MOBILE, TOUS, ABR, nom, charger, choix, tuiles, consigne };
 })();
