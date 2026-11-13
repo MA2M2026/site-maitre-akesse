@@ -93,6 +93,12 @@ function donnees(role) {
     ok(/On nous doit\s*260 000 FCFA/i.test(t) && /Nous devons\s*80 000 FCFA/i.test(t), nomEcran + ' : on nous doit 260 000, nous devons 80 000');
     ok(/Dépenses sans justificatif\s*1/i.test(t) && /Wave Business\s*90 000 FCFA/i.test(t), nomEcran + ' : dépense sans justificatif signalée, soldes de trésorerie');
     await controler(p, nomEcran + ' : tableau du mois');
+    // (12/11/2026) chiffre d'affaires et TVA à part : 105 000 encaissés TVA comprise, 18 % (taux par défaut), par catégorie
+    const n = (x) => x.replace(/[  ]/g, ' ');
+    ok(/Encaissé \(TVA comprise\)\s*105 000 FCFA/i.test(n(t)) && /Chiffre d’affaires hors taxes\s*88 983 FCFA/i.test(n(t)) && /TVA prévue \(18 %\)\s*16 017 FCFA/i.test(n(t)) && /Prévision : l’agence n’est pas encore immatriculée/.test(t),
+      nomEcran + ' : chiffre d’affaires hors taxes 88 983 et TVA prévue 16 017 (18 %), séparés');
+    const tva = await p.$$eval('.tableau-tva tbody tr', (l) => l.map((r) => r.innerText.replace(/[  ]/g, ' ').replace(/\s+/g, ' ')));
+    ok(tva.length === 2 && /Castings.*90 000 FCFA.*76 271 FCFA.*13 729 FCFA/i.test(tva[0]) && /Inscriptions.*15 000 FCFA.*12 712 FCFA.*2 288 FCFA/i.test(tva[1]), nomEcran + ' : TVA par catégorie ' + JSON.stringify(tva));
     ok(/Tableau de bord/.test(t) && /Mode actuel : Factures internes, non déclarées/.test(t) && /Identité de l’agence →/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
     if (ecran.width > 860) {
       // (11/11/2026) toutes les rubriques sont sur la page d'entrée « Toutes les rubriques », dans l'ordre des groupes
@@ -107,6 +113,11 @@ function donnees(role) {
     await aller(p, 'recettes'); t = await texte(p);
     ok(t.includes('Suivi des paiements · automatique') && (await p.$$('[data-action="compta-annuler"]')).length === 2 && !(await p.$('[data-action="compta-annuler"][data-id="e1"]')), nomEcran + ' : recette de l’espace 2 automatique, sans bouton « Annuler »');
     await controler(p, nomEcran + ' : recettes');
+    // mode légal activé : la même TVA devient « à reverser »
+    d.tables.compta_reglages = [{ id: 1, tva_taux: 18, mode_legal: true }];
+    await aller(p, 'mois'); t = await texte(p);
+    ok(/TVA à reverser \(18 %\)\s*16[\s  ]017 FCFA/i.test(t) && /à valider par le comptable/.test(t), nomEcran + ' : mode légal → « TVA à reverser » 16 017');
+    delete d.tables.compta_reglages;
 
     // Dépenses : mauvais fichier refusé, puis une vraie dépense avec son justificatif
     await aller(p, 'depenses');
