@@ -4957,3 +4957,14 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
   `test-fiche-rapide.js` vérifient qu'il n'apparaît plus et n'est plus demandé.
 - **Plus de son à l'ouverture du menu** (`js/menu.js` ; le son « menu » de `window.jouerSon`, js/app.js, est supprimé ;
   restent « entrée », « cœur » et « envoi »). Test : `test-menu-clavier.js` vérifie qu'aucun son n'est joué.
+
+## Accueil : fond noir en attendant la photo ; photos qui défilent sur les pages « luxe » (13/11/2026, demandes de la propriétaire)
+
+- **Accueil** : au rechargement, la couverture montrait un fond rouge (`--mag-attente`) avant la photo. La couverture
+  (`.p-couv` et son cadre, css/magazine.css) a maintenant un fond **noir** (`--voile-photo-a100`, permis par le gardien
+  des couleurs : il est posé sous une photo).
+- **Intégrer l'agence et Atelier talons (FR/EN)** : la grande photo du haut, les 3 photos de la galerie et la photo du
+  défilé **défilent en boucle en fondu** (`js/diaporama-luxe.js`, une copie pour les 4 pages ; liste `PHOTOS` = les
+  photos de l'agence déjà choisies pour ces pages, jamais de mineure). La nouvelle photo vient au-dessus puis
+  l'ancienne disparaît (pas de trou) ; seulement quand la section est à l'écran ; rien ne bouge si le visiteur demande
+  moins d'animations. Test : `test-diaporama-luxe.js` (aussi le fond noir de l'accueil).
