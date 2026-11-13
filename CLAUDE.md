@@ -74,3 +74,9 @@ relecture et s'appliquent à chaque modification, sans exception.
    vérifier que les notes ne baissent pas et qu'aucun nouveau problème de
    sécurité ou de fiabilité n'apparaît, et corriger les vrais problèmes
    (en expliquant simplement les fausses alertes).
+
+# Vidéos (modèle validé par la propriétaire, 13/11/2026)
+
+Pour TOUTE vidéo (présentation de mannequin, teaser, annonce…) : suivre `outils/video-talons/GUIDE-VIDEOS.md`
+(méthode pas à pas, direction artistique attendue, décisions de la propriétaire, pièges connus) et partir des modèles
+`film-alicia.html` (récit animé) et `film-teaser-v1.html` (bande-annonce), en les rendant encore plus dynamiques.

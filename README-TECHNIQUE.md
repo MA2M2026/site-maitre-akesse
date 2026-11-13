@@ -4922,6 +4922,10 @@ moyens, sans document). Essai : test-liens-serveur.js.
 
 ## Vidéo et carrousel « Alicia Kouadio — La juste mesure » (13/11/2026, demande de la propriétaire)
 
+**Méthode complète et modèle à suivre pour toute nouvelle vidéo : `outils/video-talons/GUIDE-VIDEOS.md`**
+(outils : `apercu.js` pour les images d'essai, `assembler.sh` pour le MP4 final ; âge retiré des vidéos à la demande
+de la propriétaire).
+
 Communication de la semaine du 16/11/2026 (à la place d'André Dominique, programmée par la propriétaire dans
 Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 1,69 m, en racontant son histoire.
 - **Film** `outils/video-talons/film-alicia.html` : moteur PROPRE à ce film (indépendant de `moteur-film.css/js`,
