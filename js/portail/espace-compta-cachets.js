@@ -119,16 +119,19 @@
       '<label class="fl" for="ca-montant">' + (commission === null ? 'Montant à verser (FCFA)' : 'Montant total de la prestation (FCFA)') +
         '<input id="ca-montant" name="montant" type="number" inputmode="numeric" min="1" max="5000000" step="1" required data-change="cachet-montant" data-direct></label>' +
       // (13/11/2026, reçu officiel demandé par la propriétaire) quand, où, avec qui ; impôts et frais retenus
-      '<div class="large f-sous"><h3>Pour le reçu</h3>' +
-        '<label class="fl" for="ca-date">Date de la prestation<input id="ca-date" name="date_prestation" type="date"></label>' +
-        '<label class="fl" for="ca-debut">De<input id="ca-debut" name="heure_debut" type="time"></label>' +
-        '<label class="fl" for="ca-fin">À<input id="ca-fin" name="heure_fin" type="time"></label>' +
-        '<label class="fl" for="ca-lieu">Lieu<input id="ca-lieu" name="lieu" maxlength="160" placeholder="ex. : Sofitel Ivoire, Cocody"></label>' +
-        '<label class="fl" for="ca-partenaire">Partenaire (client)<input id="ca-partenaire" name="partenaire" maxlength="160" placeholder="ex. : Maison Sococé"></label>' +
-        '<label class="fl" for="ca-impots">Impôts retenus (FCFA, facultatif)<input id="ca-impots" name="impots" type="number" inputmode="numeric" min="0" step="1" data-change="cachet-montant" data-direct></label>' +
-        [1, 2, 3].map((i) => '<label class="fl" for="ca-frais-' + i + '">Frais retenu ' + i + ' (facultatif)<input id="ca-frais-' + i + '" name="frais_libelle_' + i + '" maxlength="80" placeholder="ex. : transport" data-change="cachet-montant" data-direct></label>' +
-          '<label class="fl" for="ca-frais-m-' + i + '">Montant (FCFA)<input id="ca-frais-m-' + i + '" name="frais_montant_' + i + '" type="number" inputmode="numeric" min="0" step="1" data-change="cachet-montant" data-direct></label>').join('') +
-        '<p class="doux large petit-texte">Taux et montants des impôts : à confirmer avec le comptable. Les impôts retenus entrent dans « Impôts et taxes » au paiement.</p></div>' +
+      // (13/11/2026, demande de la propriétaire : chaque frais sur UNE ligne, son nom à gauche et son montant à droite)
+      '<div class="large recu-bloc-form"><h3>Pour le reçu</h3>' +
+        '<div class="recu-l3"><label class="fl" for="ca-date">Date de la prestation<input id="ca-date" name="date_prestation" type="date"></label>' +
+          '<label class="fl" for="ca-debut">De<input id="ca-debut" name="heure_debut" type="time"></label>' +
+          '<label class="fl" for="ca-fin">À<input id="ca-fin" name="heure_fin" type="time"></label></div>' +
+        '<div class="recu-l2"><label class="fl" for="ca-lieu">Lieu<input id="ca-lieu" name="lieu" maxlength="160" placeholder="ex. : Sofitel Ivoire, Cocody"></label>' +
+          '<label class="fl" for="ca-partenaire">Partenaire (client)<input id="ca-partenaire" name="partenaire" maxlength="160" placeholder="ex. : Maison Sococé"></label></div>' +
+        '<h4>Retenues sur le cachet (facultatif)</h4>' +
+        '<div class="recu-frais"><label class="fl" for="ca-impots-nom">Retenue<input id="ca-impots-nom" value="Impôts" disabled></label>' +
+          '<label class="fl" for="ca-impots">Montant (FCFA)<input id="ca-impots" name="impots" type="number" inputmode="numeric" min="0" step="1" placeholder="0" data-change="cachet-montant" data-direct></label></div>' +
+        [1, 2, 3].map((i) => '<div class="recu-frais"><label class="fl" for="ca-frais-' + i + '">Frais ' + i + '<input id="ca-frais-' + i + '" name="frais_libelle_' + i + '" maxlength="80" placeholder="ex. : transport" data-change="cachet-montant" data-direct></label>' +
+          '<label class="fl" for="ca-frais-m-' + i + '">Montant (FCFA)<input id="ca-frais-m-' + i + '" name="frais_montant_' + i + '" type="number" inputmode="numeric" min="0" step="1" placeholder="0" data-change="cachet-montant" data-direct></label></div>').join('') +
+        '<p class="doux petit-texte">Taux et montants des impôts : à confirmer avec le comptable. Les impôts retenus entrent dans « Impôts et taxes » au paiement.</p></div>' +
       (commission === null ? '' : '<p class="large doux" id="ca-calcul" role="status">Commission de l’agence ' + pourcent(commission) + ' · à verser à la mannequin : —</p>') +
       '<div class="ligne large"><button class="btn rouge" type="submit">Ajouter à payer</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
     document.getElementById('ca-nom').focus();

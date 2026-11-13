@@ -1442,3 +1442,17 @@ input[type="file"]:focus-visible { outline: 2px solid #7C2128; outline-offset: 3
 /* Chiffre d'affaires et TVA, moyens de paiement : css/paiements-premium.css (13/11/2026) */
 .carte-tva { margin: 0 0 14px; max-width: 760px; }
 .carte-moyens { margin: 0 0 14px; max-width: 760px; }
+/* « Pour le reçu » du nouveau cachet (13/11/2026) : date et horaires sur une ligne, lieu et partenaire, puis chaque retenue
+   sur UNE ligne (nom à gauche, montant à droite) */
+form.f .recu-bloc-form { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 16px; background: #FFFFFF; border: 1px solid #EADCDD; }
+form.f .recu-bloc-form h3, form.f .recu-bloc-form h4 { margin: 0; }
+form.f .recu-bloc-form h4 { margin-top: 4px; font-size: 14px; }
+form.f .recu-l3 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
+form.f .recu-l2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+form.f .recu-frais { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; align-items: end; }
+form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit-text-fill-color: #2a1416; opacity: 1; }
+@media (max-width: 560px) {
+  form.f .recu-l3 { grid-template-columns: 1fr 1fr; }
+  form.f .recu-l3 > :first-child { grid-column: 1 / -1; }
+  form.f .recu-l2 { grid-template-columns: 1fr; }
+}
