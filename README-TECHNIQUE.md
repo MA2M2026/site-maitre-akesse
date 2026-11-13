@@ -4936,4 +4936,10 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
   horizontal 1920 × 1080 pour YouTube).
 - **Carrousel** Instagram / Facebook : `outils/video-talons/carrousel-alicia.html?n=1…8` (1080 × 1350), rendu par
   Chromium en 8 images (couverture, 5 photos avec une phrase, compcard, carte « Réservez Alicia »).
+- **Teaser** (bande-annonce, scénario de la propriétaire) : `outils/video-talons/film-teaser-alicia.html`, voix
+  `voix-teaser.json`, musique `alicia/musique-teaser.wav` (ElevenLabs Music composée par sections, puis creusée en
+  silence juste avant le nom ; source `musique-teaser-source.mp3`), bandes de cinéma en horizontal.
+  `FILM=film-teaser-alicia.html NOM=alicia-teaser SONS=1 HD=1 VOLUME_MUSIQUE=0.32 MUSIQUE=alicia/musique-teaser.wav …`
+- `fabrique-talons.js` (13/11/2026) : le son finit exactement à la durée du film (`apad` + `atrim`) ; avant, la
+  normalisation et le mélange des effets coupaient les 3 dernières secondes de musique.
 - Les fichiers finaux (vidéos, images, textes des publications) sont remis à la propriétaire, pas mis sur le site.
