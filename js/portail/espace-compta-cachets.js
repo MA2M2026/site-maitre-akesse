@@ -69,6 +69,9 @@
     const carte = (c) => '<div class="cachet' + (c.statut === 'a_payer' ? '' : ' fait') + '"><div class="t">' + nom(c) +
       '<small>' + P.esc(c.prestation) + ' · ' + joli(c.telephone) + (c.parent_nom ? ' · versé au parent : ' + P.esc(c.parent_nom) : '') + '</small>' +
       (c.montant_prestation ? '<small>Prestation ' + P.fcfa(c.montant_prestation) + ' · commission de l’agence ' + pourcent(c.commission_taux) + ' : ' + P.fcfa(c.commission) + '</small>' : '') +
+      // (13/11/2026) impôts et frais retenus : le net versé se raccorde au total
+      (c.impots || c.frais_total ? '<small>Retenus : ' + [c.impots ? 'impôts ' + P.fcfa(c.impots) : '', c.frais_total ? 'frais ' + P.fcfa(c.frais_total) : ''].filter(Boolean).join(' · ') + '</small>' : '') +
+      (c.moyen ? '<small>Payé par ' + P.esc(C.nomMoyen(c.moyen)) + '</small>' : '') +
       '</div><span class="cachet-montant">' + P.fcfa(c.montant) + '</span>' +
       (c.statut === 'a_payer' ? '<div class="ligne"><button class="btn petit" type="button" data-action="cachet-copier" data-numero="' + P.esc(c.telephone) + '">Copier le numéro</button>' +
         (principal() ? '<button class="btn petit rouge" type="button" data-action="cachet-payer" data-id="' + c.id + '">Marquer payé</button>' +
@@ -89,6 +92,7 @@
       '<template id="cachet-projets">' + projets.map((p) => '<option value="' + p.id + '">' + P.esc(p.titre + ' · ' + P.date(p.date_debut)) + '</option>').join('') + '</template>';
   }
 
+  // moyens pour payer une mannequin (noms : js/moyens-paiement.js, les mêmes partout)
   P.actions['cachet-nouveau'] = () => {
     const registre = P.etat.cachetsRegistre || [], tpl = document.getElementById('cachet-projets');
     P.fenetre('<form class="f" data-form="cachet-ajouter"><h2 class="large">Nouveau cachet à payer</h2>' +
@@ -114,6 +118,17 @@
         : '<label class="fl" for="ca-prestation">Prestation (sinon : le projet choisi)<input id="ca-prestation" name="prestation" maxlength="200" placeholder="ex. : défilé du 5 décembre"></label>') +
       '<label class="fl" for="ca-montant">' + (commission === null ? 'Montant à verser (FCFA)' : 'Montant total de la prestation (FCFA)') +
         '<input id="ca-montant" name="montant" type="number" inputmode="numeric" min="1" max="5000000" step="1" required data-change="cachet-montant" data-direct></label>' +
+      // (13/11/2026, reçu officiel demandé par la propriétaire) quand, où, avec qui ; impôts et frais retenus
+      '<div class="large f-sous"><h3>Pour le reçu</h3>' +
+        '<label class="fl" for="ca-date">Date de la prestation<input id="ca-date" name="date_prestation" type="date"></label>' +
+        '<label class="fl" for="ca-debut">De<input id="ca-debut" name="heure_debut" type="time"></label>' +
+        '<label class="fl" for="ca-fin">À<input id="ca-fin" name="heure_fin" type="time"></label>' +
+        '<label class="fl" for="ca-lieu">Lieu<input id="ca-lieu" name="lieu" maxlength="160" placeholder="ex. : Sofitel Ivoire, Cocody"></label>' +
+        '<label class="fl" for="ca-partenaire">Partenaire (client)<input id="ca-partenaire" name="partenaire" maxlength="160" placeholder="ex. : Maison Sococé"></label>' +
+        '<label class="fl" for="ca-impots">Impôts retenus (FCFA, facultatif)<input id="ca-impots" name="impots" type="number" inputmode="numeric" min="0" step="1" data-change="cachet-montant" data-direct></label>' +
+        [1, 2, 3].map((i) => '<label class="fl" for="ca-frais-' + i + '">Frais retenu ' + i + ' (facultatif)<input id="ca-frais-' + i + '" name="frais_libelle_' + i + '" maxlength="80" placeholder="ex. : transport" data-change="cachet-montant" data-direct></label>' +
+          '<label class="fl" for="ca-frais-m-' + i + '">Montant (FCFA)<input id="ca-frais-m-' + i + '" name="frais_montant_' + i + '" type="number" inputmode="numeric" min="0" step="1" data-change="cachet-montant" data-direct></label>').join('') +
+        '<p class="doux large petit-texte">Taux et montants des impôts : à confirmer avec le comptable. Les impôts retenus entrent dans « Impôts et taxes » au paiement.</p></div>' +
       (commission === null ? '' : '<p class="large doux" id="ca-calcul" role="status">Commission de l’agence ' + pourcent(commission) + ' · à verser à la mannequin : —</p>') +
       '<div class="ligne large"><button class="btn rouge" type="submit">Ajouter à payer</button><button class="btn" type="button" data-action="fermer-fenetre">Annuler</button></div></form>');
     document.getElementById('ca-nom').focus();
@@ -170,6 +185,12 @@
     if (pourParent) ligne.parent_nom = parentNom;
     if (commission !== null) ligne.montant_prestation = montant;
     if (recus) ligne.motif = motif;
+    // détails du reçu (seulement ceux remplis)
+    ['date_prestation', 'heure_debut', 'heure_fin', 'lieu', 'partenaire'].forEach((k) => { if (t(f, k)) ligne[k] = t(f, k); });
+    const { impots, frais } = retenues(f);
+    if (impots > 0) ligne.impots = impots;
+    if (frais.length) ligne.frais = frais;
+    if (montant - (commission === null ? 0 : Math.round(montant * commission / 100)) - impots - frais.reduce((n, x) => n + x.montant, 0) < 1) { P.message('Après la commission, les impôts et les frais, il ne reste rien à verser.'); return; }
     const r = await P.bd(sb.from('cachets_mannequins').insert(ligne).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été enregistré : reconnectez-vous puis réessayez.'); return; }
     // (après le cachet seulement : un cachet refusé ne change jamais le parent)
@@ -181,11 +202,18 @@
     await C.actualiser('Cachet ajouté à la liste « À payer ».' + note);
   };
   // calcul affiché pendant la saisie (le vrai calcul est fait par la base, au franc près)
+  // impôts et frais retenus saisis (frais : libellé + montant, lignes vides ignorées)
+  function retenues(f) {
+    const n = (k) => Math.max(0, Math.round(Number(f.get(k)) || 0));
+    const frais = [1, 2, 3].map((i) => ({ libelle: String(f.get('frais_libelle_' + i) || '').trim(), montant: n('frais_montant_' + i) })).filter((x) => x.libelle && x.montant > 0);
+    return { impots: n('impots'), frais };
+  }
   P.changements['cachet-montant'] = (el) => {
-    const z = document.getElementById('ca-calcul'), total = Math.round(Number(el.value));
-    if (!z || commission === null) return;
-    const part = Math.round(total * commission / 100);
-    z.textContent = 'Commission de l’agence ' + pourcent(commission) + (total > 0 ? ' : ' + P.fcfa(part) + ' · à verser à la mannequin : ' + P.fcfa(total - part) : ' · à verser à la mannequin : —');
+    const z = document.getElementById('ca-calcul'), form = el.form;
+    if (!z || commission === null || !form) return;
+    const f = new FormData(form), total = Math.round(Number(f.get('montant')) || 0), { impots, frais } = retenues(f);
+    const part = Math.round(total * commission / 100), retenu = impots + frais.reduce((n, x) => n + x.montant, 0);
+    z.textContent = 'Commission de l’agence ' + pourcent(commission) + (total > 0 ? ' : ' + P.fcfa(part) + (retenu ? ' · impôts et frais retenus : ' + P.fcfa(retenu) : '') + ' · à verser à la mannequin : ' + P.fcfa(total - part - retenu) : ' · à verser à la mannequin : —');
   };
   P.formulaires['cachet-commission'] = async (f) => {
     const taux = Number(String(f.get('taux')).replace(',', '.'));
@@ -206,14 +234,16 @@
     P.fenetre('<form class="f" data-form="cachet-confirmer" data-id="' + c.id + '"><h2 class="large">Confirmer le paiement</h2>' +
       '<p class="large recap-cachet"><b>' + P.fcfa(c.montant) + '</b> à <b>' + P.esc(c.beneficiaire) + '</b> (' + joli(c.telephone) + ')<br><span class="doux">' + P.esc(c.prestation) + '</span></p>' +
       '<label class="fl" for="cp-compte">Payé depuis<select id="cp-compte" name="compte" required>' + C.optionsComptes(comptes) + '</select></label>' +
-      '<label class="fl" for="cp-ref">Référence de la transaction Wave (facultatif)<input id="cp-ref" name="reference" maxlength="80" autocomplete="off"></label>' +
-      '<p class="doux petit-texte large">Ne touchez « J’ai payé » qu’après l’envoi réussi dans Wave. ' + (c.montant_prestation
-        ? 'Deux lignes entrent dans la comptabilité : la recette de la prestation (' + P.fcfa(c.montant_prestation) + ') et la dépense du cachet (' + P.fcfa(c.montant) + ') ; la différence est la commission de l’agence. Ne saisissez pas cette recette à la main.'
+      // (13/11/2026) moyen utilisé : il est écrit sur le reçu
+      '<div class="fl large"><span class="pp-s">Payé par</span>' + (window.MoyensPaiement ? window.MoyensPaiement.tuiles('moyen', 'wave', 'id="cp-moyen"') : '') + '</div>' +
+      '<label class="fl" for="cp-ref">Référence (transaction, n° de chèque ou de virement, facultatif)<input id="cp-ref" name="reference" maxlength="80" autocomplete="off"></label>' +
+      '<p class="doux petit-texte large">Ne touchez « J’ai payé » qu’après l’envoi réussi. ' + (c.impots ? 'Les impôts retenus (' + P.fcfa(c.impots) + ') entrent dans « Impôts et taxes », à reverser. ' : '') + (c.montant_prestation
+        ? 'Deux lignes entrent dans la comptabilité : la recette de la prestation (' + P.fcfa(c.montant_prestation) + ') et la dépense du cachet (' + P.fcfa(c.montant) + ') ; la différence est la commission de l’agence' + (c.impots || c.frais_total ? ', les impôts et les frais retenus' : '') + '. Ne saisissez pas cette recette à la main.'
         : 'La dépense entre dans la comptabilité.') + '</p>' +
       '<div class="ligne large"><button class="btn rouge" type="submit">J’ai payé</button><button class="btn" type="button" data-action="fermer-fenetre">Retour</button></div></form>');
   };
   P.formulaires['cachet-confirmer'] = async (f, form) => {
-    await P.sensible(() => P.rpc('cachet_payer', { p_id: form.dataset.id, p_compte: t(f, 'compte'), p_reference: t(f, 'reference') }));
+    await P.sensible(() => P.rpc('cachet_payer_moyen', { p_id: form.dataset.id, p_compte: t(f, 'compte'), p_reference: t(f, 'reference'), p_moyen: t(f, 'moyen') || 'wave' }));
     const c = cachets.find((x) => x.id === form.dataset.id);
     await C.actualiser(c && c.montant_prestation ? 'Paiement enregistré : la recette de la prestation et la dépense du cachet sont dans la comptabilité.' : 'Paiement enregistré : la dépense est dans la comptabilité.');
   };

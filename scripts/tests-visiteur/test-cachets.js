@@ -56,9 +56,16 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.selectOption('#ca-motif', 'defile');
     // commission de l'agence (22/10/2026) : montant total saisi, commission et part de la mannequin affichées
     ok(/Montant total de la prestation/.test(await p.textContent('label[for="ca-montant"]')) && /20 % : 5 000 FCFA · à verser à la mannequin : 20 000 FCFA/.test((await p.textContent('#ca-calcul')).replace(/\u202f|\u00a0/g, ' ')), n + 'commission de 20 % et montant à verser affichés pendant la saisie');
+    // (13/11/2026) reçu officiel : date, horaires, lieu, partenaire, impôts et frais retenus ; le net tient compte de tout
+    await p.fill('#ca-date', '2026-11-08'); await p.fill('#ca-debut', '18:00'); await p.fill('#ca-fin', '22:30');
+    await p.fill('#ca-lieu', 'Sofitel Ivoire'); await p.fill('#ca-partenaire', 'Maison Sococé');
+    await p.fill('#ca-impots', '1000'); await p.fill('#ca-frais-1', 'Transport'); await p.fill('#ca-frais-m-1', '1500');
+    ok(/impôts et frais retenus : 2 500 FCFA · à verser à la mannequin : 17 500 FCFA/.test((await p.textContent('#ca-calcul')).replace(/\u202f|\u00a0/g, ' ')), n + 'reçu officiel : impôts et frais retenus, net à verser 17 500 recalculé');
     await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
     const cree = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => JSON.parse(j[3]))[0] || {};
     ok(cree.montant_prestation === 25000, n + 'montant total de la prestation envoyé : la base calcule la commission');
+    ok(cree.date_prestation === '2026-11-08' && cree.heure_debut === '18:00' && cree.heure_fin === '22:30' && cree.lieu === 'Sofitel Ivoire' && cree.partenaire === 'Maison Sococé' && cree.impots === 1000
+      && JSON.stringify(cree.frais) === '[{"libelle":"Transport","montant":1500}]', n + 'détails du reçu enregistrés (date, horaires, lieu, partenaire, impôts, frais)');
     ok(cree.motif === 'defile' && /^Défilé · ABIDJAN BORDER FORUM/.test(cree.prestation), n + 'motif enregistré, et repris en tête de la prestation (' + cree.prestation + ')');
     ok(await p.$('.cachet .visage-lien .vis') !== null, n + 'cachet d’une mannequin du registre : sa photo en médaillon, qui ouvre sa fiche');
     ok(cree.telephone === '2250700000010' && cree.montant === 25000 && cree.projet_id === 'p1' && /ABIDJAN BORDER FORUM/.test(cree.prestation) && cree.agence_mannequin_id === 'r0', n + 'cachet ajouté : numéro au format Wave, prestation reprise du projet (' + JSON.stringify(cree).slice(0, 120) + ')');
@@ -88,8 +95,11 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(await p.inputValue('#cp-compte') === 'k2' && /AYA KOUASSI|Koné Styliste/.test(await p.textContent('.recap-cachet')), n + 'confirmation : récapitulatif, compte Wave proposé');
     ok(/Deux lignes entrent dans la comptabilité : la recette de la prestation/.test(await p.textContent('#fenetre')), n + 'confirmation : recette de la prestation et dépense du cachet annoncées (commission)');
     await capture(p, 'cachet-confirmer' + suffixe);
+    ok((await p.$$eval('#fenetre [data-pp-moyen]', (o) => o.map((x) => [...x.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim()))).join('|') === 'Wave|Orange Money|MTN Money|Moov Money|Carte bancaire (Visa)|Virement bancaire|Chèque|Espèces'
+      && await p.inputValue('#cp-moyen') === 'wave', n + 'payé par : les 8 moyens en tuiles, Wave choisi d’office');
+    await p.click('#fenetre [data-pp-moyen="orange_money"]');
     await p.fill('#cp-ref', 'T_XY99'); await p.click('form[data-form="cachet-confirmer"] [type=submit]'); await p.waitForTimeout(1200);
-    ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_payer' && /"p_compte":"k2"/.test(j[2]) && /T_XY99/.test(j[2])), n + 'paiement enregistré (cachet_payer : dépense + cachet payé)');
+    ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_payer_moyen' && /"p_compte":"k2"/.test(j[2]) && /T_XY99/.test(j[2]) && /"p_moyen":"orange_money"/.test(j[2])), n + 'paiement enregistré avec son moyen (cachet_payer_moyen : dépense + cachet payé + Orange Money)');
     // 4. Annuler l'autre, avec motif
     await p.click('.cachet [data-action="cachet-annuler"]'); await p.fill('#cn-motif', 'Prestation annulée'); await p.click('form[data-form="cachet-annuler"] [type=submit]'); await p.waitForTimeout(1000);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_annuler' && /Prestation annulée/.test(j[2])), n + 'cachet annulé avec motif');

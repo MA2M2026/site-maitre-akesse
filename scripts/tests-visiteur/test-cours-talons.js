@@ -48,7 +48,7 @@ async function navigateur() {
     const p = await (await b.newContext({ viewport: ecran })).newPage(); const errs = [], journal = [], drive = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript(() => { try { localStorage.setItem('ma2m_cookies', 'non'); sessionStorage.setItem('ma2m_entree_vue', '1'); } catch (e) { /* */ } });
-    await brancher(p, { tables: {}, rpc: {}, formulaire: pasPret === 'coupure' ? () => (++essais === 1 ? { statut: 500, error: 'Envoi impossible pour le moment, réessayez.' } : null)
+    await brancher(p, { tables: {}, rpc: { moyens_paiement_publics: [{ code: 'wave', nom: 'Wave' }, { code: 'orange_money', nom: 'Orange Money', numero: '07 11 22 33 44' }] }, formulaire: pasPret === 'coupure' ? () => (++essais === 1 ? { statut: 500, error: 'Envoi impossible pour le moment, réessayez.' } : null)
       : pasPret ? () => ({ statut: 503, error: 'Inscriptions en ligne bientôt ouvertes.', pasPret: true }) : null }, journal);
     // Google Drive simulé (photos, puis vidéo en morceaux)
     await p.route(/script\.google\.com/, (route) => {
@@ -105,6 +105,14 @@ async function navigateur() {
     // étape 4 : Wave maintenant
     await p.click('label.ct-choix:has(input[value="maintenant"])');
     ok((await p.getAttribute('#ct-lien-wave', 'href')).endsWith('?amount=250000'), n + 'lien Wave avec le bon montant (250 000)');
+    // (13/11/2026) moyens en tuiles : Orange Money montre le numéro de l'agence et le montant, puis retour à Wave
+    await p.click('#ct-moyens [data-moyen="orange_money"]'); await p.waitForTimeout(200);
+    ok(/250 000 FCFA (par Orange Money au numéro de l’agence|by Orange Money to the agency number)/.test((await p.textContent('#ct-consigne')).replace(/[\u202f\u00a0]/g, ' ')) && !(await p.isVisible('#ct-lien-wave')), n + 'Orange Money en tuile : numéro de l’agence et montant (250 000), lien Wave caché');
+    await p.click('#ct-moyens [data-moyen="wave"]'); await p.waitForTimeout(200);
+    ok(await p.isVisible('#ct-lien-wave'), n + 'retour à Wave : le lien Wave revient');
+    // (page anglaise) inscription envoyée avec Orange Money : le moyen part avec la ligne, noms en anglais
+    const parOrange = page.startsWith('en/');
+    if (parOrange) { await p.click('#ct-moyens [data-moyen="orange_money"]'); await p.waitForTimeout(200); ok(/Copy/.test(await p.textContent('#ct-consigne')), n + 'page anglaise : consigne en anglais (« Copy »)'); }
     await p.fill('#ct-ref-wave', 'T_ESSAI1');
     await p.click('#ct-envoyer');
     ok(/case|tick/i.test(await p.textContent('#ct-msg')), n + 'sans la case de confidentialité : envoi refusé avec un message');
@@ -128,8 +136,8 @@ async function navigateur() {
     if (pasPret === 'coupure') { /* déjà vérifié */ } else if (!pasPret) {
       const l = envoi.length ? JSON.parse(envoi[0][3]) : {};
       ok(envoi.length === 1 && journal.some((j) => j[0] === 'ANTI-ROBOT' && j[1] === 'cours_talons'), n + 'inscription envoyée une fois, par le serveur (anti-robots)');
-      ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
-        n + 'contenu : formule, 10 séances, Wave maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
+      ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
+        n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
       ok(Array.isArray(l.photos) && l.photos.length === 2 && l.video === 'https://drive.google.com/video-marche' && !('statut' in l) && !('montant' in l), n + 'liens Drive des 2 photos et de la vidéo ; ni statut ni montant envoyés (la base décide)');
       ok(/Merci|Thank you/.test(merci) && journal.some((j) => j[0] === 'EMAIL'), n + 'message de remerciement, e-mail de notification à l’agence');
       ok(/bien arrivées|reached the agency/.test(merci) && await p.isVisible('#ct-jauge-video') && /✓/.test(await p.textContent('#ct-jauge-video')), n + 'confirmation : « photos et vidéo bien arrivées », jauges à 100 % visibles');

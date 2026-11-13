@@ -5,6 +5,8 @@
 -- recette de la prestation + dépense du cachet).
 -- À exécuter UNE FOIS dans l'éditeur SQL de Supabase, APRÈS supabase-cachets.sql.
 -- Rejouable sans danger (rien n'est supprimé ; les cachets déjà saisis ne changent pas).
+-- ⚠ Version à jour de cachet_commission et cachet_depense_annulee (impôts et frais retenus, 13/11/2026) :
+-- supabase-paiements-officiels.sql, à recoller APRÈS celui-ci s'il est recollé.
 -- ===================================================================================
 alter table compta_reglages add column if not exists commission_taux numeric(5,2) not null default 20
   check (commission_taux >= 0 and commission_taux < 100);

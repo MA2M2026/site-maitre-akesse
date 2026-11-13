@@ -116,6 +116,7 @@ grant execute on function formulaire_public_enregistrer(text, jsonb, text) to se
 
 -- Valider le paiement d'une inscription : statut « inscrite », et la recette « Cours de talons » en Compta
 -- (compte Wave, ou caisse si payé en espèces). Une seule recette par inscription.
+-- ⚠ Version à jour (moyen de paiement, 13/11/2026) : supabase-moyens-inscriptions.sql, à recoller APRÈS ce fichier-ci.
 create or replace function cours_talons_valider(p_id uuid, p_montant int default null, p_especes boolean default false)
 returns cours_talons language plpgsql security definer set search_path = public as $$
 declare

@@ -26,3 +26,9 @@
   .recu-feuille { box-shadow: none; border-radius: 0; }
   .recu-actions { display: none !important; }
 }
+/* Reçu officiel (13/11/2026) : trois blocs titrés, les retenues en retrait */
+.recu-bloc { margin: 1.4rem 0 0; padding: 0; }
+.recu-bloc h2 { margin: 0 0 .2rem; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: #5E5752; font-weight: 600; }
+.recu-calcul .retenue dd { font-weight: 500; }
+@media print { .recu-bloc { break-inside: avoid; } }
+.recu-calcul dd { white-space: nowrap; }

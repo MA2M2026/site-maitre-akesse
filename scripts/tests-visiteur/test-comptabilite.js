@@ -95,10 +95,12 @@ function donnees(role) {
     await controler(p, nomEcran + ' : tableau du mois');
     // (12/11/2026) chiffre d'affaires et TVA à part : 105 000 encaissés TVA comprise, 18 % (taux par défaut), par catégorie
     const n = (x) => x.replace(/[  ]/g, ' ');
-    ok(/Encaissé \(TVA comprise\)\s*105 000 FCFA/i.test(n(t)) && /Chiffre d’affaires hors taxes\s*88 983 FCFA/i.test(n(t)) && /TVA prévue \(18 %\)\s*16 017 FCFA/i.test(n(t)) && /Prévision : l’agence n’est pas encore immatriculée/.test(t),
+    // (13/11/2026, maquette premium) carte façon carte bancaire : chiffre d'affaires hors taxes en grand, encaissé et TVA dessous ; tuile « TVA prévue »
+    const carteTva = n(await p.evaluate(() => document.querySelector('.carte-tva').innerText));
+    ok(/88 983\s*F\s*Chiffre d’affaires hors taxes/i.test(carteTva) && /Encaissé \(TVA comprise\)\s*105 000 FCFA/i.test(carteTva) && /TVA 18 %\s*16 017 FCFA/i.test(carteTva) && /16 017\s*F\s*TVA prévue \(18 %\)/i.test(carteTva) && /Prévision : l’agence n’est pas encore immatriculée/.test(carteTva),
       nomEcran + ' : chiffre d’affaires hors taxes 88 983 et TVA prévue 16 017 (18 %), séparés');
-    const tva = await p.$$eval('.tableau-tva tbody tr', (l) => l.map((r) => r.innerText.replace(/[  ]/g, ' ').replace(/\s+/g, ' ')));
-    ok(tva.length === 2 && /Castings.*90 000 FCFA.*76 271 FCFA.*13 729 FCFA/i.test(tva[0]) && /Inscriptions.*15 000 FCFA.*12 712 FCFA.*2 288 FCFA/i.test(tva[1]), nomEcran + ' : TVA par catégorie ' + JSON.stringify(tva));
+    const tva = await p.$$eval('.tableau-tva .pp-op', (l) => l.map((r) => r.innerText.replace(/[  ]/g, ' ').replace(/\s+/g, ' ')));
+    ok(tva.length === 2 && /Castings.*76 271 FCFA.*13 729 FCFA.*90 000 FCFA/i.test(tva[0]) && /Inscriptions.*12 712 FCFA.*2 288 FCFA.*15 000 FCFA/i.test(tva[1]), nomEcran + ' : TVA par catégorie ' + JSON.stringify(tva));
     ok(/Tableau de bord/.test(t) && /Mode actuel : Factures internes, non déclarées/.test(t) && /Identité de l’agence →/.test(t), nomEcran + ' : tableau de bord avec le mode légal / FNE en évidence');
     if (ecran.width > 860) {
       // (11/11/2026) toutes les rubriques sont sur la page d'entrée « Toutes les rubriques », dans l'ordre des groupes
@@ -116,7 +118,7 @@ function donnees(role) {
     // mode légal activé : la même TVA devient « à reverser »
     d.tables.compta_reglages = [{ id: 1, tva_taux: 18, mode_legal: true }];
     await aller(p, 'mois'); t = await texte(p);
-    ok(/TVA à reverser \(18 %\)\s*16[\s  ]017 FCFA/i.test(t) && /à valider par le comptable/.test(t), nomEcran + ' : mode légal → « TVA à reverser » 16 017');
+    ok(/16[\s\u202f\u00a0]017\s*F\s*TVA à reverser \(18 %\)/i.test(t) && /À déclarer/i.test(t) && /à valider par le comptable/.test(t), nomEcran + ' : mode légal → « TVA à reverser » 16 017');
     delete d.tables.compta_reglages;
 
     // Dépenses : mauvais fichier refusé, puis une vraie dépense avec son justificatif
@@ -213,8 +215,14 @@ function donnees(role) {
     ok(await p.inputValue('#rg-montant') === '260000', nomEcran + ' : « Encaisser » propose le reste dû');
     await p.fill('#rg-montant', '300000'); await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(400);
     ok((await p.textContent('#calque')).includes('entre 1 et 260 000'), nomEcran + ' : encaisser plus que le reste est refusé');
+    // (13/11/2026) paiement du client : le moyen place le bon compte ; la part de TVA de la somme s'affiche
+    await p.fill('#rg-montant', '59000'); await p.waitForTimeout(500);
+    ok(/Dont hors taxes 50 000 FCFA\s*TVA 18 % 9 000 FCFA \(prévision\)/.test((await p.textContent('#rg-tva')).replace(/[\u202f\u00a0]/g, ' ')), nomEcran + ' : encaisser : part de TVA de la somme (59 000 = 50 000 + 9 000)');
+    await p.click('[data-pp-moyen="especes"]'); ok(await p.inputValue('#rg-compte') === 'c1', nomEcran + ' : client payé en espèces → la caisse est choisie');
+    await p.click('[data-pp-moyen="wave"]'); ok(await p.inputValue('#rg-compte') === 'c2', nomEcran + ' : client payé par Wave → le compte Wave est choisi');
     await p.fill('#rg-montant', '60000'); await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(800);
     let rg = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
+    ok(rg.moyen === 'wave', nomEcran + ' : encaissement : le moyen du client est enregistré (' + rg.moyen + ')');
     ok(rg.dette_id === 'd1' && rg.sens === 'recette' && rg.montant === 60000 && rg.categorie === 'casting' && (await p.textContent('#calque')).includes('Reste 200 000'),
       nomEcran + ' : encaissement partiel enregistré comme recette, reste 200 000 annoncé');
     await ouvrirSaisies(p); await p.fill('#dt-montant', '150000'); await p.fill('#dt-libelle', 'Shooting catalogue'); await p.fill('#dt-echeance', '2099-01-31');

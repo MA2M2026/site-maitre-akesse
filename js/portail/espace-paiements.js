@@ -12,7 +12,8 @@
   const DROIT_INSCRIPTION = 15000, PREMIER_MOIS = 10000, INSCRIPTION_FCFA = DROIT_INSCRIPTION + PREMIER_MOIS;
   const moisCourant = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01'; };
   const STATUTS = { actif: 'Actif', suspendu: 'Suspendu', sorti: 'Sorti' };
-  const MODES = { wave: 'Wave', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
+  // (12/11/2026) noms des moyens : js/moyens-paiement.js, partagé avec les pages des mannequins
+  const MODES = (window.MoyensPaiement && window.MoyensPaiement.NOMS) || { wave: 'Wave', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
 
   // État de l'inscription d'un mannequin : [libellé, ton de la pastille]
   function etatInscription(m, paiement) {
@@ -282,7 +283,9 @@
     const montant = el.getAttribute('data-montant'), mode = el.getAttribute('data-mode');
     P.fenetre('<h2>Corriger le paiement</h2><form class="f" data-form="paiement-corriger" data-id="' + P.esc(el.getAttribute('data-id')) + '">' +
       '<label class="fl" for="pc-montant">Montant reçu (FCFA)<input id="pc-montant" name="montant" type="number" min="1" step="1" required value="' + P.esc(montant) + '"></label>' +
-      '<label class="fl" for="pc-mode">Moyen<select id="pc-mode" name="mode"><option value="wave"' + (mode === 'wave' ? ' selected' : '') + '>Wave</option><option value="especes"' + (mode === 'especes' ? ' selected' : '') + '>Espèces</option></select></label>' +
+      // (12/11/2026) tous les moyens : un paiement Orange, carte ou virement garde son moyen quand on corrige seulement le montant
+      '<label class="fl" for="pc-mode">Moyen<select id="pc-mode" name="mode">' + Object.keys(MODES).filter((k) => k !== 'cheque' && (k !== 'avant_systeme' || mode === k)).map((k) =>
+        '<option value="' + P.esc(k) + '"' + (mode === k ? ' selected' : '') + '>' + P.esc(MODES[k]) + '</option>').join('') + '</select></label>' +
       '<label class="fl large" for="pc-motif">Pourquoi cette correction ? (obligatoire)<textarea id="pc-motif" name="motif" required rows="3"></textarea></label>' +
       '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer la correction</button><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div></form>');
   };
@@ -359,8 +362,8 @@
       '<strong>' + P.esc(P.fcfa(g.total)) + '</strong><span>' + P.esc(objetPaiement(p)) + (p.objet === 'inscription' && g.total > (p.montant || 0) ? ' · dont 1er mois de formation' : '') + '</span></div>';
     return P.etude.page(P.etude.quitter(retour), 'Paiements · 1 / ' + restants.length + (deCote.length ? ' (+' + deCote.length + ' plus tard)' : ''),
       P.etude.haut([], nom, ['En attente de validation'], centre) +
-      P.etude.infos(['📅 Déclaré le ' + P.dateHeure(p.declare_le), p.mode === 'wave' ? '🌊 Wave' : especes ? '💵 Espèces' : '', p.mannequin && p.mannequin.telephone ? '📞 ' + p.mannequin.telephone : '']) +
-      '<p class="etude-actuel">' + (especes ? 'Vérifiez d’abord que cet argent a bien été reçu en espèces.' : 'Retrouvez d’abord ce paiement dans Wave Business.') + '</p>' +
+      P.etude.infos(['📅 Déclaré le ' + P.dateHeure(p.declare_le), especes ? '💵 Espèces' : p.mode ? '💳 ' + (MODES[p.mode] || p.mode) : '', p.mannequin && p.mannequin.telephone ? '📞 ' + p.mannequin.telephone : '']) +
+      '<p class="etude-actuel">' + (especes ? 'Vérifiez d’abord que cet argent a bien été reçu en espèces.' : p.mode === 'wave' ? 'Retrouvez d’abord ce paiement dans Wave Business.' : 'Retrouvez d’abord ce paiement sur le compte ' + (MODES[p.mode] || p.mode) + ' de l’agence.') + '</p>' +
       P.etude.decision([['non', '✕', 'Refuser', { action: 'paiement-refuser', id: p.id }], P.etude.plusTard('paiements', p.id), ['oui', '✓', 'Valider', { action: 'paiement-valider', id: p.id }]]) +
       '<a class="etude-fiche" data-visage href="#/paiements/fiche/' + P.esc(encodeURIComponent(p.mannequin_id)) + '">Voir la fiche du mannequin</a>');
   }
@@ -962,11 +965,59 @@
       '<label class="fl" for="lw-montant">Montant (FCFA)<input id="lw-montant" name="montant" type="number" min="1" step="1" required></label>' +
       '<label class="fl large" for="lw-adresse">Adresse du lien (https://…)<input id="lw-adresse" name="adresse" type="url" required placeholder="https://pay.wave.com/…"></label>' +
       '<div class="large ligne"><button class="btn rouge" type="submit">Ajouter le lien</button></div></form>';
-    return P.entete('Paramètres') +
+    const carteMoyens = await moyensPaiement(principal);
+    return P.entete('Paramètres') + carteMoyens +
       '<div class="carte"><h2>Liens de paiement Wave Business</h2><p class="doux">Dans « Messages et relances », la variable {lien_wave} utilise le lien actif du montant du mannequin.</p>' + liste + '</div>' + ajout +
       '<div class="carte"><h2>Montants en vigueur</h2>' + montants + '<p class="doux">Ces montants sont fixes pour l’instant. La mensualité de chaque mannequin se choisit dans le registre ; un changement ne touche que les échéances à venir.</p></div>' +
       '<div class="carte"><h2>Calendrier du mois</h2>' + calendrier + '</div>';
   }
+  // ---------- Moyens de paiement (12/11/2026, demande de la propriétaire) ----------
+  // Six moyens préparés ; chacun s'allume avec son numéro (Orange, MTN, Moov), son lien (carte) ou son RIB (virement),
+  // le jour où l'agence a le compte. Table : moyens_paiement (supabase-moyens-paiement.sql, à coller par la propriétaire).
+  async function moyensPaiement(principal) {
+    let liste;
+    try { liste = await P.bd(sb.from('moyens_paiement').select('*').order('ordre')); } catch (e) { liste = null; }
+    if (!liste) return '<div class="carte"><h2>Moyens de paiement</h2><div class="note info">Wave seul pour l’instant. Orange Money, MTN Money, Moov Money, carte bancaire et virement sont prêts : ils s’activent après l’étape d’installation « supabase-moyens-paiement.sql ».</div></div>';
+    P.etat.moyensPaiement = liste;
+    // (13/11/2026, maquette premium validée) carte façon carte bancaire, puis deux relevés : allumés, prêts à allumer
+    const MP = window.MoyensPaiement, ou = (m) => m.code === 'wave' ? 'Liens Wave Business' : m.code === 'carte' ? (m.lien || 'Lien de paiement à indiquer') : m.code === 'virement' ? (m.rib || 'RIB à indiquer') : (m.numero || 'Numéro à indiquer');
+    const allumes = liste.filter((m) => m.actif), eteints = liste.filter((m) => !m.actif);
+    const ligne = (m) => '<' + (principal ? 'button type="button" data-bouton-libre data-action="moyen-modifier" data-code="' + P.esc(m.code) + '"' : 'div') + ' class="pp-op">' +
+      '<em aria-hidden="true">' + ((MP && MP.ABR[m.code]) || '•') + '</em><span>' + P.esc(m.nom) + '<small>' + P.esc(ou(m) + (m.titulaire ? ' · au nom de ' + m.titulaire : '')) + '</small></span>' +
+      '<b class="pp-pastille ' + (m.actif ? 'vert' : 'gris') + '">' + (m.actif ? 'Allumé' : 'Éteint') + '</b></' + (principal ? 'button' : 'div') + '>';
+    const famille = (codes) => allumes.filter((m) => codes.indexOf(m.code) >= 0).map((m) => MP.nomCourt(m.code)).join(', ') || 'bientôt';
+    return '<section class="carte-moyens" aria-label="Moyens de paiement des mannequins">' +
+      MP.carte({ etiquette: 'Encaissements', grand: allumes.length + ' <small>/ ' + liste.length + '</small>', sous: 'Moyens de paiement des mannequins allumés',
+        bas: [['Mobile money', famille(['wave', 'orange_money', 'mtn_money', 'moov_money'])], ['Banque', famille(['carte', 'virement'])]] }) +
+      (allumes.length ? '<div class="pp-titre">Allumés</div><div class="pp-releve">' + allumes.map(ligne).join('') + '</div>' : '') +
+      (eteints.length ? '<div class="pp-titre">Prêts, à allumer</div><div class="pp-releve">' + eteints.map(ligne).join('') + '</div>' : '') +
+      '<p class="pp-legende">' + (principal ? 'Un toucher sur un moyen : son numéro (ou lien, ou RIB) et « Allumé », le jour où l’agence a le compte.' : 'Seul l’administrateur principal peut modifier les moyens de paiement.') + '</p></section>';
+  }
+  P.actions['moyen-modifier'] = (el) => {
+    const m = (P.etat.moyensPaiement || []).find((x) => x.code === el.getAttribute('data-code'));
+    if (!m) return;
+    const champ = (nom, libelle, val, attrs) => '<label class="fl large" for="mo-' + nom + '">' + libelle + '<input id="mo-' + nom + '" name="' + nom + '" value="' + P.esc(val || '') + '" ' + (attrs || '') + '></label>';
+    P.fenetre('<h2>' + P.esc(m.nom) + '</h2><form class="f" data-form="moyen-enregistrer" data-code="' + P.esc(m.code) + '">' +
+      '<label class="fl large case"><input type="checkbox" name="actif"' + (m.actif ? ' checked' : '') + '> Allumé : proposé aux mannequins</label>' +
+      (window.MoyensPaiement && window.MoyensPaiement.MOBILE.indexOf(m.code) >= 0 ? champ('numero', 'Numéro qui reçoit les paiements', m.numero, 'type="tel" inputmode="tel" maxlength="20" placeholder="07 00 00 00 00"') : '') +
+      (m.code === 'carte' ? champ('lien', 'Lien de paiement par carte (https://…)', m.lien, 'type="url" placeholder="https://…"') : '') +
+      (m.code === 'virement' ? '<label class="fl large" for="mo-rib">Banque et RIB / IBAN<textarea id="mo-rib" name="rib" rows="3" maxlength="300">' + P.esc(m.rib || '') + '</textarea></label>' : '') +
+      champ('titulaire', 'Au nom de (facultatif)', m.titulaire, 'maxlength="120"') +
+      champ('consignes', 'Phrase pour les mannequins (facultatif)', m.consignes, 'maxlength="400"') +
+      '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer</button><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div></form>');
+  };
+  P.formulaires['moyen-enregistrer'] = async (f, form) => {
+    const t = (k) => String(f.get(k) || '').trim() || null;
+    const maj = { actif: f.get('actif') === 'on', titulaire: t('titulaire'), consignes: t('consignes') };
+    ['numero', 'lien', 'rib'].forEach((k) => { if (form.querySelector('[name="' + k + '"]')) maj[k] = t(k); });
+    if (maj.numero && !/^[0-9+ ]{6,20}$/.test(maj.numero)) return P.message('Numéro : seulement des chiffres, des espaces et +.');
+    if (maj.lien && !/^https:\/\/\S+$/i.test(maj.lien)) return P.message('Le lien doit commencer par https://');
+    try {
+      const r = await P.sensible(() => P.bd(sb.from('moyens_paiement').update(maj).eq('code', form.getAttribute('data-code')).select('code')));
+      if (!r || !r.length) return P.message('Action refusée : votre rôle ne le permet pas.');
+      P.fenetre(''); await P.afficher(); P.message('Moyen de paiement enregistré.');
+    } catch (e) { P.message(P.erreurTexte(e)); }
+  };
   P.formulaires['lien-ajouter'] = async (f) => {
     const adresse = String(f.get('adresse') || '').trim(), montant = Math.round(Number(f.get('montant')));
     if (!/^https:\/\/[^\s]+$/i.test(adresse)) return P.message('L’adresse doit commencer par https://');

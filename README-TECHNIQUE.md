@@ -4851,3 +4851,61 @@ Demande de la propriétaire : voir l'argent encaissé, le chiffre d'affaires et 
 l'agence, 18 % par défaut). Avant le mode légal : « TVA prévue » (prévision) ; après : « TVA à reverser », à valider par le
 comptable. Aucun changement de la base. Exposés dans `P.compta` (separerTva, chiffreAffaires, reglageTva) pour les étapes
 suivantes (moyens de paiement, reçus de cachet, paiements des clients). Essai : test-comptabilite.js.
+
+## Moyens de paiement des mannequins (12/11/2026)
+
+Demande de la propriétaire : Wave, Orange Money, MTN Money, Moov Money, carte bancaire (Visa) et virement, préparés dès
+maintenant. Base : **`supabase-moyens-paiement.sql`** (À COLLER par la propriétaire) : table `moyens_paiement` (allumé,
+numéro, lien, RIB, titulaire, phrase ; garde-fous : un moyen allumé doit dire où payer), `moyens_paiement_publics()`
+(moyens allumés, aussi sans compte), `paiements_mannequins.mode` élargi, `mensualite_declarer_avec_numero(mois, numéro,
+moyen)` et `mensualites_payer_avance(nb, numéro, moyen)` (les fonctions d'avant déclarent, puis `paiements_noter_moyen`
+pose le moyen sur les paiements créés par CET appel : même `declare_le` = now()), `compta_type_du_mode` (espèces → caisse,
+Wave → Wave, Orange/MTN/Moov → « Autre mobile money », carte/virement → banque ; sans compte actif de ce type : Wave,
+noté au journal) utilisé par `compta_depuis_espace2` (même version dans supabase-administration.sql). Garde-fous : administrateur principal, code récent, journal d'audit.
+Partagé : `js/moyens-paiement.js` (`window.MoyensPaiement` : noms, `charger`, `choix`, `consigne`), chargé par
+app/mes-paiements.html, app/index.html et admin/index.html. « Mes paiements » (js/mes-paiements.js, site et application) :
+choix en pastilles, Wave et carte par leur lien, Orange/MTN/Moov et virement par le numéro ou le RIB affiché. Administration
+> Paiements > Paramètres : « Moyens de paiement des mannequins » (Modifier : administrateur principal, code récent).
+Paiements à valider : le moyen déclaré est affiché. Sans le fichier collé : Wave seul, comme avant.
+Prochaines étapes : la page d'inscription et les cours de marche avec le même choix. Essai : test-moyens-paiement.js.
+
+## Payer les mannequins : reçu officiel détaillé (13/11/2026)
+
+Demande de la propriétaire : un reçu qui sert de preuve. Base : **`supabase-paiements-officiels.sql`** (À COLLER) :
+colonnes `date_prestation`, `heure_debut`, `heure_fin`, `lieu`, `partenaire`, `impots`, `frais` (jsonb, 5 lignes au plus),
+`frais_total`, `moyen` (wave, orange_money, mtn_money, moov_money, cheque, virement, carte, especes), `impot_id` ;
+`cachet_commission` (net versé = total - commission - impôts - frais ; même version dans supabase-cachets-commission.sql) ;
+`cachet_payer_moyen(id, compte, référence, moyen)` (cachet_payer, puis le moyen, et les impôts retenus entrent dans
+« Impôts et taxes », date limite le 15 du mois suivant) ; `cachet_recu_lire` rend tout le détail (commission comprise).
+Administration (js/portail/espace-compta-cachets.js) : bloc « Pour le reçu » dans « Nouveau cachet », calcul en direct du
+net, « Payé par » (8 moyens) au paiement. Reçu (recu.html, js/recu.js, css/recu.css) : La prestation (mannequin, parent,
+prestation, date, horaires, lieu, partenaire, pour le compte de l'agence), Le détail, Net versé, Le paiement. Message
+WhatsApp : lieu et moyen en plus. Essais : test-cachets.js, test-recu.js.
+
+## Paiements des clients : moyen et TVA (13/11/2026)
+
+Proforma → « accepté » → facture → « Ce qu'on nous doit » → « Encaisser » : le moyen du client (Wave, Orange Money, MTN
+Money, Moov Money, carte bancaire (Visa), virement, chèque, espèces) est choisi et enregistré (`compta_ecritures.moyen`,
+supabase-paiements-officiels.sql) ; il place le bon compte (espèces → caisse, Wave → Wave, Orange/MTN/Moov → autre mobile
+money, carte/virement/chèque → banque). La part de TVA de la somme s'affiche (« Dont chiffre d'affaires hors taxes … et TVA
+… »). Même choix dans « Nouvelle recette » et « Nouvelle dépense » ; le moyen apparaît sur chaque carte. Outils :
+`P.compta.champMoyen`, `P.compta.noteTva` (js/portail/espace-compta.js). Essai : test-comptabilite.js.
+
+## Paiements premium partout (13/11/2026, maquette validée : « applique-la partout »)
+
+Style de « Mes paiements » de l'application, UNE fois : **`css/paiements-premium.css`** (classes `pp-*` : `pp-cb` carte façon
+carte bancaire, `pp-tuiles`/`pp-tuile`, `pp-releve`/`pp-op`, `pp-blanc`, `pp-choix`/`pp-moyen` tuiles avec ✓, `pp-consigne`
++ `pp-num` « Copier », `pp-tva`, `pp-gros` grand bouton rouge). Chargé par admin/index.html, app/index.html,
+app/mes-paiements.html, app/inscription-mannequin.html, cours-talons.html (FR/EN).
+`js/moyens-paiement.js` : `choix(moyens, choisi, clé)` (tuiles des moyens allumés + « bientôt » estompés), `tuiles(nom,
+choisi, attributs, codes)` (formulaires de l'agence : champ caché qui prévient par « change »), `consigne` (numéro, lien
+ou RIB + « Copier », FR/EN), `ABR` (initiales des tuiles), `TOUS` (8 moyens), `carte` (la carte façon carte bancaire), `grandF`, `parLien`, `nomCourt`, noms anglais (pages EN).
+Écrans : Comptabilité (carte « hors taxes », tuiles TVA prévue ou à reverser / encaissé, relevé par catégorie), Paramètres des
+Paiements (carte « n / 6 allumés », relevés allumés / prêts), « Mes paiements », Encaisser, Payer un cachet, inscription
+des nouveaux mannequins (étape 3 : choix du moyen, `infos.moyen` envoyé au serveur), cours de talons (« Payer
+maintenant » : choix du moyen, colonne `cours_talons.moyen`). Base : **`supabase-moyens-inscriptions.sql`** (À COLLER) :
+`inscription_payer_avec_numero` note le moyen, `cours_talons.moyen`, `cours_talons_valider` range la recette sur le compte
+du moyen. Essais : test-comptabilite, test-moyens-paiement, test-mensualites, test-inscription, test-cours-talons, test-cachets.
+Reçu officiel écrit d'avance par le serveur (middleware.js, `recuRempli`) avec les MÊMES lignes que la page :
+`CachetsMa2m.lignesRecu(c)` (js/cachets-communs.js) ; `js/moyens-paiement.js` est aussi importé par middleware.js (noms des
+moyens, sans document). Essai : test-liens-serveur.js.

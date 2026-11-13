@@ -24,6 +24,10 @@
   function monter(zone, options) {
   const mode = (options && options.mode) || 'page', surDeclare = (options && options.surDeclare) || null;
   let donnees = null, waveOuvert = {}, liensWave = {}, recus = [], numeros = {}, cachets = [], nbAvance = 1;
+  // (12/11/2026) moyens de paiement allumés par l'agence (js/moyens-paiement.js) et moyen choisi pour chaque paiement
+  const MP = window.MoyensPaiement;
+  let moyens = [{ code: 'wave', nom: 'Wave' }], moyenChoisi = {};
+  const moyenDe = (cle) => moyens.find((m) => m.code === moyenChoisi[cle]) || moyens[0];
 
   async function charger() {
     const { data: s } = await sb.auth.getSession();
@@ -51,24 +55,32 @@
   }
   // lien Wave des Paramètres de l'agence pour ce montant, sinon le lien de secours au bon montant
   const adresseWave = (montant) => liensWave[Number(montant)] || (LIEN_WAVE + Number(montant));
-  // Wave, numéro du payeur, « J'ai payé » (cle : le mois, ou « avance » pour plusieurs mois)
+  // Moyen choisi, où payer, numéro du payeur, « J'ai payé » (cle : le mois, ou « avance » pour plusieurs mois).
+  // Wave et carte : on passe d'abord par le lien ; Orange, MTN, Moov et virement : le numéro ou le RIB est affiché.
+  const parLien = (code) => (MP ? MP.parLien(code) : code === 'wave');
+  const peutDeclarer = (cle) => (!parLien(moyenDe(cle).code) || waveOuvert[cle]) && numeroValide(numeros[cle]);
   function blocPaiement(cle, montant) {
-    return '<p class="mp-petit">Moyen de paiement : <b>Wave</b> · Orange Money, MTN Money et Moov Money : bientôt.</p>' +
-      '<a class="btn btn--principal" data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>' +
-      '<label class="mp-petit" for="mp-num-' + esc(cle) + '">Numéro mobile money qui paie</label>' +
+    const m = moyenDe(cle), code = m.code, mobile = code === 'wave' || (MP && MP.MOBILE.indexOf(code) >= 0);
+    const ou = code === 'wave' ? '<a class="btn btn--principal pp-gros" data-bouton-libre data-mp="wave" data-mois="' + esc(cle) + '" href="' + esc(adresseWave(montant)) + '" target="_blank" rel="noopener">1 · Payer avec Wave</a>'
+      : '';
+    const phrase = MP ? MP.consigne(m, montant, cle) : '';
+    const apres = code === 'wave' ? 'Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.'
+      : 'Après avoir payé, revenez ici, indiquez ' + (mobile ? 'le numéro qui a payé' : 'votre numéro de téléphone') + ', puis appuyez sur « J’ai payé ». L’agence vérifie la réception avant de valider.';
+    // (13/11/2026, maquette premium validée) tuiles du moyen, où payer, numéro du payeur, grand bouton « J'ai payé »
+    return (MP ? MP.choix(moyens, code, cle) : '') + '<div class="mp-pp-suite">' + ou + phrase +
+      '<label class="mp-petit" for="mp-num-' + esc(cle) + '">' + (mobile ? 'Numéro mobile money qui a payé' : 'Votre numéro de téléphone') + '</label>' +
       '<input class="mp-num" id="mp-num-' + esc(cle) + '" data-num="' + esc(cle) + '" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+225 07 00 00 00 00" value="' + esc(numeros[cle] || '') + '">' +
-      '<button class="btn" type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (waveOuvert[cle] && numeroValide(numeros[cle]) ? '' : ' disabled') + '>2 · J’ai payé</button>' +
-      '<p class="mp-petit">Après avoir payé dans Wave, revenez ici, indiquez le numéro qui a payé, puis appuyez sur « J’ai payé ». Pas de capture : l’agence vérifie dans Wave Business.</p>' +
-      '<p class="mp-petit">Paiement en espèces ? Remettez-le à l’agence : il apparaîtra ici dès que l’agence l’aura validé.</p>';
+      '<button class="btn btn--principal pp-gros mp-pp-payer" data-bouton-libre type="button" data-mp="paye" data-mois="' + esc(cle) + '"' + (peutDeclarer(cle) ? '' : ' disabled') + '>' + (parLien(code) ? '2 · ' : '') + 'J’ai payé</button>' +
+      '<p class="mp-petit">' + apres + ' Espèces : à remettre à l’agence, le paiement apparaît ici une fois validé.</p></div>';
   }
   function carteAPayer(m) {
-    return '<div class="mp-carte"><div class="mp-ligne"><span><b>Mensualité · ' + esc(nomMois(m.mois)) + '</b></span><b class="mp-montant">' + fcfa(donnees.mensualite) + '</b></div>' +
-      blocPaiement(m.mois, donnees.mensualite) + '</div>';
+    return '<div class="pp-blanc mp-pp"><span class="pp-s">Mensualité · ' + esc(nomMois(m.mois)) + '</span><div class="pp-montant"><b class="mp-montant">' + fcfa(donnees.mensualite) + '</b>' +
+      (m.etat === 'non_paye' ? '<span>en retard</span>' : '<span>avant le 5</span>') + '</div>' + blocPaiement(m.mois, donnees.mensualite) + '</div>';
   }
   function carteAvance(liste) {
     nbAvance = Math.min(Math.max(1, nbAvance), liste.length);
     const choisis = liste.slice(0, nbAvance), total = nbAvance * Number(donnees.mensualite);
-    return '<div class="mp-carte" id="avance"><div class="mp-ligne"><span><b>Payer à l’avance</b></span><b class="mp-montant">' + fcfa(total) + '</b></div>' +
+    return '<div class="pp-blanc mp-pp" id="avance"><span class="pp-s">Payer à l’avance</span><div class="pp-montant"><b class="mp-montant">' + fcfa(total) + '</b><span>' + nbAvance + ' mois</span></div>' +
       '<p class="mp-petit">Jusqu’à ' + MA2M_AVANCE_MAX + ' mois à l’avance, au même prix, en un seul paiement.</p>' +
       '<label class="mp-petit" for="mp-avance-nb">Nombre de mois</label>' +
       '<select class="mp-num" id="mp-avance-nb" data-avance-nb>' + liste.map((m, i) => '<option value="' + (i + 1) + '"' + (i + 1 === nbAvance ? ' selected' : '') + '>' + (i + 1) + ' mois · ' + fcfa((i + 1) * Number(donnees.mensualite)) + '</option>').join('') + '</select>' +
@@ -142,27 +154,31 @@
     if (!c) return;
     numeros[c.getAttribute('data-num')] = c.value;
     const b = zone.querySelector('[data-mp="paye"][data-mois="' + c.getAttribute('data-num') + '"]');
-    if (b) b.disabled = !(waveOuvert[c.getAttribute('data-num')] && numeroValide(c.value));
+    if (b) b.disabled = !peutDeclarer(c.getAttribute('data-num'));
   });
   zone.addEventListener('click', async (ev) => {
+    const choixMoyen = ev.target.closest('[data-moyen]');
+    if (choixMoyen) { moyenChoisi[choixMoyen.getAttribute('data-mois')] = choixMoyen.getAttribute('data-moyen'); waveOuvert[choixMoyen.getAttribute('data-mois')] = false; afficher(); return; }
     const el = ev.target.closest('[data-mp]');
     if (!el) return;
     const mois = el.getAttribute('data-mois');
-    if (el.getAttribute('data-mp') === 'wave') { waveOuvert[mois] = true; setTimeout(() => afficher(), 300); return; }
+    if (el.getAttribute('data-mp') === 'wave' || el.getAttribute('data-mp') === 'lien') { waveOuvert[mois] = true; setTimeout(() => afficher(), 300); return; }
     el.disabled = true;
     const numero = String(numeros[mois] || '').trim();
     try {
       let error;
       // à l'avance : tous les mois choisis en une fois, tout ou rien (un seul paiement Wave)
-      if (mois === 'avance') ({ error } = await sb.rpc('mensualites_payer_avance', { p_nb: nbAvance, p_numero: numero }));
+      // (moyen autre que Wave : les mêmes fonctions avec le moyen, qui le notent sur ce paiement — supabase-moyens-paiement.sql)
+      const moyen = moyenDe(mois).code, avecMoyen = moyen === 'wave' ? {} : { p_moyen: moyen };
+      if (mois === 'avance') ({ error } = await sb.rpc('mensualites_payer_avance', Object.assign({ p_nb: nbAvance, p_numero: numero }, avecMoyen)));
       else {
-        ({ error } = await sb.rpc('mensualite_declarer_avec_numero', { p_mois: mois, p_numero: numero }));
+        ({ error } = await sb.rpc('mensualite_declarer_avec_numero', Object.assign({ p_mois: mois, p_numero: numero }, avecMoyen)));
         if (error && error.code === 'PGRST202') ({ error } = await sb.rpc('mensualite_declarer', { p_mois: mois }));
       }
       if (error) throw error;
       const nb = mois === 'avance' ? nbAvance : 1;
       donnees = await charger();
-      waveOuvert = {}; nbAvance = 1;
+      waveOuvert = {}; moyenChoisi = {}; nbAvance = 1;
       if (surDeclare) surDeclare();
       afficher(['Merci ! L’agence vérifie votre paiement' + (nb > 1 ? ' (' + nb + ' mois)' : '') + '. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'bleu']);
     } catch (e) {
@@ -172,7 +188,8 @@
   afficher();
   // (« Payer à l'avance » de l'application : /app/mes-paiements.html#avance, la carte est dessinée après le chargement)
   const versAvance = () => { const c = location.hash === '#avance' && document.getElementById('avance'); if (c) c.scrollIntoView({ block: 'start' }); };
-  charger().then((d) => { donnees = d; afficher(); versAvance(); }, (e) => { donnees = { inscrit: false }; afficher([String((e && e.message) || 'Connexion impossible. Réessayez.'), 'rouge']); });
+  // (moyens allumés chargés en même temps que la page, une seule fois : jamais un nouvel affichage qui effacerait un message)
+  Promise.all([charger(), MP ? MP.charger(sb) : null]).then(([d, l]) => { if (l) moyens = l; donnees = d; afficher(); versAvance(); }, (e) => { donnees = { inscrit: false }; afficher([String((e && e.message) || 'Connexion impossible. Réessayez.'), 'rouge']); });
   }
   window.PaiementMa2m = { monter };
   const zonePage = document.getElementById('mp-zone');

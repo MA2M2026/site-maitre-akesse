@@ -1327,7 +1327,13 @@ $$;
 revoke all on function compta_materiel_acheter(text, date, int, uuid, text, text, text, text) from public, anon;
 grant execute on function compta_materiel_acheter(text, date, int, uuid, text, text, text, text) to authenticated;
 
--- Espace 2 → comptabilité : un paiement validé (montant connu) devient une recette
+-- Espace 2 → comptabilité : un paiement validé (montant connu) devient une recette, sur le compte de son moyen
+-- (12/11/2026, moyens de paiement : même version que supabase-moyens-paiement.sql)
+create or replace function compta_type_du_mode(p_mode text)
+returns text language sql immutable as $$
+  select case p_mode when 'especes' then 'caisse' when 'wave' then 'wave' when 'carte' then 'banque' when 'virement' then 'banque'
+    when 'avant_systeme' then 'wave' else 'mobile_money' end;
+$$;
 create or replace function compta_depuis_espace2()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
@@ -1335,17 +1341,23 @@ declare
 begin
   if TG_OP = 'UPDATE' and OLD.statut = 'valide' then
     if NEW.statut = OLD.statut and NEW.montant is not distinct from OLD.montant and NEW.mode = OLD.mode then return NEW; end if;
-    -- paiement corrigé ou refusé après validation : l'ancienne recette est annulée (et remplacée
-    -- par la bonne s'il reste validé)
     update compta_ecritures set annule = true, motif_annulation = 'Paiement corrigé ou refusé dans l''espace 2'
     where paiement_id = NEW.id and not annule;
   end if;
   if NEW.statut <> 'valide' or NEW.montant is null or NEW.mode = 'avant_systeme' then return NEW; end if;
-  -- (compte actif d'abord ; les garde-fous des comptes empêchent de fermer la dernière caisse ou le dernier Wave)
-  select id into compte from compta_comptes where type = case when NEW.mode = 'especes' then 'caisse' else 'wave' end order by actif desc, cree_le limit 1;
+  select id into compte from compta_comptes where type = compta_type_du_mode(NEW.mode) and actif order by cree_le limit 1;
+  if compte is null and compta_type_du_mode(NEW.mode) not in ('caisse', 'wave') then
+    -- (pas encore de compte mobile money ou banque actif : rangé sur Wave, et noté pour le comptable)
+    select id into compte from compta_comptes where type = 'wave' order by actif desc, cree_le limit 1;
+    perform journaliser('Comptabilité : recette ' || NEW.mode || ' rangée sur le compte Wave (aucun compte ' || compta_type_du_mode(NEW.mode) || ' actif) : à corriger',
+                        'paiements_mannequins', NEW.id::text, null, null);
+  end if;
+  if compte is null then
+    select id into compte from compta_comptes where type = compta_type_du_mode(NEW.mode) order by actif desc, cree_le limit 1;
+  end if;
   if compte is null then
     -- (ne bloque jamais la validation dans l'espace 2 ; les garde-fous des comptes l'empêchent)
-    perform journaliser('Comptabilité : paiement validé sans compte ' || case when NEW.mode = 'especes' then 'caisse' else 'Wave' end || ' pour le recevoir',
+    perform journaliser('Comptabilité : paiement validé sans compte pour le recevoir (' || NEW.mode || ')',
                         'paiements_mannequins', NEW.id::text, null, null);
     return NEW;
   end if;

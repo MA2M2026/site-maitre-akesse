@@ -386,7 +386,8 @@
   // membre façon carte bancaire, deux chiffres (mois payés, cachets reçus), le prochain paiement avec « Payer avec
   // Wave », la grille des mois, puis « Mes opérations » comme un relevé (cachets reçus et mensualités validées).
   const moisCourt = moisCourtDe;  // (js/app.js)
-  const MODES_PAIEMENT = { wave: 'Wave', especes: 'Espèces', orange_money: 'Orange Money', mtn: 'MTN Money', moov: 'Moov Money', virement: 'Virement', avant_systeme: 'Avant l’application' };
+  // (noms des moyens : js/moyens-paiement.js, les mêmes que l'Administration)
+  const MODES_PAIEMENT = Object.assign({}, window.MoyensPaiement ? window.MoyensPaiement.NOMS : { wave: 'Wave', especes: 'Espèces' }, { avant_systeme: 'Avant l’application' });
   function carteMembre(m) {
     const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
     const champ = (titre, valeur) => (valeur ? '<div><b>' + titre + '</b>' + esc(valeur) + '</div>' : '');

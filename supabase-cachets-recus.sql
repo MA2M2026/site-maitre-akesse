@@ -1,4 +1,6 @@
 -- ===================================================================================
+-- ⚠ cachet_recu_lire a changé (reçu officiel, 13/11/2026) : la version à jour est dans supabase-paiements-officiels.sql.
+-- Recoller ce fichier-ci demande d’abord : drop function if exists cachet_recu_lire(uuid), puis ensuite supabase-paiements-officiels.sql.
 -- « Payer les mannequins » : motif du cachet et REÇU (22/10/2026, demande de la propriétaire :
 -- motif choisi dans une liste ; après le paiement, un joli reçu envoyé sur WhatsApp, avec un lien
 -- vers sa page de reçu, et visible aussi dans l'Espace mannequin).

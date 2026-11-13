@@ -26,7 +26,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
         objectif: 'miss', concours: 'Miss Côte d’Ivoire', niveau: 'un_peu', parent_nom: 'Mme Kouassi', parent_telephone: '+2250501020304',
         photos: ['https://drive.google.com/p1', 'https://drive.google.com/p2'], video: 'https://drive.google.com/v1', decision: 'plus_tard', statut: 'plus_tard', montant: 250000 },
       { id: 't2', cree_le: '2026-11-07T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'AWA DIALLO', telephone: '+2250700000002', age: 24, photos: [], decision: 'maintenant',
-        reference_wave: 'T_123', statut: 'paiement_envoye', montant: 30000 },
+        reference_wave: 'T_123', statut: 'paiement_envoye', montant: 30000, moyen: 'orange_money' },
       { id: 't3', cree_le: '2026-10-01T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'ANCIENNE ÉLÈVE', telephone: '+2250700000003', age: 30, photos: [], decision: 'maintenant', statut: 'terminee', montant: 30000, valide_le: '2026-10-02T10:00:00Z' }];
     d.rpc = Object.assign({}, d.rpc, { cours_talons_valider: (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); Object.assign(l, { statut: 'inscrite', montant: c.p_montant, valide_le: '2026-11-08T12:00:00Z' }); return l; } });
     await brancher(p, d, journal); await photosLocales(p);
@@ -51,9 +51,12 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await p.click('.ct-fiche[data-id="t1"] button[type="submit"]'); await p.waitForTimeout(800);
     ok(d.tables.cours_talons[0].date_seance === '2026-11-15' && d.tables.cours_talons[0].notes === 'Rappeler samedi', n + 'date de séance et notes enregistrées');
     // paiement reçu (Wave)
+    // (13/11/2026) payé par Orange Money : la fiche et le bouton le disent (plus « Wave » d'office)
+    ok(/Payé par Orange Money à l’inscription \(réf\. T_123\)/.test(await p.textContent('.ct-fiche[data-id="t2"]')) && /Paiement reçu \(Orange Money\)/.test(await p.textContent('.ct-fiche[data-id="t2"] [data-action="talons-valider"]:not([data-valeur])')),
+      n + 'fiche : « Payé par Orange Money », bouton « Paiement reçu (Orange Money) »');
     await p.click('.ct-fiche[data-id="t2"] [data-action="talons-valider"]:not([data-valeur])'); await p.waitForTimeout(900);
     const appel = journal.find((j) => j[0] === 'rpc' && j[1] === 'cours_talons_valider');
-    ok(appel && JSON.parse(appel[2]).p_id === 't2' && JSON.parse(appel[2]).p_montant === 30000 && JSON.parse(appel[2]).p_especes === false, n + 'paiement Wave validé par la base (une recette « Cours de talons » en Compta)');
+    ok(appel && JSON.parse(appel[2]).p_id === 't2' && JSON.parse(appel[2]).p_montant === 30000 && JSON.parse(appel[2]).p_especes === false, n + 'paiement Orange Money validé par la base (une recette « Cours de talons » en Compta, sur le compte du moyen)');
     t = await texte();
     ok(!t.includes('AWA DIALLO'), n + 'l’inscription payée quitte « À traiter »');
     await p.click('[data-action="talons-filtre"][data-valeur="inscrite"]'); await p.waitForTimeout(500);

@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="css/charte-ma2m.css?v=f4263a67">
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41">
 <link rel="stylesheet" href="css/luxe.css?v=d6dfb49d">
+<link rel="stylesheet" href="css/paiements-premium.css?v=e68257b9">
 <link rel="stylesheet" href="css/cours-talons.css?v=d715a6a9">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
@@ -200,10 +201,13 @@
         <div class="ct-etape-titre"><span>4</span><h3>Le paiement</h3></div>
         <p class="ct-total ct-total--grand" id="ct-total-final"></p>
         <p class="ct-consigne">👆 Touchez votre choix.</p>
-        <label class="ct-choix"><input type="radio" name="decision" value="maintenant"><span><strong>Je paie maintenant par Wave</strong><em>Votre place est réservée dès que l’agence voit votre paiement.</em></span></label>
+        <label class="ct-choix"><input type="radio" name="decision" value="maintenant"><span><strong>Je paie maintenant</strong><em>Votre place est réservée dès que l’agence voit votre paiement.</em></span></label>
         <div id="ct-bloc-wave" class="ct-wave u-hidden">
-          <a id="ct-lien-wave" class="btn btn--principal" href="#" target="_blank" rel="noopener">Payer avec Wave</a>
-          <div class="form-champ"><label for="ct-ref-wave">Référence du paiement Wave (facultatif)</label><input type="text" id="ct-ref-wave" maxlength="120" placeholder="Ex. : T_ABC123…"></div>
+          <!-- (13/11/2026) moyen de paiement en tuiles et où payer (js/moyens-paiement.js) -->
+          <div id="ct-moyens"></div>
+          <a id="ct-lien-wave" class="btn btn--principal pp-gros" data-bouton-libre href="#" target="_blank" rel="noopener">Payer avec Wave</a>
+          <div id="ct-consigne"></div>
+          <div class="form-champ"><label for="ct-ref-wave">Référence du paiement (facultatif)</label><input type="text" id="ct-ref-wave" maxlength="120" placeholder="Ex. : T_ABC123…"></div>
         </div>
         <label class="ct-choix"><input type="radio" name="decision" value="plus_tard"><span><strong>Je paierai plus tard</strong><em>L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.</em></span></label>
         <div class="form-champ form-consentement"><input type="checkbox" id="ct-consentement"><label for="ct-consentement">J’ai lu la <a href="politique-confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a> et j’accepte que mes informations, photos et vidéo soient utilisées par l’agence seulement pour organiser mes cours.</label></div>
@@ -248,10 +252,11 @@
 <script src="js/conversion-heic.js?v=82dc3921"></script>
 <script src="js/photos.js?v=c819e38b"></script>
 <script src="js/partage.js?v=6b9f7039"></script>
-<script src="js/app.js?v=0b49e49e"></script>
+<script src="js/app.js?v=7e454a75"></script>
 <script src="js/confort.js?v=cad83e86"></script>
 <script src="js/video-allegee.js?v=c3f34d58"></script>
 <script src="js/menu.js?v=e2094e8d"></script>
-<script src="js/cours-talons.js?v=66f868ce"></script>
+<script src="js/moyens-paiement.js?v=e15e92a3"></script>
+<script src="js/cours-talons.js?v=20fb11cb"></script>
 </body>
 </html>

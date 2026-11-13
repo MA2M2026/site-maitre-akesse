@@ -15,11 +15,12 @@
 <link rel="stylesheet" href="/css/jetons.css?v=c6c0c637">
 <link rel="stylesheet" href="/css/charte-ma2m.css?v=f4263a67">
 <link rel="stylesheet" href="/css/bouton-ma2m.css?v=c65b8b41">
-<link rel="stylesheet" href="/css/recu.css?v=24091538">
+<link rel="stylesheet" href="/css/recu.css?v=47ab59bc">
 <script src="/js/bouton-appui.js?v=bedca56e" defer></script>
 <script src="/js/supabase-config.js?v=9e1844d8" defer></script>
-<script src="/js/cachets-communs.js?v=7750d86a" defer></script>
-<script src="/js/recu.js?v=c1e8a27e" defer></script>
+<script src="/js/cachets-communs.js?v=af02c599" defer></script>
+<script src="/js/moyens-paiement.js?v=e15e92a3" defer></script>
+<script src="/js/recu.js?v=52b65457" defer></script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <meta name="theme-color" content="#7C2128">
 </head>
@@ -32,14 +33,11 @@
     </header>
     <h1 id="rc-titre">Reçu de paiement</h1>
     <p class="recu-etat" id="rc-etat" role="status">Chargement…</p>
-    <dl class="recu-lignes" id="rc-lignes" hidden>
-      <div><dt>Payé à</dt><dd id="rc-qui"></dd></div>
-      <div><dt>Motif</dt><dd id="rc-quoi"></dd></div>
-      <div><dt>Date du paiement</dt><dd id="rc-date"></dd></div>
-      <div><dt>Moyen de paiement</dt><dd>Wave</dd></div>
-      <div id="rc-ref-ligne" hidden><dt>Référence Wave</dt><dd id="rc-ref"></dd></div>
-    </dl>
-    <div class="recu-montant" id="rc-montant-bloc" hidden><span>Montant reçu</span><strong id="rc-montant"></strong></div>
+    <!-- (13/11/2026, reçu officiel) la prestation, le détail du cachet, le paiement : remplis par js/recu.js -->
+    <section class="recu-bloc" id="rc-prestation-bloc" hidden><h2>La prestation</h2><dl class="recu-lignes" id="rc-prestation"></dl></section>
+    <section class="recu-bloc" id="rc-detail-bloc" hidden><h2>Le détail</h2><dl class="recu-lignes recu-calcul" id="rc-detail"></dl></section>
+    <div class="recu-montant" id="rc-montant-bloc" hidden><span>Net versé</span><strong id="rc-montant"></strong></div>
+    <section class="recu-bloc" id="rc-paiement-bloc" hidden><h2>Le paiement</h2><dl class="recu-lignes" id="rc-paiement"></dl></section>
     <p class="recu-merci" id="rc-merci" hidden>Merci pour votre travail. Maître Akesse Model Management</p>
     <footer class="recu-pied">Maître Akesse Model Management · Abidjan, Côte d’Ivoire · +225 05 45 65 66 87 · infos.ma2m@gmail.com</footer>
   </article>

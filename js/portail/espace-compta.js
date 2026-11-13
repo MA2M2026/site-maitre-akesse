@@ -90,18 +90,25 @@
     return { lignes, total };
   }
   const tauxTexte = (taux) => String(Number(taux) || 0).replace('.', ',') + ' %';
+  // (13/11/2026, maquette premium validée) carte façon carte bancaire (chiffre d'affaires hors taxes), deux tuiles (TVA
+  // prévue ou à reverser ; encaissé TVA comprise), puis le relevé par catégorie (css/paiements-premium.css,
+  // window.MoyensPaiement.carte et grandF : les mêmes cartes partout)
   function carteTva(liste, reglage) {
-    const taux = reglage.tva_taux == null ? 18 : reglage.tva_taux, legal = !!reglage.mode_legal;
+    const taux = reglage.tva_taux == null ? 18 : reglage.tva_taux, legal = !!reglage.mode_legal, MP = window.MoyensPaiement;
     const { lignes, total } = chiffreAffaires(liste, taux);
-    return '<div class="carte carte-tva"><h2>Chiffre d’affaires et TVA · ' + P.esc(P.mois(moisChoisi())) + '</h2>' +
-      '<div class="grille chiffres">' + P.chiffre('Encaissé (TVA comprise)', P.fcfa(total.ttc)) + P.chiffre('Chiffre d’affaires hors taxes', P.fcfa(total.ht), 'vert') +
-      P.chiffre(legal ? 'TVA à reverser (' + tauxTexte(taux) + ')' : 'TVA prévue (' + tauxTexte(taux) + ')', P.fcfa(total.tva), legal ? 'rouge' : '') + '</div>' +
-      (lignes.length ? '<table class="tableau-tva"><thead><tr><th>Catégorie</th><th>Encaissé</th><th>Hors taxes</th><th>TVA</th></tr></thead><tbody>' +
-        lignes.map((l) => '<tr><td>' + P.esc(l.nom) + '</td><td data-l="Encaissé">' + P.fcfa(l.ttc) + '</td><td data-l="Hors taxes">' + P.fcfa(l.ht) + '</td><td data-l="TVA">' + P.fcfa(l.tva) + '</td></tr>').join('') +
-        '</tbody><tfoot><tr><th>Total</th><th data-l="Encaissé">' + P.fcfa(total.ttc) + '</th><th data-l="Hors taxes">' + P.fcfa(total.ht) + '</th><th data-l="TVA">' + P.fcfa(total.tva) + '</th></tr></tfoot></table>'
-        : '<p class="doux">Aucune recette ce mois-ci.</p>') +
-      '<p class="doux petit-texte">' + (legal ? 'TVA calculée sur l’argent encaissé ce mois-ci, au taux de ' + tauxTexte(taux) + '. Montant à valider par le comptable avant la déclaration.'
-        : 'Prévision : l’agence n’est pas encore immatriculée, elle ne reverse pas encore de TVA. Ces chiffres montrent ce qu’elle reverserait au taux de ' + tauxTexte(taux) + ' ; ils deviendront la TVA à déclarer dès l’activation du mode légal.') + '</p></div>';
+    const nb = liste.filter((e) => e.sens === 'recette' && !e.annule && HORS_CA.indexOf(e.categorie) === -1).length;
+    return '<section class="carte-tva" aria-label="Chiffre d’affaires et TVA">' +
+      MP.carte({ etiquette: 'Hors taxes', grand: MP.grandF(total.ht), sous: 'Chiffre d’affaires hors taxes · ' + P.mois(moisChoisi()),
+        bas: [['Encaissé (TVA comprise)', P.fcfa(total.ttc)], ['TVA ' + tauxTexte(taux), P.fcfa(total.tva)], ['Recettes', String(nb)]] }) +
+      '<div class="pp-tuiles"><div class="pp-tuile"><div class="pp-ch">' + MP.grandF(total.tva) + '</div><div class="pp-dx">' + (legal ? 'TVA à reverser (' + tauxTexte(taux) + ')' : 'TVA prévue (' + tauxTexte(taux) + '), à mettre de côté') + '</div>' +
+        '<span class="pp-pastille' + (legal ? '' : ' gris') + '">' + (legal ? 'À déclarer' : 'Prévision') + '</span></div>' +
+        '<div class="pp-tuile"><div class="pp-ch">' + MP.grandF(total.ttc) + '</div><div class="pp-dx">Encaissé ce mois, TVA comprise</div><span class="pp-pastille gris">' + nb + ' recette' + (nb > 1 ? 's' : '') + '</span></div></div>' +
+      '<div class="pp-titre">Par catégorie</div>' +
+      (lignes.length ? '<div class="pp-releve tableau-tva">' + lignes.map((l) => '<div class="pp-op"><em aria-hidden="true">' + P.esc(l.nom.slice(0, 2).toUpperCase()) + '</em><span>' + P.esc(l.nom) +
+        '<small>Hors taxes ' + P.fcfa(l.ht) + ' · TVA ' + P.fcfa(l.tva) + '</small></span><strong>' + P.fcfa(l.ttc) + '</strong></div>').join('') + '</div>'
+        : '<div class="pp-releve"><div class="pp-op"><span>Aucune recette ce mois-ci.</span></div></div>') +
+      '<p class="pp-legende">' + (legal ? 'TVA calculée sur l’argent encaissé ce mois-ci, au taux de ' + tauxTexte(taux) + '. Montant à valider par le comptable avant la déclaration.'
+        : 'Prévision : l’agence n’est pas encore immatriculée, elle ne reverse pas encore de TVA. Dès le mode légal, la tuile devient « TVA à reverser ».') + '</p></section>';
   }
   async function reglageTva() {
     try { const r = await sb.from('compta_reglages').select('mode_legal, tva_taux').eq('id', 1).maybeSingle(); return (r && r.data) || {}; } catch (e) { return {}; }  // (réglages indisponibles : prévision à 18 %)
@@ -120,7 +127,7 @@
       return l.length ? l.map((c) => P.barre(RECETTES[c[0]] || DEPENSES[c[0]] || AUTRES[c[0]] || c[0], c[1], total, rouge)).join('') : '<p class="doux">Rien pour le moment.</p>';
     };
     const sansJustif = liste.filter((e) => e.sens === 'depense' && !e.annule && !e.justificatif).length;
-    const reglage = await reglageTva(), legal = !!reglage.mode_legal;
+    const reglage = await (P.etat.reglageTva = reglageTva()), legal = !!reglage.mode_legal;
     const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal (factures officielles)' : 'Factures internes, non déclarées') + '</h2><p class="doux">' +
       (legal ? 'Factures complètes, TVA et FNE actives.' : 'Les factures sont des documents internes « non fiscaux ». La FNE et la TVA sont prévues et s’activeront avec le mode légal.') +
       '</p><a class="btn petit rouge" href="#/compta/identite">' + (legal ? 'Voir l’identité de l’agence' : 'Identité de l’agence →') + '</a></div>';
@@ -142,7 +149,7 @@
   function lignes(liste, nomsComptes, vide) {
     return P.cartesPersonnes(liste.map((e) => ({
       tete: '<b class="pers-libelle">' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<span class="petit-texte doux tiers"><span data-visage-nom="' + P.esc(e.tiers) + '"></span>' + P.esc(e.tiers) + '</span>' : ''),
-      sous: [P.date(e.date_op), categorie(e), (nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + (nomsComptes[e.compte_dest_id] || '—') : ''), e.annule && e.motif_annulation ? 'Motif : ' + e.motif_annulation : ''],
+      sous: [P.date(e.date_op), categorie(e), e.moyen ? nomMoyen(e.moyen) : '', (nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + (nomsComptes[e.compte_dest_id] || '—') : ''), e.annule && e.motif_annulation ? 'Motif : ' + e.motif_annulation : ''],
       montant: P.fcfa(e.montant), classe: e.annule ? 'annulee' : '', ton: e.annule ? 'erreur' : 'neutre',
       etat: e.annule ? ['Annulée', 'erreur'] : e.source === 'espace2' ? ['Suivi des paiements · automatique', 'info'] : null,
       actions: (e.justificatif ? '<button class="btn petit" type="button" data-action="compta-justif-voir" data-id="' + e.id + '">Justificatif</button>' :
@@ -150,7 +157,34 @@
         (!e.annule && e.source === 'manuel' ? '<button class="btn petit" type="button" data-action="compta-annuler" data-id="' + e.id + '">Annuler</button>' : '')
     })), vide || 'Aucune écriture ce mois-ci.');
   }
-  const optionsComptes = (liste) => liste.map((c) => '<option value="' + c.id + '">' + P.esc(c.nom) + '</option>').join('');
+  const optionsComptes = (liste) => liste.map((c) => '<option value="' + c.id + '" data-type="' + P.esc(c.type || '') + '">' + P.esc(c.nom) + '</option>').join('');
+  // ---------- Moyen de paiement d'une recette ou d'une dépense (13/11/2026, paiements des clients) ----------
+  // Le choix du moyen (noms : js/moyens-paiement.js) place le bon compte : espèces → caisse, Wave → Wave, Orange/MTN/
+  // Moov → autre mobile money, carte, virement et chèque → banque (s'il existe). Colonne compta_ecritures.moyen
+  // (supabase-paiements-officiels.sql). Recette : la part de TVA de la somme s'affiche (même calcul que le tableau).
+  const MOYENS = window.MoyensPaiement ? window.MoyensPaiement.TOUS : ['wave', 'especes'];
+  const TYPE_DU_MOYEN = { especes: 'caisse', wave: 'wave', carte: 'banque', virement: 'banque', cheque: 'banque' };
+  const nomMoyen = (k) => (window.MoyensPaiement ? window.MoyensPaiement.nom(k) : k);
+  // (13/11/2026, maquette premium validée) le choix en tuiles (js/moyens-paiement.js), le champ caché « moyen » prévient
+  const champMoyen = (id, compteId, recette) => '<div class="fl large"><span class="pp-s">' + (recette ? 'Payé par le client avec' : 'Payé avec') + '</span>' +
+    (window.MoyensPaiement ? window.MoyensPaiement.tuiles('moyen', '', 'id="' + id + '" data-change="compta-moyen" data-compte="' + compteId + '"', MOYENS) : '') + '</div>';
+  P.changements['compta-moyen'] = (el) => {
+    const sel = document.getElementById(el.getAttribute('data-compte')), type = TYPE_DU_MOYEN[el.value] || (el.value ? 'mobile_money' : '');
+    const o = sel && type && [...sel.options].find((x) => x.getAttribute('data-type') === type);
+    if (o) sel.value = o.value;
+    // (pas de compte de ce type : on le dit, plutôt que de garder sans rien dire le compte choisi avant)
+    else if (sel && type) P.message('Aucun compte « ' + ({ caisse: 'Caisse', wave: 'Wave', banque: 'Banque', mobile_money: 'Autre mobile money' }[type] || type) + ' » : choisissez le compte qui reçoit l’argent, ou créez-le dans Trésorerie.');
+  };
+  // « dont TVA » d'une somme encaissée (prévision avant le mode légal)
+  const noteTva = (id) => '<p class="pp-tva large" id="' + id + '" role="status"></p>';
+  P.changements['compta-tva-somme'] = async (el) => {
+    const z = document.getElementById(el.getAttribute('data-note')), m = Math.round(Number(el.value) || 0);
+    if (!z) return;
+    if (!(m > 0)) { z.textContent = ''; return; }
+    // (réglage relu à chaque ouverture d'écran ou de fenêtre : un changement de taux ou le mode légal est pris aussitôt)
+    const r = await (P.etat.reglageTva || (P.etat.reglageTva = reglageTva())), taux = r.tva_taux == null ? 18 : r.tva_taux, x = separerTva(m, taux);
+    z.innerHTML = '<span>Dont hors taxes <b>' + P.fcfa(x.ht) + '</b></span><span>TVA ' + tauxTexte(taux) + ' <b>' + P.fcfa(x.tva) + '</b>' + (r.mode_legal ? ' (à reverser)' : ' (prévision)') + '</span>';
+  };
   const optionsCategories = (cats) => Object.keys(cats).map((k) => '<option value="' + k + '">' + P.esc(cats[k]) + '</option>').join('');
 
   // Recettes et dépenses : même écran, catégories différentes
@@ -158,7 +192,7 @@
     const recette = sens === 'recette';
     return async () => {
       const m = moisChoisi();
-      const [liste, cpts, reglage] = await Promise.all([ecritures(m, sens), comptes(true), recette ? reglageTva() : null]);
+      const [liste, cpts, reglage] = await Promise.all([ecritures(m, sens), comptes(true), recette ? (P.etat.reglageTva = reglageTva()) : null]);
       const noms = {};
       cpts.forEach((c) => { noms[c.id] = c.nom; });
       P.etat.comptaListe = liste;
@@ -168,7 +202,8 @@
         (recette ? '<div class="note info">Les inscriptions et mensualités validées dans le Suivi des paiements arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
         '<form class="carte f" data-form="compta-ecrire" data-sens="' + sens + '"><h2>' + (recette ? 'Nouvelle recette' : 'Nouvelle dépense') + '</h2>' +
         '<label class="fl" for="cp-date">Date<input id="cp-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +
-        '<label class="fl" for="cp-montant">Montant (FCFA)<input id="cp-montant" name="montant" type="number" inputmode="numeric" min="1" step="1" required></label>' +
+        '<label class="fl" for="cp-montant">Montant (FCFA)<input id="cp-montant" name="montant" type="number" inputmode="numeric" min="1" step="1" required' + (recette ? ' data-change="compta-tva-somme" data-note="cp-tva" data-direct' : '') + '></label>' +
+        (recette ? noteTva('cp-tva') : '') + champMoyen('cp-moyen', 'cp-compte', recette) +
         '<label class="fl" for="cp-cat">Catégorie<select id="cp-cat" name="categorie" required>' + optionsCategories(recette ? RECETTES : DEPENSES) + '</select></label>' +
         '<label class="fl" for="cp-compte">' + (recette ? 'Encaissé sur' : 'Payé depuis') + '<select id="cp-compte" name="compte_id" required>' + optionsComptes(actifs) + '</select></label>' +
         '<label class="fl large" for="cp-libelle">Libellé<input id="cp-libelle" name="libelle" required maxlength="200" placeholder="' + (recette ? 'Ex. : casting défilé Sococé' : 'Ex. : loyer du bureau d’octobre') + '"></label>' +
@@ -200,8 +235,9 @@
     try {
       const justificatif = await deposerJustificatif(f.get('justificatif'));
       const t = (k) => String(f.get(k) || '').trim() || null;
-      await P.bd(sb.from('compta_ecritures').insert({ sens, montant, date_op: t('date_op'), categorie: t('categorie'), compte_id: t('compte_id'),
-        libelle: t('libelle'), tiers: t('tiers'), justificatif }));
+      const ligne = { sens, montant, date_op: t('date_op'), categorie: t('categorie'), compte_id: t('compte_id'), libelle: t('libelle'), tiers: t('tiers'), justificatif };
+      if (t('moyen')) ligne.moyen = t('moyen');
+      await P.bd(sb.from('compta_ecritures').insert(ligne));
       const d = t('date_op');
       if (d && d.slice(0, 7) !== moisChoisi().slice(0, 7)) P.etat.moisCompta = d.slice(0, 7) + '-01';
       await P.afficher();
@@ -335,7 +371,7 @@
   // sinon sa photo cherchée par son nom ; et la table des cachets pas encore créée
   const nomMannequin = (id, nom) => (id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(id, nom) : '<span data-visage-nom="' + P.esc(nom) + '"></span><b>' + P.esc(nom) + '</b>');
   const cachetsAbsents = (e) => /cachets_mannequins|PGRST205|42P01|does not exist/.test(String((e && (e.code + ' ' + e.message)) || e));
-  P.compta = { separerTva, chiffreAffaires, reglageTva, nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
+  P.compta = { champMoyen, noteTva, nomMoyen, separerTva, chiffreAffaires, reglageTva, nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],
