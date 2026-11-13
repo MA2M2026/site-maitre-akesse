@@ -4868,3 +4868,16 @@ choix en pastilles, Wave et carte par leur lien, Orange/MTN/Moov et virement par
 > Paiements > Paramètres : « Moyens de paiement des mannequins » (Modifier : administrateur principal, code récent).
 Paiements à valider : le moyen déclaré est affiché. Sans le fichier collé : Wave seul, comme avant.
 Prochaines étapes : la page d'inscription et les cours de marche avec le même choix. Essai : test-moyens-paiement.js.
+
+## Payer les mannequins : reçu officiel détaillé (13/11/2026)
+
+Demande de la propriétaire : un reçu qui sert de preuve. Base : **`supabase-cachets-recu-officiel.sql`** (À COLLER) :
+colonnes `date_prestation`, `heure_debut`, `heure_fin`, `lieu`, `partenaire`, `impots`, `frais` (jsonb, 5 lignes au plus),
+`frais_total`, `moyen` (wave, orange_money, mtn_money, moov_money, cheque, virement, carte, especes), `impot_id` ;
+`cachet_commission` (net versé = total - commission - impôts - frais ; même version dans supabase-cachets-commission.sql) ;
+`cachet_payer_moyen(id, compte, référence, moyen)` (cachet_payer, puis le moyen, et les impôts retenus entrent dans
+« Impôts et taxes », date limite le 15 du mois suivant) ; `cachet_recu_lire` rend tout le détail (commission comprise).
+Administration (js/portail/espace-compta-cachets.js) : bloc « Pour le reçu » dans « Nouveau cachet », calcul en direct du
+net, « Payé par » (8 moyens) au paiement. Reçu (recu.html, js/recu.js, css/recu.css) : La prestation (mannequin, parent,
+prestation, date, horaires, lieu, partenaire, pour le compte de l'agence), Le détail, Net versé, Le paiement. Message
+WhatsApp : lieu et moyen en plus. Essais : test-cachets.js, test-recu.js.

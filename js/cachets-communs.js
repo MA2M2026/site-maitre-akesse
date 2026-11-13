@@ -25,7 +25,10 @@
       var quoi = c.prestation || libelle(c.motif);  // (la prestation commence par le motif)
       return 'Bonjour ' + (parent || c.beneficiaire) + ',\n\nMaître Akesse Model Management vous confirme le paiement ' + (parent ? 'du cachet de ' + c.beneficiaire + '. Merci pour son travail !' : 'de votre cachet. Merci pour votre travail !') + '\n\n' +
         '🧾 Reçu n° ' + (c.numero_recu || '—') + '\n📅 Payé le ' + jour(c.paye_le) + '\n🎬 ' + quoi + '\n💰 Montant reçu : ' + fcfa(c.montant) +
-        (c.reference_wave ? '\n🔖 Référence Wave : ' + c.reference_wave : '') +
+        // (13/11/2026) moyen utilisé, et le lieu de la prestation quand il est connu
+        (c.lieu ? '\n📍 ' + c.lieu : '') +
+        (c.moyen && racine.MoyensPaiement ? '\n💳 Payé par ' + racine.MoyensPaiement.nom(c.moyen) : '') +
+        (c.reference_wave ? '\n🔖 Référence : ' + c.reference_wave : '') +
         '\n\nVotre reçu (à garder ou enregistrer en PDF) :\n' + racine.CachetsMa2m.lienRecu(c.jeton);
     }
   };

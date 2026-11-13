@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   const NOMS = { wave: 'Wave', orange_money: 'Orange Money', mtn_money: 'MTN Money', moov_money: 'Moov Money', carte: 'Carte bancaire (Visa)',
-    virement: 'Virement bancaire', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
+    virement: 'Virement bancaire', cheque: 'Chèque', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
   const PREPARES = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement'];
   const MOBILE = ['orange_money', 'mtn_money', 'moov_money'];
   const esc = (s) => window.echapperHtml(s == null ? '' : s);  // (js/app.js)
