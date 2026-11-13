@@ -3,7 +3,7 @@
 // js/fiche-mannequin.js seulement. Script classique ET importable : il pose window.RenduFiche / globalThis.RenduFiche.
 // Outils : js/partage.js (Partage) et js/tailles.js (ma2mBlocEquivalences, ma2mMesuresAReprendre).
 (function (racine) {
-  // d : { profil (avec épaules, bras, cou), photos, projets (déjà fusionnés et traduits), age }
+  // d : { profil (avec épaules, bras, cou), photos, projets (déjà fusionnés et traduits) } (plus d'âge : 13/11/2026)
   // o : { en, urlLegere, photoHero, photoAvatar, selectionne }
   function fiche(d, o) {
     const EN = !!o.en;
@@ -18,7 +18,6 @@
     // Petites icônes ligne (SVG, currentColor) affichées à côté de chaque mensuration
     // sur la fiche — purement décoratif, aucune donnée, pas besoin d'échappement.
     const ICONES_MENSURATIONS = {
-      age: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4" width="14" height="13" rx="1"/><line x1="3" y1="8" x2="17" y2="8"/><line x1="7" y1="2.5" x2="7" y2="5.5"/><line x1="13" y1="2.5" x2="13" y2="5.5"/></svg>',
       taille: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><line x1="10" y1="2" x2="10" y2="18"/><polyline points="6,6 10,2 14,6"/><polyline points="6,14 10,18 14,14"/></svg>',
       poids: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>',
       ruban: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="7" width="15" height="6" rx="1"/><line x1="5.5" y1="7" x2="5.5" y2="9.5"/><line x1="8.5" y1="7" x2="8.5" y2="9.5"/><line x1="11.5" y1="7" x2="11.5" y2="9.5"/><line x1="14.5" y1="7" x2="14.5" y2="9.5"/></svg>',
@@ -59,7 +58,7 @@
       } catch (e) { return null; }
       return null;
     }
-    const profil = d.profil, photos = d.photos || [], age = d.age || '';
+    const profil = d.profil, photos = d.photos || [];
     let projets = d.projets || [];
     const photoHero = o.photoHero, photoAvatar = o.photoAvatar;
     // (08/11/2026) cadrage automatique de la grande photo : le visage au-dessus du nom (js/cadrages-photos.js,
@@ -147,7 +146,9 @@
   const nom = profil.full_name || T('Mannequin', 'Model');
   const categorie = profil.category === 'homme' ? T('Homme', 'Man') : profil.category === 'femme' ? T('Femme', 'Woman') : 'New Face';
   const niveau = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
-  const sousTitre = [profil.city, age ? age + ' ' + T('ans', 'years') : ''].filter(Boolean).join(' · ');
+  // (13/11/2026, décision de la propriétaire) plus d'âge sur la fiche publique : il reste dans l'Administration et
+  // l'agence le donne au client qui le demande
+  const sousTitre = [profil.city].filter(Boolean).join(' · ');
   const dispo = profil.availability && libellesDispo[profil.availability] ? `<span class="fiche-dispo">${libellesDispo[profil.availability]}</span>` : '';
   const essentielles = [
     profil.height_cm ? [T('Taille', 'Height'), echapperHtml(profil.height_cm) + '<small>cm</small>'] : null,
@@ -193,7 +194,6 @@
         <details class="fiche-mens-tout">
           <summary>${T('Toutes les mensurations', 'All measurements')}</summary>
         <dl class="fiche-mesures" aria-label="${T('Mensurations', 'Measurements')}">
-          ${age ? `<div class="fiche-mesure"><dt>${iconeMensuration('age')}${T('Âge', 'Age')}</dt><dd>${age} ${T('ans', 'years')}</dd></div>` : ''}
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}${T('Taille', 'Height')}</dt><dd>${profil.height_cm} cm${imperial(enPieds(profil.height_cm))}</dd></div>` : ''}
           ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}${T('Poids', 'Weight')}</dt><dd>${profil.weight_kg} kg${imperial(enLivres(profil.weight_kg))}</dd></div>` : ''}
           ${!masquer && profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}${T('Poitrine', 'Chest')}</dt><dd>${profil.chest_cm} cm${imperial(enPouces(profil.chest_cm))}</dd></div>` : ''}

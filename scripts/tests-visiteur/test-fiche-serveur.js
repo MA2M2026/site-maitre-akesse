@@ -1,6 +1,6 @@
 // Site dynamique, étape 1 (01/11/2026, PLAN-SERVEUR.md, décision de la propriétaire) : la fiche d'un
 // mannequin (/book/nom) part DÉJÀ REMPLIE par le serveur (middleware.js). Base SIMULÉE, rien n'est écrit :
-//  - le serveur pose dans la page le profil, les photos et l'âge (jamais la date de naissance ni les
+//  - le serveur pose dans la page le profil et les photos (plus l'âge depuis le 13/11/2026 ; jamais la date de naissance ni les
 //    coordonnées), le vrai titre, la description, l'adresse canonique et la grande photo annoncée en tête ;
 //  - un nom avec des signes spéciaux ne peut rien injecter ; sa propre demande de la page passe sans boucle ;
 //  - base lente (> 1,2 s) ou en panne, profil non publié : la fiche part comme avant (elle se remplit seule) ;
@@ -58,7 +58,8 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     const html = r && !reecrite(r) ? await r.text() : '';
     pages[chemin] = html;
     const d = html && donneesDe(html);
-    ok(d && d.id === ID && d.slug === 'awa-kone' && d.profil.full_name === 'Awa Koné' && d.photos.length === 1 && d.age === 19, chemin + ' : profil, photos et âge sont dans la page');
+    ok(d && d.id === ID && d.slug === 'awa-kone' && d.profil.full_name === 'Awa Koné' && d.photos.length === 1 && !('age' in d), chemin + ' : profil et photos sont dans la page, sans l’âge (13/11/2026)');
+    ok(html && !/19 (ans|years)/.test(html), chemin + ' : l’âge n’apparaît nulle part dans la page');
     ok(d && !('date_naissance' in d.profil) && !/phone|email|telephone|parent/i.test(JSON.stringify(d.profil)), chemin + ' : ni date de naissance ni coordonnées dans la page');
     ok(/<title>Awa Koné · Maître Akesse Model Management<\/title>/.test(html), chemin + ' : le vrai titre de la mannequin (lu par Google sans programme)');
     ok(new RegExp('<meta name="description" content="Awa Koné · Abidjan · 178 cm · ' + (en ? 'Full book' : 'Book complet')).test(html), chemin + ' : la vraie description');
@@ -67,8 +68,8 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(r && /max-age=0/.test(r.headers.get('cache-control') || '') && r.headers.get('x-ma2m-render') === 'ssr', chemin + ' : revérifiée à chaque visite (le serveur la garde 3 minutes au plus)');
     // étape A (01/11/2026) : le contenu principal est écrit dans le HTML, avant tout programme
     const visible = html.replace(/<script[\s\S]*?<\/script>/g, '');
-    ok(/<div id="contenu"[^>]*>\s*<div class="reveal visible[^"]*">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm[< ]/.test(visible) && /<dd>19 (ans|years)<\/dd>/.test(visible) && !/fiche-en-chargement/.test(visible),
-      chemin + ' : fiche complète (nom, taille, âge) écrite dans le HTML avant tout programme');
+    ok(/<div id="contenu"[^>]*>\s*<div class="reveal visible[^"]*">/.test(visible) && /<h1>Awa Koné<\/h1>/.test(visible) && /<dd>178 cm[< ]/.test(visible) && !/19 (ans|years)/.test(visible) && !/fiche-en-chargement/.test(visible),
+      chemin + ' : fiche complète (nom, taille, sans l’âge) écrite dans le HTML avant tout programme');
   }
   nomPiege = true;
   const piege = await (await demander('book/awa-kone')).text();
@@ -144,7 +145,7 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(!nombre.profil && !nombre.photos && !nombre.age && !nombre.identite && !nombre.autres, n + 'la fiche s’affiche sans rien demander à la base : profil, photos, âge, identité, expériences, parcours, mesures, traductions (' + JSON.stringify(nombre) + ')');
     ok(photo > 0, n + 'la grande photo est demandée (' + photo + ' ms)');
     ok((await p.title()) === 'Awa Koné · Maître Akesse Model Management' && (await p.$$('link[rel="canonical"]')).length === 1, n + 'titre juste et une seule adresse canonique');
-    ok(/19/.test(await p.textContent('#contenu')), n + 'l’âge est affiché');
+    ok(!/19 (ans|years)/.test(await p.textContent('#contenu')), n + 'l’âge n’est pas affiché (13/11/2026)');
     ok(!errs.length, n + 'aucune erreur' + (errs.length ? ' — ' + errs[0] : ''));
   }
   // (01/11/2026, « ça doit être instantané ») la photo de la carte du Book (déjà dans le téléphone) s'affiche AUSSITÔT

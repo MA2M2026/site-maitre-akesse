@@ -4947,3 +4947,13 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
 - `fabrique-talons.js` (13/11/2026) : le son finit exactement à la durée du film (`apad` + `atrim`) ; avant, la
   normalisation et le mélange des effets coupaient les 3 dernières secondes de musique.
 - Les fichiers finaux (vidéos, images, textes des publications) sont remis à la propriétaire, pas mis sur le site.
+
+## Fiche publique sans âge, menu sans son (13/11/2026, décisions de la propriétaire)
+
+- **Âge retiré de la fiche publique** (cadre professionnel : l'âge peut écarter une mannequin sans raison, c'est une
+  donnée personnelle ; l'agence le donne au client qui le demande). `js/rendu-fiche.js` ne l'affiche plus (ni sous le
+  nom, ni dans les mesures), `js/fiche-mannequin.js` et `middleware.js` ne le demandent plus (`ages_mannequins` reste
+  pour l'Administration, les anniversaires et l'accord parental). Tests : `test-fiche-serveur.js`, `test-fiche-premium.js`,
+  `test-fiche-rapide.js` vérifient qu'il n'apparaît plus et n'est plus demandé.
+- **Plus de son à l'ouverture du menu** (`js/menu.js` ; le son « menu » de `window.jouerSon`, js/app.js, est supprimé ;
+  restent « entrée », « cœur » et « envoi »). Test : `test-menu-clavier.js` vérifie qu'aucun son n'est joué.

@@ -97,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const elementsDuMenu = () => [...overlay.querySelectorAll('a[href], button:not([disabled])')].filter(el => el.offsetParent !== null);
   function ouvrirMenu() {
     overlay.classList.add('active');
-    if (window.jouerSon) window.jouerSon('menu');
     menuEstOuvert = true;
     window.verrouillerDefilement();
     const premier = elementsDuMenu()[0];
