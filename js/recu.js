@@ -16,8 +16,6 @@
     if (classe) d.className = classe;
     dt.textContent = titre; dd.textContent = valeur; d.appendChild(dt); d.appendChild(dd); dl.appendChild(d);
   }
-  var heure = function (h) { return h ? String(h).slice(0, 5).replace(':', ' h ') : ''; };
-  var jourSeul = function (d) { return d ? new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''; };
   if (!/^[0-9a-f-]{36}$/.test(jeton) || typeof SUPABASE_URL === 'undefined' || !K) { introuvable(); return; }
   fetch(SUPABASE_URL + '/rest/v1/rpc/cachet_recu_lire', {
     method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
@@ -30,28 +28,12 @@
     if (!c) { introuvable(); return; }
     $('rc-numero').textContent = c.numero || '—';
     $('rc-etat').textContent = 'Paiement effectué ✓';
-    var p = $('rc-prestation'), d = $('rc-detail'), v = $('rc-paiement');
-    ligne(p, 'Mannequin', c.beneficiaire);
-    if (c.parent_nom) ligne(p, 'Versé au parent', c.parent_nom);
-    ligne(p, 'Prestation', c.prestation || K.libelle(c.motif));
-    ligne(p, 'Date', jourSeul(c.date_prestation));
-    ligne(p, 'Horaires', c.heure_debut ? 'de ' + heure(c.heure_debut) + (c.heure_fin ? ' à ' + heure(c.heure_fin) : '') : '');
-    ligne(p, 'Lieu', c.lieu);
-    ligne(p, 'Partenaire', c.partenaire);
-    ligne(p, 'Pour le compte de', 'Maître Akesse Model Management');
-    // détail : cachet total, commission, impôts, frais (sans total de prestation : le net seul, comme avant)
-    if (c.montant_prestation) {
-      ligne(d, 'Cachet total de la prestation', K.fcfa(c.montant_prestation));
-      if (c.commission) ligne(d, 'Commission de l’agence' + (c.commission_taux ? ' (' + String(Number(c.commission_taux)).replace('.', ',') + ' %)' : ''), '− ' + K.fcfa(c.commission), 'retenue');
-    }
-    var frais = (Array.isArray(c.frais) ? c.frais : []).reduce(function (n, x) { return n + (Number(x && x.montant) || 0); }, 0);
-    // (sans commission : le cachet avant impôts et frais, pour que le calcul se raccorde au net)
-    if (!c.montant_prestation && (Number(c.impots) > 0 || frais > 0)) ligne(d, 'Cachet', K.fcfa(Number(c.montant) + Number(c.impots || 0) + frais));
-    if (Number(c.impots) > 0) ligne(d, 'Impôts retenus', '− ' + K.fcfa(c.impots), 'retenue');
-    (Array.isArray(c.frais) ? c.frais : []).forEach(function (x) { if (x && x.libelle) ligne(d, 'Frais : ' + x.libelle, '− ' + K.fcfa(x.montant), 'retenue'); });
-    ligne(v, 'Payé le', K.jour(c.paye_le));
-    ligne(v, 'Moyen de paiement', window.MoyensPaiement ? window.MoyensPaiement.nom(c.moyen || 'wave') : 'Wave');
-    ligne(v, 'Référence', c.reference_wave);
+    // les lignes des trois blocs : js/cachets-communs.js (les mêmes que celles écrites d'avance par le serveur)
+    var L = K.lignesRecu(c), d = $('rc-detail');
+    [['rc-prestation', L.prestation], ['rc-detail', L.detail], ['rc-paiement', L.paiement]].forEach(function (b) {
+      var dl = $(b[0]); dl.textContent = '';
+      b[1].forEach(function (x) { ligne(dl, x[0], x[1], x[2]); });
+    });
     $('rc-montant').textContent = K.fcfa(c.montant);
     ['rc-prestation-bloc', 'rc-montant-bloc', 'rc-paiement-bloc', 'rc-merci', 'rc-actions'].forEach(function (id) { $(id).hidden = false; });
     $('rc-detail-bloc').hidden = !d.children.length;

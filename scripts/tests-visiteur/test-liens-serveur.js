@@ -39,9 +39,11 @@ const visible = (h) => h.replace(/<script[\s\S]*?<\/script>/g, '');
   // 1. le serveur seul
   const htmlRecu = await (await demander('recu?r=' + JR)).text();
   const v = visible(htmlRecu);
-  ok(/<b id="rc-numero">MA2M-CA-2026-0007<\/b>/.test(v) && /id="rc-etat"[^>]*>Paiement effectué ✓</.test(v) && /<strong id="rc-montant">40 000 FCFA<\/strong>/.test(v) && /id="rc-date">20 octobre 2026</.test(v),
+  ok(/<b id="rc-numero">MA2M-CA-2026-0007<\/b>/.test(v) && /id="rc-etat"[^>]*>Paiement effectué ✓</.test(v) && /<strong id="rc-montant">40 000 FCFA<\/strong>/.test(v) && /<dt>Payé le<\/dt><dd>20 octobre 2026<\/dd>/.test(v),
     'reçu : numéro, état, date et montant écrits dans le HTML avant tout programme');
-  ok(/id="rc-lignes">/.test(v) && /id="rc-montant-bloc">/.test(v) && /id="rc-ref-ligne">/.test(v) && /id="rc-ref">T-123</.test(v), 'reçu : les blocs du reçu sont visibles (plus cachés)');
+  // (13/11/2026, reçu officiel) blocs « La prestation » et « Le paiement » écrits d'avance ; « Le détail » seulement s'il y a des lignes
+  ok(/id="rc-prestation-bloc">/.test(v) && /id="rc-paiement-bloc">/.test(v) && /id="rc-montant-bloc">/.test(v) && /<dt>Référence<\/dt><dd>T-123<\/dd>/.test(v) && /<dt>Moyen de paiement<\/dt><dd>Wave<\/dd>/.test(v)
+    && /<dt>Pour le compte de<\/dt><dd>Maître Akesse Model Management<\/dd>/.test(v) && /id="rc-detail-bloc" hidden>/.test(v), 'reçu : les blocs du reçu sont visibles (plus cachés), le détail vide reste caché');
   ok(!/<img src=x onerror/.test(htmlRecu) && /Awa &lt;img src=x onerror=alert\(1\)&gt;/.test(v), 'reçu : un nom piégé ne peut rien injecter');
   const htmlPlaces = await (await demander('places?c=' + JP)).text();
   const vp = visible(htmlPlaces);

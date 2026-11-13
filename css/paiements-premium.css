@@ -16,7 +16,7 @@
 .pp-cb-bas { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin-top: 18px; font: 500 13px 'Work Sans', sans-serif; color: #FFFFFF; }
 .pp-cb-bas b { display: block; font-size: 9px; font-weight: 700; letter-spacing: .2em; color: #F3DDE0; margin-bottom: 3px; text-transform: uppercase; }
 .pp-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-.pp-tuile { border-radius: 16px; padding: 14px; background: #8A3540; color: #FFFFFF; }
+.pp-tuile { border-radius: 16px; padding: 14px; background: rgba(255, 255, 255, .1); color: #FFFFFF; }
 .pp-tuile .pp-ch { font: 600 28px/1.05 'Cormorant Garamond', Georgia, serif; }
 .pp-tuile .pp-ch small { font-size: 18px; color: #F3DDE0; }
 .pp-tuile .pp-dx { color: #F3DDE0; font-size: 12.5px; margin: 2px 0 8px; }

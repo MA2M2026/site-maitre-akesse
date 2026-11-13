@@ -25,6 +25,7 @@
 import './js/rendu-book.js';
 import './js/rendu-publications.js';
 import './js/cachets-communs.js';
+import './js/moyens-paiement.js';
 import './js/lien-public.js';
 import './js/gabarit.js';
 import './js/partage.js';
@@ -1143,10 +1144,11 @@ async function recuRempli(url) {
   const lecture = lireSupabase('rpc/cachet_recu_lire', { p_jeton: jeton }, ATTENTE_FICHE).then((l) => (Array.isArray(l) && l[0] ? { recu: l[0] } : null));
   return pageRemplie(url, '/recu' + url.search, 'recu-donnees', lecture, (html, d) => {
     const c = d.recu, K = globalThis.CachetsMa2m;
-    html = [['rc-numero', c.numero || '—'], ['rc-etat', 'Paiement effectué ✓'], ['rc-qui', c.beneficiaire], ['rc-quoi', c.prestation || K.libelle(c.motif)],
-      ['rc-date', K.jour(c.paye_le)], ['rc-montant', K.fcfa(c.montant)]].reduce((h, [id, t]) => texteElement(h, id, t || ''), html);
-    if (c.reference_wave) html = montrer(texteElement(html, 'rc-ref', c.reference_wave), 'rc-ref-ligne');
-    html = ['rc-lignes', 'rc-montant-bloc', 'rc-merci', 'rc-actions'].reduce((h, id) => montrer(h, id), html);
+    html = [['rc-numero', c.numero || '—'], ['rc-etat', 'Paiement effectué ✓'], ['rc-montant', K.fcfa(c.montant)]].reduce((h, [id, t]) => texteElement(h, id, t || ''), html);
+    // (13/11/2026, reçu officiel) les trois blocs, avec les lignes de js/cachets-communs.js (les mêmes que la page)
+    const L = K.lignesRecu(c), dl = (lignes) => lignes.map((x) => '<div' + (x[2] ? ' class="' + x[2] + '"' : '') + '><dt>' + echapper(x[0]) + '</dt><dd>' + echapper(x[1]) + '</dd></div>').join('');
+    html = [['rc-prestation', L.prestation], ['rc-detail', L.detail], ['rc-paiement', L.paiement]].reduce((h, [id, l]) => texteElement(h, id, dl(l), true), html);
+    html = ['rc-prestation-bloc', 'rc-montant-bloc', 'rc-paiement-bloc', 'rc-merci', 'rc-actions'].concat(L.detail.length ? ['rc-detail-bloc'] : []).reduce((h, id) => montrer(h, id), html);
     return html.replace(/<title>[^<]*<\/title>/, () => '<title>' + echapper('Reçu ' + (c.numero || '') + ' · Maître Akesse Model Management') + '</title>');
   });
 }

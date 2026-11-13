@@ -4,19 +4,21 @@
 // un dans l'Administration (Paramètres > Moyens de paiement) avec leur numéro, lien ou RIB : le jour où l'agence a le
 // compte, rien à changer dans le site. Base : supabase-moyens-paiement.sql (moyens_paiement, moyens_paiement_publics,
 // mensualite_declarer_avec_numero et mensualites_payer_avance avec le moyen). Tant que ce fichier n'est pas collé : Wave seul, comme avant.
-(function () {
+(function (racine) {
   'use strict';
+  // (13/11/2026) aussi importé par middleware.js (reçu écrit par le serveur) : pas de document là-bas, noms seulement
+  const doc = typeof document !== 'undefined' ? document : null;
   const NOMS = { wave: 'Wave', orange_money: 'Orange Money', mtn_money: 'MTN Money', moov_money: 'Moov Money', carte: 'Carte bancaire (Visa)',
     virement: 'Virement bancaire', cheque: 'Chèque', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
   const PREPARES = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement'];
   const MOBILE = ['orange_money', 'mtn_money', 'moov_money'];
   // tous les moyens d'un paiement fait ou reçu par l'agence (cachets, clients), dans cet ordre partout
   const TOUS = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement', 'cheque', 'especes'];
-  const esc = (s) => window.echapperHtml(s == null ? '' : s);  // (js/app.js)
+  const esc = (s) => racine.echapperHtml(s == null ? '' : s);  // (js/app.js)
   // (js/cachets-communs.js s'il est chargé, sinon enFcfa de js/app.js : pages d'inscription et cours de talons)
-  const fcfa = (n) => (window.CachetsMa2m ? window.CachetsMa2m.fcfa(n) : window.enFcfa(n));
+  const fcfa = (n) => (racine.CachetsMa2m ? racine.CachetsMa2m.fcfa(n) : racine.enFcfa(n));
   // pages en anglais (cours de talons EN, inscription) : les phrases des consignes en anglais
-  const EN = /^en/i.test(document.documentElement.lang || '');
+  const EN = !!doc && /^en/i.test(doc.documentElement.lang || '');
   const T = (fr, en) => (EN ? en : fr);
   const NOMS_EN = { orange_money: 'Orange Money', mtn_money: 'MTN Money', moov_money: 'Moov Money', carte: 'Bank card (Visa)', virement: 'Bank transfer', cheque: 'Cheque', especes: 'Cash' };
   const nom = (code) => (EN && NOMS_EN[code]) || NOMS[code] || code || '';
@@ -62,7 +64,7 @@
       (codes || TOUS).map((c) => tuile(c, nom(c), c === choisi, 'data-pp-moyen="' + c + '"')).join('') + '</div>';
   }
   // un toucher sur une tuile d'un formulaire : elle est choisie, le champ caché prend sa valeur et prévient (change)
-  document.addEventListener('click', (e) => {
+  if (doc) doc.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('[data-pp-moyen]');
     const zone = b && b.closest('[data-pp-champ]');
     if (!zone) return;
@@ -91,7 +93,7 @@
     return libre;
   }
   // « Copier » : le numéro ou le RIB dans le presse-papiers
-  document.addEventListener('click', (e) => {
+  if (doc) doc.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('[data-pp-copier]');
     if (!b) return;
     if (!b.dataset.libelle) b.dataset.libelle = b.textContent;  // (un 2e toucher ne garde pas « Copié ✓ » pour toujours)
@@ -104,5 +106,5 @@
     else fini(ancienne());
   });
 
-  window.MoyensPaiement = { NOMS, PREPARES, MOBILE, TOUS, ABR, nom, nomCourt, parLien, grandF, carte, charger, choix, tuiles, consigne };
-})();
+  racine.MoyensPaiement = { NOMS, PREPARES, MOBILE, TOUS, ABR, nom, nomCourt, parLien, grandF, carte, charger, choix, tuiles, consigne };
+})(typeof window !== 'undefined' ? window : globalThis);

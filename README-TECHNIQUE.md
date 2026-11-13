@@ -4906,3 +4906,6 @@ des nouveaux mannequins (étape 3 : choix du moyen, `infos.moyen` envoyé au ser
 maintenant » : choix du moyen, colonne `cours_talons.moyen`). Base : **`supabase-moyens-inscriptions.sql`** (À COLLER) :
 `inscription_payer_avec_numero` note le moyen, `cours_talons.moyen`, `cours_talons_valider` range la recette sur le compte
 du moyen. Essais : test-comptabilite, test-moyens-paiement, test-mensualites, test-inscription, test-cours-talons, test-cachets.
+Reçu officiel écrit d'avance par le serveur (middleware.js, `recuRempli`) avec les MÊMES lignes que la page :
+`CachetsMa2m.lignesRecu(c)` (js/cachets-communs.js) ; `js/moyens-paiement.js` est aussi importé par middleware.js (noms des
+moyens, sans document). Essai : test-liens-serveur.js.
