@@ -60,6 +60,9 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     await p.fill('#ca-date', '2026-11-08'); await p.fill('#ca-debut', '18:00'); await p.fill('#ca-fin', '22:30');
     await p.fill('#ca-lieu', 'Sofitel Ivoire'); await p.fill('#ca-partenaire', 'Maison Sococé');
     await p.fill('#ca-impots', '1000'); await p.fill('#ca-frais-1', 'Transport'); await p.fill('#ca-frais-m-1', '1500');
+    if (process.env.CAPTURES) await p.locator('.recu-bloc-form').screenshot({ path: process.env.CAPTURES + '/cachet-recu' + suffixe + '.png' });
+    // (13/11/2026) chaque retenue sur UNE ligne : son nom à gauche, son montant à droite, à la même hauteur
+    ok(await p.evaluate(() => [1, 2, 3].every((i) => { const a = document.getElementById('ca-frais-' + i).getBoundingClientRect(), b = document.getElementById('ca-frais-m-' + i).getBoundingClientRect(); return Math.abs(a.top - b.top) < 3 && a.right <= b.left; })), n + 'reçu : chaque frais sur une ligne, nom à gauche et montant à droite');
     ok(/impôts et frais retenus : 2 500 FCFA · à verser à la mannequin : 17 500 FCFA/.test((await p.textContent('#ca-calcul')).replace(/\u202f|\u00a0/g, ' ')), n + 'reçu officiel : impôts et frais retenus, net à verser 17 500 recalculé');
     await p.click('form[data-form="cachet-ajouter"] [type=submit]'); await p.waitForTimeout(1200);
     const cree = journal.filter((j) => j[0] === 'POST' && j[1] === 'cachets_mannequins').map((j) => JSON.parse(j[3]))[0] || {};

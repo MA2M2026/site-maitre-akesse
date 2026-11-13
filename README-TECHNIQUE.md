@@ -4909,3 +4909,13 @@ du moyen. Essais : test-comptabilite, test-moyens-paiement, test-mensualites, te
 Reçu officiel écrit d'avance par le serveur (middleware.js, `recuRempli`) avec les MÊMES lignes que la page :
 `CachetsMa2m.lignesRecu(c)` (js/cachets-communs.js) ; `js/moyens-paiement.js` est aussi importé par middleware.js (noms des
 moyens, sans document). Essai : test-liens-serveur.js.
+
+## Revue du 13/11/2026 : espace mannequin plus rapide, boutons du bas au-dessus du bandeau des cookies
+
+- **Espace mannequin** (`Store.load`, js/espace-mannequin.js) : les lectures du profil partent toutes ensemble (`Promise.all`),
+  chacune facultative sauf `completerProfilsPrives` (si elle échoue, la page ne s'ouvre pas : jamais de cases vides qu'un
+  enregistrement effacerait). 7,5 s → environ 2 s en vrai ; essai : test-espace-rapide.js (base lente simulée, 400 ms par réponse).
+- **Bandeau des cookies** (js/analytics-config.js) : tant qu'il est affiché, `--hauteur-cookies` (sur `<html>`) vaut sa hauteur
+  + 12 px ; sur téléphone et tablette (≤ 860 px), `.retour-haut`, `.whatsapp-flottant`, `.fiche-barre`, `.panier-widget` et
+  `.envoi-a-finir` montent d'autant (`translate`, sans saut d'affichage). **Tout nouveau bouton collé en bas doit être ajouté à
+  cette liste** (css/style.css). Essai : test-cookies-boutons.js.
