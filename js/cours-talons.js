@@ -72,9 +72,11 @@
   // affichent le numéro (ou le lien de la carte, ou le RIB) — js/moyens-paiement.js
   const MP = window.MoyensPaiement;
   let moyens = [{ code: 'wave', nom: 'Wave' }], moyenChoisi = 'wave';
+  // le moyen montré est celui qui est enregistré (si Wave est éteint, le premier moyen allumé)
+  const moyenActuel = () => moyens.find((x) => x.code === moyenChoisi) || moyens[0];
   function dessinerMoyens() {
     if (!MP) return;
-    const m = moyens.find((x) => x.code === moyenChoisi) || moyens[0];
+    const m = moyenActuel();
     $('ct-moyens').innerHTML = MP.choix(moyens, m.code, 'talons');
     $('ct-lien-wave').classList.toggle('u-hidden', m.code !== 'wave');
     $('ct-consigne').innerHTML = MP.consigne(m, montant(), 'talons');
@@ -272,7 +274,7 @@
       photos: liensPhotos, video: lienVideo || null,
       decision: decision(),
       reference_wave: decision() === 'maintenant' ? ($('ct-ref-wave').value.trim() || null) : null,
-      ...(decision() === 'maintenant' && moyenChoisi !== 'wave' ? { moyen: moyenChoisi } : {})
+      ...(decision() === 'maintenant' && moyenActuel().code !== 'wave' ? { moyen: moyenActuel().code } : {})
     };
   }
   const NOMS_FORMULES = { groupe: 'En groupe (4 dimanches)', prive_salle: 'Privé dans la salle', prive_exterieur: 'Privé à l’extérieur' };

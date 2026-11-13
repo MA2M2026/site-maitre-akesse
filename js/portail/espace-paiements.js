@@ -985,10 +985,10 @@
     const ligne = (m) => '<' + (principal ? 'button type="button" data-bouton-libre data-action="moyen-modifier" data-code="' + P.esc(m.code) + '"' : 'div') + ' class="pp-op">' +
       '<em aria-hidden="true">' + ((MP && MP.ABR[m.code]) || '•') + '</em><span>' + P.esc(m.nom) + '<small>' + P.esc(ou(m) + (m.titulaire ? ' · au nom de ' + m.titulaire : '')) + '</small></span>' +
       '<b class="pp-pastille ' + (m.actif ? 'vert' : 'gris') + '">' + (m.actif ? 'Allumé' : 'Éteint') + '</b></' + (principal ? 'button' : 'div') + '>';
-    const famille = (codes) => allumes.filter((m) => codes.indexOf(m.code) >= 0).map((m) => m.nom.replace(/ \(Visa\)$/, '')).join(', ') || 'bientôt';
-    return '<section class="carte-moyens" aria-label="Moyens de paiement des mannequins"><div class="pp-cb"><div class="pp-cb-tete"><img src="/assets/logo-header.png" alt="" width="86" height="26"><span>Encaissements</span></div>' +
-      '<div class="pp-cb-grand">' + allumes.length + ' <small>/ ' + liste.length + '</small></div><div class="pp-cb-sous">Moyens de paiement des mannequins allumés</div>' +
-      '<div class="pp-cb-bas"><div><b>Mobile money</b>' + P.esc(famille(['wave', 'orange_money', 'mtn_money', 'moov_money'])) + '</div><div><b>Banque</b>' + P.esc(famille(['carte', 'virement'])) + '</div></div></div>' +
+    const famille = (codes) => allumes.filter((m) => codes.indexOf(m.code) >= 0).map((m) => MP.nomCourt(m.code)).join(', ') || 'bientôt';
+    return '<section class="carte-moyens" aria-label="Moyens de paiement des mannequins">' +
+      MP.carte({ etiquette: 'Encaissements', grand: allumes.length + ' <small>/ ' + liste.length + '</small>', sous: 'Moyens de paiement des mannequins allumés',
+        bas: [['Mobile money', famille(['wave', 'orange_money', 'mtn_money', 'moov_money'])], ['Banque', famille(['carte', 'virement'])]] }) +
       (allumes.length ? '<div class="pp-titre">Allumés</div><div class="pp-releve">' + allumes.map(ligne).join('') + '</div>' : '') +
       (eteints.length ? '<div class="pp-titre">Prêts, à allumer</div><div class="pp-releve">' + eteints.map(ligne).join('') + '</div>' : '') +
       '<p class="pp-legende">' + (principal ? 'Un toucher sur un moyen : son numéro (ou lien, ou RIB) et « Allumé », le jour où l’agence a le compte.' : 'Seul l’administrateur principal peut modifier les moyens de paiement.') + '</p></section>';

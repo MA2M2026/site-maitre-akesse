@@ -4899,8 +4899,8 @@ carte bancaire, `pp-tuiles`/`pp-tuile`, `pp-releve`/`pp-op`, `pp-blanc`, `pp-cho
 app/mes-paiements.html, app/inscription-mannequin.html, cours-talons.html (FR/EN).
 `js/moyens-paiement.js` : `choix(moyens, choisi, clé)` (tuiles des moyens allumés + « bientôt » estompés), `tuiles(nom,
 choisi, attributs, codes)` (formulaires de l'agence : champ caché qui prévient par « change »), `consigne` (numéro, lien
-ou RIB + « Copier », FR/EN), `ABR` (initiales des tuiles), `TOUS` (8 moyens).
-Écrans : Comptabilité (carte « hors taxes », tuiles TVA prévue / déjà reversée, relevé par catégorie), Paramètres des
+ou RIB + « Copier », FR/EN), `ABR` (initiales des tuiles), `TOUS` (8 moyens), `carte` (la carte façon carte bancaire), `grandF`, `parLien`, `nomCourt`, noms anglais (pages EN).
+Écrans : Comptabilité (carte « hors taxes », tuiles TVA prévue ou à reverser / encaissé, relevé par catégorie), Paramètres des
 Paiements (carte « n / 6 allumés », relevés allumés / prêts), « Mes paiements », Encaisser, Payer un cachet, inscription
 des nouveaux mannequins (étape 3 : choix du moyen, `infos.moyen` envoyé au serveur), cours de talons (« Payer
 maintenant » : choix du moyen, colonne `cours_talons.moyen`). Base : **`supabase-moyens-inscriptions.sql`** (À COLLER) :

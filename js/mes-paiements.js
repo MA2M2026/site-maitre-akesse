@@ -57,7 +57,7 @@
   const adresseWave = (montant) => liensWave[Number(montant)] || (LIEN_WAVE + Number(montant));
   // Moyen choisi, où payer, numéro du payeur, « J'ai payé » (cle : le mois, ou « avance » pour plusieurs mois).
   // Wave et carte : on passe d'abord par le lien ; Orange, MTN, Moov et virement : le numéro ou le RIB est affiché.
-  const parLien = (code) => code === 'wave' || code === 'carte';
+  const parLien = (code) => (MP ? MP.parLien(code) : code === 'wave');
   const peutDeclarer = (cle) => (!parLien(moyenDe(cle).code) || waveOuvert[cle]) && numeroValide(numeros[cle]);
   function blocPaiement(cle, montant) {
     const m = moyenDe(cle), code = m.code, mobile = code === 'wave' || (MP && MP.MOBILE.indexOf(code) >= 0);

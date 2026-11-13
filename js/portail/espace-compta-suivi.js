@@ -82,9 +82,8 @@
     P.etat.reglageTva = null;  // (taux de TVA relu pour cette fenêtre)
     // (13/11/2026, maquette premium validée) la somme due en carte façon carte bancaire, puis le moyen en tuiles
     P.fenetre('<form data-form="compta-regler" data-id="' + d.id + '" class="grille" style="gap:12px"><h2>' + (d.sens === 'creance' ? 'Encaisser' : 'Payer') + '</h2>' +
-      '<div class="pp-cb"><div class="pp-cb-tete"><img src="/assets/logo-header.png" alt="" width="86" height="26"><span>' + (d.sens === 'creance' ? 'À recevoir' : 'À payer') + '</span></div>' +
-        '<div class="pp-cb-grand">' + P.fcfa(d.reste).replace(/\s?FCFA$/, '') + ' <small>F</small></div><div class="pp-cb-sous">' + (d.sens === 'creance' ? 'reste à recevoir' : 'reste à payer') + '</div>' +
-        '<div class="pp-cb-bas"><div><b>' + (d.sens === 'creance' ? 'Pour' : 'Objet') + '</b>' + P.esc(d.libelle) + '</div>' + (d.tiers_nom || d.tiers ? '<div><b>' + (d.sens === 'creance' ? 'Client' : 'Fournisseur') + '</b>' + P.esc(d.tiers_nom || d.tiers) + '</div>' : '') + '</div></div>' +
+      window.MoyensPaiement.carte({ etiquette: d.sens === 'creance' ? 'À recevoir' : 'À payer', grand: window.MoyensPaiement.grandF(d.reste), sous: d.sens === 'creance' ? 'reste à recevoir' : 'reste à payer',
+        bas: [[d.sens === 'creance' ? 'Pour' : 'Objet', d.libelle]].concat(d.tiers_nom || d.tiers ? [[d.sens === 'creance' ? 'Client' : 'Fournisseur', d.tiers_nom || d.tiers]] : []) }) +
       // (13/11/2026) client : moyen utilisé (mobile money, Visa, virement, chèque, espèces) et part de TVA de la somme
       champMontant('rg-montant', d.reste).replace('<input ', d.sens === 'creance' ? '<input data-change="compta-tva-somme" data-note="rg-tva" data-direct ' : '<input ') +
       (d.sens === 'creance' ? C.noteTva('rg-tva') : '') + C.champMoyen('rg-moyen', 'rg-compte', d.sens === 'creance') +

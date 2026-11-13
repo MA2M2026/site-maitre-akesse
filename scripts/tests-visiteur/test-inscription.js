@@ -25,7 +25,8 @@ const CASTINGS = {
       // (13/11/2026) moyens de paiement : l'enfant paie par Orange Money (allumé par l'agence), l'adulte par Wave
       const orange = code === 'MA2M-ENFANT';
       await brancher(p, { tables: {}, rpc: { lien_paiement: () => 'https://pay.wave.com/m/PARAMETRES/c/ci/?amount=25000',
-        ...(orange ? { moyens_paiement_publics: [{ code: 'wave', nom: 'Wave' }, { code: 'orange_money', nom: 'Orange Money', numero: '07 11 22 33 44', titulaire: 'MA2M' }] } : {}) }, api: { '/api/code-protege': (c) => {
+        moyens_paiement_publics: orange ? [{ code: 'wave', nom: 'Wave' }, { code: 'orange_money', nom: 'Orange Money', numero: '07 11 22 33 44', titulaire: 'MA2M' }]
+          : [{ code: 'wave', nom: 'Wave' }, { code: 'carte', nom: 'Carte bancaire (Visa)', lien: 'https://paiement.exemple.ci/ma2m' }] }, api: { '/api/code-protege': (c) => {
         const k = CASTINGS[c.code];
         if (!k || c.naissance !== k.naissance) return { statut: 401, error: 'refuse', essaisRestants: --essais };
         if (c.type === 'inscription-code') return { ok: true, casting: k.casting, note: 'prive/note-integration/note-1.pdf' };
@@ -69,6 +70,13 @@ const CASTINGS = {
         await p.click('[data-moyen="orange_money"]'); await p.waitForTimeout(300);
         ok(/Envoyez 25 000 FCFA par Orange Money au numéro de l’agence \(au nom de MA2M\) :\s*07 11 22 33 44/.test((await t()).replace(/[\u202f\u00a0]/g, ' ')) && !(await p.$('[data-a="wave"]')), nom + ' ' + code + ' : Orange Money choisi en tuile → numéro de l’agence et montant');
       } else {
+        // carte bancaire : son lien d'abord, puis « J'ai payé » ; retour à Wave ensuite
+        await p.click('[data-moyen="carte"]'); await p.waitForTimeout(300);
+        ok(await p.getAttribute('[data-mp="lien"]', 'href') === 'https://paiement.exemple.ci/ma2m' && await p.isDisabled('[data-a="paye"]'), nom + ' ' + code + ' : carte choisie → lien de paiement par carte, « J’ai payé » attend le lien');
+        await p.locator('[data-mp="lien"]').evaluate((a) => { a.removeAttribute('target'); a.href = location.href.split('#')[0] + '#'; });
+        await p.click('[data-mp="lien"]'); await p.waitForTimeout(500);
+        ok(!(await p.isDisabled('[data-a="paye"]')), nom + ' ' + code + ' : carte : après le lien, « J’ai payé » s’ouvre');
+        await p.click('[data-moyen="wave"]'); await p.waitForTimeout(300);
         await p.locator('[data-a="wave"]').evaluate((a) => { a.removeAttribute('target'); a.href = location.href.split('#')[0] + '#'; });  // (pas « # » seul : dans l'application, <base href="/"> en ferait l'accueil)
         await p.click('[data-a="wave"]'); await p.waitForTimeout(500);
       }

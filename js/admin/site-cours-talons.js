@@ -8,6 +8,8 @@
   const P = window.Portail;
   if (!P || !P.espaces.site) return;
   const PAGE = 'b2-cours-talons';
+  // nom du moyen de paiement choisi par la personne (js/moyens-paiement.js) ; Wave quand rien n'est noté
+  const nomMoyen = (k) => (window.MoyensPaiement ? window.MoyensPaiement.nom(k || 'wave') : 'Wave');
   const FORMULES = { groupe: 'En groupe (4 dimanches)', prive_salle: 'Privé, dans la salle', prive_exterieur: 'Privé, à l’extérieur' };
   const STATUTS = { nouvelle: ['Nouvelle', 'neutre'], plus_tard: ['Paiera plus tard', 'orange'], paiement_envoye: ['Paiement envoyé, à vérifier', 'orange'],
     inscrite: ['Inscrite (payé)', 'vert'], terminee: ['Terminée', 'neutre'], annulee: ['Annulée', 'rouge'] };
@@ -54,7 +56,8 @@
     const photos = (Array.isArray(d.photos) ? d.photos : []).filter(https);
     const infos = [
       ['Formule', FORMULES[d.formule] + ' · ' + seances(d)], ['Montant', P.fcfa(d.montant)],
-      ['Paiement', d.decision === 'maintenant' ? 'Payé par Wave à l’inscription' + (d.reference_wave ? ' (réf. ' + d.reference_wave + ')' : '') + ', à vérifier' : 'Paiera plus tard'],
+      // (13/11/2026) le moyen choisi par la personne (Orange Money, carte…), Wave sinon
+      ['Paiement', d.decision === 'maintenant' ? 'Payé par ' + nomMoyen(d.moyen) + ' à l’inscription' + (d.reference_wave ? ' (réf. ' + d.reference_wave + ')' : '') + ', à vérifier' : 'Paiera plus tard'],
       ['Téléphone', d.telephone], ['Âge', d.age ? d.age + ' ans' : ''], ['Quartier', d.quartier],
       ['Objectif', [OBJECTIFS[d.objectif], d.concours, d.concours_date ? 'le ' + P.date(d.concours_date) : ''].filter(Boolean).join(' · ')],
       ['Niveau', NIVEAUX[d.niveau]], ['Lieu des cours', d.adresse], ['Disponibilités', d.disponibilites],
@@ -79,7 +82,7 @@
         '<label class="fl" for="ct-montant-' + id + '">Montant (FCFA)<input id="ct-montant-' + id + '" name="montant" type="number" min="0" step="500" value="' + P.esc(d.montant || '') + '"' + (payee ? ' readonly title="Déjà payé : le montant est en Comptabilité"' : '') + '></label>' +
         '<label class="fl large" for="ct-notes-' + id + '">Notes<textarea id="ct-notes-' + id + '" name="notes" maxlength="2000">' + P.esc(d.notes || '') + '</textarea></label>' +
         '<div class="ligne large"><button class="btn" type="submit">Enregistrer</button>' +
-          (!payee ? '<button class="btn rouge" type="button" data-action="talons-valider" data-id="' + id + '">✓ Paiement reçu (Wave)</button><button class="btn" type="button" data-action="talons-valider" data-id="' + id + '" data-valeur="especes">✓ Payé en espèces</button>' : '') +
+          (!payee ? '<button class="btn rouge" type="button" data-action="talons-valider" data-id="' + id + '">✓ Paiement reçu (' + P.esc(nomMoyen(d.moyen)) + ')</button><button class="btn" type="button" data-action="talons-valider" data-id="' + id + '" data-valeur="especes">✓ Payé en espèces</button>' : '') +
           (payee ? '<button class="btn" type="button" data-action="talons-statut" data-id="' + id + '" data-valeur="terminee">Cours terminés</button>' : '') +
           '<button class="btn" type="button" data-action="talons-statut" data-id="' + id + '" data-valeur="annulee">Annuler l’inscription</button>' +
         '</div></form>'
@@ -105,7 +108,7 @@
     const especes = el.dataset.valeur === 'especes';
     const champ = document.getElementById('ct-montant-' + d.id);
     const montant = parseInt(champ && champ.value, 10) || d.montant;
-    if (!confirm('Confirmer le paiement de ' + P.fcfa(montant) + ' par ' + (especes ? 'espèces' : 'Wave') + ' pour ' + d.nom + ' ? Une recette « Cours de talons » sera ajoutée en Comptabilité.')) return;
+    if (!confirm('Confirmer le paiement de ' + P.fcfa(montant) + ' par ' + (especes ? 'espèces' : nomMoyen(d.moyen)) + ' pour ' + d.nom + ' ? Une recette « Cours de talons » sera ajoutée en Comptabilité.')) return;
     await P.sensible(() => P.rpc('cours_talons_valider', { p_id: d.id, p_montant: montant, p_especes: especes }));
     P.message('Paiement validé : recette ajoutée en Comptabilité.');
     return P.afficher();

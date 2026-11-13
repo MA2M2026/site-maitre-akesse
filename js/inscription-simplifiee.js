@@ -86,7 +86,7 @@
   // (13/11/2026, maquette premium validée) le montant en grand, le moyen en tuiles, où payer, numéro, grand bouton
   const MP = window.MoyensPaiement;
   const moyenInn = () => (E.moyens || []).find((m) => m.code === E.moyen) || (E.moyens || [])[0] || { code: 'wave', nom: 'Wave' };
-  const parLien = (code) => code === 'wave' || code === 'carte';
+  const parLien = (code) => (MP ? MP.parLien(code) : code === 'wave');
   const peutPayer = () => (!parLien(moyenInn().code) || E.waveOuvert) && numeroValide(E.numero) && !E.occupe;
   function ecranPaiement() {
     etapes(4);
@@ -155,7 +155,7 @@
       E.occupe = false;
       if (rep.ok) { aller('merci'); return; }
       // (seuls nos propres messages s'affichent, jamais un message technique de la base)
-      E.erreur = r.error === 'dossier' ? (/obligatoires|règlement|invalide/.test(r.message || '') ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
+      E.erreur = r.error === 'dossier' ? (/obligatoires|règlement|invalide|indisponible/.test(r.message || '') ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
         : messageAccesRefuse(rep, r, T('Ce code n’est plus valable', 'This code is no longer valid')) || T('Impossible d’enregistrer votre paiement. Contactez l’agence.', 'Your payment could not be recorded. Please contact the agency.');
     } catch (e) {
       E.occupe = false;

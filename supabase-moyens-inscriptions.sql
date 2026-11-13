@@ -15,7 +15,7 @@ declare
   v_id uuid;
 begin
   if not est_ecriture_serveur() then raise exception 'Accès refusé.'; end if;
-  if n is null or n !~ '^[0-9+ ]{6,20}$' then raise exception 'Numéro mobile money invalide.'; end if;
+  if n is null or n !~ '^[0-9+ ]{6,20}$' then raise exception 'Numéro de téléphone invalide.'; end if;
   if m is not null and m <> 'wave' and not exists (select 1 from moyens_paiement where code = m and actif) then raise exception 'Moyen de paiement indisponible.'; end if;
   v_id := inscription_simplifiee_payer(p_code, p_naissance, p_infos);
   insert into rapprochements (paiement_id, numero_payeur)
@@ -31,6 +31,20 @@ revoke all on function inscription_payer_avec_numero(text, date, jsonb) from pub
 
 -- Cours de talons : le moyen choisi par la personne, et la recette sur le compte de ce moyen à la validation
 alter table cours_talons add column if not exists moyen text check (moyen is null or moyen in ('wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement'));
+
+-- Le moyen envoyé par la page doit être allumé par l’agence (le formulaire public écrit la ligne telle quelle)
+create or replace function cours_talons_moyen_allume()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if NEW.moyen is not null and NEW.moyen <> 'wave' and not exists (select 1 from moyens_paiement where code = NEW.moyen and actif) then
+    raise exception 'Moyen de paiement indisponible.';
+  end if;
+  return NEW;
+end;
+$$;
+revoke all on function cours_talons_moyen_allume() from public, anon, authenticated;
+drop trigger if exists cours_talons_moyen_allume on cours_talons;
+create trigger cours_talons_moyen_allume before insert or update of moyen on cours_talons for each row execute function cours_talons_moyen_allume();
 
 create or replace function cours_talons_valider(p_id uuid, p_montant integer default null, p_especes boolean default false)
 returns cours_talons language plpgsql security definer set search_path = public as $$
