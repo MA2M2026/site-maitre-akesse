@@ -148,7 +148,7 @@
   const niveau = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
   // (13/11/2026, décision de la propriétaire) plus d'âge sur la fiche publique : il reste dans l'Administration et
   // l'agence le donne au client qui le demande
-  const sousTitre = [profil.city].filter(Boolean).join(' · ');
+  const sousTitre = profil.city || '';
   const dispo = profil.availability && libellesDispo[profil.availability] ? `<span class="fiche-dispo">${libellesDispo[profil.availability]}</span>` : '';
   const essentielles = [
     profil.height_cm ? [T('Taille', 'Height'), echapperHtml(profil.height_cm) + '<small>cm</small>'] : null,
@@ -178,7 +178,7 @@
         <div class="profil-hero-contenu">
           <div class="eyebrow eyebrow--clair">${[categorie, niveau].filter(Boolean).map(echapperHtml).join(' · ')}</div>
           <h1>${echapperHtml(nom)}</h1>
-          <p>${echapperHtml(sousTitre)}</p>
+          ${sousTitre ? `<p>${echapperHtml(sousTitre)}</p>` : ''}
           ${dispo}
         </div>
       </div>

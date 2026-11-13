@@ -4952,8 +4952,8 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
 
 - **Âge retiré de la fiche publique** (cadre professionnel : l'âge peut écarter une mannequin sans raison, c'est une
   donnée personnelle ; l'agence le donne au client qui le demande). `js/rendu-fiche.js` ne l'affiche plus (ni sous le
-  nom, ni dans les mesures), `js/fiche-mannequin.js` et `middleware.js` ne le demandent plus (`ages_mannequins` reste
-  pour l'Administration, les anniversaires et l'accord parental). Tests : `test-fiche-serveur.js`, `test-fiche-premium.js`,
+  nom, ni dans les mesures), `js/fiche-mannequin.js` et `middleware.js` ne le demandent plus. La fonction `ages_mannequins` n'est plus appelée
+  par le site ; son accès public (anon) est à retirer dans la base (`supabase-age-prive.sql`, à coller par la propriétaire). Tests : `test-fiche-serveur.js`, `test-fiche-premium.js`,
   `test-fiche-rapide.js` vérifient qu'il n'apparaît plus et n'est plus demandé.
 - **Plus de son à l'ouverture du menu** (`js/menu.js` ; le son « menu » de `window.jouerSon`, js/app.js, est supprimé ;
   restent « entrée », « cœur » et « envoi »). Test : `test-menu-clavier.js` vérifie qu'aucun son n'est joué.

@@ -1,7 +1,7 @@
 // Fiche d'un mannequin plus rapide (28/10/2026, la propriétaire attendait la photo sur tablette) :
 // photos, expériences, mesures et adresse sont demandées EN MÊME TEMPS que le profil, et une seule
 // fois chacune. Le profil répond ici lentement (1,2 s) : les photos doivent être demandées avant. Base simulée.
-// 31/10/2026 : la GRANDE PHOTO (l'âge n'est plus demandé depuis le 13/11/2026) elle-même partent aussi sans attendre le profil ; par l'adresse
+// 31/10/2026 : la GRANDE PHOTO elle-même part aussi sans attendre le profil (l'âge n'est plus demandé depuis le 13/11/2026) ; par l'adresse
 // /book/… l'identité du mannequin n'est demandée qu'une fois (fiche et compteur de visites).
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { tables, rpc } = require('./pages-publiques');

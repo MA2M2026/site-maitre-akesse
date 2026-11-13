@@ -36,7 +36,7 @@ const tables = {
     const refus = await p.$('#bandeau-cookies button'); if (refus) await refus.click().catch(() => {});
     // 1. arrivée et mensurations
     const mens = await p.$$eval('.fiche-mens > div', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
-    ok(!/21 (ans|years)|\bÂge\b|\bAge\b/.test(await p.textContent('.fiche-v2')), n + 'l’âge n’est plus affiché sur la fiche (13/11/2026)');
+    ok(!/\d+\s*(ans|years)\b|Âge|\bAge\b/.test(await p.textContent('.fiche-v2')), n + 'l’âge n’est plus affiché sur la fiche (13/11/2026)');
     ok(mens.length === 6 && /178/.test(mens[0]) && /Marron|Brown/.test(mens[5]), n + '6 mensurations essentielles (' + mens.join(' | ') + ')');
     ok(/Awa Koné/.test(await p.textContent('h1')) && /(Disponible immédiatement|Available immediately)/.test(await p.textContent('.fiche-v2')), n + 'nom en grand et « Disponible immédiatement »');
     // (12/11/2026, demande de la propriétaire) la photo de profil toujours visible, en rond, sans cacher « Disponible »

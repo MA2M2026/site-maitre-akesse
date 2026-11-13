@@ -2471,7 +2471,7 @@ function lireContenuEditeur(quill) {
 }
 
 // ================== Effets sonores ==================
-// Bruit blanc (souffle des effets « Rideau » et « Menu ») tiré par le générateur sûr du
+// Bruit blanc (souffle de l'effet « Rideau » ; le son du menu est retiré depuis le 13/11/2026) tiré par le générateur sûr du
 // navigateur, par paquets (getRandomValues accepte au plus 65 536 octets à la fois).
 function remplirBruitBlanc(donnees) {
   const paquet = new Uint32Array(16384);
