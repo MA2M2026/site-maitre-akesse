@@ -5824,6 +5824,7 @@ as $$
 $$;
 revoke all on function ages_mannequins(uuid[]) from public;
 grant execute on function ages_mannequins(uuid[]) to anon, authenticated;
+-- (13/11/2026) accès retiré : la fiche publique n'affiche plus l'âge (supabase-age-prive.sql)
 
 revoke select (date_naissance) on model_profiles from anon;
 

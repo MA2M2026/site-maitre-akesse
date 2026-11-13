@@ -736,16 +736,15 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
   const lecture = enMemoire('fiche-' + id, () => Promise.all([
     lireSupabase('model_profiles?id=eq.' + id + '&published=eq.true&select=' + COLONNES_PROFIL_FICHE, null, ATTENTE_FICHE),
     lireSupabase('model_photos?model_id=eq.' + id + '&select=' + COLONNES_PHOTOS_FICHE + '&order=principale.desc,created_at.asc', null, ATTENTE_FICHE),
-    lireSupabase('rpc/ages_mannequins', { ids: [id] }, ATTENTE_FICHE),
     // (100 % dynamique, 01/11/2026) aussi les expériences, le parcours avec l'agence (10 ans, comme
     // ma2mExperiencesAgence, js/app.js) et les mesures de l'Extension 121 ; manquants, la page les lit elle-même
     lireSupabase('model_projects?model_id=eq.' + id + '&select=id,model_id,type_projet,titre,periode,pays,ville,promoteur,lieu,created_at&order=created_at.desc', null, ATTENTE_FICHE).catch(() => null),
     lireSupabase('rpc/parcours_public', { p_debut: dixAnsAvant(), p_fin: new Date().toISOString().slice(0, 10), p_model: id }, ATTENTE_FICHE).catch(() => null),
     lireSupabase('model_profiles?id=eq.' + id + '&select=shoulder_cm,arm_cm,neck_cm', null, ATTENTE_FICHE).catch(() => null)
-  ]).then(([profils, photos, ages, projets, parcours, mesures]) => {
+  ]).then(([profils, photos, projets, parcours, mesures]) => {
     const profil = Array.isArray(profils) && profils[0];
     if (!profil || !Array.isArray(photos)) return null;
-    const d = { id, slug, profil, photos, age: Array.isArray(ages) ? ages[0]?.age ?? null : null };
+    const d = { id, slug, profil, photos };  // (13/11/2026) plus d'âge sur la fiche publique
     if (Array.isArray(projets)) d.projets = projets;
     if (Array.isArray(parcours)) d.parcours = parcours;
     if (Array.isArray(mesures)) d.mesures = mesures[0] || {};
@@ -759,7 +758,7 @@ async function ficheRemplie(requete, url, id, slug, anglais) {
     const projetsFusionnes = P.fusionnerExperiences(P.experiencesDepuisParcours(d.parcours || [], anglais), d.projets || []);
     const [profilPage, ...projetsPage] = anglais ? await versAnglaisServeur([Object.assign({}, d.profil, d.mesures || {}), ...projetsFusionnes], ['bio', 'type_projet']) : [Object.assign({}, d.profil, d.mesures || {}), ...projetsFusionnes];
     const vues = P.photosAffichees(d.photos);
-    const dessin = globalThis.RenduFiche.fiche({ profil: profilPage, photos: d.photos, projets: projetsPage, age: d.age != null ? d.age : '' }, {
+    const dessin = globalThis.RenduFiche.fiche({ profil: profilPage, photos: d.photos, projets: projetsPage }, {
       en: anglais, urlLegere: photoLegere,
       photoHero: vues.couverture ? photoLegere(vues.couverture.url_moyenne || vues.couverture.url) : '/assets/logo-dark-bg.png',
       photoAvatar: vues.profil ? photoLegere(vues.profil.url_miniature || vues.profil.url) : '/assets/logo-dark-bg.png' });

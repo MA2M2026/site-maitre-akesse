@@ -1,7 +1,7 @@
 // Fiche d'un mannequin plus rapide (28/10/2026, la propriétaire attendait la photo sur tablette) :
 // photos, expériences, mesures et adresse sont demandées EN MÊME TEMPS que le profil, et une seule
 // fois chacune. Le profil répond ici lentement (1,2 s) : les photos doivent être demandées avant. Base simulée.
-// 31/10/2026 : l'âge et la GRANDE PHOTO elle-même partent aussi sans attendre le profil ; par l'adresse
+// 31/10/2026 : la GRANDE PHOTO elle-même part aussi sans attendre le profil (l'âge n'est plus demandé depuis le 13/11/2026) ; par l'adresse
 // /book/… l'identité du mannequin n'est demandée qu'une fois (fiche et compteur de visites).
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { tables, rpc } = require('./pages-publiques');
@@ -29,7 +29,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await p.waitForFunction(() => /Awa Koné/.test(document.getElementById('contenu')?.textContent || ''), null, { timeout: 15000 });
     ok(quand.model_photos && profilRepondu && quand.model_photos < profilRepondu, page + ' ' + vp.width + 'px : photos demandées sans attendre le profil');
     ok(quand.model_projects && quand.model_projects < profilRepondu, page + ' ' + vp.width + 'px : expériences demandées sans attendre le profil');
-    ok(quand.ages_mannequins && quand.ages_mannequins < profilRepondu, page + ' ' + vp.width + 'px : âge demandé sans attendre le profil');
+    ok(!quand.ages_mannequins, page + ' ' + vp.width + 'px : l’âge n’est plus demandé à la base (13/11/2026)');
     ok(quand.photo && quand.photo < profilRepondu, page + ' ' + vp.width + 'px : la grande photo part sans attendre le profil');
     if (/book/.test(page)) ok(nombre.identite === 1, page + ' : identité du mannequin demandée une seule fois (' + nombre.identite + ')');
     ok(nombre.model_photos === 1 && nombre.model_projects === 1, page + ' ' + vp.width + 'px : chaque demande ne part qu’une fois (photos ' + nombre.model_photos + ', expériences ' + nombre.model_projects + ')');

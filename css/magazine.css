@@ -71,6 +71,8 @@
 
 /* ---- 1 · Couverture ---- */
 .p-couv { color: var(--mag-sur-photo); }
+/* (13/11/2026, demande de la propriétaire) en attendant la photo (rechargement), du NOIR et non du rouge */
+.p-couv, .p-couv .mag-cadre { background: var(--voile-photo-a100); }
 .p-couv .mag-cadre { position: absolute; inset: 0; }
 .p-couv .mag-cadre img { position: absolute; inset: 0; object-position: 50% 25%; opacity: 0; transition: opacity 1.4s ease; }
 /* défilement des photos de couverture (js/accueil.js) : deux images qui se relaient en fondu */

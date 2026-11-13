@@ -43,7 +43,12 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     let t = await texte();
     ok(t.includes('KOUASSI MARIE') && t.includes('AWA DIALLO') && !t.includes('ANCIENNE ÉLÈVE'), n + '« À traiter » : les 2 inscriptions en cours, pas la terminée');
     ok(/Mineure/.test(t) && t.includes('Mme Kouassi') && t.includes('10 séances') && t.includes('250 000 FCFA'), n + 'fiche : mineure avec son parent, 10 séances, 250 000 FCFA');
-    ok(await p.locator('.ct-fiche[data-id="t1"] a[href="https://drive.google.com/p2"]').count() === 1 && await p.locator('.ct-fiche[data-id="t1"] a[href="https://drive.google.com/v1"]').count() === 1, n + 'photos et vidéo de la marche à ouvrir');
+    // (13/11/2026) les photos sont AFFICHÉES dans la fiche (plus de simples boutons) et s'agrandissent d'un appui ;
+    // la vidéo reste un bouton
+    ok(await p.locator('.ct-fiche[data-id="t1"] .galerie-dossier img[src="https://drive.google.com/p2"]').count() === 1 && await p.locator('.ct-fiche[data-id="t1"] a[href="https://drive.google.com/v1"]').count() === 1, n + 'photos affichées dans la fiche et vidéo de la marche');
+    await p.click('.ct-fiche[data-id="t1"] [data-action="talons-photo-voir"][data-index="1"]'); await p.waitForTimeout(500);
+    ok(await p.evaluate(() => !!document.querySelector('.lightbox.active, .lightbox-global.active, [class*="lightbox"].active, [class*="lightbox"][class*="ouvert"]')), n + 'une photo s’agrandit d’un appui');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(300);
     const wave = await p.getAttribute('.ct-fiche[data-id="t1"] a:has-text("Envoyer le lien Wave")', 'href');
     ok(/^https:\/\/wa\.me\/2250701020304\?text=/.test(wave) && decodeURIComponent(wave).includes('?amount=250000') && /T_123/.test(t), n + 'lien Wave envoyé sur WhatsApp avec le bon montant ; référence Wave affichée');
     // date et notes

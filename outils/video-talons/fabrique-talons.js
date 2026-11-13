@@ -12,6 +12,8 @@
 const fs = require('fs'); const path = require('path'); const { execFileSync } = require('child_process');
 const ICI = __dirname, VOIX = process.env.VOIX, IMAGES = process.env.IMAGES, MUSIQUE = process.env.MUSIQUE;
 const FILM = process.env.FILM || 'film-talons.html', NOM = process.env.NOM || 'atelier-talons-elegance';
+// (13/11/2026) le son finit exactement à DUREE (apad + atrim) : avant, la normalisation (loudnorm, 3 s d'avance)
+// et le mélange des effets (duration=first) coupaient les 3 dernières secondes de la musique.
 // volumes (11/11/2026, demandes de la propriétaire : « augmente la voix, diminue la musique ») : musique 0,22 sous la
 // voix (0,5 au départ), voix renforcée × 1,5 (+3,5 dB), le limiteur final évite toute saturation
 const VOLUME = process.env.VOLUME_MUSIQUE || '0.2', VOLUME_VOIX = process.env.VOLUME_VOIX || '2';
@@ -31,7 +33,7 @@ function faireSon() {
   const son = path.join(IMAGES, 'son.m4a');
   const filtre = MUSIQUE
     ? '[0:a]aresample=48000,apad,atrim=0:' + DUREE + ',asplit=2[voix][cle];[1:a]aresample=48000,aloop=loop=-1:size=2e9,atrim=0:' + DUREE + ',volume=' + VOLUME + ',afade=t=in:d=2,afade=t=out:st=' + (DUREE - 3.5) + ':d=3.5[mus];' +
-      '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix]volume=' + VOLUME_VOIX + '[voixf];[voixf][musd]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.2:LRA=9,alimiter=limit=0.95[a]'
+      '[mus][cle]sidechaincompress=threshold=0.025:ratio=5:attack=30:release=600[musd];[voix]volume=' + VOLUME_VOIX + '[voixf];[voixf][musd]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.2:LRA=9,alimiter=limit=0.95,apad,atrim=0:' + DUREE + '[a]'
     : '[0:a]aresample=48000,apad,atrim=0:' + DUREE + '[a]';
   // effets sonores (SONS=1 : sons/*.mp3 aux instants de window.EFFETS, enregistrés dans IMAGES/effets.json)
   const fe = path.join(IMAGES, 'effets.json'), effets = process.env.SONS && fs.existsSync(fe) ? JSON.parse(fs.readFileSync(fe, 'utf8')) : [];
@@ -40,8 +42,8 @@ function faireSon() {
   if (effets.length) {
     const base = MUSIQUE ? 2 : 1;
     effets.forEach((e) => entrees.push('-i', path.join(ICI, 'sons', e.son + '.mp3')));
-    f2 = filtre.replace(/\[a\]$/, '[pre]') + ';' + effets.map((e, i) => '[' + (base + i) + ':a]aresample=48000,aformat=channel_layouts=stereo,volume=' + (VOL[e.son] || 0.5) + ',adelay=' + Math.round(e.t * 1000) + ':all=1[e' + i + ']').join(';') +
-      ';[pre]' + effets.map((e, i) => '[e' + i + ']').join('') + 'amix=inputs=' + (effets.length + 1) + ':normalize=0:duration=first,alimiter=limit=0.95[a]';
+    f2 = filtre.replace(/\[a\]$/, '[pre]') + ';' + effets.map((e, i) => '[' + (base + i) + ':a]aresample=48000,aformat=channel_layouts=stereo,volume=' + (e.vol || VOL[e.son] || 0.5) + ',adelay=' + Math.round(e.t * 1000) + ':all=1[e' + i + ']').join(';') +
+      ';[pre]' + effets.map((e, i) => '[e' + i + ']').join('') + 'amix=inputs=' + (effets.length + 1) + ':normalize=0:duration=longest,alimiter=limit=0.95,apad,atrim=0:' + DUREE + '[a]';
   }
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', ...entrees, '-filter_complex', f2, '-map', '[a]', '-c:a', 'aac', '-b:a', '128k', son]);
   return son;
@@ -51,9 +53,9 @@ if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.ex
 
 (async () => {
   const { chromium } = require('playwright');
-  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: L, height: H } });
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: L, height: H }, deviceScaleFactor: Number(process.env.ECHELLE || 1) });  // ECHELLE=2 : images 4K (3840 × 2160) pour YouTube
   const erreurs = []; p.on('pageerror', (e) => erreurs.push(e.message));
-  await p.goto('file://' + ICI + '/' + FILM + (FORMAT === 'large' ? '?format=large' : '')); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1200);
+  await p.goto('file://' + ICI + '/' + FILM + (FORMAT === 'large' ? '?format=large' : '')); await p.evaluate(() => document.fonts.ready); await p.evaluate(() => window.PRET); await p.waitForTimeout(1200);
   const manques = await p.evaluate(() => window.MANQUES);
   fs.writeFileSync(path.join(IMAGES, 'effets.json'), JSON.stringify(await p.evaluate(() => window.EFFETS || [])));
   if (erreurs.length || manques.length) { console.error('ERREURS', erreurs, 'MOTS INTROUVABLES', manques); process.exit(1); }

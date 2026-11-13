@@ -57,10 +57,8 @@ async function chargerProfilInterne() {
     ma2mExperiencesAgence(id, serveur && Array.isArray(serveur.parcours) ? serveur.parcours : null)
   ]);
   const demandeMesures = serveur && serveur.mesures ? Promise.resolve(serveur.mesures) : window.ma2mMesuresSupp(id);
-  // l'âge aussi, en même temps (31/10/2026 : il était demandé après tout le reste)
-  const demandeAge = serveur ? Promise.resolve({ data: [{ age: serveur.age }] }) : Promise.resolve(sb.rpc('ages_mannequins', { ids: [id] }));
   // une demande abandonnée (profil non publié) ne doit pas laisser d'erreur non gérée
-  [demandePhotos, demandeProjets, demandeMesures, demandeAge].forEach((d) => { d.catch(() => {}); });
+  [demandePhotos, demandeProjets, demandeMesures].forEach((d) => { d.catch(() => {}); });
   // La grande photo part dès que la liste des photos arrive, sans attendre le reste (31/10/2026 :
   // elle ne commençait qu'au bout de ≈ 5 s sur téléphone) ; le navigateur la garde pour l'affichage.
   if (!serveur) demandePhotos.then(({ data }) => {  // (préparée par le serveur : déjà annoncée dans la page)
@@ -130,22 +128,15 @@ async function chargerProfilInterne() {
   const photoHero = vues.couverture ? urlLegere(vues.couverture.url_moyenne || vues.couverture.url) : premierePhoto;
   // (12/11/2026, demande de la propriétaire) la photo de profil, toujours visible en rond sur la fiche
   const photoAvatar = vues.profil ? urlLegere(vues.profil.url_miniature || vues.profil.url) : '';
-  // Âge seulement, jamais la date de naissance (décision de la propriétaire, 06/10/2026) :
-  // la base calcule l'âge (fonction ages_mannequins, extension 114) et la date n'est plus
-  // lisible par les visiteurs (extension 114 installée le 06/10/2026).
-  let age = '';
-  try {
-    const { data: ages } = await demandeAge;
-    if (Array.isArray(ages) && ages[0] && ages[0].age != null) age = ages[0].age;
-  } catch (e) {}
+  // (13/11/2026, décision de la propriétaire) plus d'âge sur la fiche publique : il n'est plus demandé à la base.
 
   // Conservé pour le générateur de fiche PDF (comp card), déclenché plus tard
   // par un clic — évite de refaire les mêmes requêtes à ce moment-là.
-  ficheData = { profil, photos: photos || [], projets: projets || [], age };
+  ficheData = { profil, photos: photos || [], projets: projets || [] };
 
   const imageDejaLa = contenu.querySelector('[data-couv-img]');
   const apercuDejaLa = contenu.querySelector('.hero-apercu');  // (photo de la carte du Book, posée par le serveur)
-  const dessin = window.RenduFiche.fiche({ profil, photos, projets, age }, { en: EN, urlLegere, photoHero, photoAvatar, selectionne: estDansSelection(id) });
+  const dessin = window.RenduFiche.fiche({ profil, photos, projets }, { en: EN, urlLegere, photoHero, photoAvatar, selectionne: estDansSelection(id) });
   contenu.innerHTML = dessin.contenu;
   const contactBas = document.getElementById('fiche-contact-bas');
   if (contactBas) contactBas.innerHTML = dessin.contact;

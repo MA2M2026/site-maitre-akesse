@@ -4919,3 +4919,64 @@ moyens, sans document). Essai : test-liens-serveur.js.
   + 12 px ; sur téléphone et tablette (≤ 860 px), `.retour-haut`, `.whatsapp-flottant`, `.fiche-barre`, `.panier-widget` et
   `.envoi-a-finir` montent d'autant (`translate`, sans saut d'affichage). **Tout nouveau bouton collé en bas doit être ajouté à
   cette liste** (css/style.css). Essai : test-cookies-boutons.js.
+
+## Vidéo et carrousel « Alicia Kouadio — La juste mesure » (13/11/2026, demande de la propriétaire)
+
+**Méthode complète et modèle à suivre pour toute nouvelle vidéo : `outils/video-talons/GUIDE-VIDEOS.md`**
+(outils : `apercu.js` pour les images d'essai, `assembler.sh` pour le MP4 final ; âge retiré des vidéos à la demande
+de la propriétaire).
+
+Communication de la semaine du 16/11/2026 (à la place d'André Dominique, programmée par la propriétaire dans
+Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 1,69 m, en racontant son histoire.
+- **Film** `outils/video-talons/film-alicia.html` : moteur PROPRE à ce film (indépendant de `moteur-film.css/js`,
+  dont les classes `.abs`, `.carte`, `.trait`… entraient en conflit) ; il fournit `window.rendre(t)`,
+  `window.EFFETS` (sons `sons/a-*.mp3` avec leur volume `vol`), `window.MANQUES` et `window.PRET` (toutes les images
+  chargées et décodées, attendu par `fabrique-talons.js` avant la première image). 23 scènes calées au mot près sur
+  la voix « Victoria » fournie par la propriétaire (texte `voix-alicia.json`, `aligner-voix.py`) ; musique
+  `alicia/musique.mp3` (ElevenLabs Music), photos de son book `alicia/p00…p13.jpg`, détourages rembg
+  `alicia/d-*.png`, compcard officielle téléchargée de sa fiche `alicia/compcard.jpg`.
+  Rendu : `FILM=film-alicia.html NOM=alicia-kouadio SONS=1 HD=1 VOIX=<dossier aligner-voix> MUSIQUE=alicia/musique.mp3
+  IMAGES=<dossier vide> node fabrique-talons.js [vertical|large]` (vertical 1080 × 1920 pour TikTok / Reels,
+  horizontal 1920 × 1080 pour YouTube).
+- **Carrousel** Instagram / Facebook : `outils/video-talons/carrousel-alicia.html?n=1…8` (1080 × 1350), rendu par
+  Chromium en 8 images (couverture, 5 photos avec une phrase, compcard, carte « Réservez Alicia »).
+- **Teaser** (bande-annonce, scénario de la propriétaire) : `outils/video-talons/film-teaser-alicia.html`, voix
+  `voix-teaser.json`, musique `alicia/musique-teaser.wav` (ElevenLabs Music composée par sections, puis creusée en
+  silence juste avant le nom ; source `musique-teaser-source.mp3`), bandes de cinéma en horizontal.
+  `FILM=film-teaser-alicia.html NOM=alicia-teaser SONS=1 HD=1 VOLUME_MUSIQUE=0.32 MUSIQUE=alicia/musique-teaser.wav …`
+- `fabrique-talons.js` (13/11/2026) : le son finit exactement à la durée du film (`apad` + `atrim`) ; avant, la
+  normalisation et le mélange des effets coupaient les 3 dernières secondes de musique.
+- Les fichiers finaux (vidéos, images, textes des publications) sont remis à la propriétaire, pas mis sur le site.
+
+## Fiche publique sans âge, menu sans son (13/11/2026, décisions de la propriétaire)
+
+- **Âge retiré de la fiche publique** (cadre professionnel : l'âge peut écarter une mannequin sans raison, c'est une
+  donnée personnelle ; l'agence le donne au client qui le demande). `js/rendu-fiche.js` ne l'affiche plus (ni sous le
+  nom, ni dans les mesures), `js/fiche-mannequin.js` et `middleware.js` ne le demandent plus. La fonction `ages_mannequins` n'est plus appelée
+  par le site ; son accès public (anon) est à retirer dans la base (`supabase-age-prive.sql`, à coller par la propriétaire). Tests : `test-fiche-serveur.js`, `test-fiche-premium.js`,
+  `test-fiche-rapide.js` vérifient qu'il n'apparaît plus et n'est plus demandé.
+- **Plus de son à l'ouverture du menu** (`js/menu.js` ; le son « menu » de `window.jouerSon`, js/app.js, est supprimé ;
+  restent « entrée », « cœur » et « envoi »). Test : `test-menu-clavier.js` vérifie qu'aucun son n'est joué.
+
+## Accueil : fond noir en attendant la photo ; photos qui défilent sur les pages « luxe » (13/11/2026, demandes de la propriétaire)
+
+- **Accueil** : au rechargement, la couverture montrait un fond rouge (`--mag-attente`) avant la photo. La couverture
+  (`.p-couv` et son cadre, css/magazine.css) a maintenant un fond **noir** (`--voile-photo-a100`, permis par le gardien
+  des couleurs : il est posé sous une photo).
+- **Intégrer l'agence et Atelier talons (FR/EN)** : la grande photo du haut, les 3 photos de la galerie et la photo du
+  défilé **défilent en boucle en fondu** (`js/diaporama-luxe.js`, une copie pour les 4 pages ; liste `PHOTOS` = les
+  photos de l'agence déjà choisies pour ces pages, jamais de mineure). La nouvelle photo vient au-dessus puis
+  l'ancienne disparaît (pas de trou) ; seulement quand la section est à l'écran ; rien ne bouge si le visiteur demande
+  moins d'animations. Test : `test-diaporama-luxe.js` (aussi le fond noir de l'accueil).
+
+## Cours de talons : photos affichées et notification sur le téléphone (13/11/2026, signalement de la propriétaire)
+
+- **Photos** : la fiche d'une inscription (Administration › Cours de talons, `js/admin/site-cours-talons.js`) AFFICHE
+  désormais ses photos (Google Drive), comme les candidatures casting, et chacune s'agrandit d'un appui
+  (`ouvrirGalerieLightbox`). Outil commun `P.visageDistant` (js/admin/coque.js), aussi utilisé par les dossiers de
+  candidature (js/admin/site-dossiers.js). La vidéo de la marche reste un bouton vers Google Drive.
+- **Notification** : les inscriptions au cours de talons n'avaient jamais été branchées sur les notifications du
+  téléphone (seul l'e-mail partait). `api/notifications-webhook.js` gère maintenant la table `cours_talons`
+  (« 👠 Nouvelle inscription au cours de talons », nom et formule, ouvre la page Cours de talons) ; le déclencheur est
+  dans `supabase-notif-cours-talons.sql` (à coller par la propriétaire ; réutilise `notifier_push_notification`, aucun
+  secret à remplir). Tests : `test-notifications-app.js`, `test-admin-cours-talons.js`.

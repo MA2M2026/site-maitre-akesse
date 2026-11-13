@@ -2471,7 +2471,7 @@ function lireContenuEditeur(quill) {
 }
 
 // ================== Effets sonores ==================
-// Bruit blanc (souffle des effets « Rideau » et « Menu ») tiré par le générateur sûr du
+// Bruit blanc (souffle de l'effet « Rideau » ; le son du menu est retiré depuis le 13/11/2026) tiré par le générateur sûr du
 // navigateur, par paquets (getRandomValues accepte au plus 65 536 octets à la fois).
 function remplirBruitBlanc(donnees) {
   const paquet = new Uint32Array(16384);
@@ -2520,25 +2520,6 @@ window.jouerSon = function (nom) {
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
       souffle.connect(filtre); filtre.connect(gain); gain.connect(sortie);
       souffle.start(t); souffle.stop(t + 2);
-    } else if (nom === 'menu') {
-      // Souffle d'étoffe court, de la même famille que « Rideau » (≈ 0,4 s).
-      const taille = Math.floor(ctx.sampleRate * 0.5);
-      const tampon = ctx.createBuffer(1, taille, ctx.sampleRate);
-      const donnees = tampon.getChannelData(0);
-      remplirBruitBlanc(donnees);
-      const souffle = ctx.createBufferSource();
-      souffle.buffer = tampon;
-      const filtre = ctx.createBiquadFilter();
-      filtre.type = 'bandpass';
-      filtre.Q.value = 1;
-      filtre.frequency.setValueAtTime(700, t);
-      filtre.frequency.exponentialRampToValueAtTime(2600, t + 0.35);
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-      souffle.connect(filtre); filtre.connect(gain); gain.connect(sortie);
-      souffle.start(t); souffle.stop(t + 0.45);
     } else if (nom === 'coeur') {
       // Petite note cristalline (mi aigu + son harmonique), ≈ 0,3 s.
       [[1318.5, 0.05, 0.35], [2637, 0.012, 0.2]].forEach(([frequence, volume, duree]) => {
@@ -3535,7 +3516,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function afficher() {
-    document.getElementById('lbg-img').src = urlLegere(urls[index]);  // Cloudflare, comme la page
+    const img = document.getElementById('lbg-img');
+    // (13/11/2026) photo Google Drive (candidatures, cours de talons) : sans l'adresse de la page, sinon Drive la refuse
+    img.referrerPolicy = /^https:\/\/[\w.-]*google(usercontent)?\.com\//.test(urls[index] || '') ? 'no-referrer' : '';
+    img.src = urlLegere(urls[index]);  // Cloudflare, comme la page
     const multi = urls.length > 1;
     document.getElementById('lbg-compteur').textContent = multi ? `${index + 1} / ${urls.length}` : '';
     document.getElementById('lbg-precedent').style.display = multi ? 'flex' : 'none';
