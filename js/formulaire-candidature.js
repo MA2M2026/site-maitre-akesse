@@ -550,7 +550,7 @@ async function envoyerMedias(etat) {
     : T('Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.'), 'ok');
   if (complet) {
     await EnvoiFiable.oublier('candidature');
-    EnvoiFiable.prevenir(T('Candidature envoyée ✓', 'Application sent ✓'), T('Merci ! Votre candidature est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your application has reached Maître Akesse Model Management.'), etat.page);
+    void EnvoiFiable.prevenir(T('Candidature envoyée ✓', 'Application sent ✓'), T('Merci ! Votre candidature est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your application has reached Maître Akesse Model Management.'), etat.page);
   }
   return complet;
 }
@@ -679,7 +679,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
 
 // Reprise d'un envoi coupé (12/11/2026) : à l'ouverture de la page, s'il reste des photos ou une vidéo à envoyer
 window.MA2M_REPRISE_ICI = 'candidature';
-(async () => {
+void (async () => {
   const etat = await EnvoiFiable.lire('candidature');
   if (!etat || !etat.candidature) return;
   const msg = document.getElementById('ca-msg'), btn = document.getElementById('btn-envoyer');

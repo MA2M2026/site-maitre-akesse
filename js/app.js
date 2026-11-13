@@ -3070,7 +3070,10 @@ const EnvoiFiable = (() => {
   }
   // à appeler pendant l'appui sur « Envoyer » (le téléphone n'accepte la question qu'à ce moment-là)
   function demanderNotifications() {
-    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch (e) { /* téléphone sans notifications */ }
+    // (SonarCloud 13/11/2026 : pas de « try » autour d'une promesse ; les anciens navigateurs répondent sans promesse)
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    const reponse = Notification.requestPermission();
+    if (reponse && typeof reponse.catch === 'function') reponse.catch(() => {});
   }
   // notification seulement si la personne n'a plus la page sous les yeux (sinon, le message à l'écran suffit)
   async function prevenir(titre, texte, adresse) {

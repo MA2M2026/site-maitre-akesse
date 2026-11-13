@@ -305,7 +305,7 @@
     }
     if (!error) envoyerNotificationEmail({ name: ligne.nom + ' (cours de talons)', telephone: ligne.telephone, email: '', message: resume(ligne, etat.montant) });
     await EnvoiFiable.oublier('cours-talons');
-    EnvoiFiable.prevenir(T('Inscription envoyée ✓', 'Sign-up sent ✓'), T('Merci ! Votre inscription aux cours de talons est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your heels class sign-up has reached Maître Akesse Model Management.'), etat.page);
+    void EnvoiFiable.prevenir(T('Inscription envoyée ✓', 'Sign-up sent ✓'), T('Merci ! Votre inscription aux cours de talons est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your heels class sign-up has reached Maître Akesse Model Management.'), etat.page);
     if (window.jouerSon) window.jouerSon('envoi');
     msg.className = 'form-msg'; msg.textContent = '';
     const merci = $('ct-merci');
@@ -362,7 +362,7 @@
   montrer(1, false);  // (sans défilement au chargement)
   // Reprise d'un envoi coupé (12/11/2026) : l'inscription gardée dans le téléphone se termine toute seule
   window.MA2M_REPRISE_ICI = 'cours-talons';
-  (async () => {
+  void (async () => {
     const etat = await EnvoiFiable.lire('cours-talons');
     if (!etat || !etat.ligne) return;
     const btn = $('ct-envoyer'); btn.disabled = true;
