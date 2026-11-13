@@ -2538,6 +2538,11 @@ html.vide-mot-responsable #mot-responsable.section-reservee.u-hidden { display: 
 .bandeau-cookies a { color: var(--bordeaux-clair); text-decoration: underline; text-underline-offset: 3px; }
 .bandeau-cookies-boutons { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .bandeau-cookies .btn { padding: 0.6rem 1.3rem; border-radius: 999px; }
+/* (13/11/2026) les boutons collés en bas montent au-dessus du bandeau tant qu'il est là (hauteur posée par js/analytics-config.js ;
+   « translate » : rien ne bouge dans la page, aucun saut d'affichage) */
+:root { --hauteur-cookies: 0px; }
+/* (seulement quand le bandeau prend toute la largeur : sur ordinateur, carte centrée, il ne cache pas les boutons des côtés) */
+@media (max-width: 860px) { .retour-haut, .whatsapp-flottant, .fiche-barre, .panier-widget, .envoi-a-finir { translate: 0 calc(-1 * var(--hauteur-cookies)); } }
 @keyframes bandeau-cookies-arrivee { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .bandeau-cookies { animation: none; } }
 

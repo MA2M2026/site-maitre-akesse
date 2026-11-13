@@ -36,13 +36,22 @@ function gtag(){dataLayer.push(arguments);}
         '<div class="bandeau-cookies-boutons"><button type="button" class="btn" data-cookies="non">Decline</button><button type="button" class="btn btn--principal" data-cookies="oui">Accept</button></div>'
       : '<p>Nous utilisons des cookies de mesure d’audience (Google Analytics) pour améliorer le site. Aucune publicité. <a href="/politique-confidentialite.html#cookies">En savoir plus</a></p>' +
         '<div class="bandeau-cookies-boutons"><button type="button" class="btn" data-cookies="non">Refuser</button><button type="button" class="btn btn--principal" data-cookies="oui">Accepter</button></div>';
+    // (13/11/2026, revue de nuit) tant que le bandeau est là, les boutons collés en bas (« Réserver » et « Compcard » de la
+    // fiche, retour en haut, WhatsApp, sélection) montent au-dessus de lui au lieu d'être cachés (--hauteur-cookies, css/style.css)
+    const reserver = function () { document.documentElement.style.setProperty('--hauteur-cookies', bandeau.isConnected ? (bandeau.offsetHeight + 12) + 'px' : '0px'); };
     bandeau.addEventListener('click', function (e) {
       const bouton = e.target.closest('[data-cookies]');
       if (!bouton) return;
       enregistrer(bouton.dataset.cookies);
       bandeau.remove();
+      if (observateur) observateur.disconnect();
+      reserver();
     });
     document.body.appendChild(bandeau);
+    reserver();
+    // (hauteur remesurée quand les styles arrivent ou que l'écran tourne ; sans ResizeObserver : à la fin du chargement)
+    const observateur = window.ResizeObserver ? new ResizeObserver(reserver) : null;
+    if (observateur) observateur.observe(bandeau); else window.addEventListener('load', reserver);
   }
 
   // (08/11/2026, phase 3 V1) bandeau affiché dès que la page commence à s'afficher, sans attendre la fin du chargement de

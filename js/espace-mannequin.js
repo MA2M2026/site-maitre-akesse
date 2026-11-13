@@ -496,15 +496,32 @@ const Store = {
       .select(sansChampsPrives('id, full_name, bio, height_cm, weight_kg, city, quartier, instagram, published, created_at, category, chest_cm, waist_cm, hips_cm, shoe_size, carnation, clothing_size, date_naissance, eye_color, hair_color, years_experience, niveau_mannequin, model_types, languages, availability, inseam_cm, featured, premiere_publication_faite, en_attente_validation, raison_refus, niveau_etude, etablissement, formation_particuliere, formation_mannequin, competences, citation, ville_naissance, lieu_naissance, nationalite'))
       .eq('id', currentUser.id).maybeSingle();
     if (e1) { console.error(e1); toast('Erreur de chargement du profil', true); return emptyState(); }
-    await completerProfilsPrives(profile); // date de naissance, quartier… (Extension 131)
-
-    const { data: contactPriveRows } = await sb.rpc('mon_contact_prive');
+    // (13/11/2026, revue de nuit : la page mettait ~7,5 s à s'ouvrir, 13 lectures l'une après l'autre) les lectures
+    // indépendantes partent TOUTES EN MÊME TEMPS ; chacune reste facultative (une table ou une colonne absente ne bloque rien)
+    const sansErreur = (q) => Promise.resolve(q).then((r) => r, (e) => ({ data: null, error: e }));
+    const lectures = Promise.all([
+      sansErreur(sb.rpc('mon_contact_prive')),
+      sansErreur(sb.from('contacts_parents').select('parent_nom, parent_telephone, parent_email').eq('model_id', currentUser.id).maybeSingle()),
+      sansErreur(sb.from('model_profiles').select('civilite').eq('id', currentUser.id).maybeSingle()),
+      sansErreur(sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle()),
+      sansErreur(sb.from('model_profiles').select('desactive').eq('id', currentUser.id).maybeSingle()),
+      Promise.resolve(ma2mMesuresSupp(currentUser.id)).catch(function(){ return {}; }),
+      sansErreur(sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true })),
+      Promise.resolve(ma2mExperiencesAgence(currentUser.id)).catch(function(){ return []; }),
+      sansErreur(sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true })),
+      sansErreur(sb.from('fiche_evenement').select('*').eq('model_id', currentUser.id).maybeSingle()),
+      // (date de naissance, quartier… : SANS repli — si cette lecture échoue, la page ne s'ouvre pas, comme avant, plutôt que de
+      // montrer des cases vides qu'un enregistrement effacerait ; Extension 131)
+      completerProfilsPrives(profile)
+    ]);
+    const [rContact, rParent, rCiv, rSansInsta, rSourdine, supp, rExps, expsAgence, rPhotos, rFiche] = await lectures;
+    const contactPriveRows = rContact.data;
     const contactPrive = contactPriveRows && contactPriveRows[0] ? contactPriveRows[0] : null;
 
     const s = mapProfileFromDb(profile, contactPrive);
 
     // Contacts du parent (vide tant que l'Extension 129 n'est pas exécutée).
-    const { data: parent } = await sb.from('contacts_parents').select('parent_nom, parent_telephone, parent_email').eq('model_id', currentUser.id).maybeSingle();
+    const parent = rParent.data;
     if (parent) {
       // « Madame Kouassi Marie » : la civilité est rangée devant le nom (comme dans les formulaires).
       const nomComplet = parent.parent_nom || '';
@@ -513,26 +530,26 @@ const Store = {
     }
 
     // Civilité lue à part : vide tant que l'Extension 132 n'est pas exécutée, sans rien bloquer.
-    const { data: rowCiv, error: eCiv } = await sb.from('model_profiles').select('civilite').eq('id', currentUser.id).maybeSingle();
+    const { data: rowCiv, error: eCiv } = rCiv;
     s.civilite = (!eCiv && rowCiv && rowCiv.civilite) || '';
-    const { data: rowSansInsta, error: eSansInsta } = await sb.from('model_profiles').select('sans_instagram').eq('id', currentUser.id).maybeSingle();
+    const { data: rowSansInsta, error: eSansInsta } = rSansInsta;
     s.sansInstagram = !eSansInsta && !!(rowSansInsta && rowSansInsta.sans_instagram); // faux tant que l'Extension 126 n'est pas exécutée
 
     // Mise en sourdine par l'agence (Extension 135) : lue à part, pour qu'une base sans
     // la colonne ne bloque jamais l'Espace.
-    const { data: rowSourdine, error: eSourdine } = await sb.from('model_profiles').select('desactive').eq('id', currentUser.id).maybeSingle();
+    const { data: rowSourdine, error: eSourdine } = rSourdine;
     s.meta.desactive = !eSourdine && !!(rowSourdine && rowSourdine.desactive);
 
-    const supp = await ma2mMesuresSupp(currentUser.id); // vide si l'Extension 121 n'est pas encore exécutée
+    // (supp : vide si l'Extension 121 n'est pas encore exécutée)
     Object.assign(s.physique, { epaules: supp.shoulder_cm ?? '', bras: supp.arm_cm ?? '', cou: supp.neck_cm ?? '' });
     s.physique.tailleVet = tailleGeneraleCalculee(s.physique, s.identite.sexe);
 
-    const { data: exps } = await sb.from('model_projects').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
+    const exps = rExps.data;
     s.experiences = (exps||[]).map(experienceDepuisBase);
     // Projets réalisés avec l'agence : ajoutés automatiquement à ses expériences (js/app.js)
-    s.experiencesAgence = (await ma2mExperiencesAgence(currentUser.id).catch(function(){ return []; })).map(experiencePourCv);
+    s.experiencesAgence = (expsAgence || []).map(experiencePourCv);
 
-    const { data: photos } = await sb.from('model_photos').select('*').eq('model_id', currentUser.id).order('created_at', { ascending:true });
+    const photos = rPhotos.data;
     (photos||[]).forEach(function(p){
       const item = photoDuBook(p);
       s.photos.book.push(item);
@@ -542,10 +559,10 @@ const Store = {
       if (p.photo_couverture) s.photos.couverture = item;
     });
 
-    try {
-      const { data: fe } = await sb.from('fiche_evenement').select('*').eq('model_id', currentUser.id).maybeSingle();
+    {
+      const fe = rFiche.data;  // (table pas encore créée : champs vides)
       if (fe) s.ficheEvenement = { tailleHaut: fe.taille_haut||'', tailleBas: fe.taille_bas||'', regime: fe.regime_allergies||'', tiktok: fe.tiktok||'', facebook: fe.facebook||'', droitImage: fe.droit_image };
-    } catch(e) { /* table pas encore créée : champs vides */ }
+    }
 
     return s;
   },
