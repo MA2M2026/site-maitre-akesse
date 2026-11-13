@@ -21,7 +21,8 @@ alter table cachets_mannequins add column if not exists moyen text check (moyen 
 alter table cachets_mannequins add column if not exists impot_id uuid references compta_impots(id);
 
 -- Le calcul est fait par la base : commission, puis impôts et frais retenus. Le montant versé (montant) est le net.
--- (Même version dans supabase-cachets-commission.sql, pour qu’un nouveau collage ne la remplace pas.)
+-- (Sans commission, le montant saisi est le cachet, impôts et frais en sont retirés aussi.)
+-- (Version à jour : supabase-cachets-commission.sql renvoie ici, à recoller APRÈS lui.)
 create or replace function cachet_commission()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
@@ -38,6 +39,8 @@ begin
   NEW.impots := coalesce(NEW.impots, 0);
   if NEW.montant_prestation is null then
     NEW.commission_taux := null; NEW.commission := null;
+    NEW.montant := NEW.montant - NEW.impots - NEW.frais_total;
+    if NEW.montant < 1 then raise exception 'Après les impôts et les frais, il ne reste rien à verser.'; end if;
     return NEW;
   end if;
   select commission_taux into taux from compta_reglages where id = 1;
@@ -71,11 +74,44 @@ begin
       returning id into i;
   end if;
   update cachets_mannequins set moyen = p_moyen, impot_id = i where id = p_id;
+  update compta_ecritures set moyen = p_moyen where id = e;
   return e;
 end;
 $$;
 revoke all on function cachet_payer_moyen(uuid, uuid, text, text) from public, anon;
 grant execute on function cachet_payer_moyen(uuid, uuid, text, text) to authenticated;
+
+-- Paiement d’un cachet annulé en comptabilité (dépense annulée) : le cachet revient à payer, sa recette est annulée,
+-- et la retenue d’impôt pas encore reversée est annulée aussi (sinon elle serait comptée deux fois au nouveau paiement).
+create or replace function cachet_depense_annulee()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  r uuid;
+  i uuid;
+begin
+  if NEW.annule and not OLD.annule then
+    if exists (select 1 from cachets_mannequins where recette_id = NEW.id and statut = 'paye') then
+      raise exception 'Recette d''un cachet payé : annulez la dépense du cachet, la recette sera annulée avec elle.';
+    end if;
+    select recette_id, impot_id into r, i from cachets_mannequins where ecriture_id = NEW.id and statut = 'paye';
+    update cachets_mannequins set statut = 'a_payer', mode = null, compte_id = null, ecriture_id = null, recette_id = null, paye_le = null, paye_par = null,
+      reference_wave = null, moyen = null, impot_id = null
+      where ecriture_id = NEW.id and statut = 'paye';
+    if r is not null then
+      update compta_ecritures set annule = true, motif_annulation = left('Cachet : paiement annulé — ' || coalesce(NEW.motif_annulation, ''), 300) where id = r and not annule;
+    end if;
+    if i is not null then
+      if exists (select 1 from compta_impots where id = i and ecriture_id is null and not annule) then
+        update compta_impots set annule = true, motif_annulation = left('Cachet : paiement annulé — ' || coalesce(NEW.motif_annulation, ''), 300) where id = i;
+      else
+        perform journaliser('Cachet : paiement annulé, mais sa retenue d''impôt est déjà reversée : à régulariser', 'compta_impots', i::text, null, null);
+      end if;
+    end if;
+  end if;
+  return NEW;
+end;
+$$;
+revoke all on function cachet_depense_annulee() from public, anon, authenticated;
 
 -- Le reçu montre maintenant tout le détail (commission comprise, à la demande de la propriétaire)
 drop function if exists cachet_recu_lire(uuid);

@@ -10,6 +10,8 @@
     virement: 'Virement bancaire', cheque: 'Chèque', especes: 'Espèces', avant_systeme: 'Avant le nouveau système' };
   const PREPARES = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement'];
   const MOBILE = ['orange_money', 'mtn_money', 'moov_money'];
+  // tous les moyens d'un paiement fait ou reçu par l'agence (cachets, clients), dans cet ordre partout
+  const TOUS = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement', 'cheque', 'especes'];
   const esc = (s) => window.echapperHtml(s == null ? '' : s);  // (js/app.js)
   const fcfa = (n) => window.CachetsMa2m.fcfa(n);  // (js/cachets-communs.js, chargé avant)
   const nom = (code) => NOMS[code] || code || '';
@@ -51,5 +53,5 @@
     return libre;
   }
 
-  window.MoyensPaiement = { NOMS, PREPARES, MOBILE, nom, charger, choix, consigne };
+  window.MoyensPaiement = { NOMS, PREPARES, MOBILE, TOUS, nom, charger, choix, consigne };
 })();

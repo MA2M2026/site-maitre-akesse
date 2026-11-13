@@ -120,7 +120,7 @@
       return l.length ? l.map((c) => P.barre(RECETTES[c[0]] || DEPENSES[c[0]] || AUTRES[c[0]] || c[0], c[1], total, rouge)).join('') : '<p class="doux">Rien pour le moment.</p>';
     };
     const sansJustif = liste.filter((e) => e.sens === 'depense' && !e.annule && !e.justificatif).length;
-    const reglage = await reglageTva(), legal = !!reglage.mode_legal;
+    const reglage = await (P.etat.reglageTva = reglageTva()), legal = !!reglage.mode_legal;
     const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal (factures officielles)' : 'Factures internes, non déclarées') + '</h2><p class="doux">' +
       (legal ? 'Factures complètes, TVA et FNE actives.' : 'Les factures sont des documents internes « non fiscaux ». La FNE et la TVA sont prévues et s’activeront avec le mode légal.') +
       '</p><a class="btn petit rouge" href="#/compta/identite">' + (legal ? 'Voir l’identité de l’agence' : 'Identité de l’agence →') + '</a></div>';
@@ -155,7 +155,7 @@
   // Le choix du moyen (noms : js/moyens-paiement.js) place le bon compte : espèces → caisse, Wave → Wave, Orange/MTN/
   // Moov → autre mobile money, carte, virement et chèque → banque (s'il existe). Colonne compta_ecritures.moyen
   // (supabase-paiements-officiels.sql). Recette : la part de TVA de la somme s'affiche (même calcul que le tableau).
-  const MOYENS = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement', 'cheque', 'especes'];
+  const MOYENS = window.MoyensPaiement ? window.MoyensPaiement.TOUS : ['wave', 'especes'];
   const TYPE_DU_MOYEN = { especes: 'caisse', wave: 'wave', carte: 'banque', virement: 'banque', cheque: 'banque' };
   const nomMoyen = (k) => (window.MoyensPaiement ? window.MoyensPaiement.nom(k) : k);
   const champMoyen = (id, compteId, recette) => '<label class="fl" for="' + id + '">' + (recette ? 'Payé par le client avec' : 'Payé avec') + '<select id="' + id + '" name="moyen" data-change="compta-moyen" data-compte="' + compteId + '">' +
@@ -164,6 +164,8 @@
     const sel = document.getElementById(el.getAttribute('data-compte')), type = TYPE_DU_MOYEN[el.value] || (el.value ? 'mobile_money' : '');
     const o = sel && type && [...sel.options].find((x) => x.getAttribute('data-type') === type);
     if (o) sel.value = o.value;
+    // (pas de compte de ce type : on le dit, plutôt que de garder sans rien dire le compte choisi avant)
+    else if (sel && type) P.message('Aucun compte « ' + ({ caisse: 'Caisse', wave: 'Wave', banque: 'Banque', mobile_money: 'Autre mobile money' }[type] || type) + ' » : choisissez le compte qui reçoit l’argent, ou créez-le dans Trésorerie.');
   };
   // « dont TVA » d'une somme encaissée (prévision avant le mode légal)
   const noteTva = (id) => '<p class="doux petit-texte large" id="' + id + '" role="status"></p>';
@@ -171,7 +173,8 @@
     const z = document.getElementById(el.getAttribute('data-note')), m = Math.round(Number(el.value) || 0);
     if (!z) return;
     if (!(m > 0)) { z.textContent = ''; return; }
-    const r = P.etat.reglageTva || (P.etat.reglageTva = await reglageTva()), taux = r.tva_taux == null ? 18 : r.tva_taux, x = separerTva(m, taux);
+    // (réglage relu à chaque ouverture d'écran ou de fenêtre : un changement de taux ou le mode légal est pris aussitôt)
+    const r = await (P.etat.reglageTva || (P.etat.reglageTva = reglageTva())), taux = r.tva_taux == null ? 18 : r.tva_taux, x = separerTva(m, taux);
     z.textContent = 'Dont chiffre d’affaires hors taxes ' + P.fcfa(x.ht) + ' et TVA ' + P.fcfa(x.tva) + ' (' + tauxTexte(taux) + (r.mode_legal ? ', à reverser)' : ', prévision)');
   };
   const optionsCategories = (cats) => Object.keys(cats).map((k) => '<option value="' + k + '">' + P.esc(cats[k]) + '</option>').join('');
@@ -181,7 +184,7 @@
     const recette = sens === 'recette';
     return async () => {
       const m = moisChoisi();
-      const [liste, cpts, reglage] = await Promise.all([ecritures(m, sens), comptes(true), recette ? reglageTva() : null]);
+      const [liste, cpts, reglage] = await Promise.all([ecritures(m, sens), comptes(true), recette ? (P.etat.reglageTva = reglageTva()) : null]);
       const noms = {};
       cpts.forEach((c) => { noms[c.id] = c.nom; });
       P.etat.comptaListe = liste;

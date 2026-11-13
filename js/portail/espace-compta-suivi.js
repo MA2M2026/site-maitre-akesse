@@ -79,6 +79,7 @@
     const d = trouver(el.getAttribute('data-id'));
     if (!d) return;
     const cpts = await C.comptes(false);
+    P.etat.reglageTva = null;  // (taux de TVA relu pour cette fenêtre)
     P.fenetre('<form data-form="compta-regler" data-id="' + d.id + '" class="grille" style="gap:12px"><h2>' + (d.sens === 'creance' ? 'Encaisser' : 'Payer') + '</h2>' +
       '<p class="doux">' + P.esc(d.libelle) + ' · reste ' + P.fcfa(d.reste) + '</p>' +
       // (13/11/2026) client : moyen utilisé (mobile money, Visa, virement, chèque, espèces) et part de TVA de la somme

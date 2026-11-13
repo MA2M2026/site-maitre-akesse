@@ -44,6 +44,9 @@
       ligne(d, 'Cachet total de la prestation', K.fcfa(c.montant_prestation));
       if (c.commission) ligne(d, 'Commission de l’agence' + (c.commission_taux ? ' (' + String(Number(c.commission_taux)).replace('.', ',') + ' %)' : ''), '− ' + K.fcfa(c.commission), 'retenue');
     }
+    var frais = (Array.isArray(c.frais) ? c.frais : []).reduce(function (n, x) { return n + (Number(x && x.montant) || 0); }, 0);
+    // (sans commission : le cachet avant impôts et frais, pour que le calcul se raccorde au net)
+    if (!c.montant_prestation && (Number(c.impots) > 0 || frais > 0)) ligne(d, 'Cachet', K.fcfa(Number(c.montant) + Number(c.impots || 0) + frais));
     if (Number(c.impots) > 0) ligne(d, 'Impôts retenus', '− ' + K.fcfa(c.impots), 'retenue');
     (Array.isArray(c.frais) ? c.frais : []).forEach(function (x) { if (x && x.libelle) ligne(d, 'Frais : ' + x.libelle, '− ' + K.fcfa(x.montant), 'retenue'); });
     ligne(v, 'Payé le', K.jour(c.paye_le));

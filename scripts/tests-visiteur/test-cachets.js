@@ -95,7 +95,7 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(await p.inputValue('#cp-compte') === 'k2' && /AYA KOUASSI|Koné Styliste/.test(await p.textContent('.recap-cachet')), n + 'confirmation : récapitulatif, compte Wave proposé');
     ok(/Deux lignes entrent dans la comptabilité : la recette de la prestation/.test(await p.textContent('#fenetre')), n + 'confirmation : recette de la prestation et dépense du cachet annoncées (commission)');
     await capture(p, 'cachet-confirmer' + suffixe);
-    ok((await p.$$eval('#cp-moyen option', (o) => o.map((x) => x.textContent))).join('|') === 'Wave|Orange Money|MTN Money|Moov Money|Chèque|Virement bancaire|Carte bancaire (Visa)|Espèces', n + 'payé par : les 8 moyens (Wave, Orange, MTN, Moov, chèque, virement, carte, espèces)');
+    ok((await p.$$eval('#cp-moyen option', (o) => o.map((x) => x.textContent))).join('|') === 'Wave|Orange Money|MTN Money|Moov Money|Carte bancaire (Visa)|Virement bancaire|Chèque|Espèces', n + 'payé par : les 8 moyens (Wave, Orange, MTN, Moov, chèque, virement, carte, espèces)');
     await p.selectOption('#cp-moyen', 'orange_money');
     await p.fill('#cp-ref', 'T_XY99'); await p.click('form[data-form="cachet-confirmer"] [type=submit]'); await p.waitForTimeout(1200);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'cachet_payer_moyen' && /"p_compte":"k2"/.test(j[2]) && /T_XY99/.test(j[2]) && /"p_moyen":"orange_money"/.test(j[2])), n + 'paiement enregistré avec son moyen (cachet_payer_moyen : dépense + cachet payé + Orange Money)');

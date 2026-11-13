@@ -5,6 +5,8 @@
 -- recette de la prestation + dépense du cachet).
 -- À exécuter UNE FOIS dans l'éditeur SQL de Supabase, APRÈS supabase-cachets.sql.
 -- Rejouable sans danger (rien n'est supprimé ; les cachets déjà saisis ne changent pas).
+-- ⚠ Version à jour de cachet_commission et cachet_depense_annulee (impôts et frais retenus, 13/11/2026) :
+-- supabase-paiements-officiels.sql, à recoller APRÈS celui-ci s'il est recollé.
 -- ===================================================================================
 alter table compta_reglages add column if not exists commission_taux numeric(5,2) not null default 20
   check (commission_taux >= 0 and commission_taux < 100);
@@ -16,30 +18,20 @@ alter table cachets_mannequins add column if not exists commission int;
 -- Le calcul est fait ICI, par la base (jamais par la page) : commission = total × pourcentage du
 -- moment, arrondie au franc ; montant (à verser à la mannequin) = total − commission. Le
 -- pourcentage est gardé sur le cachet : le changer plus tard ne modifie pas les cachets passés.
--- (13/11/2026 : impôts et frais retenus aussi, même version que supabase-paiements-officiels.sql)
 create or replace function cachet_commission()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
   taux numeric;
-  f jsonb;
-  total int := 0;
 begin
-  for f in select * from jsonb_array_elements(coalesce(NEW.frais, '[]'::jsonb)) loop
-    if coalesce(trim(f ->> 'libelle'), '') = '' or (f ->> 'montant') !~ '^[0-9]{1,7}$' then
-      raise exception 'Chaque frais retenu a un libellé et un montant.'; end if;
-    total := total + (f ->> 'montant')::int;
-  end loop;
-  NEW.frais_total := total;
-  NEW.impots := coalesce(NEW.impots, 0);
   if NEW.montant_prestation is null then
-    NEW.commission_taux := null; NEW.commission := null;
+    NEW.commission_taux := null; NEW.commission := null;  -- cachet saisi « montant versé » (avant la commission)
     return NEW;
   end if;
   select commission_taux into taux from compta_reglages where id = 1;
   NEW.commission_taux := coalesce(taux, 20);
   NEW.commission := round(NEW.montant_prestation * NEW.commission_taux / 100);
-  NEW.montant := NEW.montant_prestation - NEW.commission - NEW.impots - NEW.frais_total;
-  if NEW.montant < 1 then raise exception 'Après la commission, les impôts et les frais, il ne reste rien à verser.'; end if;
+  NEW.montant := NEW.montant_prestation - NEW.commission;
+  if NEW.montant < 1 then raise exception 'Après la commission de l''agence, il ne reste rien à verser.'; end if;
   return NEW;
 end;
 $$;
