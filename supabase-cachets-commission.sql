@@ -16,7 +16,7 @@ alter table cachets_mannequins add column if not exists commission int;
 -- Le calcul est fait ICI, par la base (jamais par la page) : commission = total × pourcentage du
 -- moment, arrondie au franc ; montant (à verser à la mannequin) = total − commission. Le
 -- pourcentage est gardé sur le cachet : le changer plus tard ne modifie pas les cachets passés.
--- (13/11/2026 : impôts et frais retenus aussi, même version que supabase-cachets-recu-officiel.sql)
+-- (13/11/2026 : impôts et frais retenus aussi, même version que supabase-paiements-officiels.sql)
 create or replace function cachet_commission()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare

@@ -213,8 +213,14 @@ function donnees(role) {
     ok(await p.inputValue('#rg-montant') === '260000', nomEcran + ' : « Encaisser » propose le reste dû');
     await p.fill('#rg-montant', '300000'); await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(400);
     ok((await p.textContent('#calque')).includes('entre 1 et 260 000'), nomEcran + ' : encaisser plus que le reste est refusé');
+    // (13/11/2026) paiement du client : le moyen place le bon compte ; la part de TVA de la somme s'affiche
+    await p.fill('#rg-montant', '59000'); await p.waitForTimeout(500);
+    ok(/Dont chiffre d’affaires hors taxes 50 000 FCFA et TVA 9 000 FCFA \(18 %, prévision\)/.test((await p.textContent('#rg-tva')).replace(/[\u202f\u00a0]/g, ' ')), nomEcran + ' : encaisser : part de TVA de la somme (59 000 = 50 000 + 9 000)');
+    await p.selectOption('#rg-moyen', 'especes'); ok(await p.inputValue('#rg-compte') === 'c1', nomEcran + ' : client payé en espèces → la caisse est choisie');
+    await p.selectOption('#rg-moyen', 'wave'); ok(await p.inputValue('#rg-compte') === 'c2', nomEcran + ' : client payé par Wave → le compte Wave est choisi');
     await p.fill('#rg-montant', '60000'); await p.click('form[data-form="compta-regler"] [type=submit]'); await p.waitForTimeout(800);
     let rg = envoi(journal, 'POST', 'compta_ecritures').pop() || {};
+    ok(rg.moyen === 'wave', nomEcran + ' : encaissement : le moyen du client est enregistré (' + rg.moyen + ')');
     ok(rg.dette_id === 'd1' && rg.sens === 'recette' && rg.montant === 60000 && rg.categorie === 'casting' && (await p.textContent('#calque')).includes('Reste 200 000'),
       nomEcran + ' : encaissement partiel enregistré comme recette, reste 200 000 annoncé');
     await ouvrirSaisies(p); await p.fill('#dt-montant', '150000'); await p.fill('#dt-libelle', 'Shooting catalogue'); await p.fill('#dt-echeance', '2099-01-31');

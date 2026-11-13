@@ -1,5 +1,6 @@
 -- =====================================================================================================
--- Payer les mannequins : reçu officiel détaillé (13/11/2026, demande de la propriétaire)
+-- Paiements officiels (13/11/2026, demande de la propriétaire) : reçu officiel des cachets des mannequins,
+-- et moyen de paiement des recettes (paiements des clients : mobile money, Visa, virement, chèque, espèces)
 -- À COLLER UNE FOIS dans Supabase (SQL Editor), bouton orange « Run without RLS » s’il est proposé
 -- (la table existe déjà et reste protégée). Rien n’est effacé, peut être recollé sans risque.
 -- Chaque cachet garde : date, heure de début et de fin, lieu, partenaire, impôts retenus, frais retenus
@@ -91,5 +92,8 @@ $$;
 revoke all on function cachet_recu_lire(uuid) from public;
 grant execute on function cachet_recu_lire(uuid) to anon, authenticated;
 
+-- Recettes et dépenses : le moyen de paiement utilisé (un client paie sa facture par Orange Money, Visa, virement…)
+alter table compta_ecritures add column if not exists moyen text check (moyen is null or moyen in ('wave', 'orange_money', 'mtn_money', 'moov_money', 'cheque', 'virement', 'carte', 'especes'));
+
 NOTIFY pgrst, 'reload schema';
-select 'Reçu officiel des cachets en place' as resultat;
+select 'Paiements officiels en place (reçu des cachets, moyen des recettes)' as resultat;

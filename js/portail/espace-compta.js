@@ -142,7 +142,7 @@
   function lignes(liste, nomsComptes, vide) {
     return P.cartesPersonnes(liste.map((e) => ({
       tete: '<b class="pers-libelle">' + P.esc(e.libelle) + '</b>' + (e.tiers ? '<span class="petit-texte doux tiers"><span data-visage-nom="' + P.esc(e.tiers) + '"></span>' + P.esc(e.tiers) + '</span>' : ''),
-      sous: [P.date(e.date_op), categorie(e), (nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + (nomsComptes[e.compte_dest_id] || '—') : ''), e.annule && e.motif_annulation ? 'Motif : ' + e.motif_annulation : ''],
+      sous: [P.date(e.date_op), categorie(e), e.moyen ? nomMoyen(e.moyen) : '', (nomsComptes[e.compte_id] || '—') + (e.compte_dest_id ? ' → ' + (nomsComptes[e.compte_dest_id] || '—') : ''), e.annule && e.motif_annulation ? 'Motif : ' + e.motif_annulation : ''],
       montant: P.fcfa(e.montant), classe: e.annule ? 'annulee' : '', ton: e.annule ? 'erreur' : 'neutre',
       etat: e.annule ? ['Annulée', 'erreur'] : e.source === 'espace2' ? ['Suivi des paiements · automatique', 'info'] : null,
       actions: (e.justificatif ? '<button class="btn petit" type="button" data-action="compta-justif-voir" data-id="' + e.id + '">Justificatif</button>' :
@@ -150,7 +150,30 @@
         (!e.annule && e.source === 'manuel' ? '<button class="btn petit" type="button" data-action="compta-annuler" data-id="' + e.id + '">Annuler</button>' : '')
     })), vide || 'Aucune écriture ce mois-ci.');
   }
-  const optionsComptes = (liste) => liste.map((c) => '<option value="' + c.id + '">' + P.esc(c.nom) + '</option>').join('');
+  const optionsComptes = (liste) => liste.map((c) => '<option value="' + c.id + '" data-type="' + P.esc(c.type || '') + '">' + P.esc(c.nom) + '</option>').join('');
+  // ---------- Moyen de paiement d'une recette ou d'une dépense (13/11/2026, paiements des clients) ----------
+  // Le choix du moyen (noms : js/moyens-paiement.js) place le bon compte : espèces → caisse, Wave → Wave, Orange/MTN/
+  // Moov → autre mobile money, carte, virement et chèque → banque (s'il existe). Colonne compta_ecritures.moyen
+  // (supabase-paiements-officiels.sql). Recette : la part de TVA de la somme s'affiche (même calcul que le tableau).
+  const MOYENS = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement', 'cheque', 'especes'];
+  const TYPE_DU_MOYEN = { especes: 'caisse', wave: 'wave', carte: 'banque', virement: 'banque', cheque: 'banque' };
+  const nomMoyen = (k) => (window.MoyensPaiement ? window.MoyensPaiement.nom(k) : k);
+  const champMoyen = (id, compteId, recette) => '<label class="fl" for="' + id + '">' + (recette ? 'Payé par le client avec' : 'Payé avec') + '<select id="' + id + '" name="moyen" data-change="compta-moyen" data-compte="' + compteId + '">' +
+    '<option value="">Choisir</option>' + MOYENS.map((k) => '<option value="' + k + '">' + P.esc(nomMoyen(k)) + '</option>').join('') + '</select></label>';
+  P.changements['compta-moyen'] = (el) => {
+    const sel = document.getElementById(el.getAttribute('data-compte')), type = TYPE_DU_MOYEN[el.value] || (el.value ? 'mobile_money' : '');
+    const o = sel && type && [...sel.options].find((x) => x.getAttribute('data-type') === type);
+    if (o) sel.value = o.value;
+  };
+  // « dont TVA » d'une somme encaissée (prévision avant le mode légal)
+  const noteTva = (id) => '<p class="doux petit-texte large" id="' + id + '" role="status"></p>';
+  P.changements['compta-tva-somme'] = async (el) => {
+    const z = document.getElementById(el.getAttribute('data-note')), m = Math.round(Number(el.value) || 0);
+    if (!z) return;
+    if (!(m > 0)) { z.textContent = ''; return; }
+    const r = P.etat.reglageTva || (P.etat.reglageTva = await reglageTva()), taux = r.tva_taux == null ? 18 : r.tva_taux, x = separerTva(m, taux);
+    z.textContent = 'Dont chiffre d’affaires hors taxes ' + P.fcfa(x.ht) + ' et TVA ' + P.fcfa(x.tva) + ' (' + tauxTexte(taux) + (r.mode_legal ? ', à reverser)' : ', prévision)');
+  };
   const optionsCategories = (cats) => Object.keys(cats).map((k) => '<option value="' + k + '">' + P.esc(cats[k]) + '</option>').join('');
 
   // Recettes et dépenses : même écran, catégories différentes
@@ -168,7 +191,8 @@
         (recette ? '<div class="note info">Les inscriptions et mensualités validées dans le Suivi des paiements arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
         '<form class="carte f" data-form="compta-ecrire" data-sens="' + sens + '"><h2>' + (recette ? 'Nouvelle recette' : 'Nouvelle dépense') + '</h2>' +
         '<label class="fl" for="cp-date">Date<input id="cp-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +
-        '<label class="fl" for="cp-montant">Montant (FCFA)<input id="cp-montant" name="montant" type="number" inputmode="numeric" min="1" step="1" required></label>' +
+        '<label class="fl" for="cp-montant">Montant (FCFA)<input id="cp-montant" name="montant" type="number" inputmode="numeric" min="1" step="1" required' + (recette ? ' data-change="compta-tva-somme" data-note="cp-tva" data-direct' : '') + '></label>' +
+        (recette ? noteTva('cp-tva') : '') + champMoyen('cp-moyen', 'cp-compte', recette) +
         '<label class="fl" for="cp-cat">Catégorie<select id="cp-cat" name="categorie" required>' + optionsCategories(recette ? RECETTES : DEPENSES) + '</select></label>' +
         '<label class="fl" for="cp-compte">' + (recette ? 'Encaissé sur' : 'Payé depuis') + '<select id="cp-compte" name="compte_id" required>' + optionsComptes(actifs) + '</select></label>' +
         '<label class="fl large" for="cp-libelle">Libellé<input id="cp-libelle" name="libelle" required maxlength="200" placeholder="' + (recette ? 'Ex. : casting défilé Sococé' : 'Ex. : loyer du bureau d’octobre') + '"></label>' +
@@ -200,8 +224,9 @@
     try {
       const justificatif = await deposerJustificatif(f.get('justificatif'));
       const t = (k) => String(f.get(k) || '').trim() || null;
-      await P.bd(sb.from('compta_ecritures').insert({ sens, montant, date_op: t('date_op'), categorie: t('categorie'), compte_id: t('compte_id'),
-        libelle: t('libelle'), tiers: t('tiers'), justificatif }));
+      const ligne = { sens, montant, date_op: t('date_op'), categorie: t('categorie'), compte_id: t('compte_id'), libelle: t('libelle'), tiers: t('tiers'), justificatif };
+      if (t('moyen')) ligne.moyen = t('moyen');
+      await P.bd(sb.from('compta_ecritures').insert(ligne));
       const d = t('date_op');
       if (d && d.slice(0, 7) !== moisChoisi().slice(0, 7)) P.etat.moisCompta = d.slice(0, 7) + '-01';
       await P.afficher();
@@ -335,7 +360,7 @@
   // sinon sa photo cherchée par son nom ; et la table des cachets pas encore créée
   const nomMannequin = (id, nom) => (id && P.lienFiche && P.moi.espaces.paiements ? P.lienFiche(id, nom) : '<span data-visage-nom="' + P.esc(nom) + '"></span><b>' + P.esc(nom) + '</b>');
   const cachetsAbsents = (e) => /cachets_mannequins|PGRST205|42P01|does not exist/.test(String((e && (e.code + ' ' + e.message)) || e));
-  P.compta = { separerTva, chiffreAffaires, reglageTva, nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
+  P.compta = { champMoyen, noteTva, nomMoyen, separerTva, chiffreAffaires, reglageTva, nomMannequin, cachetsAbsents, RECETTES, DEPENSES, AUTRES, comptes, ecritures, toutes, dettes, moisChoisi, bornes, choixMois, lignes, optionsComptes, optionsCategories, deposerJustificatif, totaux, champ, actualiser, paiementsImpots, paiementImpot };
   // (les pages du morceau B sont ajoutées par js/portail/espace-compta-suivi.js)
   P.espaces.compta = {
     nav: [[null, 'Au quotidien'], ['mois', 'Tableau du mois'], ['recettes', 'Recettes'], ['depenses', 'Dépenses'], ['tresorerie', 'Trésorerie']],

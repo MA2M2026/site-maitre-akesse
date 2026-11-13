@@ -4871,7 +4871,7 @@ Prochaines étapes : la page d'inscription et les cours de marche avec le même 
 
 ## Payer les mannequins : reçu officiel détaillé (13/11/2026)
 
-Demande de la propriétaire : un reçu qui sert de preuve. Base : **`supabase-cachets-recu-officiel.sql`** (À COLLER) :
+Demande de la propriétaire : un reçu qui sert de preuve. Base : **`supabase-paiements-officiels.sql`** (À COLLER) :
 colonnes `date_prestation`, `heure_debut`, `heure_fin`, `lieu`, `partenaire`, `impots`, `frais` (jsonb, 5 lignes au plus),
 `frais_total`, `moyen` (wave, orange_money, mtn_money, moov_money, cheque, virement, carte, especes), `impot_id` ;
 `cachet_commission` (net versé = total - commission - impôts - frais ; même version dans supabase-cachets-commission.sql) ;
@@ -4881,3 +4881,12 @@ Administration (js/portail/espace-compta-cachets.js) : bloc « Pour le reçu » 
 net, « Payé par » (8 moyens) au paiement. Reçu (recu.html, js/recu.js, css/recu.css) : La prestation (mannequin, parent,
 prestation, date, horaires, lieu, partenaire, pour le compte de l'agence), Le détail, Net versé, Le paiement. Message
 WhatsApp : lieu et moyen en plus. Essais : test-cachets.js, test-recu.js.
+
+## Paiements des clients : moyen et TVA (13/11/2026)
+
+Proforma → « accepté » → facture → « Ce qu'on nous doit » → « Encaisser » : le moyen du client (Wave, Orange Money, MTN
+Money, Moov Money, carte bancaire (Visa), virement, chèque, espèces) est choisi et enregistré (`compta_ecritures.moyen`,
+supabase-paiements-officiels.sql) ; il place le bon compte (espèces → caisse, Wave → Wave, Orange/MTN/Moov → autre mobile
+money, carte/virement/chèque → banque). La part de TVA de la somme s'affiche (« Dont chiffre d'affaires hors taxes … et TVA
+… »). Même choix dans « Nouvelle recette » et « Nouvelle dépense » ; le moyen apparaît sur chaque carte. Outils :
+`P.compta.champMoyen`, `P.compta.noteTva` (js/portail/espace-compta.js). Essai : test-comptabilite.js.

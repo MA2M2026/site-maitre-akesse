@@ -80,7 +80,10 @@
     if (!d) return;
     const cpts = await C.comptes(false);
     P.fenetre('<form data-form="compta-regler" data-id="' + d.id + '" class="grille" style="gap:12px"><h2>' + (d.sens === 'creance' ? 'Encaisser' : 'Payer') + '</h2>' +
-      '<p class="doux">' + P.esc(d.libelle) + ' · reste ' + P.fcfa(d.reste) + '</p>' + champMontant('rg-montant', d.reste) +
+      '<p class="doux">' + P.esc(d.libelle) + ' · reste ' + P.fcfa(d.reste) + '</p>' +
+      // (13/11/2026) client : moyen utilisé (mobile money, Visa, virement, chèque, espèces) et part de TVA de la somme
+      champMontant('rg-montant', d.reste).replace('<input ', d.sens === 'creance' ? '<input data-change="compta-tva-somme" data-note="rg-tva" data-direct ' : '<input ') +
+      (d.sens === 'creance' ? C.noteTva('rg-tva') : '') + C.champMoyen('rg-moyen', 'rg-compte', d.sens === 'creance') +
       '<label class="fl" for="rg-compte">' + (d.sens === 'creance' ? 'Encaissé sur' : 'Payé depuis') + '<select id="rg-compte" name="compte_id" required>' + C.optionsComptes(cpts) + '</select></label>' +
       champDate('rg-date', 'date_op', 'Date', P.aujourdhui(), true) + champJustif('rg-justif') +
       '<div class="ligne"><button class="btn rouge" type="submit">Enregistrer</button><button class="btn" type="button" data-action="fermer-fenetre">Fermer</button></div></form>');
@@ -91,8 +94,10 @@
     if (!(montant > 0) || montant > d.reste) return P.message('Le montant doit être entre 1 et ' + P.fcfa(d.reste) + '.');
     try {
       const justificatif = await C.deposerJustificatif(f.get('justificatif'));
-      await P.bd(sb.from('compta_ecritures').insert({ sens: d.sens === 'creance' ? 'recette' : 'depense', montant, date_op: t(f, 'date_op'), compte_id: t(f, 'compte_id'),
-        categorie: d.categorie, libelle: 'Règlement : ' + d.libelle, dette_id: d.id, justificatif }));
+      const ligne = { sens: d.sens === 'creance' ? 'recette' : 'depense', montant, date_op: t(f, 'date_op'), compte_id: t(f, 'compte_id'),
+        categorie: d.categorie, libelle: 'Règlement : ' + d.libelle, dette_id: d.id, justificatif };
+      if (t(f, 'moyen')) ligne.moyen = t(f, 'moyen');
+      await P.bd(sb.from('compta_ecritures').insert(ligne));
       await actualiser(montant === d.reste ? 'Réglé en totalité.' : 'Règlement enregistré. Reste ' + P.fcfa(d.reste - montant) + '.');
     } catch (e) { P.message(P.erreurTexte(e)); }
   };
