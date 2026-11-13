@@ -48,7 +48,9 @@
       '<p class="doux">Inscriptions à l’Atelier Talons &amp; Élégance (ouvert à toutes, sans intégrer l’agence). Groupe : 30 000 FCFA les 4 dimanches ; privé : 25 000 FCFA la séance en salle, 30 000 à 35 000 FCFA la séance à l’extérieur.</p>' +
       '<div class="chiffres">' + P.chiffre('À traiter', String(compte('a_traiter'))) + P.chiffre('Inscrites', String(compte('inscrite'))) + P.chiffre('Encaissé (inscrites et terminées)', P.fcfa(encaisse)) + '</div>' +
       '<div class="carte f">' + onglets + '</div>' +
-      (visibles.length ? visibles.map(fiche).join('') : '<div class="carte vide">Aucune inscription ici pour le moment.</div>');
+      // (13/11/2026, demande de la propriétaire) regroupées par jour d'inscription, les plus récentes en haut, comme les castings
+      (visibles.length ? P.parJour(visibles, (d) => d.cree_le).map((g) => '<section class="jour-groupe"><h2 class="jour-titre">' + P.esc(g.titre) +
+        ' <span class="nb">' + g.elements.length + '</span></h2>' + g.elements.map(fiche).join('') + '</section>').join('') : '<div class="carte vide">Aucune inscription ici pour le moment.</div>');
   }
 
   function fiche(d) {
@@ -70,18 +72,21 @@
     const galerie = photos.length ? '<section class="galerie-dossier" aria-label="Photos">' + photos.map((u, i) =>
       '<figure class="photo-dossier"><button type="button" class="photo-ouvrir" data-action="talons-photo-voir" data-id="' + P.esc(d.id) + '" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       P.visageDistant(u, d.nom) + '</button><figcaption><a class="doux petit-texte" href="' + P.esc(u) + '" target="_blank" rel="noopener noreferrer">Ouvrir dans Drive ↗</a></figcaption></figure>').join('') + '</section>' : '';
-    const medias = galerie + (https(d.video) ? '<div class="ligne"><a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a></div>' : '');
     const ouverte = !['terminee', 'annulee'].includes(d.statut);
     const payee = d.statut === 'inscrite' || d.statut === 'terminee';
+    // (13/11/2026, « un peu trop désordonné ») les boutons regroupés en une rangée aérée, sous les photos :
+    // la vidéo d'abord, puis les messages
+    const boutons = [
+      https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
+      wa ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '">💬 WhatsApp</a>' : '',
+      waParent ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '">💬 Parent</a>' : '',
+      wa && ouverte && !payee ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messagePaiement(d)) + '">💳 Envoyer le lien Wave</a>' : ''
+    ];
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
-      (medias || '<p class="doux">Photos et vidéo non reçues (demandez-les sur WhatsApp).</p>') +
-      '<div class="ligne">' +
-        (wa ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '">💬 WhatsApp</a>' : '') +
-        (waParent ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '">💬 Parent</a>' : '') +
-        (wa && ouverte && !payee ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messagePaiement(d)) + '">💳 Envoyer le lien Wave</a>' : '') +
-      '</div>' +
+      (galerie || (https(d.video) ? '' : '<p class="doux">Photos et vidéo non reçues (demandez-les sur WhatsApp).</p>')) +
+      '<div class="ct-actions">' + boutons.join('') + '</div>' +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +
         '<label class="fl" for="ct-date-' + id + '">Date de la (première) séance<input id="ct-date-' + id + '" name="date_seance" type="date" value="' + P.esc(d.date_seance || '') + '"></label>' +
         '<label class="fl" for="ct-montant-' + id + '">Montant (FCFA)<input id="ct-montant-' + id + '" name="montant" type="number" min="0" step="500" value="' + P.esc(d.montant || '') + '"' + (payee ? ' readonly title="Déjà payé : le montant est en Comptabilité"' : '') + '></label>' +
