@@ -4919,3 +4919,21 @@ moyens, sans document). Essai : test-liens-serveur.js.
   + 12 px ; sur téléphone et tablette (≤ 860 px), `.retour-haut`, `.whatsapp-flottant`, `.fiche-barre`, `.panier-widget` et
   `.envoi-a-finir` montent d'autant (`translate`, sans saut d'affichage). **Tout nouveau bouton collé en bas doit être ajouté à
   cette liste** (css/style.css). Essai : test-cookies-boutons.js.
+
+## Vidéo et carrousel « Alicia Kouadio — La juste mesure » (13/11/2026, demande de la propriétaire)
+
+Communication de la semaine du 16/11/2026 (à la place d'André Dominique, programmée par la propriétaire dans
+Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 1,69 m, en racontant son histoire.
+- **Film** `outils/video-talons/film-alicia.html` : moteur PROPRE à ce film (indépendant de `moteur-film.css/js`,
+  dont les classes `.abs`, `.carte`, `.trait`… entraient en conflit) ; il fournit `window.rendre(t)`,
+  `window.EFFETS` (sons `sons/a-*.mp3` avec leur volume `vol`), `window.MANQUES` et `window.PRET` (toutes les images
+  chargées et décodées, attendu par `fabrique-talons.js` avant la première image). 23 scènes calées au mot près sur
+  la voix « Victoria » fournie par la propriétaire (texte `voix-alicia.json`, `aligner-voix.py`) ; musique
+  `alicia/musique.mp3` (ElevenLabs Music), photos de son book `alicia/p00…p13.jpg`, détourages rembg
+  `alicia/d-*.png`, compcard officielle téléchargée de sa fiche `alicia/compcard.jpg`.
+  Rendu : `FILM=film-alicia.html NOM=alicia-kouadio SONS=1 HD=1 VOIX=<dossier aligner-voix> MUSIQUE=alicia/musique.mp3
+  IMAGES=<dossier vide> node fabrique-talons.js [vertical|large]` (vertical 1080 × 1920 pour TikTok / Reels,
+  horizontal 1920 × 1080 pour YouTube).
+- **Carrousel** Instagram / Facebook : `outils/video-talons/carrousel-alicia.html?n=1…8` (1080 × 1350), rendu par
+  Chromium en 8 images (couverture, 5 photos avec une phrase, compcard, carte « Réservez Alicia »).
+- Les fichiers finaux (vidéos, images, textes des publications) sont remis à la propriétaire, pas mis sur le site.

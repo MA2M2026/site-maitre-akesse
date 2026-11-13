@@ -40,7 +40,7 @@ function faireSon() {
   if (effets.length) {
     const base = MUSIQUE ? 2 : 1;
     effets.forEach((e) => entrees.push('-i', path.join(ICI, 'sons', e.son + '.mp3')));
-    f2 = filtre.replace(/\[a\]$/, '[pre]') + ';' + effets.map((e, i) => '[' + (base + i) + ':a]aresample=48000,aformat=channel_layouts=stereo,volume=' + (VOL[e.son] || 0.5) + ',adelay=' + Math.round(e.t * 1000) + ':all=1[e' + i + ']').join(';') +
+    f2 = filtre.replace(/\[a\]$/, '[pre]') + ';' + effets.map((e, i) => '[' + (base + i) + ':a]aresample=48000,aformat=channel_layouts=stereo,volume=' + (e.vol || VOL[e.son] || 0.5) + ',adelay=' + Math.round(e.t * 1000) + ':all=1[e' + i + ']').join(';') +
       ';[pre]' + effets.map((e, i) => '[e' + i + ']').join('') + 'amix=inputs=' + (effets.length + 1) + ':normalize=0:duration=first,alimiter=limit=0.95[a]';
   }
   execFileSync('ffmpeg', ['-loglevel', 'error', '-y', ...entrees, '-filter_complex', f2, '-map', '[a]', '-c:a', 'aac', '-b:a', '128k', son]);
@@ -53,7 +53,7 @@ if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.ex
   const { chromium } = require('playwright');
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: L, height: H } });
   const erreurs = []; p.on('pageerror', (e) => erreurs.push(e.message));
-  await p.goto('file://' + ICI + '/' + FILM + (FORMAT === 'large' ? '?format=large' : '')); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1200);
+  await p.goto('file://' + ICI + '/' + FILM + (FORMAT === 'large' ? '?format=large' : '')); await p.evaluate(() => document.fonts.ready); await p.evaluate(() => window.PRET); await p.waitForTimeout(1200);
   const manques = await p.evaluate(() => window.MANQUES);
   fs.writeFileSync(path.join(IMAGES, 'effets.json'), JSON.stringify(await p.evaluate(() => window.EFFETS || [])));
   if (erreurs.length || manques.length) { console.error('ERREURS', erreurs, 'MOTS INTROUVABLES', manques); process.exit(1); }

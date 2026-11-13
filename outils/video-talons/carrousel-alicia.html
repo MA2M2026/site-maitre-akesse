@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<!-- Carrousel Instagram / Facebook « Alicia Kouadio » (13/11/2026) : 8 images 1080 × 1350 (format 4:5), même univers
+     que la vidéo (noir, or champagne, ivoire). ?n=1…8 ; rendu par Chromium (voir README-TECHNIQUE, vidéo d'Alicia). -->
+<title>Carrousel Alicia</title>
+<style>
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url('../../assets/polices/cormorant-garamond-latin-400-italic.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 500; src: url('../../assets/polices/work-sans-latin-500-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 600; src: url('../../assets/polices/work-sans-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 700; src: url('../../assets/polices/work-sans-latin-700-normal.woff2'); }
+:root { --or: #D8B878; --or-clair: #F3DFAE; --or-fonce: #9C7A3C; --ivoire: #F5EEE3; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1350px; overflow: hidden; background: #060607; color: var(--ivoire); font-family: 'Work Sans', sans-serif; }
+.d { position: absolute; inset: 0; display: none; overflow: hidden; }
+.cadre { position: absolute; inset: 28px; border: 1px solid rgba(216,184,120,0.45); pointer-events: none; z-index: 9; }
+.ph { position: absolute; inset: 0; background-size: cover; background-position: 50% 25%; filter: contrast(1.06) saturate(1.05); }
+.voile { position: absolute; inset: 0; }
+.serif { font-family: 'Cormorant Garamond', serif; font-weight: 500; }
+.ital { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; }
+.caps { font-weight: 600; text-transform: uppercase; letter-spacing: 0.38em; }
+.or { color: var(--or); }
+.abs { position: absolute; }
+.num { position: absolute; right: 60px; top: 58px; font: 600 20px 'Work Sans'; letter-spacing: 0.3em; color: var(--or); z-index: 10; }
+.marque { position: absolute; left: 60px; top: 56px; height: 34px; z-index: 10; opacity: 0.95; }
+.legende { position: absolute; left: 70px; right: 70px; bottom: 80px; z-index: 10; }
+</style></head><body>
+<!-- 1. couverture -->
+<section class="d" id="d1">
+  <div class="ph" style="background-image:url(alicia/p12.jpg);background-position:50% 30%"></div>
+  <div class="voile" style="background:linear-gradient(180deg,rgba(0,0,0,0.72),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.88))"></div>
+  <div class="abs caps or" style="left:0;right:0;top:110px;text-align:center;font-size:22px">New Face · Maître Akesse Model Management</div>
+  <div class="abs serif" style="left:0;right:0;top:150px;text-align:center;font-size:150px;line-height:1;letter-spacing:0.04em">ALICIA</div>
+  <div class="abs caps" style="left:0;right:0;top:310px;text-align:center;font-size:40px;font-weight:500;letter-spacing:0.5em">Kouadio</div>
+  <div class="abs" style="left:0;right:0;bottom:120px;text-align:center">
+    <div class="ital" style="font-size:72px;line-height:1.05">La juste <span class="or">mesure.</span></div>
+    <div class="caps" style="margin-top:22px;font-size:22px;color:var(--or-clair)">1,69 m · Défilé · Photo · Publicité</div>
+  </div>
+</section>
+<!-- 2 à 6. photos avec une phrase de son histoire -->
+<section class="d" id="d2"><div class="ph" style="background-image:url(alicia/p01.jpg);background-position:50% 20%"></div><div class="voile" style="background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0) 16%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.85))"></div>
+  <div class="legende"><div class="ital" style="font-size:64px;line-height:1.1">Un regard qui <span class="or">s’impose.</span></div></div></section>
+<section class="d" id="d3"><div class="ph" style="background-image:url(alicia/p06.jpg);background-position:50% 30%"></div><div class="voile" style="background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0) 16%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.85))"></div>
+  <div class="legende"><div class="ital" style="font-size:64px;line-height:1.1">Grâce, énergie <span class="or">et maîtrise.</span></div></div></section>
+<section class="d" id="d4"><div class="ph" style="background-image:url(alicia/p08.jpg);background-position:50% 25%"></div><div class="voile" style="background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0) 16%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.85))"></div>
+  <div class="legende"><div class="ital" style="font-size:64px;line-height:1.1">Et soudain, la tenue <span class="or">prend vie.</span></div></div></section>
+<section class="d" id="d5"><div class="ph" style="background-image:url(alicia/p05.jpg);background-position:50% 25%"></div><div class="voile" style="background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0) 16%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.85))"></div>
+  <div class="legende"><div class="ital" style="font-size:64px;line-height:1.1">Une présence qui ne demande pas <span class="or">la permission.</span></div></div></section>
+<section class="d" id="d6"><div class="ph" style="background-image:url(alicia/p09.jpg);background-position:50% 35%"></div><div class="voile" style="background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0) 16%,rgba(0,0,0,0) 55%,rgba(0,0,0,0.85))"></div>
+  <div class="legende"><div class="ital" style="font-size:64px;line-height:1.1">Elle donne à chaque création <span class="or">une histoire.</span></div></div></section>
+<!-- 7. compcard -->
+<section class="d" id="d7" style="background:radial-gradient(ellipse at 50% 40%,#1c1915,#060607 75%)">
+  <div class="abs caps or" style="left:0;right:0;top:70px;text-align:center;font-size:22px">Sa compcard</div>
+  <img class="abs" src="alicia/compcard.jpg" style="left:50%;top:120px;height:1150px;margin-left:-406px;box-shadow:0 40px 80px -20px #000,0 0 0 1px rgba(216,184,120,0.5)">
+</section>
+<!-- 8. fin -->
+<section class="d" id="d8" style="background:radial-gradient(ellipse at 50% 35%,#1d1a16,#060607 72%)">
+  <img class="abs" src="alicia/d-p06.png" style="left:50%;top:110px;height:690px;margin-left:-205px;filter:drop-shadow(0 30px 40px #000)">
+  <div class="abs ital" style="left:0;right:0;top:830px;text-align:center;font-size:62px;line-height:1.1">Et si votre prochain projet<br>avait besoin <span class="or">d’elle ?</span></div>
+  <div class="abs" style="left:50%;top:1010px;width:600px;margin-left:-300px;text-align:center;padding:24px 0;background:linear-gradient(90deg,var(--or-fonce),var(--or-clair),var(--or-fonce));color:#141210;font:700 28px 'Work Sans';letter-spacing:0.3em;text-transform:uppercase">Réservez Alicia</div>
+  <div class="abs caps" style="left:0;right:0;top:1110px;text-align:center;font-size:24px;letter-spacing:0.14em;line-height:1.9">WhatsApp +225 05 45 65 66 87<br><span class="or" style="font-size:20px">maitreakessemodelmanagement.com</span></div>
+  <img class="abs" src="../../assets/logo-intro.png" style="left:50%;top:1215px;width:300px;margin-left:-150px">
+</section>
+<div class="cadre"></div>
+<img class="marque" id="marque" src="../../assets/logo-intro.png">
+<div class="num" id="num"></div>
+<script>
+const n = +(new URLSearchParams(location.search).get('n') || 1);
+document.getElementById('d' + n).style.display = 'block';
+document.getElementById('num').textContent = n + ' / 8';
+if (n === 1 || n === 8 || n === 7) document.getElementById('marque').style.display = 'none';
+if (n === 7) document.getElementById('num').style.display = 'none';
+</script>
+</body></html>
