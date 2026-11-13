@@ -185,7 +185,7 @@ scene({ id: 'oubli', de: debut('oubli') - 0.15, entree: 'iris',
     style(s.q('#b-2'), { o: out(k(t, n - 0.1, 0.7)), x: mix(-40, 0, out(k(t, n - 0.1, 1))) });
   } });
 
-// 3. NOM — ALICIA, lettres remplies de photo, KOUADIO, 25 ANS
+// 3. NOM — ALICIA, lettres remplies de photo, KOUADIO, médaillon NEW FACE (13/11/2026 : plus d'âge, demande de la propriétaire)
 scene({ id: 'nom', de: debut('nom') - 0.2, entree: 'volet', sansSt: true,
   html: '<div class="img" id="n-fond" style="inset:-4%;background-image:url(' + photo('p12') + ');filter:brightness(0.22) saturate(0.7) blur(3px)"></div>' +
     '<div class="abs caps centre or" id="n-0" style="top:' + V(560, 250) + 'px;font-size:' + V(28, 26) + 'px">Elle s’appelle</div>' +
@@ -194,10 +194,10 @@ scene({ id: 'nom', de: debut('nom') - 0.2, entree: 'volet', sansSt: true,
     '<div class="abs caps centre" id="n-2" style="top:' + V(935, 630) + 'px;font-size:' + V(64, 66) + 'px;color:var(--ivoire);font-weight:500">Kouadio</div>' +
     '<div class="abs" id="n-3" style="left:50%;top:' + V(1100, 760) + 'px;width:220px;height:220px;margin-left:-110px">' +
       '<svg viewBox="0 0 100 100" width="220" height="220" style="position:absolute;inset:0"><circle pathLength="1" cx="50" cy="50" r="46" class="trait" style="stroke-width:1"/></svg>' +
-      '<div class="serif or" id="n-age" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:92px;line-height:0.9">25<small style="font:600 20px Work Sans;letter-spacing:0.4em;margin-top:10px;margin-left:8px">ANS</small></div></div>',
-  prep: (s) => { son(s.de, 'souffle', 0.4); son(w('nom', 'alicia') - 0.05, 'impact', 0.55); son(w('nom', 'kouadio'), 'soie', 0.5); son(w('nom', '25'), 'declic', 0.45); },
+      '<div class="caps or" id="n-age" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;letter-spacing:0.32em;line-height:1.5;text-align:center;padding-left:8px">New<br>Face</div></div>',
+  prep: (s) => { son(s.de, 'souffle', 0.4); son(w('nom', 'alicia') - 0.05, 'impact', 0.55); son(w('nom', 'kouadio'), 'soie', 0.5); son(w('nom', 'kouadio') + 0.3, 'declic', 0.45); },
   maj: (t, s) => {
-    const a = w('nom', 'alicia'), b = w('nom', 'kouadio'), c = w('nom', '25');
+    const a = w('nom', 'alicia'), b = w('nom', 'kouadio'), c = w('nom', 'kouadio') + 0.3;
     style(s.q('#n-fond'), { s: mix(1.12, 1.0, io(k(t, s.de, 4))) });
     style(s.q('#n-0'), { o: out(k(t, s.de + 0.1, 0.6)) });
     s.qa('#n-1 .lettre').forEach((l, i) => { const x = k(t, a - 0.15 + i * 0.07, 0.75); style(l, { o: out(x), y: mix(-70, 0, back(x)), rx: mix(-80, 0, out(x)), b: mix(8, 0, out(x)) }); l.style.backgroundPosition = (50 + (t - a) * 3) + '% 40%'; });

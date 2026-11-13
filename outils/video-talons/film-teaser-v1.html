@@ -9,7 +9,7 @@
      VOIX=… MUSIQUE=alicia/musique-teaser.wav IMAGES=… node fabrique-talons.js [vertical|large] -->
 <!-- (13/11/2026) PREMIÈRE version du teaser, celle que la propriétaire garde pour publier (copie de film-teaser-alicia.html au commit 3f71b04). -->
 <title>Teaser Alicia Kouadio</title>
-<script src="timing-teaser-alicia.js"></script>
+<script src="timing-teaser-v1.js"></script>
 <style>
 @font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
 @font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../../assets/polices/cormorant-garamond-latin-ext-500-normal.woff2'); unicode-range: U+0100-024F; }
@@ -113,13 +113,13 @@ plan({ a: NOM - 0.02, b: w('newface', 'new') + 0.1, fi: 0.05, fo: 0.7,
   html: img('p01', 'contrast(1.06) saturate(1.04)') + '<div class="abs" style="inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,0.82) 85%)"></div>' +
     '<div class="abs serif" id="n-nom" style="left:0;right:0;text-align:center;top:' + V(1330, 720) + 'px;font-size:' + V(92, 100) + 'px;line-height:1;white-space:nowrap">' + [...'ALICIA KOUADIO'].map((c) => '<span class="lettre">' + (c === ' ' ? '&nbsp;' : c) + '</span>').join('') + '</div>' +
     '<div class="abs" id="n-trait" style="left:50%;top:' + V(1480, 852) + 'px;width:' + V(460, 420) + 'px;height:1px;margin-left:' + V(-230, -210) + 'px;background:var(--or)"></div>' +
-    '<div class="abs caps" id="n-infos" style="left:0;right:0;text-align:center;top:' + V(1520, 880) + 'px;font-size:' + V(26, 22) + 'px;color:var(--or)"><span id="n-age">25 ans</span><span id="n-taille"> &nbsp;·&nbsp; 1,69 m</span></div>',
+    '<div class="abs caps" id="n-infos" style="left:0;right:0;text-align:center;top:' + V(1520, 880) + 'px;font-size:' + V(26, 22) + 'px;color:var(--or)"><span id="n-taille">1,69 m</span></div>',
   maj: (t, p) => {
     cadre(p.q('.img'), V(2000, 2000), 50, V(30, 22), W / 2, V(860, 470), mix(1.06, 1.0, out(k(t, NOM, 5))), R.p01);
     p.qa('#n-nom .lettre').forEach((l, i) => { const x = k(t, NOM + 0.15 + i * 0.05, 1.1); l.style.opacity = String(out(x)); l.style.filter = 'blur(' + mix(12, 0, out(x)) + 'px)'; });
     p.q('#n-nom').style.letterSpacing = mix(V(0.2, 0.32), V(0.06, 0.12), out(k(t, NOM, 2.6))) + 'em';
     p.q('#n-trait').style.transform = 'scaleX(' + io(k(t, NOM + 0.9, 1.2)) + ')';
-    p.q('#n-age').style.opacity = String(out(k(t, w('infos', '25') - 0.1, 0.6))); p.q('#n-taille').style.opacity = String(out(k(t, w('infos', '1') - 0.1, 0.6)));
+    p.q('#n-taille').style.opacity = String(out(k(t, w('infos', '1') - 0.1, 0.6)));
   } });
 son(NOM - 0.05, 'revelation', 0.6); son(NOM, 'grave', 0.55);
 
