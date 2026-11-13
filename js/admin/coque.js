@@ -12,12 +12,11 @@
   P.pluriel = (n, un, plusieurs) => n + ' ' + (n > 1 ? plusieurs : un);
   // (la civilité devant le nom ne compte pas : « Mademoiselle GRÂCE YAO » → GY)
   P.initiales = initialesNom;  // (js/app.js)
-  // (13/11/2026) photo hébergée ailleurs (Google Drive : candidatures casting, cours de talons), telle quelle,
+  // (13/11/2026) distant : photo hébergée ailleurs (Google Drive : candidatures casting, cours de talons), telle quelle,
   // sans envoyer l'adresse de la page (Drive refuse sinon certaines vignettes)
-  P.visageDistant = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
-    (url ? '<img src="' + P.esc(url) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '') + '</span>';
-  P.visage = (url, nom, classe) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
-    (url ? '<img src="' + P.esc(urlLegere(url)) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
+  P.visage = (url, nom, classe, distant) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
+    (url ? '<img src="' + P.esc(distant ? url : urlLegere(url)) + '" alt="" loading="lazy" decoding="async"' + (distant ? ' referrerpolicy="no-referrer"' : '') + '>' : '') + '</span>';
+  P.visageDistant = (url, nom, classe) => P.visage(url, nom, classe, true);
   // Grille de cases à cocher avec visages (Programmation défilé, Informations agence) : un titre, le
   // nombre, les personnes par ordre alphabétique ; attributs(x) = ce que porte la case de chacune
   P.casesVisages = (titre, l, attributs) => {

@@ -69,7 +69,7 @@
     // (P.visageDistant, js/admin/coque.js), qui s'agrandissent d'un appui ; la vidéo reste un bouton (Google Drive)
     const galerie = photos.length ? '<section class="galerie-dossier" aria-label="Photos">' + photos.map((u, i) =>
       '<figure class="photo-dossier"><button type="button" class="photo-ouvrir" data-action="talons-photo-voir" data-id="' + P.esc(d.id) + '" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
-      P.visageDistant(u, d.nom) + '</button></figure>').join('') + '</section>' : '';
+      P.visageDistant(u, d.nom) + '</button><figcaption><a class="doux petit-texte" href="' + P.esc(u) + '" target="_blank" rel="noopener noreferrer">Ouvrir dans Drive ↗</a></figcaption></figure>').join('') + '</section>' : '';
     const medias = galerie + (https(d.video) ? '<div class="ligne"><a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a></div>' : '');
     const ouverte = !['terminee', 'annulee'].includes(d.statut);
     const payee = d.statut === 'inscrite' || d.statut === 'terminee';
@@ -98,7 +98,9 @@
   P.actions['talons-photo-voir'] = (el) => {
     const d = lignes.find((x) => x.id === el.dataset.id);
     const l = photosDe(d);
-    if (l.length && typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(l, Number(el.dataset.index));
+    if (!l.length) return;
+    if (typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(l, Number(el.dataset.index));
+    else window.open(l[Number(el.dataset.index)] || l[0], '_blank', 'noopener');
   };
   P.actions['talons-filtre'] = (el) => { filtre = el.dataset.valeur; return P.afficher(); };
   P.formulaires['talons-suivi'] = async (f, form) => {

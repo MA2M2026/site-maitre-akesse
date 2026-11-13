@@ -34,10 +34,10 @@ const vue = (p, zone) => p.evaluate((z) => { const i = [...document.querySelecto
       // la galerie aussi : à tout instant, dans chaque cadre, la photo du dessus est opaque (pas de clignotement)
       const clign = await p.evaluate(async () => { document.querySelector('.lx-galerie').scrollIntoView(); let t = 0;
         for (let i = 0; i < 60; i++) { document.querySelectorAll('.lx-galerie-photo').forEach((f) => { const im = [...f.querySelectorAll('img')].sort((a, b) => (+getComputedStyle(b).zIndex || 0) - (+getComputedStyle(a).zIndex || 0));
-          const op = im.map((x) => +getComputedStyle(x).opacity); if (!(op[0] > 0.98 || op[1] > 0.98) && !(op[0] + op[1] > 0.98)) t++; }); await new Promise((r) => setTimeout(r, 150)); } return t; });
-      ok(clign === 0, n + 'galerie : pas de trou ni de clignotement pendant les fondus (' + clign + ')');
+          const op = im.map((x) => +getComputedStyle(x).opacity); if (!(Math.max(...op) > 0.98)) t++; }); await new Promise((r) => setTimeout(r, 150)); } return t; });
+      ok(clign === 0, n + 'galerie : à tout instant, une photo entièrement opaque dans chaque cadre (' + clign + ')');
       // jamais la même photo à deux endroits en même temps
-      const doubles = await p.evaluate(() => { const vus = [...document.querySelectorAll('.lx-hero-photo, .lx-galerie-photo img, .lx-defile-photo')].filter((x) => getComputedStyle(x).opacity === '1').map((x) => x.getAttribute('src').replace(/\?.*$/, '')); return vus.length - new Set(vus).size; });
+      const doubles = await p.evaluate(async () => { let pire = 0; for (let i = 0; i < 40; i++) { const vus = [...document.querySelectorAll('.lx-hero-photo, .lx-galerie-photo img, .lx-defile-photo')].filter((x) => +getComputedStyle(x).opacity > 0.98).map((x) => x.getAttribute('src').replace(/\?.*$/, '')); pire = Math.max(pire, vus.length - new Set(vus).size); await new Promise((r) => setTimeout(r, 200)); } return pire; });
       ok(doubles === 0, n + 'jamais la même photo à deux endroits (' + doubles + ')');
       // la galerie : on la fait venir à l'écran, ses photos changent aussi
       await p.evaluate(() => document.querySelector('.lx-galerie').scrollIntoView());

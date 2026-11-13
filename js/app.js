@@ -3516,7 +3516,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function afficher() {
-    document.getElementById('lbg-img').src = urlLegere(urls[index]);  // Cloudflare, comme la page
+    const img = document.getElementById('lbg-img');
+    // (13/11/2026) photo Google Drive (candidatures, cours de talons) : sans l'adresse de la page, sinon Drive la refuse
+    img.referrerPolicy = /^https:\/\/[\w.-]*google(usercontent)?\.com\//.test(urls[index] || '') ? 'no-referrer' : '';
+    img.src = urlLegere(urls[index]);  // Cloudflare, comme la page
     const multi = urls.length > 1;
     document.getElementById('lbg-compteur').textContent = multi ? `${index + 1} / ${urls.length}` : '';
     document.getElementById('lbg-precedent').style.display = multi ? 'flex' : 'none';

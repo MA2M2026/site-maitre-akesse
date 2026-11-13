@@ -22,7 +22,8 @@
   const adresse = (n) => adresses[n] || prefixe + (n.startsWith('ma2m-book') ? 'assets/reseaux/' : 'assets/cours-talons/') + n;
   const ALT = EN ? 'Agency model' : 'Mannequin de l’agence';
   const zones = [];
-  const montrees = () => new Set(zones.map((z) => z.nom));
+  // (les photos montrées ET celles en cours de chargement : deux cadres ne choisissent jamais la même)
+  const montrees = () => new Set(zones.flatMap((z) => [z.nom, z.reserve]).filter(Boolean));
   const precharger = (url, ok) => {
     if (typeof window.prechargerPhoto === 'function') return window.prechargerPhoto(url, ok);
     const i = new Image(); i.onload = () => ok(url); i.src = url;
@@ -33,6 +34,7 @@
     if (getComputedStyle(img).position !== 'absolute') {  // (galerie) deux calques absolus dans leur cadre (aspect-ratio)
       if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
       img.style.position = 'absolute'; img.style.inset = '0';
+      parent.style.isolation = 'isolate';  // (son propre étage : le calque du dessous reste dans le cadre)
     }
     const base = parseInt(getComputedStyle(img).zIndex, 10) || 0;
     const autre = img.cloneNode(false);
@@ -40,7 +42,9 @@
     // l'ancienne transition (zoom au survol de la galerie) est gardée, l'opacité s'y ajoute
     const t = getComputedStyle(img).transition;
     const transition = (t && !/^all 0s/.test(t) ? t + ', ' : '') + 'opacity ' + FONDU + 'ms ease';
-    [img, autre].forEach((x) => { x.style.transition = transition; x.alt = ALT; });
+    // photo décorative (alt vide) : le reste ; sinon une description qui reste vraie quelle que soit la photo
+    const alt = img.getAttribute('alt') ? ALT : '';
+    [img, autre].forEach((x) => { x.style.transition = transition; x.alt = alt; });
     autre.style.opacity = '0'; autre.setAttribute('aria-hidden', 'true'); autre.style.zIndex = String(base - 1);  // (jamais au-dessus de l'étage d'origine : voiles et cadres restent devant)
     img.style.zIndex = String(base);
     parent.insertBefore(autre, img.nextSibling);
@@ -51,8 +55,9 @@
       let nom = null;
       for (let i = 1; i <= NOMS.length; i++) { const c = NOMS[(k + i + NOMS.length) % NOMS.length]; if (!prises.has(c)) { nom = c; break; } }
       if (!nom) return planifier(z, pas);
+      z.reserve = nom;
       let fait = false;
-      const secours = setTimeout(() => { if (!fait) { fait = true; planifier(z, pas); } }, 8000);  // photo qui ne vient pas : on attend la suivante
+      const secours = setTimeout(() => { if (!fait) { fait = true; z.reserve = null; planifier(z, pas); } }, 8000);  // photo qui ne vient pas : on attend la suivante
       precharger(adresse(nom), (url) => {
         if (fait) return;
         fait = true; clearTimeout(secours);
@@ -62,7 +67,7 @@
         void cache.offsetWidth;
         cache.style.transition = transition; cache.style.opacity = '1';
         cache.removeAttribute('aria-hidden'); visible.setAttribute('aria-hidden', 'true');
-        z.visible = cache; z.cache = visible; z.nom = nom;
+        z.visible = cache; z.cache = visible; z.nom = nom; z.reserve = null;
         setTimeout(() => { visible.style.transition = 'none'; visible.style.opacity = '0'; void visible.offsetWidth; visible.style.transition = transition; }, FONDU + 50);
         planifier(z, pas);
       });
