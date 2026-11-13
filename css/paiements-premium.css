@@ -70,3 +70,4 @@ button.pp-op:first-child { border-top: 0; }
 .pp-gros { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; box-sizing: border-box; border: 0; border-radius: 14px; padding: 14px 16px;
   background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; font: 700 15px 'Work Sans', sans-serif; letter-spacing: 0; text-transform: none; text-decoration: none; box-shadow: none; cursor: pointer; }
 .pp-gros:disabled, .pp-gros[aria-disabled="true"] { background: #C49AA0; cursor: default; }
+.pp-gros.u-hidden, .pp-gros[hidden] { display: none; }

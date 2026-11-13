@@ -4890,3 +4890,19 @@ supabase-paiements-officiels.sql) ; il place le bon compte (espèces → caisse,
 money, carte/virement/chèque → banque). La part de TVA de la somme s'affiche (« Dont chiffre d'affaires hors taxes … et TVA
 … »). Même choix dans « Nouvelle recette » et « Nouvelle dépense » ; le moyen apparaît sur chaque carte. Outils :
 `P.compta.champMoyen`, `P.compta.noteTva` (js/portail/espace-compta.js). Essai : test-comptabilite.js.
+
+## Paiements premium partout (13/11/2026, maquette validée : « applique-la partout »)
+
+Style de « Mes paiements » de l'application, UNE fois : **`css/paiements-premium.css`** (classes `pp-*` : `pp-cb` carte façon
+carte bancaire, `pp-tuiles`/`pp-tuile`, `pp-releve`/`pp-op`, `pp-blanc`, `pp-choix`/`pp-moyen` tuiles avec ✓, `pp-consigne`
++ `pp-num` « Copier », `pp-tva`, `pp-gros` grand bouton rouge). Chargé par admin/index.html, app/index.html,
+app/mes-paiements.html, app/inscription-mannequin.html, cours-talons.html (FR/EN).
+`js/moyens-paiement.js` : `choix(moyens, choisi, clé)` (tuiles des moyens allumés + « bientôt » estompés), `tuiles(nom,
+choisi, attributs, codes)` (formulaires de l'agence : champ caché qui prévient par « change »), `consigne` (numéro, lien
+ou RIB + « Copier », FR/EN), `ABR` (initiales des tuiles), `TOUS` (8 moyens).
+Écrans : Comptabilité (carte « hors taxes », tuiles TVA prévue / déjà reversée, relevé par catégorie), Paramètres des
+Paiements (carte « n / 6 allumés », relevés allumés / prêts), « Mes paiements », Encaisser, Payer un cachet, inscription
+des nouveaux mannequins (étape 3 : choix du moyen, `infos.moyen` envoyé au serveur), cours de talons (« Payer
+maintenant » : choix du moyen, colonne `cours_talons.moyen`). Base : **`supabase-moyens-inscriptions.sql`** (À COLLER) :
+`inscription_payer_avec_numero` note le moyen, `cours_talons.moyen`, `cours_talons_valider` range la recette sur le compte
+du moyen. Essais : test-comptabilite, test-moyens-paiement, test-mensualites, test-inscription, test-cours-talons, test-cachets.

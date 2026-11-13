@@ -13,7 +13,11 @@
   // tous les moyens d'un paiement fait ou reçu par l'agence (cachets, clients), dans cet ordre partout
   const TOUS = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'carte', 'virement', 'cheque', 'especes'];
   const esc = (s) => window.echapperHtml(s == null ? '' : s);  // (js/app.js)
-  const fcfa = (n) => window.CachetsMa2m.fcfa(n);  // (js/cachets-communs.js, chargé avant)
+  // (js/cachets-communs.js s'il est chargé, sinon enFcfa de js/app.js : pages d'inscription et cours de talons)
+  const fcfa = (n) => (window.CachetsMa2m ? window.CachetsMa2m.fcfa(n) : window.enFcfa(n));
+  // pages en anglais (cours de talons EN, inscription) : les phrases des consignes en anglais
+  const EN = /^en/i.test(document.documentElement.lang || '');
+  const T = (fr, en) => (EN ? en : fr);
   const nom = (code) => NOMS[code] || code || '';
 
   // moyens allumés (Wave seul si la base ne répond pas ou si le fichier n'est pas encore collé)
@@ -37,7 +41,7 @@
     if (moyens.length < 2 && !bientot.length) return '';
     return '<div class="pp-choix" role="group" aria-label="Moyen de paiement">' +
       moyens.map((m) => tuile(m.code, m.nom || nom(m.code), m.code === choisi, 'data-moyen="' + esc(m.code) + '" data-mois="' + esc(cle) + '"')).join('') +
-      bientot.map((c) => tuile(c, nom(c).replace(/ \(Visa\)$/, '') + ' · bientôt', false, 'data-bientot="' + c + '"', true)).join('') + '</div>';
+      bientot.map((c) => tuile(c, nom(c).replace(/ \(Visa\)$/, '') + T(' · bientôt', ' · soon'), false, 'data-bientot="' + c + '"', true)).join('') + '</div>';
   }
 
   // formulaires de l'agence (encaisser, recette, payer un cachet) : tuiles + champ caché « nom » (codes : TOUS par défaut) ;
@@ -63,16 +67,16 @@
   function consigne(m, montant, cle) {
     if (!m) return '';
     const libre = m.consignes ? '<p class="pp-legende">' + esc(m.consignes) + '</p>' : '';
-    const copier = (v) => '<div class="pp-num"><span>' + esc(v || '') + '</span><button type="button" data-bouton-libre data-pp-copier="' + esc(v || '') + '">Copier</button></div>';
+    const copier = (v) => '<div class="pp-num"><span>' + esc(v || '') + '</span><button type="button" data-bouton-libre data-pp-copier="' + esc(v || '') + '">' + T('Copier', 'Copy') + '</button></div>';
     if (MOBILE.indexOf(m.code) >= 0) {
-      return '<div class="pp-consigne"><p>Envoyez <b>' + fcfa(montant) + '</b> par ' + esc(m.nom || nom(m.code)) + ' au numéro de l’agence' +
-        (m.titulaire ? ' (au nom de ' + esc(m.titulaire) + ')' : '') + ' :</p>' + copier(m.numero) + '</div>' + libre;
+      return '<div class="pp-consigne"><p>' + T('Envoyez ', 'Send ') + '<b>' + fcfa(montant) + '</b>' + T(' par ', ' by ') + esc(m.nom || nom(m.code)) + T(' au numéro de l’agence', ' to the agency number') +
+        (m.titulaire ? T(' (au nom de ', ' (name: ') + esc(m.titulaire) + ')' : '') + ' :</p>' + copier(m.numero) + '</div>' + libre;
     }
     if (m.code === 'carte') {
-      return '<a class="btn btn--principal pp-gros" data-bouton-libre data-mp="lien" data-mois="' + esc(cle) + '" href="' + esc(m.lien || '#') + '" target="_blank" rel="noopener">1 · Payer ' + fcfa(montant) + ' par carte</a>' + libre;
+      return '<a class="btn btn--principal pp-gros" data-bouton-libre data-mp="lien" data-mois="' + esc(cle) + '" href="' + esc(m.lien || '#') + '" target="_blank" rel="noopener">' + T('1 · Payer ', '1 · Pay ') + fcfa(montant) + T(' par carte', ' by card') + '</a>' + libre;
     }
     if (m.code === 'virement') {
-      return '<div class="pp-consigne"><p>Virez <b>' + fcfa(montant) + '</b>' + (m.titulaire ? ' à ' + esc(m.titulaire) : '') + ' :</p>' + copier(m.rib) + '</div>' + libre;
+      return '<div class="pp-consigne"><p>' + T('Virez ', 'Transfer ') + '<b>' + fcfa(montant) + '</b>' + (m.titulaire ? T(' à ', ' to ') + esc(m.titulaire) : '') + ' :</p>' + copier(m.rib) + '</div>' + libre;
     }
     return libre;
   }
@@ -82,7 +86,7 @@
     if (!b) return;
     const texte = b.textContent;
     const fini = (t) => { b.textContent = t; setTimeout(() => { if (b.isConnected) b.textContent = texte; }, 1600); };
-    if (navigator.clipboard) navigator.clipboard.writeText(b.getAttribute('data-pp-copier')).then(() => fini('Copié ✓'), () => fini('Copier'));
+    if (navigator.clipboard) navigator.clipboard.writeText(b.getAttribute('data-pp-copier')).then(() => fini(T('Copié ✓', 'Copied ✓')), () => fini(texte));
   });
 
   window.MoyensPaiement = { NOMS, PREPARES, MOBILE, TOUS, ABR, nom, charger, choix, tuiles, consigne };

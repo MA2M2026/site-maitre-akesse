@@ -93,7 +93,6 @@
   }
 
   // moyens pour payer une mannequin (noms : js/moyens-paiement.js, les mêmes partout)
-  const MOYENS_CACHET = (window.MoyensPaiement ? window.MoyensPaiement.TOUS : ['wave', 'especes']).map((k) => [k, C.nomMoyen(k)]);
   P.actions['cachet-nouveau'] = () => {
     const registre = P.etat.cachetsRegistre || [], tpl = document.getElementById('cachet-projets');
     P.fenetre('<form class="f" data-form="cachet-ajouter"><h2 class="large">Nouveau cachet à payer</h2>' +
@@ -236,7 +235,7 @@
       '<p class="large recap-cachet"><b>' + P.fcfa(c.montant) + '</b> à <b>' + P.esc(c.beneficiaire) + '</b> (' + joli(c.telephone) + ')<br><span class="doux">' + P.esc(c.prestation) + '</span></p>' +
       '<label class="fl" for="cp-compte">Payé depuis<select id="cp-compte" name="compte" required>' + C.optionsComptes(comptes) + '</select></label>' +
       // (13/11/2026) moyen utilisé : il est écrit sur le reçu
-      '<label class="fl" for="cp-moyen">Payé par<select id="cp-moyen" name="moyen">' + MOYENS_CACHET.map((m) => '<option value="' + m[0] + '">' + P.esc(m[1]) + '</option>').join('') + '</select></label>' +
+      '<div class="fl large"><span class="pp-s">Payé par</span>' + (window.MoyensPaiement ? window.MoyensPaiement.tuiles('moyen', 'wave', 'id="cp-moyen"') : '') + '</div>' +
       '<label class="fl" for="cp-ref">Référence (transaction, n° de chèque ou de virement, facultatif)<input id="cp-ref" name="reference" maxlength="80" autocomplete="off"></label>' +
       '<p class="doux petit-texte large">Ne touchez « J’ai payé » qu’après l’envoi réussi. ' + (c.impots ? 'Les impôts retenus (' + P.fcfa(c.impots) + ') entrent dans « Impôts et taxes », à reverser. ' : '') + (c.montant_prestation
         ? 'Deux lignes entrent dans la comptabilité : la recette de la prestation (' + P.fcfa(c.montant_prestation) + ') et la dépense du cachet (' + P.fcfa(c.montant) + ') ; la différence est la commission de l’agence' + (c.impots || c.frais_total ? ', les impôts et les frais retenus' : '') + '. Ne saisissez pas cette recette à la main.'

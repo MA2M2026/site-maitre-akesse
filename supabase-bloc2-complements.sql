@@ -517,6 +517,7 @@ revoke all on function mensualite_declarer_avec_numero(date, text) from public, 
 grant execute on function mensualite_declarer_avec_numero(date, text) to authenticated;
 
 -- « J'ai payé » de l'inscription (appelé par le serveur du site, comme inscription_simplifiee_payer)
+-- ⚠ Version à jour (moyen de paiement, 13/11/2026) : supabase-moyens-inscriptions.sql, à recoller APRÈS ce fichier-ci.
 create or replace function inscription_payer_avec_numero(p_code text, p_naissance date, p_infos jsonb)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare

@@ -66,7 +66,24 @@
     $('ct-total').textContent = texteTotal();
     $('ct-total-final').textContent = texteTotal();
     $('ct-lien-wave').href = LIEN_WAVE_AGENCE + montant();
+    dessinerMoyens();
   }
+  // (13/11/2026, maquette premium validée) moyens allumés par l'agence en tuiles ; Wave garde son lien, les autres
+  // affichent le numéro (ou le lien de la carte, ou le RIB) — js/moyens-paiement.js
+  const MP = window.MoyensPaiement;
+  let moyens = [{ code: 'wave', nom: 'Wave' }], moyenChoisi = 'wave';
+  function dessinerMoyens() {
+    if (!MP) return;
+    const m = moyens.find((x) => x.code === moyenChoisi) || moyens[0];
+    $('ct-moyens').innerHTML = MP.choix(moyens, m.code, 'talons');
+    $('ct-lien-wave').classList.toggle('u-hidden', m.code !== 'wave');
+    $('ct-consigne').innerHTML = MP.consigne(m, montant(), 'talons');
+  }
+  if (MP && typeof sb !== 'undefined' && sb) MP.charger(sb).then((l) => { moyens = l; dessinerMoyens(); });
+  $('ct-bloc-wave').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-moyen]');
+    if (t) { moyenChoisi = t.getAttribute('data-moyen'); dessinerMoyens(); }
+  });
   form.querySelectorAll('input[name="formule"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-nb').addEventListener('change', majFormule);
   $('ct-objectif').addEventListener('change', () => $('ct-bloc-concours').classList.toggle('u-hidden', !['miss', 'beaute'].includes($('ct-objectif').value)));
@@ -254,7 +271,8 @@
       parent_telephone: mineure() ? composerTelephone($('ct-parent-indicatif'), $('ct-parent-telephone')) : null,
       photos: liensPhotos, video: lienVideo || null,
       decision: decision(),
-      reference_wave: decision() === 'maintenant' ? ($('ct-ref-wave').value.trim() || null) : null
+      reference_wave: decision() === 'maintenant' ? ($('ct-ref-wave').value.trim() || null) : null,
+      ...(decision() === 'maintenant' && moyenChoisi !== 'wave' ? { moyen: moyenChoisi } : {})
     };
   }
   const NOMS_FORMULES = { groupe: 'En groupe (4 dimanches)', prive_salle: 'Privé dans la salle', prive_exterieur: 'Privé à l’extérieur' };
@@ -265,7 +283,7 @@
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',
       l.parent_nom ? `⚠️ Mineure. Parent : ${l.parent_nom} · ${l.parent_telephone}` : '',
-      `Paiement : ${l.decision === 'maintenant' ? 'payé maintenant par Wave' + (l.reference_wave ? ' (réf. ' + l.reference_wave + ')' : '') : 'plus tard'}`,
+      `Paiement : ${l.decision === 'maintenant' ? 'payé maintenant par ' + (MP ? MP.nom(l.moyen || 'wave') : 'Wave') + (l.reference_wave ? ' (réf. ' + l.reference_wave + ')' : '') : 'plus tard'}`,
       l.photos.length ? 'Photos : ' + l.photos.join(' ') : 'Photos : non reçues', 'Vidéo : ' + (l.video || 'non reçue')].filter(Boolean).join('\n');
   }
 
@@ -295,7 +313,7 @@
     p1.textContent = error
       ? T('Merci ! Les inscriptions en ligne ouvrent très bientôt : touchez le bouton ci-dessous pour envoyer votre inscription à l’agence sur WhatsApp.', 'Thank you! Online sign-ups open very soon: tap the button below to send your sign-up to the agency on WhatsApp.')
       : (ligne.decision === 'maintenant'
-        ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement Wave, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your Wave payment, it confirms your place on WhatsApp.')
+        ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, it confirms your place on WhatsApp.')
         : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
     merci.appendChild(p1);
     if (envoi.liens.length && lienVideo) {
