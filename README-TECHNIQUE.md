@@ -4980,3 +4980,7 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
   (« 👠 Nouvelle inscription au cours de talons », nom et formule, ouvre la page Cours de talons) ; le déclencheur est
   dans `supabase-notif-cours-talons.sql` (à coller par la propriétaire ; réutilise `notifier_push_notification`, aucun
   secret à remplir). Tests : `test-notifications-app.js`, `test-admin-cours-talons.js`.
+- (13/11/2026, suite) **Atelier talons : que des femmes** — la photo du défilé homme (`ma2m-book-4.jpg`) n'y est plus ;
+  ajout de 5 photos d'Alicia Kouadio (majeure, choisie par la propriétaire) : `assets/cours-talons/alicia-1…5.jpg`.
+  **La bande du milieu (galerie) défile toute seule comme un tapis roulant** (`.lx-tapis`, css/luxe.css) : toutes les
+  photos, deux fois de suite pour une boucle sans à-coup ; s'arrête sous le doigt, hors de l'écran ou onglet caché.
