@@ -31,6 +31,14 @@ const vue = (p, zone) => p.evaluate((z) => { const i = [...document.querySelecto
       const trous = await p.evaluate(async () => { let t = 0; const z = document.querySelector('.lx-hero-photo').parentElement;
         for (let i = 0; i < 40; i++) { if (![...z.querySelectorAll('.lx-hero-photo')].some((x) => +getComputedStyle(x).opacity > 0.98)) t++; await new Promise((r) => setTimeout(r, 160)); } return t; });
       ok(trous === 0, n + 'pas de trou pendant les fondus (' + trous + ')');
+      // la galerie aussi : à tout instant, dans chaque cadre, la photo du dessus est opaque (pas de clignotement)
+      const clign = await p.evaluate(async () => { document.querySelector('.lx-galerie').scrollIntoView(); let t = 0;
+        for (let i = 0; i < 60; i++) { document.querySelectorAll('.lx-galerie-photo').forEach((f) => { const im = [...f.querySelectorAll('img')].sort((a, b) => (+getComputedStyle(b).zIndex || 0) - (+getComputedStyle(a).zIndex || 0));
+          const op = im.map((x) => +getComputedStyle(x).opacity); if (!(op[0] > 0.98 || op[1] > 0.98) && !(op[0] + op[1] > 0.98)) t++; }); await new Promise((r) => setTimeout(r, 150)); } return t; });
+      ok(clign === 0, n + 'galerie : pas de trou ni de clignotement pendant les fondus (' + clign + ')');
+      // jamais la même photo à deux endroits en même temps
+      const doubles = await p.evaluate(() => { const vus = [...document.querySelectorAll('.lx-hero-photo, .lx-galerie-photo img, .lx-defile-photo')].filter((x) => getComputedStyle(x).opacity === '1').map((x) => x.getAttribute('src').replace(/\?.*$/, '')); return vus.length - new Set(vus).size; });
+      ok(doubles === 0, n + 'jamais la même photo à deux endroits (' + doubles + ')');
       // la galerie : on la fait venir à l'écran, ses photos changent aussi
       await p.evaluate(() => document.querySelector('.lx-galerie').scrollIntoView());
       const avant = await p.evaluate(() => [...document.querySelectorAll('.lx-galerie-photo')].map((f) => [...f.querySelectorAll('img')].filter((i) => getComputedStyle(i).opacity === '1').pop()?.getAttribute('src')));

@@ -2,58 +2,89 @@
 // ne peuvent pas s'alterner ? ») sur les pages « luxe » Intégrer l'agence et Atelier talons (FR et EN) : la grande
 // photo du haut, les trois photos de la galerie et la photo du défilé passent l'une après l'autre en fondu.
 // UNE copie pour les 4 pages. Seulement les photos de l'agence déjà choisies pour ces pages (jamais de mineure).
-// Rien ne bouge si le visiteur a demandé moins d'animations ; la page n'anime que ce qui est à l'écran.
+//  - deux calques par zone, l'un sur l'autre (z-index), jamais déplacés dans la page : la nouvelle photo apparaît
+//    au-dessus, l'ancienne ne s'efface qu'ensuite (pas de trou, pas de clignotement) ;
+//  - photo préchargée par prechargerPhoto (js/photos.js) : une photo qui ne vient pas n'est jamais montrée ;
+//  - jamais la même photo à deux endroits en même temps ;
+//  - seulement quand la section est à l'écran et l'onglet visible ; rien ne bouge si le visiteur demande moins
+//    d'animations.
 (function () {
   'use strict';
-  const PHOTOS = ['assets/cours-talons/mannequin-podium.jpg?v=2', 'assets/cours-talons/galerie-tailleur.jpg?v=1',
-    'assets/cours-talons/galerie-blanc.jpg?v=1', 'assets/cours-talons/galerie-drapeau.jpg?v=1',
-    'assets/cours-talons/mannequin-defile.jpg?v=2', 'assets/reseaux/ma2m-book-4.jpg'];
+  const NOMS = ['mannequin-podium.jpg', 'galerie-tailleur.jpg', 'galerie-blanc.jpg', 'galerie-drapeau.jpg', 'mannequin-defile.jpg', 'ma2m-book-4.jpg'];
   const FONDU = 1200;  // ms
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  // pages en anglais (/en/…) : les chemins des photos remontent d'un dossier
+  const EN = /^en/i.test(document.documentElement.lang || '');
   const prefixe = /\/en\//.test(location.pathname) ? '../' : '';
-  const chemin = (p) => prefixe + p;
-  const sansVersion = (u) => u.replace(/\?.*$/, '').replace(/^.*\/assets\//, 'assets/');
+  const nomDe = (u) => (u || '').replace(/\?.*$/, '').replace(/^.*\//, '');
+  // l'adresse de chaque photo : celle déjà écrite dans la page (avec son numéro de version), sinon le dossier connu
+  const adresses = {};
+  document.querySelectorAll('img[src]').forEach((i) => { const n = nomDe(i.getAttribute('src')); if (NOMS.includes(n) && !adresses[n]) adresses[n] = i.getAttribute('src'); });
+  const adresse = (n) => adresses[n] || prefixe + (n.startsWith('ma2m-book') ? 'assets/reseaux/' : 'assets/cours-talons/') + n;
+  const ALT = EN ? 'Agency model' : 'Mannequin de l’agence';
+  const zones = [];
+  const montrees = () => new Set(zones.map((z) => z.nom));
+  const precharger = (url, ok) => {
+    if (typeof window.prechargerPhoto === 'function') return window.prechargerPhoto(url, ok);
+    const i = new Image(); i.onload = () => ok(url); i.src = url;
+  };
 
-  function animer(img, pas, decalage) {
+  function zone(img, pas, decalage) {
     const parent = img.parentElement;
-    // la photo du moment et la suivante, superposées (la suivante prend la place exacte de la première)
-    const dessus = img.cloneNode(false);
-    dessus.removeAttribute('fetchpriority'); dessus.alt = ''; dessus.setAttribute('aria-hidden', 'true');
-    dessus.style.opacity = '0'; dessus.style.transition = 'opacity ' + FONDU + 'ms ease';
-    if (getComputedStyle(img).position !== 'absolute') {
+    if (getComputedStyle(img).position !== 'absolute') {  // (galerie) deux calques absolus dans leur cadre (aspect-ratio)
       if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
-      dessus.style.position = 'absolute'; dessus.style.inset = '0';
+      img.style.position = 'absolute'; img.style.inset = '0';
     }
-    parent.insertBefore(dessus, img.nextSibling);
-    const depart = Math.max(0, PHOTOS.findIndex((p) => sansVersion(p) === sansVersion(img.getAttribute('src') || '')));
-    let rang = depart, visible = img, cache = dessus, minuteur = null, aLEcran = false;
-
-    function suivante() {
-      rang = (rang + 1) % PHOTOS.length;
-      const url = chemin(PHOTOS[rang]);
-      const pret = new Image(); pret.src = url;
-      (pret.decode ? pret.decode() : Promise.resolve()).catch(() => {}).then(() => {
-        // la nouvelle photo vient AU-DESSUS et apparaît en fondu ; l'ancienne ne disparaît qu'ensuite (pas de trou)
+    const base = parseInt(getComputedStyle(img).zIndex, 10) || 0;
+    const autre = img.cloneNode(false);
+    autre.removeAttribute('fetchpriority'); autre.removeAttribute('loading');
+    // l'ancienne transition (zoom au survol de la galerie) est gardée, l'opacité s'y ajoute
+    const t = getComputedStyle(img).transition;
+    const transition = (t && !/^all 0s/.test(t) ? t + ', ' : '') + 'opacity ' + FONDU + 'ms ease';
+    [img, autre].forEach((x) => { x.style.transition = transition; x.alt = ALT; });
+    autre.style.opacity = '0'; autre.setAttribute('aria-hidden', 'true'); autre.style.zIndex = String(base - 1);  // (jamais au-dessus de l'étage d'origine : voiles et cadres restent devant)
+    img.style.zIndex = String(base);
+    parent.insertBefore(autre, img.nextSibling);
+    const z = { nom: nomDe(img.getAttribute('src')), visible: img, cache: autre, minuteur: null, aLEcran: false, pas, decalage, section: parent.closest('section') || parent };
+    z.suivante = () => {
+      if (document.hidden || !z.aLEcran) return;
+      const prises = montrees(), k = NOMS.indexOf(z.nom);
+      let nom = null;
+      for (let i = 1; i <= NOMS.length; i++) { const c = NOMS[(k + i + NOMS.length) % NOMS.length]; if (!prises.has(c)) { nom = c; break; } }
+      if (!nom) return planifier(z, pas);
+      let fait = false;
+      const secours = setTimeout(() => { if (!fait) { fait = true; planifier(z, pas); } }, 8000);  // photo qui ne vient pas : on attend la suivante
+      precharger(adresse(nom), (url) => {
+        if (fait) return;
+        fait = true; clearTimeout(secours);
+        const visible = z.visible, cache = z.cache;
         cache.style.transition = 'none'; cache.style.opacity = '0'; cache.src = url;
-        parent.insertBefore(cache, visible.nextSibling);
+        cache.style.zIndex = String(base); visible.style.zIndex = String(base - 1);
         void cache.offsetWidth;
-        cache.style.transition = 'opacity ' + FONDU + 'ms ease'; cache.style.opacity = '1';
-        const avant = visible; visible = cache; cache = avant;
-        setTimeout(() => { cache.style.transition = 'none'; cache.style.opacity = '0'; }, FONDU + 50);
-        planifier(pas);
+        cache.style.transition = transition; cache.style.opacity = '1';
+        cache.removeAttribute('aria-hidden'); visible.setAttribute('aria-hidden', 'true');
+        z.visible = cache; z.cache = visible; z.nom = nom;
+        setTimeout(() => { visible.style.transition = 'none'; visible.style.opacity = '0'; void visible.offsetWidth; visible.style.transition = transition; }, FONDU + 50);
+        planifier(z, pas);
       });
-    }
-    function planifier(d) { clearTimeout(minuteur); minuteur = aLEcran ? setTimeout(suivante, d) : null; }
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver((e) => { const avant = aLEcran; aLEcran = e[0].isIntersecting; if (aLEcran && !avant) planifier(pas + decalage); if (!aLEcran) clearTimeout(minuteur); }).observe(parent.closest('section') || parent);  // (la section : sur téléphone, la galerie défile de côté)
-    } else { aLEcran = true; planifier(pas + decalage); }
+    };
+    zones.push(z);
   }
+  function planifier(z, d) { clearTimeout(z.minuteur); z.minuteur = z.aLEcran && !document.hidden ? setTimeout(z.suivante, d) : null; }
+  const reprendre = (z) => planifier(z, z.pas + z.decalage);
 
   function lancer() {
-    document.querySelectorAll('.lx-hero-photo').forEach((img) => animer(img, 6000, 0));
-    document.querySelectorAll('.lx-galerie-photo img').forEach((img, i) => animer(img, 5200, 900 * i));
-    document.querySelectorAll('.lx-defile-photo').forEach((img) => animer(img, 6000, 1500));
+    document.querySelectorAll('.lx-hero-photo').forEach((img) => zone(img, 6000, 0));
+    document.querySelectorAll('.lx-galerie-photo img').forEach((img, i) => zone(img, 5200, 900 * i));
+    document.querySelectorAll('.lx-defile-photo').forEach((img) => zone(img, 6000, 1500));
+    // UN observateur pour toutes les zones : chacune ne vit que quand sa section est à l'écran
+    // (la section entière : sur téléphone, la galerie défile de côté)
+    const voir = (z, oui) => { const avant = z.aLEcran; z.aLEcran = oui; if (oui && !avant) reprendre(z); if (!oui) clearTimeout(z.minuteur); };
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entrees) => entrees.forEach((e) => zones.filter((z) => z.section === e.target).forEach((z) => voir(z, e.isIntersecting))));
+      new Set(zones.map((z) => z.section)).forEach((s) => obs.observe(s));
+    } else zones.forEach((z) => voir(z, true));
+    // onglet caché : tout s'arrête ; de retour : ça repart
+    document.addEventListener('visibilitychange', () => zones.forEach((z) => { if (document.hidden) clearTimeout(z.minuteur); else if (z.aLEcran) reprendre(z); }));
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lancer); else lancer();
 })();
