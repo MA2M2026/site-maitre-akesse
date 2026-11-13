@@ -53,7 +53,7 @@ if (process.argv.includes('--son')) { console.log('✓', faireSon()); process.ex
 
 (async () => {
   const { chromium } = require('playwright');
-  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: L, height: H } });
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: L, height: H }, deviceScaleFactor: Number(process.env.ECHELLE || 1) });  // ECHELLE=2 : images 4K (3840 × 2160) pour YouTube
   const erreurs = []; p.on('pageerror', (e) => erreurs.push(e.message));
   await p.goto('file://' + ICI + '/' + FILM + (FORMAT === 'large' ? '?format=large' : '')); await p.evaluate(() => document.fonts.ready); await p.evaluate(() => window.PRET); await p.waitForTimeout(1200);
   const manques = await p.evaluate(() => window.MANQUES);
