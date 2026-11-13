@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE (13/11/2026, à valider par la propriétaire) : « Mon programme » (page personnelle de l'élève de l'Atelier
+     Talons & Élégance, envoyée par WhatsApp) et le dossier de l'élève dans l'Administration. Données d'exemple.
+     ?vue=eleve | ?vue=admin -->
+<title>Maquette programme talons</title>
+<style>
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url('../assets/polices/cormorant-garamond-latin-500-normal.woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url('../assets/polices/cormorant-garamond-latin-400-italic.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 400; src: url('../assets/polices/work-sans-latin-400-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 600; src: url('../assets/polices/work-sans-latin-600-normal.woff2'); }
+@font-face { font-family: 'Work Sans'; font-weight: 700; src: url('../assets/polices/work-sans-latin-700-normal.woff2'); }
+:root { --rouge: #7C2128; --rouge-fonce: #5A141B; --rose: #F6EEEE; --ligne: #EADCDD; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--rouge); color: #fff; font: 400 15px/1.5 'Work Sans', sans-serif; padding-bottom: 40px; }
+.v { display: none; } body.eleve .v-eleve, body.admin .v-admin { display: block; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.25); }
+header img { height: 30px; }
+header small { font: 600 11px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.85; }
+.wrap { padding: 0 16px; }
+.serif { font-family: 'Cormorant Garamond', serif; font-weight: 500; }
+.ital { font-family: 'Cormorant Garamond', serif; font-style: italic; }
+.caps { font: 600 11px 'Work Sans'; letter-spacing: 0.3em; text-transform: uppercase; }
+.carte { background: #fff; color: #2A1416; border-radius: 22px; padding: 20px; margin-top: 16px; box-shadow: 0 24px 50px -24px rgba(30,4,8,0.6); }
+.carte h3 { font: 500 24px 'Cormorant Garamond'; color: var(--rouge); margin-bottom: 12px; }
+/* en-tête de l'élève */
+.hero { margin-top: 22px; text-align: center; }
+.portrait { width: 116px; height: 116px; margin: 0 auto; border-radius: 50%; padding: 4px; background: linear-gradient(135deg, #fff, rgba(255,255,255,0.35)); }
+.portrait img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 15%; display: block; }
+.hero h1 { font: 500 40px/1 'Cormorant Garamond'; margin-top: 14px; }
+.hero p { opacity: 0.88; margin-top: 6px; }
+.badge { display: inline-block; margin-top: 12px; padding: 7px 16px; border: 1px solid rgba(255,255,255,0.7); border-radius: 999px; font: 600 11px 'Work Sans'; letter-spacing: 0.25em; text-transform: uppercase; }
+/* calendrier : même style que l'agenda du site */
+.cal-tete { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cal-tete b { font: 500 26px 'Cormorant Garamond'; color: var(--rouge); text-transform: capitalize; }
+.cal-tete span { font: 600 12px 'Work Sans'; color: #8B5A60; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.cal .j { font: 600 10px 'Work Sans'; letter-spacing: 0.12em; color: #8B5A60; padding: 4px 0; }
+.cal .d { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 12px; font: 500 16px 'Work Sans'; color: var(--rouge); background: var(--rose); position: relative; }
+.cal .d.hors { opacity: 0.3; background: none; }
+.cal .d.cours { background: var(--rouge); color: #fff; font-weight: 700; box-shadow: 0 8px 16px -8px rgba(124,33,40,0.8); }
+.cal .d.cours::after { content: "👠"; position: absolute; top: -7px; right: -4px; font-size: 13px; }
+.cal .d.auj { outline: 2px solid var(--rouge); outline-offset: -2px; }
+.legende { display: flex; gap: 14px; margin-top: 12px; font-size: 12px; color: #6B4A4E; }
+.legende i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; background: var(--rouge); vertical-align: -2px; margin-right: 5px; }
+/* séances */
+.seance { display: flex; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--ligne); }
+.seance:first-of-type { border-top: 0; }
+.date { flex: 0 0 62px; height: 66px; border-radius: 14px; background: var(--rouge); color: #fff; text-align: center; padding-top: 7px; }
+.date small { display: block; font: 600 10px 'Work Sans'; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.85; }
+.date b { display: block; font: 500 28px/1 'Cormorant Garamond'; }
+.seance .t b { display: block; font-weight: 600; }
+.seance .t span { color: #6B4A4E; font-size: 13px; }
+.seance .num { margin-left: auto; font: 600 11px 'Work Sans'; color: #8B5A60; }
+.lieu { display: flex; gap: 12px; align-items: flex-start; }
+.lieu .ic { flex: 0 0 42px; height: 42px; border-radius: 12px; background: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.lien { display: inline-block; margin-top: 6px; color: var(--rouge); font-weight: 600; font-size: 13px; text-decoration: underline; }
+.prevoir { display: flex; flex-wrap: wrap; gap: 8px; }
+.prevoir span { padding: 8px 12px; border-radius: 999px; background: var(--rose); color: var(--rouge); font-size: 13px; font-weight: 600; }
+.gros { display: block; width: 100%; margin-top: 18px; padding: 17px; border: 0; border-radius: 16px; background: #fff; color: var(--rouge); font: 700 15px 'Work Sans'; text-align: center; box-shadow: 0 18px 36px -18px rgba(0,0,0,0.6); }
+.gros.plein { background: var(--rouge); color: #fff; }
+.note { text-align: center; font-size: 12px; opacity: 0.85; margin-top: 10px; }
+/* administration */
+.fiche-tete { display: flex; gap: 14px; align-items: center; }
+.fiche-tete img { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; object-position: 50% 15%; }
+.fiche-tete h2 { font: 500 26px/1.1 'Cormorant Garamond'; color: var(--rouge); }
+.pastille { display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 999px; font: 700 11px 'Work Sans'; }
+.pastille.ok { background: #E3F4E8; color: #1E6B3A; }
+.pastille.info { background: var(--rose); color: var(--rouge); }
+.mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.mini div { background: var(--rose); border-radius: 14px; padding: 10px; text-align: center; }
+.mini small { display: block; font: 600 10px 'Work Sans'; letter-spacing: 0.12em; text-transform: uppercase; color: #8B5A60; }
+.mini b { font: 500 20px 'Cormorant Garamond'; color: var(--rouge); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font: 600 10px 'Work Sans'; letter-spacing: 0.12em; text-transform: uppercase; color: #8B5A60; padding: 6px 4px; }
+td { padding: 10px 4px; border-top: 1px solid var(--ligne); }
+td .ok { color: #1E6B3A; font-weight: 700; }
+.ajout { margin-top: 10px; display: block; text-align: center; padding: 10px; border: 1.5px dashed var(--ligne); border-radius: 12px; color: var(--rouge); font-weight: 600; font-size: 13px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.actions span { display: block; padding: 13px 10px; border-radius: 14px; background: var(--rouge); color: #fff; font: 700 13px 'Work Sans'; text-align: center; }
+.actions span.blanc { background: var(--rose); color: var(--rouge); }
+.alerte { margin-top: 16px; display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); }
+.alerte b { display: block; }
+.alerte span { font-size: 13px; opacity: 0.9; }
+.titre-page { font: 500 34px 'Cormorant Garamond'; margin: 20px 0 4px; }
+</style></head>
+<body>
+<header><img src="../assets/logo-intro.png" alt="MA2M"><small class="v v-eleve">Mon programme</small><small class="v v-admin">Administration</small></header>
+
+<!-- ======================= VUE DE L'ÉLÈVE ======================= -->
+<div class="v v-eleve"><div class="wrap">
+  <section class="hero">
+    <div class="portrait"><img src="../assets/cours-talons/alicia-2.jpg" alt=""></div>
+    <h1>Bienvenue, Awa</h1>
+    <p class="ital" style="font-size:20px">Atelier Talons &amp; Élégance</p>
+    <span class="badge">En groupe · 4 dimanches</span>
+  </section>
+
+  <div class="carte">
+    <div class="cal-tete"><b>novembre 2026</b><span>4 séances</span></div>
+    <div class="cal" id="cal"></div>
+    <div class="legende"><span><i></i>Vos cours</span><span>👠 15 h – 18 h</span></div>
+  </div>
+
+  <div class="carte">
+    <h3>Vos séances</h3>
+    <div id="seances"></div>
+  </div>
+
+  <div class="carte">
+    <h3>Le lieu</h3>
+    <div class="lieu"><div class="ic">📍</div><div><b>Salle MA2M</b><br><span style="color:#6B4A4E;font-size:13px">Cocody Angré, 8ᵉ tranche, près de la pharmacie</span><br><span class="lien">Itinéraire Google Maps ↗</span></div></div>
+  </div>
+
+  <div class="carte">
+    <h3>À prévoir</h3>
+    <div class="prevoir"><span>👠 Talons 7 à 10 cm</span><span>👗 Tenue près du corps</span><span>💧 Une bouteille d’eau</span><span>🩴 Des ballerines</span><span>⏰ Arriver 15 min avant</span></div>
+  </div>
+
+  <span class="gros">📅 Ajouter à mon calendrier</span>
+  <p class="note">Les 4 séances s’ajoutent d’un coup à votre téléphone, avec un rappel la veille.</p>
+  <span class="gros plein" style="background:#25D366;color:#fff">💬 Une question ? Écrivez-nous</span>
+</div></div>
+
+<!-- ======================= VUE DE L'ADMINISTRATION ======================= -->
+<div class="v v-admin"><div class="wrap">
+  <h1 class="titre-page">Dossier de l’élève</h1>
+  <div class="alerte"><div style="font-size:26px">🔔</div><div><b>Demain : séance 2 d’Awa</b><span>Dimanche 22 novembre · 15 h – 18 h · Salle MA2M</span></div></div>
+
+  <div class="carte">
+    <div class="fiche-tete"><img src="../assets/cours-talons/alicia-2.jpg" alt=""><div><h2>Awa Koné</h2><span class="pastille ok">Paiement validé · Wave</span></div></div>
+    <div class="mini"><div><small>Formule</small><b>Groupe</b></div><div><small>Séances</small><b>1 / 4</b></div><div><small>Montant</small><b>30 000 F</b></div></div>
+  </div>
+
+  <div class="carte">
+    <h3>Son programme</h3>
+    <table><thead><tr><th>N°</th><th>Date</th><th>Heure</th><th>Lieu</th><th></th></tr></thead><tbody id="tab"></tbody></table>
+    <span class="ajout">＋ Ajouter une séance</span>
+    <p style="font-size:12px;color:#6B4A4E;margin-top:8px">Groupe : les 4 dimanches sont remplis tout seuls à la validation du paiement. Privé : vous choisissez les créneaux libres (1 h 30 d’écart gardé tout seul).</p>
+  </div>
+
+  <div class="carte">
+    <h3>Envoyer sur WhatsApp</h3>
+    <div class="actions">
+      <span>📅 Son programme</span><span class="blanc">✓ Inscription reçue</span>
+      <span class="blanc">💳 Lien de paiement</span><span class="blanc">⏰ Rappel de demain</span>
+    </div>
+  </div>
+</div></div>
+
+<script>
+const vue = new URLSearchParams(location.search).get('vue') || 'eleve';
+document.body.classList.add(vue);
+const COURS = [15, 22, 29], DEC = [6];
+// calendrier de novembre 2026 (commence un dimanche → 6 cases vides du lundi au samedi)
+const cal = document.getElementById('cal');
+['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'].forEach((j) => cal.insertAdjacentHTML('beforeend', '<div class="j">' + j + '</div>'));
+for (let i = 26; i <= 31; i++) cal.insertAdjacentHTML('beforeend', '<div class="d hors">' + i + '</div>');
+for (let d = 1; d <= 30; d++) cal.insertAdjacentHTML('beforeend', '<div class="d' + (COURS.includes(d) ? ' cours' : '') + (d === 13 ? ' auj' : '') + '">' + d + '</div>');
+for (let d = 1; d <= 6; d++) cal.insertAdjacentHTML('beforeend', '<div class="d hors' + (DEC.includes(d) ? ' cours' : '') + '">' + d + '</div>');
+const S = [['Dim', 15, 'nov.'], ['Dim', 22, 'nov.'], ['Dim', 29, 'nov.'], ['Dim', 6, 'déc.']];
+document.getElementById('seances').innerHTML = S.map((s, i) => '<div class="seance"><div class="date"><small>' + s[0] + '</small><b>' + s[1] + '</b><small>' + s[2] + '</small></div><div class="t"><b>Séance ' + (i + 1) + ' · ' + ['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Défilé final'][i] + '</b><span>15 h – 18 h · Salle MA2M</span></div></div>').join('');
+document.getElementById('tab').innerHTML = S.map((s, i) => '<tr><td>' + (i + 1) + '</td><td>' + s[0] + ' ' + s[1] + ' ' + s[2] + '</td><td>15 h – 18 h</td><td>Salle MA2M</td><td>' + (i === 0 ? '<span class="ok">✓ faite</span>' : '✎') + '</td></tr>').join('');
+</script>
+</body></html>
