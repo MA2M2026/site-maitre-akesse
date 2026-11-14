@@ -1086,7 +1086,7 @@ const PAGES_FORMULAIRES = /^\/(en\/)?(contact|candidature)$/;
 async function formulairesRemplis(url, anglais) {
   const page = PAGES_FORMULAIRES.exec(url.pathname)[2];
   const lecture = page === 'candidature'
-    ? enMemoire('castings', () => lireSupabase('casting_projets?actif=eq.true&select=id,nom,description&order=ordre_affichage.asc,nom.asc', null, ATTENTE_FICHE)).then((l) => (Array.isArray(l) ? { projets: l } : null))
+    ? enMemoire('castings', () => lireSupabase('casting_projets?actif=eq.true&select=id,nom,description,date_casting,lieu&order=ordre_affichage.asc,nom.asc', null, ATTENTE_FICHE)).then((l) => (Array.isArray(l) ? { projets: l } : null))
     : Promise.resolve({});
   // (phase 2, 02/11/2026) candidature : la liste des castings ouverts écrite dans la page, et le bon bloc montré d'avance
   // (le formulaire, ou « Aucun casting n'est ouvert… »), comme chargerProjetsActifs (js/formulaire-candidature.js)

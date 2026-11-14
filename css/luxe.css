@@ -193,3 +193,25 @@
   .lx-prog--compact .lx-prog:not(.lx-prog--seul) .lx-prog-num { flex-basis: auto; width: 2.4rem; height: 2.4rem; font-size: 1.05rem; }
   .lx-prog--compact .lx-prog:not(.lx-prog--seul) .lx-prog-mois h3 { font-size: 1.12rem; overflow-wrap: break-word; hyphens: manual; }
 }
+
+/* Formulaires en étapes (cours de talons, puis candidatures le 14/11/2026) : pastilles numérotées reliées par un fil,
+   titre de l'étape, consigne ; classes ct-* (talons) et lx-* (candidatures), une seule fois ici */
+.ct-progression, .lx-progression { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 0 0 1.8rem; padding: 0; counter-reset: etape; }
+.ct-progression li, .lx-progression li { counter-increment: etape; position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.55rem; text-align: center;
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; opacity: 0.6; transition: opacity 0.3s; }
+.ct-progression li::before, .lx-progression li::before { content: counter(etape); position: relative; z-index: 1; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.25rem; font-weight: 600; letter-spacing: 0; color: #fff;
+  background: var(--rouge-profond); border: 1px solid rgba(255, 255, 255, 0.4); transition: background 0.35s, color 0.35s, box-shadow 0.35s; }
+.ct-progression li + li::after, .lx-progression li + li::after { content: ""; position: absolute; top: 1.25rem; right: 50%; width: 100%; height: 1px; background: rgba(255, 255, 255, 0.25); }
+.ct-progression li.fait + li::after, .lx-progression li.fait + li::after, .ct-progression li.fait + li.actif::after, .lx-progression li.fait + li.actif::after { background: #fff; }
+.ct-progression li.actif, .lx-progression li.actif, .ct-progression li.fait, .lx-progression li.fait { opacity: 1; }
+.ct-progression li.actif::before, .lx-progression li.actif::before { background: #fff; color: var(--rouge-profond); box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.15), 0 10px 24px -8px rgba(90, 20, 27, 1); }
+.ct-progression li.fait::before, .lx-progression li.fait::before { content: "✓"; background: #fff; color: var(--rouge-mat); }
+
+.ct-etape, .lx-etape { border: 0; margin: 0; padding: 0; min-width: 0; animation: ct-entree 0.5s ease both; }
+@keyframes ct-entree { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.ct-etape-titre, .lx-etape-titre { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.2rem; }
+.ct-etape-titre span, .lx-etape-titre span { display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; flex: none;
+  background: #fff; color: var(--rouge-profond); font-size: 1.35rem; font-weight: 600; font-style: italic; }
+.ct-etape-titre h3, .lx-etape-titre h3 { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.75rem; text-transform: none; letter-spacing: 0; color: #fff; }
+.ct-consigne, .lx-consigne { margin: -0.4rem 0 1rem; font-weight: 500; opacity: 0.9; }
