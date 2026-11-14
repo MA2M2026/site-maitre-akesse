@@ -50,9 +50,12 @@ insert into formation_programme (niveau, mois, theme) values
 on conflict (niveau, mois) do update set theme = excluded.theme;
 alter table formation_programme enable row level security;
 revoke all on formation_programme from anon, authenticated;
-grant select on formation_programme to authenticated;
+-- (14/11/2026) lisible aussi sans compte : l'écran « Merci » de l'inscription des nouveaux mannequins montre les premiers
+-- mois (les thèmes ne sont pas secrets : ils sont aussi sur la page publique « Intégrer l'agence »)
+grant select on formation_programme to anon, authenticated;
 drop policy if exists "Programme de formation : lu par les comptes" on formation_programme;
-create policy "Programme de formation : lu par les comptes" on formation_programme for select using (true);
+drop policy if exists "Programme de formation : public" on formation_programme;
+create policy "Programme de formation : public" on formation_programme for select using (true);
 
 -- Le programme d'une mannequin, mois de cours par mois de cours : rang (1 à 18), niveau, mois du niveau, thème, mois du
 -- calendrier (vide pour les mois faits avant la reprise de mars) et état : fait, en_cours, a_venir.
