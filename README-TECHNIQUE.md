@@ -5067,3 +5067,11 @@ suivent le programme de leur niveau).
   « Formation terminée ✓ · Révision, ce mois-ci : … ». Mannequins déjà en cours (3, 6, 9 mois faits…) : le programme
   reprend au bon thème (mois faits notés dans l'assistant de reprise ; sinon, il commence au mois 1).
 - **Tests** : test-app-mannequin.js (accueil, écran Mon programme, couleurs et lisibilité), test-correction-paiement.js (fiche).
+
+## « Intégrer l'agence » : la formation mois après mois (14/11/2026, demande de la propriétaire)
+
+Section « Votre formation, mois après mois » (integrer-agence.html FR/EN, après « Choisissez votre parcours ») : niveau 1
+« Les fondations » et niveau 2 « La professionnelle » (9 cartes chacun), puis la carte blanche « Révision ». Même style que
+le programme des cours de talons, désormais commun : **`.lx-prog*` dans css/luxe.css** (renommé depuis `.ct-prog*` ;
+`.lx-prog--compact` = un thème par carte). Texte écrit dans la page : à changer aussi dans `formation_programme`
+(supabase-programme-mannequins.sql) si le programme change.

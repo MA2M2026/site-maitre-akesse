@@ -68,7 +68,7 @@ async function navigateur() {
     const prix = await p.textContent('.ct-formules');
     ok(prix.includes('30 000') && prix.includes('25 000') && /le mois : 4 dimanches|a month: 4 Sundays/.test(prix) && /1 à 12 mois|1 to 12 months/.test(prix) && /la séance|per session/.test(prix), n + 'prix : groupe 30 000 le mois (4 dimanches, 1 à 12 mois), privé à la séance');
     // (14/11/2026) le programme du groupe, mois après mois (validé par la propriétaire)
-    const prog = await p.$$eval('#programme .ct-prog-mois h3', (l) => l.map((x) => x.textContent));
+    const prog = await p.$$eval('#programme .lx-prog-mois h3', (l) => l.map((x) => x.textContent));
     ok(prog.length === 7 && prog[0] === (en ? 'The basics' : 'Les bases') && prog[5] === (en ? 'Pageants' : 'Miss et concours') && prog[6] === (en ? 'Fine-tuning' : 'Perfectionnement'), n + 'programme : 6 mois puis le perfectionnement (' + prog.join(', ') + ')');
     ok(await p.locator('.ct-carte a[href="#programme"]').count() === 1, n + 'la carte du groupe mène au programme');
 

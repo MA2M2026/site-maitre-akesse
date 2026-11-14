@@ -148,3 +148,39 @@
   :is(.lx-hero, .lx-boutons, .lx-formulaire) .btn--principal::after { animation: none; display: none; }
   .lx-galerie-photo img { transition: none; }
 }
+
+/* Programme mois après mois en cartes de verre (14/11/2026, « architecture » validée par la propriétaire) : cours de
+   talons (cours-talons.html) et formation de l'agence (integrer-agence.html) ; 1 colonne sur téléphone, 2 puis 3. */
+.lx-prog-section { padding: 5rem 0 2rem; }
+.lx-prog-intro { max-width: 34em; margin: -1rem auto 2.4rem; text-align: center; color: rgba(255, 255, 255, 0.88); font-size: 1.02rem; line-height: 1.6; }
+.lx-prog { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; counter-reset: none; position: relative; }
+.lx-prog-mois { display: flex; gap: 1.1rem; align-items: flex-start; padding: 1.5rem 1.4rem; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)); color: #fff; }
+.lx-prog-num { flex: 0 0 3.2rem; height: 3.2rem; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.55);
+  font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.35rem; line-height: 1; }
+.lx-prog-num { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+.lx-prog-section .lx-surtitre { margin-left: auto; margin-right: auto; }
+.lx-prog-mois--suite .lx-prog-num { font-size: 1.1rem; }
+.lx-prog-num small { font-size: 0.75rem; margin-left: 1px; }
+.lx-prog-quand { margin: 0.1rem 0 0.15rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255, 255, 255, 0.72); }
+.lx-prog-mois h3 { margin: 0 0 0.6rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.9rem; line-height: 1.05; text-transform: none; letter-spacing: 0; color: #fff; }
+.lx-prog-mois ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; }
+.lx-prog-mois ol li { position: relative; padding-left: 1.1rem; font-size: 0.95rem; line-height: 1.45; color: rgba(255, 255, 255, 0.9); }
+.lx-prog-mois ol li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 1px; background: rgba(255, 255, 255, 0.7); }
+.lx-prog-mois ol li:last-child { font-style: italic; }
+.lx-prog-mois p:not(.lx-prog-quand) { margin: 0; font-size: 0.95rem; line-height: 1.55; color: rgba(255, 255, 255, 0.9); }
+.lx-prog-mois--suite { background: #fff; border-color: #fff; color: #7C2128; }
+.lx-prog-mois--suite .lx-prog-num { border-color: rgba(124, 33, 40, 0.4); color: #7C2128; }
+.lx-prog-mois--suite h3, .lx-prog-mois--suite p:not(.lx-prog-quand) { color: #7C2128; }
+.lx-prog-mois--suite .lx-prog-quand { color: #8B5A60; }
+.lx-prog-pied { max-width: 34em; margin: 2rem auto 0; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; line-height: 1.4; color: #fff; }
+@media (min-width: 700px) { .lx-prog { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1100px) { .lx-prog { grid-template-columns: repeat(3, 1fr); } .lx-prog-mois--suite { grid-column: 1 / -1; } }
+/* (14/11/2026) version compacte pour la formation de l'agence (integrer-agence.html) : un thème par carte, titres des niveaux */
+.lx-prog-niveau { margin: 2.6rem 0 1rem; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 500; font-size: 1.7rem; color: #fff; text-transform: none; letter-spacing: 0; }
+.lx-prog-niveau:first-of-type { margin-top: 0.4rem; }
+.lx-prog--compact .lx-prog-mois { padding: 1.1rem 1.2rem; align-items: center; }
+.lx-prog--compact .lx-prog-mois h3 { margin: 0; font-size: 1.35rem; line-height: 1.2; }
+.lx-prog--compact .lx-prog-mois--suite p:not(.lx-prog-quand) { margin-top: 0.4rem; }
+.lx-prog--seul { margin-top: 1.6rem; }
+@media (min-width: 1100px) { .lx-prog--seul { grid-template-columns: 1fr; } }
