@@ -5023,5 +5023,10 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   civilité, montants en FCFA). Chaque dimanche prévu a son numéro de mois (colonne `cours_talons_seances.mois`) ; un
   rattrapage ajouté à la main n’en a pas (jamais « à régler »). `cours_talons_valider` (version à jour dans ce fichier)
   et `cours_talons_mois_payer` partagent `cours_talons_compte` (compte du moyen, sinon Wave + note au journal).
+- **Programme qui progresse** (validé par la propriétaire le 14/11/2026) : table `cours_talons_programme` (lisible par
+  tous ; seule source) : mois 1 Les bases, 2 L'assurance, 3 La prestance, 4 Le podium, 5 Les tenues, 6 Miss et
+  concours, à partir du 7e Perfectionnement (séances adaptées, dernier dimanche = défilé). `cours_talons_ajouter_dimanches`
+  y prend les thèmes ; un renouvellement continue au mois suivant. La page affiche « Mois 2 · L'assurance »
+  (`titres_mois` renvoyé par `programme_talons_lire`).
 - Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
   planning jour par jour et notification 24 h avant.

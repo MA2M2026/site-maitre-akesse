@@ -89,14 +89,38 @@ drop policy if exists "Séances de talons : l'équipe du site" on cours_talons_s
 create policy "Séances de talons : l'équipe du site" on cours_talons_seances for all
   using (portail_peut('site')) with check (portail_peut('site'));
 
+-- Le PROGRAMME mois par mois (validé par la propriétaire le 14/11/2026) : l'élève progresse, elle ne refait pas le même
+-- mois ; à partir du 7e mois, « Perfectionnement » (séances adaptées, que l'agence précise dans la fiche), le dernier
+-- dimanche reste un défilé. Une seule source : la page de l'élève et l'Administration le lisent ici.
+create table if not exists cours_talons_programme (
+  mois int primary key check (mois between 1 and 7),
+  titre text not null check (length(titre) <= 60),
+  themes text[] not null check (array_length(themes, 1) = 4)
+);
+insert into cours_talons_programme (mois, titre, themes) values
+  (1, 'Les bases', array['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Premier défilé']),
+  (2, 'L''assurance', array['Talons plus hauts', 'Escaliers et marches', 'S''asseoir et se relever avec grâce', 'Défilé du mois']),
+  (3, 'La prestance', array['Regard et expression', 'Gestuelle des mains', 'Poses et arrêts', 'Défilé du mois']),
+  (4, 'Le podium', array['Marcher en rythme sur la musique', 'Demi-tours et tours complets', 'Défiler à plusieurs', 'Défilé du mois']),
+  (5, 'Les tenues', array['Robe longue et traîne', 'Tailleur et tenue courte', 'Les accessoires : sac, veste, chapeau', 'Défilé du mois']),
+  (6, 'Miss et concours', array['Se présenter au jury', 'Tenue de soirée et écharpe', 'Prendre la parole sur scène', 'Concours blanc']),
+  (7, 'Perfectionnement', array['Séance adaptée à votre niveau', 'Séance adaptée à votre niveau', 'Séance adaptée à votre niveau', 'Défilé du mois'])
+on conflict (mois) do update set titre = excluded.titre, themes = excluded.themes;
+alter table cours_talons_programme enable row level security;
+revoke all on cours_talons_programme from anon, authenticated;
+grant select on cours_talons_programme to anon, authenticated;
+drop policy if exists "Programme des talons : public" on cours_talons_programme;
+create policy "Programme des talons : public" on cours_talons_programme for select using (true);
+
 -- Ajoute les dimanches de p_nb mois (4 par mois) à partir du dimanche p_depart, 15 h – 18 h, dans la salle, avec leur
--- numéro de mois (colonne mois : les pages savent quels mois sont payés) ; le thème suit le programme d'un mois
+-- numéro de mois (colonne mois : les pages savent quels mois sont payés) ; le thème suit le programme du mois
+-- (cours_talons_programme ; au-delà du 6e mois, celui du perfectionnement)
 create or replace function cours_talons_ajouter_dimanches(p_id uuid, p_depart date, p_premier_mois int, p_nb int)
 returns void language sql security definer set search_path = public as $$
   insert into cours_talons_seances (inscription_id, debut, fin, lieu, theme, mois)
   select p_id, ((p_depart + 7 * i) + time '15:00') at time zone 'Africa/Abidjan',
     ((p_depart + 7 * i) + time '18:00') at time zone 'Africa/Abidjan', 'Salle MA2M, Riviera Faya',
-    (array['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Le défilé final'])[i % 4 + 1], p_premier_mois + i / 4
+    (select themes[i % 4 + 1] from cours_talons_programme where mois = least(p_premier_mois + i / 4, 7)), p_premier_mois + i / 4
   from generate_series(0, 4 * p_nb - 1) i;
 $$;
 revoke all on function cours_talons_ajouter_dimanches(uuid, date, int, int) from public, anon, authenticated;
@@ -131,6 +155,7 @@ language sql stable security definer set search_path = public as $$
     'nom', c.nom,
     'civilite', case coalesce(c.civilite, case when c.age < 18 then 'mademoiselle' end) when 'mademoiselle' then 'Mademoiselle' else 'Madame' end,
     'formule', c.formule, 'nb_seances', c.nb_seances, 'statut', c.statut,
+    'titres_mois', (select jsonb_object_agg(mois, titre) from cours_talons_programme),
     'nb_mois', c.nb_mois, 'mois_payes', c.mois_payes, 'paiement', c.paiement, 'prix_mois', cours_talons_prix_mois(),
     'numero', 'TAL-' || upper(left(replace(c.id::text, '-', ''), 6)),
     'seances', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'mois', s.mois, 'debut', s.debut, 'fin', s.fin, 'lieu', s.lieu, 'theme', s.theme, 'faite', s.faite) order by s.debut)

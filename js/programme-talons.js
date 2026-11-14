@@ -89,7 +89,9 @@
       if (plusieursMois && s.mois && s.mois !== moisAffiche) {
         moisAffiche = s.mois;
         var tete = document.createElement('p'); tete.className = 'pt-mois-tete' + (s.aRegler ? ' a-regler' : '');
-        tete.textContent = 'Mois ' + s.mois + (s.aRegler ? ' · à régler (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + ')' : '');
+        // titre du mois (programme validé par la propriétaire : « Les bases », « L'assurance »… puis « Perfectionnement »)
+        var titres = p.titres_mois || {}, titre = titres[String(Math.min(s.mois, 7))];
+        tete.textContent = 'Mois ' + s.mois + (titre ? ' · ' + titre : '') + (s.aRegler ? ' · à régler (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + ')' : '');
         frise.appendChild(tete);
       }
       var l = document.createElement('div');

@@ -77,7 +77,7 @@ select cours_talons_valider('00000000-0000-0000-0000-0000000c0203');
 select essai((select mois_payes = 1 from cours_talons where id = '00000000-0000-0000-0000-0000000c0203') and (select count(*) = 48 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0203'), 'déjà « inscrite » à la main puis validée : 1 mois payé, 48 dimanches prévus');
 select essai((select mois_payes = 1 from cours_talons where id = '00000000-0000-0000-0000-0000000c0201') and (select mois_payes = 3 from cours_talons where id = '00000000-0000-0000-0000-0000000c0202'), 'validation : mois par mois → 1 mois payé ; d''un coup → 3 mois payés');
 select essai((select count(*) = 12 and bool_and(extract(dow from debut at time zone 'UTC') = 0) and max(debut) - min(debut) = interval '77 days' from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201'), '3 mois : 12 dimanches qui se suivent, prévus dès la validation');
-select essai((select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 3 and theme = 'Le défilé final'), 'chaque dimanche a son mois (le 3e mois finit par « Le défilé final »)');
+select essai((select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 3 and theme = 'Poses et arrêts') and (select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 1 and theme = 'Premier défilé'), 'le programme progresse : mois 1 « Premier défilé », mois 3 « Poses et arrêts »');
 reset role;
 select essai((select libelle = 'Cours de talons en groupe, mois 1 sur 3' from compta_ecritures e join cours_talons c on c.ecriture_id = e.id where c.id = '00000000-0000-0000-0000-0000000c0201')
   and (select libelle = 'Cours de talons en groupe, 3 mois payés d''un coup' and e.montant = 90000 from compta_ecritures e join cours_talons c on c.ecriture_id = e.id where c.id = '00000000-0000-0000-0000-0000000c0202'), 'Compta : libellé juste à la validation (« mois 1 sur 3 », « 3 mois payés d''un coup »)');
@@ -92,12 +92,13 @@ select essai((select mois_payes = 3 and nb_mois = 3 and montant = 90000 from cou
 select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 4);
 select essai((select mois_payes = 4 and nb_mois = 4 and paiement = 'mensuel' from cours_talons where id = '00000000-0000-0000-0000-0000000c0201')
   and (select count(*) = 16 and bool_and(extract(dow from debut at time zone 'UTC') = 0) and max(debut) - min(debut) = interval '105 days' from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201')
-  and (select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 4 and theme = 'Posture et équilibre'), 'renouvellement : 4e mois, 4 dimanches ajoutés juste après');
+  and (select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 4 and theme = 'Marcher en rythme sur la musique'), 'renouvellement : 4e mois, 4 dimanches ajoutés juste après');
 select essai_refuse($$select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0102', 1)$$, 'privé : pas de paiement au mois');
 reset role;
 select essai((select count(*) = 4 and sum(montant) = 120000 from compta_ecritures where categorie = 'cours_talons' and tiers = 'Mois Par Mois' and libelle like 'Cours de talons en groupe, mois %'), 'Compta : une recette de 30 000 par mois payé (mois 1 à 4)');
 select essai((select (programme_talons_lire(jeton)->>'civilite') = 'Mademoiselle' and (programme_talons_lire(jeton)->>'mois_payes')::int = 4 and jsonb_array_length(programme_talons_lire(jeton)->'seances') = 16
-  from cours_talons where id = '00000000-0000-0000-0000-0000000c0201'), 'page de l''élève : « Mademoiselle » (son choix), 4 mois payés, 16 séances');
+  from cours_talons where id = '00000000-0000-0000-0000-0000000c0201') and (select programme_talons_lire(jeton)->'titres_mois'->>'2' = 'L''assurance' from cours_talons where id = '00000000-0000-0000-0000-0000000c0201'), 'page de l''élève : « Mademoiselle » (son choix), 4 mois payés, 16 séances, titres des mois');
+select essai((select count(*) = 4 and bool_and(theme in ('Séance adaptée à votre niveau', 'Défilé du mois')) from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0203' and mois = 12), '12e mois : perfectionnement, le dernier dimanche reste un défilé');
 select essai((select programme_talons_lire(jeton)->>'civilite' = 'Madame' from cours_talons where id = '00000000-0000-0000-0000-0000000c0202'), 'civilité choisie « Madame » : Madame');
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-000000000fd3', 'aal2', 30, 'appareil-demande-0003');

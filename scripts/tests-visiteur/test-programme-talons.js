@@ -15,7 +15,7 @@ const groupe = { nom: 'Awa Koné', civilite: 'Madame', formule: 'groupe', nb_sea
   seances: [-6, 1, 8, 15].map((n, i) => ({ id: 'seance-' + i, debut: jour(n, 15), fin: jour(n, 18), lieu: 'Salle MA2M, Riviera Faya', theme: THEMES[i], faite: i === 0 })) };
 // (14/11/2026) groupe sur 3 mois, payé mois par mois : 1 mois réglé sur 3, « Mademoiselle » choisie
 const J_MOIS = 'd4'.repeat(18);
-const mois3 = { nom: 'Fatou Bamba', civilite: 'Mademoiselle', formule: 'groupe', nb_seances: 4, nb_mois: 3, mois_payes: 1, paiement: 'mensuel', prix_mois: 30000, statut: 'inscrite', numero: 'TAL-MO1S3X',
+const mois3 = { nom: 'Fatou Bamba', civilite: 'Mademoiselle', formule: 'groupe', nb_seances: 4, nb_mois: 3, mois_payes: 1, paiement: 'mensuel', prix_mois: 30000, titres_mois: { 1: 'Les bases', 2: 'L’assurance', 3: 'La prestance', 7: 'Perfectionnement' }, statut: 'inscrite', numero: 'TAL-MO1S3X',
   seances: Array.from({ length: 12 }, (_, i) => ({ id: 'm' + i, debut: jour(1 + 7 * i, 15), fin: jour(1 + 7 * i, 18), lieu: 'Salle MA2M, Riviera Faya', mois: Math.floor(i / 4) + 1, theme: THEMES[i % 4], faite: false }))
     // un rattrapage ajouté à la main par l'agence (sans mois) : jamais « à régler »
     .concat([{ id: 'rattrapage', debut: jour(2, 15), fin: jour(2, 17), lieu: 'Salle MA2M, Riviera Faya', theme: 'Rattrapage', faite: false }])
@@ -67,7 +67,7 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     ok(/Mademoiselle Fatou Bamba/.test(await p.textContent('#pt-titre')) && /3 mois pour marcher/.test(await p.textContent('#pt-accroche')), n + '3 mois : « Mademoiselle » (son choix), « 3 mois pour marcher avec assurance »');
     ok(/Formule en groupe · 3 mois · 13 séances/.test(await p.textContent('#pt-formule')) && (await p.textContent('#pt-paiement')) === '1 / 3 mois', n + 'carte d’élève : 3 mois, 13 séances (un rattrapage), 1 / 3 mois payés');
     const tetes = await p.$$eval('.pt-mois-tete', (l) => l.map((x) => x.textContent));
-    ok(tetes.length === 3 && tetes[0] === 'Mois 1' && /Mois 2 · à régler \(30\s000\sFCFA\)/.test(tetes[1]) && await p.$$eval('.pt-seance.a-regler', (l) => l.length) === 8, n + 'séances rangées par mois ; mois 2 et 3 « à régler » (' + tetes.join(' | ') + ')');
+    ok(tetes.length === 3 && tetes[0] === 'Mois 1 · Les bases' && /Mois 2 · L’assurance · à régler \(30\s000\sFCFA\)/.test(tetes[1]) && await p.$$eval('.pt-seance.a-regler', (l) => l.length) === 8, n + 'séances rangées par mois ; mois 2 et 3 « à régler » (' + tetes.join(' | ') + ')');
     ok(!(await p.getAttribute('.pt-seance:has-text("Rattrapage")', 'class')).includes('a-regler'), n + 'rattrapage ajouté à la main : jamais « à régler »');
     ok(/Les 5 séances s’ajoutent.*Les mois suivants s’ajouteront une fois réglés/.test(await p.textContent('#pt-ics-note')), n + 'calendrier du téléphone : seulement le mois réglé');
     const [dl3] = await Promise.all([p.waitForEvent('download'), p.click('#pt-ics')]);

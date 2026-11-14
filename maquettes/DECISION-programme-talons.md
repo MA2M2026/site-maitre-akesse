@@ -35,3 +35,10 @@
   elle a mis Mademoiselle, on met Mademoiselle ») ; groupe sur plusieurs mois (ex. 10 mois) : **les deux au choix**
   (1 mois renouvelable OU plusieurs mois dès l'inscription), **30 000 F × nombre de mois**, payé **en une fois ou mois
   par mois au choix de l'élève**. Fait le même jour (voir README-TECHNIQUE.md).
+- **14/11/2026, programme sur plusieurs mois validé** (« Parfait, j'aime bien ton architecture ») : 1 Les bases, 2
+  L'assurance, 3 La prestance, 4 Le podium, 5 Les tenues, 6 Miss et concours, puis Perfectionnement (le dernier dimanche
+  de chaque mois reste un défilé). Fait (table cours_talons_programme).
+- **Demandes suivantes de la propriétaire (14/11/2026, à faire une à la fois)** :
+  1. montrer ce programme en premium sur la page publique des cours de talons (inscription) ;
+  2. un programme du même genre pour les mannequins de l'agence, et ce style premium dans l'Administration,
+     l'application, l'inscription, « Postuler à un casting », « Intégrer l'agence », la candidature.
