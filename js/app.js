@@ -913,6 +913,18 @@ const LIEN_WAVE_AGENCE = 'https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=
 function enFcfa(n) { return Number(n || 0).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' FCFA'; }
 const MA2M_NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 function moisEnToutes(iso) { return MA2M_NOMS_MOIS[Number(String(iso).slice(5, 7)) - 1] + ' ' + String(iso).slice(0, 4); }
+// Programme de formation des mannequins (14/11/2026, validé par la propriétaire ; supabase-programme-mannequins.sql,
+// mon_programme_formation / programme_formation_de) : titres des niveaux, et où en est la mannequin : le mois en cours
+// (ou, agence fermée, le prochain), mois faits / total. Partagé par l'application (js/mannequin-app.js) et
+// l'Administration (fiche du mannequin, js/portail/espace-paiements.js).
+const MA2M_NIVEAUX_FORMATION = { 1: 'Les fondations', 2: 'La professionnelle' };
+function resumeProgrammeFormation(p) {
+  const mois = (p && Array.isArray(p.mois)) ? p.mois : [];
+  if (!mois.length) return null;
+  const enCours = mois.find((x) => x.etat === 'en_cours') || null;
+  return { mois, enCours, prochain: enCours || mois.find((x) => x.etat === 'a_venir') || null,
+    faits: mois.filter((x) => x.etat === 'fait').length, total: Number(p.total) || mois.length, termine: mois.every((x) => x.etat === 'fait') };
+}
 function situationFormation(d) {
   if (!d || d.niveau === undefined || d.niveau === null) return null;
   const fcfa = enFcfa;

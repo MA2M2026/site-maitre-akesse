@@ -5043,3 +5043,20 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   corrigé par la propriétaire : ni « s'asseoir », ni escaliers, ni prise de parole (l'agence ne les enseigne pas).
 - Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
   planning jour par jour et notification 24 h avant.
+
+## Programme de formation des mannequins (14/11/2026, programme validé par la propriétaire)
+
+Même idée que « Mon programme » des cours de talons, pour les mannequins de l'agence (elles ne choisissent pas : toutes
+suivent le programme de leur niveau).
+- **Base** : **`supabase-programme-mannequins.sql`** (À COLLER, après supabase-formation.sql et supabase-reprise-mars.sql ;
+  rejouable ; essais `scripts/base-essai/essais-programme-mannequins.sql`) : table `formation_programme` (18 thèmes :
+  niveau 1 « Les fondations », niveau 2 « La professionnelle », 9 mois chacun), `formation_programme_calcul(id)` (rang,
+  niveau, mois du niveau, thème, mois du calendrier, état fait / en_cours / a_venir), calée EXACTEMENT sur les mois des
+  mensualités (`formation_debut`, `formation_mois_n`, `formation_reste_total` ; mois faits avant la reprise sans date ;
+  congés sautés). `mon_programme_formation()` (la mannequin connectée) et `programme_formation_de(id)` (espace Paiements).
+- **Application** (js/mannequin-app.js, css/mannequin-app.css `.ap-prog-*`) : carte « Ce mois-ci : … » sur l'accueil,
+  rond « Programme », écran `#programme` (carte façon carte bancaire, puis les mois de chaque niveau en relevé).
+  Commun avec l'Administration (js/app.js) : `MA2M_NIVEAUX_FORMATION`, `resumeProgrammeFormation`.
+- **Administration** : fiche du mannequin (espace Paiements, js/portail/espace-paiements.js `carteProgramme`) : thème du
+  mois, mois faits / total, les 18 mois dépliables (`.pf-*`, css/admin-vivante.css). Fichier pas collé : pas de carte.
+- **Tests** : test-app-mannequin.js (accueil, écran Mon programme, couleurs et lisibilité), test-correction-paiement.js (fiche).

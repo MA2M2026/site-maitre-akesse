@@ -1480,3 +1480,9 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ct-ajout summary::-webkit-details-marker { display: none; }
 .ct-mois { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; }
 .ct-mois p { flex: 1 1 100%; margin: 0; font-size: 13.5px; color: #2A1416; }
+/* Programme de formation dans la fiche d'un mannequin (14/11/2026, js/portail/espace-paiements.js) */
+.pf-programme details { margin-top: 8px; }
+.pf-programme summary { cursor: pointer; font-weight: 600; color: #7C2128; }
+.pf-mois { margin: 10px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; font-size: 13.5px; }
+.pf-mois li.en_cours { font-weight: 600; }
+.pf-mois li.en_cours::before { content: '▸ '; color: #7C2128; }

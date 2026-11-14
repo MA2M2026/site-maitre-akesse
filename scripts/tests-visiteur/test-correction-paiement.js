@@ -36,7 +36,10 @@ function donnees(role) {
       portail_moi: { role, mfa: true, nom: { principal: 'Maître Akesse', site: 'Gestion du site', caisse: 'Encaissements', compta: 'Comptable' }[role], actif: true, membre: true, espaces, contacts_prives: role !== 'site' && role !== 'compta', noms_payeurs: espaces.paiements },
       portail_enregistrer_appareil: { ok: true, nouveau: false },
       portail_code_appareil_etat: { defini: true, verrouille: false },
-      compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 0 }]
+      compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 0 }],
+      // (14/11/2026) programme de formation dans la fiche : 2 mois faits, le 3e en cours
+      programme_formation_de: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2, mois_niveau: (i % 9) + 1,
+        theme: i === 2 ? 'La pose photo : les bases (angles, mains, regard)' : 'Thème ' + (i + 1), date: '2027-' + String(3 + i).padStart(2, '0') + '-01', etat: i < 2 ? 'fait' : i === 2 ? 'en_cours' : 'a_venir' })).slice(0, 18) }
     },
     api: { '/api/portail': (corps) => corps.action === 'codes_secours_creer' ? { codes: ['AAAAA-BBBBB', 'CCCCC-DDDDD', 'EEEEE-FFFFF', 'GGGGG-HHHHH', 'JJJJJ-KKKKK', 'LLLLL-MMMMM', 'NNNNN-PPPPP', 'QQQQQ-RRRRR'] } : { ok: true } }
   };
@@ -87,6 +90,8 @@ function donnees(role) {
     };
     const t = (p) => p.evaluate(() => document.querySelector('.contenu').innerText.replace(/\s+/g, ' '));
     const e = await connecter('principal'), p = e.p;
+    ok(/Programme de formation\s*Ce mois-ci : La pose photo : les bases \(angles, mains, regard\)\s*· niveau 1 \(Les fondations\), mois 3 sur 9\s*2 mois faits sur 18/.test(await p.evaluate(() => (document.querySelector('.pf-programme') || {}).innerText || '').then((x) => x.replace(/\s+/g, ' '))),
+      nomEcran + ' : fiche du mannequin : « Programme de formation », thème du mois, 2 mois faits sur 18');
     ok((await p.$$('[data-action="paiement-corriger"]')).length === 3 && (await p.$$('[data-action="paiement-annuler"]')).length === 3, nomEcran + ' : l’administrateur principal voit « Corriger » et « Annuler » sur chaque paiement');
     // corriger le montant et le moyen d'une mensualité
     await p.click('[data-action="paiement-corriger"][data-id="pm1"]'); await p.waitForSelector('form[data-form="paiement-corriger"]', { timeout: 4000 });
