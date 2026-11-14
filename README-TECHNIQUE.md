@@ -5059,4 +5059,11 @@ suivent le programme de leur niveau).
   Commun avec l'Administration (js/app.js) : `MA2M_NIVEAUX_FORMATION`, `resumeProgrammeFormation`.
 - **Administration** : fiche du mannequin (espace Paiements, js/portail/espace-paiements.js `carteProgramme`) : thème du
   mois, mois faits / total, les 18 mois dépliables (`.pf-*`, css/admin-vivante.css). Fichier pas collé : pas de carte.
+- **Mois en colonnes** (demande de la propriétaire) : une carte par mois, 2 colonnes sur téléphone, 3 sur grand écran.
+- **Révision** (validée par la propriétaire le 14/11/2026) : formation finie (2 ans, ou le niveau 1 seul ; aussi quand tous
+  les mois étaient faits avant la reprise) → `termine` et `revision` (niveau 3 de `formation_programme` : 9 thèmes, mars
+  = mois 1 … novembre = mois 9, chaque année ; pendant les congés, la saison suivante). Application : carte « Révision ·
+  ce mois-ci » sur l'accueil, écran « Formation terminée ✓ » + la Révision + sa formation ; fiche de l'Administration :
+  « Formation terminée ✓ · Révision, ce mois-ci : … ». Mannequins déjà en cours (3, 6, 9 mois faits…) : le programme
+  reprend au bon thème (mois faits notés dans l'assistant de reprise ; sinon, il commence au mois 1).
 - **Tests** : test-app-mannequin.js (accueil, écran Mon programme, couleurs et lisibilité), test-correction-paiement.js (fiche).

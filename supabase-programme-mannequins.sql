@@ -7,14 +7,18 @@
 -- Les mois suivent EXACTEMENT ceux des mensualités (formation_debut, formation_mois_n, formation_reste_total,
 -- formation_mois_faits : supabase-formation.sql puis supabase-reprise-mars.sql, à coller AVANT ce fichier).
 -- Les mannequins ne choisissent pas : toutes suivent le programme de leur niveau. Ajout seulement. Rejouable.
+-- (14/11/2026, validé par la propriétaire) « Révision » : celles qui ont fini leur formation (2 ans, ou le niveau 1
+-- seul) révisent tout le parcours en 9 mois, de mars à novembre, recommencé chaque année (niveau 3 de la table).
 -- À coller dans Supabase › SQL Editor › Run.
 
 create table if not exists formation_programme (
-  niveau int not null check (niveau in (1, 2)),
+  niveau int not null,
   mois int not null check (mois between 1 and 9),
   theme text not null check (length(theme) between 2 and 120),
   primary key (niveau, mois)
 );
+alter table formation_programme drop constraint if exists formation_programme_niveau_check;
+alter table formation_programme add constraint formation_programme_niveau_check check (niveau in (1, 2, 3));
 insert into formation_programme (niveau, mois, theme) values
   (1, 1, 'Posture et démarche de base'),
   (1, 2, 'Le podium : marche, demi-tours, arrêts'),
@@ -33,7 +37,16 @@ insert into formation_programme (niveau, mois, theme) values
   (2, 6, 'Castings professionnels : mises en situation'),
   (2, 7, 'Les coulisses d''un défilé : changements de tenue rapides'),
   (2, 8, 'Le mannequinat publicitaire'),
-  (2, 9, 'Le grand défilé de fin de formation')
+  (2, 9, 'Le grand défilé de fin de formation'),
+  (3, 1, 'Démarche et posture'),
+  (3, 2, 'Le podium : marche, tours et rythme sur la musique'),
+  (3, 3, 'La pose photo : studio et extérieur'),
+  (3, 4, 'Expression, regard et vidéo'),
+  (3, 5, 'Robe longue et tenue de soirée'),
+  (3, 6, 'Tailleur, tenue courte et accessoires'),
+  (3, 7, 'Les castings : marche de casting et mises en situation'),
+  (3, 8, 'Défiler à plusieurs et les coulisses'),
+  (3, 9, 'Le défilé de révision')
 on conflict (niveau, mois) do update set theme = excluded.theme;
 alter table formation_programme enable row level security;
 revoke all on formation_programme from anon, authenticated;
@@ -49,12 +62,22 @@ declare
   a agence_mannequins;
   avant int;
   courant date := date_trunc('month', now())::date;
+  fin date;
+  saison int;
 begin
   select * into a from agence_mannequins where id = p_mannequin;
   if a.id is null then return null; end if;
   avant := least(coalesce(a.formation_mois_faits, 0), a.formation_niveaux * 9);
+  -- formation finie : son dernier mois de cours est passé, ou tous ses mois étaient déjà faits avant la reprise
+  fin := case when avant >= a.formation_niveaux * 9 then (courant - interval '1 month')::date else formation_fin(a.id) end;
+  -- Révision (formation finie) : la saison de mars à novembre en cours, ou la prochaine pendant les congés de décembre
+  saison := extract(year from courant)::int + case when extract(month from courant) = 12 then 1 else 0 end;
   return json_build_object(
     'niveaux', a.formation_niveaux, 'total', a.formation_niveaux * 9,
+    'termine', fin < courant,
+    'revision', case when fin < courant then (select json_agg(json_build_object('mois_niveau', p.mois, 'theme', p.theme, 'date', d.d,
+                  'etat', case when d.d < courant then 'fait' when d.d = courant then 'en_cours' else 'a_venir' end) order by p.mois)
+                from formation_programme p cross join lateral (select make_date(saison, p.mois + 2, 1) as d) d where p.niveau = 3) end,
     'mois', (select json_agg(json_build_object('rang', x.rang, 'niveau', (x.rang - 1) / 9 + 1, 'mois_niveau', (x.rang - 1) % 9 + 1,
                 'theme', p.theme, 'date', x.d,
                 'etat', case when x.d is null or x.d < courant then 'fait' when x.d = courant then 'en_cours' else 'a_venir' end) order by x.rang)

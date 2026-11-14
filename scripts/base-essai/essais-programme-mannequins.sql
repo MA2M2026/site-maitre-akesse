@@ -5,7 +5,7 @@
 set search_path = public, extensions;
 reset role;
 select set_config('request.jwt.claims', '', false);
-select essai((select count(*) from formation_programme) = 18, 'programme : 18 thèmes (2 niveaux de 9 mois)');
+select essai((select count(*) from formation_programme where niveau in (1, 2)) = 18 and (select count(*) from formation_programme where niveau = 3) = 9, 'programme : 18 thèmes (2 niveaux de 9 mois) et 9 de révision');
 -- ESSAI REPRISE NIVEAU 2 (essais-reprise-mars.sql) : 2 niveaux, 7 mois faits avant la reprise de mars 2027
 select formation_programme_calcul('00000000-0000-0000-0000-000000154e01') as p \gset
 select essai(json_array_length(:'p'::json -> 'mois') = 18, '18 mois de cours au programme');
@@ -47,3 +47,11 @@ select essai((select x->>'theme' like 'Le casting%' and x->>'date' = '2027-03-01
 select essai((select (x->>'niveau')::int = 2 and (x->>'mois_niveau')::int = 1 and x->>'date' = '2027-03-01' from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000162e09') -> 'mois') x where (x->>'rang')::int = 10)
   and (select count(*) = 9 from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000162e09') -> 'mois') x where x->>'etat' = 'fait'),
   '9 mois faits : le niveau 1 est fait, en mars 2027 elle entame son 10e mois (niveau 2, mois 1)');
+-- Révision : formation finie (niveau 1 seul, 9 mois faits avant la reprise) → les 9 thèmes de révision, de mars à novembre
+select essai((formation_programme_calcul('00000000-0000-0000-0000-000000154e02') ->> 'termine')::boolean
+  and json_array_length(formation_programme_calcul('00000000-0000-0000-0000-000000154e02') -> 'revision') = 9
+  and (select bool_and(extract(month from (x->>'date')::date) between 3 and 11) from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000154e02') -> 'revision') x)
+  and (select x->>'theme' = 'Le défilé de révision' and extract(month from (x->>'date')::date) = 11 from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000154e02') -> 'revision') x where (x->>'mois_niveau')::int = 9),
+  'formation finie : « Révision », 9 thèmes de mars à novembre (novembre : le défilé de révision)');
+select essai(not (formation_programme_calcul('00000000-0000-0000-0000-000000162e03') ->> 'termine')::boolean and formation_programme_calcul('00000000-0000-0000-0000-000000162e03') ->> 'revision' is null,
+  'formation pas finie : pas encore de révision');

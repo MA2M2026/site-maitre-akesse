@@ -150,6 +150,20 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(!(await deborde()), n + 'Mon programme : rien ne dépasse');
     await capture('3b-programme');
     await p.goBack(); await p.waitForSelector('.ap-stories', { timeout: 8000 });
+    // (14/11/2026) formation finie : la Révision (9 thèmes de mars à novembre), sur l'accueil et dans « Mon programme »
+    const programmeEnCours = d.rpc.mon_programme_formation;
+    d.rpc.mon_programme_formation = { niveaux: 2, total: 18, termine: true,
+      mois: programmeEnCours.mois.map((x) => Object.assign({}, x, { etat: 'fait' })),
+      revision: Array.from({ length: 9 }, (_, i) => ({ mois_niveau: i + 1, theme: i === 1 ? 'Le podium : marche, tours et rythme sur la musique' : 'Révision ' + (i + 1), date: moisDe(i - 1), etat: i < 1 ? 'fait' : i === 1 ? 'en_cours' : 'a_venir' })) };
+    await p.reload(); await p.waitForSelector('.ap-prog-carte', { timeout: 15000 });
+    ok(/RÉVISION · CE MOIS-CI\s*Le podium : marche, tours et rythme sur la musique\s*Révision · mois 2 sur 9/.test(await p.textContent('.ap-prog-carte')), n + 'formation finie : l’accueil annonce la Révision du mois');
+    await p.click('.ap-prog-carte'); await p.waitForSelector('.ap-prog-cb', { timeout: 8000 });
+    ok(/FORMATION TERMINÉE ✓/.test(await p.textContent('.ap-prog-cb')) && /18 \/ 18/.test(await p.textContent('.ap-prog-cb')) && /Révision · mars à novembre/.test(await p.textContent('#ap-ecran'))
+      && await p.locator('.ap-prog-grille').first().locator('.ap-prog-mois').count() === 9, n + 'formation finie : « Formation terminée ✓ », la Révision en 9 mois, puis sa formation');
+    ok(!(await deborde()), n + 'Révision : rien ne dépasse');
+    await capture('3c-revision');
+    d.rpc.mon_programme_formation = programmeEnCours;
+    await p.goto(BASE + '/app/'); await p.reload(); await p.waitForSelector('.ap-stories', { timeout: 15000 });
     ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Messages/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
     ok(/Moi.*Ma carte.*Compcard.*Mon CV.*Messages/s.test(await p.textContent('.ap-stories')) && /Le fil de l’agence/.test(accueil) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil),
       n + 'Accueil en « fil » (11/11/2026) : ronds façon stories, fil de l’agence (casting ouvert), mensualité du mois à payer');

@@ -175,9 +175,12 @@
     if (!r) return '';
     const x = r.enCours || r.prochain;
     const nomMois = (iso) => P.esc(libelleMois(iso));
+    // (14/11/2026) formation finie : la Révision (thème du mois de mars à novembre)
+    const y = r.termine ? r.revProchain : null;
     return '<div class="carte pf-programme"><h2>Programme de formation</h2>' +
-      '<p><b>' + (r.termine ? 'Formation terminée' : (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme)) + '</b>' +
-      (x && !r.termine ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>' +
+      (r.termine ? '<p><b>Formation terminée ✓</b>' + (y ? ' <span class="doux">· Révision, ' + (r.revEnCours ? 'ce mois-ci' : 'prochain thème (' + nomMois(y.date) + ')') + ' : ' + P.esc(y.theme) + ' (mois ' + y.mois_niveau + ' sur 9)</span>' : '') + '</p>' :
+      '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
+      (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
       '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
       '<details><summary>Voir les ' + r.total + ' mois</summary><ol class="pf-mois">' + r.mois.map((m) => '<li class="' + P.esc(m.etat) + '"><b>N' + m.niveau + ' · ' + m.mois_niveau + '</b> ' + P.esc(m.theme) +
         ' <span class="doux">— ' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</span></li>').join('') + '</ol></details></div>';
