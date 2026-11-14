@@ -188,5 +188,5 @@
 .ct-programme-choisi { margin-top: 1.4rem; padding: 1rem 1.1rem; border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.45); }
 .ct-programme-choisi ol { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
 .ct-programme-choisi li { display: flex; gap: 0.8rem; align-items: baseline; }
-.ct-programme-choisi small { flex: 0 0 6.6rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.75; }
-.ct-programme-choisi span { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; }
+.ct-programme-choisi small { flex: 0 0 5.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.75; }
+.ct-programme-choisi li span { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; }
