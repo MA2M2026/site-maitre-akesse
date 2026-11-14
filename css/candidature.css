@@ -68,3 +68,5 @@
 .lx-vignettes { display: flex; gap: 0.35rem; }
 .lx-vignettes i { width: 2.2rem; height: 2.8rem; border-radius: 6px; background-size: cover; background-position: 50% 20%; }
 .lx-recommencer { margin-top: 1rem; }
+.lx-progression[hidden] { display: none; }
+@media (max-width: 520px) { .lx-resume .lx-etape-boutons #btn-envoyer { width: 100%; order: -1; margin-left: 0; } .lx-resume .lx-etape-boutons .lx-retour { width: 100%; } }

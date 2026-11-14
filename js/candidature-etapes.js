@@ -27,6 +27,10 @@
   const barre = el('ol', 'lx-progression'); barre.setAttribute('aria-label', T('Étapes', 'Steps'));
   NOMS.forEach((n) => barre.appendChild(el('li', '', n)));
   form.parentNode.insertBefore(barre, form);
+  // (« Aucun casting n'est ouvert » : le formulaire est caché par la page, la barre des étapes aussi)
+  const majBarre = () => { barre.hidden = form.classList.contains('u-hidden'); };
+  majBarre();
+  if (typeof MutationObserver === 'function') new MutationObserver(majBarre).observe(form, { attributes: true, attributeFilter: ['class'] });
   const etapes = TITRES.map((titre, i) => {
     const f = el('fieldset', 'lx-etape'); f.dataset.etape = String(i + 1);
     const leg = el('legend', 'u-lecteur-ecran', T('Étape ', 'Step ') + (i + 1) + ' : ' + titre); f.appendChild(leg);
