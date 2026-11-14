@@ -5032,5 +5032,14 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   mois » (6 mois + Perfectionnement, cartes en verre, 1 / 2 / 3 colonnes) et carte du groupe « le mois : 4 dimanches,
   de 1 à 12 mois ». Texte écrit dans la page (traduit) : **à changer aussi dans cours_talons_programme** si le programme
   change.
+- **Parcours, en groupe comme en privé** (décision de la propriétaire, 14/11/2026) : étape 1 du formulaire, « Je débute »
+  (tout le programme dans l'ordre : durée en mois pour le groupe, nombre de séances pour le privé) ou « J'ai déjà la
+  base » (elle coche ses thèmes, 1 ou 2 mois chacun ; durée et prix calculés : groupe 1 mois par mois de thème, privé
+  4 séances par mois de thème). Thèmes lus dans la section #programme de la page (`data-module`, FR/EN). « Votre
+  programme » résume ce qu'elle suivra. Base : `cours_talons.parcours` (debut / base) et `modules` (int[], répétés
+  selon la durée : {3,3,4}) ; `cours_talons_module` / `cours_talons_theme` donnent le module et le thème de chaque
+  séance (2e mois d'un même thème : « (approfondissement) ») ; colonne `cours_talons_seances.module` ; en privé, une
+  séance ajoutée sans thème prend le suivant de son programme (déclencheur `cours_talons_seance_theme`). Programme
+  corrigé par la propriétaire : ni « s'asseoir », ni escaliers, ni prise de parole (l'agence ne les enseigne pas).
 - Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
   planning jour par jour et notification 24 h avant.

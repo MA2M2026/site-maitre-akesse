@@ -77,13 +77,28 @@ async function navigateur() {
     ok(/formule|option/i.test(await p.textContent('#ct-msg')), n + 'étape 1 : sans formule, un message demande de choisir');
     // (14/11/2026) groupe sur plusieurs mois : durée, puis paiement d'un coup ou mois par mois
     await p.click('label.ct-choix:has(input[value="groupe"])');
+    // (14/11/2026) parcours, en groupe comme en privé : d'abord « Je débute » / « J'ai déjà la base »
+    ok(await p.isVisible('#ct-bloc-parcours') && await p.isHidden('#ct-bloc-groupe'), n + 'groupe : on demande d’abord « Je débute » ou « J’ai déjà la base »');
+    await p.click('#ct-suivant');
+    ok(/débutez|beginner/.test(await p.textContent('#ct-msg')), n + 'sans parcours : un message demande de choisir');
+    await p.click('label.ct-parcours-choix:has(input[value="debut"])');
     ok(await p.isVisible('#ct-mois') && await p.isHidden('#ct-bloc-paiement-mois') && (await p.textContent('#ct-total')).includes('30 000'), n + 'groupe : choix de la durée (1 mois par défaut, 30 000)');
     await p.selectOption('#ct-mois', '3');
+    ok(/(Mois|Month) 1\s*(Les bases|The basics)\s*(Mois|Month) 2\s*(L’assurance|Confidence)\s*(Mois|Month) 3\s*(La prestance|Poise)/.test(await p.textContent('#ct-programme-choisi')), n + 'je débute, 3 mois : « Votre programme » = mois 1, 2, 3 dans l’ordre');
     ok(await p.isVisible('#ct-bloc-paiement-mois') && /90 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')) && /12 (dimanches|Sundays)/.test(await p.textContent('#ct-total')), n + 'groupe 3 mois, tout en une fois : 90 000 pour 12 dimanches');
     await p.click('label.ct-pastille:has(input[name="paiement"][value="mensuel"])');
     ok(/(À payer maintenant|To pay now) : ?30 000|To pay now: 30 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')), n + 'groupe 3 mois, mois par mois : 30 000 maintenant, puis chaque mois');
+    // j'ai déjà la base : elle coche ses thèmes, 1 ou 2 mois chacun
+    await p.click('label.ct-parcours-choix:has(input[value="base"])');
+    ok(await p.isHidden('#ct-champ-mois') && await p.locator('#ct-themes .ct-theme').count() === 6 && !(await p.textContent('#ct-themes')).match(/asseoir|escalier|parole|sitting|stairs|speaking/i), n + 'j’ai la base : 6 thèmes à cocher (ni s’asseoir, ni escaliers, ni prise de parole)');
+    await p.click('#ct-suivant');
+    ok(/thème|theme/.test(await p.textContent('#ct-msg')), n + 'rien de coché : un message demande au moins un thème');
+    await p.check('#ct-theme-3'); await p.selectOption('#ct-duree-3', '2'); await p.check('#ct-theme-4');
+    ok(/3 (mois|months) en tout|3 months in all/.test(await p.textContent('#ct-total')) && /(La prestance|Poise) \((approfondissement|going further)\)/.test(await p.textContent('#ct-programme-choisi')), n + 'La prestance 2 mois + Le podium : 3 mois (payés mois par mois), approfondissement au 2e mois');
     await p.click('label.ct-choix:has(input[value="prive_salle"])');
-    ok(await p.isHidden('#ct-bloc-groupe'), n + 'privé : la durée en mois disparaît');
+    ok(await p.isHidden('#ct-bloc-groupe') && await p.isHidden('#ct-champ-nb') && /300 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')) && /(Séances|Sessions) 1–4/.test(await p.textContent('#ct-programme-choisi')), n + 'privé + j’ai la base : 3 mois de thèmes = 12 séances (300 000), séances 1–4…');
+    await p.click('label.ct-parcours-choix:has(input[value="debut"])');
+    ok(await p.isVisible('#ct-champ-nb'), n + 'privé + je débute : le nombre de séances revient');
     ok(/Touchez|Tap/.test(await p.textContent('.ct-etape[data-etape="1"] .ct-consigne')) && await p.evaluate(() => getComputedStyle(document.querySelector('input[value="prive_salle"] + span'), '::after').content.includes('✓')), n + 'consigne « Touchez la formule », le bloc choisi porte une coche');
     await p.selectOption('#ct-nb', '10');
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
@@ -151,6 +166,7 @@ async function navigateur() {
     if (pasPret === 'coupure') { /* déjà vérifié */ } else if (!pasPret) {
       const l = envoi.length ? JSON.parse(envoi[0][3]) : {};
       ok(envoi.length === 1 && journal.some((j) => j[0] === 'ANTI-ROBOT' && j[1] === 'cours_talons'), n + 'inscription envoyée une fois, par le serveur (anti-robots)');
+      ok(l.parcours === 'debut' && l.modules === null, n + 'parcours « je débute » envoyé (sans thèmes)');
       ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');

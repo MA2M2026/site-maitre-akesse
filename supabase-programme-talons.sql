@@ -35,6 +35,11 @@ create table if not exists cours_talons_seances (
 alter table cours_talons add column if not exists civilite text check (civilite is null or civilite in ('madame', 'mademoiselle'));
 alter table cours_talons add column if not exists nb_mois int not null default 1 check (nb_mois between 1 and 24);
 alter table cours_talons add column if not exists paiement text not null default 'tout' check (paiement in ('tout', 'mensuel'));
+-- (14/11/2026, décision de la propriétaire) le PARCOURS, en groupe comme en privé : « debut » = elle débute, tout le
+-- programme dans l'ordre ; « base » = elle a déjà la base et choisit ses thèmes (modules = les mois du programme
+-- choisis, dans l'ordre, répétés quand elle en prend 2 mois : {3,3,4} = La prestance 2 mois puis Le podium 1 mois)
+alter table cours_talons add column if not exists parcours text not null default 'debut' check (parcours in ('debut', 'base'));
+alter table cours_talons add column if not exists modules int[] check (modules is null or (array_length(modules, 1) between 1 and 12 and 1 <= all(modules) and 6 >= all(modules)));
 alter table cours_talons add column if not exists mois_payes int not null default 0 check (mois_payes between 0 and 24);
 -- inscriptions déjà payées avant ce fichier : leur mois est payé (la nouvelle colonne seulement)
 update cours_talons set mois_payes = nb_mois where valide_le is not null and mois_payes = 0;
@@ -51,13 +56,21 @@ create or replace function cours_talons_avant_inscription() returns trigger lang
 begin
   new.jeton := encode(extensions.gen_random_bytes(18), 'hex');
   new.mois_payes := 0;
+  if new.parcours = 'base' and coalesce(array_length(new.modules, 1), 0) = 0 then new.parcours := 'debut'; end if;
+  if new.parcours = 'debut' then new.modules := null; end if;
   if new.formule = 'groupe' then
-    new.nb_mois := greatest(1, least(12, coalesce(new.nb_mois, 1)));
+    -- « j'ai la base » : un mois par module choisi
+    new.nb_mois := case when new.parcours = 'base' then array_length(new.modules, 1) else greatest(1, least(12, coalesce(new.nb_mois, 1))) end;
     if new.nb_mois = 1 then new.paiement := 'tout'; end if;
     new.nb_seances := 4;
     new.montant := cours_talons_prix_mois() * case when new.paiement = 'mensuel' then 1 else new.nb_mois end;
   else
     new.nb_mois := 1; new.paiement := 'tout';
+    -- privé, « j'ai la base » : 4 séances par mois de module choisi, au prix de la séance
+    if new.parcours = 'base' then
+      new.nb_seances := least(30, 4 * array_length(new.modules, 1));
+      new.montant := cours_talons_montant(new.formule, new.nb_seances);
+    end if;
   end if;
   return new;
 end;
@@ -89,7 +102,8 @@ drop policy if exists "Séances de talons : l'équipe du site" on cours_talons_s
 create policy "Séances de talons : l'équipe du site" on cours_talons_seances for all
   using (portail_peut('site')) with check (portail_peut('site'));
 
--- Le PROGRAMME mois par mois (validé par la propriétaire le 14/11/2026) : l'élève progresse, elle ne refait pas le même
+-- Le PROGRAMME mois par mois (validé par la propriétaire le 14/11/2026 ; ni « s'asseoir », ni escaliers, ni prise de
+-- parole : l'agence ne les enseigne pas) : l'élève progresse, elle ne refait pas le même
 -- mois ; à partir du 7e mois, « Perfectionnement » (séances adaptées, que l'agence précise dans la fiche), le dernier
 -- dimanche reste un défilé. Une seule source : la page de l'élève et l'Administration le lisent ici.
 create table if not exists cours_talons_programme (
@@ -99,11 +113,11 @@ create table if not exists cours_talons_programme (
 );
 insert into cours_talons_programme (mois, titre, themes) values
   (1, 'Les bases', array['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Premier défilé']),
-  (2, 'L''assurance', array['Talons plus hauts', 'Escaliers et marches', 'S''asseoir et se relever avec grâce', 'Défilé du mois']),
+  (2, 'L''assurance', array['Talons plus hauts', 'Marche lente et marche rapide', 'L''équilibre en mouvement', 'Défilé du mois']),
   (3, 'La prestance', array['Regard et expression', 'Gestuelle des mains', 'Poses et arrêts', 'Défilé du mois']),
   (4, 'Le podium', array['Marcher en rythme sur la musique', 'Demi-tours et tours complets', 'Défiler à plusieurs', 'Défilé du mois']),
   (5, 'Les tenues', array['Robe longue et traîne', 'Tailleur et tenue courte', 'Les accessoires : sac, veste, chapeau', 'Défilé du mois']),
-  (6, 'Miss et concours', array['Se présenter au jury', 'Tenue de soirée et écharpe', 'Prendre la parole sur scène', 'Concours blanc']),
+  (6, 'Miss et concours', array['Le passage devant le jury', 'Tenue de soirée et écharpe', 'Les poses de concours', 'Concours blanc']),
   (7, 'Perfectionnement', array['Séance adaptée à votre niveau', 'Séance adaptée à votre niveau', 'Séance adaptée à votre niveau', 'Défilé du mois'])
 on conflict (mois) do update set titre = excluded.titre, themes = excluded.themes;
 alter table cours_talons_programme enable row level security;
@@ -115,14 +129,53 @@ create policy "Programme des talons : public" on cours_talons_programme for sele
 -- Ajoute les dimanches de p_nb mois (4 par mois) à partir du dimanche p_depart, 15 h – 18 h, dans la salle, avec leur
 -- numéro de mois (colonne mois : les pages savent quels mois sont payés) ; le thème suit le programme du mois
 -- (cours_talons_programme ; au-delà du 6e mois, celui du perfectionnement)
+alter table cours_talons_seances add column if not exists module int check (module is null or module between 1 and 7);
+
+-- Le module (mois du programme) du m-ième mois d'une élève : elle débute → 1, 2, 3… ; elle a la base → ses modules
+-- choisis, dans l'ordre ; au-delà → Perfectionnement (7)
+create or replace function cours_talons_module(p_parcours text, p_modules int[], p_m int) returns int
+language sql immutable as $$
+  select case when p_parcours = 'base' and p_m <= coalesce(array_length(p_modules, 1), 0) then p_modules[p_m]
+    when p_parcours = 'base' then 7 else least(greatest(p_m, 1), 7) end;
+$$;
+-- Thème de la k-ième séance (k à partir de 0) de son m-ième mois : le programme du module ; le 2e mois d'un même
+-- module choisi deux fois est un approfondissement
+create or replace function cours_talons_theme(p_parcours text, p_modules int[], p_m int, p_k int) returns text
+language sql stable set search_path = public as $$
+  select p.themes[p_k % 4 + 1] || case when p_parcours = 'base' and p_m > 1 and p_m <= coalesce(array_length(p_modules, 1), 0)
+      and p_modules[p_m - 1] = p_modules[p_m] and p.mois < 7 then ' (approfondissement)' else '' end
+  from cours_talons_programme p where p.mois = cours_talons_module(p_parcours, p_modules, p_m);
+$$;
+
 create or replace function cours_talons_ajouter_dimanches(p_id uuid, p_depart date, p_premier_mois int, p_nb int)
 returns void language sql security definer set search_path = public as $$
-  insert into cours_talons_seances (inscription_id, debut, fin, lieu, theme, mois)
-  select p_id, ((p_depart + 7 * i) + time '15:00') at time zone 'Africa/Abidjan',
+  insert into cours_talons_seances (inscription_id, debut, fin, lieu, theme, mois, module)
+  select c.id, ((p_depart + 7 * i) + time '15:00') at time zone 'Africa/Abidjan',
     ((p_depart + 7 * i) + time '18:00') at time zone 'Africa/Abidjan', 'Salle MA2M, Riviera Faya',
-    (select themes[i % 4 + 1] from cours_talons_programme where mois = least(p_premier_mois + i / 4, 7)), p_premier_mois + i / 4
-  from generate_series(0, 4 * p_nb - 1) i;
+    cours_talons_theme(c.parcours, c.modules, p_premier_mois + i / 4, i), p_premier_mois + i / 4,
+    cours_talons_module(c.parcours, c.modules, p_premier_mois + i / 4)
+  from cours_talons c, generate_series(0, 4 * p_nb - 1) i where c.id = p_id;
 $$;
+
+-- Cours PRIVÉ : une séance ajoutée par l'agence sans thème prend le suivant de son programme (4 séances par mois de
+-- programme, dans l'ordre de son parcours). Le groupe n'est pas concerné (un rattrapage reste sans thème imposé).
+create or replace function cours_talons_seance_theme() returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  c cours_talons;
+  k int;
+begin
+  if new.theme is not null or new.module is not null then return new; end if;
+  select * into c from cours_talons where id = new.inscription_id;
+  if c.id is null or c.formule = 'groupe' then return new; end if;
+  select count(*) into k from cours_talons_seances where inscription_id = new.inscription_id;
+  new.module := cours_talons_module(c.parcours, c.modules, k / 4 + 1);
+  new.theme := cours_talons_theme(c.parcours, c.modules, k / 4 + 1, k);
+  return new;
+end;
+$$;
+revoke all on function cours_talons_seance_theme() from public, anon, authenticated;
+drop trigger if exists cours_talons_seance_theme on cours_talons_seances;
+create trigger cours_talons_seance_theme before insert on cours_talons_seances for each row execute function cours_talons_seance_theme();
 revoke all on function cours_talons_ajouter_dimanches(uuid, date, int, int) from public, anon, authenticated;
 
 -- Groupe : les 4 dimanches remplis tout seuls quand l'inscription devient « inscrite » (une seule fois : rien
@@ -156,9 +209,10 @@ language sql stable security definer set search_path = public as $$
     'civilite', case coalesce(c.civilite, case when c.age < 18 then 'mademoiselle' end) when 'mademoiselle' then 'Mademoiselle' else 'Madame' end,
     'formule', c.formule, 'nb_seances', c.nb_seances, 'statut', c.statut,
     'titres_mois', (select jsonb_object_agg(mois, titre) from cours_talons_programme),
+    'parcours', c.parcours, 'modules', c.modules,
     'nb_mois', c.nb_mois, 'mois_payes', c.mois_payes, 'paiement', c.paiement, 'prix_mois', cours_talons_prix_mois(),
     'numero', 'TAL-' || upper(left(replace(c.id::text, '-', ''), 6)),
-    'seances', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'mois', s.mois, 'debut', s.debut, 'fin', s.fin, 'lieu', s.lieu, 'theme', s.theme, 'faite', s.faite) order by s.debut)
+    'seances', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'mois', s.mois, 'module', s.module, 'debut', s.debut, 'fin', s.fin, 'lieu', s.lieu, 'theme', s.theme, 'faite', s.faite) order by s.debut)
       from cours_talons_seances s where s.inscription_id = c.id), '[]'::jsonb))
   from cours_talons c
   where length(coalesce(p_jeton, '')) = 36 and c.jeton = p_jeton and c.statut in ('inscrite', 'terminee');

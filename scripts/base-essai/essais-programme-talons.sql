@@ -100,6 +100,37 @@ select essai((select (programme_talons_lire(jeton)->>'civilite') = 'Mademoiselle
   from cours_talons where id = '00000000-0000-0000-0000-0000000c0201') and (select programme_talons_lire(jeton)->'titres_mois'->>'2' = 'L''assurance' from cours_talons where id = '00000000-0000-0000-0000-0000000c0201'), 'page de l''élève : « Mademoiselle » (son choix), 4 mois payés, 16 séances, titres des mois');
 select essai((select count(*) = 4 and bool_and(theme in ('Séance adaptée à votre niveau', 'Défilé du mois')) from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0203' and mois = 12), '12e mois : perfectionnement, le dernier dimanche reste un défilé');
 select essai((select programme_talons_lire(jeton)->>'civilite' = 'Madame' from cours_talons where id = '00000000-0000-0000-0000-0000000c0202'), 'civilité choisie « Madame » : Madame');
+-- (14/11/2026) parcours : « j'ai déjà la base » → ses thèmes choisis, en groupe comme en privé
+set role service_role;
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0301","formule":"groupe","nom":"Base Groupe","telephone":"+2250700000301","age":25,"civilite":"madame","parcours":"base","modules":[3,3,4],"nb_mois":9}'::jsonb, '4.4.6.1');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0302","formule":"prive_salle","nom":"Base Privée","telephone":"+2250700000302","age":25,"civilite":"madame","parcours":"base","modules":[5],"nb_seances":1}'::jsonb, '4.4.6.2');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0303","formule":"prive_salle","nom":"Débute Privée","telephone":"+2250700000303","age":25,"civilite":"madame","parcours":"debut","modules":[6],"nb_seances":6}'::jsonb, '4.4.6.3');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0304","formule":"groupe","nom":"Base Vide","telephone":"+2250700000304","age":25,"parcours":"base","modules":[]}'::jsonb, '4.4.6.4');
+reset role;
+select essai_refuse($$set role service_role; select formulaire_public_enregistrer('cours_talons', '{"formule":"groupe","nom":"Module piège","telephone":"+2250700000309","age":25,"parcours":"base","modules":[9]}'::jsonb, '4.4.6.9')$$, 'thème inconnu (module 9) : refusé');
+reset role;
+select essai((select nb_mois = 3 and montant = 90000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0301'), 'groupe, j''ai la base : La prestance 2 mois + Le podium 1 mois = 3 mois, 90 000 (la durée envoyée est ignorée)');
+select essai((select nb_seances = 4 and montant = 100000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0302'), 'privé, j''ai la base : Les tenues = 4 séances, 100 000');
+select essai((select parcours = 'debut' and modules is null and nb_seances = 6 from cours_talons where id = '00000000-0000-0000-0000-0000000c0303'), 'privé, je débute : 6 séances, modules envoyés ignorés');
+select essai((select parcours = 'debut' from cours_talons where id = '00000000-0000-0000-0000-0000000c0304'), 'j''ai la base sans rien cocher : traité comme « je débute »');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select cours_talons_valider('00000000-0000-0000-0000-0000000c0301');
+select cours_talons_valider('00000000-0000-0000-0000-0000000c0302');
+select cours_talons_valider('00000000-0000-0000-0000-0000000c0303');
+select essai((select array_agg(theme order by debut) = array['Regard et expression', 'Gestuelle des mains', 'Poses et arrêts', 'Défilé du mois',
+    'Regard et expression (approfondissement)', 'Gestuelle des mains (approfondissement)', 'Poses et arrêts (approfondissement)', 'Défilé du mois (approfondissement)',
+    'Marcher en rythme sur la musique', 'Demi-tours et tours complets', 'Défiler à plusieurs', 'Défilé du mois']
+  and array_agg(module order by debut) = array[3,3,3,3,3,3,3,3,4,4,4,4] from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0301'), 'groupe, j''ai la base : ses dimanches suivent SES thèmes (La prestance, approfondie, puis Le podium)');
+-- privé : l'agence pose les dates, le thème suit tout seul son programme
+insert into cours_talons_seances (inscription_id, debut, fin) values ('00000000-0000-0000-0000-0000000c0302', '2030-03-02 10:00Z', '2030-03-02 12:00Z'), ('00000000-0000-0000-0000-0000000c0302', '2030-03-04 10:00Z', '2030-03-04 12:00Z');
+insert into cours_talons_seances (inscription_id, debut, fin) values ('00000000-0000-0000-0000-0000000c0303', '2030-03-02 14:00Z', '2030-03-02 16:00Z');
+select essai((select array_agg(theme order by debut) = array['Robe longue et traîne', 'Tailleur et tenue courte'] and bool_and(module = 5) from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0302')
+  and (select theme = 'Posture et équilibre' and module = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0303'), 'privé : chaque séance ajoutée prend le thème suivant de son programme (Les tenues ; Les bases pour celle qui débute)');
+insert into cours_talons_seances (inscription_id, debut, fin, theme) values ('00000000-0000-0000-0000-0000000c0303', '2030-03-03 14:00Z', '2030-03-03 16:00Z', 'Thème choisi par l''agence');
+select essai((select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0303' and theme = 'Thème choisi par l''agence' and module is null), 'privé : un thème écrit par l''agence est gardé tel quel');
+reset role;
+select essai((select programme_talons_lire(jeton)->>'parcours' = 'base' and programme_talons_lire(jeton)->'modules' = '[3, 3, 4]'::jsonb from cours_talons where id = '00000000-0000-0000-0000-0000000c0301'), 'page de l''élève : son parcours et ses thèmes');
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-000000000fd3', 'aal2', 30, 'appareil-demande-0003');
 select essai_refuse($$select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 5)$$, 'personne sans rôle : n''encaisse pas de mois');

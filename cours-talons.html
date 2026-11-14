@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41">
 <link rel="stylesheet" href="css/luxe.css?v=e66b5862">
 <link rel="stylesheet" href="css/paiements-premium.css?v=e68257b9">
-<link rel="stylesheet" href="css/cours-talons.css?v=2ff15e11">
+<link rel="stylesheet" href="css/cours-talons.css?v=d053b401">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -126,12 +126,12 @@
     <h2 class="lx-titre-section reveal" id="ct-programme-titre">Le programme, mois après mois</h2>
     <p class="ct-prog-intro reveal">Chaque mois, 4 dimanches et un thème. Vous progressez de mois en mois, sans jamais refaire le même : un mois pour découvrir, six mois pour tout maîtriser.</p>
     <ol class="ct-prog">
-      <li class="ct-prog-mois reveal"><span class="ct-prog-num">I</span><div><p class="ct-prog-quand">Mois 1</p><h3>Les bases</h3><ol><li>Posture et équilibre</li><li>Démarche et port de tête</li><li>Fluidité et tours</li><li>Premier défilé</li></ol></div></li>
-      <li class="ct-prog-mois reveal reveal-delay-1"><span class="ct-prog-num">II</span><div><p class="ct-prog-quand">Mois 2</p><h3>L’assurance</h3><ol><li>Talons plus hauts</li><li>Escaliers et marches</li><li>S’asseoir et se relever avec grâce</li><li>Défilé du mois</li></ol></div></li>
-      <li class="ct-prog-mois reveal reveal-delay-2"><span class="ct-prog-num">III</span><div><p class="ct-prog-quand">Mois 3</p><h3>La prestance</h3><ol><li>Regard et expression</li><li>Gestuelle des mains</li><li>Poses et arrêts</li><li>Défilé du mois</li></ol></div></li>
-      <li class="ct-prog-mois reveal"><span class="ct-prog-num">IV</span><div><p class="ct-prog-quand">Mois 4</p><h3>Le podium</h3><ol><li>Marcher en rythme sur la musique</li><li>Demi-tours et tours complets</li><li>Défiler à plusieurs</li><li>Défilé du mois</li></ol></div></li>
-      <li class="ct-prog-mois reveal reveal-delay-1"><span class="ct-prog-num">V</span><div><p class="ct-prog-quand">Mois 5</p><h3>Les tenues</h3><ol><li>Robe longue et traîne</li><li>Tailleur et tenue courte</li><li>Les accessoires : sac, veste, chapeau</li><li>Défilé du mois</li></ol></div></li>
-      <li class="ct-prog-mois reveal reveal-delay-2"><span class="ct-prog-num">VI</span><div><p class="ct-prog-quand">Mois 6</p><h3>Miss et concours</h3><ol><li>Se présenter au jury</li><li>Tenue de soirée et écharpe</li><li>Prendre la parole sur scène</li><li>Concours blanc</li></ol></div></li>
+      <li class="ct-prog-mois reveal" data-module="1"><span class="ct-prog-num">I</span><div><p class="ct-prog-quand">Mois 1</p><h3>Les bases</h3><ol><li>Posture et équilibre</li><li>Démarche et port de tête</li><li>Fluidité et tours</li><li>Premier défilé</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-1" data-module="2"><span class="ct-prog-num">II</span><div><p class="ct-prog-quand">Mois 2</p><h3>L’assurance</h3><ol><li>Talons plus hauts</li><li>Marche lente et marche rapide</li><li>L’équilibre en mouvement</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-2" data-module="3"><span class="ct-prog-num">III</span><div><p class="ct-prog-quand">Mois 3</p><h3>La prestance</h3><ol><li>Regard et expression</li><li>Gestuelle des mains</li><li>Poses et arrêts</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal" data-module="4"><span class="ct-prog-num">IV</span><div><p class="ct-prog-quand">Mois 4</p><h3>Le podium</h3><ol><li>Marcher en rythme sur la musique</li><li>Demi-tours et tours complets</li><li>Défiler à plusieurs</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-1" data-module="5"><span class="ct-prog-num">V</span><div><p class="ct-prog-quand">Mois 5</p><h3>Les tenues</h3><ol><li>Robe longue et traîne</li><li>Tailleur et tenue courte</li><li>Les accessoires : sac, veste, chapeau</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-2" data-module="6"><span class="ct-prog-num">VI</span><div><p class="ct-prog-quand">Mois 6</p><h3>Miss et concours</h3><ol><li>Le passage devant le jury</li><li>Tenue de soirée et écharpe</li><li>Les poses de concours</li><li>Concours blanc</li></ol></div></li>
       <li class="ct-prog-mois ct-prog-mois--suite reveal"><span class="ct-prog-num">VII<small>+</small></span><div><p class="ct-prog-quand">À partir du mois 7</p><h3>Perfectionnement</h3><p>Des séances adaptées à votre niveau et à votre objectif. Le dernier dimanche de chaque mois reste un défilé.</p></div></li>
     </ol>
     <p class="ct-prog-pied reveal">Votre programme personnel vous est envoyé sur WhatsApp dès votre inscription validée : vos dates, le lieu, et un bouton pour tout ajouter à votre calendrier.</p>
@@ -169,21 +169,35 @@
         <legend class="u-lecteur-ecran">Étape 1 : la formule</legend>
         <div class="ct-etape-titre"><span>1</span><h3>Choisissez votre formule</h3></div>
         <p class="ct-consigne">👆 Touchez la formule de votre choix.</p>
-        <label class="ct-choix"><input type="radio" name="formule" value="groupe" required><span><strong>En groupe</strong><em>Chaque dimanche, 15 h – 18 h, Riviera Faya</em><b>30 000 FCFA les 4 séances</b></span></label>
-        <!-- (14/11/2026, demande de la propriétaire) le groupe sur plusieurs mois : 30 000 FCFA le mois, payé d'un coup ou mois par mois -->
-        <div id="ct-bloc-groupe" class="u-hidden">
-          <div class="form-champ"><label for="ct-mois">Durée du cours en groupe</label><select id="ct-mois"><option value="1">1 mois (4 dimanches)</option><option value="2">2 mois (8 dimanches)</option><option value="3">3 mois (12 dimanches)</option><option value="4">4 mois (16 dimanches)</option><option value="5">5 mois (20 dimanches)</option><option value="6">6 mois (24 dimanches)</option><option value="7">7 mois (28 dimanches)</option><option value="8">8 mois (32 dimanches)</option><option value="9">9 mois (36 dimanches)</option><option value="10">10 mois (40 dimanches)</option><option value="11">11 mois (44 dimanches)</option><option value="12">12 mois (48 dimanches)</option></select></div>
-          <div class="form-champ u-hidden" id="ct-bloc-paiement-mois"><span class="ct-label">Comment souhaitez-vous payer ?</span><div class="ct-niveaux"><label class="ct-pastille"><input type="radio" name="paiement" value="tout" checked><span>Tout en une fois</span></label><label class="ct-pastille"><input type="radio" name="paiement" value="mensuel"><span>Mois par mois (30 000 FCFA par mois)</span></label></div></div>
-        </div>
+        <label class="ct-choix"><input type="radio" name="formule" value="groupe" required><span><strong>En groupe</strong><em>Chaque dimanche, 15 h – 18 h, Riviera Faya</em><b>30 000 FCFA le mois (4 dimanches)</b></span></label>
         <label class="ct-choix"><input type="radio" name="formule" value="prive_salle"><span><strong>En privé, dans notre salle</strong><em>Séance de 2 h à la Riviera Faya</em><b>25 000 FCFA la séance</b></span></label>
         <label class="ct-choix"><input type="radio" name="formule" value="prive_exterieur"><span><strong>En privé, chez vous ou ailleurs</strong><em>Séance de 2 h, au lieu de votre choix</em><b>30 000 – 35 000 FCFA la séance</b></span></label>
+        <!-- (14/11/2026, décision de la propriétaire) le parcours, en groupe comme en privé : « Je débute » (tout le programme dans l’ordre) ou « J’ai déjà la base » (elle coche ses thèmes, 1 ou 2 mois chacun). Les thèmes sont lus dans la section #programme de la page (js/cours-talons.js). -->
+        <div id="ct-bloc-parcours" class="u-hidden">
+          <span class="ct-label" id="ct-parcours-titre">Où en êtes-vous ?</span>
+          <div class="ct-parcours" role="radiogroup" aria-labelledby="ct-parcours-titre">
+            <label class="ct-parcours-choix"><input type="radio" name="parcours" value="debut"><span><strong>Je débute</strong><em>Je n’ai pas la base : je suis tout le programme, dans l’ordre.</em></span></label>
+            <label class="ct-parcours-choix"><input type="radio" name="parcours" value="base"><span><strong>J’ai déjà la base</strong><em>Je choisis seulement ce que je veux travailler.</em></span></label>
+          </div>
+          <div id="ct-bloc-themes" class="u-hidden">
+            <span class="ct-label">Vos thèmes</span>
+            <p class="ct-aide">Cochez ce que vous voulez travailler, puis choisissez 1 ou 2 mois pour chacun (en privé : 4 séances par mois).</p>
+            <div id="ct-themes" class="ct-themes"></div>
+          </div>
+        </div>
+        <!-- (14/11/2026, demande de la propriétaire) le groupe sur plusieurs mois : 30 000 FCFA le mois, payé d'un coup ou mois par mois -->
+        <div id="ct-bloc-groupe" class="u-hidden">
+          <div class="form-champ" id="ct-champ-mois"><label for="ct-mois">Durée du cours en groupe</label><select id="ct-mois"><option value="1">1 mois (4 dimanches)</option><option value="2">2 mois (8 dimanches)</option><option value="3">3 mois (12 dimanches)</option><option value="4">4 mois (16 dimanches)</option><option value="5">5 mois (20 dimanches)</option><option value="6">6 mois (24 dimanches)</option><option value="7">7 mois (28 dimanches)</option><option value="8">8 mois (32 dimanches)</option><option value="9">9 mois (36 dimanches)</option><option value="10">10 mois (40 dimanches)</option><option value="11">11 mois (44 dimanches)</option><option value="12">12 mois (48 dimanches)</option></select></div>
+          <div class="form-champ u-hidden" id="ct-bloc-paiement-mois"><span class="ct-label">Comment souhaitez-vous payer ?</span><div class="ct-niveaux"><label class="ct-pastille"><input type="radio" name="paiement" value="tout" checked><span>Tout en une fois</span></label><label class="ct-pastille"><input type="radio" name="paiement" value="mensuel"><span>Mois par mois (30 000 FCFA par mois)</span></label></div></div>
+        </div>
         <div id="ct-bloc-prive" class="u-hidden">
           <div class="form-grille">
-            <div class="form-champ"><label for="ct-nb">Nombre de séances</label><select id="ct-nb"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
+            <div class="form-champ" id="ct-champ-nb"><label for="ct-nb">Nombre de séances</label><select id="ct-nb"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
             <div class="form-champ"><label for="ct-dispo">Vos disponibilités</label><input type="text" id="ct-dispo" maxlength="600" placeholder="Ex. : samedi matin, en semaine après 17 h"></div>
           </div>
           <div class="form-champ u-hidden" id="ct-bloc-adresse"><label for="ct-adresse">Lieu des cours (quartier, adresse)</label><input type="text" id="ct-adresse" maxlength="300" placeholder="Ex. : Cocody Angré, près de…"></div>
         </div>
+        <div id="ct-programme-choisi" class="ct-programme-choisi u-hidden" aria-live="polite"><span class="ct-label">Votre programme</span><ol></ol></div>
         <p class="ct-total" id="ct-total" aria-live="polite"></p>
       </fieldset>
 
@@ -288,6 +302,6 @@
 <script src="js/diaporama-luxe.js?v=6c1722dd"></script>
 <script src="js/moyens-paiement.js?v=e15e92a3"></script>
 <script src="js/talons-commun.js?v=3b4ccd33"></script>
-<script src="js/cours-talons.js?v=b746a20a"></script>
+<script src="js/cours-talons.js?v=982bbfc3"></script>
 </body>
 </html>

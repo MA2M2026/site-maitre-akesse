@@ -38,7 +38,7 @@
     var plusieursMois = groupe && nbMois > 1;
     var seances = (p.seances || []).map(function (s, i) {
       var debut = new Date(s.debut), fin = new Date(s.fin), mois = groupe && s.mois ? s.mois : 0;
-      return { id: s.id || '', n: i + 1, debut: debut, fin: fin, lieu: s.lieu || LIEU_DEFAUT, theme: s.theme || '',
+      return { id: s.id || '', n: i + 1, module: s.module || 0, debut: debut, fin: fin, lieu: s.lieu || LIEU_DEFAUT, theme: s.theme || '',
         mois: mois, aRegler: mois > moisPayes, faite: !!s.faite || (fin < maintenant && mois <= moisPayes) };   // (un dimanche non payé n'est jamais « fait »)
     }).filter(function (s) { return !isNaN(s.debut) && !isNaN(s.fin); });
     var aVenir = seances.filter(function (s) { return !s.faite; });
@@ -86,13 +86,16 @@
     if (!seances.length) { var vide = document.createElement('p'); vide.className = 'pt-vide'; vide.textContent = 'Les dates de vos séances apparaîtront ici.'; frise.appendChild(vide); }
     var moisAffiche = 0;
     seances.forEach(function (s) {
-      if (plusieursMois && s.mois && s.mois !== moisAffiche) {
-        moisAffiche = s.mois;
+      // titre de chaque mois (groupe sur plusieurs mois) ou de chaque thème (privé) : le module de SON programme
+      // (« Les bases », « La prestance »… selon son parcours), puis « Perfectionnement »
+      var titres = p.titres_mois || {};
+      var cle = groupe ? (plusieursMois && s.mois ? 'm' + s.mois : '') : (s.module ? 'p' + s.module : '');
+      if (cle && cle !== moisAffiche) {
+        moisAffiche = cle;
         var tete = document.createElement('p'); tete.className = 'pt-mois-tete' + (s.aRegler ? ' a-regler' : '');
-        // titre du mois (programme validé par la propriétaire : « Les bases », « L'assurance »… puis « Perfectionnement »)
-        var titres = p.titres_mois || {}, titre = titres[String(Math.min(s.mois, 7))];
-        tete.textContent = 'Mois ' + s.mois + (titre ? ' · ' + titre : '') + (s.aRegler ? ' · à régler (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + ')' : '');
-        frise.appendChild(tete);
+        var titre = titres[String(s.module || Math.min(s.mois, 7))];
+        tete.textContent = (groupe ? 'Mois ' + s.mois + (titre ? ' · ' + titre : '') : titre || '') + (s.aRegler ? ' · à régler (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + ')' : '');
+        if (tete.textContent) frise.appendChild(tete);
       }
       var l = document.createElement('div');
       l.className = 'pt-seance' + (s === prochaine ? ' proche' : '') + (s.faite ? ' faite' : '') + (s.aRegler ? ' a-regler' : '');

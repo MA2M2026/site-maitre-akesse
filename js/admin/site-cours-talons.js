@@ -34,6 +34,10 @@
   const civilite = (d) => T.civilite(d.civilite, d.age) + ' ' + String(d.nom || '').trim();
   // (14/11/2026) groupe sur plusieurs mois : durée, façon de payer, mois payés
   const nbMois = (d) => d.nb_mois || 1;
+  // titres des thèmes (cours_talons_programme, lu une fois par page) ; {3,3,4} → « La prestance (2 mois), Le podium (1 mois) »
+  let titresProgramme = {};
+  const resumeModules = (l) => (Array.isArray(l) ? l : []).reduce((acc, m) => { const x = acc.find((y) => y.m === m); if (x) x.n++; else acc.push({ m, n: 1 }); return acc; }, [])
+    .map((x) => (titresProgramme[x.m] || 'Thème ' + x.m) + ' (' + x.n + ' mois)').join(', ');
   const dureeGroupe = (d) => seances(d) + (nbMois(d) > 1 ? ', payés ' + (d.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '');
 
   const seances = (d) => d.formule === 'groupe' ? (nbMois(d) > 1 ? nbMois(d) + ' mois, ' + 4 * nbMois(d) + ' dimanches' : '4 dimanches') : d.nb_seances + ' séance' + (d.nb_seances > 1 ? 's' : '');
@@ -54,6 +58,7 @@
     // séances des élèves inscrites (« Son programme ») ; fichier pas encore collé : la fiche le dit, le reste marche
     // (toutes les séances d'un coup : une liste d'identifiants dans l'adresse dépasserait la limite avec des centaines d'élèves)
     seancesDe = {}; programmeAbsent = false;
+    try { (await P.bd(sb.from('cours_talons_programme').select('mois,titre'))).forEach((x) => { titresProgramme[x.mois] = x.titre; }); } catch (e) { /* programme pas encore collé : numéros seulement */ }
     if (lignes.some((d) => d.statut === 'inscrite' || d.statut === 'terminee')) {
       try {
         const l = await P.bd(sb.from('cours_talons_seances').select('*').order('debut', { ascending: true }).limit(5000));
@@ -80,6 +85,8 @@
     const photos = photosDe(d);
     const infos = [
       ['Civilité', d.civilite ? T.civilite(d.civilite) : ''],
+      // (14/11/2026) son parcours : elle débute (tout le programme) ou elle a la base (ses thèmes choisis)
+      ['Parcours', d.parcours === 'base' ? 'A déjà la base · ' + resumeModules(d.modules) : d.parcours === 'debut' ? 'Débute : tout le programme, dans l’ordre' : ''],
       ['Formule', FORMULES[d.formule] + ' · ' + (d.formule === 'groupe' ? dureeGroupe(d) : seances(d))], ['Montant', P.fcfa(d.montant)],
       ['Mois payés', d.formule === 'groupe' && d.valide_le ? (d.mois_payes || 0) + ' / ' + nbMois(d) : ''],
       // (13/11/2026) le moyen choisi par la personne (Orange Money, carte…), Wave sinon
@@ -134,7 +141,7 @@
     const lignesSeances = l.map((s, i) => {
       const passee = s.faite || (new Date(s.fin).getTime() <= maintenant && !(s.mois > (d.mois_payes || 0)));   // (un dimanche non payé n'est jamais « fait »)
       return '<div class="pp-op ct-seance"><em class="' + (s === prochaine ? 'ct-proche' : passee ? 'ct-faite' : '') + '">' + (passee ? '✓' : i + 1) + '</em>' +
-        '<span>' + P.esc((s.mois && nbMois(d) > 1 ? 'Mois ' + s.mois + ' · ' : '') + (s.theme || 'Séance ' + (i + 1))) + '<small>' + P.esc(quandSeance(s) + ' · ' + (s.lieu || LIEU_SALLE)) + '</small></span>' +
+        '<span>' + P.esc((s.mois && nbMois(d) > 1 ? 'Mois ' + s.mois + ' · ' : '') + (s.theme || 'Séance ' + (i + 1)) + (s.module && titresProgramme[s.module] && d.formule !== 'groupe' ? ' — ' + titresProgramme[s.module] : '')) + '<small>' + P.esc(quandSeance(s) + ' · ' + (s.lieu || LIEU_SALLE)) + '</small></span>' +
         '<button type="button" class="ct-mini' + (s.faite ? ' oui' : '') + '" data-action="talons-seance-faite" data-id="' + P.esc(s.id) + '" data-valeur="' + (s.faite ? '' : '1') + '" aria-pressed="' + (s.faite ? 'true' : 'false') + '">' + (s.faite ? 'Faite ✓' : 'Faite ?') + '</button>' +
         '<button type="button" class="ct-mini" data-action="talons-seance-retirer" data-id="' + P.esc(s.id) + '" aria-label="Retirer la séance du ' + P.esc(quandSeance(s)) + '">✕</button></div>';
     }).join('');
@@ -162,7 +169,7 @@
         '<label class="fl" for="ct-s-duree-' + id + '">Durée<select id="ct-s-duree-' + id + '" name="duree">' + [[60, '1 h'], [90, '1 h 30'], [120, '2 h'], [180, '3 h']].map((x) =>
           '<option value="' + x[0] + '"' + (x[0] === (groupe ? 180 : 120) ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="ct-s-lieu-' + id + '">Lieu<input id="ct-s-lieu-' + id + '" name="lieu" maxlength="200" value="' + P.esc(d.formule === 'prive_exterieur' ? (d.adresse || '') : LIEU_SALLE) + '"></label>' +
-        '<label class="fl large" for="ct-s-theme-' + id + '">Thème (facultatif)<input id="ct-s-theme-' + id + '" name="theme" maxlength="120" placeholder="Ex. : Démarche et port de tête"></label>' +
+        '<label class="fl large" for="ct-s-theme-' + id + '">Thème (facultatif)<input id="ct-s-theme-' + id + '" name="theme" maxlength="120" placeholder="' + (groupe ? 'Ex. : Rattrapage' : 'Vide : le thème suivant de son programme') + '"></label>' +
         '<div class="ligne large"><button class="btn" type="submit">Ajouter la séance</button></div></form></details>' +
       '<p class="doux petit-texte">' + (groupe ? 'Les 4 dimanches sont remplis tout seuls à la validation du paiement. ' : '') + 'La page de l’élève se met à jour toute seule.</p></section>';
   }

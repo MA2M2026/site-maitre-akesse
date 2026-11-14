@@ -46,9 +46,20 @@
 
   const formule = () => (form.querySelector('input[name="formule"]:checked') || {}).value || '';
   const decision = () => (form.querySelector('input[name="decision"]:checked') || {}).value || '';
-  const nbSeances = () => (formule() === 'groupe' ? 4 : Math.max(1, Math.min(30, parseInt($('ct-nb').value, 10) || 1)));
+  // (14/11/2026, décision de la propriétaire) parcours, en groupe comme en privé : « Je débute » (tout le programme dans
+  // l'ordre) ou « J'ai déjà la base » (elle coche ses thèmes, 1 ou 2 mois chacun ; en privé, 4 séances par mois).
+  // Les thèmes sont lus dans la section « Le programme » de la page (#programme) : un seul endroit, traduit en anglais.
+  const parcours = () => (form.querySelector('input[name="parcours"]:checked') || {}).value || '';
+  const PROGRAMME = Array.from(document.querySelectorAll('#programme .ct-prog-mois[data-module]')).map((li) => ({
+    module: +li.dataset.module, titre: li.querySelector('h3').textContent.trim(), themes: Array.from(li.querySelectorAll('ol li')).map((x) => x.textContent.trim()) }));
+  const TITRE_SUITE = ((document.querySelector('#programme .ct-prog-mois--suite h3') || {}).textContent || '').trim();
+  const titreModule = (m) => (PROGRAMME.find((x) => x.module === m) || {}).titre || TITRE_SUITE;
+  // modules choisis, dans l'ordre, répétés selon la durée : {3,3,4} = La prestance 2 mois puis Le podium 1 mois
+  const modulesChoisis = () => (parcours() !== 'base' ? [] : Array.from(form.querySelectorAll('#ct-themes input[type="checkbox"]:checked'))
+    .flatMap((c) => Array(Math.max(1, Math.min(2, parseInt(($('ct-duree-' + c.value) || {}).value, 10) || 1))).fill(+c.value)).slice(0, 12));
+  const nbSeances = () => (formule() === 'groupe' ? 4 : parcours() === 'base' ? Math.max(1, Math.min(30, 4 * modulesChoisis().length)) : Math.max(1, Math.min(30, parseInt($('ct-nb').value, 10) || 1)));
   // (14/11/2026) groupe sur plusieurs mois : 30 000 le mois, payé d'un coup ou mois par mois (la base décide du montant)
-  const nbMois = () => (formule() === 'groupe' ? Math.max(1, Math.min(12, parseInt($('ct-mois').value, 10) || 1)) : 1);
+  const nbMois = () => (formule() !== 'groupe' ? 1 : parcours() === 'base' ? Math.max(1, modulesChoisis().length) : Math.max(1, Math.min(12, parseInt($('ct-mois').value, 10) || 1)));
   const paiementMois = () => (nbMois() > 1 && (form.querySelector('input[name="paiement"]:checked') || {}).value === 'mensuel' ? 'mensuel' : 'tout');
   const civilite = () => (form.querySelector('input[name="civilite"]:checked') || {}).value || '';
   const montant = () => (formule() === 'groupe' ? PRIX.groupe * (paiementMois() === 'mensuel' ? 1 : nbMois()) : (PRIX[formule()] || 0) * nbSeances());
@@ -70,12 +81,52 @@
     return T(`Total : à partir de ${fcfa(montant())} pour ${n} séance${s} de 2 h (30 000 à 35 000 FCFA la séance selon le lieu ; l'agence vous confirme le prix exact).`,
       `Total: from ${fcfa(montant())} for ${n} 2-hour session${s} (30,000 to 35,000 FCFA per session depending on the place; the agency confirms the exact price).`);
   }
+  // la liste des thèmes à cocher (« J'ai déjà la base ») : titre, ses 4 séances, 1 ou 2 mois
+  (function dessinerThemes() {
+    const boite = $('ct-themes');
+    if (!boite) return;
+    PROGRAMME.forEach((m) => {
+      const l = document.createElement('div'); l.className = 'ct-theme';
+      const lab = document.createElement('label'); lab.className = 'ct-theme-case';
+      const c = document.createElement('input'); c.type = 'checkbox'; c.value = String(m.module); c.id = 'ct-theme-' + m.module;
+      const t = document.createElement('span'); const b = document.createElement('strong'); b.textContent = m.titre;
+      const e = document.createElement('em'); e.textContent = m.themes.join(' · ');
+      t.appendChild(b); t.appendChild(e); lab.appendChild(c); lab.appendChild(t);
+      const d = document.createElement('select'); d.id = 'ct-duree-' + m.module; d.setAttribute('aria-label', T('Durée : ', 'Length: ') + m.titre);
+      [1, 2].forEach((n) => { const o = document.createElement('option'); o.value = String(n); o.textContent = T(n + ' mois', n + (n > 1 ? ' months' : ' month')); d.appendChild(o); });
+      l.appendChild(lab); l.appendChild(d); boite.appendChild(l);
+      c.addEventListener('change', majFormule); d.addEventListener('change', majFormule);
+    });
+  })();
+  // « Votre programme » : ce qu'elle suivra, mois après mois (le privé : 4 séances par mois de programme)
+  function dessinerProgrammeChoisi() {
+    const boite = $('ct-programme-choisi'), liste = boite.querySelector('ol');
+    const f = formule(), p = parcours();
+    let mois = [];
+    if (f && p === 'base') mois = modulesChoisis();
+    else if (f && p === 'debut') mois = Array.from({ length: f === 'groupe' ? nbMois() : Math.ceil(nbSeances() / 4) }, (_, i) => Math.min(i + 1, 7));
+    liste.textContent = '';
+    mois.forEach((m, i) => {
+      const li = document.createElement('li');
+      const n = document.createElement('small'); n.textContent = f === 'groupe' ? T('Mois ', 'Month ') + (i + 1) : T('Séances ', 'Sessions ') + (4 * i + 1) + '–' + Math.min(4 * i + 4, nbSeances());
+      const t = document.createElement('span'); t.textContent = titreModule(m) + (i > 0 && mois[i - 1] === m && m < 7 ? T(' (approfondissement)', ' (going further)') : '');
+      li.appendChild(n); li.appendChild(t); liste.appendChild(li);
+    });
+    boite.classList.toggle('u-hidden', !mois.length);
+  }
   function majFormule() {
     const f = formule();
     $('ct-bloc-prive').classList.toggle('u-hidden', !f || f === 'groupe');
     $('ct-bloc-adresse').classList.toggle('u-hidden', f !== 'prive_exterieur');
-    $('ct-bloc-groupe').classList.toggle('u-hidden', f !== 'groupe');
+    const base = parcours() === 'base';
+    $('ct-bloc-parcours').classList.toggle('u-hidden', !f);
+    $('ct-bloc-themes').classList.toggle('u-hidden', !base);
+    $('ct-bloc-groupe').classList.toggle('u-hidden', f !== 'groupe' || !parcours());
+    $('ct-champ-mois').classList.toggle('u-hidden', base);
+    $('ct-champ-nb').classList.toggle('u-hidden', base);
     $('ct-bloc-paiement-mois').classList.toggle('u-hidden', f !== 'groupe' || nbMois() === 1);
+    form.querySelectorAll('#ct-themes .ct-theme').forEach((t) => t.classList.toggle('choisi', t.querySelector('input').checked));
+    dessinerProgrammeChoisi();
     $('ct-total').textContent = texteTotal();
     $('ct-total-final').textContent = texteTotal();
     $('ct-lien-wave').href = LIEN_WAVE_AGENCE + montant();
@@ -102,6 +153,7 @@
   form.querySelectorAll('input[name="formule"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-nb').addEventListener('change', majFormule);
   $('ct-mois').addEventListener('change', majFormule);
+  form.querySelectorAll('input[name="parcours"]').forEach((r) => r.addEventListener('change', majFormule));
   form.querySelectorAll('input[name="paiement"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-objectif').addEventListener('change', () => $('ct-bloc-concours').classList.toggle('u-hidden', !['miss', 'beaute'].includes($('ct-objectif').value)));
   $('ct-age').addEventListener('input', () => $('ct-bloc-parent').classList.toggle('u-hidden', !mineure()));
@@ -129,6 +181,8 @@
   function etapeValide(n) {
     if (n === 1) {
       if (!formule()) return erreur(T('Choisissez une formule.', 'Please choose an option.'));
+      if (!parcours()) return erreur(T('Dites-nous si vous débutez ou si vous avez déjà la base.', 'Please tell us whether you are a beginner or already have the basics.'), form.querySelector('input[name="parcours"]'));
+      if (parcours() === 'base' && !modulesChoisis().length) return erreur(T('Cochez au moins un thème à travailler.', 'Please tick at least one theme to work on.'), form.querySelector('#ct-themes input'));
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
     }
     if (n === 2) {
@@ -275,6 +329,7 @@
     const f = formule();
     return {
       formule: f, nb_seances: nbSeances(), nb_mois: nbMois(), paiement: paiementMois(), civilite: civilite() || null,
+      parcours: parcours() || 'debut', modules: parcours() === 'base' ? modulesChoisis() : null,
       nom: $('ct-nom').value.trim(),
       telephone: composerTelephone($('ct-indicatif'), $('ct-telephone')),
       age: age(),
@@ -297,6 +352,7 @@
   function resume(l, montantTexte) {
     return [`Inscription aux cours de talons${EN ? ' (site en anglais)' : ''}`,
       `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? (l.nb_mois > 1 ? ' · ' + l.nb_mois + ' mois, payés ' + (l.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '') : ' · ' + l.nb_seances + ' séance(s)'} · ${montantTexte}`,
+      l.parcours === 'base' ? `Parcours : a déjà la base · thèmes : ${(l.modules || []).map(titreModule).join(', ')}` : 'Parcours : débute (tout le programme)',
       `Nom : ${l.civilite ? window.TalonsCommun.civilite(l.civilite) + ' ' : ''}${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',

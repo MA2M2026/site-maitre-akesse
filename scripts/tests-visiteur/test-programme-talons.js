@@ -20,6 +20,10 @@ const mois3 = { nom: 'Fatou Bamba', civilite: 'Mademoiselle', formule: 'groupe',
     // un rattrapage ajouté à la main par l'agence (sans mois) : jamais « à régler »
     .concat([{ id: 'rattrapage', debut: jour(2, 15), fin: jour(2, 17), lieu: 'Salle MA2M, Riviera Faya', theme: 'Rattrapage', faite: false }])
     .sort((a, b) => (a.debut < b.debut ? -1 : 1)) };
+// (14/11/2026) privé, « j'ai déjà la base » : ses séances suivent SES thèmes (Les tenues), titre du thème au-dessus
+const J_BASE = 'e5'.repeat(18);
+const priveBase = { nom: 'Aminata Base', civilite: 'Madame', formule: 'prive_salle', nb_seances: 4, statut: 'inscrite', numero: 'TAL-BASE01', parcours: 'base', modules: [5],
+  titres_mois: { 5: 'Les tenues', 7: 'Perfectionnement' }, seances: [['Robe longue et traîne', 2], ['Tailleur et tenue courte', 4]].map((x, i) => ({ id: 'b' + i, module: 5, debut: jour(x[1], 10), fin: jour(x[1], 12), lieu: 'Salle MA2M, Riviera Faya', theme: x[0], faite: false })) };
 const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_salle', nb_seances: 2, statut: 'inscrite', numero: 'TAL-EF34GH', seances: [] };
 
 (async () => {
@@ -31,7 +35,7 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
-    await brancher(p, { tables: {}, rpc: { programme_talons_lire: (x) => x.p_jeton === J ? groupe : x.p_jeton === J_PRIVE ? prive : x.p_jeton === J_MOIS ? mois3 : null } }, journal);
+    await brancher(p, { tables: {}, rpc: { programme_talons_lire: (x) => x.p_jeton === J ? groupe : x.p_jeton === J_PRIVE ? prive : x.p_jeton === J_MOIS ? mois3 : x.p_jeton === J_BASE ? priveBase : null } }, journal);
     const n = nom + ' : ';
     await p.goto(BASE + 'programme-talons.html?c=' + J); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
     ok(/Bienvenue,\s*Madame Awa Koné/.test(await p.textContent('#pt-titre')), n + 'vouvoiement : « Bienvenue, Madame Awa Koné »');
@@ -74,6 +78,9 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     ok((fs.readFileSync(await dl3.path(), 'utf8').match(/BEGIN:VEVENT/g) || []).length === 5, n + '.ics : les 4 séances du mois réglé et le rattrapage');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + '3 mois : rien ne dépasse de l’écran');
     if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/programme-talons-mois-' + vp.width + '.png', fullPage: true });
+    await p.goto(BASE + 'programme-talons.html?c=' + J_BASE); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
+    ok((await p.$$eval('.pt-mois-tete', (l) => l.map((x) => x.textContent))).join('|') === 'Les tenues' && /Robe longue et traîne/.test(await p.textContent('.pt-seance.proche')) && await p.$$eval('.pt-seance.a-regler', (l) => l.length) === 0,
+      n + 'privé, j’ai la base : ses séances sous « Les tenues », rien « à régler »');
     // privé, mineure, séances pas encore fixées
     await p.goto(BASE + 'programme-talons.html?c=' + J_PRIVE); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
     ok(/Mademoiselle Petite Aya/.test(await p.textContent('#pt-titre')) && /bientôt programmées/.test(await p.textContent('#pt-proch-titre')) && await p.isHidden('#pt-ics') && await p.isHidden('#pt-bloc-cal'), n + 'privé sans dates : « Mademoiselle », « bientôt programmées », pas de bouton calendrier');
