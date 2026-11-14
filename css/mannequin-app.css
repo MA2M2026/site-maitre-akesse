@@ -600,10 +600,14 @@ button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer;
 .ap-prog-theme { font: 600 26px/1.12 'Cormorant Garamond', Georgia, serif; margin: 6px 0 14px; }
 .ap-prog-cb .ap-jauge { background: rgba(255, 255, 255, .18); margin: 0 0 14px; height: 4px; }
 .ap-prog-cb .ap-jauge i { background: #FFFFFF; }
-.ap-prog-mois em { font: 700 13px 'Work Sans', sans-serif; color: #7C2128; }
-.ap-prog-mois span b { display: block; font-weight: 600; }
-.ap-prog-mois span small { display: block; font-weight: 400; font-size: 11.5px; color: #6E4F53; margin-top: 2px; }
-.ap-prog-mois strong { font: 700 11.5px 'Work Sans', sans-serif; white-space: nowrap; color: #7C2128; }
-.ap-prog-mois.fait strong { color: #6E4F53; }
-.ap-prog-mois.en_cours { box-shadow: inset 4px 0 0 #7C2128; }
-.ap-prog-mois.en_cours em { background: #7C2128; color: #FFFFFF; }
+.ap-prog-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (min-width: 700px) { .ap-prog-grille { grid-template-columns: repeat(3, 1fr); } }
+.ap-prog-mois { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px; border-radius: 16px; background: #FFFFFF; color: #2a1416; box-shadow: var(--ap-ombre); }
+.ap-prog-haut { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.ap-prog-mois em { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; background: #F3DDE0; display: grid; place-items: center; font: 700 12.5px 'Work Sans', sans-serif; font-style: normal; color: #7C2128; }
+.ap-prog-mois strong { font: 700 10px 'Work Sans', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #6E4F53; }
+.ap-prog-mois b { font: 600 15.5px/1.2 'Cormorant Garamond', Georgia, serif; overflow-wrap: anywhere; }
+.ap-prog-mois small { margin-top: auto; font-size: 11.5px; color: #6E4F53; }
+.ap-prog-mois.en_cours { background: #7C2128; color: #FFFFFF; box-shadow: 0 0 0 2px #FFFFFF, var(--ap-ombre); }
+.ap-prog-mois.en_cours em { background: #FFFFFF; color: #7C2128; }
+.ap-prog-mois.en_cours strong, .ap-prog-mois.en_cours small { color: #FFFFFF; }

@@ -327,10 +327,11 @@
       '<div class="ap-cb-bas"><div><b>MOIS FAITS</b>' + r.faits + ' / ' + r.total + '</div><div><b>NIVEAU</b>' + esc(MA2M_NIVEAUX_FORMATION[x.niveau] || '') + '</div>' +
       '<div><b>MOIS</b>' + x.mois_niveau + ' sur 9</div></div></div>';
     const niveaux = [1, 2].filter((n) => r.mois.some((m) => m.niveau === n)).map((n) =>
-      '<h2 class="ap-titre-sec">Niveau ' + n + ' · ' + esc(MA2M_NIVEAUX_FORMATION[n]) + '</h2><div class="ap-releve ap-prog-liste">' +
-      r.mois.filter((m) => m.niveau === n).map((m) => '<div class="ap-op ap-prog-mois ' + esc(m.etat) + '"><em aria-hidden="true">' + (m.etat === 'fait' ? '✓' : m.mois_niveau) + '</em>' +
-        '<span><b>' + esc(m.theme) + '</b><small>' + (m.etat === 'en_cours' ? 'Ce mois-ci' : m.date ? esc(nomMoisAnnee(m.date)) : 'Fait avant la reprise') + '</small></span>' +
-        (m.etat === 'en_cours' ? '<strong>En cours</strong>' : m.etat === 'fait' ? '<strong class="plus">Fait</strong>' : '') + '</div>').join('') + '</div>').join('');
+      // (14/11/2026, demande de la propriétaire) les mois en colonnes : une carte par mois, 2 colonnes (3 sur grand écran)
+      '<h2 class="ap-titre-sec">Niveau ' + n + ' · ' + esc(MA2M_NIVEAUX_FORMATION[n]) + '</h2><div class="ap-prog-grille">' +
+      r.mois.filter((m) => m.niveau === n).map((m) => '<div class="ap-prog-mois ' + esc(m.etat) + '"><div class="ap-prog-haut"><em aria-hidden="true">' + (m.etat === 'fait' ? '✓' : m.mois_niveau) + '</em>' +
+        '<strong>' + (m.etat === 'en_cours' ? 'En cours' : m.etat === 'fait' ? 'Fait' : 'Mois ' + m.mois_niveau) + '</strong></div>' +
+        '<b>' + esc(m.theme) + '</b><small>' + (m.etat === 'en_cours' ? 'Ce mois-ci' : m.date ? esc(nomMoisAnnee(m.date)) : 'Fait avant la reprise') + '</small></div>').join('') + '</div>').join('');
     return carte + niveaux + '<p class="doux ap-formation-note">Décembre, janvier et février : congés, l’agence est fermée. Le programme reprend en mars.</p>';
   }
   function ecranEvenements() {
