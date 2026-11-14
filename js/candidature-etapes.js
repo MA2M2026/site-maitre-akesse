@@ -208,5 +208,5 @@
     new MutationObserver(() => { if (msgEnvoi.textContent.trim() && courante !== 5) montrer(5, false); }).observe(msgEnvoi, { childList: true, characterData: true, subtree: true });
   }
   montrer(1, false);
-  window.CandidatureEtapes = { montrer: (n) => montrer(n), etape: () => courante };
+  window.CandidatureEtapes = { montrer: (n, defiler) => montrer(n, defiler), etape: () => courante };
 })();

@@ -32,7 +32,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(auDepart && !enDescendant && enRemontant, page + ' : visible au départ, effacée en descendant, de retour en remontant (' + [auDepart, enDescendant, enRemontant] + ')');
     if (champ) {
       // sans faire défiler la page (le défilement vers le bas efface déjà la pastille : ici on teste la saisie seule)
-      await p.evaluate((c) => document.querySelector(c).focus({ preventScroll: true }), champ); await p.waitForTimeout(600);
+      // (14/11/2026) le nom est à l'étape 2 du formulaire en étapes (js/candidature-etapes.js) : on l'ouvre sans défiler
+      await p.evaluate((c) => { if (window.CandidatureEtapes) window.CandidatureEtapes.montrer(2, false); document.querySelector(c).focus({ preventScroll: true }); }, champ); await p.waitForTimeout(600);
       const pendantSaisie = await visible();
       await p.evaluate(() => document.activeElement.blur()); await p.waitForTimeout(600);
       ok(!pendantSaisie && await visible(), page + ' : effacée pendant la saisie d\'un champ, de retour ensuite');
