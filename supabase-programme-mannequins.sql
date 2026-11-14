@@ -112,4 +112,4 @@ grant execute on function programme_formation_de(uuid) to authenticated;
 NOTIFY pgrst, 'reload schema';
 
 select 'Programme de formation installé : ' || ((select count(*) from formation_programme)
-  + (select count(*) from pg_proc where proname in ('mon_programme_formation', 'programme_formation_de'))) || ' éléments sur 20' as controle;
+  + (select count(*) from pg_proc where proname in ('mon_programme_formation', 'programme_formation_de'))) || ' éléments sur 29' as controle;
