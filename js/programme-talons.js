@@ -193,7 +193,7 @@
         'DTSTART:' + z(s.debut), 'DTEND:' + z(s.fin),
         'SUMMARY:' + esc('Atelier talons MA2M · Séance ' + s.n + (s.theme ? ' · ' + s.theme : '')),
         'LOCATION:' + esc(s.lieu + ', Abidjan'),
-        'DESCRIPTION:' + esc(nom + ' : arrivée 15 minutes avant. À prévoir : talons de 7 à 10 cm, tenue près du corps, ballerines, une bouteille d’eau. ' + location.origin + location.pathname + '?c=' + jeton),
+        'DESCRIPTION:' + esc(nom + ' : arrivée 15 minutes avant. À prévoir : ' + T.A_PREVOIR + '. ' + location.origin + location.pathname + '?c=' + jeton),
         'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + esc('Demain : atelier talons MA2M à ' + heure(s.debut)), 'TRIGGER:-P1D', 'END:VALARM', 'END:VEVENT');
     });
     lignes.push('END:VCALENDAR');

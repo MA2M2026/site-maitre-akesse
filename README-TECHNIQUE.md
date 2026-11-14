@@ -5004,8 +5004,15 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   Essais : `scripts/base-essai/essais-programme-talons.sql`.
 - **Administration** (`js/admin/site-cours-talons.js`, fiche d'une élève payée) : « Son programme » en relevé
   (`pp-releve`), « Faite ? » / ✕ par séance, « ＋ Ajouter une séance » (date, heure, durée, lieu, thème),
-  « Envoyer son programme (WhatsApp) » (« Bonjour Madame … » + lien) et « Voir sa page ». Fichier pas encore collé :
+  et « Voir sa page ». Fichier pas encore collé :
   la fiche le dit, le reste marche. Styles : `.ct-programme`, `.ct-seance`, `.ct-mini` (css/admin-vivante.css).
+- **Messages prêts à envoyer** (14/11/2026, `messagesPrets` dans js/admin/site-cours-talons.js, styles `.ct-msg*`) :
+  dans chaque fiche, une tuile par message utile maintenant, avec « À elle » et (mineure) « Au parent » ; un appui ouvre
+  WhatsApp avec le message écrit (vouvoiement). Pas encore payée : « Inscription reçue » (`messageInscription`) et
+  « Lien de paiement » (`messagePaiement`, montant Wave). Payée : « Son programme » (`messageProgramme`) et « Rappel de
+  la prochaine séance » (`messageRappel` : « demain » si c'est demain, heures, lieu, thème, « À prévoir »
+  = `TalonsCommun.A_PREVOIR`, partagé avec le calendrier de la page de l'élève, et son lien). La prochaine séance
+  (`prochaineSeance`) : pas faite, pas passée et, en groupe, d'un mois déjà payé. Rien n'est envoyé tout seul.
 - **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
   paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).
 - **Civilité et plusieurs mois** (14/11/2026, demandes de la propriétaire) : le formulaire (cours-talons.html FR/EN,

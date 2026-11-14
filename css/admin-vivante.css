@@ -1480,6 +1480,18 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ct-ajout summary::-webkit-details-marker { display: none; }
 .ct-mois { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; }
 .ct-mois p { flex: 1 1 100%; margin: 0; font-size: 13.5px; color: #2A1416; }
+/* « Messages prêts à envoyer » (14/11/2026, js/admin/site-cours-talons.js, messagesPrets) : une tuile par message */
+.ct-messages { margin: 0 0 18px; }
+.ct-messages h3 { margin: 0 0 4px; }
+.ct-messages > p { margin: 0 0 10px; }
+.ct-msgs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.ct-msg { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; padding: 12px 14px; border-radius: 16px; border: 1px solid #EADCDD; background: #FFFFFF; }
+.ct-msg > i { flex: 0 0 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #FBF4F5; font-style: normal; font-size: 17px; }
+.ct-msg-txt { flex: 1 1 140px; min-width: 0; }
+.ct-msg-txt b { display: block; color: #2A1416; font-size: 14px; }
+.ct-msg-txt small { display: block; color: #6E4F53; font-size: 12.5px; overflow-wrap: anywhere; }
+.ct-msg-btn { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+.ct-msg-btn .btn { flex: 1 1 0; justify-content: center; text-align: center; }
 /* Programme de formation dans la fiche d'un mannequin (14/11/2026, js/portail/espace-paiements.js) */
 .pf-programme details { margin-top: 8px; }
 .pf-programme summary { cursor: pointer; font-weight: 600; color: #7C2128; }

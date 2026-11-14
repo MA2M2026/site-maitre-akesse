@@ -67,8 +67,18 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await p.click('.ct-fiche[data-id="t1"] [data-action="talons-photo-voir"][data-index="1"]'); await p.waitForTimeout(500);
     ok(await p.evaluate(() => !!document.querySelector('.lightbox.active, .lightbox-global.active, [class*="lightbox"].active, [class*="lightbox"][class*="ouvert"]')), n + 'une photo s’agrandit d’un appui');
     await p.keyboard.press('Escape'); await p.waitForTimeout(300);
-    const wave = await p.getAttribute('.ct-fiche[data-id="t1"] a:has-text("Envoyer le lien Wave")', 'href');
+    // (14/11/2026) « Messages prêts à envoyer » : une tuile par message, à elle et (mineure) à son parent
+    const m1 = '.ct-fiche[data-id="t1"] .ct-msg';
+    const wave = await p.getAttribute(m1 + '[data-msg="paiement"] a[data-pour="eleve"]', 'href');
     ok(/^https:\/\/wa\.me\/2250701020304\?text=/.test(wave) && decodeURIComponent(wave).includes('?amount=250000') && /T_123/.test(t), n + 'lien Wave envoyé sur WhatsApp avec le bon montant ; référence Wave affichée');
+    const waveParent = decodeURIComponent(await p.getAttribute(m1 + '[data-msg="paiement"] a[data-pour="parent"]', 'href'));
+    ok(/^https:\/\/wa\.me\/2250501020304\?text=Bonjour Mme Kouassi,/.test(waveParent) && /l’inscription de Mademoiselle KOUASSI MARIE/.test(waveParent) && waveParent.includes('?amount=250000'), n + 'lien de paiement aussi au parent (« l’inscription de Mademoiselle … »)');
+    const recue = decodeURIComponent(await p.getAttribute(m1 + '[data-msg="inscription"] a[data-pour="eleve"]', 'href'));
+    ok(/Bonjour Mademoiselle KOUASSI MARIE,/.test(recue) && /bien reçu votre inscription/.test(recue) && /lien de paiement/.test(recue), n + '« Inscription reçue » : message prêt, vouvoiement');
+    ok(await p.locator(m1 + '[data-msg="programme"], ' + m1 + '[data-msg="rappel"]').count() === 0 && await p.locator('.ct-fiche[data-id="t1"] .ct-actions a:has-text("Wave")').count() === 0, n + 'pas encore payée : ni programme ni rappel, plus de doublon du lien Wave');
+    const tuiles = await p.$$eval(m1, (l) => l.map((x) => { const r = x.getBoundingClientRect(); return [r.left, r.right, innerWidth]; }));
+    if (process.env.CAPTURES) await p.locator('.ct-fiche[data-id="t1"] .ct-messages').screenshot({ path: process.env.CAPTURES + '/messages-' + n.replace(/\W+/g, '') + '.png' });
+    ok(tuiles.length === 2 && tuiles.every((r) => r[0] >= 0 && r[1] <= r[2] + 1), n + 'les tuiles tiennent dans l’écran');
     // date et notes
     await p.fill('#ct-date-t1', '2026-11-15'); await p.fill('#ct-notes-t1', 'Rappeler samedi');
     await p.click('.ct-fiche[data-id="t1"] button[type="submit"]'); await p.waitForTimeout(800);
@@ -91,7 +101,11 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     } else {
       ok(await p.locator(fiche2 + '.ct-seance').count() === 4 && /4 \/ 4/.test(await p.textContent(fiche2 + '.ct-programme h3')), n + 'Son programme : les 4 dimanches remplis tout seuls (4 / 4)');
       ok(/Démarche et port de tête/.test(await p.textContent(fiche2 + '.ct-programme')) && /Dim\. 13 janv\. · 15 h – 18 h · Salle MA2M, Riviera Faya/.test(await p.textContent(fiche2 + '.ct-programme')), n + 'chaque séance : thème, date, heures, lieu');
-      const envoi = await p.getAttribute(fiche2 + 'a:has-text("Envoyer son programme")', 'href');
+      const envoi = await p.getAttribute(fiche2 + '.ct-msg[data-msg="programme"] a[data-pour="eleve"]', 'href');
+      const rappel = decodeURIComponent(await p.getAttribute(fiche2 + '.ct-msg[data-msg="rappel"] a[data-pour="eleve"]', 'href'));
+      ok(/Bonjour Madame AWA DIALLO,/.test(rappel) && /le dimanche 6 janvier, de 15 h à 18 h/.test(rappel) && /Lieu : Salle MA2M, Riviera Faya/.test(rappel) && /Thème : Posture et équilibre/.test(rappel) && /À prévoir : talons de 7 à 10 cm/.test(rappel) && rappel.includes('programme-talons?c=' + 'f'.repeat(36)),
+        n + '« Rappel de la prochaine séance » : date, heures, lieu, thème, à prévoir, son lien');
+      if (process.env.CAPTURES) await p.locator(fiche2 + '.ct-messages').screenshot({ path: process.env.CAPTURES + '/messages-payee-' + n.replace(/\W+/g, '') + '.png' });
       ok(/^https:\/\/wa\.me\/2250700000002\?text=/.test(envoi) && /Bonjour Madame AWA DIALLO/.test(decodeURIComponent(envoi)) && decodeURIComponent(envoi).includes('https://www.maitreakessemodelmanagement.com/programme-talons?c=' + 'f'.repeat(36)),
         n + 'WhatsApp : « Bonjour Madame … » avec son lien personnel');
       // (14/11/2026) groupe payé en une fois, 1 mois : « un mois de plus » ; 3 mois payés mois par mois : « Mois 2 payé »
@@ -104,7 +118,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       const appelMois = journal.find((j) => j[0] === 'rpc' && j[1] === 'cours_talons_mois_payer');
       ok(appelMois && JSON.parse(appelMois[2]).p_id === 't5' && JSON.parse(appelMois[2]).p_especes === false && JSON.parse(appelMois[2]).p_mois === 2 && /Mois payés : 2 \/ 3/.test(await p.textContent(f5 + '.ct-mois')), n + '« Mois 2 payé » : encaissé par la base, la fiche passe à 2 / 3');
       ok(await p.locator(fiche2 + 'a:has-text("Au parent")').count() === 0, n + 'élève majeure : pas de bouton « Au parent »');
-      const parent = await p.getAttribute('.ct-fiche[data-id="t4"] a:has-text("Au parent")', 'href');
+      const parent = await p.getAttribute('.ct-fiche[data-id="t4"] .ct-msg[data-msg="programme"] a[data-pour="parent"]', 'href');
       ok(/^https:\/\/wa\.me\/2250500000004\?text=/.test(parent) && /Bonjour M\. Yao/.test(decodeURIComponent(parent)) && /L’inscription de Mademoiselle JEUNE AYA/.test(decodeURIComponent(parent)) && decodeURIComponent(parent).includes('programme-talons?c=' + 'e'.repeat(36)),
         n + 'élève mineure : son programme part aussi au parent (« Mademoiselle », son lien)');
       ok((await p.getAttribute(fiche2 + 'a:has-text("Voir sa page")', 'href')).endsWith('programme-talons?c=' + 'f'.repeat(36)), n + '« Voir sa page » ouvre sa page Mon programme');

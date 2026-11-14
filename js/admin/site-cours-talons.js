@@ -40,8 +40,53 @@
   const dureeGroupe = (d) => seances(d) + (nbMois(d) > 1 ? ', payés ' + (d.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '');
 
   const seances = (d) => d.formule === 'groupe' ? (nbMois(d) > 1 ? nbMois(d) + ' mois, ' + 4 * nbMois(d) + ' dimanches' : '4 dimanches') : d.nb_seances + ' séance' + (d.nb_seances > 1 ? 's' : '');
-  function messagePaiement(d) {
+  // « Bonjour M. Yao, » (parent d'une élève mineure) ou « Bonjour Madame AWA, »
+  const bonjour = (d, parent) => 'Bonjour' + (parent ? (d.parent_nom ? ' ' + String(d.parent_nom).trim() : '') : ' ' + civilite(d)) + ',\n\n';
+  const SIGNATURE = 'Maître Akesse Model Management';
+  // (14/11/2026, « messages prêts à envoyer ») l'inscription bien reçue : l'agence revient vers elle
+  function messageInscription(d, parent) {
+    const paye = d.decision === 'maintenant';
+    return bonjour(d, parent) + (parent ? 'Nous avons bien reçu l’inscription de ' + civilite(d) : 'Nous avons bien reçu votre inscription') +
+      ' à l’Atelier Talons & Élégance (' + FORMULES[d.formule] + ', ' + seances(d) + '), merci !\n' +
+      (paye ? 'Nous vérifions le paiement et revenons vers vous très vite avec ' + (parent ? 'son' : 'votre') + ' programme.'
+        : 'Nous revenons vers vous très vite avec le lien de paiement et la date de ' + (parent ? 'sa' : 'votre') + ' première séance.') +
+      '\n\nÀ très bientôt,\n' + SIGNATURE;
+  }
+  // la prochaine séance confirmée (pas faite, pas passée ; en groupe, d'un mois déjà payé)
+  const prochaineSeance = (d) => (seancesDe[d.id] || []).find((s) => !s.faite && new Date(s.fin).getTime() > Date.now() && !(s.mois > (d.mois_payes || 0) && d.formule === 'groupe'));
+  // le rappel de la prochaine séance : « demain » quand c'est demain, sinon le jour et la date
+  function messageRappel(d, s, parent) {
+    const a = new Date(s.debut), b = new Date(s.fin), auj = new Date();
+    const demain = new Date(Date.UTC(auj.getUTCFullYear(), auj.getUTCMonth(), auj.getUTCDate() + 1));
+    const estDemain = a.getUTCFullYear() === demain.getUTCFullYear() && a.getUTCMonth() === demain.getUTCMonth() && a.getUTCDate() === demain.getUTCDate();
+    const quand = (estDemain ? 'demain, ' : 'le ') + T.JOURS[a.getUTCDay()] + ' ' + a.getUTCDate() + ' ' + T.MOIS[a.getUTCMonth()] + ', de ' + T.heure(a) + ' à ' + T.heure(b);
+    return bonjour(d, parent) + 'Petit rappel : ' + (parent ? 'la séance de ' + civilite(d) : 'votre séance') + ' de l’Atelier Talons & Élégance, c’est ' + quand + '.\n' +
+      'Lieu : ' + (s.lieu || LIEU_SALLE) + '.\n' + (s.theme ? 'Thème : ' + s.theme + '.\n' : '') +
+      'À prévoir : ' + T.A_PREVOIR + '. Merci d’arriver 15 minutes avant.\n' +
+      (d.jeton ? '\n' + (parent ? 'Son' : 'Votre') + ' programme : ' + LIEN_PROGRAMME + d.jeton + '\n' : '') + '\n' + (estDemain ? 'À demain !' : 'À bientôt !') + '\n' + SIGNATURE;
+  }
+  // « Messages prêts à envoyer » : une tuile par message utile maintenant, à elle et (mineure) à son parent
+  function messagesPrets(d, wa, waParent) {
+    if (!wa && !waParent) return '';
+    const ouverte = !['terminee', 'annulee'].includes(d.statut), payee = d.statut === 'inscrite';
+    const s = payee ? prochaineSeance(d) : null;
+    const tuiles = [
+      ouverte && !payee ? ['inscription', '📩', 'Inscription reçue', 'Pour la remercier et dire que l’agence revient vers elle.', (p) => messageInscription(d, p)] : null,
+      ouverte && !payee ? ['paiement', '💳', 'Lien de paiement', P.fcfa(d.montant) + ' par Wave' + (d.formule === 'groupe' && d.paiement === 'mensuel' && nbMois(d) > 1 ? ' (le premier mois)' : '') + '.', (p) => messagePaiement(d, p)] : null,
+      payee && d.jeton && !programmeAbsent ? ['programme', '📅', 'Son programme', 'Son lien personnel : séances, lieu, calendrier.', (p) => messageProgramme(d, p)] : null,
+      s ? ['rappel', '⏰', 'Rappel de la prochaine séance', quandSeance(s) + (s.theme ? ' · « ' + s.theme + ' »' : '') + '. À envoyer la veille.', (p) => messageRappel(d, s, p)] : null
+    ].filter(Boolean);
+    if (!tuiles.length) return '';
+    const lien = (num, texte, pour, msg) => '<a class="btn petit' + (pour === 'eleve' ? ' rouge' : '') + '" data-pour="' + pour + '" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(msg) + '">' + texte + '</a>';
+    return '<section class="ct-messages"><h3>Messages prêts à envoyer</h3><p class="doux petit-texte">Un appui ouvre WhatsApp avec le message écrit ; vous le relisez puis l’envoyez.</p><div class="ct-msgs">' +
+      tuiles.map((t) => '<div class="ct-msg" data-msg="' + t[0] + '"><i aria-hidden="true">' + t[1] + '</i><div class="ct-msg-txt"><b>' + P.esc(t[2]) + '</b><small>' + P.esc(t[3]) + '</small></div>' +
+        '<div class="ct-msg-btn">' + (wa ? lien(wa, 'À elle', 'eleve', t[4](false)) : '') + (waParent ? lien(waParent, 'Au parent', 'parent', t[4](true)) : '') + '</div></div>').join('') + '</div></section>';
+  }
+  function messagePaiement(d, parent) {
     // (14/11/2026) vouvoiement : « Bonjour Madame … » / « Mademoiselle … » (civilité choisie à l'inscription)
+    if (parent) return bonjour(d, true) + 'Merci pour l’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance de ' + SIGNATURE + ' (' + FORMULES[d.formule] + ', ' + seances(d) + ').\n' +
+      'Montant : ' + P.fcfa(d.montant) + (d.formule === 'groupe' && d.paiement === 'mensuel' && nbMois(d) > 1 ? ' (le premier mois ; puis ' + P.fcfa(T.PRIX_MOIS) + ' chaque mois)' : '') + '.\nVous pouvez régler par Wave avec ce lien :\n' + LIEN_WAVE_AGENCE + (d.montant || 0) + '\n\n' +
+      (d.date_seance ? 'Sa première séance : le ' + P.date(d.date_seance) + '.\n\n' : '') + 'À très bientôt !\n' + SIGNATURE;
     return 'Bonjour ' + civilite(d) + ',\n\nMerci pour votre inscription à l’Atelier Talons & Élégance de Maître Akesse Model Management (' + FORMULES[d.formule] + ', ' + seances(d) + ').\n' +
       'Montant : ' + P.fcfa(d.montant) + (d.formule === 'groupe' && d.paiement === 'mensuel' && nbMois(d) > 1 ? ' (le premier mois ; puis ' + P.fcfa(T.PRIX_MOIS) + ' chaque mois)' : '') + '.\nVous pouvez régler par Wave avec ce lien :\n' + LIEN_WAVE_AGENCE + (d.montant || 0) + '\n\n' +
       (d.date_seance ? 'Votre première séance : le ' + P.date(d.date_seance) + '.\n\n' : '') + 'À très bientôt !\nMaître Akesse Model Management';
@@ -111,14 +156,13 @@
     const boutons = [
       https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
       wa ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '">💬 WhatsApp</a>' : '',
-      waParent ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '">💬 Parent</a>' : '',
-      wa && ouverte && !payee ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messagePaiement(d)) + '">💳 Envoyer le lien Wave</a>' : ''
-    ];
+      waParent ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '">💬 Parent</a>' : ''
+    ];   // (14/11/2026) le lien Wave est dans « Messages prêts à envoyer », sous ces boutons
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
       (galerie || (https(d.video) ? '' : '<p class="doux">Photos et vidéo non reçues (demandez-les sur WhatsApp).</p>')) +
-      '<div class="ct-actions">' + boutons.join('') + '</div>' +
+      '<div class="ct-actions">' + boutons.join('') + '</div>' + messagesPrets(d, wa, waParent) +
       (payee ? programme(d, wa, waParent) : '') +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +
         '<label class="fl" for="ct-date-' + id + '">Date de la (première) séance<input id="ct-date-' + id + '" name="date_seance" type="date" value="' + P.esc(d.date_seance || '') + '"></label>' +
@@ -139,7 +183,7 @@
     if (programmeAbsent) return '<section class="ct-programme"><h3>Son programme</h3><p class="doux">Pour préparer la page « Mon programme » des élèves, collez le fichier <strong>supabase-programme-talons.sql</strong> dans Supabase (SQL Editor, puis Run).</p></section>';
     const l = seancesDe[d.id] || [];
     const maintenant = Date.now();
-    const prochaine = l.find((s) => !s.faite && new Date(s.fin).getTime() > maintenant);
+    const prochaine = prochaineSeance(d);
     const lignesSeances = l.map((s, i) => {
       const passee = s.faite || (new Date(s.fin).getTime() <= maintenant && !(s.mois > (d.mois_payes || 0)));   // (un dimanche non payé n'est jamais « fait »)
       return '<div class="pp-op ct-seance"><em class="' + (s === prochaine ? 'ct-proche' : passee ? 'ct-faite' : '') + '">' + (passee ? '✓' : i + 1) + '</em>' +
@@ -148,10 +192,8 @@
         '<button type="button" class="ct-mini" data-action="talons-seance-retirer" data-id="' + P.esc(s.id) + '" aria-label="Retirer la séance du ' + P.esc(quandSeance(s)) + '">✕</button></div>';
     }).join('');
     const groupe = d.formule === 'groupe';
-    // mineure : le programme part AUSSI à son parent (avec un message pour lui)
-    const envoi = d.jeton ? [wa ? '<a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messageProgramme(d)) + '">📅 Envoyer son programme (WhatsApp)</a>' : '',
-      waParent ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '?text=' + encodeURIComponent(messageProgramme(d, true)) + '">📅 Au parent</a>' : '',
-      '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(LIEN_PROGRAMME + d.jeton) + '">Voir sa page ↗</a>'].join('') : '';
+    // (14/11/2026) son programme part sur WhatsApp depuis « Messages prêts à envoyer » (à elle et, mineure, à son parent)
+    const envoi = d.jeton ? '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(LIEN_PROGRAMME + d.jeton) + '">Voir sa page ↗</a>' : '';
     // groupe : le mois suivant payé (ou un mois de plus quand tout est payé) → cours_talons_mois_payer
     const moisSuivant = groupe && d.statut === 'inscrite' ? '<div class="ct-mois">' + ((d.mois_payes || 0) < nbMois(d)
       ? '<p><b>Mois payés : ' + (d.mois_payes || 0) + ' / ' + nbMois(d) + '</b> · prochain mois à régler : ' + P.fcfa(T.PRIX_MOIS) + '</p>' +
@@ -184,7 +226,7 @@
       '\n\nMerci, à dimanche !\nMaître Akesse Model Management';
   }
   function messageProgramme(d, parent) {
-    if (parent) return 'Bonjour' + (d.parent_nom ? ' ' + String(d.parent_nom).trim() : '') + ',\n\nL’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance est confirmée, merci !\n' +
+    if (parent) return bonjour(d, true) + 'L’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance est confirmée, merci !\n' +
       'Voici son programme personnel : ses séances, le lieu, et un bouton pour les ajouter d’un coup à votre calendrier (avec un rappel la veille) :\n' +
       LIEN_PROGRAMME + d.jeton + '\n\nÀ très bientôt,\nMaître Akesse Model Management';
     return 'Bonjour ' + civilite(d) + ',\n\nVotre inscription à l’Atelier Talons & Élégance est confirmée, merci !\n' +

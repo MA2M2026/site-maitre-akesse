@@ -13,6 +13,8 @@ window.TalonsCommun = (function () {
     MOIS_COURTS: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
     // 15 h, 16 h 30
     heure: function (d) { return d.getUTCHours() + ' h' + (d.getUTCMinutes() ? ' ' + String(d.getUTCMinutes()).padStart(2, '0') : ''); },
+    // ce que l'élève apporte à chaque séance (page « Mon programme », son calendrier, le rappel WhatsApp de l'Administration)
+    A_PREVOIR: 'talons de 7 à 10 cm, tenue près du corps, ballerines, une bouteille d’eau',
     PRIX_MOIS: 30000,   // groupe : 30 000 FCFA le mois (4 dimanches), comme cours_talons_prix_mois() dans la base
     // vouvoiement (demandes de la propriétaire du 14/11/2026) : la civilité choisie à l'inscription (« madame » ou
     // « mademoiselle ») ; pour une inscription plus ancienne, « Mademoiselle » si elle est mineure, sinon « Madame »
