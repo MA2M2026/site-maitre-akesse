@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<!-- « Mon programme » de l'Atelier Talons & Élégance (14/11/2026, maquette validée par la propriétaire) : ouverte
+     depuis le lien personnel envoyé sur WhatsApp (?c=jeton), sans compte. Séances, calendrier, lieu, « Ajouter à mon
+     calendrier » (fichier .ics, rappel la veille). Base : supabase-programme-talons.sql. js/programme-talons.js -->
+<script src="/js/surveillance.js?v=1bd0ded2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mon programme | Atelier Talons &amp; Élégance</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Votre programme personnel de l'Atelier Talons & Élégance de Maître Akesse Model Management.">
+<link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="/css/paiements-premium.css?v=e68257b9">
+<link rel="stylesheet" href="/css/programme-talons.css?v=d424d158">
+<script src="/js/supabase-config.js?v=9e1844d8" defer></script>
+<script src="/js/lien-public.js?v=cb582da9" defer></script>
+<script src="/js/talons-commun.js?v=d99a6882" defer></script>
+<script src="/js/programme-talons.js?v=e075cb4a" defer></script>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<meta name="theme-color" content="#4A1016">
+</head>
+<body class="pt">
+<svg width="0" height="0" class="pt-symboles" aria-hidden="true">
+  <symbol id="i-cal-plus" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></symbol>
+  <symbol id="i-lieu" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+  <symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-fleche" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+  <symbol id="i-bulle" viewBox="0 0 24 24"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.6-4.4a8.4 8.4 0 1 1 15.4-4.5z"/></symbol>
+  <symbol id="i-gauche" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
+  <symbol id="i-droite" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+</svg>
+<main class="pt-page">
+  <section class="pt-une">
+    <img class="pt-photo" src="/assets/cours-talons/alicia-2.jpg" alt="" width="900" height="1200">
+    <header class="pt-entete"><a href="/"><img src="/assets/logo-intro.png" alt="Maître Akesse Model Management"></a><span>Mon programme</span></header>
+    <div class="pt-une-texte">
+      <p class="pt-surtitre">Atelier Talons &amp; Élégance</p>
+      <h1 id="pt-titre">Mon programme</h1>
+      <p class="pt-accroche" id="pt-accroche" role="status">Chargement…</p>
+    </div>
+  </section>
+
+  <div id="pt-contenu" hidden>
+    <div class="pp-cb pt-acces">
+      <div class="pp-cb-tete"><span>Carte d'élève</span><span id="pt-numero"></span></div>
+      <div class="pp-cb-grand" id="pt-periode"></div>
+      <div class="pp-cb-sous" id="pt-formule"></div>
+      <div class="pt-progres" aria-hidden="true"><i id="pt-progres"></i></div>
+      <div class="pp-cb-bas"><span><b>Séances</b><span id="pt-faites"></span></span><span><b>Horaire</b><span id="pt-horaire"></span></span><span><b>Paiement</b>Validé ✓</span></div>
+    </div>
+
+    <div class="pt-prochaine" id="pt-prochaine">
+      <div class="pt-rond"><svg class="pt-ic"><use href="#i-horloge"/></svg></div>
+      <div><b id="pt-proch-titre"></b><span id="pt-proch-detail"></span></div>
+    </div>
+
+    <section class="pt-bloc" id="pt-bloc-cal" aria-labelledby="pt-mois">
+      <p class="pt-surtitre">Calendrier</p>
+      <div class="pt-cal-tete">
+        <button type="button" class="pt-fl" id="pt-avant" aria-label="Mois précédent"><svg class="pt-ic"><use href="#i-gauche"/></svg></button>
+        <h2 id="pt-mois"></h2>
+        <button type="button" class="pt-fl" id="pt-apres" aria-label="Mois suivant"><svg class="pt-ic"><use href="#i-droite"/></svg></button>
+      </div>
+      <div class="pt-cal" id="pt-cal"></div>
+    </section>
+
+    <section class="pt-bloc" aria-labelledby="pt-seances-titre">
+      <p class="pt-surtitre">Le programme</p>
+      <h2 id="pt-seances-titre">Vos séances</h2>
+      <div class="pt-frise" id="pt-seances"></div>
+    </section>
+
+    <section class="pt-bloc" aria-labelledby="pt-jour-titre">
+      <p class="pt-surtitre">Infos pratiques</p>
+      <h2 id="pt-jour-titre">Le jour J</h2>
+      <div class="pt-info"><div class="pt-pic"><svg class="pt-ic"><use href="#i-lieu"/></svg></div><div><b id="pt-lieu"></b><a id="pt-itineraire" target="_blank" rel="noopener noreferrer">Itinéraire <svg class="pt-ic pt-ic-petit"><use href="#i-fleche"/></svg></a></div></div>
+      <div class="pt-info"><div class="pt-pic"><svg class="pt-ic"><use href="#i-horloge"/></svg></div><div><b id="pt-arrivee"></b><span id="pt-arrivee-detail"></span></div></div>
+      <div class="pt-prevoir">
+        <div><small>Chaussures</small>Talons de 7 à 10 cm</div>
+        <div><small>Tenue</small>Près du corps</div>
+        <div><small>Pour souffler</small>Des ballerines</div>
+        <div><small>À boire</small>Une bouteille d'eau</div>
+      </div>
+    </section>
+
+    <div class="pt-boutons">
+      <button class="pp-gros" id="pt-ics" type="button"><svg class="pt-ic"><use href="#i-cal-plus"/></svg>Ajouter à mon calendrier</button>
+      <p class="pt-note" id="pt-ics-note" role="status"></p>
+    </div>
+  </div>
+
+  <div class="pt-boutons">
+    <a class="pt-second" id="pt-wa" href="https://wa.me/2250545656687" target="_blank" rel="noopener noreferrer"><svg class="pt-ic"><use href="#i-bulle"/></svg>Une question ? Écrivez-nous</a>
+  </div>
+  <div class="pt-signature"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><p id="pt-signature">Avec élégance.</p></div>
+</main>
+</body>
+</html>

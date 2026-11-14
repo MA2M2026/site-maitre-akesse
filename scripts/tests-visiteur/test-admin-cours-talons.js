@@ -12,8 +12,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();
-  for (const [nom, ecran, absente] of [['téléphone', { width: 390, height: 844 }, false], ['ordinateur', { width: 1366, height: 900 }, false], ['ordinateur', { width: 1366, height: 900 }, true]]) {
-    const tel = ecran.width < 700, n = nom + (absente ? ' (SQL pas encore collé)' : '') + ' : ';
+  for (const [nom, ecran, absente, sansProgramme] of [['téléphone', { width: 390, height: 844 }, false], ['ordinateur', { width: 1366, height: 900 }, false], ['ordinateur', { width: 1366, height: 900 }, true], ['téléphone', { width: 390, height: 844 }, false, true]]) {
+    const tel = ecran.width < 700, n = nom + (absente ? ' (SQL pas encore collé)' : sansProgramme ? ' (programme pas encore collé)' : '') + ' : ';
     const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
@@ -26,10 +26,18 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
         objectif: 'miss', concours: 'Miss Côte d’Ivoire', niveau: 'un_peu', parent_nom: 'Mme Kouassi', parent_telephone: '+2250501020304',
         photos: ['https://drive.google.com/p1', 'https://drive.google.com/p2'], video: 'https://drive.google.com/v1', decision: 'plus_tard', statut: 'plus_tard', montant: 250000 },
       { id: 't2', cree_le: '2026-11-07T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'AWA DIALLO', telephone: '+2250700000002', age: 24, photos: [], decision: 'maintenant',
-        reference_wave: 'T_123', statut: 'paiement_envoye', montant: 30000, moyen: 'orange_money' },
+        reference_wave: 'T_123', statut: 'paiement_envoye', montant: 30000, moyen: 'orange_money', jeton: 'f'.repeat(36) },
+      { id: 't4', cree_le: '2026-10-05T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'JEUNE AYA', telephone: '+2250700000004', age: 15, parent_nom: 'M. Yao', parent_telephone: '+2250500000004',
+        photos: [], decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-10-06T10:00:00Z', jeton: 'e'.repeat(36) },
       { id: 't3', cree_le: '2026-10-01T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'ANCIENNE ÉLÈVE', telephone: '+2250700000003', age: 30, photos: [], decision: 'maintenant', statut: 'terminee', montant: 30000, valide_le: '2026-10-02T10:00:00Z' }];
-    d.rpc = Object.assign({}, d.rpc, { cours_talons_valider: (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); Object.assign(l, { statut: 'inscrite', montant: c.p_montant, valide_le: '2026-11-08T12:00:00Z' }); return l; } });
+    d.rpc = Object.assign({}, d.rpc, { cours_talons_valider: (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); Object.assign(l, { statut: 'inscrite', montant: c.p_montant, valide_le: '2026-11-08T12:00:00Z' });
+      // (14/11/2026) la base remplit toute seule les 4 dimanches d'un groupe (déclencheur de supabase-programme-talons.sql)
+      if (l.formule === 'groupe') d.tables.cours_talons_seances.push(...[0, 1, 2, 3].map((i) => ({ id: 's' + i, inscription_id: l.id, debut: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T15:00:00Z',
+        fin: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T18:00:00Z', lieu: 'Salle MA2M, Riviera Faya', theme: ['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Le défilé final'][i], faite: false })));
+      return l; } });
+    d.tables.cours_talons_seances = [];
     await brancher(p, d, journal); await photosLocales(p);
+    if (sansProgramme) await p.route(/\/rest\/v1\/cours_talons_seances/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons_seances" does not exist' }) }));
     if (absente) await p.route(/\/rest\/v1\/cours_talons/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons" does not exist' }) }));
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
     await p.goto(URL_ADMIN + '#/site/b2-cours-talons'); await p.waitForFunction(() => /Cours de talons/.test((document.querySelector('#contenu h1') || {}).textContent || ''), null, { timeout: 15000 }); await p.waitForTimeout(600);
@@ -73,11 +81,38 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(!t.includes('AWA DIALLO'), n + 'l’inscription payée quitte « À traiter »');
     await p.click('[data-action="talons-filtre"][data-valeur="inscrite"]'); await p.waitForTimeout(500);
     ok((await texte()).includes('AWA DIALLO'), n + 'elle est dans « Inscrites »');
+    // (14/11/2026) « Son programme » : les 4 dimanches remplis par la base, son lien personnel envoyé sur WhatsApp
+    const fiche2 = '.ct-fiche[data-id="t2"] ';
+    if (sansProgramme) {
+      ok(/supabase-programme-talons\.sql/.test(await p.textContent(fiche2 + '.ct-programme')) && !errs.length, n + 'programme pas encore collé : message clair, la fiche marche');
+    } else {
+      ok(await p.locator(fiche2 + '.ct-seance').count() === 4 && /4 \/ 4/.test(await p.textContent(fiche2 + '.ct-programme h3')), n + 'Son programme : les 4 dimanches remplis tout seuls (4 / 4)');
+      ok(/Démarche et port de tête/.test(await p.textContent(fiche2 + '.ct-programme')) && /Dim\. 13 janv\. · 15 h – 18 h · Salle MA2M, Riviera Faya/.test(await p.textContent(fiche2 + '.ct-programme')), n + 'chaque séance : thème, date, heures, lieu');
+      const envoi = await p.getAttribute(fiche2 + 'a:has-text("Envoyer son programme")', 'href');
+      ok(/^https:\/\/wa\.me\/2250700000002\?text=/.test(envoi) && /Bonjour Madame AWA DIALLO/.test(decodeURIComponent(envoi)) && decodeURIComponent(envoi).includes('https://www.maitreakessemodelmanagement.com/programme-talons?c=' + 'f'.repeat(36)),
+        n + 'WhatsApp : « Bonjour Madame … » avec son lien personnel');
+      ok(await p.locator(fiche2 + 'a:has-text("Au parent")').count() === 0, n + 'élève majeure : pas de bouton « Au parent »');
+      const parent = await p.getAttribute('.ct-fiche[data-id="t4"] a:has-text("Au parent")', 'href');
+      ok(/^https:\/\/wa\.me\/2250500000004\?text=/.test(parent) && /Bonjour M\. Yao/.test(decodeURIComponent(parent)) && /L’inscription de Mademoiselle JEUNE AYA/.test(decodeURIComponent(parent)) && decodeURIComponent(parent).includes('programme-talons?c=' + 'e'.repeat(36)),
+        n + 'élève mineure : son programme part aussi au parent (« Mademoiselle », son lien)');
+      ok((await p.getAttribute(fiche2 + 'a:has-text("Voir sa page")', 'href')).endsWith('programme-talons?c=' + 'f'.repeat(36)), n + '« Voir sa page » ouvre sa page Mon programme');
+      await p.click(fiche2 + '[data-action="talons-seance-faite"][data-id="s0"]'); await p.waitForTimeout(700);
+      ok(d.tables.cours_talons_seances.find((x) => x.id === 's0').faite === true && /Faite ✓/.test(await p.textContent(fiche2 + '.ct-programme')) && await p.getAttribute(fiche2 + '[data-id="s0"][data-action="talons-seance-faite"]', 'aria-pressed') === 'true', n + 'séance 1 marquée « faite »');
+      await p.click(fiche2 + '.ct-ajout summary');
+      await p.fill('#ct-s-date-t2', '2030-02-03'); await p.fill('#ct-s-heure-t2', '16:30'); await p.selectOption('#ct-s-duree-t2', '90'); await p.fill('#ct-s-theme-t2', 'Rattrapage');
+      await p.click(fiche2 + 'form[data-form="talons-seance"] button[type="submit"]'); await p.waitForTimeout(800);
+      const ajout = d.tables.cours_talons_seances.find((x) => x.theme === 'Rattrapage');
+      ok(ajout && ajout.inscription_id === 't2' && ajout.debut === '2030-02-03T16:30:00.000Z' && ajout.fin === '2030-02-03T18:00:00.000Z' && ajout.lieu === 'Salle MA2M, Riviera Faya', n + 'séance ajoutée : 3 févr., 16 h 30 – 18 h, salle par défaut');
+      ok(await p.locator(fiche2 + '.ct-seance').count() === 5, n + 'la nouvelle séance apparaît dans son programme');
+      await p.click(fiche2 + '[data-action="talons-seance-retirer"][data-id="' + ajout.id + '"]'); await p.waitForTimeout(700);
+      ok(!d.tables.cours_talons_seances.some((x) => x.theme === 'Rattrapage') && await p.locator(fiche2 + '.ct-seance').count() === 4, n + 'séance retirée (après confirmation)');
+      if (process.env.CAPTURES) { await p.locator(fiche2 + '.ct-programme').scrollIntoViewIfNeeded(); await p.screenshot({ path: process.env.CAPTURES + '/programme-admin-' + ecran.width + '.png' }); }
+    }
     await p.click('.ct-fiche[data-id="t2"] [data-action="talons-statut"][data-valeur="terminee"]'); await p.waitForTimeout(700);
     ok(d.tables.cours_talons[1].statut === 'terminee', n + '« Cours terminés » enregistré');
     await p.click('[data-action="talons-filtre"][data-valeur="a_traiter"]'); await p.waitForTimeout(500);
     await p.click('.ct-fiche[data-id="t1"] [data-action="talons-statut"][data-valeur="annulee"]'); await p.waitForTimeout(700);
-    ok(d.tables.cours_talons[0].statut === 'annulee' && !journal.some((j) => j[0] === 'DELETE'), n + 'inscription annulée (rien n’est effacé)');
+    ok(d.tables.cours_talons[0].statut === 'annulee' && !journal.some((j) => j[0] === 'DELETE' && j[1] === 'cours_talons'), n + 'inscription annulée (rien n’est effacé)');
     const deborde = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     ok(deborde <= 1, n + 'aucun débordement horizontal (' + deborde + ' px)');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));

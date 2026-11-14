@@ -1461,3 +1461,20 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
   form.f .recu-l3 > :first-child { grid-column: 1 / -1; }
   form.f .recu-l2 { grid-template-columns: 1fr; }
 }
+/* « Son programme » dans la fiche d'une élève (14/11/2026, js/admin/site-cours-talons.js) : relevé façon Paiements premium */
+.ct-programme { margin: 4px 0 18px; padding-top: 14px; border-top: 1px solid #EADCDD; }
+.ct-programme h3 { margin: 0 0 10px; font: 500 22px 'Cormorant Garamond', Georgia, serif; color: #7C2128; }
+.ct-programme h3 .nb { font: 600 12px 'Work Sans', sans-serif; color: #6E4F53; margin-left: 6px; }
+.ct-programme .pp-releve { border: 1px solid #EFE4E5; box-shadow: none; }
+.ct-seance { gap: 8px; }
+.ct-seance em.ct-proche { background: #7C2128; color: #FFFFFF; }
+.ct-seance em.ct-faite { background: #E3F1E6; color: #24603A; }
+.ct-seance [data-action="talons-seance-retirer"] { width: 34px; padding: 0; }
+.ct-seance-ajout { margin-top: 14px; }
+.ct-seance .ct-mini { flex: none; min-height: 34px; padding: 6px 12px; border-radius: 999px; border: 1px solid #EADCDD; background: #FFFFFF; color: #6E4F53; font: 600 12px 'Work Sans', sans-serif; cursor: pointer; }
+.ct-seance .ct-mini.oui { border-color: #CFE6D5; background: #E3F1E6; color: #24603A; }
+.ct-seance .ct-mini:focus-visible, .ct-ajout summary:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
+.ct-envoi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.ct-ajout { margin-top: 12px; }
+.ct-ajout summary { display: inline-flex; align-items: center; min-height: 40px; padding: 0 4px; color: #7C2128; font: 600 13px 'Work Sans', sans-serif; cursor: pointer; list-style: none; }
+.ct-ajout summary::-webkit-details-marker { display: none; }

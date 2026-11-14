@@ -4984,3 +4984,29 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
   ajout de 5 photos d'Alicia Kouadio (majeure, choisie par la propriétaire) : `assets/cours-talons/alicia-1…5.jpg`.
   **La bande du milieu (galerie) défile toute seule comme un tapis roulant** (`.lx-tapis`, css/luxe.css) : toutes les
   photos, deux fois de suite pour une boucle sans à-coup ; s'arrête sous le doigt, hors de l'écran ou onglet caché.
+
+## « Mon programme » de l'Atelier talons, étape 1 (14/11/2026, maquette validée par la propriétaire)
+
+Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette : `maquettes/programme-talons.html`).
+- **Page de l'élève** `programme-talons.html` (+ `css/programme-talons.css`, `js/programme-talons.js`, carte d'élève
+  reprise de `css/paiements-premium.css`) : ouverte par le lien personnel `/programme-talons?c=<jeton>` envoyé sur
+  WhatsApp, sans compte (même principe que « Confirmer ma présence » : `js/lien-public.js`). Vouvoiement partout
+  (« Bienvenue, Madame … », « Mademoiselle » pour une mineure : demande de la propriétaire). Carte d'élève (dates,
+  séances faites, horaire), prochaine séance, calendrier (flèches entre les mois des séances), séances en frise, lieu et
+  itinéraire Google Maps, « À prévoir », **« Ajouter à mon calendrier »** (fichier .ics fabriqué dans le téléphone :
+  toutes les séances à venir, rappel la veille ; iPhone et Android), WhatsApp de l'agence prérempli.
+  Abidjan = UTC toute l'année : les heures sont lues et écrites en UTC.
+- **Base** : **`supabase-programme-talons.sql`** (À COLLER par la propriétaire, après supabase-cours-talons.sql ;
+  rejouable) : `cours_talons.jeton` (36 caractères), table `cours_talons_seances` (équipe du site seulement),
+  déclencheur `cours_talons_remplir_groupe` (groupe passé « inscrite » → 4 dimanches 15 h – 18 h à partir de la date
+  de première séance si elle est à venir, sinon du prochain dimanche ; jamais de doublon), `programme_talons_lire(jeton)`
+  (visiteur : rien sans le bon jeton ni avant le paiement validé ; ni téléphone ni photos).
+  Essais : `scripts/base-essai/essais-programme-talons.sql`.
+- **Administration** (`js/admin/site-cours-talons.js`, fiche d'une élève payée) : « Son programme » en relevé
+  (`pp-releve`), « Faite ? » / ✕ par séance, « ＋ Ajouter une séance » (date, heure, durée, lieu, thème),
+  « Envoyer son programme (WhatsApp) » (« Bonjour Madame … » + lien) et « Voir sa page ». Fichier pas encore collé :
+  la fiche le dit, le reste marche. Styles : `.ct-programme`, `.ct-seance`, `.ct-mini` (css/admin-vivante.css).
+- **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
+  paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).
+- Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
+  planning jour par jour et notification 24 h avant.

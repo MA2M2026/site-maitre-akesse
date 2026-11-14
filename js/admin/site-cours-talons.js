@@ -23,6 +23,15 @@
   const https = (u) => typeof u === 'string' && /^https:\/\/[^\s"<>]+$/.test(u);
   const photosDe = (d) => (d && Array.isArray(d.photos) ? d.photos : []).filter(https);
   const pasInstallee = P.pasActivee('cours_talons');
+  // (14/11/2026) « Mon programme » : les séances de chaque élève (supabase-programme-talons.sql) et son lien personnel
+  const programmePasInstalle = P.pasActivee('cours_talons_seances');
+  const LIEN_PROGRAMME = 'https://www.maitreakessemodelmanagement.com/programme-talons?c=';
+  const T = window.TalonsCommun;   // js/talons-commun.js (heures, mois, lieu de la salle, vouvoiement)
+  const LIEU_SALLE = T.LIEU_SALLE;
+  let seancesDe = {}, programmeAbsent = false;
+  const quandSeance = (s) => { const a = new Date(s.debut), b = new Date(s.fin); const j = T.JOURS[a.getUTCDay()];
+    return j.charAt(0).toUpperCase() + j.slice(1, 3) + '. ' + a.getUTCDate() + ' ' + T.MOIS_COURTS[a.getUTCMonth()] + ' · ' + T.heure(a) + ' – ' + T.heure(b); };
+  const civilite = (d) => T.civilite(d.age) + ' ' + String(d.nom || '').trim();
 
   const seances = (d) => d.formule === 'groupe' ? '4 dimanches' : d.nb_seances + ' séance' + (d.nb_seances > 1 ? 's' : '');
   function messagePaiement(d) {
@@ -38,6 +47,15 @@
     } catch (e) {
       if (!pasInstallee(e)) throw e;
       return P.entete('Cours de talons') + '<div class="carte"><h2>Pas encore activé</h2><p class="doux">Pour recevoir les inscriptions en ligne, collez le fichier <strong>supabase-cours-talons.sql</strong> dans Supabase (SQL Editor, puis Run). En attendant, la page publique propose aux personnes d’envoyer leur inscription sur WhatsApp.</p></div>';
+    }
+    // séances des élèves inscrites (« Son programme ») ; fichier pas encore collé : la fiche le dit, le reste marche
+    // (toutes les séances d'un coup : une liste d'identifiants dans l'adresse dépasserait la limite avec des centaines d'élèves)
+    seancesDe = {}; programmeAbsent = false;
+    if (lignes.some((d) => d.statut === 'inscrite' || d.statut === 'terminee')) {
+      try {
+        const l = await P.bd(sb.from('cours_talons_seances').select('*').order('debut', { ascending: true }).limit(5000));
+        (l || []).forEach((x) => { (seancesDe[x.inscription_id] = seancesDe[x.inscription_id] || []).push(x); });
+      } catch (e) { if (!programmePasInstalle(e)) throw e; programmeAbsent = true; }
     }
     const compte = (f) => lignes.filter((d) => f === 'toutes' || (f === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === f)).length;
     const visibles = lignes.filter((d) => filtre === 'toutes' || (filtre === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === filtre));
@@ -87,6 +105,7 @@
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
       (galerie || (https(d.video) ? '' : '<p class="doux">Photos et vidéo non reçues (demandez-les sur WhatsApp).</p>')) +
       '<div class="ct-actions">' + boutons.join('') + '</div>' +
+      (payee ? programme(d, wa, waParent) : '') +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +
         '<label class="fl" for="ct-date-' + id + '">Date de la (première) séance<input id="ct-date-' + id + '" name="date_seance" type="date" value="' + P.esc(d.date_seance || '') + '"></label>' +
         '<label class="fl" for="ct-montant-' + id + '">Montant (FCFA)<input id="ct-montant-' + id + '" name="montant" type="number" min="0" step="500" value="' + P.esc(d.montant || '') + '"' + (payee ? ' readonly title="Déjà payé : le montant est en Comptabilité"' : '') + '></label>' +
@@ -99,6 +118,73 @@
         : (d.notes ? '<p class="doux">' + P.esc(d.notes) + '</p>' : '') + '<div class="ligne"><button class="btn petit" type="button" data-action="talons-statut" data-id="' + id + '" data-valeur="' + (d.valide_le ? 'inscrite' : d.decision === 'maintenant' ? 'paiement_envoye' : 'plus_tard') + '">Rouvrir</button></div>') +
       '</article>';
   }
+
+  // « Son programme » (14/11/2026, maquette validée) : ses séances en relevé, une séance à ajouter, son lien sur WhatsApp
+  function programme(d, wa, waParent) {
+    const id = P.esc(d.id);
+    if (programmeAbsent) return '<section class="ct-programme"><h3>Son programme</h3><p class="doux">Pour préparer la page « Mon programme » des élèves, collez le fichier <strong>supabase-programme-talons.sql</strong> dans Supabase (SQL Editor, puis Run).</p></section>';
+    const l = seancesDe[d.id] || [];
+    const maintenant = Date.now();
+    const prochaine = l.find((s) => !s.faite && new Date(s.fin).getTime() > maintenant);
+    const lignesSeances = l.map((s, i) => {
+      const passee = s.faite || new Date(s.fin).getTime() <= maintenant;
+      return '<div class="pp-op ct-seance"><em class="' + (s === prochaine ? 'ct-proche' : passee ? 'ct-faite' : '') + '">' + (passee ? '✓' : i + 1) + '</em>' +
+        '<span>' + P.esc(s.theme || 'Séance ' + (i + 1)) + '<small>' + P.esc(quandSeance(s) + ' · ' + (s.lieu || LIEU_SALLE)) + '</small></span>' +
+        '<button type="button" class="ct-mini' + (s.faite ? ' oui' : '') + '" data-action="talons-seance-faite" data-id="' + P.esc(s.id) + '" data-valeur="' + (s.faite ? '' : '1') + '" aria-pressed="' + (s.faite ? 'true' : 'false') + '">' + (s.faite ? 'Faite ✓' : 'Faite ?') + '</button>' +
+        '<button type="button" class="ct-mini" data-action="talons-seance-retirer" data-id="' + P.esc(s.id) + '" aria-label="Retirer la séance du ' + P.esc(quandSeance(s)) + '">✕</button></div>';
+    }).join('');
+    const groupe = d.formule === 'groupe';
+    // mineure : le programme part AUSSI à son parent (avec un message pour lui)
+    const envoi = d.jeton ? [wa ? '<a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messageProgramme(d)) + '">📅 Envoyer son programme (WhatsApp)</a>' : '',
+      waParent ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '?text=' + encodeURIComponent(messageProgramme(d, true)) + '">📅 Au parent</a>' : '',
+      '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(LIEN_PROGRAMME + d.jeton) + '">Voir sa page ↗</a>'].join('') : '';
+    return '<section class="ct-programme"><h3>Son programme <span class="nb">' + l.length + ' / ' + (groupe ? 4 : d.nb_seances) + '</span></h3>' +
+      (l.length ? '<div class="pp-releve">' + lignesSeances + '</div>' : '<p class="doux">Aucune séance pour le moment. ' + (groupe ? 'Ajoutez les dimanches ci-dessous.' : 'Ajoutez ses séances privées ci-dessous.') + '</p>') +
+      (envoi ? '<div class="ct-envoi">' + envoi + '</div>' : '') +
+      '<details class="ct-ajout"' + (l.length ? '' : ' open') + '><summary>＋ Ajouter une séance</summary><form class="f ct-seance-ajout" data-form="talons-seance" data-id="' + id + '">' +
+        '<label class="fl" for="ct-s-date-' + id + '">Date<input id="ct-s-date-' + id + '" name="date" type="date" required></label>' +
+        '<label class="fl" for="ct-s-heure-' + id + '">Heure<input id="ct-s-heure-' + id + '" name="heure" type="time" value="' + (groupe ? '15:00' : '10:00') + '" required></label>' +
+        '<label class="fl" for="ct-s-duree-' + id + '">Durée<select id="ct-s-duree-' + id + '" name="duree">' + [[60, '1 h'], [90, '1 h 30'], [120, '2 h'], [180, '3 h']].map((x) =>
+          '<option value="' + x[0] + '"' + (x[0] === (groupe ? 180 : 120) ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></label>' +
+        '<label class="fl" for="ct-s-lieu-' + id + '">Lieu<input id="ct-s-lieu-' + id + '" name="lieu" maxlength="200" value="' + P.esc(d.formule === 'prive_exterieur' ? (d.adresse || '') : LIEU_SALLE) + '"></label>' +
+        '<label class="fl large" for="ct-s-theme-' + id + '">Thème (facultatif)<input id="ct-s-theme-' + id + '" name="theme" maxlength="120" placeholder="Ex. : Démarche et port de tête"></label>' +
+        '<div class="ligne large"><button class="btn" type="submit">Ajouter la séance</button></div></form></details>' +
+      '<p class="doux petit-texte">' + (groupe ? 'Les 4 dimanches sont remplis tout seuls à la validation du paiement. ' : '') + 'La page de l’élève se met à jour toute seule.</p></section>';
+  }
+  function messageProgramme(d, parent) {
+    if (parent) return 'Bonjour' + (d.parent_nom ? ' ' + String(d.parent_nom).trim() : '') + ',\n\nL’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance est confirmée, merci !\n' +
+      'Voici son programme personnel : ses séances, le lieu, et un bouton pour les ajouter d’un coup à votre calendrier (avec un rappel la veille) :\n' +
+      LIEN_PROGRAMME + d.jeton + '\n\nÀ très bientôt,\nMaître Akesse Model Management';
+    return 'Bonjour ' + civilite(d) + ',\n\nVotre inscription à l’Atelier Talons & Élégance est confirmée, merci !\n' +
+      'Voici votre programme personnel : vos séances, le lieu, et un bouton pour les ajouter d’un coup à votre calendrier (avec un rappel la veille) :\n' +
+      LIEN_PROGRAMME + d.jeton + '\n\nÀ très bientôt,\nMaître Akesse Model Management';
+  }
+  P.formulaires['talons-seance'] = async (f, form) => {
+    const id = form && form.dataset.id;
+    const date = String(f.get('date') || ''), heure = String(f.get('heure') || '');
+    const duree = parseInt(f.get('duree'), 10) || 120;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(heure)) { P.message('Choisissez la date et l’heure de la séance.'); return; }
+    const debut = new Date(date + 'T' + heure + ':00Z');   // Abidjan = UTC
+    if (isNaN(debut)) { P.message('Date ou heure incorrecte.'); return; }
+    const ligne = { inscription_id: id, debut: debut.toISOString(), fin: new Date(debut.getTime() + duree * 60000).toISOString(),
+      lieu: String(f.get('lieu') || '').trim() || LIEU_SALLE, theme: String(f.get('theme') || '').trim() || null };
+    const r = await P.bd(sb.from('cours_talons_seances').insert(ligne).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été ajouté : reconnectez-vous puis réessayez.'); return; }
+    P.message('Séance ajoutée : la page de l’élève est à jour.');
+    return P.afficher();
+  };
+  P.actions['talons-seance-faite'] = async (el) => {
+    const r = await P.bd(sb.from('cours_talons_seances').update({ faite: el.dataset.valeur === '1' }).eq('id', el.dataset.id).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été changé : reconnectez-vous puis réessayez.'); return; }
+    return P.afficher();
+  };
+  P.actions['talons-seance-retirer'] = async (el) => {
+    if (!confirm('Retirer cette séance de son programme ?')) return;
+    const r = await P.bd(sb.from('cours_talons_seances').delete().eq('id', el.dataset.id).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été retiré : reconnectez-vous puis réessayez.'); return; }
+    P.message('Séance retirée.');
+    return P.afficher();
+  };
 
   P.actions['talons-photo-voir'] = (el) => {
     const d = lignes.find((x) => x.id === el.dataset.id);

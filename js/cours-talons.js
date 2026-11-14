@@ -18,7 +18,7 @@
   // séance (à l'extérieur : 30 000 au départ, l'agence ajuste jusqu'à 35 000 selon le lieu). Mêmes valeurs que
   // cours_talons_montant() dans la base, qui reste seule juge du montant enregistré.
   const PRIX = { groupe: 30000, prive_salle: 25000, prive_exterieur: 30000 };
-  const WHATSAPP_AGENCE = '2250545656687';
+  const WHATSAPP_AGENCE = window.TalonsCommun.NUMERO_AGENCE;  // js/talons-commun.js
   // 2 à 5 photos ; vidéo de 3 minutes au plus (décisions de la propriétaire, 10/11/2026). Le programme Google Drive
   // refuse plus de 60 Mo : la vidéo est allégée en 480p (environ 6 Mo la minute) et son poids final est vérifié.
   const PHOTOS_MAX = 5, PHOTOS_MIN = 2;

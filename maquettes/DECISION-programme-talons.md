@@ -26,4 +26,8 @@
 - « Ajouter à mon calendrier » fabrique déjà un vrai fichier .ics (4 séances, rappel la veille) dans la maquette.
 - Dossier de l'Administration : carte rouge (nom, paiement, séances, montant, fin), rappel de demain, programme en
   relevé, messages WhatsApp en tuiles (envoyé / à envoyer).
-- **En attente** : avis de la propriétaire sur cette v2, avant de construire l'étape 1.
+- **14/11/2026 : v2 validée** (« C'est parfaitement ça »), avec le **vouvoiement** (« Bienvenue, Madame Koné » :
+  des dames, des femmes responsables viennent). « Applique et lance-toi. »
+- **Étape 1 construite** (14/11/2026) : vraie page `programme-talons.html`, base `supabase-programme-talons.sql`
+  (À COLLER par la propriétaire), « Son programme » dans la fiche de l'élève (Administration). Détails :
+  README-TECHNIQUE.md, section « Mon programme ». Prochaine étape : 2, les messages WhatsApp tout prêts.
