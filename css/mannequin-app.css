@@ -587,3 +587,27 @@ body.ap-volet-ouvert { overflow: hidden; }
 .ap-volet .btn--principal { background: #7C2128; color: #FFFFFF; }
 .ap-volet .btn:disabled { opacity: 0.45; cursor: default; }
 button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer; }
+/* Programme de formation (14/11/2026, validé par la propriétaire) : carte de l'accueil, écran « Mon programme »
+   (carte façon carte bancaire, puis les mois de chaque niveau en relevé : fait ✓, en cours mis en avant, à venir) */
+.ap-prog-carte { display: flex; align-items: center; gap: 12px; color: var(--ap-texte, #2a1416); }
+.ap-prog-carte em { flex: 0 0 42px; height: 42px; border-radius: 50%; background: #F3DDE0; display: grid; place-items: center; font-style: normal; font-size: 20px; }
+.ap-prog-carte span { flex: 1; min-width: 0; }
+.ap-prog-carte small { display: block; font: 700 9.5px 'Work Sans', sans-serif; letter-spacing: .2em; color: var(--ap-rouge-texte); }
+.ap-prog-carte b { display: block; font: 600 19px/1.15 'Cormorant Garamond', Georgia, serif; margin: 2px 0; }
+.ap-prog-carte i { font-style: normal; font-size: 12.5px; color: var(--ap-gris); }
+.ap-prog-cb { min-height: 0; }
+.ap-prog-sur { display: block; margin-top: 22px; font: 700 9.5px 'Work Sans', sans-serif; letter-spacing: .22em; color: #F3DDE0; }
+.ap-prog-theme { font: 600 26px/1.12 'Cormorant Garamond', Georgia, serif; margin: 6px 0 14px; }
+.ap-prog-cb .ap-jauge { background: rgba(255, 255, 255, .18); margin: 0 0 14px; height: 4px; }
+.ap-prog-cb .ap-jauge i { background: #FFFFFF; }
+.ap-prog-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (min-width: 700px) { .ap-prog-grille { grid-template-columns: repeat(3, 1fr); } }
+.ap-prog-mois { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px; border-radius: 16px; background: #FFFFFF; color: #2a1416; box-shadow: var(--ap-ombre); }
+.ap-prog-haut { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.ap-prog-mois em { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; background: #F3DDE0; display: grid; place-items: center; font: 700 12.5px 'Work Sans', sans-serif; font-style: normal; color: #7C2128; }
+.ap-prog-mois strong { font: 700 10px 'Work Sans', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #6E4F53; }
+.ap-prog-mois b { font: 600 15.5px/1.2 'Cormorant Garamond', Georgia, serif; overflow-wrap: anywhere; }
+.ap-prog-mois small { margin-top: auto; font-size: 11.5px; color: #6E4F53; }
+.ap-prog-mois.en_cours { background: #7C2128; color: #FFFFFF; box-shadow: 0 0 0 2px #FFFFFF, var(--ap-ombre); }
+.ap-prog-mois.en_cours em { background: #FFFFFF; color: #7C2128; }
+.ap-prog-mois.en_cours strong, .ap-prog-mois.en_cours small { color: #FFFFFF; }

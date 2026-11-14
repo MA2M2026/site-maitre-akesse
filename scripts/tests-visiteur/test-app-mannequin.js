@@ -50,6 +50,10 @@ function donnees() {
       // cours du dimanche (chantier 14) : le mois dernier, présente à tous sauf le premier (rouge)
       mes_presences: { date_entree: '2025-09-01', annulees: [], presences: P.dimanchesDuMois(P.moisVoisin(P.jourIso(new Date()).slice(0, 7), -1)).slice(1).map((d) => ({ dimanche: d, etat: 'present' })) },
       mes_recus: [{ objet: 'mensualite', mois: moisDe(-1), montant: 10000, mode: 'wave', valide_le: jour(-30) + 'T09:00:00Z', numero: 'REC-2026-00012' }],
+      // (14/11/2026) programme de formation : 3 mois faits, le mois en cours (niveau 1, mois 4 « Expression et regard »), la suite
+      mon_programme_formation: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2, mois_niveau: (i % 9) + 1,
+        theme: ['Posture et démarche de base', 'Le podium : marche, demi-tours, arrêts', 'La pose photo : les bases (angles, mains, regard)', 'Expression et regard'][i] || 'Thème ' + (i + 1),
+        date: moisDe(i - 3), etat: i < 3 ? 'fait' : i === 3 ? 'en_cours' : 'a_venir' })) },
       mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
     }
   };
@@ -137,6 +141,29 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     const accueil = await p.textContent('#ap-ecran');
     ok(/Bonjour\s*Aya(?!A)/.test(accueil) && /ABIDJAN FASHION WEEK/.test(accueil) && /dans 4 jours/.test(accueil) && /À répondre/.test(accueil) && /Convocation à 15h00/.test(accueil), n + 'Accueil : « Bonjour Aya », prochain rendez-vous (dans 4 jours, convocation à 15h00, à répondre)');
     ok(/Nouveau message de l’agence : ✨ Casting Kouroukan/.test(accueil) && (await p.getAttribute('.ap-nouveau-message', 'href')) === '#alertes', n + 'Accueil : « Nouveau message de l’agence » mène à l’onglet Messages');
+    // (14/11/2026) programme de formation : carte de l'accueil, puis l'écran « Mon programme »
+    ok(/CE MOIS-CI\s*Expression et regard\s*Niveau 1 · mois 4 sur 9/.test(await p.textContent('.ap-prog-carte')) && (await p.getAttribute('.ap-prog-carte', 'href')) === '#programme', n + 'Accueil : « Ce mois-ci : Expression et regard, niveau 1 · mois 4 sur 9 »');
+    await p.click('.ap-prog-carte'); await p.waitForSelector('.ap-prog-cb', { timeout: 8000 });
+    ok(/Mon programme/.test(await p.textContent('.ap-tete')) && /Expression et regard/.test(await p.textContent('.ap-prog-theme')) && /3 \/ 18/.test(await p.textContent('.ap-prog-cb')) && /Les fondations/.test(await p.textContent('.ap-prog-cb')),
+      n + 'Mon programme : thème du mois, 3 / 18 mois faits, niveau « Les fondations »');
+    ok(await p.locator('.ap-prog-mois').count() === 18 && await p.locator('.ap-prog-mois.fait').count() === 3 && await p.locator('.ap-prog-mois.en_cours').count() === 1 && /Niveau 2 · La professionnelle/.test(await p.textContent('#ap-ecran')), n + 'Mon programme : 18 mois en 2 niveaux, 3 faits, 1 en cours');
+    ok(!(await deborde()), n + 'Mon programme : rien ne dépasse');
+    await capture('3b-programme');
+    await p.goBack(); await p.waitForSelector('.ap-stories', { timeout: 8000 });
+    // (14/11/2026) formation finie : la Révision (9 thèmes de mars à novembre), sur l'accueil et dans « Mon programme »
+    const programmeEnCours = d.rpc.mon_programme_formation;
+    d.rpc.mon_programme_formation = { niveaux: 2, total: 18, termine: true,
+      mois: programmeEnCours.mois.map((x) => Object.assign({}, x, { etat: 'fait' })),
+      revision: Array.from({ length: 9 }, (_, i) => ({ mois_niveau: i + 1, theme: i === 1 ? 'Le podium : marche, tours et rythme sur la musique' : 'Révision ' + (i + 1), date: moisDe(i - 1), etat: i < 1 ? 'fait' : i === 1 ? 'en_cours' : 'a_venir' })) };
+    await p.reload(); await p.waitForSelector('.ap-prog-carte', { timeout: 15000 });
+    ok(/RÉVISION · CE MOIS-CI\s*Le podium : marche, tours et rythme sur la musique\s*Révision · mois 2 sur 9/.test(await p.textContent('.ap-prog-carte')), n + 'formation finie : l’accueil annonce la Révision du mois');
+    await p.click('.ap-prog-carte'); await p.waitForSelector('.ap-prog-cb', { timeout: 8000 });
+    ok(/FORMATION TERMINÉE ✓/.test(await p.textContent('.ap-prog-cb')) && /18 \/ 18/.test(await p.textContent('.ap-prog-cb')) && /Révision · mars à novembre/.test(await p.textContent('#ap-ecran'))
+      && await p.locator('.ap-prog-grille').first().locator('.ap-prog-mois').count() === 9, n + 'formation finie : « Formation terminée ✓ », la Révision en 9 mois, puis sa formation');
+    ok(!(await deborde()), n + 'Révision : rien ne dépasse');
+    await capture('3c-revision');
+    d.rpc.mon_programme_formation = programmeEnCours;
+    await p.goto(BASE + '/app/'); await p.reload(); await p.waitForSelector('.ap-stories', { timeout: 15000 });
     ok((await p.$$('.ap-nav a')).length === 5 && /Accueil.*Événements.*Profil.*Paiements.*Messages/s.test(await p.textContent('.ap-nav')) && /1/.test(await p.textContent('.ap-nav a[href="#evenements"]')), n + 'menu du bas : 5 onglets, « 1 » sur Événements (à répondre)');
     ok(/Moi.*Ma carte.*Compcard.*Mon CV.*Messages/s.test(await p.textContent('.ap-stories')) && /Le fil de l’agence/.test(accueil) && /CASTING CACAO/.test(accueil) && /Mensualité de .*10 000 F/.test(accueil),
       n + 'Accueil en « fil » (11/11/2026) : ronds façon stories, fil de l’agence (casting ouvert), mensualité du mois à payer');

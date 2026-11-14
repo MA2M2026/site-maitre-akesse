@@ -4980,3 +4980,98 @@ Metricool, auquel le site n'a pas accès) : mettre en lumière une mannequin de 
   (« 👠 Nouvelle inscription au cours de talons », nom et formule, ouvre la page Cours de talons) ; le déclencheur est
   dans `supabase-notif-cours-talons.sql` (à coller par la propriétaire ; réutilise `notifier_push_notification`, aucun
   secret à remplir). Tests : `test-notifications-app.js`, `test-admin-cours-talons.js`.
+- (13/11/2026, suite) **Atelier talons : que des femmes** — la photo du défilé homme (`ma2m-book-4.jpg`) n'y est plus ;
+  ajout de 5 photos d'Alicia Kouadio (majeure, choisie par la propriétaire) : `assets/cours-talons/alicia-1…5.jpg`.
+  **La bande du milieu (galerie) défile toute seule comme un tapis roulant** (`.lx-tapis`, css/luxe.css) : toutes les
+  photos, deux fois de suite pour une boucle sans à-coup ; s'arrête sous le doigt, hors de l'écran ou onglet caché.
+
+## « Mon programme » de l'Atelier talons, étape 1 (14/11/2026, maquette validée par la propriétaire)
+
+Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette : `maquettes/programme-talons.html`).
+- **Page de l'élève** `programme-talons.html` (+ `css/programme-talons.css`, `js/programme-talons.js`, carte d'élève
+  reprise de `css/paiements-premium.css`) : ouverte par le lien personnel `/programme-talons?c=<jeton>` envoyé sur
+  WhatsApp, sans compte (même principe que « Confirmer ma présence » : `js/lien-public.js`). Vouvoiement partout
+  (« Bienvenue, Madame … », « Mademoiselle » pour une mineure : demande de la propriétaire). Carte d'élève (dates,
+  séances faites, horaire), prochaine séance, calendrier (flèches entre les mois des séances), séances en frise, lieu et
+  itinéraire Google Maps, « À prévoir », **« Ajouter à mon calendrier »** (fichier .ics fabriqué dans le téléphone :
+  toutes les séances à venir, rappel la veille ; iPhone et Android), WhatsApp de l'agence prérempli.
+  Abidjan = UTC toute l'année : les heures sont lues et écrites en UTC.
+- **Base** : **`supabase-programme-talons.sql`** (À COLLER par la propriétaire, après supabase-cours-talons.sql ;
+  rejouable) : `cours_talons.jeton` (36 caractères), table `cours_talons_seances` (équipe du site seulement),
+  déclencheur `cours_talons_remplir_groupe` (groupe passé « inscrite » → 4 dimanches 15 h – 18 h à partir de la date
+  de première séance si elle est à venir, sinon du prochain dimanche ; jamais de doublon), `programme_talons_lire(jeton)`
+  (visiteur : rien sans le bon jeton ni avant le paiement validé ; ni téléphone ni photos).
+  Essais : `scripts/base-essai/essais-programme-talons.sql`.
+- **Administration** (`js/admin/site-cours-talons.js`, fiche d'une élève payée) : « Son programme » en relevé
+  (`pp-releve`), « Faite ? » / ✕ par séance, « ＋ Ajouter une séance » (date, heure, durée, lieu, thème),
+  « Envoyer son programme (WhatsApp) » (« Bonjour Madame … » + lien) et « Voir sa page ». Fichier pas encore collé :
+  la fiche le dit, le reste marche. Styles : `.ct-programme`, `.ct-seance`, `.ct-mini` (css/admin-vivante.css).
+- **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
+  paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).
+- **Civilité et plusieurs mois** (14/11/2026, demandes de la propriétaire) : le formulaire (cours-talons.html FR/EN,
+  js/cours-talons.js) demande **Madame ou Mademoiselle** (obligatoire, `cours_talons.civilite`) ; tous les messages et la
+  page l'utilisent (`TalonsCommun.civilite`, js/talons-commun.js ; inscription plus ancienne : « Mademoiselle » si
+  mineure, sinon « Madame »). Le **groupe** se prend sur **1 à 12 mois** (`nb_mois`), 30 000 FCFA le mois, payé **en une
+  fois** ou **mois par mois** (`paiement` = tout / mensuel, au choix de l'élève) : la base décide du montant à payer
+  maintenant (déclencheur `cours_talons_avant_inscription`, qui tire aussi le jeton). À la validation, tous les dimanches
+  sont prévus (thèmes « Mois 3 · Le défilé final ») et `mois_payes` vaut 1 (mois par mois) ou tous les mois. Chaque mois
+  suivant : « 💳 Lien du mois 2 » (WhatsApp, et « Au parent » pour une mineure) puis « ✓ Mois 2 payé » dans la fiche →
+  `cours_talons_mois_payer(id, mois, espèces)` (recette de 30 000 en Compta ; le numéro du mois empêche un double
+  encaissement ; un dimanche non payé n'est jamais compté « fait ») ; quand tout est payé, le même bouton devient « ＋ Un mois de plus » (renouvellement : 4 dimanches
+  ajoutés à la suite). Page de l'élève : séances rangées par mois, mois pas encore réglés « à régler » et estompés,
+  absents du fichier .ics. Commun aux trois pages : js/talons-commun.js (numéro de l'agence, salle, prix du mois, heures,
+  civilité, montants en FCFA). Chaque dimanche prévu a son numéro de mois (colonne `cours_talons_seances.mois`) ; un
+  rattrapage ajouté à la main n’en a pas (jamais « à régler »). `cours_talons_valider` (version à jour dans ce fichier)
+  et `cours_talons_mois_payer` partagent `cours_talons_compte` (compte du moyen, sinon Wave + note au journal).
+- **Programme qui progresse** (validé par la propriétaire le 14/11/2026) : table `cours_talons_programme` (lisible par
+  tous ; seule source) : mois 1 Les bases, 2 L'assurance, 3 La prestance, 4 Le podium, 5 Les tenues, 6 Miss et
+  concours, à partir du 7e Perfectionnement (séances adaptées, dernier dimanche = défilé). `cours_talons_ajouter_dimanches`
+  y prend les thèmes ; un renouvellement continue au mois suivant. La page affiche « Mois 2 · L'assurance »
+  (`titres_mois` renvoyé par `programme_talons_lire`).
+- **Page publique** (cours-talons.html FR/EN, css/cours-talons.css `.ct-prog-*`) : section « Le programme, mois après
+  mois » (6 mois + Perfectionnement, cartes en verre, 1 / 2 / 3 colonnes) et carte du groupe « le mois : 4 dimanches,
+  de 1 à 12 mois ». Texte écrit dans la page (traduit) : **à changer aussi dans cours_talons_programme** si le programme
+  change.
+- **Parcours, en groupe comme en privé** (décision de la propriétaire, 14/11/2026) : étape 1 du formulaire, « Je débute »
+  (tout le programme dans l'ordre : durée en mois pour le groupe, nombre de séances pour le privé) ou « J'ai déjà la
+  base » (elle coche ses thèmes, 1 ou 2 mois chacun ; durée et prix calculés : groupe 1 mois par mois de thème, privé
+  4 séances par mois de thème). Thèmes lus dans la section #programme de la page (`data-module`, FR/EN). « Votre
+  programme » résume ce qu'elle suivra. Base : `cours_talons.parcours` (debut / base) et `modules` (int[], répétés
+  selon la durée : {3,3,4}) ; `cours_talons_module` / `cours_talons_theme` donnent le module et le thème de chaque
+  séance (2e mois d'un même thème : « (approfondissement) ») ; colonne `cours_talons_seances.module` ; en privé, une
+  séance ajoutée sans thème prend le suivant de son programme (déclencheur `cours_talons_seance_theme`). Programme
+  corrigé par la propriétaire : ni « s'asseoir », ni escaliers, ni prise de parole (l'agence ne les enseigne pas).
+- Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
+  planning jour par jour et notification 24 h avant.
+
+## Programme de formation des mannequins (14/11/2026, programme validé par la propriétaire)
+
+Même idée que « Mon programme » des cours de talons, pour les mannequins de l'agence (elles ne choisissent pas : toutes
+suivent le programme de leur niveau).
+- **Base** : **`supabase-programme-mannequins.sql`** (À COLLER, après supabase-formation.sql et supabase-reprise-mars.sql ;
+  rejouable ; essais `scripts/base-essai/essais-programme-mannequins.sql`) : table `formation_programme` (18 thèmes :
+  niveau 1 « Les fondations », niveau 2 « La professionnelle », 9 mois chacun), `formation_programme_calcul(id)` (rang,
+  niveau, mois du niveau, thème, mois du calendrier, état fait / en_cours / a_venir), calée EXACTEMENT sur les mois des
+  mensualités (`formation_debut`, `formation_mois_n`, `formation_reste_total` ; mois faits avant la reprise sans date ;
+  congés sautés). `mon_programme_formation()` (la mannequin connectée) et `programme_formation_de(id)` (espace Paiements).
+- **Application** (js/mannequin-app.js, css/mannequin-app.css `.ap-prog-*`) : carte « Ce mois-ci : … » sur l'accueil,
+  rond « Programme », écran `#programme` (carte façon carte bancaire, puis les mois de chaque niveau en relevé).
+  Commun avec l'Administration (js/app.js) : `MA2M_NIVEAUX_FORMATION`, `resumeProgrammeFormation`.
+- **Administration** : fiche du mannequin (espace Paiements, js/portail/espace-paiements.js `carteProgramme`) : thème du
+  mois, mois faits / total, les 18 mois dépliables (`.pf-*`, css/admin-vivante.css). Fichier pas collé : pas de carte.
+- **Mois en colonnes** (demande de la propriétaire) : une carte par mois, 2 colonnes sur téléphone, 3 sur grand écran.
+- **Révision** (validée par la propriétaire le 14/11/2026) : formation finie (2 ans, ou le niveau 1 seul ; aussi quand tous
+  les mois étaient faits avant la reprise) → `termine` et `revision` (niveau 3 de `formation_programme` : 9 thèmes, mars
+  = mois 1 … novembre = mois 9, chaque année ; pendant les congés, la saison suivante). Application : carte « Révision ·
+  ce mois-ci » sur l'accueil, écran « Formation terminée ✓ » + la Révision + sa formation ; fiche de l'Administration :
+  « Formation terminée ✓ · Révision, ce mois-ci : … ». Mannequins déjà en cours (3, 6, 9 mois faits…) : le programme
+  reprend au bon thème (mois faits notés dans l'assistant de reprise ; sinon, il commence au mois 1).
+- **Tests** : test-app-mannequin.js (accueil, écran Mon programme, couleurs et lisibilité), test-correction-paiement.js (fiche).
+
+## « Intégrer l'agence » : la formation mois après mois (14/11/2026, demande de la propriétaire)
+
+Section « Votre formation, mois après mois » (integrer-agence.html FR/EN, après « Choisissez votre parcours ») : niveau 1
+« Les fondations » et niveau 2 « La professionnelle » (9 cartes chacun), puis la carte blanche « Révision ». Même style que
+le programme des cours de talons, désormais commun : **`.lx-prog*` dans css/luxe.css** (renommé depuis `.ct-prog*` ;
+`.lx-prog--compact` = un thème par carte). Texte écrit dans la page : à changer aussi dans `formation_programme`
+(supabase-programme-mannequins.sql) si le programme change.

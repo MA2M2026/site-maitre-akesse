@@ -1,0 +1,100 @@
+/* « Mon programme » de l'Atelier Talons & Élégance (programme-talons.html, 14/11/2026, maquette validée par la
+   propriétaire). La carte d'élève reprend css/paiements-premium.css (pp-cb, pp-gros) ; le reste est propre à la page. */
+:root { --pt-rouge: #7C2128; --pt-fonce: #4A1016; --pt-encre: #2A1416; --pt-gris: #6E4F53; --pt-doux: #A88A8E; --pt-rose: #F3DDE0; --pt-pale: #FBF4F5; --pt-ligne: #EFE4E5; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px/1.55 'Work Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+.pt h1, .pt h2, .pt p { margin: 0; }
+.pt-symboles { position: absolute; width: 0; height: 0; overflow: hidden; }
+.pt-page { max-width: 480px; margin: 0 auto; padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+.pt-ic { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.pt-ic-petit { width: 13px; height: 13px; }
+.pt-surtitre { font: 600 10px 'Work Sans', sans-serif; letter-spacing: .32em; text-transform: uppercase; color: var(--pt-gris); }
+.pt-bloc { padding: 0 20px; margin-top: 36px; }
+.pt-bloc > h2 { font: 500 28px/1.1 'Cormorant Garamond', Georgia, serif; margin: 6px 0 16px; }
+
+/* grande photo, nom */
+.pt-une { position: relative; height: 470px; overflow: hidden; background: var(--pt-fonce); color: #FFFFFF; }
+.pt-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+.pt-une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,6,10,.45) 0%, rgba(40,6,10,0) 28%, rgba(40,6,10,0) 42%, rgba(58,12,18,.92) 86%, #4A1016 100%); }
+.pt-une > * { position: relative; z-index: 1; }
+.pt-entete { display: flex; justify-content: space-between; align-items: center; padding: calc(20px + env(safe-area-inset-top)) 20px 20px; }
+.pt-entete img { height: 26px; width: auto; display: block; }
+.pt-entete span { font: 600 9.5px 'Work Sans', sans-serif; letter-spacing: .32em; text-transform: uppercase; }
+.pt-une-texte { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 22px 64px; }
+.pt-une .pt-surtitre { color: var(--pt-rose); }
+.pt-une h1 { font: 500 50px/0.98 'Cormorant Garamond', Georgia, serif; margin-top: 10px; overflow-wrap: anywhere; }
+.pt-une h1 em { font-style: italic; font-weight: 400; }
+.pt-accroche { font: italic 400 19px 'Cormorant Garamond', Georgia, serif; color: var(--pt-rose); margin-top: 8px; }
+.pt-page > .pt-une + .pt-boutons { margin-top: 28px; }
+
+/* carte d'élève (pp-cb) */
+.pt-acces { margin: -44px 16px 0; z-index: 2; }
+.pt-acces .pp-cb-grand { font-size: 34px; margin-top: 20px; }
+.pt-progres { margin-top: 16px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.18); overflow: hidden; }
+.pt-progres i { display: block; height: 100%; width: 0; background: #FFFFFF; transition: width .6s ease; }
+
+.pt-prochaine { display: flex; align-items: center; gap: 14px; margin: 14px 16px 0; padding: 14px 16px; border-radius: 16px; background: var(--pt-pale); }
+.pt-rond { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--pt-rouge); color: #FFFFFF; display: grid; place-items: center; }
+.pt-prochaine b { display: block; font-weight: 600; font-size: 14px; }
+.pt-prochaine span { font-size: 12.5px; color: var(--pt-gris); }
+
+/* calendrier */
+.pt-cal-tete { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 14px; }
+.pt-cal-tete h2 { font: 500 24px 'Cormorant Garamond', Georgia, serif; text-transform: capitalize; }
+.pt-fl { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--pt-ligne); background: #FFFFFF; color: var(--pt-encre); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.pt-fl:disabled { opacity: .25; cursor: default; }
+.pt-fl:focus-visible, .pt-second:focus-visible, .pt-info a:focus-visible { outline: 2px solid var(--pt-rouge); outline-offset: 2px; }
+.pt-cal { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 6px; text-align: center; }
+.pt-cal .j { font: 600 9.5px 'Work Sans', sans-serif; letter-spacing: .14em; color: var(--pt-doux); padding-bottom: 6px; }
+.pt-cal .d { height: 40px; display: grid; place-items: center; font: 400 14px 'Work Sans', sans-serif; position: relative; }
+.pt-cal .d span { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; }
+.pt-cal .d.hors { color: #D6C6C8; }
+.pt-cal .d.cours span { background: var(--pt-rouge); color: #FFFFFF; font-weight: 600; }
+.pt-cal .d.cours.faite span { background: var(--pt-rose); color: var(--pt-rouge); }
+.pt-cal .d.auj span { box-shadow: inset 0 0 0 1px var(--pt-encre); }
+.pt-cal .d.auj::after { content: ''; position: absolute; bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: var(--pt-rouge); }
+
+/* séances en frise */
+.pt-frise { position: relative; }
+.pt-frise::before { content: ''; position: absolute; left: 27px; top: 30px; bottom: 30px; width: 1px; background: var(--pt-ligne); }
+.pt-seance { position: relative; display: flex; gap: 16px; align-items: center; padding: 12px 0; }
+.pt-date { flex: 0 0 56px; height: 62px; border-radius: 14px; background: #FFFFFF; border: 1px solid var(--pt-ligne); text-align: center; padding-top: 7px; }
+.pt-seance.proche .pt-date { background: var(--pt-rouge); border-color: var(--pt-rouge); color: #FFFFFF; box-shadow: 0 12px 22px -12px rgba(124,33,40,.9); }
+.pt-seance.faite { opacity: .55; }
+.pt-date small { display: block; font: 600 9px 'Work Sans', sans-serif; letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
+.pt-date b { display: block; font: 500 26px/1 'Cormorant Garamond', Georgia, serif; }
+.pt-seance-t { flex: 1; min-width: 0; }
+.pt-seance-t small { font: 600 9.5px 'Work Sans', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: var(--pt-doux); }
+.pt-seance-t b { display: block; font: 500 19px/1.2 'Cormorant Garamond', Georgia, serif; margin: 1px 0 2px; }
+.pt-seance-t span { font-size: 12.5px; color: var(--pt-gris); }
+.pt-vide { color: var(--pt-gris); font-size: 14px; }
+
+/* le jour J */
+.pt-info { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-top: 1px solid var(--pt-ligne); }
+.pt-info:first-of-type { border-top: 0; padding-top: 0; }
+.pt-pic { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--pt-pale); color: var(--pt-rouge); display: grid; place-items: center; }
+.pt-info b { display: block; font-weight: 600; font-size: 14px; }
+.pt-info span { font-size: 13px; color: var(--pt-gris); }
+.pt-info a { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--pt-rouge); font: 600 12px 'Work Sans', sans-serif; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+.pt-prevoir { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--pt-ligne); border: 1px solid var(--pt-ligne); border-radius: 16px; overflow: hidden; }
+.pt-prevoir div { background: #FFFFFF; padding: 14px; font-size: 13px; }
+.pt-prevoir small { display: block; font: 600 9px 'Work Sans', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: var(--pt-doux); margin-bottom: 3px; }
+
+/* boutons */
+.pt-boutons { padding: 0 20px; margin-top: 36px; display: grid; gap: 10px; }
+#pt-contenu + .pt-boutons { margin-top: 0; }
+.pt .pp-gros { gap: 10px; min-height: 56px; border-radius: 16px; letter-spacing: .02em; }
+.pt-second { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 16px; border: 1px solid var(--pt-ligne); background: #FFFFFF; color: var(--pt-encre); font: 600 14px 'Work Sans', sans-serif; text-decoration: none; }
+.pt-second .pt-ic { color: #1F9E52; }
+.pt-note { text-align: center; font-size: 12px; color: var(--pt-gris); }
+.pt-signature { text-align: center; margin-top: 44px; }
+.pt-signature img { height: 22px; width: auto; }
+.pt-signature p { font: italic 400 16px 'Cormorant Garamond', Georgia, serif; color: var(--pt-gris); margin-top: 6px; }
+@media (max-width: 360px) { .pt-une h1 { font-size: 42px; } .pt-prevoir { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .pt-progres i { transition: none; } }
+/* groupe sur plusieurs mois (14/11/2026) : un titre par mois ; les mois pas encore réglés, estompés */
+.pt-mois-tete { position: relative; z-index: 1; display: inline-block; margin: 14px 0 2px; padding: 4px 12px; border-radius: 999px; background: var(--pt-pale); color: var(--pt-rouge); font: 600 10px 'Work Sans', sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+.pt-mois-tete:first-child { margin-top: 0; }
+.pt-mois-tete.a-regler { background: #FFFFFF; border: 1px dashed var(--pt-ligne); color: var(--pt-gris); }
+.pt-seance.a-regler { opacity: .5; }

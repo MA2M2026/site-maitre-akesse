@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE v2 (14/11/2026) : « Mon programme » retravaillée « plus belle, plus chic, plus clean, plus classe, vraiment
+     premium » (v1 validée le 14/11, voir DECISION-programme-talons.md). Page personnelle de l'élève de l'Atelier
+     Talons & Élégance (envoyée par WhatsApp) et son dossier dans l'Administration, dans l'esprit des « Paiements
+     premium » (css/paiements-premium.css, réutilisé tel quel). Données d'exemple. ?vue=eleve | ?vue=admin
+     « Ajouter à mon calendrier » fabrique déjà un vrai fichier .ics (4 séances + rappel la veille) pour essayer. -->
+<title>Maquette programme talons</title>
+<link rel="stylesheet" href="../css/polices.css?v=f8b78de5">
+<link rel="stylesheet" href="../css/paiements-premium.css?v=e68257b9">
+<style>
+:root { --rouge: #7C2128; --rouge-fonce: #4A1016; --encre: #2A1416; --gris: #6E4F53; --rose: #F3DDE0; --pale: #FBF4F5; --ligne: #EFE4E5; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #FFFFFF; color: var(--encre); font: 400 15px/1.55 'Work Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+.v { display: none; } body.eleve .v-eleve, body.admin .v-admin { display: block; }
+.page { max-width: 480px; margin: 0 auto; padding-bottom: 48px; }
+.ic { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.surtitre { font: 600 10px 'Work Sans'; letter-spacing: .32em; text-transform: uppercase; color: var(--gris); }
+.bloc { padding: 0 20px; margin-top: 36px; }
+.bloc > h2 { font: 500 28px/1.1 'Cormorant Garamond', serif; color: var(--encre); margin: 6px 0 16px; }
+.filet { height: 1px; background: var(--ligne); margin: 0 20px; }
+
+/* ---------- ÉLÈVE : grande photo, nom, carte d'accès ---------- */
+.une { position: relative; height: 470px; overflow: hidden; background: var(--rouge-fonce); color: #FFFFFF; }
+.une img.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+.une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,6,10,.45) 0%, rgba(40,6,10,0) 28%, rgba(40,6,10,0) 45%, rgba(58,12,18,.92) 88%, #4A1016 100%); }
+.une > * { position: relative; z-index: 1; }
+.une header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
+.une header img { height: 26px; }
+.une header span { font: 600 9.5px 'Work Sans'; letter-spacing: .32em; text-transform: uppercase; }
+.une .texte { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 22px 64px; }
+.une .texte .surtitre { color: #F3DDE0; }
+.une h1 { font: 500 52px/0.95 'Cormorant Garamond', serif; margin-top: 10px; }
+.une h1 em { font-style: italic; font-weight: 400; }
+.une p { font: 400 italic 19px 'Cormorant Garamond', serif; color: #F3DDE0; margin-top: 8px; }
+
+.acces { margin: -44px 16px 0; position: relative; z-index: 2; }
+.acces .pp-cb-grand { font-size: 34px; margin-top: 20px; }
+.progres { margin-top: 16px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.18); overflow: hidden; }
+.progres i { display: block; height: 100%; width: 0; background: #FFFFFF; }
+
+.prochaine { display: flex; align-items: center; gap: 14px; margin: 14px 16px 0; padding: 14px 16px; border-radius: 16px; background: var(--pale); }
+.prochaine .rond { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--rouge); color: #FFFFFF; display: grid; place-items: center; }
+.prochaine b { display: block; font-weight: 600; font-size: 14px; }
+.prochaine span { font-size: 12.5px; color: var(--gris); }
+
+/* calendrier épuré */
+.cal-tete { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.cal-tete b { font: 500 24px 'Cormorant Garamond', serif; text-transform: capitalize; }
+.cal-tete span { font-size: 12px; color: var(--gris); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 6px; text-align: center; }
+.cal .j { font: 600 9.5px 'Work Sans'; letter-spacing: .14em; color: #A88A8E; padding-bottom: 6px; }
+.cal .d { height: 40px; display: grid; place-items: center; font: 400 14px 'Work Sans'; color: var(--encre); position: relative; }
+.cal .d span { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; }
+.cal .d.hors { color: #D6C6C8; }
+.cal .d.cours span { background: var(--rouge); color: #FFFFFF; font-weight: 600; }
+.cal .d.hors.cours span { background: var(--rose); color: var(--rouge); }
+.cal .d.auj span { box-shadow: inset 0 0 0 1px var(--encre); }
+.cal .d.auj::after { content: ''; position: absolute; bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: var(--encre); }
+
+/* séances en frise */
+.frise { position: relative; }
+.frise::before { content: ''; position: absolute; left: 27px; top: 30px; bottom: 30px; width: 1px; background: var(--ligne); }
+.seance { position: relative; display: flex; gap: 16px; align-items: center; padding: 12px 0; }
+.date { flex: 0 0 56px; height: 62px; border-radius: 14px; background: #FFFFFF; border: 1px solid var(--ligne); text-align: center; padding-top: 7px; }
+.seance.proche .date { background: var(--rouge); border-color: var(--rouge); color: #FFFFFF; box-shadow: 0 12px 22px -12px rgba(124,33,40,.9); }
+.date small { display: block; font: 600 9px 'Work Sans'; letter-spacing: .16em; text-transform: uppercase; opacity: .7; }
+.date b { display: block; font: 500 26px/1 'Cormorant Garamond', serif; }
+.seance .t { flex: 1; min-width: 0; }
+.seance .t small { font: 600 9.5px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; color: #A88A8E; }
+.seance .t b { display: block; font: 500 19px/1.2 'Cormorant Garamond', serif; margin: 1px 0 2px; }
+.seance .t span { font-size: 12.5px; color: var(--gris); }
+
+/* lieu, à prévoir */
+.ligne-info { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-top: 1px solid var(--ligne); }
+.ligne-info:first-of-type { border-top: 0; padding-top: 0; }
+.ligne-info .pic { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--pale); color: var(--rouge); display: grid; place-items: center; }
+.ligne-info b { display: block; font-weight: 600; font-size: 14px; }
+.ligne-info span { font-size: 13px; color: var(--gris); }
+.ligne-info a { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--rouge); font: 600 12px 'Work Sans'; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+.prevoir { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ligne); border: 1px solid var(--ligne); border-radius: 16px; overflow: hidden; }
+.prevoir div { background: #FFFFFF; padding: 14px; font-size: 13px; color: var(--encre); }
+.prevoir div small { display: block; font: 600 9px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; color: #A88A8E; margin-bottom: 3px; }
+.prevoir div.large { grid-column: 1 / -1; }
+
+/* boutons */
+.boutons { padding: 0 20px; margin-top: 36px; display: grid; gap: 10px; }
+.pp-gros { gap: 10px; min-height: 56px; border-radius: 16px; letter-spacing: .02em; }
+.second { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 16px; border: 1px solid var(--ligne); background: #FFFFFF; color: var(--encre); font: 600 14px 'Work Sans'; text-decoration: none; cursor: pointer; }
+.second .ic { color: #1F9E52; }
+.note { text-align: center; font-size: 12px; color: var(--gris); margin-top: 2px; }
+.signature { text-align: center; margin-top: 44px; }
+.signature img { height: 22px; opacity: .9; }
+.signature p { font: italic 400 16px 'Cormorant Garamond', serif; color: var(--gris); margin-top: 6px; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; transition: .3s; background: var(--encre); color: #FFFFFF; padding: 12px 18px; border-radius: 999px; font-size: 13px; pointer-events: none; }
+.toast.vu { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- ADMINISTRATION : dossier de l'élève ---------- */
+body.admin { background: #FAF6F6; }
+.ad-tete { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
+.ad-tete img { height: 26px; }
+.ad-tete span { font: 600 9.5px 'Work Sans'; letter-spacing: .32em; text-transform: uppercase; color: var(--gris); }
+.ad-titre { padding: 0 20px; }
+.ad-titre h1 { font: 500 36px/1 'Cormorant Garamond', serif; margin-top: 6px; }
+.ad-carte { margin: 18px 16px 0; }
+.ad-carte .qui { display: flex; gap: 14px; align-items: center; margin-top: 20px; }
+.ad-carte .qui img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; border: 2px solid rgba(255,255,255,.5); }
+.ad-carte .qui b { display: block; font: 500 30px/1 'Cormorant Garamond', serif; }
+.ad-carte .qui span { font-size: 12.5px; color: #F3DDE0; }
+.ad-carte .pp-tuiles { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.ad-carte .pp-tuile { padding: 12px; }
+.ad-carte .pp-tuile .pp-ch { font-size: 24px; }
+.ad-carte .pp-tuile .pp-dx { margin: 2px 0 0; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.rappel { display: flex; gap: 12px; align-items: center; margin: 14px 16px 0; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; border: 1px solid var(--ligne); }
+.rappel .rond { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--rose); color: var(--rouge); display: grid; place-items: center; }
+.rappel b { display: block; font-size: 14px; }
+.rappel span { font-size: 12.5px; color: var(--gris); }
+.ad-bloc { margin: 26px 16px 0; }
+.ad-bloc .pp-s { margin: 0 4px 10px; }
+.pp-op em.fait { background: #E3F1E6; color: #24603A; }
+.pp-op em.plein { background: var(--rouge); color: #FFFFFF; }
+.pp-op > span.etat { flex: none; font: 600 11.5px 'Work Sans'; color: var(--gris); white-space: nowrap; }
+.pp-op .etat.ok { color: #24603A; }
+.ajout { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-top: 1px solid #F2F2F2; color: var(--rouge); font: 600 13px 'Work Sans'; }
+.ad-bloc .pp-legende { color: var(--gris); }
+.wa { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wa div { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: #FFFFFF; border: 1px solid var(--ligne); }
+.wa div.plein { background: var(--rouge); border-color: var(--rouge); color: #FFFFFF; }
+.wa div .ic { color: var(--rouge); width: 20px; height: 20px; }
+.wa div.plein .ic { color: #FFFFFF; }
+.wa div b { font-size: 13px; line-height: 1.3; }
+.wa div small { font-size: 11.5px; color: var(--gris); margin-top: -6px; }
+.wa div.plein small { color: #F3DDE0; }
+</style></head>
+<body>
+<!-- icônes au trait (une seule fois) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-cal-plus" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></symbol>
+  <symbol id="i-lieu" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+  <symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-fleche" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+  <symbol id="i-bulle" viewBox="0 0 24 24"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.6-4.4a8.4 8.4 0 1 1 15.4-4.5z"/></symbol>
+  <symbol id="i-cloche" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-lien" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+
+<!-- ======================= VUE DE L'ÉLÈVE ======================= -->
+<div class="v v-eleve"><div class="page">
+  <section class="une">
+    <img class="photo" src="../assets/cours-talons/alicia-2.jpg" alt="">
+    <header><img src="../assets/logo-intro.png" alt="MA2M"><span>Mon programme</span></header>
+    <div class="texte">
+      <div class="surtitre">Atelier Talons &amp; Élégance</div>
+      <h1>Bienvenue,<br><em>Madame Koné</em></h1>
+      <p>Quatre dimanches pour marcher avec assurance.</p>
+    </div>
+  </section>
+
+  <div class="pp-cb acces">
+    <div class="pp-cb-tete"><span>Carte d'élève</span><span>N° TAL-0412</span></div>
+    <div class="pp-cb-grand">15 nov. → 6 déc.</div>
+    <div class="pp-cb-sous">Formule en groupe · 4 séances de 3 heures</div>
+    <div class="progres"><i id="progres"></i></div>
+    <div class="pp-cb-bas"><span><b>Séances</b><span id="faites">0 / 4</span></span><span><b>Horaire</b>15 h – 18 h</span><span><b>Paiement</b>Validé ✓</span></div>
+  </div>
+
+  <div class="prochaine">
+    <div class="rond"><svg class="ic"><use href="#i-horloge"/></svg></div>
+    <div><b id="proch-titre">Votre première séance, c'est demain</b><span id="proch-detail">Dimanche 15 novembre · 15 h · Salle MA2M</span></div>
+  </div>
+
+  <section class="bloc">
+    <div class="surtitre">Calendrier</div>
+    <div class="cal-tete" style="margin-top:6px"><b>Novembre 2026</b><span>Vos séances en rouge</span></div>
+    <div class="cal" id="cal"></div>
+  </section>
+
+  <section class="bloc">
+    <div class="surtitre">Le programme</div>
+    <h2>Vos quatre séances</h2>
+    <div class="frise" id="seances"></div>
+  </section>
+
+  <section class="bloc">
+    <div class="surtitre">Infos pratiques</div>
+    <h2>Le jour J</h2>
+    <div class="ligne-info"><div class="pic"><svg class="ic"><use href="#i-lieu"/></svg></div><div><b>Salle MA2M</b><span>Cocody Angré, 8ᵉ tranche, près de la pharmacie</span><br><a href="#" onclick="return false">Itinéraire <svg class="ic" style="width:13px;height:13px"><use href="#i-fleche"/></svg></a></div></div>
+    <div class="ligne-info"><div class="pic"><svg class="ic"><use href="#i-horloge"/></svg></div><div><b>Arrivée à 14 h 45</b><span>Le cours commence à 15 h précises.</span></div></div>
+    <div class="prevoir" style="margin-top:16px">
+      <div><small>Chaussures</small>Talons de 7 à 10 cm</div>
+      <div><small>Tenue</small>Près du corps</div>
+      <div><small>Pour souffler</small>Des ballerines</div>
+      <div><small>À boire</small>Une bouteille d'eau</div>
+    </div>
+  </section>
+
+  <div class="boutons">
+    <button class="pp-gros" id="ics" type="button"><svg class="ic"><use href="#i-cal-plus"/></svg>Ajouter à mon calendrier</button>
+    <p class="note">Les 4 séances s'ajoutent d'un coup à votre téléphone, avec un rappel la veille.</p>
+    <a class="second" href="#" onclick="return false"><svg class="ic"><use href="#i-bulle"/></svg>Une question ? Écrivez-nous</a>
+  </div>
+
+  <div class="signature"><img src="../assets/logo-header.png" alt="MA2M"><p>À dimanche, avec élégance.</p></div>
+</div></div>
+
+<!-- ======================= VUE DE L'ADMINISTRATION ======================= -->
+<div class="v v-admin"><div class="page">
+  <div class="ad-tete"><img src="../assets/logo-header.png" alt="MA2M"><span>Administration</span></div>
+  <div class="ad-titre"><div class="surtitre">Atelier talons · Élèves</div><h1>Dossier de l'élève</h1></div>
+
+  <div class="pp-cb ad-carte">
+    <div class="pp-cb-tete"><span>Formule groupe</span><span class="pp-pastille vert">Payé · Wave</span></div>
+    <div class="qui"><img src="../assets/cours-talons/alicia-2.jpg" alt=""><div><b>Mme Awa Koné</b><span>+225 07 00 00 00 00 · inscrite le 9 nov.</span></div></div>
+    <div class="pp-tuiles">
+      <div class="pp-tuile"><div class="pp-ch">0<small> / 4</small></div><div class="pp-dx">Séances</div></div>
+      <div class="pp-tuile"><div class="pp-ch">30 000<small> F</small></div><div class="pp-dx">Payé</div></div>
+      <div class="pp-tuile"><div class="pp-ch">6<small> déc.</small></div><div class="pp-dx">Fin</div></div>
+    </div>
+  </div>
+
+  <div class="rappel">
+    <div class="rond"><svg class="ic"><use href="#i-cloche"/></svg></div>
+    <div><b>Demain : séance 1 de Mme Koné</b><span>Dimanche 15 novembre · 15 h – 18 h</span></div>
+  </div>
+
+  <section class="ad-bloc">
+    <span class="pp-s">Son programme</span>
+    <div class="pp-releve"><div id="tab"></div><div class="ajout"><svg class="ic"><use href="#i-plus"/></svg>Ajouter une séance</div></div>
+    <p class="pp-legende">Groupe : les 4 dimanches sont remplis tout seuls à la validation du paiement. Privé : vous choisissez les créneaux libres (1 h 30 d'écart gardé tout seul).</p>
+  </section>
+
+  <section class="ad-bloc">
+    <span class="pp-s">Envoyer sur WhatsApp</span>
+    <div class="wa">
+      <div class="plein"><svg class="ic"><use href="#i-cal"/></svg><b>Son programme</b><small>Lien vers sa page</small></div>
+      <div><svg class="ic"><use href="#i-ok"/></svg><b>Inscription reçue</b><small>Envoyé le 9 nov.</small></div>
+      <div><svg class="ic"><use href="#i-lien"/></svg><b>Lien de paiement</b><small>Envoyé le 9 nov.</small></div>
+      <div><svg class="ic"><use href="#i-cloche"/></svg><b>Rappel de demain</b><small>À envoyer ce soir</small></div>
+    </div>
+  </section>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const vue = new URLSearchParams(location.search).get('vue') === 'admin' ? 'admin' : 'eleve';
+document.body.classList.add(vue);
+// Données d'exemple : novembre 2026 commence un dimanche ; « aujourd'hui » = samedi 14.
+const AUJ = 14;
+const S = [
+  { j: 15, m: 10, titre: 'Posture et équilibre' },
+  { j: 22, m: 10, titre: 'Démarche et port de tête' },
+  { j: 29, m: 10, titre: 'Fluidité et tours' },
+  { j: 6, m: 11, titre: 'Le défilé final' }
+];
+const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+const cal = document.getElementById('cal');
+let h = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((j) => '<div class="j">' + j + '</div>').join('');
+const c = (n, cls) => '<div class="d' + cls + '"><span>' + n + '</span></div>';
+for (let i = 26; i <= 31; i++) h += c(i, ' hors');
+for (let d = 1; d <= 30; d++) h += c(d, (S.some((s) => s.m === 10 && s.j === d) ? ' cours' : '') + (d === AUJ ? ' auj' : ''));
+for (let d = 1; d <= 6; d++) h += c(d, ' hors' + (S.some((s) => s.m === 11 && s.j === d) ? ' cours' : ''));
+cal.innerHTML = h;
+
+document.getElementById('seances').innerHTML = S.map((s, i) => '<div class="seance' + (i === 0 ? ' proche' : '') + '"><div class="date"><small>Dim</small><b>' + s.j + '</b><small>' + MOIS[s.m] + '</small></div><div class="t"><small>Séance ' + (i + 1) + (i === 0 ? ' · demain' : '') + '</small><b>' + s.titre + '</b><span>15 h – 18 h · Salle MA2M</span></div></div>').join('');
+
+document.getElementById('tab').innerHTML = S.map((s, i) => '<div class="pp-op"><em class="' + (i === 0 ? 'plein' : '') + '">' + (i + 1) + '</em><span>' + s.titre + '<small>Dim. ' + s.j + ' ' + MOIS[s.m] + ' · 15 h – 18 h</small></span><span class="etat">' + (i === 0 ? 'Demain' : 'À venir') + '</span></div>').join('');
+
+// « Ajouter à mon calendrier » : un vrai fichier .ics (iPhone et Android), 4 séances, rappel la veille.
+function ics() {
+  const deux = (n) => String(n).padStart(2, '0');
+  // Abidjan = UTC toute l'année : 15 h – 18 h locales = 15:00Z – 18:00Z
+  const ev = S.map((s, i) => [
+    'BEGIN:VEVENT', 'UID:talons-awa-' + (i + 1) + '@ma2m', 'DTSTAMP:20261114T120000Z',
+    'DTSTART:2026' + deux(s.m + 1) + deux(s.j) + 'T150000Z', 'DTEND:2026' + deux(s.m + 1) + deux(s.j) + 'T180000Z',
+    'SUMMARY:Atelier talons MA2M · Séance ' + (i + 1), 'DESCRIPTION:' + s.titre + '. Talons 7 à 10 cm\\, tenue près du corps\\, ballerines\\, eau.',
+    'LOCATION:Salle MA2M\\, Cocody Angré 8e tranche',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Demain : atelier talons MA2M à 15 h', 'TRIGGER:-P1D', 'END:VALARM', 'END:VEVENT'
+  ].join('\r\n')).join('\r\n');
+  const txt = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//MA2M//Atelier talons//FR\r\nCALSCALE:GREGORIAN\r\n' + ev + '\r\nEND:VCALENDAR\r\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'text/calendar;charset=utf-8' }));
+  a.download = 'atelier-talons-ma2m.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  const t = document.getElementById('toast');
+  t.textContent = 'Ouvrez le fichier pour ajouter les 4 séances';
+  t.classList.add('vu'); setTimeout(() => t.classList.remove('vu'), 2600);
+}
+document.getElementById('ics').addEventListener('click', ics);
+</script>
+</body></html>

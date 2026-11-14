@@ -125,10 +125,12 @@
   async function fiche(params) {
     const id = String((params && params[0]) || '');
     if (!/^[\w-]{1,64}$/.test(id)) { location.hash = '#/paiements/registre'; return ''; }
-    const [m, paiements, codes] = await Promise.all([
+    const [m, paiements, codes, programme] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('id', id).single()),
       P.bd(sb.from('paiements_mannequins').select('*').eq('mannequin_id', id).order('declare_le', { ascending: false })),
-      P.bd(sb.from('codes_espace').select('*').eq('mannequin_id', id).eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false }))
+      P.bd(sb.from('codes_espace').select('*').eq('mannequin_id', id).eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false })),
+      // (14/11/2026) son programme de formation (supabase-programme-mannequins.sql) ; pas encore collé : la carte ne s'affiche pas
+      P.bd(sb.rpc('programme_formation_de', { p_mannequin: id })).catch(() => null)
     ]);
     const inscription = paiements.find((p) => p.objet === 'inscription' && p.statut !== 'refuse') || null;
     const principal = P.moi.role === 'principal';
@@ -145,7 +147,7 @@
       (inscription ? '<p class="doux petit-texte">' + P.esc(MODES[inscription.mode]) + (inscription.montant ? ' · ' + P.fcfa(inscription.montant) : '') +
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
       (m.user_id ? '<p class="doux petit-texte">Ce mannequin a déjà son compte sur le site : aucun code à lui donner, on suit seulement ses mensualités.</p>' : '') +
-      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) +
+      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) + carteProgramme(programme) +
       (principal && !m.user_id && !paiements.some((p) => p.statut === 'valide')
         ? '<div class="carte"><h2>Supprimer ce mannequin</h2><p class="doux">Pour un essai ou une erreur seulement. La fiche et ses paiements non validés disparaissent pour toujours. S’il a vraiment été mannequin de l’agence, proposez plutôt sa sortie.</p><button class="btn rouge" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '">Supprimer définitivement</button></div>' : '') +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
@@ -165,6 +167,23 @@
         '<label class="fl" for="mz-mois">Mois<select id="mz-mois" name="mois">' + listeMois().map((x) => '<option value="' + x + '"' + (x === moisCourant() ? ' selected' : '') + '>' + P.esc(libelleMois(x)) + '</option>').join('') + '</select></label>' +
         '<label class="fl" for="mz-mode">Moyen<select id="mz-mode" name="mode"><option value="wave">Wave reçu en dehors du site</option><option value="especes">Espèces</option></select></label>' +
         '<div class="large ligne"><button class="btn rouge" type="submit">Enregistrer ' + P.fcfa(m.mensualite) + '</button></div></form>' : '') + '</div>';
+  }
+  // Programme de formation (14/11/2026, validé par la propriétaire) : le thème du mois, mois faits / total, et les 18 mois
+  // dépliables (resumeProgrammeFormation et MA2M_NIVEAUX_FORMATION : js/app.js, comme l'application des mannequins)
+  function carteProgramme(programme) {
+    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
+    if (!r) return '';
+    const x = r.enCours || r.prochain;
+    const nomMois = (iso) => P.esc(libelleMois(iso));
+    // (14/11/2026) formation finie : la Révision (thème du mois de mars à novembre)
+    const y = r.termine ? r.revProchain : null;
+    return '<div class="carte pf-programme"><h2>Programme de formation</h2>' +
+      (r.termine ? '<p><b>Formation terminée ✓</b>' + (y ? ' <span class="doux">· Révision, ' + (r.revEnCours ? 'ce mois-ci' : 'prochain thème (' + nomMois(y.date) + ')') + ' : ' + P.esc(y.theme) + ' (mois ' + y.mois_niveau + ' sur 9)</span>' : '') + '</p>' :
+      '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
+      (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
+      '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
+      '<details><summary>Voir les ' + r.total + ' mois</summary><ol class="pf-mois">' + r.mois.map((m) => '<li class="' + P.esc(m.etat) + '"><b>N' + m.niveau + ' · ' + m.mois_niveau + '</b> ' + P.esc(m.theme) +
+        ' <span class="doux">— ' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</span></li>').join('') + '</ol></details></div>';
   }
   // 6 mois passés, le mois en cours et 3 mois d'avance
   function listeMois() {

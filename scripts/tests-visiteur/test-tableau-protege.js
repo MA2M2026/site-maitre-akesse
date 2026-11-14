@@ -42,8 +42,10 @@ const ADMIN = '11111111-2222-3333-4444-555555555555';
   const pieces = [...fs.readFileSync(path.join(RACINE, 'js/admin/site.js'), 'utf8').matchAll(/'\/js\/([\w-]+)\.js'/g)].map(m => m[1]);
   // aussi utilisés par les pages publiques (publications-lecture : lecture seule, phase 2 W4) ou l'application des
   // mannequins (presences-calcul) ; documents-communs :
-  // seulement des noms de documents et une mise en forme de date, sans rien de privé (01/11/2026)
-  const publics = ['publications-lecture', 'couverture-admin', 'presences-calcul', 'documents-communs', 'rendu-publications'].filter((n) => !duRegex.includes(n));
+  // seulement des noms de documents et une mise en forme de date, sans rien de privé (01/11/2026) ; talons-commun : le
+  // numéro de l'agence, la salle, le prix du mois, les heures et la civilité, aussi utilisés par la page publique des
+  // cours de talons et la page « Mon programme » (14/11/2026)
+  const publics = ['publications-lecture', 'couverture-admin', 'presences-calcul', 'documents-communs', 'rendu-publications', 'talons-commun'].filter((n) => !duRegex.includes(n));
   ok(pieces.length > 10 && JSON.stringify(duMatcher) === JSON.stringify(duRegex) && JSON.stringify(deVercel) === JSON.stringify(duRegex)
     && pieces.every(n => duRegex.includes(n) || publics.includes(n)), 'scripts protégés : même liste dans le filtre et vercel.json, et toutes les pièces de l’Administration couvertes (' + duRegex.length + ' ; ' + pieces.filter(n => !duRegex.includes(n) && !publics.includes(n)).join(', ') + ')');
   ok(!/tableau-de-bord|tableau-v2/.test(src.split('export default')[0].split('export const config')[1] || ''), 'filtre : plus aucune trace de l’ancien tableau de bord');

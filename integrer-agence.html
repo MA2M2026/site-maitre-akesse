@@ -50,7 +50,7 @@
   0%, 55% { left: -60%; }
   100% { left: 130%; }
 }</style>
-<noscript id="css-complet"><link rel="stylesheet" href="css/polices.css?v=f8b78de5"><link rel="stylesheet" href="css/menu.css?v=2d4e1fc8"><link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="css/style.css?v=d76f01aa"><link rel="stylesheet" href="css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="css/luxe.css?v=d6dfb49d"><link rel="stylesheet" href="css/integrer-agence.css?v=c00b7bd2"><link rel="stylesheet" href="css/candidature.css?v=1103e8ba"><link rel="stylesheet" href="css/jetons.css?v=c6c0c637"><link rel="stylesheet" href="css/installation.css?v=c8eeaf9d"><link rel="stylesheet" href="css/charte-ma2m.css?v=f4263a67"><link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41"></noscript>
+<noscript id="css-complet"><link rel="stylesheet" href="css/polices.css?v=f8b78de5"><link rel="stylesheet" href="css/menu.css?v=2d4e1fc8"><link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="css/style.css?v=d76f01aa"><link rel="stylesheet" href="css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="css/luxe.css?v=80e6d5ff"><link rel="stylesheet" href="css/integrer-agence.css?v=c00b7bd2"><link rel="stylesheet" href="css/candidature.css?v=1103e8ba"><link rel="stylesheet" href="css/jetons.css?v=c6c0c637"><link rel="stylesheet" href="css/installation.css?v=c8eeaf9d"><link rel="stylesheet" href="css/charte-ma2m.css?v=f4263a67"><link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41"></noscript>
 <script src="js/css-differe.js?v=d938ae04" async></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -113,6 +113,44 @@
     <h2 class="lx-titre-section reveal" data-texte="integrer-agence-13">Choisissez votre parcours</h2>
     <p class="ia-consigne reveal" data-texte="integrer-agence-14">👆 Touchez le parcours qui vous correspond : le formulaire se règle tout seul.</p>
     <div class="ia-parcours"><article class="ia-parcours-carte lx-verre reveal" data-parcours="non"><div class="ia-parcours-tete"><span class="ia-rond" aria-hidden="true"></span><div><h3 data-texte="integrer-agence-15">Je débute</h3><p data-texte="integrer-agence-16">Jamais été mannequin ? L'Académie vous forme.</p></div></div><ol class="ia-ligne"><li><b>9 mois</b><span>à l'Académie : posture, démarche, image, confiance en soi</span></li><li><b>+ 9 mois</b><span>à l'agence, avec les autres mannequins</span></li></ol><button type="button" class="btn btn--principal" data-parcours-choix="non">Je choisis ce parcours</button></article><article class="ia-parcours-carte lx-verre reveal" data-parcours="oui"><div class="ia-parcours-tete"><span class="ia-rond" aria-hidden="true"></span><div><h3 data-texte="integrer-agence-17">J'ai déjà été mannequin</h3><p data-texte="integrer-agence-18">Votre expérience compte.</p></div></div><ol class="ia-ligne"><li><b>Casting</b><span>en présentiel : le jury confirme votre niveau</span></li><li><b>Agence</b><span>directement, avec 9 mois de perfectionnement aux côtés de nos mannequins</span></li></ol><button type="button" class="btn btn--principal" data-parcours-choix="oui">Je choisis ce parcours</button></article></div>
+  </div>
+</section>
+
+<!-- (14/11/2026, programme validé par la propriétaire) la formation de l’agence, mois après mois : le même que la table
+     formation_programme (supabase-programme-mannequins.sql) qui remplit « Mon programme » dans l’application des
+     mannequins ; à changer aux deux endroits (et sur en/integrer-agence.html). Style commun : .lx-prog (css/luxe.css). -->
+<section class="lx-prog-section lx-prog--compact" id="programme" aria-labelledby="ia-programme-titre">
+  <div class="container">
+    <p class="lx-surtitre reveal">La formation</p>
+    <h2 class="lx-titre-section reveal" id="ia-programme-titre">Votre formation, mois après mois</h2>
+    <p class="lx-prog-intro reveal">Deux niveaux de 9 mois de cours, de mars à novembre (décembre, janvier et février : congés). Chaque mois, un thème : vous progressez pas à pas, et votre programme vous suit dans l’application MA2M Mannequin.</p>
+    <h3 class="lx-prog-niveau reveal">Niveau 1 · Les fondations</h3>
+    <ol class="lx-prog">
+      <li class="lx-prog-mois reveal"><span class="lx-prog-num">I</span><div><p class="lx-prog-quand">Mois 1</p><h3>Posture et démarche de base</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">II</span><div><p class="lx-prog-quand">Mois 2</p><h3>Le podium : marche, demi-tours, arrêts</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">III</span><div><p class="lx-prog-quand">Mois 3</p><h3>La pose photo : les bases (angles, mains, regard)</h3></div></li>
+      <li class="lx-prog-mois reveal"><span class="lx-prog-num">IV</span><div><p class="lx-prog-quand">Mois 4</p><h3>Expression et regard</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">V</span><div><p class="lx-prog-quand">Mois 5</p><h3>Défiler en robe longue et tenue de soirée</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">VI</span><div><p class="lx-prog-quand">Mois 6</p><h3>Défiler en tailleur, tenue courte et accessoires</h3></div></li>
+      <li class="lx-prog-mois reveal"><span class="lx-prog-num">VII</span><div><p class="lx-prog-quand">Mois 7</p><h3>Le casting : la marche de casting, se présenter avec ses photos</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">VIII</span><div><p class="lx-prog-quand">Mois 8</p><h3>Défiler à plusieurs et chorégraphies de podium</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">IX</span><div><p class="lx-prog-quand">Mois 9</p><h3>Le défilé de fin d’année</h3></div></li>
+    </ol>
+    <h3 class="lx-prog-niveau reveal">Niveau 2 · La professionnelle</h3>
+    <ol class="lx-prog">
+      <li class="lx-prog-mois reveal"><span class="lx-prog-num">I</span><div><p class="lx-prog-quand">Mois 1</p><h3>Perfectionner sa démarche : un style pour chaque créateur</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">II</span><div><p class="lx-prog-quand">Mois 2</p><h3>Le rythme du podium : marcher sur la musique</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">III</span><div><p class="lx-prog-quand">Mois 3</p><h3>Pose avancée : le shooting en studio</h3></div></li>
+      <li class="lx-prog-mois reveal"><span class="lx-prog-num">IV</span><div><p class="lx-prog-quand">Mois 4</p><h3>Pose en extérieur et en mouvement</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">V</span><div><p class="lx-prog-quand">Mois 5</p><h3>Poser pour la vidéo et les réseaux sociaux</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">VI</span><div><p class="lx-prog-quand">Mois 6</p><h3>Castings professionnels : mises en situation</h3></div></li>
+      <li class="lx-prog-mois reveal"><span class="lx-prog-num">VII</span><div><p class="lx-prog-quand">Mois 7</p><h3>Les coulisses d’un défilé : changements de tenue rapides</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">VIII</span><div><p class="lx-prog-quand">Mois 8</p><h3>Le mannequinat publicitaire</h3></div></li>
+      <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">IX</span><div><p class="lx-prog-quand">Mois 9</p><h3>Le grand défilé de fin de formation</h3></div></li>
+    </ol>
+    <ol class="lx-prog lx-prog--seul">
+      <li class="lx-prog-mois lx-prog-mois--suite reveal"><span class="lx-prog-num">∞</span><div><p class="lx-prog-quand">Après la formation</p><h3>Révision</h3><p>Chaque année, de mars à novembre, la Révision reprend tout le parcours : démarche, podium, pose, castings, défilés.</p></div></li>
+    </ol>
   </div>
 </section>
 
@@ -183,11 +221,11 @@
 <script src="js/conversion-heic.js?v=82dc3921"></script>
 <script src="js/photos.js?v=c819e38b"></script>
 <script src="js/partage.js?v=6b9f7039"></script>
-<script src="js/app.js?v=88ae7095"></script>
+<script src="js/app.js?v=6eceb3dc"></script>
 <script src="js/confort.js?v=cad83e86"></script>
 <script src="js/video-allegee.js?v=c3f34d58"></script>
 <script src="js/menu.js?v=9fe5a355"></script>
-<script src="js/diaporama-luxe.js?v=bd2cd6f0"></script>
+<script src="js/diaporama-luxe.js?v=6c1722dd"></script>
 <script src="js/integrer-agence.js?v=a973f241"></script>
 <script src="js/formulaire-candidature.js?v=2c929328"></script>
 <script src="js/brouillon.js?v=8c0a08ff"></script>

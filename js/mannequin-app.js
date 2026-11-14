@@ -35,7 +35,8 @@
     message.minuteur = setTimeout(() => zone.classList.remove('visible'), 4200);
   }
   const initialesDe = (nom) => initialesNom(nom) || '?';  // (js/app.js)
-  const ongletCourant = () => { const o = location.hash.replace('#', ''); return ONGLETS.some((x) => x[0] === o) ? o : 'accueil'; };
+  // (#programme : l'écran « Mon programme », ouvert depuis l'accueil, sans onglet à lui)
+  const ongletCourant = () => { const o = location.hash.replace('#', ''); return ONGLETS.some((x) => x[0] === o) || (o === 'programme' && resumeProgrammeFormation(etat && etat.programme)) ? o : 'accueil'; };
 
   // ---------- connexion ----------
   function ecranConnexion() {
@@ -76,7 +77,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus, programme] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -90,7 +91,8 @@
       sb.rpc('mes_bulletins'),  // bulletins trimestriels publiés (supabase-bulletins.sql)
       // (11/11/2026, « Mon profil » façon réseau social) adresse publique du book, phrase de la mannequin, demande en cours
       sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle(),
-      sb.rpc('mes_recus')  // (11/11/2026) paiements validés, pour « Mes opérations » de l'écran Paiements (supabase-bloc2-complements.sql)
+      sb.rpc('mes_recus'),  // (11/11/2026) paiements validés, pour « Mes opérations » de l'écran Paiements (supabase-bloc2-complements.sql)
+      sb.rpc('mon_programme_formation')  // (14/11/2026) programme de formation (supabase-programme-mannequins.sql) ; absent : rien ne s'affiche
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -102,7 +104,7 @@
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
       messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || [],
-      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || []
+      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || [], programme: donnees(programme) || null
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -283,6 +285,7 @@
     const stories = '<nav class="ap-stories" aria-label="Raccourcis">' +
       rond('#profil', moi ? '<img src="' + esc(urlPhotoMemeOrigine(moi)) + '" alt="">' : '<b>' + esc(initialesDe(etat.profil.full_name)) + '</b>', 'Moi') +
       rond('#evenements', '<em>🎫</em>', 'Ma carte', ' data-ma-carte') +
+      (resumeProgrammeFormation(etat.programme) ? rond('#programme', '<em>🎓</em>', 'Programme') : '') +
       rond('/app/espace-mannequin.html#compcard', '<em>🗂️</em>', 'Compcard') +
       rond('/app/espace-mannequin.html#cv', '<em>📄</em>', 'Mon CV') +
       rond('#alertes', '<em>✉️</em>' + (nouveaux.length ? '<i>' + nouveaux.length + '</i>' : ''), 'Messages') + '</nav>';
@@ -297,12 +300,56 @@
       '<h1>Bonjour <em>' + esc(prenomAffiche(etat.profil.full_name)) + '</em></h1>' +
       (nouveaux.length ? '<a class="ap-carte ap-rappel ap-nouveau-message" href="#alertes">✉️ <span><b>' + (nouveaux.length > 1 ? nouveaux.length + ' nouveaux messages' : 'Nouveau message') + '</b> de l’agence : ' + esc(nouveaux[0].titre) + '</span> ›</a>' : '') +
       (etat.mannequinDuMois && etat.mannequinDuMois.compte === etat.uid ? '<div class="ap-carte pr-app-mdm">🏆 <span><b>Vous êtes la mannequin du mois !</b><br>Félicitations : le site et l’application vous mettent à l’honneur tout le mois.</span></div>' : '') +
-      cartePresencesAccueil() +
+      cartePresencesAccueil() + carteProgrammeAccueil() +
       '<h2 class="ap-titre-sec">Prochain rendez-vous</h2>' +
       (prochain ? carteEvenement(prochain, 'sombre') : '<div class="ap-carte doux">Aucune convocation pour le moment. Dès que l’agence vous convoque, elle apparaît ici.</div>') +
       (m && m.inscrit && moisCourant() && (moisCourant().etat === 'a_payer' || moisCourant().etat === 'non_paye')
         ? '<a class="ap-carte ap-rappel" href="#paiements">💳 <span>Mensualité de ' + esc(MOIS[Number(String(moisCourant().mois).slice(5, 7)) - 1]) + ' : <b>' + fcfa(m.mensualite) + '</b></span> ›</a>' : '') +
       (posts.length ? '<h2 class="ap-titre-sec">Le fil de l’agence</h2>' + posts.join('') : '');
+  }
+  // ---------- programme de formation (14/11/2026, validé par la propriétaire) ----------
+  const nomMoisAnnee = (iso) => MOIS[Number(String(iso).slice(5, 7)) - 1] + ' ' + String(iso).slice(0, 4);
+  function carteProgrammeAccueil() {
+    const r = resumeProgrammeFormation(etat.programme);  // (js/app.js)
+    if (!r) return '';
+    // formation finie : la Révision (le thème du mois, ou le prochain pendant les congés)
+    const rev = r.termine, x = rev ? r.revProchain : r.prochain;
+    if (!x) return '';
+    const enCours = rev ? r.revEnCours : r.enCours;
+    return '<a class="ap-carte ap-prog-carte" href="#programme"><em aria-hidden="true">🎓</em><span><small>' + (rev ? 'RÉVISION · ' : '') + (enCours ? 'CE MOIS-CI' : 'PROCHAIN THÈME · ' + esc(nomMoisAnnee(x.date).toUpperCase())) + '</small>' +
+      '<b>' + esc(x.theme) + '</b><i>' + (rev ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + ' sur 9') + '</i></span>›</a>';
+  }
+  function ecranProgramme() {
+    const r = resumeProgrammeFormation(etat.programme);
+    if (!r) return '<div class="ap-carte doux">Votre programme n’est pas encore disponible.</div>';
+    const x = r.enCours || r.prochain || r.mois[r.mois.length - 1];
+    const carteMois = (m, n) => '<div class="ap-prog-mois ' + esc(m.etat) + '"><div class="ap-prog-haut"><em aria-hidden="true">' + (m.etat === 'fait' ? '✓' : m.mois_niveau) + '</em>' +
+      '<strong>' + (m.etat === 'en_cours' ? 'En cours' : m.etat === 'fait' ? 'Fait' : 'Mois ' + m.mois_niveau) + '</strong></div>' +
+      '<b>' + esc(m.theme) + '</b><small>' + (m.etat === 'en_cours' ? 'Ce mois-ci' : m.date ? esc(nomMoisAnnee(m.date)) : 'Fait avant la reprise') + '</small></div>';
+    // (14/11/2026) formation finie : la Révision en premier (9 thèmes de mars à novembre), puis sa formation, toute faite
+    if (r.termine && r.revision.length) {
+      const y = r.revProchain || r.revision[r.revision.length - 1];
+      return '<div class="ap-cb ap-prog-cb"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>RÉVISION</span></div>' +
+        '<small class="ap-prog-sur">FORMATION TERMINÉE ✓ · ' + (r.revEnCours ? 'CE MOIS-CI' : 'PROCHAIN THÈME · ' + esc(nomMoisAnnee(y.date).toUpperCase())) + '</small>' +
+        '<div class="ap-prog-theme">' + esc(y.theme) + '</div>' +
+        '<div class="ap-jauge"><i style="width:' + Math.round(r.revision.filter((m) => m.etat === 'fait').length * 100 / 9) + '%"></i></div>' +
+        '<div class="ap-cb-bas"><div><b>FORMATION</b>' + r.total + ' / ' + r.total + ' ✓</div><div><b>PROGRAMME</b>Révision</div><div><b>MOIS</b>' + y.mois_niveau + ' sur 9</div></div></div>' +
+        '<h2 class="ap-titre-sec">Révision · mars à novembre ' + esc(String(y.date).slice(0, 4)) + '</h2><div class="ap-prog-grille">' + r.revision.map(carteMois).join('') + '</div>' +
+        '<p class="doux ap-formation-note">Vous avez terminé votre formation : chaque année, de mars à novembre, la Révision reprend tout le parcours. Décembre, janvier et février : congés.</p>' +
+        [1, 2].filter((n) => r.mois.some((m) => m.niveau === n)).map((n) => '<h2 class="ap-titre-sec">Ma formation · niveau ' + n + ' · ' + esc(MA2M_NIVEAUX_FORMATION[n]) + '</h2><div class="ap-prog-grille">' +
+          r.mois.filter((m) => m.niveau === n).map(carteMois).join('') + '</div>').join('');
+    }
+    const carte = '<div class="ap-cb ap-prog-cb"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>MON PROGRAMME</span></div>' +
+      '<small class="ap-prog-sur">' + (r.termine ? 'FORMATION TERMINÉE' : r.enCours ? 'CE MOIS-CI · NIVEAU ' + x.niveau : 'PROCHAIN THÈME · ' + esc(nomMoisAnnee(x.date).toUpperCase())) + '</small>' +
+      '<div class="ap-prog-theme">' + esc(r.termine ? 'Bravo, vous avez suivi tout le programme.' : x.theme) + '</div>' +
+      '<div class="ap-jauge"><i style="width:' + Math.round(r.faits * 100 / r.total) + '%"></i></div>' +
+      '<div class="ap-cb-bas"><div><b>MOIS FAITS</b>' + r.faits + ' / ' + r.total + '</div><div><b>NIVEAU</b>' + esc(MA2M_NIVEAUX_FORMATION[x.niveau] || '') + '</div>' +
+      '<div><b>MOIS</b>' + x.mois_niveau + ' sur 9</div></div></div>';
+    const niveaux = [1, 2].filter((n) => r.mois.some((m) => m.niveau === n)).map((n) =>
+      // (14/11/2026, demande de la propriétaire) les mois en colonnes : une carte par mois, 2 colonnes (3 sur grand écran)
+      '<h2 class="ap-titre-sec">Niveau ' + n + ' · ' + esc(MA2M_NIVEAUX_FORMATION[n]) + '</h2><div class="ap-prog-grille">' +
+      r.mois.filter((m) => m.niveau === n).map(carteMois).join('') + '</div>').join('');
+    return carte + niveaux + '<p class="doux ap-formation-note">Décembre, janvier et février : congés, l’agence est fermée. Le programme reprend en mars.</p>';
   }
   function ecranEvenements() {
     const avenir = aVenir(), passes = etat.evenements.filter((e) => e.passe).reverse();
@@ -531,8 +578,8 @@
     const reg = await navigator.serviceWorker.ready, abo = await reg.pushManager.getSubscription();
     if (abo) await sb.rpc('app_push_desabonner', { p_endpoint: abo.endpoint });
   }
-  const ECRANS = { accueil: ecranAccueil, evenements: ecranEvenements, profil: ecranProfil, paiements: ecranPaiements, alertes: ecranAlertes };
-  const TITRES = { evenements: 'Mes événements', profil: 'Mon profil', paiements: 'Mes paiements', alertes: 'Messages' };
+  const ECRANS = { accueil: ecranAccueil, evenements: ecranEvenements, profil: ecranProfil, paiements: ecranPaiements, alertes: ecranAlertes, programme: ecranProgramme };
+  const TITRES = { evenements: 'Mes événements', profil: 'Mon profil', paiements: 'Mes paiements', alertes: 'Messages', programme: 'Mon programme' };
 
   function afficher() {
     // (09/11/2026, journal des erreurs : « etat.profil is null ») compte sans fiche de mannequin : l'écran « Ce compte

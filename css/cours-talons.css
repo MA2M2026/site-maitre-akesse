@@ -127,3 +127,39 @@
 @media (prefers-reduced-motion: reduce) {
   .ct-etape, .ct-merci, .ct-choix input:checked + span::after { animation: none; }
 }
+/* Parcours (14/11/2026, décision de la propriétaire) : « Je débute » / « J'ai déjà la base », thèmes à cocher (1 ou 2
+   mois chacun) et « Votre programme » résumé, en groupe comme en privé (js/cours-talons.js) */
+#ct-bloc-parcours { margin: 1.6rem 0 0.4rem; }
+.ct-parcours { display: grid; gap: 0.7rem; margin-top: 0.6rem; }
+@media (min-width: 640px) { .ct-parcours { grid-template-columns: 1fr 1fr; } }
+.ct-parcours-choix { position: relative; cursor: pointer; display: block; }
+.ct-parcours-choix input { position: absolute; opacity: 0; pointer-events: none; }
+.ct-parcours-choix span { display: block; height: 100%; padding: 1rem 1.15rem; border-radius: 18px; color: #fff; background: var(--lx-verre); border: 1px solid var(--lx-lisere); transition: all 0.25s ease; }
+.ct-parcours-choix strong { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.45rem; line-height: 1.1; }
+.ct-parcours-choix em { display: block; margin-top: 0.3rem; font-style: normal; font-size: 0.88rem; line-height: 1.45; opacity: 0.88; }
+.ct-parcours-choix:hover span { background: var(--lx-verre-fort); }
+.ct-parcours-choix input:checked + span { background: #fff; border-color: #fff; color: var(--rouge-profond); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18), 0 18px 34px -18px rgba(90, 20, 27, 1); }
+.ct-parcours-choix input:focus-visible + span { outline: 3px solid #fff; outline-offset: 3px; }
+#ct-bloc-themes { margin-top: 1.4rem; }
+#ct-bloc-themes .ct-aide { margin: 0.3rem 0 0.8rem; font-size: 0.9rem; }
+.ct-themes { display: grid; gap: 0.6rem; }
+.ct-theme { display: flex; align-items: center; gap: 0.8rem; padding: 0.85rem 1rem; border-radius: 16px; background: var(--lx-verre); border: 1px solid var(--lx-lisere); transition: all 0.25s ease; }
+.ct-theme.choisi { background: #fff; border-color: #fff; }
+.ct-theme-case { flex: 1; min-width: 0; display: flex; gap: 0.8rem; align-items: flex-start; cursor: pointer; color: #fff; }
+.ct-theme.choisi .ct-theme-case { color: var(--rouge-profond); }
+.ct-theme-case input { flex: none; width: 1.25rem; height: 1.25rem; margin: 0.2rem 0 0; accent-color: var(--rouge-mat); }
+.ct-theme-case strong { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.3rem; line-height: 1.1; }
+.ct-theme-case em { display: block; margin-top: 0.2rem; font-style: normal; font-size: 0.8rem; line-height: 1.4; opacity: 0.85; }
+.ct-theme select { flex: none; width: auto; min-width: 6.2rem; padding: 0.45rem 0.6rem; border-radius: 10px; font-size: 0.88rem; }
+.ct-theme:not(.choisi) select { display: none; }
+.ct-theme { flex-wrap: wrap; }
+.ct-theme-case { flex-basis: 100%; }
+.ct-theme select { margin-left: 2.05rem; }
+@media (min-width: 640px) { .ct-theme { flex-wrap: nowrap; } .ct-theme-case { flex-basis: auto; } .ct-theme select { margin-left: 0; } }
+.ct-programme-choisi { margin-top: 1.4rem; padding: 1rem 1.1rem; border-radius: 18px; border: 1px dashed rgba(255, 255, 255, 0.45); }
+.ct-programme-choisi ol { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.ct-programme-choisi li { display: flex; gap: 0.8rem; align-items: baseline; }
+.ct-programme-choisi small { flex: 0 0 5.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.75; }
+.ct-programme-choisi li span { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; }
+.ct-carte-plus { font-size: 0.92rem; }
+.ct-carte-plus a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
