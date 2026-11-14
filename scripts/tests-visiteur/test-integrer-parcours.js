@@ -29,10 +29,12 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
     await p.click('.ia-parcours-carte[data-parcours="oui"] button'); await p.waitForTimeout(900);
     ok(await p.inputValue('#ca-experience') === 'oui' && await p.isVisible('#ca-lien-bloc'), n + '« Déjà mannequin » choisi : formulaire réglé, champ « lien vers votre travail » proposé');
     ok(await p.evaluate(() => { const r = document.getElementById('form-casting').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }), n + 'le bouton amène au formulaire');
-    await p.fill('#ca-lien-travail', 'https://www.instagram.com/awa'); await p.fill('#ca-message', 'Bonjour');
+    // (14/11/2026) le message est à l'étape 2 du formulaire en étapes : « Suivant », comme une candidate
+    await p.fill('#ca-lien-travail', 'https://www.instagram.com/awa'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400); await p.fill('#ca-message', 'Bonjour');
     const msg = await p.evaluate(() => messageAvecLien());
     ok(msg === (en ? 'Link to my work: ' : 'Lien vers mon travail : ') + 'https://www.instagram.com/awa\n\nBonjour', n + 'le lien passe en tête du message lu par l’agence');
     // choisir dans la liste du formulaire garde les cartes à jour
+    await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);   // (retour à l'étape 1)
     await p.selectOption('#ca-experience', 'non');
     ok(await p.getAttribute('.ia-parcours-carte[data-parcours="non"]', 'class').then((c) => c.includes('choisie')) && await p.isHidden('#ca-lien-bloc') && await p.evaluate(() => messageAvecLien()) === 'Bonjour',
       n + 'retour à « débutant·e » dans le formulaire : carte mise à jour, lien ignoré');

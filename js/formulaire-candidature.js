@@ -60,10 +60,16 @@ async function chargerProjetsActifs() {
   // (liste posée par le serveur dans la page : middleware.js, page-donnees, 01/11/2026 ; sinon lue ici)
   const serveur = typeof donneesServeur === 'function' ? donneesServeur('page-donnees') : null;
   const { data: projets } = serveur && Array.isArray(serveur.projets) ? { data: serveur.projets }
-    : await sb.from('casting_projets').select('id, nom, description').eq('actif', true).order('ordre_affichage', { ascending: true }).order('nom');
+    : await sb.from('casting_projets').select('id, nom, description, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true }).order('nom');
   const liste = projets || [];
   DESCRIPTIONS_PROJETS = {};
   liste.forEach(p => { if (p.description) DESCRIPTIONS_PROJETS[p.nom] = p.description; });
+  // (14/11/2026) castings en cartes (js/candidature-etapes.js) : description, date et lieu de chaque casting
+  window.CASTINGS_INFOS = {};
+  liste.forEach(p => {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(p.date_casting || '') ? new Date(p.date_casting + 'T12:00:00Z').toLocaleDateString(T('fr-FR', 'en-GB'), { day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
+    window.CASTINGS_INFOS[p.nom] = { description: p.description || '', date: d ? T('Casting le ', 'Casting on ') + d : '', lieu: p.lieu || '' };
+  });
   selectProjet.innerHTML = `<option value="">${T('Sélectionner', 'Select')}</option>`
     + liste.map(p => `<option value="${echapperHtml(p.nom)}">${echapperHtml(p.nom)}</option>`).join('')
     + `<option value="__autre__">${T('Autre (précisez)', 'Other (specify)')}</option>`;
@@ -72,6 +78,7 @@ async function chargerProjetsActifs() {
   document.getElementById('ca-aucun-casting').classList.toggle('u-hidden', !aucunCasting);
   document.getElementById('form-casting').classList.toggle('u-hidden', aucunCasting);
   finChargement();
+  document.dispatchEvent(new Event('ma2m:castings'));
 }
 if (PARCOURS === 'projet') {
   // En cas de panne réseau, le formulaire s'affiche quand même (il ne doit jamais rester caché).

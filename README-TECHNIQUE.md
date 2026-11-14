@@ -5075,3 +5075,21 @@ Section « Votre formation, mois après mois » (integrer-agence.html FR/EN, apr
 le programme des cours de talons, désormais commun : **`.lx-prog*` dans css/luxe.css** (renommé depuis `.ct-prog*` ;
 `.lx-prog--compact` = un thème par carte). Texte écrit dans la page : à changer aussi dans `formation_programme`
 (supabase-programme-mannequins.sql) si le programme change.
+
+## Candidatures en étapes : « Postuler à un casting » et « Intégrer l'agence » (14/11/2026, maquette validée)
+
+Maquette et décision : `maquettes/postuler-casting.html`, `maquettes/DECISION-postuler-casting.md`.
+- **`js/candidature-etapes.js`** (chargé APRÈS js/formulaire-candidature.js sur les 4 pages FR/EN) RANGE les champs
+  existants (mêmes identifiants et écouteurs, l'envoi ne change pas) : barre `.lx-progression`, étapes 1 Le casting /
+  Votre parcours, 2 Vous (identité, études, parent, genre, civilité, message), 3 Mensurations, 4 Photos & vidéo (+ accord),
+  puis le résumé « Votre candidature » (`.lx-recap`, « Changer » par ligne) avec « Envoyer ». Chaque « Suivant » vérifie son
+  étape (âge minimum et photos / vidéo d'abord, puis les champs obligatoires visibles). Après l'envoi (formulaire vidé) :
+  le message reste, « Envoyer une autre candidature ». Reprise d'un envoi coupé : le résumé s'ouvre sur le message.
+  Aucun casting ouvert : la barre est cachée avec le formulaire. `window.CandidatureEtapes` (montrer, etape) pour les essais.
+- **Castings en cartes** (`.lx-casting`, `data-bouton-libre` : hors du style des boutons du site) : nom, description, date
+  et lieu (`window.CASTINGS_INFOS`, rempli par `chargerProjetsActifs` ; middleware.js lit aussi `date_casting, lieu`),
+  photo de l'agence ; la liste déroulante reste (cachée à l'écran) ; « Mon casting n'est pas dans la liste » = « Autre ».
+- Styles : css/candidature.css (cartes, résumé, boutons) ; barre et titres d'étape communs avec les cours de talons
+  (`.ct-*` / `.lx-*` : css/luxe.css).
+- Tests : test-visiteur.js (4 pages : étapes, refus des moins de 14 ans à l'étape 2, photos manquantes, cartes, résumé,
+  « Changer », envoi), test-integrer-parcours.js, test-whatsapp-discret.js.
