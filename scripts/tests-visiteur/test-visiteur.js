@@ -70,12 +70,12 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await suivant(); etapesVues.push(await etape());
     // le résumé « Votre candidature » : chaque ligne, avec « Changer »
     const resume = await p.textContent('.lx-recap');
-    const resumeOk = /Madame Awa Koné/.test(resume) && /Abidjan/.test(resume) && /1,60 m|1\.60 m/.test(resume) && /4 photos/.test(resume) && await p.locator('.lx-recap .lx-changer').count() === 4
+    const resumeOk = /(Madame|Mrs) Awa Koné/.test(resume) && /Abidjan/.test(resume) && /1,60 m|1\.60 m/.test(resume) && /4 photos/.test(resume) && await p.locator('.lx-recap .lx-changer').count() === 4
       && (page.includes('candidature') ? /Défilé X/.test(resume) : true) && await p.locator('.lx-recap .lx-vignettes i').count() === 4;
     await p.click('.lx-recap .lx-recap-ligne:nth-child(2) .lx-changer'); await p.waitForTimeout(300);
     const changerOk = await etape() === 2;
     await suivant(); await suivant(); await suivant();
-    const deborde = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+    const deborde = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1 ? document.documentElement.scrollWidth + ' > ' + innerWidth + ' : ' + Array.from(document.querySelectorAll('#form-casting *')).filter((e) => e.getBoundingClientRect().right > innerWidth + 1).slice(0, 3).map((e) => e.tagName + '.' + e.className).join(', ') : false);
     await p.screenshot({ path: __dirname + '/medias/capture-' + Date.now() + '.png' });
     if (JSON.stringify(etapesVues) !== '[1,2,3,4,5]' || !sansPhotos || !resumeOk || !changerOk || deborde) { console.log('❌ ÉCHEC étapes sur', page, etapesVues, sansPhotos, resumeOk, changerOk, deborde, resume); process.exitCode = 1; }
     await p.click('#btn-envoyer');

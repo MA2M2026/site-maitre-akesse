@@ -98,6 +98,17 @@
   function valide(i) {
     const f = etapes[i - 1];
     if (i === 1 && projet && !$('ca-projet').value) return erreur(1, T('Choisissez un casting (ou « Mon casting n’est pas dans la liste »).', 'Choose a casting (or “My casting is not in the list”).'));
+    // (d'abord ce qui compte le plus : l'âge minimum, les photos et la vidéo)
+    if (i === 2) {
+      const age = typeof calculerAgeCandidature === 'function' ? calculerAgeCandidature() : null;
+      if (age !== null && typeof AGE_MINIMUM !== 'undefined' && age < AGE_MINIMUM) return erreur(2, T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`), $('ca-naissance'));
+    }
+    if (i === 4) {
+      const n = typeof photosSelectionnees !== 'undefined' ? photosSelectionnees.length : 0, min = typeof photosMin === 'function' ? photosMin() : 4;
+      if (n < min) return erreur(4, T(`Ajoutez au moins ${min} photos (${n} pour l’instant).`, `Please add at least ${min} photos (${n} so far).`), $('ca-photos'));
+      if (n > 12) return erreur(4, T('12 photos au plus : retirez-en quelques-unes.', '12 photos at most: please remove a few.'), $('ca-photos'));
+      if (!(typeof videoChoisie !== 'undefined' && videoChoisie) && !(typeof videoEnPreparation !== 'undefined' && videoEnPreparation)) return erreur(4, T('Ajoutez votre vidéo de présentation (3 minutes au plus).', 'Please add your introduction video (3 minutes at most).'), $('ca-video'));
+    }
     for (const c of f.querySelectorAll('input, select, textarea')) {
       if (cache(c) || c.disabled || c.type === 'file') continue;
       if (!c.checkValidity()) {
@@ -107,15 +118,7 @@
       }
     }
     if (i === 2) {
-      const age = typeof calculerAgeCandidature === 'function' ? calculerAgeCandidature() : null;
-      if (age !== null && typeof AGE_MINIMUM !== 'undefined' && age < AGE_MINIMUM) return erreur(2, T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`), $('ca-naissance'));
       if ($('ca-ville').value === 'Abidjan' && $('ca-commune') && $('ca-commune').value === 'Abidjan') return erreur(2, T('Merci de préciser votre commune à Abidjan.', 'Please specify your district in Abidjan.'), $('ca-commune'));
-    }
-    if (i === 4) {
-      const n = typeof photosSelectionnees !== 'undefined' ? photosSelectionnees.length : 0, min = typeof photosMin === 'function' ? photosMin() : 4;
-      if (n < min) return erreur(4, T(`Ajoutez au moins ${min} photos (${n} pour l’instant).`, `Please add at least ${min} photos (${n} so far).`), $('ca-photos'));
-      if (n > 12) return erreur(4, T('12 photos au plus : retirez-en quelques-unes.', '12 photos at most: please remove a few.'), $('ca-photos'));
-      if (!(typeof videoChoisie !== 'undefined' && videoChoisie) && !(typeof videoEnPreparation !== 'undefined' && videoEnPreparation)) return erreur(4, T('Ajoutez votre vidéo de présentation (3 minutes au plus).', 'Please add your introduction video (3 minutes at most).'), $('ca-video'));
     }
     return true;
   }
