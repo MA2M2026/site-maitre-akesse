@@ -36,8 +36,7 @@
   const nbMois = (d) => d.nb_mois || 1;
   // titres des thèmes (cours_talons_programme, lu une fois par page) ; {3,3,4} → « La prestance (2 mois), Le podium (1 mois) »
   let titresProgramme = {};
-  const resumeModules = (l) => (Array.isArray(l) ? l : []).reduce((acc, m) => { const x = acc.find((y) => y.m === m); if (x) x.n++; else acc.push({ m, n: 1 }); return acc; }, [])
-    .map((x) => (titresProgramme[x.m] || 'Thème ' + x.m) + ' (' + x.n + ' mois)').join(', ');
+  const resumeModules = (l) => T.grouperModules(l).map((x) => (titresProgramme[x.m] || 'Thème ' + x.m) + ' (' + x.n + ' mois)').join(', ');
   const dureeGroupe = (d) => seances(d) + (nbMois(d) > 1 ? ', payés ' + (d.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '');
 
   const seances = (d) => d.formule === 'groupe' ? (nbMois(d) > 1 ? nbMois(d) + ' mois, ' + 4 * nbMois(d) + ' dimanches' : '4 dimanches') : d.nb_seances + ' séance' + (d.nb_seances > 1 ? 's' : '');
@@ -58,13 +57,16 @@
     // séances des élèves inscrites (« Son programme ») ; fichier pas encore collé : la fiche le dit, le reste marche
     // (toutes les séances d'un coup : une liste d'identifiants dans l'adresse dépasserait la limite avec des centaines d'élèves)
     seancesDe = {}; programmeAbsent = false;
-    try { (await P.bd(sb.from('cours_talons_programme').select('mois,titre'))).forEach((x) => { titresProgramme[x.mois] = x.titre; }); } catch (e) { /* programme pas encore collé : numéros seulement */ }
+    // titres des thèmes : lus une seule fois (programme pas encore collé : numéros seulement)
+    const titres = Object.keys(titresProgramme).length ? null : P.bd(sb.from('cours_talons_programme').select('mois,titre'))
+      .then((l) => { (l || []).forEach((x) => { titresProgramme[x.mois] = x.titre; }); }).catch(() => {});
     if (lignes.some((d) => d.statut === 'inscrite' || d.statut === 'terminee')) {
       try {
         const l = await P.bd(sb.from('cours_talons_seances').select('*').order('debut', { ascending: true }).limit(5000));
         (l || []).forEach((x) => { (seancesDe[x.inscription_id] = seancesDe[x.inscription_id] || []).push(x); });
       } catch (e) { if (!programmePasInstalle(e)) throw e; programmeAbsent = true; }
     }
+    await titres;
     const compte = (f) => lignes.filter((d) => f === 'toutes' || (f === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === f)).length;
     const visibles = lignes.filter((d) => filtre === 'toutes' || (filtre === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === filtre));
     const encaisse = lignes.filter((d) => d.statut === 'inscrite' || d.statut === 'terminee').reduce((t, d) => t + (d.montant || 0), 0);

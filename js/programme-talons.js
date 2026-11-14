@@ -89,7 +89,7 @@
       // titre de chaque mois (groupe sur plusieurs mois) ou de chaque thème (privé) : le module de SON programme
       // (« Les bases », « La prestance »… selon son parcours), puis « Perfectionnement »
       var titres = p.titres_mois || {};
-      var cle = groupe ? (plusieursMois && s.mois ? 'm' + s.mois : '') : (s.module ? 'p' + s.module : '');
+      var cle = groupe ? ((plusieursMois || p.parcours === 'base') && s.mois ? 'm' + s.mois : '') : (s.module ? 'p' + s.module : '');
       if (cle && cle !== moisAffiche) {
         moisAffiche = cle;
         var tete = document.createElement('p'); tete.className = 'pt-mois-tete' + (s.aRegler ? ' a-regler' : '');

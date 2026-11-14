@@ -55,8 +55,11 @@
   const TITRE_SUITE = ((document.querySelector('#programme .ct-prog-mois--suite h3') || {}).textContent || '').trim();
   const titreModule = (m) => (PROGRAMME.find((x) => x.module === m) || {}).titre || TITRE_SUITE;
   // modules choisis, dans l'ordre, répétés selon la durée : {3,3,4} = La prestance 2 mois puis Le podium 1 mois
-  const modulesChoisis = () => (parcours() !== 'base' ? [] : Array.from(form.querySelectorAll('#ct-themes input[type="checkbox"]:checked'))
-    .flatMap((c) => Array(Math.max(1, Math.min(2, parseInt(($('ct-duree-' + c.value) || {}).value, 10) || 1))).fill(+c.value)).slice(0, 12));
+  // (privé : 7 mois de thèmes au plus, soit 28 séances — le privé est limité à 30 ; la base applique la même règle)
+  const MAX_MOIS_PRIVE = 7;
+  const modulesTous = () => (parcours() !== 'base' ? [] : Array.from(form.querySelectorAll('#ct-themes input[type="checkbox"]:checked'))
+    .flatMap((c) => Array(Math.max(1, Math.min(2, parseInt(($('ct-duree-' + c.value) || {}).value, 10) || 1))).fill(+c.value)));
+  const modulesChoisis = () => modulesTous().slice(0, formule() === 'groupe' ? 12 : MAX_MOIS_PRIVE);
   const nbSeances = () => (formule() === 'groupe' ? 4 : parcours() === 'base' ? Math.max(1, Math.min(30, 4 * modulesChoisis().length)) : Math.max(1, Math.min(30, parseInt($('ct-nb').value, 10) || 1)));
   // (14/11/2026) groupe sur plusieurs mois : 30 000 le mois, payé d'un coup ou mois par mois (la base décide du montant)
   const nbMois = () => (formule() !== 'groupe' ? 1 : parcours() === 'base' ? Math.max(1, modulesChoisis().length) : Math.max(1, Math.min(12, parseInt($('ct-mois').value, 10) || 1)));
@@ -182,6 +185,7 @@
     if (n === 1) {
       if (!formule()) return erreur(T('Choisissez une formule.', 'Please choose an option.'));
       if (!parcours()) return erreur(T('Dites-nous si vous débutez ou si vous avez déjà la base.', 'Please tell us whether you are a beginner or already have the basics.'), form.querySelector('input[name="parcours"]'));
+      if (parcours() === 'base' && formule() !== 'groupe' && modulesTous().length > MAX_MOIS_PRIVE) return erreur(T('En privé : 7 mois de thèmes au plus (28 séances). Retirez un thème ou passez-en un à 1 mois.', 'Private lessons: 7 months of themes at most (28 sessions). Remove a theme or set one to 1 month.'), form.querySelector('#ct-themes input:checked'));
       if (parcours() === 'base' && !modulesChoisis().length) return erreur(T('Cochez au moins un thème à travailler.', 'Please tick at least one theme to work on.'), form.querySelector('#ct-themes input'));
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
     }
@@ -352,7 +356,7 @@
   function resume(l, montantTexte) {
     return [`Inscription aux cours de talons${EN ? ' (site en anglais)' : ''}`,
       `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? (l.nb_mois > 1 ? ' · ' + l.nb_mois + ' mois, payés ' + (l.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '') : ' · ' + l.nb_seances + ' séance(s)'} · ${montantTexte}`,
-      l.parcours === 'base' ? `Parcours : a déjà la base · thèmes : ${(l.modules || []).map(titreModule).join(', ')}` : 'Parcours : débute (tout le programme)',
+      l.parcours === 'base' ? `Parcours : a déjà la base · thèmes : ${window.TalonsCommun.grouperModules(l.modules).map((x) => titreModule(x.m) + ' (' + x.n + ' mois)').join(', ')}` : 'Parcours : débute (tout le programme)',
       `Nom : ${l.civilite ? window.TalonsCommun.civilite(l.civilite) + ' ' : ''}${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',

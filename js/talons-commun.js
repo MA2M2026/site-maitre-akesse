@@ -17,6 +17,10 @@ window.TalonsCommun = (function () {
     // vouvoiement (demandes de la propriétaire du 14/11/2026) : la civilité choisie à l'inscription (« madame » ou
     // « mademoiselle ») ; pour une inscription plus ancienne, « Mademoiselle » si elle est mineure, sinon « Madame »
     civilite: function (choix, age) { return (choix || (age && age < 18 ? 'mademoiselle' : 'madame')) === 'mademoiselle' ? 'Mademoiselle' : 'Madame'; },
+    // thèmes choisis {3,3,4} → [{ m: 3, n: 2 }, { m: 4, n: 1 }] (nombre de mois de chaque thème)
+    grouperModules: function (l) {
+      return (Array.isArray(l) ? l : []).reduce(function (acc, m) { var x = acc.filter(function (y) { return y.m === m; })[0]; if (x) x.n++; else acc.push({ m: m, n: 1 }); return acc; }, []);
+    },
     // 30000 → « 30 000 FCFA »
     fcfa: function (n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + '\u00a0FCFA'; }
   };

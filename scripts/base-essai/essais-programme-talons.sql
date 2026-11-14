@@ -109,6 +109,14 @@ select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-
 reset role;
 select essai_refuse($$set role service_role; select formulaire_public_enregistrer('cours_talons', '{"formule":"groupe","nom":"Module piège","telephone":"+2250700000309","age":25,"parcours":"base","modules":[9]}'::jsonb, '4.4.6.9')$$, 'thème inconnu (module 9) : refusé');
 reset role;
+set role service_role;
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0305","formule":"groupe","nom":"Trop Prestance","telephone":"+2250700000305","age":25,"parcours":"base","modules":[4,3,3,3,3]}'::jsonb, '4.4.6.5');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0306","formule":"prive_salle","nom":"Tout Privé","telephone":"+2250700000306","age":25,"parcours":"base","modules":[1,1,2,2,3,3,4,4,5,5,6,6]}'::jsonb, '4.4.6.6');
+reset role;
+select essai((select modules = '{3,3,4}' and nb_mois = 3 from cours_talons where id = '00000000-0000-0000-0000-0000000c0305'), 'un même thème 4 fois, dans le désordre : ramené à 2 mois au plus, dans l''ordre du programme');
+select essai((select array_length(modules, 1) = 7 and nb_seances = 28 from cours_talons where id = '00000000-0000-0000-0000-0000000c0306'), 'privé : 7 mois de thèmes au plus (28 séances)');
+select essai((select parcours = 'debut' from cours_talons where id = '00000000-0000-0000-0000-0000000c0101'), 'parcours non envoyé : « je débute »');
+reset role;
 select essai((select nb_mois = 3 and montant = 90000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0301'), 'groupe, j''ai la base : La prestance 2 mois + Le podium 1 mois = 3 mois, 90 000 (la durée envoyée est ignorée)');
 select essai((select nb_seances = 4 and montant = 100000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0302'), 'privé, j''ai la base : Les tenues = 4 séances, 100 000');
 select essai((select parcours = 'debut' and modules is null and nb_seances = 6 from cours_talons where id = '00000000-0000-0000-0000-0000000c0303'), 'privé, je débute : 6 séances, modules envoyés ignorés');
@@ -129,6 +137,12 @@ select essai((select array_agg(theme order by debut) = array['Robe longue et tra
   and (select theme = 'Posture et équilibre' and module = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0303'), 'privé : chaque séance ajoutée prend le thème suivant de son programme (Les tenues ; Les bases pour celle qui débute)');
 insert into cours_talons_seances (inscription_id, debut, fin, theme) values ('00000000-0000-0000-0000-0000000c0303', '2030-03-03 14:00Z', '2030-03-03 16:00Z', 'Thème choisi par l''agence');
 select essai((select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0303' and theme = 'Thème choisi par l''agence' and module is null), 'privé : un thème écrit par l''agence est gardé tel quel');
+-- une séance retirée ne décale pas les thèmes suivants
+delete from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0302' and theme = 'Robe longue et traîne';
+insert into cours_talons_seances (inscription_id, debut, fin) values ('00000000-0000-0000-0000-0000000c0302', '2030-03-06 10:00Z', '2030-03-06 12:00Z');
+insert into cours_talons_seances (inscription_id, debut, fin) values ('00000000-0000-0000-0000-0000000c0302', '2030-03-08 10:00Z', '2030-03-08 12:00Z');
+select essai((select array_agg(theme order by rang) = array['Robe longue et traîne', 'Tailleur et tenue courte', 'Les accessoires : sac, veste, chapeau'] from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0302'),
+  'privé : une séance annulée et retirée → la prochaine reprend son thème, les autres ne bougent pas');
 reset role;
 select essai((select programme_talons_lire(jeton)->>'parcours' = 'base' and programme_talons_lire(jeton)->'modules' = '[3, 3, 4]'::jsonb from cours_talons where id = '00000000-0000-0000-0000-0000000c0301'), 'page de l''élève : son parcours et ses thèmes');
 set role authenticated;

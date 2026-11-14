@@ -38,8 +38,10 @@ alter table cours_talons add column if not exists paiement text not null default
 -- (14/11/2026, décision de la propriétaire) le PARCOURS, en groupe comme en privé : « debut » = elle débute, tout le
 -- programme dans l'ordre ; « base » = elle a déjà la base et choisit ses thèmes (modules = les mois du programme
 -- choisis, dans l'ordre, répétés quand elle en prend 2 mois : {3,3,4} = La prestance 2 mois puis Le podium 1 mois)
-alter table cours_talons add column if not exists parcours text not null default 'debut' check (parcours in ('debut', 'base'));
-alter table cours_talons add column if not exists modules int[] check (modules is null or (array_length(modules, 1) between 1 and 12 and 1 <= all(modules) and 6 >= all(modules)));
+-- (vide pour les inscriptions d'avant : personne ne leur a posé la question)
+alter table cours_talons add column if not exists parcours text check (parcours is null or parcours in ('debut', 'base'));
+alter table cours_talons add column if not exists modules int[] check (modules is null or (array_length(modules, 1) between 1 and 12
+  and array_position(modules, null) is null and 1 <= all(modules) and 6 >= all(modules)));
 alter table cours_talons add column if not exists mois_payes int not null default 0 check (mois_payes between 0 and 24);
 -- inscriptions déjà payées avant ce fichier : leur mois est payé (la nouvelle colonne seulement)
 update cours_talons set mois_payes = nb_mois where valide_le is not null and mois_payes = 0;
@@ -56,6 +58,14 @@ create or replace function cours_talons_avant_inscription() returns trigger lang
 begin
   new.jeton := encode(extensions.gen_random_bytes(18), 'hex');
   new.mois_payes := 0;
+  -- thèmes remis en ordre : chacun 1 ou 2 mois au plus (règle de la propriétaire), dans l'ordre du programme ;
+  -- en privé, 7 mois de thèmes au plus (28 séances : le privé est limité à 30)
+  if new.parcours = 'base' then
+    select array_agg(t.m order by t.m) into new.modules
+      from (select m from (select m, least(count(*), 2) n from unnest(new.modules) m where m is not null group by m) g, generate_series(1, g.n)) t;
+    if new.formule <> 'groupe' then new.modules := new.modules[1:7]; end if;
+  end if;
+  new.parcours := coalesce(new.parcours, 'debut');
   if new.parcours = 'base' and coalesce(array_length(new.modules, 1), 0) = 0 then new.parcours := 'debut'; end if;
   if new.parcours = 'debut' then new.modules := null; end if;
   if new.formule = 'groupe' then
@@ -130,6 +140,9 @@ create policy "Programme des talons : public" on cours_talons_programme for sele
 -- numéro de mois (colonne mois : les pages savent quels mois sont payés) ; le thème suit le programme du mois
 -- (cours_talons_programme ; au-delà du 6e mois, celui du perfectionnement)
 alter table cours_talons_seances add column if not exists module int check (module is null or module between 1 and 7);
+-- (privé) place de la séance dans son programme : une séance retirée (annulée) laisse sa place, que la prochaine séance
+-- ajoutée reprend ; les thèmes des autres séances ne bougent pas
+alter table cours_talons_seances add column if not exists rang int check (rang is null or rang >= 0);
 
 -- Le module (mois du programme) du m-ième mois d'une élève : elle débute → 1, 2, 3… ; elle a la base → ses modules
 -- choisis, dans l'ordre ; au-delà → Perfectionnement (7)
@@ -167,7 +180,9 @@ begin
   if new.theme is not null or new.module is not null then return new; end if;
   select * into c from cours_talons where id = new.inscription_id;
   if c.id is null or c.formule = 'groupe' then return new; end if;
-  select count(*) into k from cours_talons_seances where inscription_id = new.inscription_id;
+  select min(n) into k from generate_series(0, 200) n
+    where not exists (select 1 from cours_talons_seances where inscription_id = new.inscription_id and rang = n);
+  new.rang := k;
   new.module := cours_talons_module(c.parcours, c.modules, k / 4 + 1);
   new.theme := cours_talons_theme(c.parcours, c.modules, k / 4 + 1, k);
   return new;
