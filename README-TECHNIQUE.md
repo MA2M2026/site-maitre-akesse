@@ -5028,5 +5028,9 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   concours, à partir du 7e Perfectionnement (séances adaptées, dernier dimanche = défilé). `cours_talons_ajouter_dimanches`
   y prend les thèmes ; un renouvellement continue au mois suivant. La page affiche « Mois 2 · L'assurance »
   (`titres_mois` renvoyé par `programme_talons_lire`).
+- **Page publique** (cours-talons.html FR/EN, css/cours-talons.css `.ct-prog-*`) : section « Le programme, mois après
+  mois » (6 mois + Perfectionnement, cartes en verre, 1 / 2 / 3 colonnes) et carte du groupe « le mois : 4 dimanches,
+  de 1 à 12 mois ». Texte écrit dans la page (traduit) : **à changer aussi dans cours_talons_programme** si le programme
+  change.
 - Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
   planning jour par jour et notification 24 h avant.

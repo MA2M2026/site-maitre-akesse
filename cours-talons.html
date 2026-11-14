@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41">
 <link rel="stylesheet" href="css/luxe.css?v=e66b5862">
 <link rel="stylesheet" href="css/paiements-premium.css?v=e68257b9">
-<link rel="stylesheet" href="css/cours-talons.css?v=d715a6a9">
+<link rel="stylesheet" href="css/cours-talons.css?v=2ff15e11">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -98,7 +98,8 @@
         <h3>En groupe</h3>
         <p class="ct-carte-quand">Chaque dimanche, de 15 h à 18 h</p>
         <p class="ct-prix"><span>30 000</span> FCFA</p>
-        <p class="ct-prix-detail">les 4 séances (4 dimanches)</p>
+        <p class="ct-prix-detail">le mois : 4 dimanches</p>
+        <p class="ct-carte-plus">De 1 à 12 mois, payés en une fois ou mois par mois. <a href="#programme">Voir le programme</a></p>
         <p>Dans notre salle à la Riviera Faya, en petit groupe.</p>
       </article>
       <article class="ct-carte ct-carte--rouge lx-verre reveal reveal-delay-1">
@@ -113,6 +114,27 @@
       </article>
     </div>
     <ul class="ct-apprendre reveal"><li>Posture</li><li>Port de tête</li><li>Équilibre</li><li>Démarche fluide</li><li>Confiance en soi</li></ul>
+  </div>
+</section>
+
+<!-- (14/11/2026, programme validé par la propriétaire) le programme du cours en groupe, mois après mois : le même que
+     la table cours_talons_programme (supabase-programme-talons.sql) qui remplit le programme de chaque élève ; à changer
+     aux deux endroits (et sur en/cours-talons.html). -->
+<section class="ct-prog-section" id="programme" aria-labelledby="ct-programme-titre">
+  <div class="container">
+    <p class="lx-surtitre reveal">Le cours en groupe</p>
+    <h2 class="lx-titre-section reveal" id="ct-programme-titre">Le programme, mois après mois</h2>
+    <p class="ct-prog-intro reveal">Chaque mois, 4 dimanches et un thème. Vous progressez de mois en mois, sans jamais refaire le même : un mois pour découvrir, six mois pour tout maîtriser.</p>
+    <ol class="ct-prog">
+      <li class="ct-prog-mois reveal"><span class="ct-prog-num">I</span><div><p class="ct-prog-quand">Mois 1</p><h3>Les bases</h3><ol><li>Posture et équilibre</li><li>Démarche et port de tête</li><li>Fluidité et tours</li><li>Premier défilé</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-1"><span class="ct-prog-num">II</span><div><p class="ct-prog-quand">Mois 2</p><h3>L’assurance</h3><ol><li>Talons plus hauts</li><li>Escaliers et marches</li><li>S’asseoir et se relever avec grâce</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-2"><span class="ct-prog-num">III</span><div><p class="ct-prog-quand">Mois 3</p><h3>La prestance</h3><ol><li>Regard et expression</li><li>Gestuelle des mains</li><li>Poses et arrêts</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal"><span class="ct-prog-num">IV</span><div><p class="ct-prog-quand">Mois 4</p><h3>Le podium</h3><ol><li>Marcher en rythme sur la musique</li><li>Demi-tours et tours complets</li><li>Défiler à plusieurs</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-1"><span class="ct-prog-num">V</span><div><p class="ct-prog-quand">Mois 5</p><h3>Les tenues</h3><ol><li>Robe longue et traîne</li><li>Tailleur et tenue courte</li><li>Les accessoires : sac, veste, chapeau</li><li>Défilé du mois</li></ol></div></li>
+      <li class="ct-prog-mois reveal reveal-delay-2"><span class="ct-prog-num">VI</span><div><p class="ct-prog-quand">Mois 6</p><h3>Miss et concours</h3><ol><li>Se présenter au jury</li><li>Tenue de soirée et écharpe</li><li>Prendre la parole sur scène</li><li>Concours blanc</li></ol></div></li>
+      <li class="ct-prog-mois ct-prog-mois--suite reveal"><span class="ct-prog-num">VII<small>+</small></span><div><p class="ct-prog-quand">À partir du mois 7</p><h3>Perfectionnement</h3><p>Des séances adaptées à votre niveau et à votre objectif. Le dernier dimanche de chaque mois reste un défilé.</p></div></li>
+    </ol>
+    <p class="ct-prog-pied reveal">Votre programme personnel vous est envoyé sur WhatsApp dès votre inscription validée : vos dates, le lieu, et un bouton pour tout ajouter à votre calendrier.</p>
   </div>
 </section>
 

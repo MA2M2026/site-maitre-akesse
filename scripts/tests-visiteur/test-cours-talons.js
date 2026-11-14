@@ -66,7 +66,11 @@ async function navigateur() {
     ok(/intégrer l'agence|member of the agency/i.test(avert) && await p.locator('.ct-avertissement a[href="integrer-agence.html"]').count() === 1, n + 'avertissement « pas pour intégrer l’agence », avec le lien vers « Intégrer l’agence »');
     ok(await p.locator('.video-pleine video source[src*="assets/cours-talons/atelier-talons-elegance.mp4"]').count() === 1, n + 'vidéo de présentation sur la page');
     const prix = await p.textContent('.ct-formules');
-    ok(prix.includes('30 000') && prix.includes('25 000') && /4 séances|4 sessions/.test(prix) && /la séance|per session/.test(prix), n + 'prix : groupe 30 000 les 4 séances, privé à la séance');
+    ok(prix.includes('30 000') && prix.includes('25 000') && /le mois : 4 dimanches|a month: 4 Sundays/.test(prix) && /1 à 12 mois|1 to 12 months/.test(prix) && /la séance|per session/.test(prix), n + 'prix : groupe 30 000 le mois (4 dimanches, 1 à 12 mois), privé à la séance');
+    // (14/11/2026) le programme du groupe, mois après mois (validé par la propriétaire)
+    const prog = await p.$$eval('#programme .ct-prog-mois h3', (l) => l.map((x) => x.textContent));
+    ok(prog.length === 7 && prog[0] === (en ? 'The basics' : 'Les bases') && prog[5] === (en ? 'Pageants' : 'Miss et concours') && prog[6] === (en ? 'Fine-tuning' : 'Perfectionnement'), n + 'programme : 6 mois puis le perfectionnement (' + prog.join(', ') + ')');
+    ok(await p.locator('.ct-carte a[href="#programme"]').count() === 1, n + 'la carte du groupe mène au programme');
 
     // étape 1
     await p.click('#ct-suivant');

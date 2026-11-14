@@ -127,3 +127,32 @@
 @media (prefers-reduced-motion: reduce) {
   .ct-etape, .ct-merci, .ct-choix input:checked + span::after { animation: none; }
 }
+/* Le programme du cours en groupe, mois après mois (14/11/2026, programme validé par la propriétaire) : une frise de
+   cartes en verre sur le rouge du site ; 1 colonne sur téléphone, 2 puis 3 sur grand écran. */
+.ct-prog-section { padding: 5rem 0 2rem; }
+.ct-prog-intro { max-width: 34em; margin: -1rem auto 2.4rem; text-align: center; color: rgba(255, 255, 255, 0.88); font-size: 1.02rem; line-height: 1.6; }
+.ct-prog { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; counter-reset: none; position: relative; }
+.ct-prog-mois { display: flex; gap: 1.1rem; align-items: flex-start; padding: 1.5rem 1.4rem; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)); color: #fff; }
+.ct-prog-num { flex: 0 0 3.2rem; height: 3.2rem; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.55);
+  font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.35rem; line-height: 1; }
+.ct-prog-num { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+.ct-prog-section .lx-surtitre { margin-left: auto; margin-right: auto; }
+.ct-prog-mois--suite .ct-prog-num { font-size: 1.1rem; }
+.ct-prog-num small { font-size: 0.75rem; margin-left: 1px; }
+.ct-prog-quand { margin: 0.1rem 0 0.15rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255, 255, 255, 0.72); }
+.ct-prog-mois h3 { margin: 0 0 0.6rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.9rem; line-height: 1.05; text-transform: none; letter-spacing: 0; color: #fff; }
+.ct-prog-mois ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; }
+.ct-prog-mois ol li { position: relative; padding-left: 1.1rem; font-size: 0.95rem; line-height: 1.45; color: rgba(255, 255, 255, 0.9); }
+.ct-prog-mois ol li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 1px; background: rgba(255, 255, 255, 0.7); }
+.ct-prog-mois ol li:last-child { font-style: italic; }
+.ct-prog-mois p:not(.ct-prog-quand) { margin: 0; font-size: 0.95rem; line-height: 1.55; color: rgba(255, 255, 255, 0.9); }
+.ct-prog-mois--suite { background: #fff; border-color: #fff; color: #7C2128; }
+.ct-prog-mois--suite .ct-prog-num { border-color: rgba(124, 33, 40, 0.4); color: #7C2128; }
+.ct-prog-mois--suite h3, .ct-prog-mois--suite p:not(.ct-prog-quand) { color: #7C2128; }
+.ct-prog-mois--suite .ct-prog-quand { color: #8B5A60; }
+.ct-prog-pied { max-width: 34em; margin: 2rem auto 0; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; line-height: 1.4; color: #fff; }
+.ct-carte-plus { font-size: 0.92rem; }
+.ct-carte-plus a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 700px) { .ct-prog { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1100px) { .ct-prog { grid-template-columns: repeat(3, 1fr); } .ct-prog-mois--suite { grid-column: 1 / -1; } }
