@@ -19,7 +19,11 @@
 
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (x) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[x]));
   const dateLisible = (iso) => String(iso || '').split('-').reverse().join('/');
-  const etapes = (n) => { Array.prototype.forEach.call(barre.children, (i, k) => { i.className = k < n ? 'on' : ''; }); };
+  // (14/11/2026, maquette validée par la propriétaire : maquettes/inscription-mannequin.html) étapes nommées, cochées une à une
+  const NOMS_ETAPES = [T('Code', 'Code'), T('Vos infos', 'Your details'), T('Règlement', 'Rules'), T('Paiement', 'Payment')];
+  Array.prototype.forEach.call(barre.children, (li, k) => { li.textContent = NOMS_ETAPES[k]; });
+  const etapes = (n, fini) => { Array.prototype.forEach.call(barre.children, (i, k) => { i.className = fini || k + 1 < n ? 'fait' : k + 1 === n ? 'actif' : ''; }); };
+  const prenom = () => String((E.c && (E.c.salutation || E.c.full_name)) || '').trim();
   const bandeau = (t, type) => t ? '<div class="inn-bandeau ' + type + '" role="alert">' + esc(t) + '</div>' : '';
   const ligne = (a, b) => b ? '<div class="inn-ligne"><span>' + esc(a) + '</span><b>' + esc(b) + '</b></div>' : '';
   const champ = (id, libelle, valeur, type) => '<div class="form-champ"><label for="' + id + '">' + esc(libelle) + '</label><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(valeur) + '"></div>';
@@ -27,8 +31,9 @@
 
   function ecranCode() {
     etapes(1);
-    return '<div class="inn-carte"><div><h1>' + T('Inscription nouveaux mannequins', 'New model registration') + '</h1>' +
-      '<p class="inn-doux">' + T('Réservée aux mannequins retenus. Entrez le code personnel transmis par l’agence.', 'For selected models only. Enter the personal code sent by the agency.') + '</p></div>' +
+    return '<div class="inn-une"><div><small>' + T('Retenue au casting', 'Selected at the casting') + '</small><h1>' + T('Bienvenue chez <em>MA2M</em>', 'Welcome to <em>MA2M</em>') + '</h1></div></div>' +
+      '<div class="inn-carte inn-carte--sous-une"><div><h2 class="u-lecteur-ecran">' + T('Inscription nouveaux mannequins', 'New model registration') + '</h2>' +
+      '<p class="inn-doux">' + T('Réservée aux mannequins retenus : entrez le code personnel que l’agence vous a envoyé, et votre date de naissance.', 'For selected models only: enter the personal code sent by the agency, and your date of birth.') + '</p></div>' +
       champ('inn-code', T('Code d’inscription', 'Registration code'), E.code) +
       champ('inn-naissance', T('Votre date de naissance', 'Your date of birth'), E.naissance, 'date') +
       bandeau(E.erreur, 'erreur') +
@@ -42,14 +47,20 @@
     const tete = '<div><div class="inn-surtitre">' + T('Étape 1 sur 3', 'Step 1 of 3') + '</div><h2>' + T('Bonjour ' + esc(c.salutation) + ', félicitations !', 'Hello ' + esc(c.salutation) + ', congratulations!') + '</h2>' +
       '<p class="inn-doux">' + T('Vous avez été retenu(e). Vos informations du casting sont déjà chez nous.', 'You have been selected. Your casting details are already with us.') + '</p></div>';
     if (!E.correction) {
-      return '<div class="inn-carte">' + tete + '<div>' + ligne(T('Nom', 'Name'), c.full_name) + ligne(T('Date de naissance', 'Date of birth'), dateLisible(c.date_naissance)) +
-        ligne(T('Téléphone', 'Phone'), c.telephone) + ligne('E-mail', c.email) + ligne(T('Ville', 'City'), c.ville) +
-        (mineur() ? ligne(T('Parent ou tuteur', 'Parent or guardian'), c.parent_nom) + ligne(T('Téléphone du parent', 'Parent’s phone'), c.parent_telephone) : '') +
-        ligne(T('Casting', 'Casting'), c.casting) + '</div>' +
+      // (14/11/2026) « Bonjour …, félicitations ! » en grand, carte « Future mannequin MA2M », informations en relevé
+      const info = (ic, titre, valeur) => valeur ? '<div><em aria-hidden="true">' + ic + '</em><span><small>' + esc(titre) + '</small>' + esc(valeur) + '</span></div>' : '';
+      return '<div class="inn-bravo"><h2>' + T('Bonjour <em>' + esc(prenom()) + '</em>,<br>félicitations !', 'Hello <em>' + esc(prenom()) + '</em>,<br>congratulations!') + '</h2>' +
+        '<p>' + T('Vous avez été retenu(e). Vos informations du casting sont déjà chez nous.', 'You have been selected. Your casting details are already with us.') + '</p></div>' +
+        '<div class="inn-cb"><div class="inn-cb-tete"><span>' + T('FUTURE MANNEQUIN MA2M', 'FUTURE MA2M MODEL') + '</span><span>' + new Date().getFullYear() + '</span></div>' +
+        '<div class="inn-cb-nom">' + esc(String(c.full_name || '').toUpperCase()) + '</div>' +
+        '<div class="inn-cb-bas"><div><b>' + T('CASTING', 'CASTING') + '</b>' + esc(c.casting || '—') + '</div><div><b>' + T('FORMATION', 'TRAINING') + '</b>' + T('Niveau 1', 'Level 1') + '</div></div></div>' +
+        '<div class="inn-releve">' + info('🎂', T('Naissance', 'Date of birth'), dateLisible(c.date_naissance)) + info('📱', 'WhatsApp', c.telephone) + info('✉️', 'E-mail', c.email) + info('📍', T('Ville', 'City'), c.ville) +
+        (mineur() ? info('👪', T('Parent ou tuteur', 'Parent or guardian'), c.parent_nom) + info('📞', T('Téléphone du parent', 'Parent’s phone'), c.parent_telephone) : '') + '</div>' +
+        '<div class="inn-carte inn-carte--nue">' +
         (mineur() && !(c.parent_nom && c.parent_telephone) ? '<div class="inn-note">' + T('Mineur : le nom et le téléphone du parent sont obligatoires. Touchez « Non, corriger ».', 'Minor: the parent’s name and phone are required. Tap “No, correct”.') + '</div>' : '') +
         '<p class="inn-question">' + T('Ces informations sont-elles exactes ?', 'Is this information correct?') + '</p>' +
-        '<button class="btn btn--principal" type="button" data-a="oui"' + (mineur() && !(c.parent_nom && c.parent_telephone) ? ' disabled' : '') + '>' + T('Oui, continuer', 'Yes, continue') + '</button>' +
-        '<button class="btn" type="button" data-a="corriger">' + T('Non, corriger', 'No, correct') + '</button></div>';
+        '<button class="btn btn--principal inn-btn-blanc" data-bouton-libre type="button" data-a="oui"' + (mineur() && !(c.parent_nom && c.parent_telephone) ? ' disabled' : '') + '>' + T('Oui, continuer', 'Yes, continue') + '</button>' +
+        '<button class="btn inn-btn-contour" data-bouton-libre type="button" data-a="corriger">' + T('Non, corriger', 'No, correct') + '</button></div>';
     }
     return '<div class="inn-carte">' + tete +
       champ('inn-nom', T('Nom et prénoms', 'Full name'), c.full_name) + champ('inn-tel', T('Téléphone (WhatsApp)', 'Phone (WhatsApp)'), c.telephone, 'tel') +
@@ -104,9 +115,24 @@
         : T('Après avoir payé, revenez ici, vérifiez le numéro, puis appuyez sur « J’ai payé ». L’agence vérifie la réception avant de valider.', 'After paying, come back here, check the number, then tap “I have paid”. The agency checks the payment before confirming.')) + '</p></div></div></div>';
   }
 
+  // (14/11/2026) les 3 premiers mois de sa formation (formation_programme, lisible sans compte : supabase-programme-mannequins.sql)
+  async function chargerProgramme() {
+    try {
+      if (typeof sb === 'undefined') return;
+      const r = await sb.from('formation_programme').select('mois, theme').eq('niveau', 1).order('mois').limit(3);
+      E.programme = !r.error && Array.isArray(r.data) ? r.data.slice(0, 3) : null;
+    } catch (e) { E.programme = null; }
+  }
   function ecranMerci() {
-    etapes(4);
-    return '<div class="inn-carte"><div class="inn-bandeau info">' + T('Merci ! L’agence vérifie votre paiement. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'Thank you! The agency is checking your payment. You will be notified by e-mail and WhatsApp as soon as it is confirmed.') + '</div>' +
+    etapes(4, true);
+    const suite = [[T('Paiement envoyé', 'Payment sent'), T('L’agence le vérifie.', 'The agency is checking it.')],
+      [T('Votre code d’espace', 'Your space code'), T('Par WhatsApp et e-mail, pour créer votre compte.', 'By WhatsApp and e-mail, to create your account.')],
+      [T('Votre programme', 'Your programme'), T('Dans l’application MA2M Mannequin, mois après mois.', 'In the MA2M Mannequin app, month after month.')]];
+    const prog = Array.isArray(E.programme) && E.programme.length ? '<p class="inn-titre-sec">' + T('Votre formation commence par…', 'Your training starts with…') + '</p><div class="inn-mois">' +
+      E.programme.map((m) => '<div><small>' + T('Mois ', 'Month ') + esc(m.mois) + '</small><b>' + esc(m.theme) + '</b></div>').join('') + '</div>' : '';
+    return '<div class="inn-bravo"><h2>' + T('Merci, <em>' + esc(prenom()) + '</em> !', 'Thank you, <em>' + esc(prenom()) + '</em>!') + '</h2><p>' + T('Votre inscription est envoyée. Voici la suite.', 'Your registration has been sent. Here is what comes next.') + '</p></div>' +
+      '<ol class="inn-suite">' + suite.map((s, k) => '<li' + (k === 0 ? ' class="ok"' : '') + '><span aria-hidden="true">' + (k === 0 ? '✓' : k + 1) + '</span><div><b>' + esc(s[0]) + '</b><small>' + esc(s[1]) + '</small></div></li>').join('') + '</ol>' + prog +
+      '<div class="inn-carte inn-carte--nue"><div class="inn-bandeau info">' + T('Merci ! L’agence vérifie votre paiement. Vous serez prévenu(e) par e-mail et WhatsApp dès qu’il est confirmé.', 'Thank you! The agency is checking your payment. You will be notified by e-mail and WhatsApp as soon as it is confirmed.') + '</div>' +
       '<p class="inn-doux">' + T('Ensuite, l’agence vous enverra le code pour créer votre espace mannequin. Vous pouvez fermer cette page.', 'Next, the agency will send you the code to create your model space. You can close this page.') + '</p></div>';
   }
 
@@ -153,7 +179,7 @@
     try {
       const { rep, r } = await serveur({ type: 'inscription-payer', infos });
       E.occupe = false;
-      if (rep.ok) { aller('merci'); return; }
+      if (rep.ok) { aller('merci'); void chargerProgramme().then(() => { if (E.ecran === 'merci') dessiner(); }); return; }
       // (seuls nos propres messages s'affichent, jamais un message technique de la base)
       E.erreur = r.error === 'dossier' ? (/obligatoires|règlement|invalide|indisponible/.test(r.message || '') ? r.message : T('Informations incomplètes. Vérifiez puis réessayez.', 'Incomplete information. Check and try again.'))
         : messageAccesRefuse(rep, r, T('Ce code n’est plus valable', 'This code is no longer valid')) || T('Impossible d’enregistrer votre paiement. Contactez l’agence.', 'Your payment could not be recorded. Please contact the agency.');
