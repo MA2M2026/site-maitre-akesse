@@ -6,11 +6,18 @@
 //    au-dessus, l'ancienne ne s'efface qu'ensuite (pas de trou, pas de clignotement) ;
 //  - photo préchargée par prechargerPhoto (js/photos.js) : une photo qui ne vient pas n'est jamais montrée ;
 //  - jamais la même photo à deux endroits en même temps ;
+//  - (13/11/2026) la bande de photos du milieu (galerie) défile toute seule, en continu, comme un tapis roulant
+//    (toutes les photos, puis les mêmes à la suite : la boucle ne se voit pas) ; elle s'arrête sous le doigt ;
 //  - seulement quand la section est à l'écran et l'onglet visible ; rien ne bouge si le visiteur demande moins
 //    d'animations.
 (function () {
   'use strict';
-  const NOMS = ['mannequin-podium.jpg', 'galerie-tailleur.jpg', 'galerie-blanc.jpg', 'galerie-drapeau.jpg', 'mannequin-defile.jpg', 'ma2m-book-4.jpg'];
+  // (13/11/2026, demande de la propriétaire) l'Atelier talons ne montre QUE des femmes (pas de garçon), avec aussi les
+  // photos d'Alicia Kouadio (majeure, choisie par la propriétaire) ; Intégrer l'agence garde aussi la photo du défilé homme
+  const FEMMES = ['mannequin-podium.jpg', 'galerie-tailleur.jpg', 'galerie-blanc.jpg', 'galerie-drapeau.jpg', 'mannequin-defile.jpg',
+    'alicia-1.jpg', 'alicia-2.jpg', 'alicia-3.jpg', 'alicia-4.jpg', 'alicia-5.jpg'];
+  const TALONS = /cours-talons/.test(location.pathname);
+  const NOMS = TALONS ? FEMMES : FEMMES.concat(['ma2m-book-4.jpg']);
   const FONDU = 1200;  // ms
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const EN = /^en/i.test(document.documentElement.lang || '');
@@ -74,12 +81,33 @@
     };
     zones.push(z);
   }
+  // la bande du milieu : un tapis roulant de toutes les photos (deux fois de suite, pour une boucle sans à-coup)
+  function tapis(grille) {
+    const modele = grille.querySelector('.lx-galerie-photo');
+    if (!modele) return;
+    const figure = (nom, cache) => {
+      const f = modele.cloneNode(true); f.classList.remove('reveal', 'reveal-delay-1', 'reveal-delay-2'); f.classList.add('visible');
+      const img = f.querySelector('img'); img.src = adresse(nom); img.alt = cache ? '' : ALT; img.loading = 'lazy';
+      if (cache) f.setAttribute('aria-hidden', 'true');
+      return f;
+    };
+    const piste = document.createElement('div'); piste.className = 'lx-tapis';
+    NOMS.forEach((n) => piste.appendChild(figure(n, false)));
+    NOMS.forEach((n) => piste.appendChild(figure(n, true)));
+    piste.style.setProperty('--duree', (NOMS.length * 4.5) + 's');
+    grille.textContent = ''; grille.appendChild(piste); grille.classList.add('en-tapis');
+    // seulement à l'écran et dans un onglet visible (sinon la bande s'arrête)
+    const jouer = (oui) => { piste.style.animationPlayState = oui && !document.hidden ? 'running' : 'paused'; };
+    let visible = true;
+    if ('IntersectionObserver' in window) new IntersectionObserver((e) => { visible = e[0].isIntersecting; jouer(visible); }).observe(grille);
+    document.addEventListener('visibilitychange', () => jouer(visible));
+  }
   function planifier(z, d) { clearTimeout(z.minuteur); z.minuteur = z.aLEcran && !document.hidden ? setTimeout(z.suivante, d) : null; }
   const reprendre = (z) => planifier(z, z.pas + z.decalage);
 
   function lancer() {
     document.querySelectorAll('.lx-hero-photo').forEach((img) => zone(img, 6000, 0));
-    document.querySelectorAll('.lx-galerie-photo img').forEach((img, i) => zone(img, 5200, 900 * i));
+    document.querySelectorAll('.lx-galerie-grille').forEach(tapis);
     document.querySelectorAll('.lx-defile-photo').forEach((img) => zone(img, 6000, 1500));
     // UN observateur pour toutes les zones : chacune ne vit que quand sa section est à l'écran
     // (la section entière : sur téléphone, la galerie défile de côté)

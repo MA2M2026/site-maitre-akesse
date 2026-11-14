@@ -1,0 +1,19 @@
+# Maquette « Mon programme » : décision de la propriétaire (14/11/2026)
+
+- **VALIDÉE** : « C'est bien, on part sur cette maquette. C'est exactement ça. »
+- **Demande en plus** : la rendre « encore plus belle, plus chic, plus clean, plus classe, vraiment premium ». Cela vaut
+  pour la page de l'élève ET pour son dossier dans l'Administration (même esprit que les « Paiements premium »).
+- **À garder absolument** : le bouton « Ajouter à mon calendrier ». Toutes les séances s'ajoutent d'un coup dans
+  l'agenda du téléphone de l'élève (fichier .ics : iPhone et Android), avec un rappel la veille.
+- **Suite prévue** (plan validé dans la conversation « Réorganisation ») :
+  - étape 2 : messages WhatsApp tout prêts (inscription reçue, lien de paiement, paiement validé + programme, rappel) ;
+  - étape 3 : cours privés (lieu, créneaux libres seulement, 1h30 d'écart, ou « dates à convenir ensemble », créneaux
+    réservés 48 h) ;
+  - étape 4 : dossier de l'élève, planning jour par jour, notification 24 h avant chaque séance.
+- **Avant tout** : montrer à la propriétaire la maquette retravaillée (plus premium), puis construire, une étape à la
+  fois.
+- **Pas encore en ligne sur cette branche** (à mettre en ligne avec le reste, après la batterie complète) :
+  - fiche des cours de talons rangée ;
+  - inscriptions classées par jour ;
+  - Atelier talons avec uniquement des femmes ;
+  - bande de photos qui défile toute seule.

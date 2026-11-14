@@ -1145,6 +1145,11 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 @media (max-width: 700px) { .texte-zone { grid-template-columns: 1fr; } .textes-enregistrer { bottom: 84px; } }
 /* Cours de talons (08/11/2026, js/admin/site-cours-talons.js) : fiche d'une inscription */
 .ct-fiche h2 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+/* (13/11/2026) boutons de la fiche : une rangée aérée sous les photos (vidéo, WhatsApp, lien Wave) */
+.ct-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 18px; padding-top: 14px; border-top: 1px solid #EADCDD; }
+.ct-fiche .galerie-dossier { margin-top: 6px; }
+.ct-fiche .photo-dossier figcaption { justify-content: center; }
+.jour-groupe > .ct-fiche + .ct-fiche { margin-top: 16px; }
 .ct-infos { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0; }
 .ct-infos dt { font-weight: 600; }
 .ct-infos dd { margin: 0; overflow-wrap: anywhere; }

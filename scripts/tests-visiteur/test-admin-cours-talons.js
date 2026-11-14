@@ -42,6 +42,13 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     }
     let t = await texte();
     ok(t.includes('KOUASSI MARIE') && t.includes('AWA DIALLO') && !t.includes('ANCIENNE ÉLÈVE'), n + '« À traiter » : les 2 inscriptions en cours, pas la terminée');
+    // (13/11/2026) regroupées par jour d'inscription, comme les castings ; boutons en une rangée aérée
+    if (process.env.CAPTURES) { await p.locator('.ct-fiche[data-id="t1"]').scrollIntoViewIfNeeded(); await p.screenshot({ path: process.env.CAPTURES + '/cours-talons-' + n.replace(/\W+/g, '') + '.png', fullPage: false }); }
+    const jours = await p.$$eval('.jour-groupe .jour-titre', (l) => l.map((x) => x.textContent.trim()));
+    ok(jours.length >= 1 && jours.every((j) => /\d/.test(j)), n + 'inscriptions regroupées par jour (' + jours.join(' | ') + ')');
+    const rangee = await p.$$eval('.ct-fiche[data-id="t1"] .ct-actions > a', (l) => l.map((a) => { const r = a.getBoundingClientRect(); return [r.top, r.bottom, r.left, r.right]; }));
+    const chevauche = rangee.some((a, i) => rangee.some((b, j) => i < j && a[0] < b[1] - 1 && b[0] < a[1] - 1 && a[2] < b[3] - 1 && b[2] < a[3] - 1));
+    ok(rangee.length >= 3 && !chevauche, n + 'vidéo, WhatsApp et lien Wave dans une rangée, sans se chevaucher (' + rangee.length + ' boutons)');
     ok(/Mineure/.test(t) && t.includes('Mme Kouassi') && t.includes('10 séances') && t.includes('250 000 FCFA'), n + 'fiche : mineure avec son parent, 10 séances, 250 000 FCFA');
     // (13/11/2026) les photos sont AFFICHÉES dans la fiche (plus de simples boutons) et s'agrandissent d'un appui ;
     // la vidéo reste un bouton

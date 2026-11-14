@@ -1,5 +1,5 @@
 // Photos qui défilent (13/11/2026, demande de la propriétaire) sur Intégrer l'agence et Atelier talons (FR et EN),
-// téléphone et ordinateur : la grande photo du haut et les photos de la galerie changent toutes seules, en fondu,
+// téléphone et ordinateur : la grande photo du haut change toute seule, en fondu ; la bande du milieu défile comme un tapis roulant ;
 // sans laisser de trou ni déborder ; rien ne bouge si le visiteur demande moins d'animations (js/diaporama-luxe.js).
 // Et l'accueil : en attendant la photo de couverture (rechargement), le fond est NOIR, plus rouge. Base SIMULÉE.
 const { chromium, devices } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
@@ -31,20 +31,21 @@ const vue = (p, zone) => p.evaluate((z) => { const i = [...document.querySelecto
       const trous = await p.evaluate(async () => { let t = 0; const z = document.querySelector('.lx-hero-photo').parentElement;
         for (let i = 0; i < 40; i++) { if (![...z.querySelectorAll('.lx-hero-photo')].some((x) => +getComputedStyle(x).opacity > 0.98)) t++; await new Promise((r) => setTimeout(r, 160)); } return t; });
       ok(trous === 0, n + 'pas de trou pendant les fondus (' + trous + ')');
-      // la galerie aussi : à tout instant, dans chaque cadre, la photo du dessus est opaque (pas de clignotement)
-      const clign = await p.evaluate(async () => { document.querySelector('.lx-galerie').scrollIntoView(); let t = 0;
-        for (let i = 0; i < 60; i++) { document.querySelectorAll('.lx-galerie-photo').forEach((f) => { const im = [...f.querySelectorAll('img')].sort((a, b) => (+getComputedStyle(b).zIndex || 0) - (+getComputedStyle(a).zIndex || 0));
-          const op = im.map((x) => +getComputedStyle(x).opacity); if (!(Math.max(...op) > 0.98)) t++; }); await new Promise((r) => setTimeout(r, 150)); } return t; });
-      ok(clign === 0, n + 'galerie : à tout instant, une photo entièrement opaque dans chaque cadre (' + clign + ')');
-      // jamais la même photo à deux endroits en même temps
-      const doubles = await p.evaluate(async () => { let pire = 0; for (let i = 0; i < 40; i++) { const vus = [...document.querySelectorAll('.lx-hero-photo, .lx-galerie-photo img, .lx-defile-photo')].filter((x) => +getComputedStyle(x).opacity > 0.98).map((x) => x.getAttribute('src').replace(/\?.*$/, '')); pire = Math.max(pire, vus.length - new Set(vus).size); await new Promise((r) => setTimeout(r, 200)); } return pire; });
-      ok(doubles === 0, n + 'jamais la même photo à deux endroits (' + doubles + ')');
-      // la galerie : on la fait venir à l'écran, ses photos changent aussi
+      // (13/11/2026) la bande du milieu défile toute seule, comme un tapis roulant, sans qu'on la pousse
       await p.evaluate(() => document.querySelector('.lx-galerie').scrollIntoView());
-      const avant = await p.evaluate(() => [...document.querySelectorAll('.lx-galerie-photo')].map((f) => [...f.querySelectorAll('img')].filter((i) => getComputedStyle(i).opacity === '1').pop()?.getAttribute('src')));
-      await p.waitForTimeout(10500);
-      const apres = await p.evaluate(() => [...document.querySelectorAll('.lx-galerie-photo')].map((f) => [...f.querySelectorAll('img')].filter((i) => getComputedStyle(i).opacity === '1').pop()?.getAttribute('src')));
-      ok(avant.length === 3 && apres.every((s, i) => s && s !== avant[i]), n + 'les 3 photos de la galerie changent');
+      const pos = () => p.evaluate(() => { const t = document.querySelector('.lx-tapis'); return t ? new DOMMatrix(getComputedStyle(t).transform).m41 : null; });
+      const x1 = await pos(); await p.waitForTimeout(2500); const x2 = await pos();
+      ok(x1 !== null && x2 < x1 - 20, n + 'la bande de photos défile toute seule (' + Math.round(x1) + ' → ' + Math.round(x2) + ' px)');
+      const nbTapis = await p.$$eval('.lx-tapis .lx-galerie-photo img', (l) => l.length);
+      ok(nbTapis >= 20, n + 'la bande contient toutes les photos, deux fois de suite pour une boucle sans à-coup (' + nbTapis + ')');
+      // jamais la même photo en même temps en haut et dans la photo du défilé
+      const doubles = await p.evaluate(async () => { let pire = 0; for (let i = 0; i < 30; i++) { const vus = [...document.querySelectorAll('.lx-hero-photo, .lx-defile-photo')].filter((x) => +getComputedStyle(x).opacity > 0.98).map((x) => x.getAttribute('src').replace(/\?.*$/, '')); pire = Math.max(pire, vus.length - new Set(vus).size); await new Promise((r) => setTimeout(r, 200)); } return pire; });
+      ok(doubles === 0, n + 'jamais la même photo en haut et au défilé (' + doubles + ')');
+      // Atelier talons : que des femmes (jamais la photo du défilé homme)
+      if (/cours-talons/.test(page)) {
+        const toutes = await p.$$eval('img', (l) => l.map((x) => x.getAttribute('src') || ''));
+        ok(!toutes.some((s) => /ma2m-book-4/.test(s)) && toutes.some((s) => /alicia-1\.jpg/.test(s)), n + 'Atelier talons : que des photos de femmes, avec celles d’Alicia');
+      }
       ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'rien ne déborde sur le côté');
       ok(!absentes.length, n + 'toutes les photos existent ' + absentes.join(' '));
       ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
