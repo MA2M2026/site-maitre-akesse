@@ -5103,3 +5103,14 @@ avec photo (`.inn-une`), « Bonjour …, félicitations ! » + carte « Future m
 relevé (`.inn-releve`), boutons blanc / contour (`data-bouton-libre`), merci avec la suite en 3 points (`.inn-suite`) et les
 3 premiers mois du programme (`formation_programme`, niveau 1, lisible sans compte : supabase-programme-mannequins.sql ;
 fichier d'appoint supabase-programme-lecture-publique.sql, collé le 14/11/2026). Test : test-inscription.js.
+
+## Accueil de l'Administration : « L'agence ce mois-ci » et « Cette semaine » (14/11/2026, maquette validée)
+
+Maquette : `maquettes/accueil-administration.html`. js/admin/coque.js (`donneesAgence`, `carteAgence`, `semaine`), sous la
+recherche et « Envoyer un message » (leurs résultats doivent rester visibles sur téléphone) : carte façon carte bancaire
+(`.ag-*`) avec l'encaissé du mois (recettes de `compta_ecritures` non annulées : rôle Comptabilité seulement), les
+mannequins actives (Paiements), les élèves des cours de talons (Site) ; « Cette semaine » (`.se-*`, Site) : aujourd'hui et
+les jours qui ont quelque chose — projets de l'agenda, cours de talons (le groupe en une ligne avec le nombre d'élèves,
+chaque cours privé avec l'élève et son thème). Chaque lecture est facultative. Styles : css/admin-vivante.css.
+Test : test-nouvelle-admin.js. (Le « cours des mannequins » de la maquette n'est pas affiché : son thème dépend de chaque
+mannequin.)

@@ -73,6 +73,9 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(acc.tuiles.join() === 'Castings,Mannequins,Événements,Messages,Paiements,Comptabilité,Le site,Réglages' && !acc.rubriques, n + '8 tuiles, plus de longue liste de rubriques (' + acc.tuiles.join(', ') + ')');
     ok(!acc.rangement.length, n + 'chaque rubrique est rangée dans une seule tuile ' + acc.rangement.join(','));
     ok(!acc.deborde, n + 'rien ne dépasse de l’écran');
+    // (14/11/2026, maquette validée) « L'agence ce mois-ci » et « Cette semaine » (aujourd'hui en premier, l'événement de l'agenda)
+    ok(await p.isVisible('.ag-carte') && /L’AGENCE CE MOIS-CI/.test(await p.textContent('.ag-carte')) && /FCFA/.test(await p.textContent('.ag-carte')) && /mannequins actives/.test(await p.textContent('.ag-carte'))
+      && await p.isVisible('.se-semaine') && await p.locator('.se-jour.auj').count() === 1, n + 'accueil : carte « L’agence ce mois-ci » et « Cette semaine »');
     if (tel) ok(await p.isVisible('.onglets-bas') && (await p.$$eval('.onglets-bas a', (a) => a.map((x) => x.textContent))).join() === 'Accueil,Le site,Paiements,Compta', n + 'barre du bas : Accueil, Le site, Paiements, Compta');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'accueil : tous les textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
