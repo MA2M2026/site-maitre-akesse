@@ -33,3 +33,17 @@ set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000b1');
 select essai((mon_programme_formation() ->> 'total')::int in (9, 18) and json_array_length(mon_programme_formation() -> 'mois') = (mon_programme_formation() ->> 'total')::int, 'la mannequin voit son programme');
 reset role;
+-- (14/11/2026, demande de la propriétaire) mannequins déjà en cours de formation : 3, 6, 9 mois faits → le programme
+-- reprend au bon thème (9 mois faits → le 10e mois est le niveau 2, mois 1)
+insert into agence_mannequins (id, full_name, statut, date_entree, cree_le, mensualite, formation_niveaux, formation_mois_faits) values
+  ('00000000-0000-0000-0000-000000162e03', 'ESSAI 3 MOIS FAITS', 'actif', '2026-09-10', '2026-09-10', 10000, 2, 3),
+  ('00000000-0000-0000-0000-000000162e06', 'ESSAI 6 MOIS FAITS', 'actif', '2026-09-10', '2026-09-10', 10000, 2, 6),
+  ('00000000-0000-0000-0000-000000162e09', 'ESSAI 9 MOIS FAITS', 'actif', '2026-09-10', '2026-09-10', 10000, 2, 9)
+on conflict (id) do nothing;
+select essai((select x->>'theme' = 'Expression et regard' and x->>'date' = '2027-03-01' from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000162e03') -> 'mois') x where (x->>'rang')::int = 4),
+  '3 mois faits : en mars 2027, elle commence le mois 4 « Expression et regard »');
+select essai((select x->>'theme' like 'Le casting%' and x->>'date' = '2027-03-01' from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000162e06') -> 'mois') x where (x->>'rang')::int = 7),
+  '6 mois faits : en mars 2027, elle commence le mois 7 « Le casting »');
+select essai((select (x->>'niveau')::int = 2 and (x->>'mois_niveau')::int = 1 and x->>'date' = '2027-03-01' from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000162e09') -> 'mois') x where (x->>'rang')::int = 10)
+  and (select count(*) = 9 from json_array_elements(formation_programme_calcul('00000000-0000-0000-0000-000000162e09') -> 'mois') x where x->>'etat' = 'fait'),
+  '9 mois faits : le niveau 1 est fait, en mars 2027 elle entame son 10e mois (niveau 2, mois 1)');
