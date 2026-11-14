@@ -28,14 +28,17 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       { id: 't2', cree_le: '2026-11-07T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'AWA DIALLO', telephone: '+2250700000002', age: 24, photos: [], decision: 'maintenant',
         reference_wave: 'T_123', statut: 'paiement_envoye', montant: 30000, moyen: 'orange_money', jeton: 'f'.repeat(36) },
       { id: 't4', cree_le: '2026-10-05T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'JEUNE AYA', telephone: '+2250700000004', age: 15, parent_nom: 'M. Yao', parent_telephone: '+2250500000004',
-        photos: [], decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-10-06T10:00:00Z', jeton: 'e'.repeat(36) },
+        photos: [], decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-10-06T10:00:00Z', mois_payes: 1, jeton: 'e'.repeat(36) },
+      { id: 't5', cree_le: '2026-10-04T10:00:00Z', formule: 'groupe', nb_seances: 4, nb_mois: 3, paiement: 'mensuel', mois_payes: 1, civilite: 'madame', nom: 'FATOU TROIS MOIS', telephone: '+2250700000005', age: 31,
+        photos: [], decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-10-04T12:00:00Z', jeton: 'd'.repeat(36) },
       { id: 't3', cree_le: '2026-10-01T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'ANCIENNE ÉLÈVE', telephone: '+2250700000003', age: 30, photos: [], decision: 'maintenant', statut: 'terminee', montant: 30000, valide_le: '2026-10-02T10:00:00Z' }];
-    d.rpc = Object.assign({}, d.rpc, { cours_talons_valider: (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); Object.assign(l, { statut: 'inscrite', montant: c.p_montant, valide_le: '2026-11-08T12:00:00Z' });
+    d.rpc = Object.assign({}, d.rpc, { cours_talons_valider: (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); Object.assign(l, { statut: 'inscrite', montant: c.p_montant, valide_le: '2026-11-08T12:00:00Z', mois_payes: l.paiement === 'mensuel' ? 1 : (l.nb_mois || 1) });
       // (14/11/2026) la base remplit toute seule les 4 dimanches d'un groupe (déclencheur de supabase-programme-talons.sql)
       if (l.formule === 'groupe') d.tables.cours_talons_seances.push(...[0, 1, 2, 3].map((i) => ({ id: 's' + i, inscription_id: l.id, debut: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T15:00:00Z',
-        fin: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T18:00:00Z', lieu: 'Salle MA2M, Riviera Faya', theme: ['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Le défilé final'][i], faite: false })));
+        fin: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T18:00:00Z', lieu: 'Salle MA2M, Riviera Faya', mois: 1, theme: ['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Le défilé final'][i], faite: false })));
       return l; } });
     d.tables.cours_talons_seances = [];
+    d.rpc.cours_talons_mois_payer = (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); l.mois_payes = (l.mois_payes || 0) + 1; l.nb_mois = Math.max(l.nb_mois || 1, l.mois_payes); return l; };
     await brancher(p, d, journal); await photosLocales(p);
     if (sansProgramme) await p.route(/\/rest\/v1\/cours_talons_seances/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons_seances" does not exist' }) }));
     if (absente) await p.route(/\/rest\/v1\/cours_talons/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons" does not exist' }) }));
@@ -91,6 +94,15 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       const envoi = await p.getAttribute(fiche2 + 'a:has-text("Envoyer son programme")', 'href');
       ok(/^https:\/\/wa\.me\/2250700000002\?text=/.test(envoi) && /Bonjour Madame AWA DIALLO/.test(decodeURIComponent(envoi)) && decodeURIComponent(envoi).includes('https://www.maitreakessemodelmanagement.com/programme-talons?c=' + 'f'.repeat(36)),
         n + 'WhatsApp : « Bonjour Madame … » avec son lien personnel');
+      // (14/11/2026) groupe payé en une fois, 1 mois : « un mois de plus » ; 3 mois payés mois par mois : « Mois 2 payé »
+      ok(/Tous ses mois sont payés \(1\)/.test(await p.textContent(fiche2 + '.ct-mois')) && await p.locator(fiche2 + '[data-action="talons-mois"]').count() === 2, n + 'groupe d’un mois, tout payé : « Un mois de plus » proposé');
+      const f5 = '.ct-fiche[data-id="t5"] ';
+      ok(/Civilité\s*Madame/.test(await p.textContent(f5 + '.ct-infos')) && /3 mois, 12 dimanches, payés mois par mois/.test(await p.textContent(f5 + '.ct-infos')) && /Mois payés\s*1 \/ 3/.test(await p.textContent(f5 + '.ct-infos')), n + 'fiche 3 mois : civilité, durée, « payés mois par mois », 1 / 3 mois payés');
+      const lienMois = decodeURIComponent(await p.getAttribute(f5 + 'a:has-text("Lien du mois 2")', 'href'));
+      ok(/^https:\/\/wa\.me\/2250700000005\?text=Bonjour Madame FATOU TROIS MOIS/.test(lienMois) && /mois 2 sur 3/.test(lienMois) && /amount=30000/.test(lienMois) && lienMois.includes('programme-talons?c=' + 'd'.repeat(36)), n + '« Lien du mois 2 » : WhatsApp avec le lien Wave de 30 000 et sa page');
+      await p.click(f5 + '[data-action="talons-mois"]:not([data-valeur])'); await p.waitForTimeout(800);
+      const appelMois = journal.find((j) => j[0] === 'rpc' && j[1] === 'cours_talons_mois_payer');
+      ok(appelMois && JSON.parse(appelMois[2]).p_id === 't5' && JSON.parse(appelMois[2]).p_especes === false && JSON.parse(appelMois[2]).p_mois === 2 && /Mois payés : 2 \/ 3/.test(await p.textContent(f5 + '.ct-mois')), n + '« Mois 2 payé » : encaissé par la base, la fiche passe à 2 / 3');
       ok(await p.locator(fiche2 + 'a:has-text("Au parent")').count() === 0, n + 'élève majeure : pas de bouton « Au parent »');
       const parent = await p.getAttribute('.ct-fiche[data-id="t4"] a:has-text("Au parent")', 'href');
       ok(/^https:\/\/wa\.me\/2250500000004\?text=/.test(parent) && /Bonjour M\. Yao/.test(decodeURIComponent(parent)) && /L’inscription de Mademoiselle JEUNE AYA/.test(decodeURIComponent(parent)) && decodeURIComponent(parent).includes('programme-talons?c=' + 'e'.repeat(36)),

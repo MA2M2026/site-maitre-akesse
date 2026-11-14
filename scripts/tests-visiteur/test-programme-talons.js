@@ -13,6 +13,13 @@ const jour = (n, h) => { const d = new Date(); d.setUTCHours(h, 0, 0, 0); d.setU
 const THEMES = ['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Le défilé final'];
 const groupe = { nom: 'Awa Koné', civilite: 'Madame', formule: 'groupe', nb_seances: 4, statut: 'inscrite', numero: 'TAL-AB12CD',
   seances: [-6, 1, 8, 15].map((n, i) => ({ id: 'seance-' + i, debut: jour(n, 15), fin: jour(n, 18), lieu: 'Salle MA2M, Riviera Faya', theme: THEMES[i], faite: i === 0 })) };
+// (14/11/2026) groupe sur 3 mois, payé mois par mois : 1 mois réglé sur 3, « Mademoiselle » choisie
+const J_MOIS = 'd4'.repeat(18);
+const mois3 = { nom: 'Fatou Bamba', civilite: 'Mademoiselle', formule: 'groupe', nb_seances: 4, nb_mois: 3, mois_payes: 1, paiement: 'mensuel', prix_mois: 30000, statut: 'inscrite', numero: 'TAL-MO1S3X',
+  seances: Array.from({ length: 12 }, (_, i) => ({ id: 'm' + i, debut: jour(1 + 7 * i, 15), fin: jour(1 + 7 * i, 18), lieu: 'Salle MA2M, Riviera Faya', mois: Math.floor(i / 4) + 1, theme: THEMES[i % 4], faite: false }))
+    // un rattrapage ajouté à la main par l'agence (sans mois) : jamais « à régler »
+    .concat([{ id: 'rattrapage', debut: jour(2, 15), fin: jour(2, 17), lieu: 'Salle MA2M, Riviera Faya', theme: 'Rattrapage', faite: false }])
+    .sort((a, b) => (a.debut < b.debut ? -1 : 1)) };
 const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_salle', nb_seances: 2, statut: 'inscrite', numero: 'TAL-EF34GH', seances: [] };
 
 (async () => {
@@ -24,7 +31,7 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
-    await brancher(p, { tables: {}, rpc: { programme_talons_lire: (x) => x.p_jeton === J ? groupe : x.p_jeton === J_PRIVE ? prive : null } }, journal);
+    await brancher(p, { tables: {}, rpc: { programme_talons_lire: (x) => x.p_jeton === J ? groupe : x.p_jeton === J_PRIVE ? prive : x.p_jeton === J_MOIS ? mois3 : null } }, journal);
     const n = nom + ' : ';
     await p.goto(BASE + 'programme-talons.html?c=' + J); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
     ok(/Bienvenue,\s*Madame Awa Koné/.test(await p.textContent('#pt-titre')), n + 'vouvoiement : « Bienvenue, Madame Awa Koné »');
@@ -55,6 +62,18 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     ok(/Ouvrez le fichier/.test(await p.textContent('#pt-ics-note')), n + 'après le clic : comment ajouter les séances');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + 'rien ne dépasse de l’écran');
     if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/programme-talons-' + vp.width + '.png', fullPage: true });
+    // groupe sur 3 mois, payé mois par mois
+    await p.goto(BASE + 'programme-talons.html?c=' + J_MOIS); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
+    ok(/Mademoiselle Fatou Bamba/.test(await p.textContent('#pt-titre')) && /3 mois pour marcher/.test(await p.textContent('#pt-accroche')), n + '3 mois : « Mademoiselle » (son choix), « 3 mois pour marcher avec assurance »');
+    ok(/Formule en groupe · 3 mois · 13 séances/.test(await p.textContent('#pt-formule')) && (await p.textContent('#pt-paiement')) === '1 / 3 mois', n + 'carte d’élève : 3 mois, 13 séances (un rattrapage), 1 / 3 mois payés');
+    const tetes = await p.$$eval('.pt-mois-tete', (l) => l.map((x) => x.textContent));
+    ok(tetes.length === 3 && tetes[0] === 'Mois 1' && /Mois 2 · à régler \(30\s000\sFCFA\)/.test(tetes[1]) && await p.$$eval('.pt-seance.a-regler', (l) => l.length) === 8, n + 'séances rangées par mois ; mois 2 et 3 « à régler » (' + tetes.join(' | ') + ')');
+    ok(!(await p.getAttribute('.pt-seance:has-text("Rattrapage")', 'class')).includes('a-regler'), n + 'rattrapage ajouté à la main : jamais « à régler »');
+    ok(/Les 5 séances s’ajoutent.*Les mois suivants s’ajouteront une fois réglés/.test(await p.textContent('#pt-ics-note')), n + 'calendrier du téléphone : seulement le mois réglé');
+    const [dl3] = await Promise.all([p.waitForEvent('download'), p.click('#pt-ics')]);
+    ok((fs.readFileSync(await dl3.path(), 'utf8').match(/BEGIN:VEVENT/g) || []).length === 5, n + '.ics : les 4 séances du mois réglé et le rattrapage');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)), n + '3 mois : rien ne dépasse de l’écran');
+    if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/programme-talons-mois-' + vp.width + '.png', fullPage: true });
     // privé, mineure, séances pas encore fixées
     await p.goto(BASE + 'programme-talons.html?c=' + J_PRIVE); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
     ok(/Mademoiselle Petite Aya/.test(await p.textContent('#pt-titre')) && /bientôt programmées/.test(await p.textContent('#pt-proch-titre')) && await p.isHidden('#pt-ics') && await p.isHidden('#pt-bloc-cal'), n + 'privé sans dates : « Mademoiselle », « bientôt programmées », pas de bouton calendrier');

@@ -14,10 +14,11 @@
   const form = document.getElementById('form-talons');
   if (!form) return;
   const $ = (id) => document.getElementById(id);
-  // Prix (décision de la propriétaire, 08/11/2026) : le groupe est un forfait de 4 dimanches ; le privé se paie à la
-  // séance (à l'extérieur : 30 000 au départ, l'agence ajuste jusqu'à 35 000 selon le lieu). Mêmes valeurs que
-  // cours_talons_montant() dans la base, qui reste seule juge du montant enregistré.
-  const PRIX = { groupe: 30000, prive_salle: 25000, prive_exterieur: 30000 };
+  // Prix (décision de la propriétaire, 08/11/2026) : le groupe est un forfait de 4 dimanches par mois (prix du mois :
+  // js/talons-commun.js) ; le privé se paie à la séance (à l'extérieur : 30 000 au départ, l'agence ajuste jusqu'à
+  // 35 000 selon le lieu). La base reste seule juge du montant enregistré (cours_talons_montant, et pour le groupe le
+  // déclencheur cours_talons_avant_inscription de supabase-programme-talons.sql).
+  const PRIX = { groupe: window.TalonsCommun.PRIX_MOIS, prive_salle: 25000, prive_exterieur: 30000 };
   const WHATSAPP_AGENCE = window.TalonsCommun.NUMERO_AGENCE;  // js/talons-commun.js
   // 2 à 5 photos ; vidéo de 3 minutes au plus (décisions de la propriétaire, 10/11/2026). Le programme Google Drive
   // refuse plus de 60 Mo : la vidéo est allégée en 480p (environ 6 Mo la minute) et son poids final est vérifié.
@@ -46,14 +47,24 @@
   const formule = () => (form.querySelector('input[name="formule"]:checked') || {}).value || '';
   const decision = () => (form.querySelector('input[name="decision"]:checked') || {}).value || '';
   const nbSeances = () => (formule() === 'groupe' ? 4 : Math.max(1, Math.min(30, parseInt($('ct-nb').value, 10) || 1)));
-  const montant = () => (formule() === 'groupe' ? PRIX.groupe : (PRIX[formule()] || 0) * nbSeances());
+  // (14/11/2026) groupe sur plusieurs mois : 30 000 le mois, payé d'un coup ou mois par mois (la base décide du montant)
+  const nbMois = () => (formule() === 'groupe' ? Math.max(1, Math.min(12, parseInt($('ct-mois').value, 10) || 1)) : 1);
+  const paiementMois = () => (nbMois() > 1 && (form.querySelector('input[name="paiement"]:checked') || {}).value === 'mensuel' ? 'mensuel' : 'tout');
+  const civilite = () => (form.querySelector('input[name="civilite"]:checked') || {}).value || '';
+  const montant = () => (formule() === 'groupe' ? PRIX.groupe * (paiementMois() === 'mensuel' ? 1 : nbMois()) : (PRIX[formule()] || 0) * nbSeances());
   const age = () => parseInt($('ct-age').value, 10);
   const mineure = () => age() > 0 && age() < 18;
 
   function texteTotal() {
     const f = formule();
     if (!f) return '';
-    if (f === 'groupe') return T('Total : ', 'Total: ') + fcfa(PRIX.groupe) + T(' pour les 4 séances (4 dimanches).', ' for the 4 sessions (4 Sundays).');
+    if (f === 'groupe') {
+      const m = nbMois();
+      if (m === 1) return T('Total : ', 'Total: ') + fcfa(PRIX.groupe) + T(' pour les 4 séances (4 dimanches).', ' for the 4 sessions (4 Sundays).');
+      if (paiementMois() === 'mensuel') return T(`À payer maintenant : ${fcfa(PRIX.groupe)} (le premier mois), puis ${fcfa(PRIX.groupe)} chaque mois, ${m} mois en tout (${4 * m} dimanches).`,
+        `To pay now: ${fcfa(PRIX.groupe)} (the first month), then ${fcfa(PRIX.groupe)} each month, ${m} months in all (${4 * m} Sundays).`);
+      return T(`Total : ${fcfa(montant())} pour ${m} mois (${4 * m} dimanches).`, `Total: ${fcfa(montant())} for ${m} months (${4 * m} Sundays).`);
+    }
     const n = nbSeances(), s = n > 1 ? 's' : '';
     if (f === 'prive_salle') return T(`Total : ${fcfa(montant())} pour ${n} séance${s} de 2 h dans notre salle.`, `Total: ${fcfa(montant())} for ${n} 2-hour session${s} in our studio.`);
     return T(`Total : à partir de ${fcfa(montant())} pour ${n} séance${s} de 2 h (30 000 à 35 000 FCFA la séance selon le lieu ; l'agence vous confirme le prix exact).`,
@@ -63,6 +74,8 @@
     const f = formule();
     $('ct-bloc-prive').classList.toggle('u-hidden', !f || f === 'groupe');
     $('ct-bloc-adresse').classList.toggle('u-hidden', f !== 'prive_exterieur');
+    $('ct-bloc-groupe').classList.toggle('u-hidden', f !== 'groupe');
+    $('ct-bloc-paiement-mois').classList.toggle('u-hidden', f !== 'groupe' || nbMois() === 1);
     $('ct-total').textContent = texteTotal();
     $('ct-total-final').textContent = texteTotal();
     $('ct-lien-wave').href = LIEN_WAVE_AGENCE + montant();
@@ -88,6 +101,8 @@
   });
   form.querySelectorAll('input[name="formule"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-nb').addEventListener('change', majFormule);
+  $('ct-mois').addEventListener('change', majFormule);
+  form.querySelectorAll('input[name="paiement"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-objectif').addEventListener('change', () => $('ct-bloc-concours').classList.toggle('u-hidden', !['miss', 'beaute'].includes($('ct-objectif').value)));
   $('ct-age').addEventListener('input', () => $('ct-bloc-parent').classList.toggle('u-hidden', !mineure()));
   form.querySelectorAll('input[name="decision"]').forEach((r) => r.addEventListener('change', () => $('ct-bloc-wave').classList.toggle('u-hidden', decision() !== 'maintenant')));
@@ -117,6 +132,7 @@
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
     }
     if (n === 2) {
+      if (!civilite()) return erreur(T('Choisissez : Madame ou Mademoiselle.', 'Please choose: Mrs or Miss.'), form.querySelector('input[name="civilite"]'));
       if ($('ct-nom').value.trim().length < 2) return erreur(T('Indiquez votre nom.', 'Please give your name.'), $('ct-nom'));
       if (!/^[0-9 ]{6,14}$/.test($('ct-telephone').value.trim())) return erreur(T('Indiquez un numéro de téléphone valide.', 'Please give a valid phone number.'), $('ct-telephone'));
       if (!(age() >= 8 && age() <= 90)) return erreur(T('Indiquez votre âge.', 'Please give your age.'), $('ct-age'));
@@ -258,7 +274,7 @@
   function ligneInscription(liensPhotos, lienVideo) {
     const f = formule();
     return {
-      formule: f, nb_seances: nbSeances(),
+      formule: f, nb_seances: nbSeances(), nb_mois: nbMois(), paiement: paiementMois(), civilite: civilite() || null,
       nom: $('ct-nom').value.trim(),
       telephone: composerTelephone($('ct-indicatif'), $('ct-telephone')),
       age: age(),
@@ -277,11 +293,11 @@
       ...(decision() === 'maintenant' && moyenActuel().code !== 'wave' ? { moyen: moyenActuel().code } : {})
     };
   }
-  const NOMS_FORMULES = { groupe: 'En groupe (4 dimanches)', prive_salle: 'Privé dans la salle', prive_exterieur: 'Privé à l’extérieur' };
+  const NOMS_FORMULES = { groupe: 'En groupe (4 dimanches par mois)', prive_salle: 'Privé dans la salle', prive_exterieur: 'Privé à l’extérieur' };
   function resume(l, montantTexte) {
     return [`Inscription aux cours de talons${EN ? ' (site en anglais)' : ''}`,
-      `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? '' : ' · ' + l.nb_seances + ' séance(s)'} · ${montantTexte}`,
-      `Nom : ${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
+      `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? (l.nb_mois > 1 ? ' · ' + l.nb_mois + ' mois, payés ' + (l.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '') : ' · ' + l.nb_seances + ' séance(s)'} · ${montantTexte}`,
+      `Nom : ${l.civilite ? window.TalonsCommun.civilite(l.civilite) + ' ' : ''}${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',
       l.parent_nom ? `⚠️ Mineure. Parent : ${l.parent_nom} · ${l.parent_telephone}` : '',

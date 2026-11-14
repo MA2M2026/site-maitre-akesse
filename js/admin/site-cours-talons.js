@@ -31,13 +31,16 @@
   let seancesDe = {}, programmeAbsent = false;
   const quandSeance = (s) => { const a = new Date(s.debut), b = new Date(s.fin); const j = T.JOURS[a.getUTCDay()];
     return j.charAt(0).toUpperCase() + j.slice(1, 3) + '. ' + a.getUTCDate() + ' ' + T.MOIS_COURTS[a.getUTCMonth()] + ' · ' + T.heure(a) + ' – ' + T.heure(b); };
-  const civilite = (d) => T.civilite(d.age) + ' ' + String(d.nom || '').trim();
+  const civilite = (d) => T.civilite(d.civilite, d.age) + ' ' + String(d.nom || '').trim();
+  // (14/11/2026) groupe sur plusieurs mois : durée, façon de payer, mois payés
+  const nbMois = (d) => d.nb_mois || 1;
+  const dureeGroupe = (d) => seances(d) + (nbMois(d) > 1 ? ', payés ' + (d.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '');
 
-  const seances = (d) => d.formule === 'groupe' ? '4 dimanches' : d.nb_seances + ' séance' + (d.nb_seances > 1 ? 's' : '');
+  const seances = (d) => d.formule === 'groupe' ? (nbMois(d) > 1 ? nbMois(d) + ' mois, ' + 4 * nbMois(d) + ' dimanches' : '4 dimanches') : d.nb_seances + ' séance' + (d.nb_seances > 1 ? 's' : '');
   function messagePaiement(d) {
-    const prenom = String(d.nom || '').trim().split(/\s+/)[0] || '';
-    return 'Bonjour ' + prenom + ',\n\nMerci pour votre inscription à l’Atelier Talons & Élégance de Maître Akesse Model Management (' + FORMULES[d.formule] + ', ' + seances(d) + ').\n' +
-      'Montant : ' + P.fcfa(d.montant) + '.\nVous pouvez régler par Wave avec ce lien :\n' + LIEN_WAVE_AGENCE + (d.montant || 0) + '\n\n' +
+    // (14/11/2026) vouvoiement : « Bonjour Madame … » / « Mademoiselle … » (civilité choisie à l'inscription)
+    return 'Bonjour ' + civilite(d) + ',\n\nMerci pour votre inscription à l’Atelier Talons & Élégance de Maître Akesse Model Management (' + FORMULES[d.formule] + ', ' + seances(d) + ').\n' +
+      'Montant : ' + P.fcfa(d.montant) + (d.formule === 'groupe' && d.paiement === 'mensuel' && nbMois(d) > 1 ? ' (le premier mois ; puis ' + P.fcfa(T.PRIX_MOIS) + ' chaque mois)' : '') + '.\nVous pouvez régler par Wave avec ce lien :\n' + LIEN_WAVE_AGENCE + (d.montant || 0) + '\n\n' +
       (d.date_seance ? 'Votre première séance : le ' + P.date(d.date_seance) + '.\n\n' : '') + 'À très bientôt !\nMaître Akesse Model Management';
   }
 
@@ -76,7 +79,9 @@
     const wa = numeroWhatsApp(d.telephone), waParent = numeroWhatsApp(d.parent_telephone);
     const photos = photosDe(d);
     const infos = [
-      ['Formule', FORMULES[d.formule] + ' · ' + seances(d)], ['Montant', P.fcfa(d.montant)],
+      ['Civilité', d.civilite ? T.civilite(d.civilite) : ''],
+      ['Formule', FORMULES[d.formule] + ' · ' + (d.formule === 'groupe' ? dureeGroupe(d) : seances(d))], ['Montant', P.fcfa(d.montant)],
+      ['Mois payés', d.formule === 'groupe' && d.valide_le ? (d.mois_payes || 0) + ' / ' + nbMois(d) : ''],
       // (13/11/2026) le moyen choisi par la personne (Orange Money, carte…), Wave sinon
       ['Paiement', d.decision === 'maintenant' ? 'Payé par ' + nomMoyen(d.moyen) + ' à l’inscription' + (d.reference_wave ? ' (réf. ' + d.reference_wave + ')' : '') + ', à vérifier' : 'Paiera plus tard'],
       ['Téléphone', d.telephone], ['Âge', d.age ? d.age + ' ans' : ''], ['Quartier', d.quartier],
@@ -127,9 +132,9 @@
     const maintenant = Date.now();
     const prochaine = l.find((s) => !s.faite && new Date(s.fin).getTime() > maintenant);
     const lignesSeances = l.map((s, i) => {
-      const passee = s.faite || new Date(s.fin).getTime() <= maintenant;
+      const passee = s.faite || (new Date(s.fin).getTime() <= maintenant && !(s.mois > (d.mois_payes || 0)));   // (un dimanche non payé n'est jamais « fait »)
       return '<div class="pp-op ct-seance"><em class="' + (s === prochaine ? 'ct-proche' : passee ? 'ct-faite' : '') + '">' + (passee ? '✓' : i + 1) + '</em>' +
-        '<span>' + P.esc(s.theme || 'Séance ' + (i + 1)) + '<small>' + P.esc(quandSeance(s) + ' · ' + (s.lieu || LIEU_SALLE)) + '</small></span>' +
+        '<span>' + P.esc((s.mois && nbMois(d) > 1 ? 'Mois ' + s.mois + ' · ' : '') + (s.theme || 'Séance ' + (i + 1))) + '<small>' + P.esc(quandSeance(s) + ' · ' + (s.lieu || LIEU_SALLE)) + '</small></span>' +
         '<button type="button" class="ct-mini' + (s.faite ? ' oui' : '') + '" data-action="talons-seance-faite" data-id="' + P.esc(s.id) + '" data-valeur="' + (s.faite ? '' : '1') + '" aria-pressed="' + (s.faite ? 'true' : 'false') + '">' + (s.faite ? 'Faite ✓' : 'Faite ?') + '</button>' +
         '<button type="button" class="ct-mini" data-action="talons-seance-retirer" data-id="' + P.esc(s.id) + '" aria-label="Retirer la séance du ' + P.esc(quandSeance(s)) + '">✕</button></div>';
     }).join('');
@@ -138,7 +143,17 @@
     const envoi = d.jeton ? [wa ? '<a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messageProgramme(d)) + '">📅 Envoyer son programme (WhatsApp)</a>' : '',
       waParent ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '?text=' + encodeURIComponent(messageProgramme(d, true)) + '">📅 Au parent</a>' : '',
       '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(LIEN_PROGRAMME + d.jeton) + '">Voir sa page ↗</a>'].join('') : '';
-    return '<section class="ct-programme"><h3>Son programme <span class="nb">' + l.length + ' / ' + (groupe ? 4 : d.nb_seances) + '</span></h3>' +
+    // groupe : le mois suivant payé (ou un mois de plus quand tout est payé) → cours_talons_mois_payer
+    const moisSuivant = groupe && d.statut === 'inscrite' ? '<div class="ct-mois">' + ((d.mois_payes || 0) < nbMois(d)
+      ? '<p><b>Mois payés : ' + (d.mois_payes || 0) + ' / ' + nbMois(d) + '</b> · prochain mois à régler : ' + P.fcfa(T.PRIX_MOIS) + '</p>' +
+        (wa ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messageMois(d)) + '">💳 Lien du mois ' + ((d.mois_payes || 0) + 1) + ' (WhatsApp)</a>' : '') +
+        (waParent ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '?text=' + encodeURIComponent(messageMois(d, true)) + '">💳 Au parent</a>' : '') +
+        '<button type="button" class="btn rouge" data-action="talons-mois" data-id="' + id + '">✓ Mois ' + ((d.mois_payes || 0) + 1) + ' payé (' + P.esc(nomMoyen(d.moyen)) + ')</button>' +
+        '<button type="button" class="btn" data-action="talons-mois" data-id="' + id + '" data-valeur="especes">✓ Payé en espèces</button>'
+      : '<p><b>Tous ses mois sont payés (' + nbMois(d) + ').</b> Elle continue ? Un mois de plus ajoute 4 dimanches à la suite.</p>' +
+        '<button type="button" class="btn" data-action="talons-mois" data-id="' + id + '">＋ Un mois de plus payé (' + P.fcfa(T.PRIX_MOIS) + ')</button>' +
+        '<button type="button" class="btn" data-action="talons-mois" data-id="' + id + '" data-valeur="especes">＋ Un mois de plus, en espèces</button>') + '</div>' : '';
+    return '<section class="ct-programme"><h3>Son programme <span class="nb">' + l.length + ' / ' + (groupe ? 4 * nbMois(d) : d.nb_seances) + '</span></h3>' + moisSuivant +
       (l.length ? '<div class="pp-releve">' + lignesSeances + '</div>' : '<p class="doux">Aucune séance pour le moment. ' + (groupe ? 'Ajoutez les dimanches ci-dessous.' : 'Ajoutez ses séances privées ci-dessous.') + '</p>') +
       (envoi ? '<div class="ct-envoi">' + envoi + '</div>' : '') +
       '<details class="ct-ajout"' + (l.length ? '' : ' open') + '><summary>＋ Ajouter une séance</summary><form class="f ct-seance-ajout" data-form="talons-seance" data-id="' + id + '">' +
@@ -150,6 +165,14 @@
         '<label class="fl large" for="ct-s-theme-' + id + '">Thème (facultatif)<input id="ct-s-theme-' + id + '" name="theme" maxlength="120" placeholder="Ex. : Démarche et port de tête"></label>' +
         '<div class="ligne large"><button class="btn" type="submit">Ajouter la séance</button></div></form></details>' +
       '<p class="doux petit-texte">' + (groupe ? 'Les 4 dimanches sont remplis tout seuls à la validation du paiement. ' : '') + 'La page de l’élève se met à jour toute seule.</p></section>';
+  }
+  // mois suivant à régler (groupe payé mois par mois) : le lien Wave du mois, sur WhatsApp
+  function messageMois(d, parent) {
+    const n = (d.mois_payes || 0) + 1;
+    return 'Bonjour' + (parent ? (d.parent_nom ? ' ' + String(d.parent_nom).trim() : '') + ',\n\nVoici le lien pour régler le mois ' + n + ' sur ' + nbMois(d) + ' de l’Atelier Talons & Élégance de ' + civilite(d)
+      : ' ' + civilite(d) + ',\n\nVoici le lien pour régler le mois ' + n + ' sur ' + nbMois(d) + ' de votre Atelier Talons & Élégance') + ' (' + P.fcfa(T.PRIX_MOIS) + ') :\n' +
+      LIEN_WAVE_AGENCE + T.PRIX_MOIS + '\n\nLes dimanches de ce mois sont déjà dans ' + (parent ? 'son' : 'votre') + ' programme ; ils seront confirmés dès le paiement' + (d.jeton ? ' :\n' + LIEN_PROGRAMME + d.jeton : '.') +
+      '\n\nMerci, à dimanche !\nMaître Akesse Model Management';
   }
   function messageProgramme(d, parent) {
     if (parent) return 'Bonjour' + (d.parent_nom ? ' ' + String(d.parent_nom).trim() : '') + ',\n\nL’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance est confirmée, merci !\n' +
@@ -171,6 +194,18 @@
     const r = await P.bd(sb.from('cours_talons_seances').insert(ligne).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été ajouté : reconnectez-vous puis réessayez.'); return; }
     P.message('Séance ajoutée : la page de l’élève est à jour.');
+    return P.afficher();
+  };
+  P.actions['talons-mois'] = async (el) => {
+    const d = lignes.find((x) => x.id === el.dataset.id);
+    if (!d) return;
+    const especes = el.dataset.valeur === 'especes', renouveler = (d.mois_payes || 0) >= nbMois(d);
+    if (!confirm((renouveler ? 'Un mois de plus pour ' + civilite(d) + ' : 4 dimanches ajoutés à son programme, ' : 'Confirmer le paiement du mois ' + ((d.mois_payes || 0) + 1) + ' de ' + civilite(d) + ' : ') +
+      P.fcfa(T.PRIX_MOIS) + ' par ' + (especes ? 'espèces' : nomMoyen(d.moyen)) + ' ? Une recette « Cours de talons » sera ajoutée en Comptabilité.')) return;
+    // (jamais deux fois : le bouton est bloqué, et la base refuse un mois déjà enregistré)
+    document.querySelectorAll('[data-action="talons-mois"][data-id="' + CSS.escape(d.id) + '"]').forEach((b) => { b.disabled = true; });
+    await P.sensible(() => P.rpc('cours_talons_mois_payer', { p_id: d.id, p_mois: (d.mois_payes || 0) + 1, p_especes: especes }));
+    P.message(renouveler ? 'Un mois de plus : ses 4 nouveaux dimanches sont dans son programme.' : 'Mois payé : recette ajoutée en Comptabilité.');
     return P.afficher();
   };
   P.actions['talons-seance-faite'] = async (el) => {

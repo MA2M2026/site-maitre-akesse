@@ -150,6 +150,11 @@
         <label class="ct-choix"><input type="radio" name="formule" value="groupe" required><span><strong>Group</strong><em>Every Sunday, 3–6 pm, Riviera Faya</em><b>30 000 FCFA for 4 sessions</b></span></label>
         <label class="ct-choix"><input type="radio" name="formule" value="prive_salle"><span><strong>Private, in our studio</strong><em>2-hour session at Riviera Faya</em><b>25 000 FCFA per session</b></span></label>
         <label class="ct-choix"><input type="radio" name="formule" value="prive_exterieur"><span><strong>Private, at your home or elsewhere</strong><em>2-hour session, at the place of your choice</em><b>30 000 – 35 000 FCFA per session</b></span></label>
+        <!-- (14/11/2026) group lessons over several months: 30 000 FCFA a month, paid at once or month by month -->
+        <div id="ct-bloc-groupe" class="u-hidden">
+          <div class="form-champ"><label for="ct-mois">Duration</label><select id="ct-mois"><option value="1">1 month (4 Sundays)</option><option value="2">2 months (8 Sundays)</option><option value="3">3 months (12 Sundays)</option><option value="4">4 months (16 Sundays)</option><option value="5">5 months (20 Sundays)</option><option value="6">6 months (24 Sundays)</option><option value="7">7 months (28 Sundays)</option><option value="8">8 months (32 Sundays)</option><option value="9">9 months (36 Sundays)</option><option value="10">10 months (40 Sundays)</option><option value="11">11 months (44 Sundays)</option><option value="12">12 months (48 Sundays)</option></select></div>
+          <div class="form-champ u-hidden" id="ct-bloc-paiement-mois"><span class="ct-label">How would you like to pay?</span><div class="ct-niveaux"><label class="ct-pastille"><input type="radio" name="paiement" value="tout" checked><span>All at once</span></label><label class="ct-pastille"><input type="radio" name="paiement" value="mensuel"><span>Month by month (30 000 FCFA a month)</span></label></div></div>
+        </div>
         <div id="ct-bloc-prive" class="u-hidden">
           <div class="form-grille">
             <div class="form-champ"><label for="ct-nb">Number of sessions</label><select id="ct-nb"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
@@ -163,6 +168,7 @@
       <fieldset class="ct-etape u-hidden" data-etape="2">
         <legend class="u-lecteur-ecran">Step 2: about you</legend>
         <div class="ct-etape-titre"><span>2</span><h3>Tell us about you</h3></div>
+        <div class="form-champ"><span class="ct-label" id="ct-civilite-titre">Title *</span><div class="ct-niveaux" role="radiogroup" aria-labelledby="ct-civilite-titre"><label class="ct-pastille"><input type="radio" name="civilite" value="madame"><span>Mrs</span></label><label class="ct-pastille"><input type="radio" name="civilite" value="mademoiselle"><span>Miss</span></label></div></div>
         <div class="form-champ"><label for="ct-nom">Full name *</label><input type="text" id="ct-nom" maxlength="120" autocomplete="name" required></div>
         <div class="form-grille">
           <div class="form-champ"><label for="ct-indicatif">Phone / WhatsApp *</label><select id="ct-indicatif" class="ct-indicatif"></select><input aria-label="Phone / WhatsApp, number" type="tel" id="ct-telephone" placeholder="07 00 00 00 00" pattern="[0-9 ]{6,14}" required></div>
@@ -258,7 +264,7 @@
 <script src="../js/menu.js?v=9fe5a355"></script>
 <script src="../js/diaporama-luxe.js?v=6c1722dd"></script>
 <script src="../js/moyens-paiement.js?v=e15e92a3"></script>
-<script src="../js/talons-commun.js?v=d99a6882"></script>
-<script src="../js/cours-talons.js?v=fdc3d8c8"></script>
+<script src="../js/talons-commun.js?v=3b4ccd33"></script>
+<script src="../js/cours-talons.js?v=b746a20a"></script>
 </body>
 </html>

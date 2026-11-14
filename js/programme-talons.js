@@ -31,26 +31,34 @@
 
   function afficher(p) {
     var maintenant = new Date();
+    // groupe sur plusieurs mois (14/11/2026) : chaque dimanche prévu a son mois (colonne mois) ; ceux qui ne sont pas
+    // encore payés (paiement mois par mois) sont « à régler » et ne partent pas dans le calendrier du téléphone. Une
+    // séance ajoutée à la main par l'agence (rattrapage) n'a pas de mois : jamais « à régler ».
+    var groupe = p.formule === 'groupe', nbMois = p.nb_mois || 1, moisPayes = p.mois_payes == null ? nbMois : p.mois_payes;
+    var plusieursMois = groupe && nbMois > 1;
     var seances = (p.seances || []).map(function (s, i) {
-      var debut = new Date(s.debut), fin = new Date(s.fin);
-      return { id: s.id || '', n: i + 1, debut: debut, fin: fin, lieu: s.lieu || LIEU_DEFAUT, theme: s.theme || '', faite: !!s.faite || fin < maintenant };
+      var debut = new Date(s.debut), fin = new Date(s.fin), mois = groupe && s.mois ? s.mois : 0;
+      return { id: s.id || '', n: i + 1, debut: debut, fin: fin, lieu: s.lieu || LIEU_DEFAUT, theme: s.theme || '',
+        mois: mois, aRegler: mois > moisPayes, faite: !!s.faite || (fin < maintenant && mois <= moisPayes) };   // (un dimanche non payé n'est jamais « fait »)
     }).filter(function (s) { return !isNaN(s.debut) && !isNaN(s.fin); });
     var aVenir = seances.filter(function (s) { return !s.faite; });
-    var prochaine = aVenir[0] || null;
+    var aAjouter = aVenir.filter(function (s) { return !s.aRegler; });
+    var prochaine = aAjouter[0] || null;   // (jamais une séance d'un mois pas encore réglé)
     var demain = false;
     var nom = [p.civilite, String(p.nom || '').trim()].filter(Boolean).join(' ');
 
     document.title = 'Mon programme · ' + nom + ' | Atelier Talons & Élégance';
     var h1 = $('pt-titre'); h1.textContent = 'Bienvenue,'; h1.appendChild(document.createElement('br'));
     var em = document.createElement('em'); em.textContent = nom; h1.appendChild(em);
-    $('pt-accroche').textContent = p.formule === 'groupe' ? 'Quatre dimanches pour marcher avec assurance.' : 'Vos séances privées pour marcher avec assurance.';
+    $('pt-accroche').textContent = !groupe ? 'Vos séances privées pour marcher avec assurance.' : plusieursMois ? nbMois + ' mois pour marcher avec assurance.' : 'Quatre dimanches pour marcher avec assurance.';
     $('pt-wa').href = 'https://wa.me/' + NUMERO_AGENCE + '?text=' + encodeURIComponent('Bonjour, je suis ' + nom + ', élève de l’Atelier Talons & Élégance (' + p.numero + '). J’ai une question : ');
 
     // carte d'élève
     $('pt-numero').textContent = 'N° ' + p.numero;
     $('pt-periode').textContent = seances.length ? dateCourte(seances[0].debut) + (seances.length > 1 ? ' → ' + dateCourte(seances[seances.length - 1].debut) : '') : 'Dates à venir';
     var nb = seances.length || p.nb_seances || 0;
-    $('pt-formule').textContent = (FORMULES[p.formule] || 'Atelier talons') + ' · ' + nb + ' séance' + (nb > 1 ? 's' : '');
+    $('pt-formule').textContent = (FORMULES[p.formule] || 'Atelier talons') + (plusieursMois ? ' · ' + nbMois + ' mois' : '') + ' · ' + nb + ' séance' + (nb > 1 ? 's' : '');
+    $('pt-paiement').textContent = groupe && moisPayes < nbMois ? moisPayes + ' / ' + nbMois + ' mois' : 'Validé ✓';
     var faites = seances.length - aVenir.length;
     $('pt-faites').textContent = faites + ' / ' + nb;
     $('pt-progres').style.width = nb ? Math.round(100 * faites / nb) + '%' : '0';
@@ -65,6 +73,9 @@
       var quand = jours <= 0 ? 'c’est aujourd’hui' : jours === 1 ? 'c’est demain' : 'dans ' + jours + ' jours';
       $('pt-proch-titre').textContent = (prochaine.n === 1 ? 'Votre première séance, ' : 'Votre prochaine séance, ') + quand;
       $('pt-proch-detail').textContent = dateLongue(prochaine.debut) + ' · ' + heure(prochaine.debut) + ' · ' + prochaine.lieu;
+    } else if (aVenir.length) {
+      $('pt-proch-titre').textContent = 'Votre mois suivant est à régler';
+      $('pt-proch-detail').textContent = 'Dès votre paiement (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + '), ses séances s’ajoutent à votre programme. Écrivez-nous sur WhatsApp.';
     } else {
       $('pt-proch-titre').textContent = seances.length ? 'Programme terminé : bravo !' : 'Vos séances seront bientôt programmées';
       $('pt-proch-detail').textContent = seances.length ? 'Merci d’avoir suivi l’Atelier Talons & Élégance.' : 'Nous vous écrirons sur WhatsApp avec les dates.';
@@ -73,9 +84,16 @@
     // séances
     var frise = $('pt-seances'); frise.textContent = '';
     if (!seances.length) { var vide = document.createElement('p'); vide.className = 'pt-vide'; vide.textContent = 'Les dates de vos séances apparaîtront ici.'; frise.appendChild(vide); }
+    var moisAffiche = 0;
     seances.forEach(function (s) {
+      if (plusieursMois && s.mois && s.mois !== moisAffiche) {
+        moisAffiche = s.mois;
+        var tete = document.createElement('p'); tete.className = 'pt-mois-tete' + (s.aRegler ? ' a-regler' : '');
+        tete.textContent = 'Mois ' + s.mois + (s.aRegler ? ' · à régler (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + ')' : '');
+        frise.appendChild(tete);
+      }
       var l = document.createElement('div');
-      l.className = 'pt-seance' + (s === prochaine ? ' proche' : '') + (s.faite ? ' faite' : '');
+      l.className = 'pt-seance' + (s === prochaine ? ' proche' : '') + (s.faite ? ' faite' : '') + (s.aRegler ? ' a-regler' : '');
       var date = document.createElement('div'); date.className = 'pt-date';
       [['small', JOURS[s.debut.getUTCDay()].slice(0, 3)], ['b', String(s.debut.getUTCDate())], ['small', MOIS_COURTS[s.debut.getUTCMonth()]]].forEach(function (x) {
         var e = document.createElement(x[0]); e.textContent = x[1]; date.appendChild(e);
@@ -105,9 +123,10 @@
 
     calendrier(seances, maintenant);
     var bouton = $('pt-ics');
-    if (!aVenir.length) { bouton.hidden = true; } else {
-      $('pt-ics-note').textContent = (aVenir.length > 1 ? 'Les ' + aVenir.length + ' séances s’ajoutent' : 'La séance s’ajoute') + ' d’un coup à votre téléphone, avec un rappel la veille.';
-      bouton.addEventListener('click', function () { telechargerIcs(aVenir, p, nom); });
+    if (!aAjouter.length) { bouton.hidden = true; } else {
+      $('pt-ics-note').textContent = (aAjouter.length > 1 ? 'Les ' + aAjouter.length + ' séances s’ajoutent' : 'La séance s’ajoute') + ' d’un coup à votre téléphone, avec un rappel la veille.' +
+        (aAjouter.length < aVenir.length ? ' Les mois suivants s’ajouteront une fois réglés.' : '');
+      bouton.addEventListener('click', function () { telechargerIcs(aAjouter, p, nom); });
     }
     $('pt-contenu').hidden = false;
   }

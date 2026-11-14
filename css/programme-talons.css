@@ -93,3 +93,8 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-signature p { font: italic 400 16px 'Cormorant Garamond', Georgia, serif; color: var(--pt-gris); margin-top: 6px; }
 @media (max-width: 360px) { .pt-une h1 { font-size: 42px; } .pt-prevoir { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .pt-progres i { transition: none; } }
+/* groupe sur plusieurs mois (14/11/2026) : un titre par mois ; les mois pas encore réglés, estompés */
+.pt-mois-tete { position: relative; z-index: 1; display: inline-block; margin: 14px 0 2px; padding: 4px 12px; border-radius: 999px; background: var(--pt-pale); color: var(--pt-rouge); font: 600 10px 'Work Sans', sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+.pt-mois-tete:first-child { margin-top: 0; }
+.pt-mois-tete.a-regler { background: #FFFFFF; border: 1px dashed var(--pt-ligne); color: var(--pt-gris); }
+.pt-seance.a-regler { opacity: .5; }

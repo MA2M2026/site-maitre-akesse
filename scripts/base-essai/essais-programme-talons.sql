@@ -52,6 +52,56 @@ reset role;
 select essai((select programme_talons_lire(jeton)->>'civilite' = 'Mademoiselle' from cours_talons where id = '00000000-0000-0000-0000-0000000c0102'), 'élève mineure : « Mademoiselle »');
 set role anon;
 select essai(programme_talons_lire('000000000000000000000000000000000000') is null and programme_talons_lire('x') is null and programme_talons_lire(null) is null, 'mauvais jeton : rien');
+-- (14/11/2026) civilité choisie et groupe sur plusieurs mois
+set role service_role;
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0201","formule":"groupe","nom":"Mois Par Mois","telephone":"+2250700000201","age":24,"civilite":"mademoiselle","nb_mois":3,"paiement":"mensuel","mois_payes":5}'::jsonb, '4.4.5.1');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0202","formule":"groupe","nom":"Tout Payé","telephone":"+2250700000202","age":40,"civilite":"madame","nb_mois":3,"paiement":"tout"}'::jsonb, '4.4.5.2');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0203","formule":"groupe","nom":"Trop De Mois","telephone":"+2250700000203","age":40,"nb_mois":50,"paiement":"mensuel"}'::jsonb, '4.4.5.3');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0204","formule":"prive_salle","nom":"Privée Mois","telephone":"+2250700000204","age":40,"nb_seances":2,"nb_mois":6,"paiement":"mensuel"}'::jsonb, '4.4.5.4');
+reset role;
+select essai_refuse($$set role service_role; select formulaire_public_enregistrer('cours_talons', '{"formule":"groupe","nom":"Civilité piège","telephone":"+2250700000209","age":40,"civilite":"monsieur"}'::jsonb, '4.4.5.9')$$, 'civilité inconnue : refusée');
+reset role;
+select essai((select montant = 30000 and nb_mois = 3 and paiement = 'mensuel' and mois_payes = 0 and civilite = 'mademoiselle' from cours_talons where id = '00000000-0000-0000-0000-0000000c0201'), '3 mois payés mois par mois : 30 000 à payer maintenant (mois payés envoyés par le visiteur ignorés)');
+select essai((select montant = 90000 and nb_mois = 3 and paiement = 'tout' from cours_talons where id = '00000000-0000-0000-0000-0000000c0202'), '3 mois payés d''un coup : 90 000');
+select essai((select nb_mois = 12 and montant = 30000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0203'), '50 mois demandés : ramenés à 12');
+select essai((select nb_mois = 1 and paiement = 'tout' and montant = 50000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0204'), 'privé : pas de mois, prix à la séance inchangé (50 000)');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select essai_refuse($$select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 1)$$, 'mois suivant avant la validation du premier paiement : refusé');
+select cours_talons_valider('00000000-0000-0000-0000-0000000c0201', 90000);
+select cours_talons_valider('00000000-0000-0000-0000-0000000c0202');
+select essai((select montant = 30000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0201'), 'mois par mois : 90 000 tapés à la validation → 30 000 encaissés (le mois 1 seulement)');
+-- ligne mise « inscrite » à la main AVANT la validation : la validation compte quand même son mois et ses dimanches
+update cours_talons set statut = 'inscrite' where id = '00000000-0000-0000-0000-0000000c0203';
+select cours_talons_valider('00000000-0000-0000-0000-0000000c0203');
+select essai((select mois_payes = 1 from cours_talons where id = '00000000-0000-0000-0000-0000000c0203') and (select count(*) = 48 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0203'), 'déjà « inscrite » à la main puis validée : 1 mois payé, 48 dimanches prévus');
+select essai((select mois_payes = 1 from cours_talons where id = '00000000-0000-0000-0000-0000000c0201') and (select mois_payes = 3 from cours_talons where id = '00000000-0000-0000-0000-0000000c0202'), 'validation : mois par mois → 1 mois payé ; d''un coup → 3 mois payés');
+select essai((select count(*) = 12 and bool_and(extract(dow from debut at time zone 'UTC') = 0) and max(debut) - min(debut) = interval '77 days' from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201'), '3 mois : 12 dimanches qui se suivent, prévus dès la validation');
+select essai((select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 3 and theme = 'Le défilé final'), 'chaque dimanche a son mois (le 3e mois finit par « Le défilé final »)');
+reset role;
+select essai((select libelle = 'Cours de talons en groupe, mois 1 sur 3' from compta_ecritures e join cours_talons c on c.ecriture_id = e.id where c.id = '00000000-0000-0000-0000-0000000c0201')
+  and (select libelle = 'Cours de talons en groupe, 3 mois payés d''un coup' and e.montant = 90000 from compta_ecritures e join cours_talons c on c.ecriture_id = e.id where c.id = '00000000-0000-0000-0000-0000000c0202'), 'Compta : libellé juste à la validation (« mois 1 sur 3 », « 3 mois payés d''un coup »)');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 2);
+select essai_refuse($$select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 2)$$, 'deuxième appui sur « Mois 2 payé » : refusé (jamais deux recettes)');
+select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 3, true);
+select essai((select mois_payes = 3 and nb_mois = 3 and montant = 90000 from cours_talons where id = '00000000-0000-0000-0000-0000000c0201')
+  and (select count(*) = 12 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201'), 'mois 2 et 3 payés : 3 / 3, 90 000 encaissés, toujours 12 dimanches');
+-- renouvellement : un 4e mois, ses 4 dimanches à la suite
+select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 4);
+select essai((select mois_payes = 4 and nb_mois = 4 and paiement = 'mensuel' from cours_talons where id = '00000000-0000-0000-0000-0000000c0201')
+  and (select count(*) = 16 and bool_and(extract(dow from debut at time zone 'UTC') = 0) and max(debut) - min(debut) = interval '105 days' from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201')
+  and (select count(*) = 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0201' and mois = 4 and theme = 'Posture et équilibre'), 'renouvellement : 4e mois, 4 dimanches ajoutés juste après');
+select essai_refuse($$select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0102', 1)$$, 'privé : pas de paiement au mois');
+reset role;
+select essai((select count(*) = 4 and sum(montant) = 120000 from compta_ecritures where categorie = 'cours_talons' and tiers = 'Mois Par Mois' and libelle like 'Cours de talons en groupe, mois %'), 'Compta : une recette de 30 000 par mois payé (mois 1 à 4)');
+select essai((select (programme_talons_lire(jeton)->>'civilite') = 'Mademoiselle' and (programme_talons_lire(jeton)->>'mois_payes')::int = 4 and jsonb_array_length(programme_talons_lire(jeton)->'seances') = 16
+  from cours_talons where id = '00000000-0000-0000-0000-0000000c0201'), 'page de l''élève : « Mademoiselle » (son choix), 4 mois payés, 16 séances');
+select essai((select programme_talons_lire(jeton)->>'civilite' = 'Madame' from cours_talons where id = '00000000-0000-0000-0000-0000000c0202'), 'civilité choisie « Madame » : Madame');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-000000000fd3', 'aal2', 30, 'appareil-demande-0003');
+select essai_refuse($$select cours_talons_mois_payer('00000000-0000-0000-0000-0000000c0201', 5)$$, 'personne sans rôle : n''encaisse pas de mois');
 reset role;
 -- une personne sans rôle ne voit ni ne change aucune séance
 set role authenticated;

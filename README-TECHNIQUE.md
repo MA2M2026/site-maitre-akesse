@@ -5008,5 +5008,20 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   la fiche le dit, le reste marche. Styles : `.ct-programme`, `.ct-seance`, `.ct-mini` (css/admin-vivante.css).
 - **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
   paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).
+- **Civilité et plusieurs mois** (14/11/2026, demandes de la propriétaire) : le formulaire (cours-talons.html FR/EN,
+  js/cours-talons.js) demande **Madame ou Mademoiselle** (obligatoire, `cours_talons.civilite`) ; tous les messages et la
+  page l'utilisent (`TalonsCommun.civilite`, js/talons-commun.js ; inscription plus ancienne : « Mademoiselle » si
+  mineure, sinon « Madame »). Le **groupe** se prend sur **1 à 12 mois** (`nb_mois`), 30 000 FCFA le mois, payé **en une
+  fois** ou **mois par mois** (`paiement` = tout / mensuel, au choix de l'élève) : la base décide du montant à payer
+  maintenant (déclencheur `cours_talons_avant_inscription`, qui tire aussi le jeton). À la validation, tous les dimanches
+  sont prévus (thèmes « Mois 3 · Le défilé final ») et `mois_payes` vaut 1 (mois par mois) ou tous les mois. Chaque mois
+  suivant : « 💳 Lien du mois 2 » (WhatsApp, et « Au parent » pour une mineure) puis « ✓ Mois 2 payé » dans la fiche →
+  `cours_talons_mois_payer(id, mois, espèces)` (recette de 30 000 en Compta ; le numéro du mois empêche un double
+  encaissement ; un dimanche non payé n'est jamais compté « fait ») ; quand tout est payé, le même bouton devient « ＋ Un mois de plus » (renouvellement : 4 dimanches
+  ajoutés à la suite). Page de l'élève : séances rangées par mois, mois pas encore réglés « à régler » et estompés,
+  absents du fichier .ics. Commun aux trois pages : js/talons-commun.js (numéro de l'agence, salle, prix du mois, heures,
+  civilité, montants en FCFA). Chaque dimanche prévu a son numéro de mois (colonne `cours_talons_seances.mois`) ; un
+  rattrapage ajouté à la main n’en a pas (jamais « à régler »). `cours_talons_valider` (version à jour dans ce fichier)
+  et `cours_talons_mois_payer` partagent `cours_talons_compte` (compte du moyen, sinon Wave + note au journal).
 - Étapes suivantes (non faites) : messages WhatsApp tout prêts, cours privés (créneaux libres, 1 h 30 d'écart),
   planning jour par jour et notification 24 h avant.

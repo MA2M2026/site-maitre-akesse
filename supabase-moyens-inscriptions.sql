@@ -46,6 +46,7 @@ revoke all on function cours_talons_moyen_allume() from public, anon, authentica
 drop trigger if exists cours_talons_moyen_allume on cours_talons;
 create trigger cours_talons_moyen_allume before insert or update of moyen on cours_talons for each row execute function cours_talons_moyen_allume();
 
+-- ⚠ Version plus récente (14/11/2026, groupe sur plusieurs mois) : supabase-programme-talons.sql, à coller APRÈS ce fichier.
 create or replace function cours_talons_valider(p_id uuid, p_montant integer default null, p_especes boolean default false)
 returns cours_talons language plpgsql security definer set search_path = public as $$
 declare

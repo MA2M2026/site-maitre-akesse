@@ -13,7 +13,11 @@ window.TalonsCommun = (function () {
     MOIS_COURTS: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
     // 15 h, 16 h 30
     heure: function (d) { return d.getUTCHours() + ' h' + (d.getUTCMinutes() ? ' ' + String(d.getUTCMinutes()).padStart(2, '0') : ''); },
-    // vouvoiement (demande de la propriétaire du 14/11/2026) : « Madame », « Mademoiselle » pour une mineure
-    civilite: function (age) { return age && age < 18 ? 'Mademoiselle' : 'Madame'; }
+    PRIX_MOIS: 30000,   // groupe : 30 000 FCFA le mois (4 dimanches), comme cours_talons_prix_mois() dans la base
+    // vouvoiement (demandes de la propriétaire du 14/11/2026) : la civilité choisie à l'inscription (« madame » ou
+    // « mademoiselle ») ; pour une inscription plus ancienne, « Mademoiselle » si elle est mineure, sinon « Madame »
+    civilite: function (choix, age) { return (choix || (age && age < 18 ? 'mademoiselle' : 'madame')) === 'mademoiselle' ? 'Mademoiselle' : 'Madame'; },
+    // 30000 → « 30 000 FCFA »
+    fcfa: function (n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + '\u00a0FCFA'; }
   };
 })();

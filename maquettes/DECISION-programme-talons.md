@@ -31,3 +31,7 @@
 - **Étape 1 construite** (14/11/2026) : vraie page `programme-talons.html`, base `supabase-programme-talons.sql`
   (À COLLER par la propriétaire), « Son programme » dans la fiche de l'élève (Administration). Détails :
   README-TECHNIQUE.md, section « Mon programme ». Prochaine étape : 2, les messages WhatsApp tout prêts.
+- **14/11/2026, ajouts demandés** : civilité choisie à l'inscription (« si la personne met Madame, on met Madame ; si
+  elle a mis Mademoiselle, on met Mademoiselle ») ; groupe sur plusieurs mois (ex. 10 mois) : **les deux au choix**
+  (1 mois renouvelable OU plusieurs mois dès l'inscription), **30 000 F × nombre de mois**, payé **en une fois ou mois
+  par mois au choix de l'élève**. Fait le même jour (voir README-TECHNIQUE.md).

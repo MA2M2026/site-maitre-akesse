@@ -1478,3 +1478,5 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ct-ajout { margin-top: 12px; }
 .ct-ajout summary { display: inline-flex; align-items: center; min-height: 40px; padding: 0 4px; color: #7C2128; font: 600 13px 'Work Sans', sans-serif; cursor: pointer; list-style: none; }
 .ct-ajout summary::-webkit-details-marker { display: none; }
+.ct-mois { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; }
+.ct-mois p { flex: 1 1 100%; margin: 0; font-size: 13.5px; color: #2A1416; }

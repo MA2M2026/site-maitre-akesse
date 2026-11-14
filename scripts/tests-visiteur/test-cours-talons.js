@@ -71,14 +71,25 @@ async function navigateur() {
     // étape 1
     await p.click('#ct-suivant');
     ok(/formule|option/i.test(await p.textContent('#ct-msg')), n + 'étape 1 : sans formule, un message demande de choisir');
+    // (14/11/2026) groupe sur plusieurs mois : durée, puis paiement d'un coup ou mois par mois
+    await p.click('label.ct-choix:has(input[value="groupe"])');
+    ok(await p.isVisible('#ct-mois') && await p.isHidden('#ct-bloc-paiement-mois') && (await p.textContent('#ct-total')).includes('30 000'), n + 'groupe : choix de la durée (1 mois par défaut, 30 000)');
+    await p.selectOption('#ct-mois', '3');
+    ok(await p.isVisible('#ct-bloc-paiement-mois') && /90 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')) && /12 (dimanches|Sundays)/.test(await p.textContent('#ct-total')), n + 'groupe 3 mois, tout en une fois : 90 000 pour 12 dimanches');
+    await p.click('label.ct-pastille:has(input[name="paiement"][value="mensuel"])');
+    ok(/(À payer maintenant|To pay now) : ?30 000|To pay now: 30 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')), n + 'groupe 3 mois, mois par mois : 30 000 maintenant, puis chaque mois');
     await p.click('label.ct-choix:has(input[value="prive_salle"])');
+    ok(await p.isHidden('#ct-bloc-groupe'), n + 'privé : la durée en mois disparaît');
     ok(/Touchez|Tap/.test(await p.textContent('.ct-etape[data-etape="1"] .ct-consigne')) && await p.evaluate(() => getComputedStyle(document.querySelector('input[value="prive_salle"] + span'), '::after').content.includes('✓')), n + 'consigne « Touchez la formule », le bloc choisi porte une coche');
     await p.selectOption('#ct-nb', '10');
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
     await p.click('#ct-suivant');
     const debEtape2 = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     ok(debEtape2 <= 1, n + 'passage à l’étape 2 : la page ne devient pas plus large que l’écran (' + debEtape2 + ' px)');
-    // étape 2 : mineure → parent obligatoire
+    // étape 2 : civilité obligatoire (14/11/2026), puis mineure → parent obligatoire
+    await p.click('#ct-suivant');
+    ok(/Madame ou Mademoiselle|Mrs or Miss/.test(await p.textContent('#ct-msg')), n + 'sans civilité : on demande « Madame ou Mademoiselle »');
+    await p.click('label.ct-pastille:has(input[name="civilite"][value="mademoiselle"])');
     await p.fill('#ct-nom', 'Kouassi Marie'); await p.fill('#ct-telephone', '07 01 02 03 04'); await p.fill('#ct-age', '16');
     ok(await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : le bloc du parent apparaît');
     await p.click('#ct-suivant');
@@ -136,6 +147,7 @@ async function navigateur() {
     if (pasPret === 'coupure') { /* déjà vérifié */ } else if (!pasPret) {
       const l = envoi.length ? JSON.parse(envoi[0][3]) : {};
       ok(envoi.length === 1 && journal.some((j) => j[0] === 'ANTI-ROBOT' && j[1] === 'cours_talons'), n + 'inscription envoyée une fois, par le serveur (anti-robots)');
+      ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
       ok(Array.isArray(l.photos) && l.photos.length === 2 && l.video === 'https://drive.google.com/video-marche' && !('statut' in l) && !('montant' in l), n + 'liens Drive des 2 photos et de la vidéo ; ni statut ni montant envoyés (la base décide)');
