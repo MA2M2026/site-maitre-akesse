@@ -5093,3 +5093,13 @@ Maquette et décision : `maquettes/postuler-casting.html`, `maquettes/DECISION-p
   (`.ct-*` / `.lx-*` : css/luxe.css).
 - Tests : test-visiteur.js (4 pages : étapes, refus des moins de 14 ans à l'étape 2, photos manquantes, cartes, résumé,
   « Changer », envoi), test-integrer-parcours.js, test-whatsapp-discret.js.
+
+## Inscription des nouveaux mannequins, version premium (14/11/2026, maquette validée)
+
+Maquette et décision : `maquettes/inscription-mannequin.html`, `maquettes/DECISION-inscription-mannequin.md`. Même
+déroulé et même serveur qu'avant (js/inscription-simplifiee.js) ; seule la présentation change : barre des étapes nommées
+(`.lx-progression`, css/luxe.css désormais chargé par app/inscription-mannequin.html), accueil « Bienvenue chez MA2M »
+avec photo (`.inn-une`), « Bonjour …, félicitations ! » + carte « Future mannequin MA2M » (`.inn-cb`) + informations en
+relevé (`.inn-releve`), boutons blanc / contour (`data-bouton-libre`), merci avec la suite en 3 points (`.inn-suite`) et les
+3 premiers mois du programme (`formation_programme`, niveau 1, lisible sans compte : supabase-programme-mannequins.sql ;
+fichier d'appoint supabase-programme-lecture-publique.sql, collé le 14/11/2026). Test : test-inscription.js.
