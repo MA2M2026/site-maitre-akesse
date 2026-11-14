@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE (14/11/2026, à valider par la propriétaire) : accueil de l'Administration avec 1) la carte « L'agence ce mois-ci »
+     (façon carte bancaire, 3 chiffres) et 2) « Cette semaine » jour par jour. Le reste de l'accueil ne change pas.
+     Données d'exemple. -->
+<title>Maquette accueil administration</title>
+<link rel="stylesheet" href="../css/polices.css">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work Sans', sans-serif; }
+.tete { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.2); }
+.tete img { height: 24px; } .tete span { font: 500 22px 'Cormorant Garamond', serif; }
+.page { max-width: 480px; margin: 0 auto; padding: 18px 12px 40px; }
+h1 { margin: 0; font: 500 34px/1.1 'Cormorant Garamond', serif; } h1 em { font-weight: 400; }
+.sous { margin: 4px 0 16px; opacity: .9; font-size: 14px; }
+.cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; background: linear-gradient(135deg, #5A141B, #8A2530 55%, #5A141B); box-shadow: 0 22px 40px -18px rgba(40,6,10,.9); }
+.cb::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.07); }
+.cb > * { position: relative; }
+.cb .h { display: flex; justify-content: space-between; align-items: center; font: 600 9px 'Work Sans'; letter-spacing: .3em; }
+.cb .h img { height: 22px; }
+.cb .grand { font: 600 38px/1 'Cormorant Garamond', serif; margin: 22px 0 2px; }
+.cb .grand small { font-size: 20px; }
+.cb .leg { font-size: 12.5px; color: #F3DDE0; }
+.tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.tuiles div { border-radius: 14px; padding: 12px; background: rgba(255,255,255,.1); }
+.tuiles b { display: block; font: 600 28px/1 'Cormorant Garamond', serif; }
+.tuiles span { font-size: 12px; color: #F3DDE0; }
+.titre { margin: 26px 2px 10px; font: 700 11px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; }
+.semaine { background: #fff; color: #2a1416; border-radius: 18px; overflow: hidden; }
+.jour { display: flex; gap: 12px; padding: 12px 14px; border-top: 1px solid #F2E7E8; }
+.jour:first-child { border-top: 0; }
+.jour .d { flex: 0 0 48px; text-align: center; border-radius: 12px; padding: 6px 0; background: #FBF4F5; }
+.jour .d small { display: block; font: 700 9px 'Work Sans'; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; }
+.jour .d b { font: 600 22px/1 'Cormorant Garamond', serif; color: #7C2128; }
+.jour.auj .d { background: #7C2128; } .jour.auj .d small, .jour.auj .d b { color: #fff; }
+.jour ul { list-style: none; margin: 0; padding: 0; flex: 1; display: grid; gap: 6px; }
+.jour li { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; }
+.jour li i { font-style: normal; }
+.jour li small { color: #6E4F53; }
+.jour .vide { color: #6E4F53; font-size: 13px; padding-top: 10px; }
+.suite { margin-top: 26px; padding: 14px; border: 1px dashed rgba(255,255,255,.45); border-radius: 16px; text-align: center; font-size: 13px; opacity: .9; }
+</style></head>
+<body>
+<div class="tete"><img src="../assets/logo-header-clair.png" alt="MA2M"><span>Accueil</span></div>
+<div class="page">
+  <h1>Bonjour <em>Maître Akesse</em></h1>
+  <p class="sous">Samedi 14 novembre · voici l’essentiel.</p>
+
+  <div class="cb">
+    <div class="h"><img src="../assets/logo-header.png" alt=""><span>L’AGENCE CE MOIS-CI</span></div>
+    <div class="grand">1 250 000 <small>FCFA</small></div>
+    <div class="leg">encaissés en novembre · mensualités, cours de talons, cachets</div>
+    <div class="tuiles">
+      <div><b>42</b><span>mannequins actives</span></div>
+      <div><b>9</b><span>élèves des cours de talons</span></div>
+    </div>
+  </div>
+
+  <p class="titre">Cette semaine</p>
+  <div class="semaine">
+    <div class="jour auj"><div class="d"><small>Sam</small><b>14</b></div><ul><li><i>✨</i><span>Casting Cacao Couture <small>· 10 h · Studio MA2M</small></span></li></ul></div>
+    <div class="jour"><div class="d"><small>Dim</small><b>15</b></div><ul><li><i>👠</i><span>Cours de talons en groupe <small>· 15 h · 6 élèves</small></span></li><li><i>🎓</i><span>Cours des mannequins <small>· « Expression et regard »</small></span></li></ul></div>
+    <div class="jour"><div class="d"><small>Lun</small><b>16</b></div><p class="vide">Rien de prévu</p></div>
+    <div class="jour"><div class="d"><small>Mer</small><b>18</b></div><ul><li><i>👠</i><span>Cours privé · Mme Koné <small>· 10 h · « Les tenues »</small></span></li></ul></div>
+    <div class="jour"><div class="d"><small>Sam</small><b>21</b></div><ul><li><i>💃</i><span>Abidjan Border Forum <small>· défilé · 2/4 confirmées</small></span></li></ul></div>
+  </div>
+
+  <div class="suite">Ensuite, comme aujourd’hui : la recherche, « Envoyer un message », « À faire aujourd’hui » et « Tout gérer ».</div>
+</div>
+</body></html>
