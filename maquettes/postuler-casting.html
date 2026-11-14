@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE (14/11/2026, à valider par la propriétaire) : « Postuler à un casting » dans l'« architecture » premium des
+     cours de talons : castings en cartes (au lieu d'une liste déroulante), formulaire en 4 étapes avec progression,
+     résumé « Votre candidature » avant l'envoi. Données d'exemple. ?vue=1 (choix du casting) | ?vue=2 (étape vous) | ?vue=4 (résumé) -->
+<title>Maquette postuler à un casting</title>
+<link rel="stylesheet" href="../css/polices.css">
+<style>
+:root { --rouge: #7C2128; --fonce: #5A141B; --lisere: rgba(255,255,255,.3); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--rouge); color: #fff; font: 400 15px/1.55 'Work Sans', sans-serif; }
+.v { display: none; } body.v1 .v-1, body.v2 .v-2, body.v4 .v-4 { display: block; }
+.boite { max-width: 760px; margin: 0 auto; padding: 36px 16px 48px; }
+h2.titre { font: italic 500 40px/1.05 'Cormorant Garamond', serif; text-align: center; margin: 0 0 6px; }
+h2.titre::after { content: ''; display: block; width: 90px; height: 1px; margin: 16px auto 0; background: rgba(255,255,255,.5); }
+.prog { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); padding: 0; margin: 28px 0 26px; }
+.prog li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; text-align: center; }
+.prog li::before { content: attr(data-n); position: relative; z-index: 1; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.55); font: italic 500 18px 'Cormorant Garamond', serif; background: var(--rouge); }
+.prog li + li::after { content: ''; position: absolute; top: 19px; right: 50%; width: 100%; height: 1px; background: rgba(255,255,255,.25); }
+.prog li.actif, .prog li.fait { opacity: 1; }
+.prog li.actif::before { background: #fff; color: var(--rouge); box-shadow: 0 0 0 6px rgba(255,255,255,.15); }
+.prog li.fait::before { content: '✓'; background: #fff; color: var(--rouge); font-style: normal; font-size: 15px; }
+.ecrin { padding: 26px 18px; border-radius: 12px; border: 1px solid var(--lisere); box-shadow: 0 40px 80px -40px rgba(40,8,12,.9); }
+.etape-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.etape-titre span { width: 40px; height: 40px; border-radius: 50%; background: #fff; color: var(--rouge); display: grid; place-items: center; font: italic 600 20px 'Cormorant Garamond', serif; }
+.etape-titre h3 { margin: 0; font: 500 28px/1.1 'Cormorant Garamond', serif; }
+.consigne { opacity: .85; margin: 6px 0 16px; font-size: 14px; }
+.castings { display: grid; gap: 12px; }
+.casting { position: relative; display: flex; gap: 14px; padding: 16px; border-radius: 18px; border: 1px solid var(--lisere); background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); }
+.casting.choisi { background: #fff; color: var(--rouge); border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.18), 0 22px 40px -18px rgba(90,20,27,1); }
+.affiche { flex: 0 0 74px; height: 96px; border-radius: 10px; background-size: cover; background-position: 50% 20%; }
+.casting small { display: block; font-size: 10px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; opacity: .8; }
+.casting b { display: block; font: 500 24px/1.1 'Cormorant Garamond', serif; margin: 3px 0 4px; }
+.casting p { margin: 0; font-size: 13px; opacity: .9; }
+.casting .meta { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.casting .meta i { font-style: normal; font-size: 11.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; opacity: .85; }
+.casting.choisi::after { content: '✓'; position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: var(--rouge); color: #fff; display: grid; place-items: center; font-size: 13px; }
+.autre { display: block; text-align: center; margin-top: 12px; padding: 12px; border-radius: 14px; border: 1px dashed rgba(255,255,255,.45); font-size: 13.5px; }
+.champ { margin-top: 14px; }
+.champ label, .lab { display: block; font-size: 11.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.champ input, .champ select { width: 100%; padding: 13px 14px; border-radius: 12px; border: 0; font: 15px 'Work Sans'; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pastilles { display: flex; gap: 8px; flex-wrap: wrap; }
+.pastilles span { padding: 10px 16px; border-radius: 999px; border: 1px solid var(--lisere); font-size: 14px; }
+.pastilles span.on { background: #fff; color: var(--rouge); font-weight: 600; }
+.boutons { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+.btn { white-space: nowrap; padding: 15px 22px; border-radius: 999px; font-weight: 700; border: 1px solid #fff; color: #fff; }
+.btn.plein { background: #fff; color: var(--rouge); margin-left: auto; }
+.recap { border-radius: 18px; overflow: hidden; background: #fff; color: #2a1416; }
+.recap div { display: flex; gap: 12px; padding: 13px 15px; border-top: 1px solid #F2E7E8; align-items: center; }
+.recap div:first-child { border-top: 0; }
+.recap em { flex: 0 0 34px; height: 34px; border-radius: 50%; background: #F3DDE0; color: var(--rouge); display: grid; place-items: center; font-style: normal; font-size: 15px; }
+.recap span { flex: 1; font-weight: 600; font-size: 14px; }
+.recap span small { display: block; font-weight: 400; color: #6E4F53; font-size: 12px; }
+.recap a { font-size: 12px; color: var(--rouge); font-weight: 600; text-decoration: underline; }
+.vignettes { display: flex; gap: 6px; }
+.vignettes i { width: 34px; height: 44px; border-radius: 6px; background-size: cover; background-position: 50% 20%; }
+</style></head>
+<body>
+<div class="boite">
+  <h2 class="titre">Votre candidature</h2>
+  <ol class="prog" id="prog"><li data-n="1">Le casting</li><li data-n="2">Vous</li><li data-n="3">Mensurations</li><li data-n="4">Photos &amp; vidéo</li></ol>
+
+  <!-- étape 1 : les castings en cartes -->
+  <div class="v v-1 ecrin">
+    <div class="etape-titre"><span>1</span><h3>Choisissez le casting</h3></div>
+    <p class="consigne">👆 Touchez le casting qui vous intéresse.</p>
+    <div class="castings">
+      <div class="casting choisi"><div class="affiche" style="background-image:url(../assets/cours-talons/mannequin-podium.jpg)"></div><div><small>Défilé · Ouvert</small><b>Abidjan Fashion Week</b><p>Mannequins femmes et hommes pour le grand défilé de décembre.</p><div class="meta"><i>📅 Avant le 30 nov.</i><i>📍 Hôtel Ivoire</i></div></div></div>
+      <div class="casting"><div class="affiche" style="background-image:url(../assets/cours-talons/galerie-tailleur.jpg)"></div><div><small>Shooting · Ouvert</small><b>Campagne Cacao Couture</b><p>Shooting photo pour une collection de prêt-à-porter.</p><div class="meta"><i>📅 Avant le 5 déc.</i><i>📍 Studio MA2M</i></div></div></div>
+    </div>
+    <span class="autre">Mon casting n’est pas dans la liste</span>
+    <div class="boutons"><span class="btn plein">Suivant →</span></div>
+  </div>
+
+  <!-- étape 2 : vous -->
+  <div class="v v-2 ecrin">
+    <div class="etape-titre"><span>2</span><h3>Parlez-nous de vous</h3></div>
+    <div class="champ"><span class="lab">Civilité *</span><div class="pastilles"><span class="on">Madame</span><span>Mademoiselle</span><span>Monsieur</span></div></div>
+    <div class="champ"><label>Nom complet *</label><input value="Awa Koné"></div>
+    <div class="duo"><div class="champ"><label>WhatsApp *</label><input value="07 00 00 00 00"></div><div class="champ"><label>Date de naissance *</label><input value="12/03/2004"></div></div>
+    <div class="duo"><div class="champ"><label>Ville *</label><select><option>Abidjan</option></select></div><div class="champ"><label>Commune *</label><select><option>Cocody</option></select></div></div>
+    <div class="champ"><label>E-mail *</label><input value="awa@exemple.ci"></div>
+    <div class="boutons"><span class="btn">← Retour</span><span class="btn plein">Suivant →</span></div>
+  </div>
+
+  <!-- étape 4 : résumé avant l'envoi -->
+  <div class="v v-4 ecrin">
+    <div class="etape-titre"><span>✓</span><h3>Votre candidature</h3></div>
+    <p class="consigne">Vérifiez avant d’envoyer : tout est modifiable.</p>
+    <div class="recap">
+      <div><em>🎫</em><span>Abidjan Fashion Week<small>Défilé · Hôtel Ivoire</small></span><a>Changer</a></div>
+      <div><em>👤</em><span>Madame Awa Koné<small>22 ans · Abidjan, Cocody · 07 00 00 00 00</small></span><a>Changer</a></div>
+      <div><em>📏</em><span>1,78 m · 84 – 61 – 90<small>Pointure 40</small></span><a>Changer</a></div>
+      <div><em>📷</em><span><span class="vignettes"><i style="background-image:url(../assets/cours-talons/alicia-1.jpg)"></i><i style="background-image:url(../assets/cours-talons/alicia-2.jpg)"></i><i style="background-image:url(../assets/cours-talons/alicia-3.jpg)"></i></span><small>3 photos · vidéo de 1 min 20</small></span><a>Changer</a></div>
+    </div>
+    <div class="boutons"><span class="btn">← Retour</span><span class="btn plein">Envoyer ma candidature</span></div>
+  </div>
+</div>
+<script>
+const v = new URLSearchParams(location.search).get('vue') || '1';
+document.body.className = 'v' + v;
+document.querySelectorAll('#prog li').forEach((li, i) => { const n = i + 1, e = +v; li.className = n < e ? 'fait' : n === e ? 'actif' : ''; });
+</script>
+</body></html>
