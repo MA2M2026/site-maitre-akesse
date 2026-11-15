@@ -546,10 +546,10 @@
       if (p.date_debut <= j.cle && (p.date_fin || p.date_debut) >= j.cle) j.lignes.push(['📅', p.titre, [p.type === 'casting' ? 'casting' : p.type === 'defile' ? 'défilé' : '', [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · '), '#/site/b2-convocations']);
     }));
     // (15/11/2026, maquette validée : maquettes/accueil-administration.html) le cours des mannequins de l'agence, chaque
-    // dimanche (liste de présence : Présences), jamais pendant les congés (js/presences-calcul.js) ; son heure n'est pas
-    // encore notée dans le site
+    // dimanche de 15 h à 18 h (heures données par la propriétaire le 15/11/2026 ; liste de présence : Présences), jamais
+    // pendant les congés (js/presences-calcul.js)
     const P2 = window.Presences;
-    if (P2) jours.forEach((j) => { if (j.d.getDay() === 0 && !P2.enVacances(j.cle)) j.lignes.push(['🎓', 'Cours des mannequins', 'liste de présence', '#/site/b2-presences']); });
+    if (P2) jours.forEach((j) => { if (j.d.getDay() === 0 && !P2.enVacances(j.cle)) j.lignes.push(['🎓', 'Cours des mannequins', '15 h – 18 h · liste de présence', '#/site/b2-presences']); });
     // cours de talons : le groupe en une ligne (nombre d'élèves), chaque cours privé avec l'élève et son thème
     const groupes = {};
     ((a && a.seances) || []).forEach((s) => {
