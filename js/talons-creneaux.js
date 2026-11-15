@@ -116,7 +116,7 @@ window.TalonsCreneaux = (function () {
       else if (o.repeter && o.repeter.checked) remplirSemaines(iso);
       else if (nb === 1) choisis = [iso];
       else if (choisis.length >= nb) { if (o.trop) o.trop(nb); return; }
-      else choisis = choisis.concat(iso).sort();
+      else choisis = choisis.concat(iso).sort((x, y) => x.localeCompare(y));
       apres();
     });
     return {

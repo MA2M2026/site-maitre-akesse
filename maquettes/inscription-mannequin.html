@@ -12,7 +12,7 @@ body { margin: 0; background: var(--rouge); color: #fff; font: 400 15px/1.55 'Wo
 .v { display: none; } body.v1 .v-1, body.v2 .v-2, body.v5 .v-5 { display: block; }
 .tete { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; }
 .tete a { color: #fff; font-weight: 600; font-size: 14px; }
-.tete span { font: 600 10px 'Work Sans'; letter-spacing: .3em; text-transform: uppercase; opacity: .85; }
+.tete span { font: 600 10px 'Work Sans', sans-serif; letter-spacing: .3em; text-transform: uppercase; opacity: .85; }
 .page { max-width: 480px; margin: 0 auto; padding: 0 16px 40px; }
 .prog { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); padding: 0; margin: 10px 0 22px; }
 .prog li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; opacity: .6; text-align: center; }
@@ -20,18 +20,18 @@ body { margin: 0; background: var(--rouge); color: #fff; font: 400 15px/1.55 'Wo
 .prog li + li::after { content: ''; position: absolute; top: 17px; right: 50%; width: 100%; height: 1px; background: rgba(255,255,255,.25); }
 .prog li.actif, .prog li.fait { opacity: 1; }
 .prog li.actif::before { background: #fff; color: var(--rouge); box-shadow: 0 0 0 5px rgba(255,255,255,.15); }
-.prog li.fait::before { content: '✓'; background: #fff; color: var(--rouge); font: 700 13px 'Work Sans'; }
+.prog li.fait::before { content: '✓'; background: #fff; color: var(--rouge); font: 700 13px 'Work Sans', sans-serif; }
 .une { position: relative; height: 300px; border-radius: 22px; overflow: hidden; background: url(../assets/cours-talons/mannequin-podium.jpg) 50% 15% / cover; }
 .une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,6,10,.1) 30%, rgba(74,16,22,.95) 100%); }
 .une div { position: absolute; z-index: 1; left: 20px; right: 20px; bottom: 18px; }
-.une small { font: 600 10px 'Work Sans'; letter-spacing: .3em; text-transform: uppercase; color: #F3DDE0; }
+.une small { font: 600 10px 'Work Sans', sans-serif; letter-spacing: .3em; text-transform: uppercase; color: #F3DDE0; }
 .une h1 { margin: 6px 0 0; font: 500 38px/1 'Cormorant Garamond', serif; }
 .une h1 em { font-weight: 400; }
 .carte { margin-top: -26px; position: relative; z-index: 2; background: #fff; color: #2a1416; border-radius: 22px; padding: 22px 18px; box-shadow: 0 30px 60px -30px rgba(30,4,8,.8); }
 .carte p { margin: 0 0 14px; color: #6E4F53; font-size: 14px; }
-label { display: block; font: 600 11px 'Work Sans'; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; margin: 14px 0 6px; }
-.code { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #EADCDD; font: 600 24px 'Work Sans'; letter-spacing: .3em; text-align: center; color: var(--rouge); }
-input.date { width: 100%; padding: 14px; border-radius: 14px; border: 1.5px solid #EADCDD; font: 16px 'Work Sans'; }
+label { display: block; font: 600 11px 'Work Sans', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; margin: 14px 0 6px; }
+.code { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #EADCDD; font: 600 24px 'Work Sans', sans-serif; letter-spacing: .3em; text-align: center; color: var(--rouge); }
+input.date { width: 100%; padding: 14px; border-radius: 14px; border: 1.5px solid #EADCDD; font: 16px 'Work Sans', sans-serif; }
 .gros { display: block; width: 100%; margin-top: 18px; padding: 16px; border-radius: 16px; background: var(--rouge); color: #fff; text-align: center; font-weight: 700; }
 .leger { display: block; width: 100%; margin-top: 10px; padding: 14px; border-radius: 16px; border: 1px solid #EADCDD; color: var(--rouge); text-align: center; font-weight: 600; }
 .petit { margin-top: 12px !important; font-size: 12px !important; text-align: center; }
@@ -41,7 +41,7 @@ input.date { width: 100%; padding: 14px; border-radius: 14px; border: 1.5px soli
 .cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; background: linear-gradient(135deg, #5A141B, #8A2530 55%, #5A141B); box-shadow: 0 22px 40px -18px rgba(90,20,27,.9); }
 .cb::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.07); }
 .cb > * { position: relative; }
-.cb .h { display: flex; justify-content: space-between; font: 600 9px 'Work Sans'; letter-spacing: .3em; }
+.cb .h { display: flex; justify-content: space-between; font: 600 9px 'Work Sans', sans-serif; letter-spacing: .3em; }
 .cb .nom { font: 600 24px/1.1 'Cormorant Garamond', serif; letter-spacing: .05em; margin: 26px 0 4px; }
 .cb .bas { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 12px; }
 .cb .bas b { display: block; font-size: 9px; letter-spacing: .2em; color: #F3DDE0; }
@@ -56,11 +56,11 @@ input.date { width: 100%; padding: 14px; border-radius: 14px; border: 1.5px soli
 .suite { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
 .suite li { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,.3); }
 .suite li span { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.6); font: italic 500 17px 'Cormorant Garamond', serif; }
-.suite li.ok span { background: #fff; color: var(--rouge); font: 700 13px 'Work Sans'; }
-.titre-sec { margin: 26px 0 10px; font: 700 11px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; }
+.suite li.ok span { background: #fff; color: var(--rouge); font: 700 13px 'Work Sans', sans-serif; }
+.titre-sec { margin: 26px 0 10px; font: 700 11px 'Work Sans', sans-serif; letter-spacing: .2em; text-transform: uppercase; }
 .mois { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .mois div { background: #fff; color: #2a1416; border-radius: 14px; padding: 10px; }
-.mois small { display: block; font: 700 9px 'Work Sans'; letter-spacing: .14em; color: #6E4F53; text-transform: uppercase; }
+.mois small { display: block; font: 700 9px 'Work Sans', sans-serif; letter-spacing: .14em; color: #6E4F53; text-transform: uppercase; }
 .mois b { display: block; font: 600 14px/1.15 'Cormorant Garamond', serif; margin-top: 4px; }
 </style></head>
 <body>
@@ -72,8 +72,8 @@ input.date { width: 100%; padding: 14px; border-radius: 14px; border: 1.5px soli
     <div class="une"><div><small>Retenue au casting</small><h1>Bienvenue chez <em>MA2M</em></h1></div></div>
     <div class="carte">
       <p>Entrez le code personnel que l’agence vous a envoyé, et votre date de naissance.</p>
-      <label>Code d’inscription</label><input class="code" value="K7Q2M9">
-      <label>Date de naissance</label><input class="date" value="12/03/2004">
+      <label>Code d’inscription</label><input aria-label="Champ d’exemple" class="code" value="K7Q2M9">
+      <label>Date de naissance</label><input aria-label="Champ d’exemple" class="date" value="12/03/2004">
       <span class="gros">Continuer</span>
       <p class="petit">Le code ne sert qu’une fois.</p>
     </div>
