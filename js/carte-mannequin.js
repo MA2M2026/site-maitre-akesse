@@ -173,5 +173,28 @@ window.CarteMannequin = (function () {
     pdf.addImage(surBlanc(v), 'JPEG', 0, 0, 85.6, 54);
     telechargerFichier(pdf.output('blob'), nomFichier(d, 'pdf'));
   }
-  return { dessiner, imageRectoVerso, telechargerImage, telechargerPdf, ligneMachine, categorieCarte };
+  // « Formation » : le texte imposé par l'agence, sinon son programme — révision, recyclage (professionnelle sur 1 niveau
+  // de 9 mois), niveau et mois (« court » : sans « sur 9 », pour la carte) ; secours : sa catégorie
+  function formation(r, c, court, secours) {
+    c = c || {};
+    if (c.formation) return c.formation;
+    const x = r && (r.termine ? r.revProchain : r.prochain);
+    if (r && r.termine) return x ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Formation terminée';
+    if (x && c.categorie === 'Professionnel' && r.total === 9) return 'Recyclage · mois ' + x.mois_niveau + ' sur 9';
+    if (x) return 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + (court ? '' : ' sur 9');
+    return secours || '';
+  }
+  // les données d'une carte, d'après ce que l'application ou l'Administration a lu (carte : ma_carte_mannequin ou
+  // carte_mannequin_de ; profil : model_profiles ; photos : model_photos ; programme : son programme de formation)
+  function donnees(o) {
+    const p = o.profil || {}, c = o.carte || {};
+    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(o.programme) : null;
+    const vues = window.Partage.photosAffichees(o.photos || []), ph = vues.profil || vues.couverture;
+    return { nom: c.nom || p.full_name, categorie: c.categorie, formation: formation(r, c, true), taille: window.Partage.enMetres(p.height_cm),
+      mensurations: [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join(' · ') : '',
+      depuis: c.depuis, valable: c.valable, matricule: c.matricule,
+      photo: ph && typeof urlPhotoMemeOrigine === 'function' ? urlPhotoMemeOrigine(ph.url_petite || ph.url_miniature || ph.url) : '',
+      lienBook: c.en_ligne && c.id_fiche ? SITE + '/' + window.Partage.lienFicheMannequin({ id: c.id_fiche, slug: c.slug }) : '' };
+  }
+  return { dessiner, imageRectoVerso, telechargerImage, telechargerPdf, ligneMachine, categorieCarte, formation, donnees };
 })();

@@ -5210,4 +5210,7 @@ du contrat, 3/4/5 ans renouvelable ; verso épuré ; l'agence active la carte). 
   1 niveau), « Formation terminée ».
 - **Administration** : encart « Sa carte de mannequin » dans la fiche (espace Paiements, `encartCarte`) : activée,
   catégorie (Calcul / New Face / Professionnelle), validité, formation affichée, numéro.
-- Tests : `test-app-mannequin.js` (carte dessinée, verso, image, PDF), `test-correction-paiement.js` (encart).
+- **Aperçu dans l'Administration** (15/11/2026) : l'encart montre SA carte (recto/verso), « Télécharger » et « Imprimer
+  (PDF) » (pour l'imprimer à l'agence). Le calcul des données et de « Formation » est partagé :
+  `CarteMannequin.donnees` / `CarteMannequin.formation` (js/carte-mannequin.js), chargé aussi par admin/index.html.
+- Tests : `test-app-mannequin.js` (carte dessinée, verso, image, PDF), `test-correction-paiement.js` (encart, aperçu, PDF).

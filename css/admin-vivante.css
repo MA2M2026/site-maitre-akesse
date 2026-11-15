@@ -1565,3 +1565,5 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ca-carte .ca-ligne small { display: block; color: #6E4F53; font-size: 12.5px; font-weight: 400; }
 .ca-carte .ca-numero { color: #7C2128; letter-spacing: .08em; }
 .ca-carte .ca-expiree { color: #7C2128; }
+.ca-apercu { margin-top: 12px; padding-top: 12px; border-top: 1px solid #F2E7E8; }
+.ca-carte-img { display: block; width: 100%; max-width: 520px; height: auto; aspect-ratio: 1012 / 638; border-radius: 14px; background: #5A141B; margin-bottom: 10px; }

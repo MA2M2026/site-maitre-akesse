@@ -38,7 +38,7 @@ function donnees(role) {
       portail_code_appareil_etat: { defini: true, verrouille: false },
       compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 0 }],
       // (15/11/2026) sa carte de mannequin : pas encore activée, catégorie calculée
-      carte_mannequin_de: { active: false, nom: 'KONE AWA', matricule: null, depuis: '2025-09-01', valable: '2030-09-01', validite_ans: 5, categorie: 'New Face', categorie_manuelle: null, formation: null, niveaux: 2 },
+      carte_mannequin_de: { active: false, nom: 'KONE AWA', matricule: null, depuis: '2025-09-01', valable: '2030-09-01', validite_ans: 5, categorie: 'New Face', categorie_manuelle: null, formation: null, niveaux: 2, id_fiche: 'fiche-awa', en_ligne: false },
       mannequin_categorie_choisir: 'Professionnel',
       // (14/11/2026) programme de formation dans la fiche : 2 mois faits, le 3e en cours
       programme_formation_de: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2, mois_niveau: (i % 9) + 1,
@@ -54,7 +54,7 @@ function donnees(role) {
   const b = await chromium.launch();
   const url = 'http://127.0.0.1:' + PORT + '/admin/';
   const ouvrir = async (role, ecran, reglage) => {
-    const ctx = await b.newContext({ viewport: ecran, serviceWorkers: 'block' });
+    const ctx = await b.newContext({ viewport: ecran, serviceWorkers: 'block', acceptDownloads: true });
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
     const d = donnees(role); if (reglage) reglage(d);
@@ -106,6 +106,14 @@ function donnees(role) {
     ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_validite_ans":3/.test(j[3] || '')), nomEcran + ' : validité 3 ans enregistrée');
     await p.fill('.ca-carte input[name="formation"]', 'Recyclage'); await p.click('form[data-form="carte-formation"] button[type="submit"]'); await p.waitForTimeout(600);
     ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_formation":"Recyclage"/.test(j[3] || '')), nomEcran + ' : « Formation affichée » enregistrée');
+    // (15/11/2026) l'aperçu de sa carte, comme dans son application : dessiné, retourné, téléchargé
+    await p.waitForFunction(() => /^data:image\/png/.test((document.querySelector('.ca-carte-img') || {}).src || ''), null, { timeout: 15000 }).catch(() => {});
+    ok(await p.evaluate(() => { const i = document.querySelector('.ca-carte-img'); return !!i && i.naturalWidth === 1012 && i.naturalHeight === 638; }), nomEcran + ' : aperçu de sa carte dans l’Administration (format carte)');
+    await p.click('[data-action="carte-face"]'); await p.waitForTimeout(300);
+    await p.waitForFunction(() => /verso/.test((document.querySelector('.ca-carte-img') || {}).alt || '') && /^data:image\/png/.test(document.querySelector('.ca-carte-img').src || ''), null, { timeout: 15000 }).catch(() => {});
+    ok(/verso/.test(await p.getAttribute('.ca-carte-img', 'alt')), nomEcran + ' : « Voir le verso »');
+    const [dlCarte] = await Promise.all([p.waitForEvent('download', { timeout: 30000 }).catch(() => null), p.click('[data-action="carte-fichier"][data-valeur="pdf"]')]);
+    ok(dlCarte && /\.pdf$/.test(dlCarte.suggestedFilename()), nomEcran + ' : « Imprimer (PDF) » de sa carte depuis l’Administration');
     ok((await p.$$('[data-action="paiement-corriger"]')).length === 3 && (await p.$$('[data-action="paiement-annuler"]')).length === 3, nomEcran + ' : l’administrateur principal voit « Corriger » et « Annuler » sur chaque paiement');
     // corriger le montant et le moyen d'une mensualité
     await p.click('[data-action="paiement-corriger"][data-id="pm1"]'); await p.waitForSelector('form[data-form="paiement-corriger"]', { timeout: 4000 });

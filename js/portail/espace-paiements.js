@@ -135,6 +135,8 @@
       P.bd(sb.rpc('carte_mannequin_de', { p_agence: id })).catch(() => null)
     ]);
     const inscription = paiements.find((p) => p.objet === 'inscription' && p.statut !== 'refuse') || null;
+    if (!carteApercu || carteApercu.id !== id) carteFace = 'recto';
+    carteApercu = { id, carte, programme };
     const principal = P.moi.role === 'principal';
     const e = etatInscription(m, inscription);
     // Mannequin sans compte et sans paiement : l'agence enregistre le paiement de l'inscription
@@ -206,8 +208,40 @@
         '<button type="button" class="btn petit" data-action="carte-renouveler" data-id="' + id + '">↻ Renouveler à partir d’aujourd’hui</button></div>' +
       '<form class="ca-ligne f" data-form="carte-formation" data-id="' + id + '"><label class="fl" for="ca-formation-' + id + '"><b>Formation affichée</b><small>Vide : d’après son programme (ex. « Niveau 1 · mois 4 », « Recyclage », « Formation terminée »)</small>' +
         '<input id="ca-formation-' + id + '" name="formation" maxlength="40" value="' + P.esc(c.formation || '') + '" placeholder="Automatique"></label><button class="btn petit" type="submit">Enregistrer</button></form>' +
-      '<div class="ca-ligne"><span><b>N° de mannequin</b><small>Donné une fois pour toutes</small></span><b class="ca-numero">' + P.esc(c.matricule || 'Donné à l’activation') + '</b></div></div>';
+      '<div class="ca-ligne"><span><b>N° de mannequin</b><small>Donné une fois pour toutes</small></span><b class="ca-numero">' + P.esc(c.matricule || 'Donné à l’activation') + '</b></div>' +
+      // (15/11/2026, demande de la propriétaire) l'aperçu de SA carte, la même que dans son application
+      (c.id_fiche && window.CarteMannequin ? '<div class="ca-apercu"><img class="ca-carte-img" alt="Sa carte de mannequin (' + carteFace + ')" width="1012" height="638">' +
+        '<div class="ligne"><button type="button" class="btn petit" data-action="carte-face">↻ Voir le ' + (carteFace === 'recto' ? 'verso' : 'recto') + '</button>' +
+        '<button type="button" class="btn petit" data-action="carte-fichier" data-valeur="image">⬇️ Télécharger</button>' +
+        '<button type="button" class="btn petit" data-action="carte-fichier" data-valeur="pdf">🖨️ Imprimer (PDF)</button></div>' +
+        (c.active ? '' : '<p class="doux petit-texte">Aperçu : elle ne la voit pas tant que la carte n’est pas activée' + (c.matricule ? '' : ' (le numéro est donné à l’activation)') + '.</p>') + '</div>' : '') + '</div>';
   }
+  // aperçu de la carte : ses données (profil, photos, programme), lues une fois par affichage de la fiche
+  let carteFace = 'recto', carteApercu = null;
+  async function donneesApercu() {
+    const a = carteApercu;
+    if (!a || !a.carte || !a.carte.id_fiche) return null;
+    if (!a.lu) {
+      const [p, ph] = await Promise.all([P.bd(sb.from('model_profiles').select('full_name, height_cm, chest_cm, waist_cm, hips_cm').eq('id', a.carte.id_fiche).maybeSingle()).catch(() => null),
+        P.bd(sb.from('model_photos').select('url, url_miniature, url_petite, principale, photo_couverture, tri_statut').eq('model_id', a.carte.id_fiche)).catch(() => [])]);
+      a.lu = window.CarteMannequin.donnees({ carte: a.carte, profil: p || {}, photos: (ph || []).filter((x) => x.tri_statut !== 'ecartee'), programme: a.programme });
+    }
+    return a.lu;
+  }
+  async function dessinerApercuCarte() {
+    const img = document.querySelector('.ca-carte-img');
+    if (!img) return;
+    try { const d = await donneesApercu(); if (d) img.src = (await window.CarteMannequin.dessiner(carteFace, d)).toDataURL('image/png'); } catch (e) { console.warn(e); }
+  }
+  P.actions['carte-face'] = () => { carteFace = carteFace === 'recto' ? 'verso' : 'recto'; return P.afficher(); };
+  P.actions['carte-fichier'] = async (el) => {
+    const d = await donneesApercu();
+    if (!d) return;
+    el.disabled = true;
+    try { if (el.getAttribute('data-valeur') === 'pdf') await window.CarteMannequin.telechargerPdf(d); else await window.CarteMannequin.telechargerImage(d); }
+    catch (e) { P.message('La carte n’a pas pu être préparée : réessayez.'); }
+    finally { el.disabled = false; }
+  };
   P.actions['carte-reglage'] = async (el) => {
     const id = el.getAttribute('data-id'), champ = el.getAttribute('data-champ'), v = el.getAttribute('data-valeur');
     if (champ === 'categorie') await P.sensible(() => P.rpc('mannequin_categorie_choisir', { p_agence: id, p_niveau: v || null }));
@@ -1115,7 +1149,7 @@
         return fin < 0 ? html : html.slice(0, fin + 12) + noteSuiviVide(0) + html.slice(fin + 12);
       } }))),
     compteur: {},
-    apres: { matrice: versMoisActuel },
+    apres: { matrice: versMoisActuel, fiche: () => { void dessinerApercuCarte(); } },
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
       // (une inscription et son 1er mois, déclarés ensemble, comptent pour un)
