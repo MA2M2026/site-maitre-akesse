@@ -29,6 +29,26 @@
     ['b3b-codes-inscription', 'Codes d’accès'], ['b3b-acces-bloques', 'Accès bloqués'], ['b3a-drive', 'Drive et transferts'],
     ['b3a-nettoyage', 'Nettoyage des photos'], ['b3a-erreurs', 'Erreurs du site']
   ];
+  // (16/11/2026, « premium partout ») en tête des tuiles Messages et Réglages, la carte façon carte bancaire
+  // (P.carteHero, js/admin/coque.js) avec leurs chiffres utiles ; un chiffre illisible (droits, réseau) est omis.
+  const compter = (requete) => P.essai(P.nombre(requete));
+  const tete = (table) => sb.from(table).select('id', { count: 'exact', head: true });
+  const ilYa = (jours) => new Date(Date.now() - jours * 864e5).toISOString();
+  const debutMois = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString(); };
+  async function heroMessages() {
+    const [contacts, infos] = await Promise.all([compter(tete('messages_contact').gte('created_at', ilYa(7))),
+      compter(tete('infos_agence').gte('cree_le', debutMois()))]);
+    if (contacts === null && infos === null) return null;
+    return { titre: 'MESSAGES', grand: contacts === null ? null : String(contacts), unite: contacts === 1 ? 'message reçu' : 'messages reçus', legende: contacts === null ? '' : 'depuis le site, ces 7 derniers jours',
+      tuiles: [[infos, infos === 1 ? 'information envoyée ce mois' : 'informations envoyées ce mois']] };
+  }
+  async function heroReglages() {
+    const [codes, erreurs] = await Promise.all([compter(tete('codes_inscription').eq('utilise', false)),
+      compter(tete('journal_erreurs').gte('created_at', ilYa(7)))]);
+    if (codes === null && erreurs === null) return null;
+    return { titre: 'RÉGLAGES', grand: erreurs === null ? null : String(erreurs), unite: erreurs === 1 ? 'erreur' : 'erreurs', legende: erreurs === null ? '' : (erreurs ? 'sur le site ces 7 derniers jours · à regarder' : 'sur le site ces 7 derniers jours · tout va bien'),
+      tuiles: [[codes, codes === 1 ? 'code d’accès pas encore utilisé' : 'codes d’accès pas encore utilisés']] };
+  }
   // Les TUILES (11/11/2026, maquette validée par la propriétaire : « trop touffu, trop surchargé ») : l'accueil
   // montre 8 grandes tuiles au lieu des rubriques ; chaque tuile garde ses rubriques utiles (pages) et range
   // les outils rares dans « Plus d'outils » (plus). Chaque rubrique du MENU est dans UNE tuile (vérifié par
@@ -43,12 +63,12 @@
     { cle: 'evenements', ic: '👠', titre: 'Événements', sous: 'Convocations, défilés, cartes',
       pages: ['b3c-agenda', 'b2-convocations', 'b2-defiles', 'b2-cartes'],
       plus: ['b2-selection', 'b2-rappel', 'b2-places', 'b2-fiches-evenement'] },
-    { cle: 'messages', ic: '💌', titre: 'Messages', sous: 'Convoquer, annoncer, informer', envoi: true,
+    { cle: 'messages', ic: '💌', titre: 'Messages', sous: 'Convoquer, annoncer, informer', envoi: true, hero: heroMessages,
       pages: ['b2-messages-groupes', 'b2-infos', 'b2-contacts'], plus: [] },
     { cle: 'site', ic: '🌐', titre: 'Le site', sous: 'Actualités, textes, vidéo', discret: true,
       pages: ['actualites', 'evenements', 'b3c-textes-pages', 'b3d-video-accueil'],
       plus: ['partenaires', 'b3c-mot-fondateur', 'b3c-instagram', 'b3c-traductions'] },
-    { cle: 'reglages', ic: '⚙️', titre: 'Réglages', sous: 'Accès, outils, erreurs', discret: true,
+    { cle: 'reglages', ic: '⚙️', titre: 'Réglages', sous: 'Accès, outils, erreurs', discret: true, hero: heroReglages,
       pages: ['b3b-codes-inscription', 'b3b-acces-bloques', 'b3a-erreurs'],
       plus: ['b3a-drive', 'b3a-nettoyage'] }
   ];
@@ -102,6 +122,7 @@
     const compte = (P.espaces.site && P.espaces.site.compteur) || {};
     const ligne = (k) => '<a class="tu-ligne" href="#/site/' + k + '"><em aria-hidden="true">' + ((INFOS[k] || [])[0] || '•') + '</em><span>' + P.esc(libelle(k)) +
       '<small>' + P.esc((INFOS[k] || [])[1] || '') + '</small></span>' + (compte[k] ? '<b>' + compte[k] + '</b>' : '<i aria-hidden="true">›</i>') + '</a>';
+    const hero = t.hero && P.carteHero ? P.essai(t.hero()) : null;   // (en même temps que les visages)
     let visages = '';
     if (t.visages) {
       const l = await P.essai(P.bd(sb.from('model_profiles').select('id, full_name').eq('published', true).order('created_at', { ascending: false }).limit(12))) || [];
@@ -110,7 +131,7 @@
         P.visage(photos[m.id], m.full_name) + '<span>' + P.esc(String(m.full_name).split(' ').slice(-1)[0]) + '</span></a>').join('');
     }
     return '<div class="tu-page"><div class="tu-tete"><a class="tu-retour" href="#/" aria-label="Retour à l’accueil">‹</a><h1>' + P.esc(t.titre) + '</h1></div>' +
-      (visages ? '<div class="tu-visages">' + visages + '</div>' : '') +
+      (await hero ? P.carteHero(await hero) : '') + (visages ? '<div class="tu-visages">' + visages + '</div>' : '') +
       (t.envoi ? blocEnvoi() + '<h2 class="tu-question">Aussi dans Messages</h2>' : '') +
       '<div class="tu-liste">' + t.pages.map(ligne).join('') + '</div>' +
       (t.plus.length ? '<details class="tu-plus"><summary>Plus d’outils (' + t.plus.length + ')</summary><div class="tu-liste">' + t.plus.map(ligne).join('') + '</div></details>' : '') + '</div>';

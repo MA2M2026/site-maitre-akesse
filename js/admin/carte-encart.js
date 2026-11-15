@@ -29,12 +29,12 @@
     const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
     if (!r) return '';
     const x = r.enCours || r.prochain;
-    const nomMois = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? P.esc(P.MOIS[+m[2] - 1] + ' ' + m[1]) : ''; };
+    const nomMois = (iso) => P.esc(P.libelleMois(iso));
     // (14/11/2026) formation finie : la Révision (thème du mois de mars à novembre)
     const y = r.termine ? r.revProchain : null;
     return '<div class="carte pf-programme"><h2>Programme de formation</h2>' +
       (r.termine ? '<p><b>Formation terminée ✓</b>' + (y ? ' <span class="doux">· Révision, ' + (r.revEnCours ? 'ce mois-ci' : 'prochain thème (' + nomMois(y.date) + ')') + ' : ' + P.esc(y.theme) + ' (mois ' + y.mois_niveau + ' sur 9)</span>' : '') + '</p>' :
-      '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
+      !x ? '' : '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
       (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
       '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
       // (15/11/2026, demande de la propriétaire) les mois en colonnes : un niveau par colonne, plus court à lire
@@ -54,7 +54,7 @@
   function dessiner() {
     const c = etat.carte, r = resume(), formee = c.parcours === 'formee';
     const peutFormation = !!(P.moi && P.moi.espaces && P.moi.espaces.paiements);   // (parcours et position : équipe des paiements ou principal)
-    const mois = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? P.MOIS[+m[2] - 1] + ' ' + m[1] : '—'; };
+    const mois = (iso) => P.libelleMois(iso, '—');
     const aujourdhui = new Date().toISOString().slice(0, 10), expiree = c.valable && c.valable < aujourdhui;
     // position actuelle : le rang du mois en cours (ou du prochain) ; formation finie : niveaux × 9 + 1
     const x = r && (r.enCours || r.prochain), total = r ? r.total : (formee ? 9 : 18);

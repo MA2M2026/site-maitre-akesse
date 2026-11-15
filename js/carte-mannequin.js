@@ -108,9 +108,11 @@ window.CarteMannequin = (function () {
       let l1 = mots.slice(0, coupe).join(' '), l2 = mots.slice(coupe).join(' ');
       taille = 15;
       while (taille > 10 && (mesure(l1, taille) > largeurMax || mesure(l2, taille) > largeurMax)) taille -= 0.5;
-      while (mesure(l2, taille) > largeurMax && l2.length > 2) l2 = l2.slice(0, -2) + '…';
-      texte(ctx, l1, ix, 52 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
-      texte(ctx, l2, ix, 52 * u + taille * 1.15 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+      // (16/11/2026, relecture) chaque ligne tient : un mot trop long est coupé lui aussi ; un seul mot reste à hauteur du nom
+      const couper = (t) => { while (mesure(t, taille) > largeurMax && t.length > 2) t = t.slice(0, -2) + '…'; return t; };
+      l1 = couper(l1); l2 = couper(l2);
+      texte(ctx, l1, ix, (l2 ? 52 : 66) * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+      if (l2) texte(ctx, l2, ix, 52 * u + taille * 1.15 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
     }
     ctx.restore();
     ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(ix, 76 * u, 26 * u, 1 * u);

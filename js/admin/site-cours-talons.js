@@ -175,7 +175,7 @@
   }
   function planning() {
     const jours = plan.jours, j0 = debutJourUTC();
-    const cles = Object.keys(jours).sort();
+    const cles = Object.keys(jours).sort((x, y) => x.localeCompare(y));
     if (!cles.length) return '<div class="carte vide">Aucun cours prévu dans les 4 prochaines semaines.</div>';
     const rappels = (d, s) => { const w = numeroWhatsApp(d.telephone), wp = numeroWhatsApp(d.parent_telephone);
       return (w ? lienWhatsApp(w, '💬 Rappel', messageRappel(d, s, false), 'petit rouge') : '') + (wp ? lienWhatsApp(wp, '💬 Au parent', messageRappel(d, s, true)) : ''); };
@@ -362,7 +362,7 @@
   P.formulaires['talons-indispo'] = async (f) => {
     const du = String(f.get('du') || ''), au = String(f.get('au') || '') || du, de = String(f.get('de') || ''), a = String(f.get('a') || '');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(du) || !/^\d{4}-\d{2}-\d{2}$/.test(au)) { P.message('Choisissez la date.'); return; }
-    if (!de !== !a) { P.message('Indiquez les deux heures (de … à …), ou aucune pour la journée entière.'); return; }
+    if (Boolean(de) !== Boolean(a)) { P.message('Indiquez les deux heures (de … à …), ou aucune pour la journée entière.'); return; }
     // Abidjan = UTC ; journée entière : de 0 h au lendemain 0 h
     // (plusieurs jours avec des heures : ces heures-là CHAQUE jour, une ligne par jour)
     const j0 = Date.parse(du + 'T00:00:00Z'), j1 = Date.parse(au + 'T00:00:00Z'), raison = String(f.get('raison') || '').trim() || null;

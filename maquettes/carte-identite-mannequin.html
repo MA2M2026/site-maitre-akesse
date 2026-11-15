@@ -11,7 +11,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work Sans', sans-serif; }
 .page { max-width: 480px; margin: 0 auto; padding: 22px 16px 40px; }
-.etiquette { font: 700 10px 'Work Sans'; letter-spacing: .22em; text-transform: uppercase; opacity: .85; margin: 22px 0 10px; }
+.etiquette { font: 700 10px 'Work Sans', sans-serif; letter-spacing: .22em; text-transform: uppercase; opacity: .85; margin: 22px 0 10px; }
 .carte { position: relative; width: 100%; aspect-ratio: 85.6 / 54; border-radius: 18px; overflow: hidden; color: #fff;
   background: linear-gradient(135deg, #4A1016 0%, #8A2530 55%, #5A141B 100%); box-shadow: 0 24px 44px -20px rgba(30,4,8,.95); }
 .carte::before { content: ''; position: absolute; right: -70px; top: -70px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,.06); }
@@ -19,7 +19,7 @@ body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work San
 .carte > * { position: relative; z-index: 1; }
 .r-tete { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px 0; }
 .r-tete img { height: 17px; }
-.r-tete span { font: 600 7.5px 'Work Sans'; letter-spacing: .26em; text-align: right; line-height: 1.5; }
+.r-tete span { font: 600 7.5px 'Work Sans', sans-serif; letter-spacing: .26em; text-align: right; line-height: 1.5; }
 .r-corps { display: flex; gap: 12px; padding: 10px 14px 0; }
 .photo { flex: 0 0 31%; aspect-ratio: 3 / 4; border-radius: 10px; background: #fff url(../assets/cours-talons/mannequin-podium.jpg) 50% 18% / cover; border: 2px solid rgba(255,255,255,.85); }
 .infos { flex: 1; min-width: 0; }
@@ -27,10 +27,10 @@ body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work San
 .prenom { font: italic 400 17px/1.1 'Cormorant Garamond', serif; color: #F3DDE0; }
 .lignes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; margin-top: 8px; }
 .lignes div { font-size: 10.5px; line-height: 1.25; }
-.lignes b { display: block; font: 600 7px 'Work Sans'; letter-spacing: .18em; color: #F3DDE0; }
+.lignes b { display: block; font: 600 7px 'Work Sans', sans-serif; letter-spacing: .18em; color: #F3DDE0; }
 .r-pied { position: absolute; left: 14px; right: 14px; bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
-.matricule { font: 600 13px 'Work Sans'; letter-spacing: .16em; }
-.valide { font-size: 9.5px; text-align: right; } .valide b { display: block; font: 600 7px 'Work Sans'; letter-spacing: .18em; color: #F3DDE0; }
+.matricule { font: 600 13px 'Work Sans', sans-serif; letter-spacing: .16em; }
+.valide { font-size: 9.5px; text-align: right; } .valide b { display: block; font: 600 7px 'Work Sans', sans-serif; letter-spacing: .18em; color: #F3DDE0; }
 .puce { width: 30px; height: 23px; border-radius: 5px; background: linear-gradient(135deg, #f6eef0, #d6bcc1); margin-bottom: 4px; }
 /* verso */
 .v-bande { margin-top: 14px; height: 30px; background: rgba(0,0,0,.35); }
@@ -38,7 +38,7 @@ body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work San
 .qr { flex: 0 0 30%; aspect-ratio: 1; border-radius: 10px; background: #fff; padding: 6px; }
 .qr img, .qr canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 .v-texte { flex: 1; font-size: 10.5px; line-height: 1.45; }
-.v-texte b { display: block; font: 600 7.5px 'Work Sans'; letter-spacing: .2em; color: #F3DDE0; margin-bottom: 2px; }
+.v-texte b { display: block; font: 600 7.5px 'Work Sans', sans-serif; letter-spacing: .2em; color: #F3DDE0; margin-bottom: 2px; }
 .v-texte p { margin: 0 0 6px; }
 .signature { position: absolute; left: 14px; right: 14px; bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 8.5px; color: #F3DDE0; }
 .signature i { font: italic 400 15px 'Cormorant Garamond', serif; color: #fff; }

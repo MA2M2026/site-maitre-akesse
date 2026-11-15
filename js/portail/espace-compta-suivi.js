@@ -36,8 +36,9 @@
       const proposes = carnet.filter((x) => x.type === (creance ? 'client' : 'fournisseur'));
       const bouton = (action, d, libelle) => '<button class="btn petit" type="button" data-action="' + action + '" data-table="compta_dettes" data-id="' + d.id + '">' + libelle + '</button>';
       return P.entete(creance ? 'Ce qu’on nous doit' : 'Ce qu’on doit') +
-        '<div class="grille chiffres">' + P.chiffre(creance ? 'Reste à encaisser' : 'Reste à payer', P.fcfa(liste.reduce((s, d) => s + d.reste, 0)), creance ? 'vert' : 'rouge') +
-        P.chiffre('En retard', liste.filter((d) => d.retard).length, liste.some((d) => d.retard) ? 'rouge' : '') + '</div>' +
+        P.carteHero({ titre: creance ? 'RESTE À ENCAISSER' : 'RESTE À PAYER', grand: P.sansFcfa(liste.reduce((s, d) => s + d.reste, 0)), unite: 'FCFA',
+          legende: creance ? 'prestations faites, pas encore payées par les clients' : 'factures reçues, pas encore payées',
+          tuiles: [[liste.filter((d) => d.retard).length, 'en retard']] }) +
         '<div class="note info">' + (creance ? 'Une prestation faite mais pas encore payée par le client (casting, défilé…). Quand il paie, même en plusieurs fois, cliquez « Encaisser » : la recette s’enregistre toute seule.'
           : 'Une facture reçue d’un fournisseur mais pas encore payée. Quand vous la payez, même en plusieurs fois, cliquez « Payer » : la dépense s’enregistre toute seule.') + '</div>' +
         (proposes.length ? '<form class="carte f" data-form="compta-dette" data-sens="' + sens + '"><h2>' + (creance ? 'Nouvelle somme due par un client' : 'Nouvelle facture à payer') + '</h2>' +
