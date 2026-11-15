@@ -5246,6 +5246,11 @@ jour(compte)` dès que change ce qui décide de la catégorie : `categorie_suivr
 parcours_arrivee, formation_mois_faits, formation_niveaux, date_entree, user_id) et `categorie_suivre_experiences`
 (model_projects : ajout, période, retrait). La fiche publique (« New Face » / « Main Board ») suit donc la carte sans
 attendre 4 h ; le rangement de la nuit reste pour le temps qui passe (2 ans).
+Le même fichier contient désormais `carte_mannequin_regler` (déplacée, corrigée à la relecture du 16/11/2026) : choisir
+le parcours garde vides des `formation_mois_faits` jamais réglés (sinon `formation_debut`, donc les mensualités,
+basculaient au calcul de la reprise) ; une position en deçà des mois déjà comptés depuis l'arrivée est refusée avec un
+message clair. Contrôle « 3 éléments sur 3 ». À savoir : parcours et position restent réservés à l'équipe des paiements
+(ou au principal) alors que l'encart est dans « Mannequins » (espace du site) : en pratique, le principal les règle.
 
 ## Premium : Messages, Réglages et Comptabilité (16/11/2026)
 La carte façon carte bancaire (`P.carteHero`, js/admin/coque.js ; montants sans « FCFA » : `P.sansFcfa`) est aussi en
@@ -5254,4 +5259,4 @@ tête des tuiles **Messages** (messages de contact des 7 derniers jours, informa
 chiffre illisible est omis. Dans la Comptabilité, elle remplace les cases blanches de **Dépenses**, **Trésorerie** (total
 et un compte par tuile), **Ce qu'on nous doit / Ce qu'on doit** (reste et nombre en retard) et **Impôts et taxes**.
 Parcours et position : équipe des paiements ou principal (ils comptent pour les mensualités). Nom trop long sur la
-carte : sur deux lignes. Contrôle « 13 éléments sur 13 ».
+carte : sur deux lignes. Contrôle « 13 éléments sur 13 » (12 depuis le 16/11/2026 : `carte_mannequin_regler` est passée dans supabase-categorie-immediate.sql).

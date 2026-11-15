@@ -122,7 +122,7 @@
     const compte = (P.espaces.site && P.espaces.site.compteur) || {};
     const ligne = (k) => '<a class="tu-ligne" href="#/site/' + k + '"><em aria-hidden="true">' + ((INFOS[k] || [])[0] || '•') + '</em><span>' + P.esc(libelle(k)) +
       '<small>' + P.esc((INFOS[k] || [])[1] || '') + '</small></span>' + (compte[k] ? '<b>' + compte[k] + '</b>' : '<i aria-hidden="true">›</i>') + '</a>';
-    const h = t.hero && P.carteHero ? await P.essai(t.hero()) : null;
+    const hero = t.hero && P.carteHero ? P.essai(t.hero()) : null;   // (en même temps que les visages)
     let visages = '';
     if (t.visages) {
       const l = await P.essai(P.bd(sb.from('model_profiles').select('id, full_name').eq('published', true).order('created_at', { ascending: false }).limit(12))) || [];
@@ -131,7 +131,7 @@
         P.visage(photos[m.id], m.full_name) + '<span>' + P.esc(String(m.full_name).split(' ').slice(-1)[0]) + '</span></a>').join('');
     }
     return '<div class="tu-page"><div class="tu-tete"><a class="tu-retour" href="#/" aria-label="Retour à l’accueil">‹</a><h1>' + P.esc(t.titre) + '</h1></div>' +
-      (h ? P.carteHero(h) : '') + (visages ? '<div class="tu-visages">' + visages + '</div>' : '') +
+      (await hero ? P.carteHero(await hero) : '') + (visages ? '<div class="tu-visages">' + visages + '</div>' : '') +
       (t.envoi ? blocEnvoi() + '<h2 class="tu-question">Aussi dans Messages</h2>' : '') +
       '<div class="tu-liste">' + t.pages.map(ligne).join('') + '</div>' +
       (t.plus.length ? '<details class="tu-plus"><summary>Plus d’outils (' + t.plus.length + ')</summary><div class="tu-liste">' + t.plus.map(ligne).join('') + '</div></details>' : '') + '</div>';

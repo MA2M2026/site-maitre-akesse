@@ -197,61 +197,7 @@ $$;
 revoke all on function carte_mannequin_par_fiche(uuid) from public, anon;
 grant execute on function carte_mannequin_par_fiche(uuid) to authenticated;
 
-create or replace function carte_mannequin_regler(p_agence uuid, p_reglages jsonb) returns jsonb
-language plpgsql security definer set search_path = public as $$
-declare
-  u uuid;
-  avant text := current_setting('request.jwt.claims', true);
-begin
-  if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé'; end if;
-  if jsonb_typeof(p_reglages) <> 'object' then raise exception 'Réglage inconnu.'; end if;
-  if p_reglages ? 'active' then update agence_mannequins set carte_active = (p_reglages->>'active')::boolean where id = p_agence; end if;
-  if p_reglages ? 'validite_ans' then
-    if (p_reglages->>'validite_ans')::int not between 1 and 10 then raise exception 'Validité inconnue.'; end if;
-    update agence_mannequins set carte_validite_ans = (p_reglages->>'validite_ans')::int where id = p_agence;
-  end if;
-  if p_reglages ? 'formation' then update agence_mannequins set carte_formation = left(nullif(trim(p_reglages->>'formation'), ''), 40) where id = p_agence; end if;
-  if p_reglages ? 'renouveler' then update agence_mannequins set carte_debut = current_date where id = p_agence; end if;
-  -- son parcours et sa position dans la formation : les mêmes données que l'assistant de reprise (elles comptent aussi
-  -- pour ses mensualités) → équipe des paiements (ou principal) seulement
-  if (p_reglages ? 'parcours' or p_reglages ? 'position') and not portail_peut('paiements') then
-    raise exception 'Seule l''équipe des paiements (ou l''administrateur principal) change le parcours ou la position dans la formation.';
-  end if;
-  if p_reglages ? 'parcours' then
-    if (p_reglages->>'parcours') not in ('debutante', 'formee') then raise exception 'Parcours inconnu.'; end if;
-    -- débutante : 2 niveaux (18 mois) ; déjà formée : le recyclage (9 mois) ; la position repart au début
-    update agence_mannequins set parcours_arrivee = p_reglages->>'parcours', formation_niveaux = case when p_reglages->>'parcours' = 'formee' then 1 else 2 end,
-      formation_mois_faits = least(coalesce(formation_mois_faits, 0), case when p_reglages->>'parcours' = 'formee' then 9 else 18 end), carte_formation = null
-      where id = p_agence;
-  end if;
-  if p_reglages ? 'position' then
-    -- position = le rang du mois EN COURS (1 = niveau 1 mois 1 … 18), ou niveaux × 9 + 1 = formation terminée :
-    -- les mois déjà faits sont recalculés pour que le mois en cours soit celui-là
-    declare
-      n int := (p_reglages->>'position')::int;
-      niv int := (select formation_niveaux from agence_mannequins where id = p_agence);
-      e int;
-    begin
-      if n is null or n < 1 or n > niv * 9 + 1 then raise exception 'Position inconnue.'; end if;
-      update agence_mannequins set formation_mois_faits = 0, carte_formation = null where id = p_agence;
-      select count(*) into e from formation_mois_n(formation_debut(p_agence), 48) m where m < date_trunc('month', current_date)::date;
-      update agence_mannequins set formation_mois_faits = least(niv * 9, greatest(0, n - 1 - e)) where id = p_agence;
-    end;
-  end if;
-  if p_reglages ? 'categorie' then
-    if (p_reglages->>'categorie') is not null and (p_reglages->>'categorie') not in ('New Face', 'Professionnel') then raise exception 'Catégorie inconnue.'; end if;
-    select user_id into u from agence_mannequins where id = p_agence;
-    if u is null then raise exception 'Cette mannequin n''a pas encore de compte.'; end if;
-    perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
-    update model_profiles set niveau_manuel = p_reglages->>'categorie' where id = u;
-    perform set_config('request.jwt.claims', coalesce(avant, ''), true);
-    perform categories_mannequins_mettre_a_jour(u);
-  end if;
-  return (select carte_mannequin_donnees(a) from agence_mannequins a where a.id = p_agence);
-end;
-$$;
-revoke all on function carte_mannequin_regler(uuid, jsonb) from public, anon;
-grant execute on function carte_mannequin_regler(uuid, jsonb) to authenticated;
+-- carte_mannequin_regler : dans supabase-categorie-immediate.sql (16/11/2026, corrigée à la relecture)
 
 -- (15/11/2026) les anciens choix à la main (catégorie, texte de formation) sont retirés : tout découle maintenant du
 -- parcours et de la position dans la formation
@@ -271,9 +217,9 @@ select categories_mannequins_mettre_a_jour() as fiches_rangees;
 
 NOTIFY pgrst, 'reload schema';
 
--- Contrôle (à lire après « Run ») : 13 éléments attendus
+-- Contrôle (à lire après « Run ») : 12 éléments attendus
 select 'Carte de mannequin installée : ' || (
   (select count(*) from information_schema.columns where (table_name, column_name) in (('model_profiles', 'niveau_manuel'), ('agence_mannequins', 'carte_active'), ('agence_mannequins', 'carte_numero'), ('agence_mannequins', 'parcours_arrivee'))) +
   (select count(*) from pg_trigger where tgname = 'model_profiles_categorie') +
-  (select count(*) from pg_proc where proname in ('categorie_mannequin_calculee', 'categories_mannequins_mettre_a_jour', 'ma_carte_mannequin', 'carte_mannequin_de', 'carte_mannequin_par_fiche', 'carte_mannequin_regler', 'mannequin_depuis')) +
-  (select count(*) from cron.job where jobname = 'categories-mannequins')) || ' éléments sur 13' as controle;
+  (select count(*) from pg_proc where proname in ('categorie_mannequin_calculee', 'categories_mannequins_mettre_a_jour', 'ma_carte_mannequin', 'carte_mannequin_de', 'carte_mannequin_par_fiche', 'mannequin_depuis')) +
+  (select count(*) from cron.job where jobname = 'categories-mannequins')) || ' éléments sur 12' as controle;

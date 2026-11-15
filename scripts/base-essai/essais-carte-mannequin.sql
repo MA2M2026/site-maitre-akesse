@@ -16,7 +16,9 @@ insert into model_projects (model_id, type_projet, titre, periode) values ('0000
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b01') = 'New Face', 'arrivée il y a 4 mois, sans expérience : New Face (même si elle avait coché « Professionnel »)');
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b02') = 'Professionnel', '2 ans à l''agence : Professionnelle');
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b03') = 'Professionnel', 'arrivée le mois dernier, défilés depuis 2020 : Professionnelle tout de suite');
-select essai(categories_mannequins_mettre_a_jour() >= 2, 'les fiches sont rangées d''un coup (celles qui ont changé)');
+-- (16/11/2026) les fiches sont déjà rangées par les déclencheurs (supabase-categorie-immediate.sql) : le rangement de la
+-- nuit les range aussi si besoin, sans erreur
+select essai(categories_mannequins_mettre_a_jour() >= 0, 'rangement de toutes les fiches : il passe');
 select essai((select string_agg(niveau_mannequin, ',' order by full_name) from model_profiles where id::text like '00000000-0000-0000-0000-0000000c0b0%') = 'New Face,Professionnel,Professionnel', 'fiches : AYA New Face, FATOU et MARIAM Professionnelles');
 select essai(categories_mannequins_mettre_a_jour() = 0, 'relancé : rien à changer');
 -- carte : rien tant que l'agence ne l'active pas

@@ -322,7 +322,7 @@
   // ---------- Paiements à valider (cahier v2.4, 5.2) ----------
   // Après « J'ai payé » : orange. L'agence vérifie dans Wave Business puis valide (vert) ou refuse
   // avec un motif ; le mannequin (son parent s'il est mineur) en est prévenu par e-mail et WhatsApp.
-  const libelleMois = (d) => { const p = String(d || '').split('-'); return p.length > 1 ? P.MOIS[Number(p[1]) - 1] + ' ' + p[0] : ''; };
+  const libelleMois = (d) => P.libelleMois(d);   // (js/portail/noyau.js)
   const objetPaiement = (p) => p.objet === 'inscription' ? 'Inscription' : 'Mensualité de ' + libelleMois(p.mois);
   async function paiementsDeclares() {
     const liste = await P.bd(sb.from('paiements_mannequins').select('*, mannequin:agence_mannequins(full_name, telephone)')

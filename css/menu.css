@@ -18,7 +18,10 @@ html body .menu-overlay {
   clip-path: circle(0 at calc(100% - 52px) 42px);
   transition: clip-path 0.7s cubic-bezier(.7,0,.2,1), visibility 0.7s !important;
 }
-html body .menu-overlay.active { visibility: visible; clip-path: circle(150% at calc(100% - 52px) 42px); }
+html body .menu-overlay.active { visibility: visible; clip-path: circle(150% at calc(100% - 52px) 42px);
+  /* (16/11/2026) visible DÈS l'ouverture (le cercle s'anime toujours) : sur une page encore occupée, le menu restait
+     « caché » jusqu'à la première image et le focus du clavier n'y entrait pas */
+  transition: clip-path 0.7s cubic-bezier(.7,0,.2,1), visibility 0s !important; }
 
 /* logo en haut à gauche, rond de fermeture en haut à droite (repris de l'ancien tiroir) */
 html body .menu-overlay::before { top: 1.6rem !important; left: clamp(22px, 6vw, 80px) !important; }
