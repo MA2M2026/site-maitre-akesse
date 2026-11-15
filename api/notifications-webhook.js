@@ -60,6 +60,17 @@ function construireNotification(table, record) {
       url: '/admin/#/site/b2-cours-talons'
     };
   }
+  // (13/11/2026) rappel 24 h avant une séance de cours de talons (déclencheur : supabase-talons-programme.sql)
+  if (table === 'talons_rappels') {
+    const d = record.debut ? new Date(record.debut) : null;
+    const quand = d && !isNaN(d) ? d.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' }) : '';
+    return {
+      cle: 'evenement_talons_rappel',
+      titre: '⏰ Cours de talons demain',
+      texte: (record.nom || 'Une élève') + (quand ? ' · ' + quand : '') + (record.lieu ? ' · ' + String(record.lieu).slice(0, 60) : ''),
+      url: '/admin/#/site/b2-cours-talons'
+    };
+  }
   if (table === 'recruiter_requests') {
     const qui = record.contact_name || record.company || 'Un recruteur';
     return {

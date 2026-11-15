@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41">
 <link rel="stylesheet" href="css/luxe.css?v=e66b5862">
 <link rel="stylesheet" href="css/paiements-premium.css?v=e68257b9">
-<link rel="stylesheet" href="css/cours-talons.css?v=d715a6a9">
+<link rel="stylesheet" href="css/cours-talons.css?v=c2ba14a5">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -156,6 +156,8 @@
             <div class="form-champ"><label for="ct-dispo">Vos disponibilités</label><input type="text" id="ct-dispo" maxlength="600" placeholder="Ex. : samedi matin, en semaine après 17 h"></div>
           </div>
           <div class="form-champ u-hidden" id="ct-bloc-adresse"><label for="ct-adresse">Lieu des cours (quartier, adresse)</label><input type="text" id="ct-adresse" maxlength="300" placeholder="Ex. : Cocody Angré, près de…"></div>
+          <!-- (13/11/2026) cours privés : les créneaux encore libres de l’agence (talons_creneaux_libres), 1 h 30 d’écart gardé -->
+          <div class="ct-creneaux u-hidden" id="ct-bloc-creneaux"><p class="ct-creneaux-titre">Choisissez vos séances parmi nos créneaux libres <small id="ct-creneaux-compte"></small></p><p class="ct-creneaux-aide">Touchez un créneau pour le choisir (chaque séance dure 2 h).</p><div class="ct-creneaux-liste" id="ct-creneaux"></div><label class="ct-convenir"><input type="checkbox" id="ct-convenir"> <span>Je préfère convenir des dates avec l’agence</span></label></div>
         </div>
         <p class="ct-total" id="ct-total" aria-live="polite"></p>
       </fieldset>
@@ -258,6 +260,6 @@
 <script src="js/menu.js?v=9fe5a355"></script>
 <script src="js/diaporama-luxe.js?v=6c1722dd"></script>
 <script src="js/moyens-paiement.js?v=e15e92a3"></script>
-<script src="js/cours-talons.js?v=20fb11cb"></script>
+<script src="js/cours-talons.js?v=32703a28"></script>
 </body>
 </html>

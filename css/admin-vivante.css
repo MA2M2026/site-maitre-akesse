@@ -1150,6 +1150,56 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .ct-fiche .galerie-dossier { margin-top: 6px; }
 .ct-fiche .photo-dossier figcaption { justify-content: center; }
 .jour-groupe > .ct-fiche + .ct-fiche { margin-top: 16px; }
+/* (13/11/2026, maquette validée) programme des élèves de l'atelier : dossier dans la fiche, planning, réglages
+   (js/admin/site-talons-programme.js) */
+.tp-dossier { margin: 6px 0 16px; padding: 16px; border-radius: 18px; background: #F7EEEF; }
+.tp-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.tp-tete h3 { margin: 0; font: 500 24px var(--av-titre); color: #7C2128; }
+.tp-mini { display: flex; gap: 8px; }
+.tp-mini span { background: #FFFFFF; border-radius: 12px; padding: 6px 12px; text-align: center; }
+.tp-mini small { display: block; font: 600 10px var(--av-texte); letter-spacing: 0.12em; text-transform: uppercase; color: #8B5A60; }
+.tp-mini b { font: 500 18px var(--av-titre); color: #7C2128; }
+.tp-table { width: 100%; border-collapse: collapse; font-size: 14px; background: #FFFFFF; border-radius: 14px; overflow: hidden; }
+.tp-table th { text-align: left; font: 600 10px var(--av-texte); letter-spacing: 0.12em; text-transform: uppercase; color: #8B5A60; padding: 8px 10px; }
+.tp-table td { padding: 10px; border-top: 1px solid #EADCDD; vertical-align: top; }
+.tp-table tr.faite td { opacity: 0.6; }
+.tp-gestes { white-space: nowrap; text-align: right; }
+.tp-gestes .btn { padding: 4px 9px; margin-left: 4px; }
+.tp-ok { color: #1E6B3A; font-weight: 700; font-size: 13px; }
+.tp-ajout { margin-top: 12px; }
+.tp-ajout summary { cursor: pointer; padding: 10px; border: 1.5px dashed #D9BFC2; border-radius: 12px; text-align: center; color: #7C2128; font-weight: 600; list-style: none; }
+.tp-ajout summary::-webkit-details-marker { display: none; }
+.tp-ajout form { margin-top: 12px; }
+.tp-puces { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tp-lien { margin: 10px 0 0; font-weight: 600; }
+.tp-lien a { color: #7C2128; }
+.tp-alerte { display: flex; align-items: center; gap: 14px; }
+.tp-cloche { font-size: 30px; }
+.tp-alerte b { display: block; font-size: 17px; }
+.tp-alerte span { display: block; color: #6B4A4E; }
+.tp-liste { padding: 6px 14px; }
+.tp-seance { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid #EADCDD; }
+.tp-seance:first-child { border-top: 0; }
+.tp-visage { flex: 0 0 56px; width: 56px; box-shadow: none; pointer-events: none; }
+.tp-visage .vis { aspect-ratio: 1 / 1; border-radius: 16px; font-size: 18px; }
+.tp-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tp-texte b { font-size: 16px; overflow-wrap: anywhere; }
+.tp-dispo { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.tp-dispo li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-radius: 12px; background: #F7EEEF; }
+/* téléphone : chaque séance devient une petite carte (le tableau ne déborde jamais) */
+@media (max-width: 640px) {
+  .tp-table, .tp-table tbody, .tp-table tr, .tp-table td { display: block; width: 100%; box-sizing: border-box; min-width: 0; }
+  .tp-table thead { display: none; }
+  .tp-table { background: none; }
+  .tp-table tr { background: #FFFFFF; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+  .tp-table td { border: 0; padding: 2px 0; }
+  .tp-table td:first-child { font: 600 10px var(--av-texte); letter-spacing: 0.12em; text-transform: uppercase; color: #8B5A60; }
+  .tp-table td:first-child::before { content: "Séance "; }
+  .tp-gestes { text-align: left; white-space: normal; padding-top: 8px !important; }
+  .tp-gestes .btn { margin: 0 6px 0 0; }
+}
+.tp-table { table-layout: auto; }
+.tp-table td { overflow-wrap: anywhere; }
 .ct-infos { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0; }
 .ct-infos dt { font-weight: 600; }
 .ct-infos dd { margin: 0; overflow-wrap: anywhere; }

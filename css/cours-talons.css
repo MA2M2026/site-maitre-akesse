@@ -127,3 +127,17 @@
 @media (prefers-reduced-motion: reduce) {
   .ct-etape, .ct-merci, .ct-choix input:checked + span::after { animation: none; }
 }
+
+/* (13/11/2026) cours privés : choix des séances parmi les créneaux libres de l'agence (js/cours-talons.js) */
+.ct-creneaux { margin: 0.6rem 0 1rem; padding: 1rem; border-radius: 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); }
+.ct-creneaux-titre { font-weight: 700; margin: 0; }
+.ct-creneaux-titre small { font-weight: 600; opacity: 0.85; }
+.ct-creneaux-aide { font-size: 0.85rem; opacity: 0.85; margin: 0.2rem 0 0.8rem; }
+.ct-creneaux-jour { margin-bottom: 0.8rem; }
+.ct-creneaux-jour > b { display: block; font-size: 0.9rem; text-transform: capitalize; margin-bottom: 0.4rem; }
+.ct-creneaux-puces { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ct-creneau { padding: 0.55rem 0.9rem; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.08); color: #FFFFFF; font: 600 0.9rem 'Work Sans', sans-serif; cursor: pointer; }
+.ct-creneau.choisi { background: #FFFFFF; color: #7C2128; border-color: #FFFFFF; }
+.ct-creneau.choisi::before { content: "✓ "; }
+.ct-convenir { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; cursor: pointer; }
+.ct-convenir input { width: 1.1rem; height: 1.1rem; accent-color: #FFFFFF; }

@@ -35,6 +35,8 @@
   async function page() {
     try {
       lignes = await P.bd(sb.from('cours_talons').select('*').order('cree_le', { ascending: false }).limit(500));
+      // (13/11/2026) les séances de chaque élève (js/admin/site-talons-programme.js)
+      if (P.talons) await P.talons.charger(lignes);
     } catch (e) {
       if (!pasInstallee(e)) throw e;
       return P.entete('Cours de talons') + '<div class="carte"><h2>Pas encore activé</h2><p class="doux">Pour recevoir les inscriptions en ligne, collez le fichier <strong>supabase-cours-talons.sql</strong> dans Supabase (SQL Editor, puis Run). En attendant, la page publique propose aux personnes d’envoyer leur inscription sur WhatsApp.</p></div>';
@@ -44,7 +46,7 @@
     const encaisse = lignes.filter((d) => d.statut === 'inscrite' || d.statut === 'terminee').reduce((t, d) => t + (d.montant || 0), 0);
     const onglets = '<div class="ligne">' + FILTRES.map((f) => '<button type="button" class="btn petit' + (f[0] === filtre ? ' rouge' : '') + '" data-action="talons-filtre" data-valeur="' + f[0] + '">' +
       P.esc(f[1]) + ' (' + compte(f[0]) + ')</button>').join('') + '</div>';
-    return P.entete('Cours de talons', '<a class="btn petit" href="/cours-talons" target="_blank" rel="noopener">Voir la page publique</a>') +
+    return P.entete('Cours de talons', '<a class="btn petit" href="#/site/b2-talons-planning">📅 Planning</a><a class="btn petit" href="/cours-talons" target="_blank" rel="noopener">Voir la page publique</a>') +
       '<p class="doux">Inscriptions à l’Atelier Talons &amp; Élégance (ouvert à toutes, sans intégrer l’agence). Groupe : 30 000 FCFA les 4 dimanches ; privé : 25 000 FCFA la séance en salle, 30 000 à 35 000 FCFA la séance à l’extérieur.</p>' +
       '<div class="chiffres">' + P.chiffre('À traiter', String(compte('a_traiter'))) + P.chiffre('Inscrites', String(compte('inscrite'))) + P.chiffre('Encaissé (inscrites et terminées)', P.fcfa(encaisse)) + '</div>' +
       '<div class="carte f">' + onglets + '</div>' +
@@ -80,13 +82,16 @@
       https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
       wa ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '">💬 WhatsApp</a>' : '',
       waParent ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '">💬 Parent</a>' : '',
-      wa && ouverte && !payee ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messagePaiement(d)) + '">💳 Envoyer le lien Wave</a>' : ''
+      wa && ouverte && !payee ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messagePaiement(d)) + '">💳 Envoyer le lien Wave</a>' : '',
+      // (13/11/2026) messages tout prêts : inscription reçue, son programme, rappel (js/admin/site-talons-programme.js)
+      P.talons ? P.talons.boutonsMessages(d) : ''
     ];
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
       (galerie || (https(d.video) ? '' : '<p class="doux">Photos et vidéo non reçues (demandez-les sur WhatsApp).</p>')) +
       '<div class="ct-actions">' + boutons.join('') + '</div>' +
+      (P.talons ? P.talons.dossier(d) : '') +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +
         '<label class="fl" for="ct-date-' + id + '">Date de la (première) séance<input id="ct-date-' + id + '" name="date_seance" type="date" value="' + P.esc(d.date_seance || '') + '"></label>' +
         '<label class="fl" for="ct-montant-' + id + '">Montant (FCFA)<input id="ct-montant-' + id + '" name="montant" type="number" min="0" step="500" value="' + P.esc(d.montant || '') + '"' + (payee ? ' readonly title="Déjà payé : le montant est en Comptabilité"' : '') + '></label>' +

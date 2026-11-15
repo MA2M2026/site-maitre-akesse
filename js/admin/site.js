@@ -14,7 +14,7 @@
     // (24/10/2026, demande de la propriétaire : un compartiment par sujet — tout ce qui sert à un
     // projet, de l'agenda aux convocations, est au même endroit)
     [null, 'Castings et demandes'],
-    ['b2-candidatures', 'Candidatures casting'], ['b2-projets', 'Projets et castings'], ['b2-recruteurs', 'Demandes recruteurs'], ['b2-contacts', 'Messages de contact'], ['b2-cours-talons', 'Cours de talons'],
+    ['b2-candidatures', 'Candidatures casting'], ['b2-projets', 'Projets et castings'], ['b2-recruteurs', 'Demandes recruteurs'], ['b2-contacts', 'Messages de contact'], ['b2-cours-talons', 'Cours de talons'], ['b2-talons-planning', 'Planning des cours de talons'],
     [null, 'Projets et convocations'],
     ['b3c-agenda', 'Agenda des projets'], ['b2-selection', 'Annoncer la sélection'], ['b2-convocations', 'Convocations'], ['b2-rappel', 'Rappeler l’information'],
     ['b2-places', 'Places limitées'], ['b2-defiles', 'Programmation défilé'], ['b2-cartes', 'Cartes d’événement'], ['b2-infos', 'Informations agence'], ['b2-messages-groupes', 'Messages groupés'], ['b2-fiches-evenement', 'Fiches événement'],
@@ -35,7 +35,7 @@
   // test-nouvelle-admin.js) ; les adresses des rubriques ne changent pas (#/site/<rubrique>).
   const TUILES = [
     { cle: 'castings', ic: '✨', titre: 'Castings', sous: 'Candidatures, projets, recruteurs',
-      pages: ['b2-candidatures', 'b2-projets', 'b2-recruteurs', 'b2-cours-talons'],
+      pages: ['b2-candidatures', 'b2-projets', 'b2-recruteurs', 'b2-cours-talons', 'b2-talons-planning'],
       plus: ['b1-a-traiter', 'v2-ensemble', 'v2-top3', 'b1-repartition', 'b1-evolution'] },
     { cle: 'mannequins', ic: '💃', titre: 'Mannequins', sous: 'Fiches, présences, bulletins', visages: true,
       pages: ['b2-mannequins-publies', 'b2-validations', 'b2-presences', 'b2-bulletins', 'b2-documents'],
@@ -55,7 +55,7 @@
   // [icône, explication courte] de chaque rubrique, affichées dans sa tuile
   const INFOS = {
     'b2-candidatures': ['📥', 'Les nouvelles candidatures à étudier'], 'b2-projets': ['🎬', 'Castings ouverts et projets du site'],
-    'b2-recruteurs': ['🤝', 'Marques et organisateurs qui cherchent des mannequins'], 'b2-cours-talons': ['👠', 'Inscriptions au cours de talons'],
+    'b2-recruteurs': ['🤝', 'Marques et organisateurs qui cherchent des mannequins'], 'b2-cours-talons': ['👠', 'Inscriptions au cours de talons'], 'b2-talons-planning': ['📅', 'Séances à venir, rappels, disponibilités'],
     'b1-a-traiter': ['📌', 'Tout ce qui attend une action'], 'v2-ensemble': ['📊', 'Les chiffres du site'], 'v2-top3': ['🏆', 'Profils les plus vus'],
     'b1-repartition': ['🧭', 'Profils par catégorie et par ville'], 'b1-evolution': ['📈', 'Candidatures mois par mois'],
     'b2-mannequins-publies': ['💃', 'Chercher, ouvrir une fiche'], 'b2-validations': ['✅', 'Profils envoyés par les mannequins'],
@@ -129,7 +129,7 @@
   const PIECES = ['/js/images-site-ecriture.js', '/js/messages-convocations.js', '/js/messages-candidats.js', '/js/agenda-outils.js',
     '/js/image-jointe.js', '/js/convocations-gabarit.js', '/js/convocations-page.js', '/js/convocations-admin.js',
     '/js/messages-groupes-gabarit.js', '/js/messages-groupes.js',
-    '/js/admin/photos-choisies.js', '/js/presences-calcul.js', '/js/admin/site-presences.js', '/js/admin/site-bulletins.js', '/js/documents-communs.js', '/js/admin/site-documents.js', '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-places.js', '/js/defile-repartition.js', '/js/admin/site-defiles.js', '/js/cartes-acces.js', '/js/admin/site-exterieures.js', '/js/admin/site-cours-talons.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-infos.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',
+    '/js/admin/photos-choisies.js', '/js/presences-calcul.js', '/js/admin/site-presences.js', '/js/admin/site-bulletins.js', '/js/documents-communs.js', '/js/admin/site-documents.js', '/js/admin/site-dossiers.js', '/js/admin/site-convocations.js', '/js/admin/site-places.js', '/js/defile-repartition.js', '/js/admin/site-defiles.js', '/js/cartes-acces.js', '/js/admin/site-exterieures.js', '/js/admin/site-cours-talons.js', '/js/admin/site-talons-programme.js', '/js/admin/site-messages-groupes.js', '/js/admin/site-infos.js', '/js/admin/site-projets.js', '/js/admin/site-mannequins.js',
     '/js/photos-mises-de-cote-gabarit.js', '/js/photos-mises-de-cote.js', '/js/rapport-profils-gabarit.js', '/js/rapport-profils-admin.js',
     '/js/fiches-evenement-gabarit.js', '/js/fiches-evenement-admin.js', '/js/admin/site-outils-mannequins.js', '/js/admin/site-pilotage.js',
     '/js/rendu-publications.js', '/js/publications-lecture.js', '/js/publications-ecriture.js', '/js/partenaires-communs.js', '/js/admin/brouillons.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js', '/js/admin/site-traductions.js', '/js/admin/site-textes.js',

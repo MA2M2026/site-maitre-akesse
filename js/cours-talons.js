@@ -65,6 +65,7 @@
     $('ct-bloc-adresse').classList.toggle('u-hidden', f !== 'prive_exterieur');
     $('ct-total').textContent = texteTotal();
     $('ct-total-final').textContent = texteTotal();
+    if (typeof dessinerCreneaux === 'function') dessinerCreneaux();
     $('ct-lien-wave').href = LIEN_WAVE_AGENCE + montant();
     dessinerMoyens();
   }
@@ -86,6 +87,61 @@
     const t = e.target.closest('[data-moyen]');
     if (t) { moyenChoisi = t.getAttribute('data-moyen'); dessinerMoyens(); }
   });
+  // ---------- (13/11/2026) cours privés : la visiteuse choisit ses séances parmi les créneaux libres de l'agence
+  // (talons_creneaux_libres, 1 h 30 d'écart gardé, réservés 48 h en attendant le paiement) ; ou « dates à convenir ».
+  // Sans créneau (rien d'ouvert, ou base pas encore prête) : le champ « Vos disponibilités » comme avant.
+  let creneaux = [], choisis = [];
+  const FUSEAU = { timeZone: 'Africa/Abidjan' };
+  const heureDe = (iso) => { const d = new Date(iso), h = d.getUTCHours(), m = d.getUTCMinutes(); return EN ? (h % 12 || 12) + (m ? ':' + String(m).padStart(2, '0') : '') + (h < 12 ? ' am' : ' pm') : h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : ''); };
+  const convenir = () => $('ct-convenir').checked;
+  const avecCreneaux = () => formule() && formule() !== 'groupe' && creneaux.length > 0;
+  function dessinerCreneaux() {
+    const bloc = $('ct-bloc-creneaux'), zone = $('ct-creneaux');
+    bloc.classList.toggle('u-hidden', !avecCreneaux());
+    $('ct-dispo').closest('.form-champ').classList.toggle('u-hidden', avecCreneaux() && !convenir());
+    if (!avecCreneaux()) return;
+    choisis = choisis.filter((c) => creneaux.some((x) => x.debut === c)).slice(0, nbSeances());
+    zone.classList.toggle('u-hidden', convenir());
+    $('ct-creneaux-compte').textContent = convenir() ? '' : '(' + choisis.length + ' / ' + nbSeances() + ')';
+    zone.textContent = '';
+    const parJour = {};
+    creneaux.forEach((c) => { (parJour[c.debut.slice(0, 10)] = parJour[c.debut.slice(0, 10)] || []).push(c); });
+    Object.keys(parJour).forEach((j) => {
+      const ligne = document.createElement('div'); ligne.className = 'ct-creneaux-jour';
+      const titre = document.createElement('b');
+      titre.textContent = new Date(j + 'T12:00:00Z').toLocaleDateString(EN ? 'en-GB' : 'fr-FR', Object.assign({ weekday: 'long', day: 'numeric', month: 'long' }, FUSEAU));
+      ligne.appendChild(titre);
+      const puces = document.createElement('div'); puces.className = 'ct-creneaux-puces';
+      parJour[j].forEach((c) => {
+        const btn = document.createElement('button'); btn.type = 'button'; btn.setAttribute('data-bouton-libre', '');
+        btn.className = 'ct-creneau' + (choisis.includes(c.debut) ? ' choisi' : ''); btn.dataset.creneau = c.debut;
+        btn.setAttribute('aria-pressed', String(choisis.includes(c.debut)));
+        btn.textContent = heureDe(c.debut) + ' – ' + heureDe(c.fin);
+        puces.appendChild(btn);
+      });
+      ligne.appendChild(puces); zone.appendChild(ligne);
+    });
+  }
+  function chargerCreneaux() {
+    if (typeof sb === 'undefined' || !sb) return;
+    Promise.resolve(sb.rpc('talons_creneaux_libres', { p_jours: 21 })).then(({ data, error }) => {
+      creneaux = !error && Array.isArray(data) ? data.filter((c) => c && typeof c.debut === 'string') : [];
+      dessinerCreneaux();
+    }).catch(() => { creneaux = []; dessinerCreneaux(); });
+  }
+  chargerCreneaux();
+  $('ct-creneaux').addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('[data-creneau]');
+    if (!b) return;
+    const c = b.dataset.creneau, i = choisis.indexOf(c);
+    if (i >= 0) choisis.splice(i, 1);
+    else if (choisis.length < nbSeances()) choisis.push(c);
+    else { afficherMsg(msg, T('Vous avez déjà choisi ' + nbSeances() + ' séance(s) : retirez-en une, ou augmentez le nombre de séances.', 'You have already chosen ' + nbSeances() + ' session(s): remove one, or increase the number of sessions.'), 'err'); return; }
+    msg.className = 'form-msg'; msg.textContent = '';
+    choisis.sort();
+    dessinerCreneaux();
+  });
+  $('ct-convenir').addEventListener('change', dessinerCreneaux);
   form.querySelectorAll('input[name="formule"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-nb').addEventListener('change', majFormule);
   $('ct-objectif').addEventListener('change', () => $('ct-bloc-concours').classList.toggle('u-hidden', !['miss', 'beaute'].includes($('ct-objectif').value)));
@@ -115,6 +171,7 @@
     if (n === 1) {
       if (!formule()) return erreur(T('Choisissez une formule.', 'Please choose an option.'));
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
+      if (avecCreneaux() && !convenir() && choisis.length !== nbSeances()) return erreur(T('Choisissez ' + nbSeances() + ' séance(s) parmi les créneaux libres, ou cochez « convenir des dates avec l’agence ».', 'Choose ' + nbSeances() + ' session(s) from the free slots, or tick “agree on the dates with the agency”.'), $('ct-creneaux'));
     }
     if (n === 2) {
       if ($('ct-nom').value.trim().length < 2) return erreur(T('Indiquez votre nom.', 'Please give your name.'), $('ct-nom'));
@@ -268,6 +325,9 @@
       concours_date: ['miss', 'beaute'].includes($('ct-objectif').value) ? ($('ct-concours-date').value || null) : null,
       niveau: (form.querySelector('input[name="niveau"]:checked') || {}).value || null,
       disponibilites: f === 'groupe' ? null : ($('ct-dispo').value.trim() || null),
+      // (13/11/2026) séances choisies parmi les créneaux libres (réservées 48 h par la base), ou dates à convenir
+      ...(f !== 'groupe' && avecCreneaux() && !convenir() && choisis.length ? { creneaux_souhaites: choisis.slice() } : {}),
+      ...(f !== 'groupe' && avecCreneaux() && convenir() ? { a_convenir: true } : {}),
       adresse: f === 'prive_exterieur' ? $('ct-adresse').value.trim() : null,
       parent_nom: mineure() ? $('ct-parent-nom').value.trim() : null,
       parent_telephone: mineure() ? composerTelephone($('ct-parent-indicatif'), $('ct-parent-telephone')) : null,
@@ -284,6 +344,8 @@
       `Nom : ${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',
+      Array.isArray(l.creneaux_souhaites) && l.creneaux_souhaites.length ? 'Séances choisies : ' + l.creneaux_souhaites.map((c) => new Date(c).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' })).join(' · ') : '',
+      l.a_convenir ? 'Dates : à convenir avec l’agence' : '',
       l.parent_nom ? `⚠️ Mineure. Parent : ${l.parent_nom} · ${l.parent_telephone}` : '',
       `Paiement : ${l.decision === 'maintenant' ? 'payé maintenant par ' + (MP ? MP.nom(l.moyen || 'wave') : 'Wave') + (l.reference_wave ? ' (réf. ' + l.reference_wave + ')' : '') : 'plus tard'}`,
       l.photos.length ? 'Photos : ' + l.photos.join(' ') : 'Photos : non reçues', 'Vidéo : ' + (l.video || 'non reçue')].filter(Boolean).join('\n');
@@ -298,6 +360,11 @@
     const ligne = Object.assign({}, etat.ligne, { photos: envoi.liens, video: lienVideo || null });
     const { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
     const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(ligne, etat.montant));
+    if (error && /CRENEAU_PRIS/.test(error.message || '')) {
+      choisis = []; chargerCreneaux(); montrer(1);
+      afficherMsg(msg, T('Désolé, un de vos créneaux vient d’être pris par une autre élève : choisissez-en un autre, puis renvoyez (vos photos et votre vidéo sont gardées).', 'Sorry, one of your slots has just been taken by another student: choose another one, then send again (your photos and video are kept).'), 'err');
+      return;
+    }
     if (error && !error.pasPret) {
       afficherMsg(msg, T('Une erreur est survenue. Réessayez, ou envoyez votre inscription sur WhatsApp.', 'An error occurred. Please try again, or send your sign-up on WhatsApp.'), 'err');
       const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' ' + T('Envoyer sur WhatsApp', 'Send on WhatsApp'); msg.appendChild(a);
