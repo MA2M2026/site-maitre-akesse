@@ -48,7 +48,7 @@ var TAILLE_MAX_MORCEAU = 8 * 1024 * 1024;        // le site envoie des morceaux 
 var DEBUT_SESSION = 'https://www.googleapis.com/upload/drive/v3/files?';
 // Base du site (clé « anon » : publique par nature, la même que dans js/supabase-config.js)
 var SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
-var SUPABASE_CLE_PUBLIQUE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmaGdoZ213bXhpZ3VodHh0c2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NzI1ODQsImV4cCI6MjEwNDI0ODU4NH0.S-JftGJNtPMLZdK6Jy9AUwwOl56JzyllkEJ0GN0eZ-M';
+var SUPABASE_CLE_PUBLIQUE = 'sb_publishable_-k2vIvxdu1Ya-WzZWgj2Fg_8eyTmOmu';  // (clé publique courte : la longue s'abîmait au copier-coller, 15/11/2026)
 var NB_PHOTOS_RETROUVEES_MAX = 12;
 
 function reponse(objet) {

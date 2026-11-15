@@ -172,7 +172,7 @@ begin
   perform net.http_post(
     url := 'https://script.google.com/macros/s/AKfycbxzPeaTLvMqZKtBvJJabLeZBh6JJ9ZaggPYUY8XAoh1-tyBq1Byi3lBm3SkhkH8rqNxxg/exec',
     body := jsonb_build_object('cle', 'b56772fb9c5075517dc36a6b20db10734701e262274f3beb', 'action', 'retrouver', 'source', p_source, 'ref', p_ref),
-    headers := jsonb_build_object('Content-Type', 'text/plain;charset=utf-8'),
+    headers := jsonb_build_object('Content-Type', 'application/json'),  -- (pg_net n'accepte que ce type ; Google lit le texte quand même)
     timeout_milliseconds := 60000);
 end;
 $$;
