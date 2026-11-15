@@ -60,3 +60,8 @@
 - **15/11/2026, étape 4 validée** (« Excellent », `maquettes/planning-talons.html`) : notification sur le téléphone de
   l'agence la veille de chaque cours, et onglet « Planning » (4 semaines, rappels WhatsApp prêts). Construite le même
   jour ; `supabase-rappels-talons.sql` à coller par la propriétaire.
+- **15/11/2026** : `supabase-rappels-talons.sql` collé (contrôle 4 sur 4). **Décision de la propriétaire : tout finaliser
+  (premium de l'application et des autres pages de l'Administration, SonarQube, cours des mannequins du dimanche)
+  puis UNE SEULE mise en ligne.** La mise en ligne programmée du 15/11 à 9 h 07 est désactivée. L'essai réel de la
+  notification de la veille se fera après cette mise en ligne (le texte de la notification vient du site en ligne).
+  Aucune séance à venir dans la base : aucun rappel ne se perd d'ici là.
