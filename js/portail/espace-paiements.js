@@ -125,14 +125,10 @@
   async function fiche(params) {
     const id = String((params && params[0]) || '');
     if (!/^[\w-]{1,64}$/.test(id)) { location.hash = '#/paiements/registre'; return ''; }
-    const [m, paiements, codes, programme, carte] = await Promise.all([
+    const [m, paiements, codes] = await Promise.all([
       P.bd(sb.from('agence_mannequins').select('*').eq('id', id).single()),
       P.bd(sb.from('paiements_mannequins').select('*').eq('mannequin_id', id).order('declare_le', { ascending: false })),
-      P.bd(sb.from('codes_espace').select('*').eq('mannequin_id', id).eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false })),
-      // (14/11/2026) son programme de formation (supabase-programme-mannequins.sql) ; pas encore collé : la carte ne s'affiche pas
-      P.bd(sb.rpc('programme_formation_de', { p_mannequin: id })).catch(() => null),
-      // (15/11/2026) sa carte « MANNEQUIN MA2M » (supabase-carte-mannequin.sql) ; pas encore collé : l'encart ne s'affiche pas
-      P.bd(sb.rpc('carte_mannequin_de', { p_agence: id })).catch(() => null)
+      P.bd(sb.from('codes_espace').select('*').eq('mannequin_id', id).eq('annule', false).is('utilise_le', null).order('cree_le', { ascending: false }))
     ]);
     const inscription = paiements.find((p) => p.objet === 'inscription' && p.statut !== 'refuse') || null;
     const principal = P.moi.role === 'principal';
@@ -149,7 +145,7 @@
       (inscription ? '<p class="doux petit-texte">' + P.esc(MODES[inscription.mode]) + (inscription.montant ? ' · ' + P.fcfa(inscription.montant) : '') +
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
       (m.user_id ? '<p class="doux petit-texte">Ce mannequin a déjà son compte sur le site : aucun code à lui donner, on suit seulement ses mensualités.</p>' : '') +
-      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) + lienCarte(carte, programme) +
+      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) +
       (principal && !m.user_id && !paiements.some((p) => p.statut === 'valide')
         ? '<div class="carte"><h2>Supprimer ce mannequin</h2><p class="doux">Pour un essai ou une erreur seulement. La fiche et ses paiements non validés disparaissent pour toujours. S’il a vraiment été mannequin de l’agence, proposez plutôt sa sortie.</p><button class="btn rouge" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '">Supprimer définitivement</button></div>' : '') +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
@@ -174,17 +170,8 @@
   // dépliables (resumeProgrammeFormation et MA2M_NIVEAUX_FORMATION : js/app.js, comme l'application des mannequins)
   // (15/11/2026, demande de la propriétaire) sa carte se gère dans « Mannequins » (fiche de la mannequin,
   // js/admin/carte-encart.js) : ici, seulement un lien
-  // (15/11/2026, demande de la propriétaire) le programme de formation aussi : raccourcis vers sa fiche de « Mannequins »
-  // (une mannequin qui n'a pas encore créé son espace n'y est pas encore : la ligne le dit)
-  function lienCarte(c, programme) {
-    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
-    const x = r && (r.enCours || r.prochain);
-    const ligne = (titre, texte) => (c && c.id_fiche
-      ? '<a class="carte ce-lien" href="#/site/b2-mannequins-publies/' + P.esc(c.id_fiche) + '"><span><b>' + titre + '</b><small>' + texte + ' · dans sa fiche de « Mannequins »</small></span><i aria-hidden="true">›</i></a>'
-      : '<div class="carte ce-lien"><span><b>' + titre + '</b><small>' + texte + ' · elle sera dans « Mannequins » quand elle aura créé son espace</small></span></div>');
-    return (r ? ligne('Programme de formation', r.termine ? 'Formation terminée ✓' : x ? 'Niveau ' + x.niveau + ', mois ' + x.mois_niveau + ' sur 9 · ' + P.esc(x.theme) : r.faits + ' mois faits sur ' + r.total) : '') +
-      (c ? ligne('Sa carte de mannequin', c.active ? 'Activée' : 'Pas encore activée') : '');
-  }
+  // (15/11/2026, décision de la propriétaire) le programme de formation et la carte de la mannequin ne sont plus ici : ils
+  // sont dans sa fiche de « Mannequins » (js/admin/carte-encart.js), que l'équipe des paiements n'a pas à voir
   // 6 mois passés, le mois en cours et 3 mois d'avance
   function listeMois() {
     const d = new Date(), l = [];

@@ -5226,6 +5226,6 @@ Base : `carte_mannequin_par_fiche(fiche)` et `carte_mannequin_regler(agence, ré
 paiements). Le programme de formation des Paiements montre ses mois en colonnes (un niveau par colonne).
 Tests : `test-nouvelle-admin-mannequins.js` (encart), `test-correction-paiement.js` (lien).
 - **Programme de formation rangé dans « Mannequins »** (15/11/2026) : `blocProgramme` (js/admin/carte-encart.js) dans la
-  fiche de la mannequin, au-dessus de sa carte ; dans les Paiements, raccourcis `lienCarte` (programme : niveau, mois,
-  thème ; carte : activée ou non) vers sa fiche, ou une note si elle n'a pas encore créé son espace. Le code de l'espace
+  fiche de la mannequin, au-dessus de sa carte ; plus rien dans les Paiements (décision de la propriétaire :
+  l'équipe des paiements n'a pas à voir la fiche des mannequins). Le code de l'espace
   et les informations du registre restent dans les Paiements (ils existent avant son espace).
