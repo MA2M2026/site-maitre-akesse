@@ -68,3 +68,17 @@ select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai((carte_mannequin_de((select id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000c0b01'))->>'valable')::date = (current_date + interval '5 years')::date, 'renouvelée aujourd''hui : valable 5 ans à partir d''aujourd''hui');
 reset role;
 select set_config('request.jwt.claims', '', false);
+-- (15/11/2026) gérée depuis « Mannequins » : l'équipe du site lit et règle la carte par la fiche du site
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select essai((carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->'carte'->>'nom') = 'AYA NOUVELLE', 'équipe du site : lit la carte par la fiche du site');
+select essai((carte_mannequin_regler((carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->>'agence_id')::uuid, '{"formation":"Niveau 1 · mois 3","validite_ans":4}')->>'formation') = 'Niveau 1 · mois 3', 'équipe du site : choisit la formation et la validité');
+select essai((carte_mannequin_regler((carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->>'agence_id')::uuid, '{"categorie":"Professionnel"}')->>'categorie') = 'Professionnel', 'équipe du site : choisit la catégorie');
+select essai((carte_mannequin_regler((carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->>'agence_id')::uuid, '{"categorie":null}')->>'categorie') = 'New Face', 'retour à « Automatique »');
+select essai_refuse($$select carte_mannequin_regler((carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->>'agence_id')::uuid, '{"validite_ans":50}')$$, 'validité impossible : refusée');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000c0b01","role":"authenticated"}', false);
+set role authenticated;
+select essai_refuse($$select carte_mannequin_regler('00000000-0000-0000-0000-000000000000', '{"active":true}')$$, 'une mannequin ne règle pas sa carte');
+reset role;
+select set_config('request.jwt.claims', '', false);

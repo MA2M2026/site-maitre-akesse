@@ -518,13 +518,22 @@
     ]);
     return { encaisse: Array.isArray(recettes) ? recettes.reduce((t, x) => t + (Number(x.montant) || 0), 0) : null, actives, eleves, seances: seances || [] };
   }
+  // (15/11/2026, « premium partout ») LA carte façon carte bancaire des tableaux de bord, écrite une fois : accueil
+  // (« L'agence ce mois-ci »), Tableau du mois (Paiements), Tableau de bord (Comptabilité).
+  // o : { titre, grand (texte), unite, legende, tuiles: [[nombre, texte]], suite (HTML déjà échappé) }
+  P.carteHero = (o) => {
+    const tuile = (t) => (t[0] === null || t[0] === undefined ? '' : '<div><b>' + P.esc(String(t[0])) + '</b><span>' + P.esc(t[1]) + '</span></div>');
+    const tuiles = (o.tuiles || []).map(tuile).join('');
+    return '<div class="ag-carte apparait" style="--i:1"><div class="ag-tete"><img src="/assets/logo-header.png" alt=""><span>' + P.esc(o.titre) + '</span></div>' +
+      (o.grand !== undefined && o.grand !== null ? '<div class="ag-grand">' + P.esc(o.grand) + (o.unite ? ' <small>' + P.esc(o.unite) + '</small>' : '') + '</div>' : '') +
+      (o.legende ? '<div class="ag-leg">' + P.esc(o.legende) + '</div>' : '') + (o.suite || '') + (tuiles ? '<div class="ag-tuiles">' + tuiles + '</div>' : '') + '</div>';
+  };
   function carteAgence(a) {
     if (!a || (a.encaisse === null && a.actives === null && a.eleves === null)) return '';
     const mois = P.MOIS[new Date().getMonth()];
-    const tuile = (n, texte) => (n === null || n === undefined ? '' : '<div><b>' + P.esc(String(n)) + '</b><span>' + P.esc(texte) + '</span></div>');
-    return '<div class="ag-carte apparait" style="--i:1"><div class="ag-tete"><img src="/assets/logo-header.png" alt=""><span>L’AGENCE CE MOIS-CI</span></div>' +
-      (a.encaisse !== null ? '<div class="ag-grand">' + P.esc(P.fcfa(a.encaisse).replace(/\s*FCFA$/, '')) + ' <small>FCFA</small></div><div class="ag-leg">encaissés en ' + P.esc(mois) + ' · mensualités, cours de talons, cachets…</div>' : '') +
-      '<div class="ag-tuiles">' + tuile(a.actives, 'mannequins actives') + tuile(a.eleves, 'élèves des cours de talons') + '</div></div>';
+    return P.carteHero({ titre: 'L’AGENCE CE MOIS-CI', grand: a.encaisse !== null ? P.fcfa(a.encaisse).replace(/\s*FCFA$/, '') : null, unite: 'FCFA',
+      legende: a.encaisse !== null ? 'encaissés en ' + mois + ' · mensualités, cours de talons, cachets…' : '',
+      tuiles: [[a.actives, 'mannequins actives'], [a.eleves, 'élèves des cours de talons']] });
   }
   const JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
   function semaine(site, a) {

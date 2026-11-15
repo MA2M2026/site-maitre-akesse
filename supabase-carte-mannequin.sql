@@ -155,6 +155,53 @@ $$;
 revoke all on function carte_mannequin_de(uuid) from public, anon;
 grant execute on function carte_mannequin_de(uuid) to authenticated;
 
+-- (15/11/2026, demande de la propriétaire) la carte se gère depuis la fiche de la mannequin dans « Mannequins »
+-- (Administration du site) : lecture par la fiche du site, et réglages par une seule fonction, pour l'équipe du site
+-- comme pour celle des paiements
+create or replace function carte_mannequin_par_fiche(p_fiche uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  a agence_mannequins;
+begin
+  if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé'; end if;
+  select * into a from agence_mannequins where user_id = p_fiche limit 1;
+  if a.id is null then return null; end if;
+  return jsonb_build_object('agence_id', a.id, 'carte', carte_mannequin_donnees(a), 'programme', formation_programme_calcul(a.id));
+end;
+$$;
+revoke all on function carte_mannequin_par_fiche(uuid) from public, anon;
+grant execute on function carte_mannequin_par_fiche(uuid) to authenticated;
+
+create or replace function carte_mannequin_regler(p_agence uuid, p_reglages jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  u uuid;
+  avant text := current_setting('request.jwt.claims', true);
+begin
+  if not (portail_peut('site') or portail_peut('paiements')) then raise exception 'Accès refusé'; end if;
+  if jsonb_typeof(p_reglages) <> 'object' then raise exception 'Réglage inconnu.'; end if;
+  if p_reglages ? 'active' then update agence_mannequins set carte_active = (p_reglages->>'active')::boolean where id = p_agence; end if;
+  if p_reglages ? 'validite_ans' then
+    if (p_reglages->>'validite_ans')::int not between 1 and 10 then raise exception 'Validité inconnue.'; end if;
+    update agence_mannequins set carte_validite_ans = (p_reglages->>'validite_ans')::int where id = p_agence;
+  end if;
+  if p_reglages ? 'formation' then update agence_mannequins set carte_formation = left(nullif(trim(p_reglages->>'formation'), ''), 40) where id = p_agence; end if;
+  if p_reglages ? 'renouveler' then update agence_mannequins set carte_debut = current_date where id = p_agence; end if;
+  if p_reglages ? 'categorie' then
+    if (p_reglages->>'categorie') is not null and (p_reglages->>'categorie') not in ('New Face', 'Professionnel') then raise exception 'Catégorie inconnue.'; end if;
+    select user_id into u from agence_mannequins where id = p_agence;
+    if u is null then raise exception 'Cette mannequin n''a pas encore de compte.'; end if;
+    perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+    update model_profiles set niveau_manuel = p_reglages->>'categorie' where id = u;
+    perform set_config('request.jwt.claims', coalesce(avant, ''), true);
+    perform categories_mannequins_mettre_a_jour(u);
+  end if;
+  return (select carte_mannequin_donnees(a) from agence_mannequins a where a.id = p_agence);
+end;
+$$;
+revoke all on function carte_mannequin_regler(uuid, jsonb) from public, anon;
+grant execute on function carte_mannequin_regler(uuid, jsonb) to authenticated;
+
 -- tous les jours à 4 h : les catégories suivent le temps qui passe (2 ans à l'agence)
 create extension if not exists pg_cron;
 select cron.unschedule('categories-mannequins') where exists (select 1 from cron.job where jobname = 'categories-mannequins');
@@ -165,9 +212,9 @@ select categories_mannequins_mettre_a_jour() as fiches_rangees;
 
 NOTIFY pgrst, 'reload schema';
 
--- Contrôle (à lire après « Run ») : 9 éléments attendus
+-- Contrôle (à lire après « Run ») : 11 éléments attendus
 select 'Carte de mannequin installée : ' || (
   (select count(*) from information_schema.columns where (table_name, column_name) in (('model_profiles', 'niveau_manuel'), ('agence_mannequins', 'carte_active'), ('agence_mannequins', 'carte_numero'))) +
   (select count(*) from pg_trigger where tgname = 'model_profiles_categorie') +
-  (select count(*) from pg_proc where proname in ('categorie_mannequin_calculee', 'categories_mannequins_mettre_a_jour', 'ma_carte_mannequin', 'carte_mannequin_de')) +
-  (select count(*) from cron.job where jobname = 'categories-mannequins')) || ' éléments sur 9' as controle;
+  (select count(*) from pg_proc where proname in ('categorie_mannequin_calculee', 'categories_mannequins_mettre_a_jour', 'ma_carte_mannequin', 'carte_mannequin_de', 'carte_mannequin_par_fiche', 'carte_mannequin_regler')) +
+  (select count(*) from cron.job where jobname = 'categories-mannequins')) || ' éléments sur 11' as controle;

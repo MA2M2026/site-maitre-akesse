@@ -135,8 +135,6 @@
       P.bd(sb.rpc('carte_mannequin_de', { p_agence: id })).catch(() => null)
     ]);
     const inscription = paiements.find((p) => p.objet === 'inscription' && p.statut !== 'refuse') || null;
-    if (!carteApercu || carteApercu.id !== id) carteFace = 'recto';
-    carteApercu = { id, carte, programme };
     const principal = P.moi.role === 'principal';
     const e = etatInscription(m, inscription);
     // Mannequin sans compte et sans paiement : l'agence enregistre le paiement de l'inscription
@@ -151,7 +149,7 @@
       (inscription ? '<p class="doux petit-texte">' + P.esc(MODES[inscription.mode]) + (inscription.montant ? ' · ' + P.fcfa(inscription.montant) : '') +
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
       (m.user_id ? '<p class="doux petit-texte">Ce mannequin a déjà son compte sur le site : aucun code à lui donner, on suit seulement ses mensualités.</p>' : '') +
-      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) + carteProgramme(programme) + encartCarte(m, carte) +
+      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) + carteProgramme(programme) + lienCarte(carte) +
       (principal && !m.user_id && !paiements.some((p) => p.statut === 'valide')
         ? '<div class="carte"><h2>Supprimer ce mannequin</h2><p class="doux">Pour un essai ou une erreur seulement. La fiche et ses paiements non validés disparaissent pour toujours. S’il a vraiment été mannequin de l’agence, proposez plutôt sa sortie.</p><button class="btn rouge" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '">Supprimer définitivement</button></div>' : '') +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
@@ -186,87 +184,18 @@
       '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
       (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
       '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
-      '<details><summary>Voir les ' + r.total + ' mois</summary><ol class="pf-mois">' + r.mois.map((m) => '<li class="' + P.esc(m.etat) + '"><b>N' + m.niveau + ' · ' + m.mois_niveau + '</b> ' + P.esc(m.theme) +
-        ' <span class="doux">— ' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</span></li>').join('') + '</ol></details></div>';
+      // (15/11/2026, demande de la propriétaire) les mois en colonnes : un niveau par colonne, plus court à lire
+      '<details><summary>Voir les ' + r.total + ' mois</summary><div class="pf-colonnes">' + [...new Set(r.mois.map((m) => m.niveau))].map((n) =>
+        '<div><h3>Niveau ' + n + ' · ' + P.esc(MA2M_NIVEAUX_FORMATION[n] || '') + '</h3><ol class="pf-mois">' + r.mois.filter((m) => m.niveau === n).map((m) => '<li class="' + P.esc(m.etat) + '"><b>' + m.mois_niveau + '</b><span>' + P.esc(m.theme) +
+          '<small>' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</small></span></li>').join('') + '</ol></div>').join('') + '</div></details></div>';
   }
-  // « Sa carte de mannequin » (15/11/2026, maquette validée : maquettes/carte-identite-mannequin-v2.html) : l'agence
-  // l'active, choisit la catégorie (ou laisse le calcul), le texte « Formation » (vide : son programme) et la validité
-  // (durée du contrat). Le numéro est donné par la base à la première activation.
-  function encartCarte(m, c) {
+  // (15/11/2026, demande de la propriétaire) sa carte se gère dans « Mannequins » (fiche de la mannequin,
+  // js/admin/carte-encart.js) : ici, seulement un lien
+  function lienCarte(c) {
     if (!c) return '';
-    const id = P.esc(m.id), choix = (nom, valeur, actuel, texte) => '<button type="button" class="btn petit' + (valeur === actuel ? ' rouge' : '') + '" data-action="carte-reglage" data-id="' + id +
-      '" data-champ="' + nom + '" data-valeur="' + P.esc(valeur === null ? '' : String(valeur)) + '" aria-pressed="' + (valeur === actuel) + '">' + P.esc(texte) + '</button>';
-    const auto = !c.categorie_manuelle;
-    return '<div class="carte ca-carte"><h2>Sa carte de mannequin</h2><p class="doux">C’est vous qui l’activez et choisissez ce qui y paraît. Elle la voit et la télécharge dans son application.</p>' +
-      '<div class="ca-ligne"><span><b>Carte activée</b><small>' + (c.active ? 'Elle peut la voir et la télécharger' : 'Elle ne la voit pas encore') + '</small></span>' +
-        choix('carte_active', true, c.active, 'Oui') + choix('carte_active', false, c.active, 'Non') + '</div>' +
-      '<div class="ca-ligne"><span><b>Catégorie</b><small>' + (auto ? 'Calculée : ' + P.esc(c.categorie) + ' (2 ans à l’agence ou 2 ans d’expérience → Professionnelle)' : 'Choisie par vous') + '</small></span>' +
-        choix('categorie', null, c.categorie_manuelle || null, 'Calcul') + choix('categorie', 'New Face', c.categorie_manuelle, 'New Face') + choix('categorie', 'Professionnel', c.categorie_manuelle, 'Professionnelle') + '</div>' +
-      '<div class="ca-ligne"><span><b>Validité</b><small>Durée du contrat, renouvelable · ' + (c.valable ? (c.valable < new Date().toISOString().slice(0, 10) ? '<b class="ca-expiree">expirée depuis ' : 'jusqu’au ') + P.esc(libelleMois(c.valable)) + (c.valable < new Date().toISOString().slice(0, 10) ? '</b>' : '') : '') +
-        (c.debut ? ' (contrat depuis ' + P.esc(libelleMois(c.debut)) + ')' : '') + '</small></span>' +
-        [3, 4, 5].map((n) => choix('carte_validite_ans', n, c.validite_ans, n + ' ans')).join('') +
-        '<button type="button" class="btn petit" data-action="carte-renouveler" data-id="' + id + '">↻ Renouveler à partir d’aujourd’hui</button></div>' +
-      '<form class="ca-ligne f" data-form="carte-formation" data-id="' + id + '"><label class="fl" for="ca-formation-' + id + '"><b>Formation affichée</b><small>Vide : d’après son programme (ex. « Niveau 1 · mois 4 », « Recyclage », « Formation terminée »)</small>' +
-        '<input id="ca-formation-' + id + '" name="formation" maxlength="40" value="' + P.esc(c.formation || '') + '" placeholder="Automatique"></label><button class="btn petit" type="submit">Enregistrer</button></form>' +
-      '<div class="ca-ligne"><span><b>N° de mannequin</b><small>Donné une fois pour toutes</small></span><b class="ca-numero">' + P.esc(c.matricule || 'Donné à l’activation') + '</b></div>' +
-      // (15/11/2026, demande de la propriétaire) l'aperçu de SA carte, la même que dans son application
-      (c.id_fiche && window.CarteMannequin ? '<div class="ca-apercu"><img class="ca-carte-img" alt="Sa carte de mannequin (' + carteFace + ')" width="1012" height="638">' +
-        '<div class="ligne"><button type="button" class="btn petit" data-action="carte-face">↻ Voir le ' + (carteFace === 'recto' ? 'verso' : 'recto') + '</button>' +
-        '<button type="button" class="btn petit" data-action="carte-fichier" data-valeur="image">⬇️ Télécharger</button>' +
-        '<button type="button" class="btn petit" data-action="carte-fichier" data-valeur="pdf">🖨️ Imprimer (PDF)</button></div>' +
-        (c.active ? '' : '<p class="doux petit-texte">Aperçu : elle ne la voit pas tant que la carte n’est pas activée' + (c.matricule ? '' : ' (le numéro est donné à l’activation)') + '.</p>') + '</div>' : '') + '</div>';
+    return '<a class="carte ce-lien" href="' + (c.id_fiche ? '#/site/b2-mannequins-publies/' + P.esc(c.id_fiche) : '#/site/b2-mannequins-publies') + '"><span><b>Sa carte de mannequin</b><small>' +
+      (c.active ? 'Activée' : 'Pas encore activée') + ' · se règle dans sa fiche de « Mannequins »</small></span><i aria-hidden="true">›</i></a>';
   }
-  // aperçu de la carte : ses données (profil, photos, programme), lues une fois par affichage de la fiche
-  let carteFace = 'recto', carteApercu = null;
-  async function donneesApercu() {
-    const a = carteApercu;
-    if (!a || !a.carte || !a.carte.id_fiche) return null;
-    if (!a.lu) {
-      const [p, ph] = await Promise.all([P.bd(sb.from('model_profiles').select('full_name, height_cm, chest_cm, waist_cm, hips_cm').eq('id', a.carte.id_fiche).maybeSingle()).catch(() => null),
-        P.bd(sb.from('model_photos').select('url, url_miniature, url_petite, principale, photo_couverture, tri_statut').eq('model_id', a.carte.id_fiche)).catch(() => [])]);
-      a.lu = window.CarteMannequin.donnees({ carte: a.carte, profil: p || {}, photos: (ph || []).filter((x) => x.tri_statut !== 'ecartee'), programme: a.programme });
-    }
-    return a.lu;
-  }
-  async function dessinerApercuCarte() {
-    const img = document.querySelector('.ca-carte-img');
-    if (!img) return;
-    try { const d = await donneesApercu(); if (d) img.src = (await window.CarteMannequin.dessiner(carteFace, d)).toDataURL('image/png'); } catch (e) { console.warn(e); }
-  }
-  P.actions['carte-face'] = () => { carteFace = carteFace === 'recto' ? 'verso' : 'recto'; return P.afficher(); };
-  P.actions['carte-fichier'] = async (el) => {
-    const d = await donneesApercu();
-    if (!d) return;
-    el.disabled = true;
-    try { if (el.getAttribute('data-valeur') === 'pdf') await window.CarteMannequin.telechargerPdf(d); else await window.CarteMannequin.telechargerImage(d); }
-    catch (e) { P.message('La carte n’a pas pu être préparée : réessayez.'); }
-    finally { el.disabled = false; }
-  };
-  P.actions['carte-reglage'] = async (el) => {
-    const id = el.getAttribute('data-id'), champ = el.getAttribute('data-champ'), v = el.getAttribute('data-valeur');
-    if (champ === 'categorie') await P.sensible(() => P.rpc('mannequin_categorie_choisir', { p_agence: id, p_niveau: v || null }));
-    else {
-      const valeur = champ === 'carte_active' ? v === 'true' : Number(v);
-      const r = await P.bd(sb.from('agence_mannequins').update({ [champ]: valeur }).eq('id', id).select('id'));
-      if (!r || !r.length) { P.message('Rien n’a été changé : reconnectez-vous puis réessayez.'); return; }
-    }
-    P.message(champ === 'carte_active' ? (v === 'true' ? 'Carte activée : elle la voit dans son application.' : 'Carte désactivée.') : 'C’est noté : sa carte est à jour.');
-    return P.afficher();
-  };
-  P.actions['carte-renouveler'] = async (el) => {
-    if (!confirm('Renouveler sa carte : le contrat repart d’aujourd’hui pour la durée choisie ?')) return;
-    const r = await P.bd(sb.from('agence_mannequins').update({ carte_debut: new Date().toISOString().slice(0, 10) }).eq('id', el.getAttribute('data-id')).select('id'));
-    if (!r || !r.length) { P.message('Rien n’a été changé : reconnectez-vous puis réessayez.'); return; }
-    P.message('Carte renouvelée : valable à partir d’aujourd’hui.');
-    return P.afficher();
-  };
-  P.formulaires['carte-formation'] = async (f, form) => {
-    const id = form.getAttribute('data-id');
-    const r = await P.bd(sb.from('agence_mannequins').update({ carte_formation: String(f.get('formation') || '').trim() || null }).eq('id', id).select('id'));
-    if (!r || !r.length) { P.message('Rien n’a été changé : reconnectez-vous puis réessayez.'); return; }
-    P.message('C’est noté : sa carte est à jour.');
-    return P.afficher();
-  };
   // 6 mois passés, le mois en cours et 3 mois d'avance
   function listeMois() {
     const d = new Date(), l = [];
@@ -718,11 +647,11 @@
     const actions = (x) => (x.e === 'attente' ? '<a class="btn petit rouge" href="#/paiements/a-valider">Valider</a>' : x.e === 'paye' ? '<span class="doux">Reçu émis</span>' : RIEN_DU(x.e) ? '<span class="doux">Rien à payer</span>' : '<a class="btn petit rouge" href="#/paiements/mensualites">Relancer</a>') +
       '<button class="btn petit" type="button" data-action="suivi-retirer" data-id="' + x.m.id + '" aria-label="Retirer ' + P.esc(x.m.full_name) + ' du tableau">Retirer</button>';
     return P.entete('Tableau du mois · ' + libelleMois(mois)) + (E && E.conges.has(mois) ? NOTE_CONGES : lignes.some((x) => x.e === 'rodage') ? NOTE_RODAGE : '') +
-      '<section class="carte chiffre tm-hero apparait"><div class="tm-taux"><div class="l">Taux de recouvrement</div><div class="v">' + taux + ' %</div></div>' +
-        '<div class="tm-detail"><p><b>' + P.esc(P.fcfa(valide)) + '</b> encaissés sur ' + P.esc(P.fcfa(attendu)) + '</p>' +
-        P.barreParts([[valide, 'ok', 'Validé'], [attente, 'alerte', 'En attente'], [nonPaye + aPayer, 'erreur', jour > 5 ? 'Non payé' : 'À payer']], attendu) +
-        '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
-        P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div></div></section>' +
+      // (15/11/2026, « premium partout ») le taux en carte façon carte bancaire (P.carteHero, js/admin/coque.js)
+      P.carteHero({ titre: 'TAUX DE RECOUVREMENT', grand: taux + ' %', legende: P.fcfa(valide) + ' encaissés sur ' + P.fcfa(attendu),
+        suite: '<div class="ag-suite">' + P.barreParts([[valide, 'ok', 'Validé'], [attente, 'alerte', 'En attente'], [nonPaye + aPayer, 'erreur', jour > 5 ? 'Non payé' : 'À payer']], attendu) +
+          '<div class="ligne">' + P.pastille('À jour : ' + nb('paye'), 'ok') + P.pastille('Preuve reçue : ' + nb('attente'), 'alerte') +
+          P.pastille('Non payé : ' + (nb('non_paye') + nb('a_payer')), 'erreur') + '</div></div>' }) +
       '<div class="grille chiffres quatre">' + P.chiffre('Attendu', P.fcfa(attendu)) + P.chiffre('Validé', P.fcfa(valide), 'vert') +
       P.chiffre('En attente de validation', P.fcfa(attente), 'orange') + P.chiffre(jour > 5 ? 'Non payé' : 'À payer avant le 5', P.fcfa(nonPaye + aPayer), 'rouge') + '</div>' +
       (P.etat.suiviAbsent ? '<div class="note alerte">Le suivi par liste n’est pas encore activé <span class="petit-texte">(étape d’installation : « supabase-suivi-mannequins.sql »)</span>. En attendant, tous les mannequins actifs sont montrés.</div>' : '') +
@@ -1149,7 +1078,7 @@
         return fin < 0 ? html : html.slice(0, fin + 12) + noteSuiviVide(0) + html.slice(fin + 12);
       } }))),
     compteur: {},
-    apres: { matrice: versMoisActuel, fiche: () => { void dessinerApercuCarte(); } },
+    apres: { matrice: versMoisActuel },
     // nombre de paiements en attente, affiché dans le menu
     avant: async () => {
       // (une inscription et son 1er mois, déclarés ensemble, comptent pour un)

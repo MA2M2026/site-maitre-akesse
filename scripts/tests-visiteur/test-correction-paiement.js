@@ -95,25 +95,9 @@ function donnees(role) {
     const e = await connecter('principal'), p = e.p;
     ok(/Programme de formation\s*Ce mois-ci : La pose photo : les bases \(angles, mains, regard\)\s*· niveau 1 \(Les fondations\), mois 3 sur 9\s*2 mois faits sur 18/.test(await p.evaluate(() => (document.querySelector('.pf-programme') || {}).innerText || '').then((x) => x.replace(/\s+/g, ' '))),
       nomEcran + ' : fiche du mannequin : « Programme de formation », thème du mois, 2 mois faits sur 18');
-    // (15/11/2026) « Sa carte de mannequin » : activer, catégorie à la main, validité, formation affichée
-    const encart = await p.evaluate(() => (document.querySelector('.ca-carte') || {}).innerText || '').then((x) => x.replace(/\s+/g, ' '));
-    ok(/Sa carte de mannequin/.test(encart) && /Elle ne la voit pas encore/.test(encart) && /Calculée : New Face/.test(encart) && /jusqu’au septembre 2030/.test(encart), nomEcran + ' : encart « Sa carte de mannequin » (pas activée, catégorie calculée, validité)');
-    await p.click('[data-action="carte-reglage"][data-champ="carte_active"][data-valeur="true"]'); await p.waitForTimeout(600);
-    ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_active":true/.test(j[3] || '')), nomEcran + ' : « Carte activée : Oui » enregistré');
-    await p.click('[data-action="carte-reglage"][data-champ="categorie"][data-valeur="Professionnel"]'); await p.waitForTimeout(600);
-    ok(e.journal.some((j) => j[0] === 'rpc' && j[1] === 'mannequin_categorie_choisir' && /"p_niveau":"Professionnel"/.test(j[2] || '')), nomEcran + ' : catégorie choisie à la main (Professionnelle)');
-    await p.click('[data-action="carte-reglage"][data-champ="carte_validite_ans"][data-valeur="3"]'); await p.waitForTimeout(600);
-    ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_validite_ans":3/.test(j[3] || '')), nomEcran + ' : validité 3 ans enregistrée');
-    await p.fill('.ca-carte input[name="formation"]', 'Recyclage'); await p.click('form[data-form="carte-formation"] button[type="submit"]'); await p.waitForTimeout(600);
-    ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_formation":"Recyclage"/.test(j[3] || '')), nomEcran + ' : « Formation affichée » enregistrée');
-    // (15/11/2026) l'aperçu de sa carte, comme dans son application : dessiné, retourné, téléchargé
-    await p.waitForFunction(() => /^data:image\/png/.test((document.querySelector('.ca-carte-img') || {}).src || ''), null, { timeout: 15000 }).catch(() => {});
-    ok(await p.evaluate(() => { const i = document.querySelector('.ca-carte-img'); return !!i && i.naturalWidth === 1012 && i.naturalHeight === 638; }), nomEcran + ' : aperçu de sa carte dans l’Administration (format carte)');
-    await p.click('[data-action="carte-face"]'); await p.waitForTimeout(300);
-    await p.waitForFunction(() => /verso/.test((document.querySelector('.ca-carte-img') || {}).alt || '') && /^data:image\/png/.test(document.querySelector('.ca-carte-img').src || ''), null, { timeout: 15000 }).catch(() => {});
-    ok(/verso/.test(await p.getAttribute('.ca-carte-img', 'alt')), nomEcran + ' : « Voir le verso »');
-    const [dlCarte] = await Promise.all([p.waitForEvent('download', { timeout: 30000 }).catch(() => null), p.click('[data-action="carte-fichier"][data-valeur="pdf"]')]);
-    ok(dlCarte && /\.pdf$/.test(dlCarte.suggestedFilename()), nomEcran + ' : « Imprimer (PDF) » de sa carte depuis l’Administration');
+    // (15/11/2026) sa carte se règle dans « Mannequins » : ici, seulement un lien vers sa fiche
+    ok(/Sa carte de mannequin/.test(await p.textContent('.ce-lien')) && (await p.getAttribute('.ce-lien', 'href')) === '#/site/b2-mannequins-publies/fiche-awa' && await p.locator('.ce-puce').count() === 0,
+      nomEcran + ' : Paiements : un lien « Sa carte de mannequin » vers sa fiche de « Mannequins »');
     ok((await p.$$('[data-action="paiement-corriger"]')).length === 3 && (await p.$$('[data-action="paiement-annuler"]')).length === 3, nomEcran + ' : l’administrateur principal voit « Corriger » et « Annuler » sur chaque paiement');
     // corriger le montant et le moyen d'une mensualité
     await p.click('[data-action="paiement-corriger"][data-id="pm1"]'); await p.waitForSelector('form[data-form="paiement-corriger"]', { timeout: 4000 });
