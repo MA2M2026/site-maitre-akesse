@@ -131,7 +131,12 @@
     const carteMode = '<div class="carte"><h2>Mode actuel : ' + (legal ? 'Légal (factures officielles)' : 'Factures internes, non déclarées') + '</h2><p class="doux">' +
       (legal ? 'Factures complètes, TVA et FNE actives.' : 'Les factures sont des documents internes « non fiscaux ». La FNE et la TVA sont prévues et s’activeront avec le mode légal.') +
       '</p><a class="btn petit rouge" href="#/compta/identite">' + (legal ? 'Voir l’identité de l’agence' : 'Identité de l’agence →') + '</a></div>';
+    // (15/11/2026, « premium partout ») le résultat du mois en carte façon carte bancaire (P.carteHero, js/admin/coque.js)
+    const tresorerie = soldes.reduce((t, s) => t + (Number(s.solde) || 0), 0);
+    const sansUnite = (n) => P.fcfa(n).replace(/\s*FCFA$/, '');   // (les tuiles : la carte dit déjà « FCFA »)
     return P.entete('Tableau de bord · ' + P.mois(m), choixMois()) + carteMode +
+      P.carteHero({ titre: 'RÉSULTAT DU MOIS', grand: P.fcfa(rec - dep).replace(/\s*FCFA$/, ''), unite: 'FCFA', legende: P.mois(m) + ' · recettes moins dépenses (en FCFA)',
+        tuiles: [[sansUnite(rec), 'recettes'], [sansUnite(dep), 'dépenses'], [sansUnite(tresorerie), 'trésorerie aujourd’hui']] }) +
       '<div class="grille chiffres">' + P.chiffre('Recettes du mois', P.fcfa(rec), 'vert') + P.chiffre('Dépenses du mois', P.fcfa(dep), 'rouge') +
       P.chiffre('Résultat du mois', P.fcfa(rec - dep), rec - dep < 0 ? 'rouge' : '') + P.chiffre('Dépenses sans justificatif', sansJustif, sansJustif ? 'orange' : '') +
       P.chiffre('On nous doit', P.fcfa(reste(creances)), creances.some((d) => d.retard) ? 'orange' : '') + P.chiffre('Nous devons', P.fcfa(reste(dues)), dues.some((d) => d.retard) ? 'rouge' : '') + '</div>' +

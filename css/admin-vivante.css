@@ -1565,3 +1565,58 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ca-carte .ca-ligne small { display: block; color: #6E4F53; font-size: 12.5px; font-weight: 400; }
 .ca-carte .ca-numero { color: #7C2128; letter-spacing: .08em; }
 .ca-carte .ca-expiree { color: #7C2128; }
+.ca-apercu { margin-top: 12px; padding-top: 12px; border-top: 1px solid #F2E7E8; }
+.ca-carte-img { display: block; width: 100%; max-width: 520px; height: auto; aspect-ratio: 1012 / 638; border-radius: 14px; background: #5A141B; margin-bottom: 10px; }
+/* carte façon carte bancaire partagée (P.carteHero) : contenu en plus (barre, pastilles), trois tuiles possibles */
+.ag-suite { margin-top: 12px; }
+.ag-suite .ligne { margin-top: 10px; }
+.ag-carte .ag-tuiles:has(> div:nth-child(3)) { grid-template-columns: repeat(3, 1fr); }
+.ag-carte .ag-tuiles b { overflow-wrap: anywhere; }
+@media (max-width: 420px) { .ag-carte .ag-tuiles:has(> div:nth-child(3)) b { font-size: 20px; } }
+/* la barre dans la carte rouge : fond clair, « à payer » en rose clair pour rester visible sur le rouge */
+.ag-carte .barre-parts { background: rgba(255, 255, 255, .18); }
+.ag-carte .barre-parts i.erreur { background: #F3DDE0; }
+.ag-carte .barre-parts i.alerte { background: rgba(255, 255, 255, .55); }
+.ag-carte .barre-parts i.ok { background: #7CE38B; }
+/* « Sa carte de mannequin » v2 (15/11/2026, js/admin/carte-encart.js) : 4 réglages qu'on touche, le choix en rouge plein ✓ */
+.ce-carte .ce-tete { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ce-carte .ce-tete h2 { margin: 0; }
+.ce-apercu { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 14px 0 4px; }
+.ce-apercu .ca-carte-img { flex: 1 1 280px; max-width: 460px; margin: 0; }
+.ce-apercu-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ce-reglage { padding: 14px 0; border-top: 1px solid #F2E7E8; }
+.ce-reglage h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font: 600 15px 'Work Sans', sans-serif; color: #2A1416; }
+.ce-reglage h3 em { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; color: #7C2128; font: italic 600 14px 'Cormorant Garamond', serif; }
+.ce-reglage > p { margin: 0 0 10px; font-size: 13px; }
+.ce-puces { display: flex; flex-wrap: wrap; gap: 8px; }
+.ce-puce { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 8px 14px; border-radius: 14px; border: 1.5px solid #EADCDD; background: #FFFFFF; color: #7C2128; font: 600 13.5px 'Work Sans', sans-serif; cursor: pointer; text-align: left; }
+.ce-puce small { display: block; font-weight: 400; font-size: 11.5px; color: #6E4F53; }
+.ce-puce:hover { border-color: #7C2128; }
+.ce-puce.choisi { background: #7C2128; border-color: #7C2128; color: #FFFFFF; box-shadow: 0 8px 18px -10px rgba(90, 20, 27, 0.9); }
+.ce-puce.choisi small { color: #F3DDE0; }
+.ce-puce i { font-style: normal; font-weight: 700; }
+.ce-puce:focus-visible { outline: 3px solid #7C2128; outline-offset: 2px; }
+.ce-puce:disabled { opacity: .55; cursor: wait; }
+.ce-renouveler { border-style: dashed; }
+.ce-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+.ce-col { display: grid; gap: 6px; align-content: start; }
+.ce-col > b { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; }
+.ce-col .ce-puce { min-height: 36px; padding: 6px 12px; }
+.ce-numero { display: flex; justify-content: space-between; align-items: center; }
+.ce-numero b { color: #7C2128; letter-spacing: .08em; }
+.ce-expiree { color: #7C2128; }
+.ce-lien { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #2A1416; }
+.ce-lien small { display: block; color: #6E4F53; font-size: 12.5px; }
+.ce-lien span { flex: 1; }
+.ce-lien i { font-style: normal; color: #7C2128; font-size: 22px; }
+/* programme de formation : les mois en colonnes (un niveau par colonne) */
+.pf-colonnes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 10px; }
+.pf-colonnes h3 { margin: 0 0 6px; font: 600 13px 'Work Sans', sans-serif; letter-spacing: .06em; color: #7C2128; }
+.pf-colonnes .pf-mois { margin: 0; }
+.pf-colonnes .pf-mois li { display: flex; gap: 8px; align-items: baseline; }
+.pf-colonnes .pf-mois li > b { flex: 0 0 18px; color: #7C2128; }
+.pf-colonnes .pf-mois small { display: block; color: #6E4F53; font-size: 12px; }
+/* les 9 mois d'un niveau en 3 × 3 (plus court) */
+.ce-col { grid-template-columns: repeat(3, 1fr); }
+.ce-col > b { grid-column: 1 / -1; }
+.ce-col .ce-puce { justify-content: center; padding: 6px 4px; }

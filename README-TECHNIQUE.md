@@ -5210,4 +5210,18 @@ du contrat, 3/4/5 ans renouvelable ; verso épuré ; l'agence active la carte). 
   1 niveau), « Formation terminée ».
 - **Administration** : encart « Sa carte de mannequin » dans la fiche (espace Paiements, `encartCarte`) : activée,
   catégorie (Calcul / New Face / Professionnelle), validité, formation affichée, numéro.
-- Tests : `test-app-mannequin.js` (carte dessinée, verso, image, PDF), `test-correction-paiement.js` (encart).
+- **Aperçu dans l'Administration** (15/11/2026) : l'encart montre SA carte (recto/verso), « Télécharger » et « Imprimer
+  (PDF) » (pour l'imprimer à l'agence). Le calcul des données et de « Formation » est partagé :
+  `CarteMannequin.donnees` / `CarteMannequin.formation` (js/carte-mannequin.js), chargé aussi par admin/index.html.
+- Tests : `test-app-mannequin.js` (carte dessinée, verso, image, PDF), `test-correction-paiement.js` (encart, aperçu, PDF).
+
+### Carte : réglée depuis « Mannequins » (15/11/2026, retours de la propriétaire)
+L'encart « Sa carte de mannequin » est dans la fiche de la mannequin de « Mannequins » (`js/admin/carte-encart.js`,
+`P.carteEncart`, chargé par admin/index.html ; `site-mannequins.js` l'insère et le dessine dans son `apres`). Dans les
+Paiements, seulement un lien (`lienCarte`). Quatre réglages qu'on TOUCHE (puces `.ce-puce`, le choix en rouge plein
+avec ✓, enregistré tout de suite, l'encart se redessine sur place) : carte activée ; catégorie (Automatique = règle des
+2 ans, New Face, Professionnelle) ; validité (3/4/5 ans, renouveler) ; formation écrite sur la carte (Automatique avec
+ce qu'elle donne aujourd'hui, Recyclage, Révision, Formation terminée, ou un niveau et un mois en grilles 3 × 3).
+Base : `carte_mannequin_par_fiche(fiche)` et `carte_mannequin_regler(agence, réglages)` (équipe du site OU des
+paiements). Le programme de formation des Paiements montre ses mois en colonnes (un niveau par colonne).
+Tests : `test-nouvelle-admin-mannequins.js` (encart), `test-correction-paiement.js` (lien).

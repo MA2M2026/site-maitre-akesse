@@ -38,6 +38,16 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // (la date de naissance est privée : la vraie base ne la donne que par profils_prives, le faux serveur aussi)
     d.tables.model_profiles[0].date_naissance = '2011-05-05'; d.rpc.accord_parent_demander = 'jeton-essai';
     d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'm0' || id === 'v1' ? '2011-05-05' : '2000-01-01' }));
+    // (15/11/2026) sa carte « MANNEQUIN MA2M », réglée depuis sa fiche (supabase-carte-mannequin.sql), base imitée
+    const carteEssai = { active: false, nom: 'AYA KOUASSI', matricule: null, depuis: '2025-09-01', valable: '2030-09-01', validite_ans: 5, categorie: 'New Face', categorie_manuelle: null,
+      formation: null, niveaux: 2, id_fiche: 'm0', en_ligne: true, slug: 'aya-kouassi' };
+    d.rpc.carte_mannequin_par_fiche = () => ({ agence_id: 'ag-m0', carte: carteEssai, programme: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2,
+      mois_niveau: (i % 9) + 1, theme: 'Thème ' + (i + 1), date: '2026-' + String(Math.min(12, 9 + i)).padStart(2, '0') + '-01', etat: i < 1 ? 'fait' : i === 1 ? 'en_cours' : 'a_venir' })) } });
+    d.rpc.carte_mannequin_regler = (x) => { const r = x.p_reglages || {};
+      if ('active' in r) { carteEssai.active = r.active; if (r.active && !carteEssai.matricule) carteEssai.matricule = 'MA2M · 2025 · 0001'; }
+      if ('formation' in r) carteEssai.formation = r.formation; if ('validite_ans' in r) carteEssai.validite_ans = r.validite_ans;
+      if ('categorie' in r) { carteEssai.categorie_manuelle = r.categorie; carteEssai.categorie = r.categorie || 'New Face'; }
+      return Object.assign({}, carteEssai); };
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
 
@@ -82,6 +92,25 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       n + 'accueil du site : exclusion par l’agence (le Book ne change pas)');
     ok(/AYA KOUASSI/.test(await p.textContent('.mannequin-tete')) && (await p.$$('.photo-mannequin')).length === 2 && /Compcard 1/.test(await p.textContent('.photos-mannequin')), n + 'fiche : nom, 2 photos, compcard 1 signalée');
     await capture(p, 'fiche-mannequin' + suffixe);
+    // (15/11/2026) « Sa carte de mannequin » dans sa fiche : 4 réglages qu'on touche, le choix visible (rouge plein ✓)
+    await p.waitForSelector('#ce-carte', { timeout: 10000 }).catch(() => {});
+    const choisi = (reglage) => p.$eval('#ce-carte .ce-puce.choisi[data-reglage="' + reglage + '"]', (x) => x.textContent.trim()).catch(() => '');
+    ok(/Pas encore activée/.test(await p.textContent('#ce-carte .ce-tete')) && /Pas activée/.test(await choisi('active')) && /Automatique/.test(await choisi('categorie')) &&
+      /Automatique.*Niveau 1 · mois 2/.test(await choisi('formation')) && /5 ans/.test(await choisi('validite_ans')), n + 'carte : pas activée, catégorie et formation automatiques (Niveau 1 · mois 2), 5 ans — chaque choix visible');
+    ok(await p.locator('#ce-carte input, #ce-carte textarea').count() === 0 && await p.locator('#ce-carte .ce-col').count() === 2 && await p.locator('#ce-carte .ce-col .ce-puce').count() === 18,
+      n + 'carte : rien à écrire, les mois de formation en 2 colonnes (Niveau 1 et Niveau 2, 9 mois chacun)');
+    await p.click('#ce-carte .ce-puce[data-reglage="active"][data-valeur="true"]'); await p.waitForTimeout(700);
+    ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'carte_mannequin_regler' && /"active":true/.test(j[2] || '')) && /✓\s*Activée/.test(await choisi('active')) && /Activée ✓/.test(await p.textContent('#ce-carte .ce-tete')) && /MA2M · 2025 · 0001/.test(await p.textContent('#ce-carte .ce-numero')),
+      n + 'carte activée : le bouton passe en rouge plein ✓, « Activée ✓ », numéro donné');
+    await p.click('#ce-carte .ce-puce[data-reglage="formation"][data-valeur="Niveau 2 · mois 3"]'); await p.waitForTimeout(700);
+    ok(/✓\s*3$/.test(await choisi('formation')) && journal.some((j) => j[0] === 'rpc' && j[1] === 'carte_mannequin_regler' && /Niveau 2 · mois 3/.test(j[2] || '')), n + 'formation choisie d’un toucher (Niveau 2 · mois 3), le choix se voit');
+    await p.click('#ce-carte .ce-puce[data-reglage="categorie"][data-valeur="Professionnel"]'); await p.waitForTimeout(700);
+    ok(/Professionnelle/.test(await choisi('categorie')) && /Aujourd’hui : Professionnelle/.test(await p.textContent('#ce-carte')), n + 'catégorie choisie : Professionnelle, le choix se voit');
+    await p.waitForFunction(() => /^data:image\/png/.test((document.querySelector('#ce-carte .ca-carte-img') || {}).src || ''), null, { timeout: 15000 }).catch(() => {});
+    ok(await p.evaluate(() => { const i = document.querySelector('#ce-carte .ca-carte-img'); return !!i && i.naturalWidth === 1012; }), n + 'aperçu de sa carte dans sa fiche');
+    const [dlC] = await Promise.all([p.waitForEvent('download', { timeout: 30000 }).catch(() => null), p.click('#ce-carte [data-action="carte-fichier"][data-valeur="pdf"]')]);
+    ok(dlC && /\.pdf$/.test(dlC.suggestedFilename()), n + 'sa carte imprimable (PDF) depuis sa fiche');
+    if (process.env.CAPTURES) { await p.locator('#ce-carte').scrollIntoViewIfNeeded(); await p.waitForTimeout(400); await p.locator('#ce-carte').screenshot({ path: process.env.CAPTURES + '/carte-encart' + suffixe + '.png' }); }
     await p.selectOption('.photo-mannequin:nth-child(2) select[data-change="mannequin-compcard"]', '2'); await p.waitForTimeout(900);
     ok(ecrits(journal, 'PATCH', 'model_photos').some((j) => /"compcard_ordre":2/.test(j[3])), n + 'compcard : photo placée en case 2');
     // plus de classement Book / Lifestyle (24/10/2026) : toutes les photos sont dans le Book

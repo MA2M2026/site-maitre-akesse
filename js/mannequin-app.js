@@ -458,27 +458,16 @@
   // les mêmes « FORMATION » (son programme, comme la carte de l'accueil) et « DEPUIS » (son entrée à l'agence)
   // « Formation » : le texte imposé par l'agence (carte), sinon son programme — révision, recyclage (professionnelle sur
   // 1 niveau de 9 mois), niveau et mois ; « court » : sans « sur 9 » pour le niveau (la carte officielle)
-  function formationTexte(court) {
-    const p = etat.profil || {}, c = etat.carte || {}, r = resumeProgrammeFormation(etat.programme);  // (js/app.js)
-    if (c.formation) return c.formation;
-    const x = r && (r.termine ? r.revProchain : r.prochain);
-    if (r && r.termine) return x ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Formation terminée';
-    if (x && c.categorie === 'Professionnel' && r.total === 9) return 'Recyclage · mois ' + x.mois_niveau + ' sur 9';
-    if (x) return 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + (court ? '' : ' sur 9');
-    return niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat';
+  function formationTexte(court) {   // (calcul partagé avec l'Administration : js/carte-mannequin.js)
+    const p = etat.profil || {};
+    return window.CarteMannequin.formation(resumeProgrammeFormation(etat.programme), etat.carte, court, niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat');
   }
   // (15/11/2026, maquette validée : maquettes/carte-identite-mannequin-v2.html) la carte officielle, quand l'agence l'a
   // activée : dessinée par js/carte-mannequin.js (la même image à l'écran, en téléchargement et en PDF), recto ou verso
   let faceCarte = 'recto';
-  function donneesCarte() {
-    const p = etat.profil || {}, c = etat.carte || {};
-    const formation = formationTexte(true);
-    const vues = photosAffichees(etat.photos), ph = vues.profil || vues.couverture;
-    return { nom: c.nom || p.full_name, categorie: c.categorie, formation, taille: window.Partage.enMetres(p.height_cm),
-      mensurations: [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join(' · ') : '',
-      depuis: c.depuis, valable: c.valable, matricule: c.matricule,
-      photo: ph ? urlPhotoMemeOrigine(ph.url_petite || ph.url_miniature || ph.url) : '',
-      lienBook: c.en_ligne ? MA2M_SITE + '/' + lienFicheMannequin({ id: etat.uid, slug: c.slug }) : '' };
+  function donneesCarte() {   // (js/carte-mannequin.js : la même que dans l'Administration)
+    const p = etat.profil || {};
+    return window.CarteMannequin.donnees({ carte: etat.carte, profil: p, photos: etat.photos, programme: etat.programme, secours: niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat' });
   }
   function carteOfficielle() {
     return '<div class="ap-carte-officielle"><img class="ap-carte-img" alt="Ma carte de mannequin MA2M (' + faceCarte + ')" width="1012" height="638">' +

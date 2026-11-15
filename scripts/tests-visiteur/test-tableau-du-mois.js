@@ -120,7 +120,7 @@ function donnees(role) {
     ok(/^10000/.test(await val('Validé')), nomEcran + ' : Validé = 10 000');
     ok(/^10000/.test(await val('En attente de validation')), nomEcran + ' : En attente de validation = 10 000');
     ok(/^30000/.test(await val(apres5 ? 'Non payé' : 'À payer avant le 5')), nomEcran + ' : Non payé (ou à payer avant le 5) = 30 000');
-    ok(/^20/.test(await val('Taux de recouvrement')), nomEcran + ' : Taux de recouvrement = 20 %');
+    ok(/^20%/.test((await p.textContent('.ag-carte .ag-grand')).replace(/\s/g, '')) && /TAUX DE RECOUVREMENT/.test(await p.textContent('.ag-carte')), nomEcran + ' : Taux de recouvrement = 20 % (carte façon carte bancaire)');
     ok(/À jour : 1/.test(tx) && /Preuve reçue : 1/.test(tx) && /Non payé : 2/.test(tx), nomEcran + ' : pastilles À jour / Preuve reçue / Non payé');
     ok(/MADAME KOUAME \(parent\)/.test(tx), nomEcran + ' : le destinataire d’un mineur est son parent');
     ok(/Inscrit sur le site/.test(tx) && /Non inscrit/.test(tx), nomEcran + ' : groupe inscrit / non inscrit');

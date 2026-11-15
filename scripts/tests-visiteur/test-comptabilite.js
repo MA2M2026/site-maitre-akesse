@@ -88,6 +88,8 @@ function donnees(role) {
     ok(p.url().endsWith('#/compta/mois'), nomEcran + ' : le comptable arrive sur le tableau du mois');
     await p.waitForFunction(() => !document.querySelector('#contenu .chargement'), null, { timeout: 6000 }).catch(() => {});
     let t = await texte(p);
+    if (process.env.CAPTURES) { await p.waitForTimeout(1200); await p.screenshot({ path: process.env.CAPTURES + '/compta-tableau-' + ecran.width + '.png' }); }
+    ok(/RÉSULTAT DU MOIS/.test(await p.textContent('.ag-carte')) && /70\s000/.test(await p.textContent('.ag-carte .ag-grand')), nomEcran + ' : résultat du mois en carte façon carte bancaire (70 000)');
     ok(/Recettes du mois\s*105 000 FCFA/i.test(t) && /Dépenses du mois\s*35 000 FCFA/i.test(t) && /Résultat du mois\s*70 000 FCFA/i.test(t),
       nomEcran + ' : recettes 105 000, dépenses 35 000, résultat 70 000 (le virement ne compte ni en recette ni en dépense)');
     ok(/On nous doit\s*260 000 FCFA/i.test(t) && /Nous devons\s*80 000 FCFA/i.test(t), nomEcran + ' : on nous doit 260 000, nous devons 80 000');
