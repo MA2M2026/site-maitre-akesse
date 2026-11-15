@@ -5238,5 +5238,13 @@ recalculés par `carte_mannequin_regler(…, {position})` pour que le mois en co
 `formation_debut_reel` (on remonte les mois de cours déjà faits, sans les congés), `mannequin_depuis` (le plus ancien
 de l'entrée au registre et du début réel), catégorie (formée à l'arrivée, ou 2 ans depuis le début réel, ou
 expérience de sa fiche), validité (à partir du début réel). L'installation retire les anciens choix à la main.
+
+### Fiche publique rangée tout de suite (16/11/2026)
+`supabase-categorie-immediate.sql` (À COLLER après supabase-carte-mannequin.sql, contrôle « 2 éléments sur 2 » ; essais
+`scripts/base-essai/essais-categorie-immediate.sql`) : deux déclencheurs AFTER appellent `categories_mannequins_mettre_a_
+jour(compte)` dès que change ce qui décide de la catégorie : `categorie_suivre_registre` (agence_mannequins :
+parcours_arrivee, formation_mois_faits, formation_niveaux, date_entree, user_id) et `categorie_suivre_experiences`
+(model_projects : ajout, période, retrait). La fiche publique (« New Face » / « Main Board ») suit donc la carte sans
+attendre 4 h ; le rangement de la nuit reste pour le temps qui passe (2 ans).
 Parcours et position : équipe des paiements ou principal (ils comptent pour les mensualités). Nom trop long sur la
 carte : sur deux lignes. Contrôle « 13 éléments sur 13 ».
