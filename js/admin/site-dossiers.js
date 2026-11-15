@@ -251,7 +251,7 @@
       '<figure class="photo-dossier apparait" style="--i:' + i + '"><button type="button" class="photo-ouvrir" data-action="dossier-photo-voir" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       visageDossier(p.affiche, fiche.d.full_name) + '</button>' +
       '<figcaption><button type="button" class="btn petit" data-action="dossier-photo-supprimer" data-photo="' + P.esc(p.id) + '" aria-label="Supprimer la photo ' + (i + 1) + '">✕</button></figcaption></figure>').join('') :
-      '<p class="doux galerie-vide">Aucune photo jointe.</p>') +
+      P.drive.encart('candidature', fiche.d.id, fiche.dossierDrive)) +
       '<p class="doux petit-texte" id="dos-photo-msg" role="status"></p></section>';
   }
   function blocStatut(source) {
@@ -319,6 +319,8 @@
     if (!d) return P.entete(conf.titre) + '<div class="carte"><h2>Dossier introuvable</h2><p class="doux">Il a peut-être été supprimé.</p><a class="btn" href="#/site/' + conf.page + '">← Retour à la liste</a></div>';
     fiche = { source, d, photos: [] };
     if (conf.photos) fiche.photos = (await photosDe(conf, [d.id]).catch(() => ({})))[d.id] || [];
+    // (15/11/2026) sans photo : le dossier Drive de la candidate, s'il est connu (P.drive, js/admin/coque.js)
+    if (source === 'casting' && !fiche.photos.length) fiche.dossierDrive = (await P.drive.dossiers([d.id]).catch(() => ({})))[d.id] || null;
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +

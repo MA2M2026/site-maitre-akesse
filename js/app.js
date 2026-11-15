@@ -3109,6 +3109,10 @@ function fichierEnBase64(fichier) {
   });
 }
 
+// payload : { nom, email, phone, type, projet, source, ref, photos }. Depuis le 15/11/2026, source ('candidature' ou
+// 'cours_talons') et ref (numéro du dossier) permettent au programme Google d'enregistrer LUI-MÊME les liens dans la
+// base (supabase-medias-drive.sql) : enregistre = true quand c'est fait. Un nouvel essai (même ref) réutilise le même
+// dossier Drive et les mêmes fichiers : rien n'est rangé deux fois.
 async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
   const payloadAvecCle = { ...payload, cle: CLE_SCRIPT_PHOTOS_DRIVE };
   for (let essai = 1; essai <= tentatives; essai++) {
@@ -3120,12 +3124,45 @@ async function envoyerPhotosVersDrive(urlScript, payload, tentatives = 2) {
       });
       const resultat = await reponse.json();
       if (resultat.ok && Array.isArray(resultat.liens)) {
-        return { liens: resultat.liens, echec: false, dossier: resultat.dossier || null };
+        return { liens: resultat.liens, echec: false, dossier: resultat.dossier || null, enregistre: resultat.enregistre === true };
       }
     } catch (e) {}
     if (essai < tentatives) await new Promise(r => setTimeout(r, 1500));
   }
-  return { liens: [], echec: true, dossier: null };
+  return { liens: [], echec: true, dossier: null, enregistre: false };
+}
+
+// Photos d'un formulaire vers Drive, avec UNE JAUGE PAR PHOTO : préparée (0 → 25 %), puis toutes envoyées ensemble
+// (un seul envoi : un seul dossier Drive) ; pendant l'envoi les jauges avancent selon le temps estimé, sans dépasser
+// 95 % avant la réponse de Google, puis passent au vert (ou au rouge). Partagé le 15/11/2026 par les candidatures
+// (castings, Intégrer l'agence : js/formulaire-candidature.js) et les cours de talons (js/cours-talons.js).
+// fichiers : photos prêtes ; ids : identifiants des jauges ; infos : { nom, email, phone, type, projet, source, ref }.
+// Renvoie { liens, echec, dossier, enregistre, rangs (numéros des photos lisibles réellement envoyées), manquantes }.
+async function envoyerPhotosAvecJauges(fichiers, ids, nomPhoto, infos) {
+  const base64 = [], rangs = [];
+  for (let i = 0; i < fichiers.length; i++) {
+    majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
+    try {
+      base64.push(await fichierEnBase64(fichiers[i]));  // (déjà prête en mémoire depuis le choix)
+      rangs.push(i);
+      majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
+    } catch (e) {
+      jaugeEnErreur(ids[i], nomPhoto(i) + T(' : illisible', ': unreadable'));
+    }
+  }
+  const octets = base64.reduce((t, b) => t + b.length, 0);
+  const debit = ((navigator.connection && navigator.connection.downlink) || 1) * 125000 * 0.6; // octets/s
+  const idsEnvoyes = rangs.map((i) => ids[i]);
+  rangs.forEach((i) => majJauge(ids[i], 25, nomPhoto(i) + T(' : envoi…', ': sending…')));
+  const arreter = avancerDoucement(idsEnvoyes, 25, 95, Math.max(3000, (octets / debit + 3) * 1000 / 1.6), null);
+  let r = { liens: [], echec: true, dossier: null, enregistre: false };
+  try {
+    r = base64.length ? await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infos, photos: base64 })
+      : { liens: [], echec: false, dossier: null, enregistre: false };
+  } finally { arreter(); }
+  // (Google peut écarter une photo sans dire laquelle : comptée comme manquante)
+  const manquantes = jaugesPhotosArrivees(ids, rangs, r.echec ? 0 : r.liens.length, nomPhoto);
+  return { ...r, rangs, manquantes: r.echec ? fichiers.length : manquantes };
 }
 
 // Vidéo de présentation (candidatures) : envoyée à part, après les photos, vers le

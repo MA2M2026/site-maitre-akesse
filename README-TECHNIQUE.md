@@ -5260,3 +5260,41 @@ chiffre illisible est omis. Dans la Comptabilité, elle remplace les cases blanc
 et un compte par tuile), **Ce qu'on nous doit / Ce qu'on doit** (reste et nombre en retard) et **Impôts et taxes**.
 Parcours et position : équipe des paiements ou principal (ils comptent pour les mensualités). Nom trop long sur la
 carte : sur deux lignes. Contrôle « 13 éléments sur 13 » (12 depuis le 16/11/2026 : `carte_mannequin_regler` est passée dans supabase-categorie-immediate.sql).
+
+### Photos et vidéos vers Google Drive : enregistrées par le serveur (15/11/2026, solution définitive)
+Problème : le programme Google rangeait les photos dans Drive puis renvoyait leurs liens AU TÉLÉPHONE, qui les
+enregistrait ; réponse perdue = photos dans Drive mais absentes de l'Administration (18 candidatures sur 20, du 19/10
+au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-candidatures.md`.
+- **Chaque envoi porte un numéro** : `source` (`candidature` ou `cours_talons`) et `ref` (id de la candidature, ou de
+  l'inscription au cours de talons, tiré par la page ; nouvelles photos = nouveau numéro, `mediasChanges`).
+- **Programme Google** (`scripts/apps-script-photos-drive.gs`) : enregistre LUI-MÊME dans la base, par
+  `media_drive_recu(secret, source, ref, dossier, photos[], video)`, d'abord le DOSSIER (avant de ranger les photos :
+  l'Administration a toujours au moins le dossier), puis les photos, puis la vidéo. Un envoi recommencé (même ref)
+  réutilise le même dossier (`dossierDeLEnvoi` : verrou + cache 6 h + dossier connu de la base) et les mêmes fichiers
+  (`photo-N.jpg`). Action `retrouver` : retrouve le dossier d'une personne (connu de la base, sinon dossier à son nom
+  créé à moins de 3 h de son envoi, celui qui a le plus de photos) et enregistre ses photos. Mot secret : propriété
+  `SECRET_SITE` des Propriétés du script (jamais dans le dépôt) ; son empreinte SHA-256 est dans
+  `medias_drive_reglage`. Sans le mot secret, le programme marche comme avant.
+- **Base** (`supabase-medias-drive.sql`) : journal `medias_drive` (ref, genre photo/vidéo/dossier, lien) ;
+  `medias_drive_appliquer` range dans `casting_photos` / `casting_applications.video_url` ou `cours_talons.photos` /
+  `video` ; l'inscription au cours de talons, enregistrée APRÈS ses photos, reprend ce qui l'attend (déclencheur
+  `cours_talons_z_medias_drive`). Index unique `casting_photos_une_fois` (jamais deux fois la même photo).
+- **Page** : outil unique `envoyerPhotosAvecJauges` (js/app.js), utilisé par les candidatures (castings, Intégrer
+  l'agence) et les cours de talons. Si Google répond `enregistre: true`, la page n'écrit plus les photos ; sinon (ancien
+  programme) elle les écrit comme avant.
+- **Surveillance** : pg_cron `medias-drive-surveillance` (toutes les 15 min, `medias_drive_surveiller(3)`) : dossier de
+  moins de 3 jours sans photo → la base demande `retrouver` au programme Google (pg_net, 4 fois au plus, toutes les
+  25 min) ; toujours rien → `medias_drive_alertes` (notification « 📷 Photos manquantes », api/notifications-webhook.js)
+  + ligne au journal des erreurs. Ne tourne qu'une fois le nouveau programme Google en place (`script_a_jour`). Photos
+  supprimées par l'agence : jamais remises par la surveillance. Rattrapage des anciens dossiers :
+  `select medias_drive_surveiller(60);`.
+- **Administration** : `P.drive` (js/admin/coque.js) : un dossier sans photo affiche « Photos dans Drive », le lien du
+  dossier et « Récupérer les photos depuis Drive » (`medias_drive_relancer`, réservé aux administrateurs).
+- Test : `test-photos-drive.js` (Google lent ou coupé, ancien programme, cours de talons, Administration).
+- **Contrôle de santé quotidien** (`supabase-medias-drive-controle.sql`, à coller APRÈS le nouveau programme Google) :
+  à 7 h 13, la base demande l'action `controle` au programme Google (une image d'essai écrite dans Drive, dossier
+  « Contrôle automatique », partagée, annoncée à la base par `media_drive_controle_ok` avec le mot secret, puis mise à
+  la corbeille) ; à 7 h 43, `medias_drive_controle_verifier` vérifie ce contrôle et que la surveillance des 15 min
+  tourne (cron.job_run_details) ; sinon alerte « 🩺 Circuit des photos en panne » (medias_drive_alertes, source
+  `controle`) + journal des erreurs. Historique : `medias_drive_controles` (60 jours).
+- Hors de ce circuit : les photos du Book des mannequins (application, Cloudflare R2, js/espace-mannequin.js).

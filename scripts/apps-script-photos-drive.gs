@@ -23,6 +23,18 @@
 //   3) ancienne vidéo d'un seul bloc { …, video: dataURL } : gardée pour les
 //      petites vidéos et les pages pas encore mises à jour.
 // La vidéo part après les photos : si elle échoue, les photos sont déjà arrivées.
+//   4) { cle, action:'retrouver', source, ref } (15/11/2026) : retrouve dans Drive le dossier d'une candidature ou
+//      d'une inscription et enregistre ses photos dans la base (appelé par la base elle-même, toutes les 15 min
+//      pour un dossier sans photo, et par le bouton « Récupérer les photos depuis Drive » de l'Administration).
+//   5) { cle, action:'controle' } (15/11/2026) : contrôle de santé du matin (supabase-medias-drive-controle.sql) :
+//      une petite image d'essai fait tout le trajet (Drive, partage par lien, annonce à la base), puis à la corbeille.
+//
+// DEPUIS LE 15/11/2026 : chaque envoi porte { source:'candidature'|'cours_talons', ref:<numéro du dossier> }, et
+// le programme ENREGISTRE LUI-MÊME les liens dans la base du site (media_drive_recu, supabase-medias-drive.sql) :
+// l'Administration n'attend plus la réponse renvoyée au téléphone de la candidate (souvent perdue).
+// Un même envoi recommencé (même ref) réutilise le même dossier et les mêmes fichiers : jamais de double.
+// ⚠️ Mot secret : Paramètres du projet (roue dentée) → Propriétés du script → propriété SECRET_SITE. Il n'est
+// JAMAIS écrit dans ce fichier (le dépôt est public) ; sans lui, le programme marche comme avant.
 //
 // Nécessite l'autorisation « se connecter à un service externe » (UrlFetchApp) :
 // Google la demande une fois au moment du déploiement.
@@ -36,6 +48,10 @@ var TAILLE_MAX_OCTETS = 15 * 1024 * 1024;        // par photo
 var TAILLE_MAX_VIDEO_OCTETS = 60 * 1024 * 1024;  // vidéo de présentation (~30 s)
 var TAILLE_MAX_MORCEAU = 8 * 1024 * 1024;        // le site envoie des morceaux de 4 Mo
 var DEBUT_SESSION = 'https://www.googleapis.com/upload/drive/v3/files?';
+// Base du site (clé « anon » : publique par nature, la même que dans js/supabase-config.js)
+var SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+var SUPABASE_CLE_PUBLIQUE = 'sb_publishable_-k2vIvxdu1Ya-WzZWgj2Fg_8eyTmOmu';  // (clé publique courte : la longue s'abîmait au copier-coller, 15/11/2026)
+var NB_PHOTOS_RETROUVEES_MAX = 12;
 
 function reponse(objet) {
   return ContentService.createTextOutput(JSON.stringify(objet))
@@ -56,6 +72,8 @@ function doPost(e) {
     if (data.action === 'video_debut') return videoDebut(dossierRacine, data);
     if (data.action === 'video_morceau') return videoMorceau(dossierRacine, data);
     if (data.action === 'video_etat') return videoEtat(data);
+    if (data.action === 'retrouver') return reponse(retrouver(dossierRacine, data));
+    if (data.action === 'controle') return reponse(controle(dossierRacine));
 
     // ---------- 3) Vidéo d'un seul bloc (petites vidéos) ----------
     if (data.video) {
@@ -77,8 +95,9 @@ function doPost(e) {
 
       var feuilleV = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
       feuilleV.appendRow([new Date(), data.nom, data.email, data.phone, data.type, data.projet || '', 'VIDÉO : ' + lienVideo]);
+      var enregistreV = signalerAuSite(data, dossierVideo.getId(), [], lienVideo);
 
-      return reponse({ ok: true, video: lienVideo, dossier: dossierVideo.getId() });
+      return reponse({ ok: true, video: lienVideo, dossier: dossierVideo.getId(), enregistre: enregistreV });
     }
 
     // ---------- 1) Envoi des photos (inchangé) ----------
@@ -87,13 +106,13 @@ function doPost(e) {
       return reponse({ ok: false, erreur: 'trop_de_photos' });
     }
 
-    // Sous-dossier de catégorie : "Inscription à l'agence", le nom du casting
-    // (ex: "Casting 1"), ou "Intégrer l'agence" pour les candidatures générales
-    // — créé automatiquement s'il n'existe pas encore, réutilisé sinon.
-    var dossierCategorie = obtenirOuCreerSousDossier(dossierRacine, nomSousDossierPour(data));
-
-    var nomDossier = nomDossierPersonne(data);
-    var dossierCandidat = dossierCategorie.createFolder(nomDossier);
+    // Dossier de la personne : celui de ce même envoi s'il existe déjà (envoi recommencé après une réponse perdue),
+    // sinon un nouveau, dans le sous-dossier de catégorie ("Inscription à l'agence", le nom du casting, "Cours de
+    // talons" ou "Intégrer l'agence", créé s'il n'existe pas encore).
+    var dossierCandidat = dossierDeLEnvoi(dossierRacine, data);
+    // (15/11/2026, demande de la propriétaire) le lien du DOSSIER est enregistré dans la base EN PREMIER, avant même
+    // de ranger les photos : quoi qu'il arrive ensuite, l'Administration a toujours au moins le dossier Drive.
+    signalerAuSite(data, dossierCandidat.getId(), [], null, 1);  // (un seul essai : ne pas retarder les photos)
 
     var liensPhotos = [];
     photos.forEach(function (photoBase64, index) {
@@ -111,10 +130,12 @@ function doPost(e) {
           return;
         }
 
-        var blob = Utilities.newBlob(Utilities.base64Decode(partieBase64), 'image/jpeg', 'photo-' + (index + 1) + '.jpg');
-        var fichier = dossierCandidat.createFile(blob);
+        var nomFichier = 'photo-' + (index + 1) + '.jpg';
+        var dejaLa = dossierCandidat.getFilesByName(nomFichier);  // (envoi recommencé : déjà arrivée)
+        var fichier = dejaLa.hasNext() ? dejaLa.next()
+          : dossierCandidat.createFile(Utilities.newBlob(Utilities.base64Decode(partieBase64), 'image/jpeg', nomFichier));
         fichier.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        liensPhotos.push('https://drive.google.com/thumbnail?id=' + fichier.getId() + '&sz=w2000');
+        liensPhotos.push(lienPhoto(fichier));
       } catch (erreurPhoto) {
         // On continue avec les photos suivantes — celle-ci sera simplement
         // absente du résultat renvoyé au site.
@@ -123,8 +144,10 @@ function doPost(e) {
 
     var feuille = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     feuille.appendRow([new Date(), data.nom, data.email, data.phone, data.type, data.projet || '', liensPhotos.join('\n')]);
+    // (15/11/2026) les liens sont enregistrés dans la base PAR LE PROGRAMME, avant même de répondre au téléphone
+    var enregistre = signalerAuSite(data, dossierCandidat.getId(), liensPhotos, null);
 
-    return reponse({ ok: true, liens: liensPhotos, dossier: dossierCandidat.getId() });
+    return reponse({ ok: true, liens: liensPhotos, dossier: dossierCandidat.getId(), enregistre: enregistre });
   } catch (err) {
     return reponse({ ok: false, erreur: err.message });
   }
@@ -154,6 +177,7 @@ function videoDebut(dossierRacine, data) {
   var entetes = rep.getHeaders();
   var session = entetes.Location || entetes.location;
   if (!session) return reponse({ ok: false, erreur: 'session_refusee ' + rep.getResponseCode() + ' ' + rep.getContentText().slice(0, 150) });
+  signalerAuSite(data, dossier.getId(), [], null, 1);
   return reponse({ ok: true, session: session, dossier: dossier.getId() });
 }
 
@@ -186,7 +210,8 @@ function videoTerminee(rep, data) {
   var lien = 'https://drive.google.com/file/d/' + fichier.getId() + '/view';
   var feuille = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   feuille.appendRow([new Date(), data.nom || '', data.email || '', data.phone || '', data.type || '', data.projet || '', 'VIDÉO : ' + lien]);
-  return { ok: true, video: lien };
+  var dossierVideo = fichier.getParents().hasNext() ? fichier.getParents().next().getId() : null;
+  return { ok: true, video: lien, enregistre: signalerAuSite(data, dossierVideo, [], lien) };
 }
 
 // c) Après une coupure : combien d'octets Google a déjà reçus pour cette vidéo ?
@@ -228,6 +253,8 @@ function dossierDeLaPersonne(dossierRacine, data) {
       }
     } catch (e) {}
   }
+  // (15/11/2026) dossier des photos inconnu du téléphone (réponse perdue) : celui de ce même envoi (même ref)
+  if (refValide(data)) return dossierDeLEnvoi(dossierRacine, data);
   var dossierCategorie = obtenirOuCreerSousDossier(dossierRacine, nomSousDossierPour(data));
   return dossierCategorie.createFolder(nomDossierPersonne(data));
 }
@@ -251,10 +278,175 @@ function obtenirOuCreerSousDossier(parent, nom) {
   return parent.createFolder(nom);
 }
 
+function lienPhoto(fichier) {
+  return 'https://drive.google.com/thumbnail?id=' + fichier.getId() + '&sz=w2000';
+}
+
+// ---------- 15/11/2026 : enregistrement par le programme lui-même ----------
+function refValide(data) {
+  return (data.source === 'candidature' || data.source === 'cours_talons')
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(data.ref || ''));
+}
+function secretSite() {
+  return PropertiesService.getScriptProperties().getProperty('SECRET_SITE') || '';
+}
+function appelBase(fonction, parametres) {
+  var rep = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/rpc/' + fonction, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { apikey: SUPABASE_CLE_PUBLIQUE, Authorization: 'Bearer ' + SUPABASE_CLE_PUBLIQUE },
+    payload: JSON.stringify(parametres),
+    muteHttpExceptions: true
+  });
+  if (rep.getResponseCode() !== 200) throw new Error('base ' + rep.getResponseCode() + ' ' + rep.getContentText().slice(0, 150));
+  return JSON.parse(rep.getContentText() || 'null');
+}
+// Enregistre dans la base du site le dossier, les photos et la vidéo d'un envoi. Renvoie true si c'est fait.
+// (2 essais ; un échec ne bloque jamais l'envoi : la surveillance de la base le rattrapera)
+function signalerAuSite(data, dossierId, photos, video, essais) {
+  if (!refValide(data) || !secretSite()) return false;
+  var nbEssais = essais || 2;
+  for (var essai = 1; essai <= nbEssais; essai++) {
+    try {
+      appelBase('media_drive_recu', { p_secret: secretSite(), p_source: data.source, p_ref: data.ref,
+        p_dossier: dossierId || null, p_photos: photos || [], p_video: video || null });
+      return true;
+    } catch (e) {
+      if (essai === nbEssais) console.error('signalerAuSite : ' + e.message);
+      else Utilities.sleep(1500);
+    }
+  }
+  return false;
+}
+
+// Dossier d'un envoi de photos : le même si ce même envoi (même ref) a déjà commencé, sinon un nouveau.
+// (verrou : deux essais simultanés du même téléphone ne créent pas deux dossiers)
+function dossierDeLEnvoi(dossierRacine, data) {
+  if (!refValide(data)) {
+    return obtenirOuCreerSousDossier(dossierRacine, nomSousDossierPour(data)).createFolder(nomDossierPersonne(data));
+  }
+  var cache = CacheService.getScriptCache(), cle = 'dossier_' + data.ref;
+  var connu = cache.get(cle);
+  if (connu) { try { return DriveApp.getFolderById(connu); } catch (e) {} }
+  // (envoi repris des heures plus tard : la base connaît peut-être déjà le dossier ; demandé AVANT le verrou)
+  if (secretSite()) {
+    try {
+      var infos = appelBase('media_drive_infos', { p_secret: secretSite(), p_source: data.source, p_ref: data.ref });
+      if (infos && infos.dossiers && infos.dossiers.length) {
+        var dejaConnu = DriveApp.getFolderById(infos.dossiers[0]);
+        cache.put(cle, dejaConnu.getId(), 21600);
+        return dejaConnu;
+      }
+    } catch (e) {}
+  }
+  // Verrou très court (seulement : relire le cache, créer le dossier) pour que deux essais simultanés du même
+  // téléphone ne créent pas deux dossiers. Jamais bloquant : sans verrou au bout de 20 s, on continue quand même.
+  var verrou = LockService.getScriptLock();
+  var verrouille = verrou.tryLock(20000);
+  try {
+    connu = cache.get(cle);
+    if (connu) { try { return DriveApp.getFolderById(connu); } catch (e) {} }
+    var dossier = obtenirOuCreerSousDossier(dossierRacine, nomSousDossierPour(data)).createFolder(nomDossierPersonne(data));
+    dossier.setDescription('ref:' + data.ref);
+    cache.put(cle, dossier.getId(), 21600);
+    return dossier;
+  } finally {
+    if (verrouille) verrou.releaseLock();
+  }
+}
+
+// 4) Retrouver le dossier Drive d'une candidature ou d'une inscription, et enregistrer ses photos (et sa vidéo)
+// dans la base. Dossier connu de la base → celui-là ; sinon (anciens dossiers, avant le 15/11/2026) : le dossier
+// dont le nom commence par le nom de la personne, créé à moins de 3 heures de son envoi, qui a le plus de photos.
+function retrouver(dossierRacine, data) {
+  if (!refValide(data) || !secretSite()) return { ok: false, erreur: 'non_configure' };
+  var infos = appelBase('media_drive_infos', { p_secret: secretSite(), p_source: data.source, p_ref: data.ref });
+  if (!infos) return { ok: false, erreur: 'dossier_inconnu' };
+  var candidats = [];
+  (infos.dossiers || []).forEach(function (id) { try { candidats.push(DriveApp.getFolderById(id)); } catch (e) {} });
+  if (!candidats.length) candidats = dossiersAuNomDe(dossierRacine, infos, data.ref);
+  var meilleur = null, meilleurNb = 0;
+  candidats.forEach(function (dossier) {
+    var nb = imagesDe(dossier).length;
+    if (nb > meilleurNb) { meilleur = dossier; meilleurNb = nb; }
+  });
+  if (!meilleur && candidats.length) meilleur = candidats[0];
+  if (!meilleur) return { ok: true, nb: 0, trouve: false };
+  var liens = imagesDe(meilleur).slice(0, NB_PHOTOS_RETROUVEES_MAX).map(function (f) {
+    f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return lienPhoto(f);
+  });
+  var lienVideo = null;
+  var fichiers = meilleur.getFiles();
+  while (fichiers.hasNext() && !lienVideo) {
+    var f = fichiers.next();
+    if (String(f.getMimeType()).indexOf('video/') === 0) {
+      f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      lienVideo = 'https://drive.google.com/file/d/' + f.getId() + '/view';
+    }
+  }
+  if (!meilleur.getDescription()) meilleur.setDescription('ref:' + data.ref);
+  signalerAuSite(data, meilleur.getId(), liens, lienVideo);
+  return { ok: true, nb: liens.length, trouve: true };
+}
+
+// 5) Contrôle de santé du matin : le même trajet qu'une vraie photo, avec une image d'essai de 1 point, rangée dans
+// « Contrôle automatique » puis mise à la corbeille. Réussi → la base le note ; sinon la base alerte l'agence.
+function controle(dossierRacine) {
+  if (!secretSite()) return { ok: false, erreur: 'mot_secret_absent' };
+  var dossier = obtenirOuCreerSousDossier(dossierRacine, 'Contrôle automatique');
+  var image = Utilities.newBlob(Utilities.base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='), 'image/png', 'essai.png');
+  var fichier = dossier.createFile(image);
+  try {
+    fichier.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    appelBase('media_drive_controle_ok', { p_secret: secretSite(), p_details: 'photo d\'essai ' + fichier.getId() + ' écrite, partagée, annoncée' });
+    return { ok: true };
+  } finally {
+    fichier.setTrashed(true);
+  }
+}
+
+// photos d'un dossier, dans l'ordre (photo-1, photo-2…)
+function imagesDe(dossier) {
+  var liste = [], fichiers = dossier.getFiles();
+  while (fichiers.hasNext()) {
+    var f = fichiers.next();
+    if (String(f.getMimeType()).indexOf('image/') === 0) liste.push(f);
+  }
+  return liste.sort(function (a, b) { return a.getName().localeCompare(b.getName(), 'fr', { numeric: true }); });
+}
+
+// Seulement dans la catégorie de cette personne (casting, Intégrer l'agence, Cours de talons…), dossier créé juste
+// APRÈS sa candidature (de 0 à 90 min : la candidature est enregistrée avant ses photos) ou juste AVANT son inscription
+// au cours de talons (enregistrée après ses photos), et jamais un dossier marqué pour un autre envoi (« ref: »).
+function dossiersAuNomDe(dossierRacine, infos, ref) {
+  var nom = String(infos.nom || '').trim();
+  if (!nom) return [];
+  var quand = new Date(infos.cree_le).getTime(), trouves = [];
+  var avant = infos.projet === 'Cours de talons' ? 90 : 2, apres = infos.projet === 'Cours de talons' ? 5 : 90;  // minutes
+  var debut = nom.toLowerCase() + ' — ';
+  var requete = "title contains '" + nom.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+  var categories = dossierRacine.getFoldersByName(nomSousDossierPour(infos));
+  while (categories.hasNext()) {
+    var dossiers = categories.next().searchFolders(requete);
+    while (dossiers.hasNext()) {
+      var d = dossiers.next();
+      if (d.getName().toLowerCase().indexOf(debut) !== 0) continue;
+      var marque = String(d.getDescription() || '');
+      if (marque.indexOf('ref:') === 0 && marque !== 'ref:' + ref) continue;
+      var ecart = (d.getDateCreated().getTime() - quand) / 60000;
+      if (ecart >= -avant && ecart <= apres) trouves.push(d);
+    }
+  }
+  return trouves;
+}
+
 // À lancer UNE fois à la main (menu des fonctions → « autoriser » → Exécuter) après
 // avoir collé ce code : Google demande alors l'autorisation « se connecter à un
 // service externe », nécessaire à l'envoi des vidéos en morceaux.
 function autoriser() {
   UrlFetchApp.fetch('https://www.googleapis.com/discovery/v1/apis?name=drive', { muteHttpExceptions: true });
+  LockService.getScriptLock(); CacheService.getScriptCache();
+  console.log(secretSite() ? 'Mot secret SECRET_SITE : présent ✓' : '⚠️ Mot secret SECRET_SITE absent des Propriétés du script');
   DriveApp.getFolderById(ID_DOSSIER_RACINE).getName();
 }

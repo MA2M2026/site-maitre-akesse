@@ -7,7 +7,7 @@
 // arrivées ; puis la ligne est enregistrée par le serveur du site
 // (anti-robots, table cours_talons, supabase-cours-talons.sql) : le statut et le montant sont décidés par la base.
 // Si le SQL n'est pas encore installé, l'inscription est proposée par WhatsApp (rien n'est perdu).
-// Outils partagés (js/app.js) : insererAvecPatience, envoyerPhotosVersDrive, envoyerVideoVersDrive, majJauge,
+// Outils partagés (js/app.js) : insererAvecPatience, envoyerPhotosAvecJauges, envoyerVideoVersDrive, majJauge,
 // afficherMsg, enMo, dureeVideo, composerTelephone… ; allègement des vidéos : js/video-allegee.js.
 (function () {
   'use strict';
@@ -37,12 +37,17 @@
   let video = null, videoEnPreparation = null, numeroVideo = 0;
   // nouvel essai après une coupure : même identifiant (la base ne double pas l'inscription) et photos / vidéo déjà
   // envoyées vers Drive gardées (oubliées dès qu'on change les photos ou la vidéo)
-  const idInscription = crypto.randomUUID();
+  // (15/11/2026) ce numéro est aussi celui de l'envoi vers Drive : nouvelles photos ou nouvelle vidéo = nouveau numéro
+  // (le programme Google réutilise le dossier d'un même numéro : il ne doit pas resservir les anciennes photos)
+  let idInscription = crypto.randomUUID();
   // Ce qui est déjà arrivé sur Drive { liens, dossier, video } : gardé pour un nouvel essai (rien n'est renvoyé en
   // double), oublié dès qu'on change les photos ou la vidéo. envoiEnCours : jauges de l'envoi affichées.
   // (rangs : numéros des photos réellement envoyées, une photo illisible étant laissée de côté)
   let dejaEnvoye = { liens: [], rangs: [], dossier: null, video: null }, envoiEnCours = false;
-  function mediasChanges() { dejaEnvoye = { liens: [], rangs: [], dossier: null, video: null }; }
+  // (nouveau numéro seulement si l'inscription n'a encore jamais été tentée : sinon, elle est peut-être déjà
+  // enregistrée, réponse perdue, et le même numéro évite de la doubler)
+  let inscriptionTentee = false;
+  function mediasChanges() { dejaEnvoye = { liens: [], rangs: [], dossier: null, video: null }; if (!inscriptionTentee) idInscription = crypto.randomUUID(); }
 
   const formule = () => (form.querySelector('input[name="formule"]:checked') || {}).value || '';
   const decision = () => (form.querySelector('input[name="decision"]:checked') || {}).value || '';
@@ -337,26 +342,12 @@
     if (d.liens.length) photosArrivees();
     else ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
-    const infosDrive = { nom: etat.ligne.nom, email: '', phone: etat.ligne.telephone, type: 'projet', projet: 'Cours de talons' };
+    const infosDrive = { nom: etat.ligne.nom, email: '', phone: etat.ligne.telephone, type: 'projet', projet: 'Cours de talons', source: 'cours_talons', ref: etat.ligne.id };
     if (!d.liens.length) {
-      const base64 = [], rangs = [];
-      for (let i = 0; i < liste.length; i++) {
-        majJauge(ids[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
-        try {
-          base64.push(await fichierEnBase64(liste[i]));  // (déjà prête en mémoire depuis le choix)
-          rangs.push(i);
-          majJauge(ids[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
-        } catch (err) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : illisible', ': unreadable')); }
-      }
-      // ~150 Ko/s : un débit mobile modeste ; la jauge ralentit d'elle-même si c'est plus long
-      const octets = base64.reduce((t, x) => t + x.length, 0);
-      const idsEnvoyes = rangs.map((i) => ids[i]);
-      const arreter = avancerDoucement(idsEnvoyes, 25, 95, Math.max(2500, octets / 150), null);
-      rangs.forEach((i) => majJauge(ids[i], 25, nomPhoto(i) + T(' : envoi…', ': sending…')));
-      const r = base64.length ? await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, { ...infosDrive, photos: base64 }) : { liens: [], dossier: null };
-      arreter();
-      d.liens = r.liens || []; d.rangs = rangs; d.dossier = r.dossier || null;
-      photosArrivees();
+      // (envoyerPhotosAvecJauges, js/app.js : le même outil que les candidatures ; le programme Google enregistre lui-même
+      // les liens dans la base, l'inscription les reprend à son arrivée même si la réponse s'est perdue)
+      const r = await envoyerPhotosAvecJauges(liste, ids, nomPhoto, infosDrive);
+      d.liens = r.liens || []; d.rangs = r.rangs; d.dossier = r.dossier || null;
       if (d.liens.length) await EnvoiFiable.garder('cours-talons', etat);
     }
     if (!d.video) {
@@ -413,6 +404,7 @@
     const envoi = { liens: etat.d.liens.slice() }, lienVideo = etat.d.video;
     // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
     const ligne = Object.assign({}, etat.ligne, { photos: envoi.liens, video: lienVideo || null });
+    inscriptionTentee = true;
     let { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
     // (14/11/2026) un créneau pris entre-temps par une autre élève : rien n'est enregistré. Sur la page, elle en
     // choisit un autre (photos et vidéo déjà envoyées gardées) ; à la reprise d'un envoi coupé (formulaire vide),
