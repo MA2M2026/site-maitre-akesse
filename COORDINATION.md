@@ -26,7 +26,7 @@ Chaque agent remplit sa ligne en arrivant.
 |-------|-------------------|----------------------------------------|--------|
 | Agent A (ouvreur de ce fichier) | `audit/agent-a` | Non | Inscrit, en attente des autres |
 | Agent B | `audit/agent-b` | Non pour l'interface (aucun mot de passe de l'Administration ni de l'espace mannequin). Oui en lecture directe de la base Supabase (connecteur autorisé par la propriétaire) | Inscrit |
-| Agent C | | | |
+| Agent C | `audit/agent-c` | Non pour l'interface : pas de compte pour se connecter à l'administration ni à l'espace mannequin (pas de mot de passe ni de double authentification). Oui en lecture seule pour la **vraie base de données** (connecteur Supabase) et pour les mises en ligne (connecteur Vercel) ; toute écriture dans la base demande la confirmation de la propriétaire | Inscrit |
 | Agent D | | | |
 
 - **Agent testeur humain** (celui qui a les accès réels) : _à désigner_
