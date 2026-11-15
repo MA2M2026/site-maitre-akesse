@@ -29,17 +29,17 @@ Chaque agent remplit sa ligne en arrivant.
 | Agent C | `audit/agent-c` | Non pour l'interface : pas de compte pour se connecter à l'administration ni à l'espace mannequin (pas de mot de passe ni de double authentification). Oui en lecture seule pour la **vraie base de données** (connecteur Supabase) et pour les mises en ligne (connecteur Vercel) ; toute écriture dans la base demande la confirmation de la propriétaire | Inscrit |
 | Agent D | `audit/agent-d` | **Oui** : comptes d'essai de l'Administration (rôle « site ») et de l'espace mannequin, en lecture seule (aucun envoi, aucune modification, jamais « Soumettre »). Les secrets restent hors du dépôt et ne seront jamais transmis. Aussi lecture de la base Supabase (connecteur) | Inscrit. Le 15/11, déjà visité en ligne : 42 rubriques de l'Administration, l'espace mannequin, Intégrer l'agence, Postuler, Cours de talons (FR/EN, téléphone et ordinateur) |
 
-- **Agent testeur humain** (celui qui a les accès réels) : _à désigner_
+- **Agent testeur humain** (celui qui a les accès réels) : **Agent D** (seul à avoir les accès réels, confirmé par la propriétaire le 15/11 ; proposé, à valider par A, B, C)
 - **Agent chargé de la mise en ligne finale** : _à désigner_
 
 ## 2. Avancement par phase
 
 | Phase | A | B | C | D |
 |-------|---|---|---|---|
-| Audit site public | ◐ partiel : en-têtes et documents publics vérifiés en ligne ; vitesse laissée à B et C | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) | |
-| Audit du code | ✅ fait (api/, middleware, SQL, publication) | ✅ fait | ✅ fait | |
-| Audit sécurité | ✅ fait (lecture seule) | ✅ fait (lecture seule) | ✅ fait (lecture seule) | |
-| Rapport individuel déposé | ✅ `audit/agent-a` : docs/audit/rapport-agent-a.md | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | |
+| Audit site public | ◐ partiel : en-têtes et documents publics vérifiés en ligne ; vitesse laissée à B et C | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) || ✅ parcours FR/EN en clic + poids des pages + journal des vrais visiteurs (7 j) ; batterie complète 130 séries, 0 échec |
+| Audit du code | ✅ fait (api/, middleware, SQL, publication) | ✅ fait | ✅ fait || ◐ ciblé (causes de D-03, D-05, D-07) |
+| Audit sécurité | ✅ fait (lecture seule) | ✅ fait (lecture seule) | ✅ fait (lecture seule) || ✅ en vrai : droits du rôle « site » (A-03), 72 tables en anonyme, en-têtes |
+| Rapport individuel déposé | ✅ `audit/agent-a` : docs/audit/rapport-agent-a.md | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md || ✅ `audit/agent-d` : docs/audit/rapport-agent-d.md |
 
 Les rapports individuels vont dans `docs/audit/rapport-agent-X.md`.
 
@@ -69,6 +69,13 @@ A-F2 | A | double authentification exigée par la base elle-même (table admins 
 A-F3 | A | un compte administrateur ne peut jamais être supprimé ; base injoignable = refus | api/supprimer-mannequin.js:52-60 |
 A-F5 | A | espace Paiements cloisonné par rôle (portail_peut('paiements')) | supabase-administration.sql:754-760 |
 A-F6 | A | tâche du matin protégée (CRON_SECRET), webhook notifications protégé (secret en temps constant) | api/portail.js:201-203, api/notifications-webhook.js:158 |
+D-F1 | D | 42 rubriques de l'Administration (rôle « site ») ouvertes sans erreur ni débordement, téléphone et ordinateur | visite réelle 390 et 1440 px |
+D-F2 | D | application mannequin : 15 écrans sans erreur (onglets, Paiements, 6 étapes, Compcard, CV, Carte, Programme) | visite réelle |
+D-F3 | D | 72 tables essayées en anonyme : seules 14 tables de contenu public répondent ; photos d'un profil non publié : 0 ligne | lecture REST anonyme |
+D-F5 | D | cours de talons : inscription du site visible dans l'Administration, mêmes prix | page publique + b2-cours-talons |
+Confirmés par D (en vrai) : B-F3 = C-F1, B-F5, B-F7 (0 candidature sans photo les 14 et 15/11).
+(détail : docs/audit/rapport-agent-d.md, branche audit/agent-d)
+
 A-F8 | A | node --check sans erreur partout, aucun JS/CSS orphelin, aucun console.log | essai local |
 Confirmés par A : C-F5 = B-F6, B-F5, C-F7.
 (détail : docs/audit/rapport-agent-a.md, branche audit/agent-a)
@@ -146,6 +153,16 @@ R-19 | R | moyenne | images Actualités / Événements | fichiers jusqu'à 515 K
 R-20 | R | basse | 57 fichiers SQL | 31 fonctions définies dans plusieurs fichiers + 12 secours « SQL pas encore collé » : recoller un vieux fichier remet une vieille fonction (complète C-P3) | git grep |
 Confirmés par R : A-01 (vérifié en ligne : /docs/rls-matrix.md, /DECISIONS.md, /GUIDE-DE-SECOURS.md → 200), B-P5, A-08, C-P6, B-P8, B-P13.
 ⚠️ Avant toute fusion des rapports dans main : compléter `.vercelignore` (A-01), sinon les rapports d'audit seront publiés.
+
+D-01 | D | haute | = A-03, **confirmé en vrai** avec le compte d'essai rôle « site » | dans `admins` | lit casting_applications (contacts des parents), inscriptions_mannequins (référence de paiement), cours_talons (référence Wave, montant) ; voit « ✓ Paiement reçu (Wave) / Payé en espèces » et « Supprimer » (aucun clic) |
+D-02 | D | haute | 11 candidatures du 06 au 12/11 | aucune ligne casting_photos (corrigé depuis le 14/11) ; photos jamais reçues → à redemander sur WhatsApp | casting_applications × casting_photos |
+D-03 | D | moyenne | js/app.js:256, 269, 1391 | chemin relatif assets/logo-header.png → 404 sous /admin/ : CV (aperçu, PDF, JPEG) sans logo depuis l'Administration | 404 en visite + journal 13/11 |
+D-04 | D | moyenne | /integrer-agence, /cours-talons | vrais visiteurs : chargement complet 14 à 70 s (31 s cours-talons) ; 59 fichiers, 1,7 Mo, load 5,7 s même en bonne connexion (recoupe C-P9, B-P1) | journal_erreurs 7 j + mesure Pixel 5 |
+D-05 | D | moyenne | application, Accueil et Paiements | agence fermée jusqu'au 1/3/2027 mais « CE MOIS-CI … mois 1 sur 9 » ; « il reste 17 mois » contre « 0 / 18 mois payés » | visite réelle ; js/app.js:934-947 + mes_mensualites (B/C : vérifier le SQL) |
+D-06 | D | basse | Administration, Mannequins | liste 5–6 s, fiche 6–7,6 s, CV 5,5 s (avec le relais de mon environnement : à remesurer) | visite réelle |
+D-07 | D | basse | journal_erreurs | fausses alarmes « À corriger » venant de Chrome 45 / Windows 7 (et UA « Pixel C » : enMo déjà déclaré, non reproduit) | journal 14–15/11 |
+D-08 | D | basse | /book/… à ≈360 px | boutons Compcard PDF JPEG dépassent de 12 px (journal ; non vu à 390 px) | journal 14/11 |
+Confirmés par D : A-03 (= D-01), B-P4 = C-P1 (page d'accueil en ligne), C-P9, B-P1/C-P2 (journal réel), A-04 en partie (?utm_source=… dans journal_erreurs.page).
 
 ## 5. Désaccords à vérifier
 
