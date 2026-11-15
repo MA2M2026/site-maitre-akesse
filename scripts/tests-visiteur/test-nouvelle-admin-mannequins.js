@@ -38,15 +38,20 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // (la date de naissance est privée : la vraie base ne la donne que par profils_prives, le faux serveur aussi)
     d.tables.model_profiles[0].date_naissance = '2011-05-05'; d.rpc.accord_parent_demander = 'jeton-essai';
     d.rpc.profils_prives = (x) => (x.ids || []).map((id) => ({ id, date_naissance: id === 'm0' || id === 'v1' ? '2011-05-05' : '2000-01-01' }));
-    // (15/11/2026) sa carte « MANNEQUIN MA2M », réglée depuis sa fiche (supabase-carte-mannequin.sql), base imitée
-    const carteEssai = { active: false, nom: 'AYA KOUASSI', matricule: null, depuis: '2025-09-01', valable: '2030-09-01', validite_ans: 5, categorie: 'New Face', categorie_manuelle: null,
-      formation: null, niveaux: 2, id_fiche: 'm0', en_ligne: true, slug: 'aya-kouassi' };
-    d.rpc.carte_mannequin_par_fiche = () => ({ agence_id: 'ag-m0', carte: carteEssai, programme: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2,
-      mois_niveau: (i % 9) + 1, theme: 'Thème ' + (i + 1), date: '2026-' + String(Math.min(12, 9 + i)).padStart(2, '0') + '-01', etat: i < 1 ? 'fait' : i === 1 ? 'en_cours' : 'a_venir' })) } });
+    // (15/11/2026) sa carte « MANNEQUIN MA2M », réglée depuis sa fiche (supabase-carte-mannequin.sql), base imitée :
+    // parcours et position dans la formation décident de tout (catégorie, « membre depuis », formation)
+    const carteEssai = { active: false, nom: 'AYA KOUASSI', matricule: null, depuis: '2026-10-01', valable: '2031-10-01', validite_ans: 5, categorie: 'New Face', categorie_manuelle: null,
+      formation: null, niveaux: 2, parcours: 'debutante', id_fiche: 'm0', en_ligne: true, slug: 'aya-kouassi' };
+    let positionEssai = 2;
+    const programmeEssai = () => { const total = carteEssai.parcours === 'formee' ? 9 : 18;
+      return { niveaux: total / 9, total, termine: positionEssai > total, mois: Array.from({ length: total }, (_, i) => ({ rang: i + 1, niveau: Math.floor(i / 9) + 1, mois_niveau: (i % 9) + 1,
+        theme: 'Thème ' + (i + 1), date: '2027-03-01', etat: i + 1 < positionEssai ? 'fait' : i + 1 === positionEssai ? 'en_cours' : 'a_venir' })) }; };
+    d.rpc.carte_mannequin_par_fiche = () => ({ agence_id: 'ag-m0', carte: Object.assign({}, carteEssai), programme: programmeEssai() });
     d.rpc.carte_mannequin_regler = (x) => { const r = x.p_reglages || {};
       if ('active' in r) { carteEssai.active = r.active; if (r.active && !carteEssai.matricule) carteEssai.matricule = 'MA2M · 2025 · 0001'; }
-      if ('formation' in r) carteEssai.formation = r.formation; if ('validite_ans' in r) carteEssai.validite_ans = r.validite_ans;
-      if ('categorie' in r) { carteEssai.categorie_manuelle = r.categorie; carteEssai.categorie = r.categorie || 'New Face'; }
+      if ('validite_ans' in r) carteEssai.validite_ans = r.validite_ans;
+      if ('parcours' in r) { carteEssai.parcours = r.parcours; carteEssai.categorie = r.parcours === 'formee' ? 'Professionnel' : 'New Face'; positionEssai = 1; }
+      if ('position' in r) { positionEssai = r.position; carteEssai.depuis = positionEssai > 9 ? '2025-03-01' : '2026-10-01'; }
       return Object.assign({}, carteEssai); };
     await brancher(p, d, journal); await photosLocales(p);
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
@@ -98,17 +103,26 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(/Programme de formation/.test(await p.textContent('.pf-programme')) && /Ce mois-ci : Thème 2/.test(await p.textContent('.pf-programme')) && await p.locator('.pf-programme .pf-colonnes > div').count() === 2,
       n + 'fiche : programme de formation (ce mois-ci, mois en 2 colonnes)');
     const choisi = (reglage) => p.$eval('#ce-carte .ce-puce.choisi[data-reglage="' + reglage + '"]', (x) => x.textContent.trim()).catch(() => '');
-    ok(/Pas encore activée/.test(await p.textContent('#ce-carte .ce-tete')) && /Pas activée/.test(await choisi('active')) && /Automatique/.test(await choisi('categorie')) &&
-      /Automatique.*Niveau 1 · mois 2/.test(await choisi('formation')) && /5 ans/.test(await choisi('validite_ans')), n + 'carte : pas activée, catégorie et formation automatiques (Niveau 1 · mois 2), 5 ans — chaque choix visible');
-    ok(await p.locator('#ce-carte input, #ce-carte textarea').count() === 0 && await p.locator('#ce-carte .ce-col').count() === 2 && await p.locator('#ce-carte .ce-col .ce-puce').count() === 18,
-      n + 'carte : rien à écrire, les mois de formation en 2 colonnes (Niveau 1 et Niveau 2, 9 mois chacun)');
+    const resumeCarte = () => p.$eval('#ce-carte .ce-resume', (x) => Array.from(x.querySelectorAll('div')).map((d) => d.querySelector('dt').textContent + ' ' + d.querySelector('dd').textContent).join(' ')).catch(() => '');
+    ok(/Pas encore activée/.test(await p.textContent('#ce-carte .ce-tete')) && /Pas activée/.test(await choisi('active')) && /Débutante chez nous/.test(await choisi('parcours')) &&
+      /✓\s*2$/.test(await choisi('position')) && /5 ans/.test(await choisi('validite_ans')), n + 'carte : pas activée, débutante, en niveau 1 mois 2, 5 ans — chaque choix visible');
+    ok(/Catégorie New Face/.test(await resumeCarte()) && /Formation Niveau 1 · mois 2/.test(await resumeCarte()) && /Membre depuis octobre 2026/.test(await resumeCarte()) &&
+      await p.locator('#ce-carte [data-reglage="categorie"], #ce-carte [data-reglage="formation"], #ce-carte input').count() === 0,
+      n + 'carte : catégorie, formation, « membre depuis » calculés et affichés (rien à choisir ni à écrire pour eux)');
+    ok(await p.locator('#ce-carte .ce-col').count() === 2 && await p.locator('#ce-carte .ce-col .ce-puce').count() === 18, n + 'carte : position dans la formation en 2 grilles (niveau 1 et niveau 2)');
     await p.click('#ce-carte .ce-puce[data-reglage="active"][data-valeur="true"]'); await p.waitForTimeout(700);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'carte_mannequin_regler' && /"active":true/.test(j[2] || '')) && /✓\s*Activée/.test(await choisi('active')) && /Activée ✓/.test(await p.textContent('#ce-carte .ce-tete')) && /MA2M · 2025 · 0001/.test(await p.textContent('#ce-carte .ce-numero')),
       n + 'carte activée : le bouton passe en rouge plein ✓, « Activée ✓ », numéro donné');
-    await p.click('#ce-carte .ce-puce[data-reglage="formation"][data-valeur="Niveau 2 · mois 3"]'); await p.waitForTimeout(700);
-    ok(/✓\s*3$/.test(await choisi('formation')) && journal.some((j) => j[0] === 'rpc' && j[1] === 'carte_mannequin_regler' && /Niveau 2 · mois 3/.test(j[2] || '')), n + 'formation choisie d’un toucher (Niveau 2 · mois 3), le choix se voit');
-    await p.click('#ce-carte .ce-puce[data-reglage="categorie"][data-valeur="Professionnel"]'); await p.waitForTimeout(700);
-    ok(/Professionnelle/.test(await choisi('categorie')) && /Aujourd’hui : Professionnelle/.test(await p.textContent('#ce-carte')), n + 'catégorie choisie : Professionnelle, le choix se voit');
+    // elle est en fait au niveau 2, mois 6 : un toucher, et « membre depuis » remonte
+    await p.click('#ce-carte .ce-col:nth-child(2) .ce-puce[data-valeur="15"]'); await p.waitForTimeout(900);
+    ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'carte_mannequin_regler' && /"position":15/.test(j[2] || '')) && /✓\s*6$/.test(await choisi('position')) &&
+      /Formation Niveau 2 · mois 6/.test(await resumeCarte()) && /Membre depuis mars 2025/.test(await resumeCarte()),
+      n + 'position niveau 2 mois 6 : formation et « membre depuis » recalculés (mars 2025)');
+    // déjà formée ailleurs : Professionnelle, recyclage de 9 mois
+    await p.click('#ce-carte .ce-puce[data-reglage="parcours"][data-valeur="formee"]'); await p.waitForTimeout(900);
+    ok(/Déjà formée/.test(await choisi('parcours')) && /Catégorie Professionnelle/.test(await resumeCarte()) && /Recyclage · mois 1 sur 9/.test(await resumeCarte()) &&
+      await p.locator('#ce-carte .ce-col').count() === 1 && /Recyclage · mois/.test(await p.textContent('#ce-carte .ce-col')),
+      n + 'déjà formée : Professionnelle, recyclage de 9 mois (une seule grille)');
     await p.waitForFunction(() => /^data:image\/png/.test((document.querySelector('#ce-carte .ca-carte-img') || {}).src || ''), null, { timeout: 15000 }).catch(() => {});
     ok(await p.evaluate(() => { const i = document.querySelector('#ce-carte .ca-carte-img'); return !!i && i.naturalWidth === 1012; }), n + 'aperçu de sa carte dans sa fiche');
     const [dlC] = await Promise.all([p.waitForEvent('download', { timeout: 30000 }).catch(() => null), p.click('#ce-carte [data-action="carte-fichier"][data-valeur="pdf"]')]);

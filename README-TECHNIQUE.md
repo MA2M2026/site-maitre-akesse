@@ -5229,3 +5229,14 @@ Tests : `test-nouvelle-admin-mannequins.js` (encart), `test-correction-paiement.
   fiche de la mannequin, au-dessus de sa carte ; plus rien dans les Paiements (décision de la propriétaire :
   l'équipe des paiements n'a pas à voir la fiche des mannequins). Le code de l'espace
   et les informations du registre restent dans les Paiements (ils existent avant son espace).
+
+### Carte : cohérence (15/11/2026, retours de la propriétaire)
+Plus de catégorie ni de formation choisies à la main (elles se contredisaient : « Niveau 2 · mois 6 » avec « membre
+depuis octobre 2026 », « New Face » pour une mannequin expérimentée). UNE source : `agence_mannequins.parcours_arrivee`
+(débutante / formée) et la position dans la formation (`formation_mois_faits`, les mêmes que l'assistant de reprise,
+recalculés par `carte_mannequin_regler(…, {position})` pour que le mois en cours soit celui touché). Calculé :
+`formation_debut_reel` (on remonte les mois de cours déjà faits, sans les congés), `mannequin_depuis` (le plus ancien
+de l'entrée au registre et du début réel), catégorie (formée à l'arrivée, ou 2 ans depuis le début réel, ou
+expérience de sa fiche), validité (à partir du début réel). L'installation retire les anciens choix à la main.
+Parcours et position : équipe des paiements ou principal (ils comptent pour les mensualités). Nom trop long sur la
+carte : sur deux lignes. Contrôle « 13 éléments sur 13 ».
