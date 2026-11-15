@@ -20,3 +20,24 @@ Correction souhaitée :
 2. Rattraper les 12 candidatures déjà touchées : retrouver leurs photos dans Drive (dossier au nom de la personne) et
    créer les lignes `casting_photos`, avec l'accord de la propriétaire.
 3. Un essai visiteur : réponse du script lente ou incomplète → les photos apparaissent quand même dans l'Administration.
+
+## Exigence de la propriétaire (15/11/2026) : une solution DÉFINITIVE
+
+« Au début ça s'affichait, maintenant ça s'affiche une fois sur deux. Il faut que ce soit réglé une fois pour toutes. »
+Cela vaut pour TOUS les envois d'images et de vidéos vers Drive :
+- candidatures aux castings ;
+- « Intégrer l'agence » ;
+- inscriptions au cours de talons.
+
+Attendu :
+1. **Ne plus dépendre de la réponse renvoyée au téléphone de la candidate.** Le lien de chaque photo doit être
+   enregistré côté serveur (par le script Google lui-même, ou par une fonction api/ qui le vérifie), même si la
+   connexion de la candidate coupe juste après l'envoi.
+2. **Un seul outil partagé** pour les trois formulaires, au lieu de trois copies (règle 5 de CLAUDE.md).
+3. **Un filet de sécurité dans l'Administration** : une candidature sans photo affiche « Photos dans Drive » avec le
+   lien du dossier, et un bouton « Récupérer les photos depuis Drive » qui rattache les fichiers trouvés.
+4. **Rattrapage** de toutes les candidatures et inscriptions déjà touchées.
+5. **Un contrôle qui prévient** : une candidature arrivée sans photo enregistrée → une alerte dans le journal des erreurs
+   et une notification, pour ne plus le découvrir par hasard.
+6. **Des essais visiteur** pour chaque formulaire : réponse de Google lente, coupée ou incomplète → les photos
+   apparaissent quand même dans l'Administration.
