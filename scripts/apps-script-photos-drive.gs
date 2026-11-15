@@ -26,6 +26,8 @@
 //   4) { cle, action:'retrouver', source, ref } (15/11/2026) : retrouve dans Drive le dossier d'une candidature ou
 //      d'une inscription et enregistre ses photos dans la base (appelé par la base elle-même, toutes les 15 min
 //      pour un dossier sans photo, et par le bouton « Récupérer les photos depuis Drive » de l'Administration).
+//   5) { cle, action:'controle' } (15/11/2026) : contrôle de santé du matin (supabase-medias-drive-controle.sql) :
+//      une petite image d'essai fait tout le trajet (Drive, partage par lien, annonce à la base), puis à la corbeille.
 //
 // DEPUIS LE 15/11/2026 : chaque envoi porte { source:'candidature'|'cours_talons', ref:<numéro du dossier> }, et
 // le programme ENREGISTRE LUI-MÊME les liens dans la base du site (media_drive_recu, supabase-medias-drive.sql) :
@@ -71,6 +73,7 @@ function doPost(e) {
     if (data.action === 'video_morceau') return videoMorceau(dossierRacine, data);
     if (data.action === 'video_etat') return videoEtat(data);
     if (data.action === 'retrouver') return reponse(retrouver(dossierRacine, data));
+    if (data.action === 'controle') return reponse(controle(dossierRacine));
 
     // ---------- 3) Vidéo d'un seul bloc (petites vidéos) ----------
     if (data.video) {
@@ -385,6 +388,22 @@ function retrouver(dossierRacine, data) {
   if (!meilleur.getDescription()) meilleur.setDescription('ref:' + data.ref);
   signalerAuSite(data, meilleur.getId(), liens, lienVideo);
   return { ok: true, nb: liens.length, trouve: true };
+}
+
+// 5) Contrôle de santé du matin : le même trajet qu'une vraie photo, avec une image d'essai de 1 point, rangée dans
+// « Contrôle automatique » puis mise à la corbeille. Réussi → la base le note ; sinon la base alerte l'agence.
+function controle(dossierRacine) {
+  if (!secretSite()) return { ok: false, erreur: 'mot_secret_absent' };
+  var dossier = obtenirOuCreerSousDossier(dossierRacine, 'Contrôle automatique');
+  var image = Utilities.newBlob(Utilities.base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='), 'image/png', 'essai.png');
+  var fichier = dossier.createFile(image);
+  try {
+    fichier.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    appelBase('media_drive_controle_ok', { p_secret: secretSite(), p_details: 'photo d\'essai ' + fichier.getId() + ' écrite, partagée, annoncée' });
+    return { ok: true };
+  } finally {
+    fichier.setTrashed(true);
+  }
 }
 
 // photos d'un dossier, dans l'ordre (photo-1, photo-2…)

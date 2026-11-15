@@ -5291,3 +5291,10 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
 - **Administration** : `P.drive` (js/admin/coque.js) : un dossier sans photo affiche « Photos dans Drive », le lien du
   dossier et « Récupérer les photos depuis Drive » (`medias_drive_relancer`, réservé aux administrateurs).
 - Test : `test-photos-drive.js` (Google lent ou coupé, ancien programme, cours de talons, Administration).
+- **Contrôle de santé quotidien** (`supabase-medias-drive-controle.sql`, à coller APRÈS le nouveau programme Google) :
+  à 7 h 13, la base demande l'action `controle` au programme Google (une image d'essai écrite dans Drive, dossier
+  « Contrôle automatique », partagée, annoncée à la base par `media_drive_controle_ok` avec le mot secret, puis mise à
+  la corbeille) ; à 7 h 43, `medias_drive_controle_verifier` vérifie ce contrôle et que la surveillance des 15 min
+  tourne (cron.job_run_details) ; sinon alerte « 🩺 Circuit des photos en panne » (medias_drive_alertes, source
+  `controle`) + journal des erreurs. Historique : `medias_drive_controles` (60 jours).
+- Hors de ce circuit : les photos du Book des mannequins (application, Cloudflare R2, js/espace-mannequin.js).
