@@ -649,10 +649,11 @@ button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer;
 .ap-pr .ap-vitrine-raccourcis a:first-child { border-top: 0; }
 .ap-pr .ap-vitrine-raccourcis em { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; font-style: normal; }
 .ap-pr .ap-vitrine-raccourcis small { display: block; color: #6E4F53; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
-.ap-pr .ap-vitrine-raccourcis span { flex: 1; min-width: 0; }
+.ap-pr .ap-vitrine-raccourcis span { display: block; flex: 1; min-width: 0; margin: 0; font: 400 14px/1.4 'Work Sans', sans-serif; }
 .ap-pr .ap-vitrine-raccourcis i { color: #7C2128; font-style: normal; }
 .ap-pr .ap-vitrine-raccourcis a:focus-visible, .ap-pr .ap-vitrine-score:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
 .ap-pr + .ap-vitrine-grille { gap: 6px; margin: 0; padding-top: 0; border-top: 0; }
 .ap-pr + .ap-vitrine-grille img, .ap-pr + .ap-vitrine-grille .ap-vitrine-ajout { border-radius: 12px; }
 .ap-pr + .ap-vitrine-grille .ap-vitrine-ajout { background: transparent; border: 1px dashed rgba(255, 255, 255, 0.6); }
-.ap-pr .ap-vitrine-raccourcis span { display: block; margin: 0; font: 400 14px/1.4 'Work Sans', sans-serif; }
+/* le nom posé sur la couverture laisse passer le toucher : toute la couverture ouvre la galerie */
+.ap-pr-titre { pointer-events: none; }

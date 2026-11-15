@@ -5179,8 +5179,9 @@ recherche et « Envoyer un message » (leurs résultats doivent rester visibles 
 mannequins actives (Paiements), les élèves des cours de talons (Site) ; « Cette semaine » (`.se-*`, Site) : aujourd'hui et
 les jours qui ont quelque chose — projets de l'agenda, cours de talons (le groupe en une ligne avec le nombre d'élèves,
 chaque cours privé avec l'élève et son thème). Chaque lecture est facultative. Styles : css/admin-vivante.css.
-Test : test-nouvelle-admin.js. (Le « cours des mannequins » de la maquette n'est pas affiché : son thème dépend de chaque
-mannequin.)
+Test : test-nouvelle-admin.js. « Cours des mannequins » chaque dimanche (15/11/2026, sans heure ni thème : son heure
+n'est pas encore notée dans le site, son thème dépend de chaque mannequin), jamais pendant les congés
+(`Presences.enVacances`), mène à la liste de présence.
 
 ## « Mon profil » premium (application des mannequins, 15/11/2026)
 Maquette validée : `maquettes/app-profil.html`. `ecranProfil` (js/mannequin-app.js) : grande couverture (on la touche

@@ -370,7 +370,8 @@
   // mensurations, ses documents (Compcard, CV, photos, programme) en relevé, puis son book en grille.
   function ecranProfil() {
     const p = etat.profil, a = etat.analyse || { score: 0 }, v = etat.vitrine || {};
-    const mesures = [p.city || '', window.Partage.enMetres(p.height_cm), [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
+    // (sa ville sous son nom ; ses mensurations une seule fois, dans « Mes mensurations »)
+    const mesures = p.city || '';
     const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
     const url = (x) => (x ? esc(urlPhotoMemeOrigine(x.url_miniature || x.url_petite || x.url)) : '');
     const r = presencesCalculees();
@@ -378,9 +379,8 @@
     const etatProfil = p.published ? ['vert', 'Profil en ligne sur le Book'] : v.en_attente_validation ? ['orange', 'En cours de validation par l’agence'] : ['gris', 'Pas encore en ligne'];
     const champPhoto = (role, texte) => '<input class="ap-cache" type="file" accept="image/*" data-photo-role="' + role + '" aria-label="' + texte + '">';
     const mots = String(p.full_name || '').trim().split(/\s+/), prog = resumeProgrammeFormation(etat.programme);  // (js/app.js)
-    const entree = etat.presences && etat.presences.date_entree;
-    const formation = prog ? (prog.termine ? 'Terminée' + (prog.revProchain ? ' · révision' : '') : prog.prochain ? 'Mois ' + prog.prochain.rang + ' sur ' + prog.total : '') : niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat';
     const mesure = (n, titre) => (n ? '<div><b>' + esc(n) + '</b><span>' + titre + '</span></div>' : '');
+    const moisProg = prog && (prog.termine ? prog.revProchain : prog.prochain);
     const doc = (lien, ic, titre, texte) => '<a href="' + lien + '"><em aria-hidden="true">' + ic + '</em><span><small>' + titre + '</small>' + esc(texte) + '</span><i aria-hidden="true">›</i></a>';
     return '<section class="ap-vitrine ap-pr">' +
       '<label class="ap-vitrine-couv ap-pr-une' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
@@ -393,18 +393,18 @@
       '<div class="ap-pr-corps">' +
         '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
         (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
-        carteMA2M('MANNEQUIN MA2M', p.full_name, [['FORMATION', formation], ['DEPUIS', entree ? moisCourtDe(entree) + ' ' + String(entree).slice(0, 4) : '']]) +
+        carteMA2M('MANNEQUIN MA2M', 'Ma carte de mannequin', p.full_name, [['FORMATION', formationTexte()], ['DEPUIS', depuisTexte()]]) +
         '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div>' +
         (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html"><span class="ap-pr-anneau" style="--p:' + Math.max(0, Math.min(100, a.score)) + '%"><i>' + a.score + ' %</i></span>' +
           '<span><b>Profil complet à ' + a.score + ' %</b><small>Complétez-le : les recruteurs le voient.</small></span><i aria-hidden="true">›</i></a>' : '') +
         '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
         ([p.height_cm, p.chest_cm, p.waist_cm, p.hips_cm].some(Boolean) ? '<h2 class="ap-titre-sec">Mes mensurations</h2><div class="ap-pr-mesures">' +
-          mesure(p.height_cm, 'taille') + mesure(p.chest_cm, 'poitrine') + mesure(p.waist_cm, 'tour de taille') + mesure(p.hips_cm, 'hanches') + '</div>' : '') +
+          mesure(p.height_cm ? window.Partage.enMetres(p.height_cm) : '', 'hauteur') + mesure(p.chest_cm, 'poitrine (cm)') + mesure(p.waist_cm, 'taille (cm)') + mesure(p.hips_cm, 'hanches (cm)') + '</div>' : '') +
         '<h2 class="ap-titre-sec">Mes documents</h2><div class="ap-vitrine-raccourcis">' +
           doc('/app/espace-mannequin.html#compcard', '🗂️', 'Compcard', 'Ma carte de présentation') +
-          doc('/app/espace-mannequin.html#cv', '📄', 'Mon CV', etat.nbProjets + (etat.nbProjets > 1 ? ' expériences' : ' expérience')) +
-          doc('/app/espace-mannequin.html#photos', '📸', 'Mes photos', etat.photos.length + ' photo' + (etat.photos.length > 1 ? 's' : '') + ' dans mon book') +
-          (prog ? doc('#programme', '🎓', 'Mon programme', prog.prochain ? 'Mois ' + prog.prochain.rang + ' · ' + prog.prochain.theme : 'Ma formation') : '') + '</div>' +
+          doc('/app/espace-mannequin.html#cv', '📄', 'Mon CV', 'Mes expériences') +
+          doc('/app/espace-mannequin.html#photos', '📸', 'Mes photos', 'Choisir et ranger mon book') +
+          (prog ? doc('#programme', '🎓', 'Mon programme', moisProg && moisProg.theme ? moisProg.theme : 'Ma formation, mois après mois') : '') + '</div>' +
         '<h2 class="ap-titre-sec">Mon book</h2></div>' +
       '</section>' +
       '<div class="ap-vitrine-grille">' + etat.photos.slice().sort((x, y) => String(y.created_at).localeCompare(String(x.created_at))).map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
@@ -452,17 +452,25 @@
   const moisCourt = moisCourtDe;  // (js/app.js)
   // (noms des moyens : js/moyens-paiement.js, les mêmes que l'Administration)
   const MODES_PAIEMENT = Object.assign({}, window.MoyensPaiement ? window.MoyensPaiement.NOMS : { wave: 'Wave', especes: 'Espèces' }, { avant_systeme: 'Avant l’application' });
-  // la carte façon carte bancaire : carte membre (Paiements) et carte de mannequin (Mon profil), écrite une fois
-  function carteMA2M(titre, nom, champs) {
+  // la carte façon carte bancaire : carte membre (Paiements) et carte de mannequin (Mon profil), écrite une fois, avec
+  // les mêmes « FORMATION » (son programme, comme la carte de l'accueil) et « DEPUIS » (son entrée à l'agence)
+  function formationTexte() {
+    const p = etat.profil || {}, r = resumeProgrammeFormation(etat.programme);  // (js/app.js)
+    const x = r && (r.termine ? r.revProchain : r.prochain);
+    if (r && r.termine) return x ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Terminée';
+    if (x) return 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + ' sur 9';
+    return niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat';
+  }
+  function depuisTexte() { const e = etat.presences && etat.presences.date_entree; return e ? moisCourtDe(e) + ' ' + String(e).slice(0, 4) : ''; }
+  function carteMA2M(titre, etiquette, nom, champs) {
     const champ = (x) => (x[1] ? '<div><b>' + x[0] + '</b>' + esc(x[1]) + '</div>' : '');
-    return '<div class="ap-cb" aria-label="' + esc(titre === 'CARTE MEMBRE' ? 'Ma carte de membre' : 'Ma carte de mannequin') + '"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>' + esc(titre) + '</span></div>' +
+    return '<div class="ap-cb" aria-label="' + esc(etiquette) + '"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>' + esc(titre) + '</span></div>' +
       '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(nom || '').toUpperCase()) + '</div>' +
       '<div class="ap-cb-bas">' + champs.map(champ).join('') + '</div></div>';
   }
   function carteMembre(m) {
-    const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
-    return carteMA2M('CARTE MEMBRE', m.nom || p.full_name, [['FORMATION', niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat'],
-      ['DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : ''], ['MENSUALITÉ', fcfa(m.mensualite)]]);
+    const p = etat.profil || {};
+    return carteMA2M('CARTE MEMBRE', 'Ma carte de membre', m.nom || p.full_name, [['FORMATION', formationTexte()], ['DEPUIS', depuisTexte()], ['MENSUALITÉ', fcfa(m.mensualite)]]);
   }
   function ecranPaiements() {
     const m = etat.mensualites;

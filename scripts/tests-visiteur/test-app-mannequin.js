@@ -201,14 +201,15 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     // 6. Profil
     await p.click('.ap-nav a[href="#profil"]'); await p.waitForSelector('.ap-vitrine');
     const profil = await p.textContent('#ap-ecran');
-    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Profil en ligne sur le Book/.test(profil) && /Abidjan · 1,78 m · 84-61-90/.test(profil) && (await p.$$('.ap-vitrine-grille img')).length === 3,
+    ok(/AYA KOUASSI/.test(profil) && /New Face/.test(profil) && /Profil en ligne sur le Book/.test(profil) && /Abidjan/.test(profil) && /1,78 m\s*hauteur/.test(profil) && /84\s*poitrine/.test(profil) && (await p.$$('.ap-vitrine-grille img')).length === 3,
       n + 'Mon profil (façon réseau social, 11/11/2026) : niveau, en ligne, mensurations, grille des photos du Book');
     ok(!!(await p.$('.ap-vitrine-avatar img')) && !!(await p.$('.ap-vitrine-couv input[type=file][data-photo-role="photo_couverture"]')) && !!(await p.$('.ap-vitrine-avatar input[type=file][data-photo-role="principale"]'))
       && /3\s*photos/.test(await p.textContent('.ap-vitrine-chiffres')) && (await p.$$('.ap-vitrine-raccourcis a')).length >= 3,
       n + 'Mon profil : photo ronde et couverture qu’on touche pour choisir dans la galerie, chiffres, « Mes documents » Compcard / CV / Photos');
     // (15/11/2026, maquette premium validée) carte de mannequin façon carte bancaire, profil complet en anneau, mensurations
     ok(/MANNEQUIN MA2M/.test(await p.textContent('.ap-pr .ap-cb')) && /AYA KOUASSI/.test(await p.textContent('.ap-pr .ap-cb-nom')) && await p.locator('.ap-pr-anneau').count() === (/Profil complet/.test(profil) ? 1 : 0)
-      && /178\s*taille/.test(await p.textContent('.ap-pr-mesures')) && /90\s*hanches/.test(await p.textContent('.ap-pr-mesures')), n + 'Mon profil premium : carte de mannequin, profil complet en anneau, mensurations');
+      && /1,78 m\s*hauteur/.test(await p.textContent('.ap-pr-mesures')) && /61\s*taille \(cm\)/.test(await p.textContent('.ap-pr-mesures')) && /90\s*hanches/.test(await p.textContent('.ap-pr-mesures'))
+      && (await p.textContent('.ap-pr .ap-cb')).includes('mois') && !/null|undefined/.test(await p.textContent('.ap-pr')), n + 'Mon profil premium : carte de mannequin, profil complet en anneau, mensurations');
     if (process.env.CAPTURES) await p.screenshot({ path: path.join(process.env.CAPTURES, nom + '-3-profil-entier.png'), fullPage: true });
     // photo ronde touchée : la galerie, puis la photo part dans le Book et devient la photo de profil
     // stockage des photos simulé (comme test-envoi-photos.js) : rien ne part pour de vrai

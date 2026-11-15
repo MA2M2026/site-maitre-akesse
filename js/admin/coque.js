@@ -507,6 +507,8 @@
     try { return await lire(', occupe'); } catch (e) { return lire(''); }
   }
   async function donneesAgence() {
+    // (le calendrier des congés des cours du dimanche, js/presences-calcul.js, pour « Cette semaine »)
+    if (P.moi.espaces.site && !window.Presences && P.chargerScript) await essai(P.chargerScript('/js/presences-calcul.js'));
     const auj = new Date(), debutMois = iso(new Date(auj.getFullYear(), auj.getMonth(), 1)), dans7 = new Date(auj.getTime() + 7 * 86400000);
     const [recettes, actives, eleves, seances] = await Promise.all([
       P.moi.espaces.compta ? essai(P.bd(sb.from('compta_ecritures').select('montant').eq('sens', 'recette').eq('annule', false).gte('date_op', debutMois).lte('date_op', iso(auj)).limit(5000))) : null,
@@ -535,8 +537,10 @@
       if (p.date_debut <= j.cle && (p.date_fin || p.date_debut) >= j.cle) j.lignes.push(['📅', p.titre, [p.type === 'casting' ? 'casting' : p.type === 'defile' ? 'défilé' : '', [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · '), '#/site/b2-convocations']);
     }));
     // (15/11/2026, maquette validée : maquettes/accueil-administration.html) le cours des mannequins de l'agence, chaque
-    // dimanche (liste de présence : Présences) ; son heure n'est pas encore notée dans le site
-    jours.forEach((j) => { if (j.d.getDay() === 0) j.lignes.push(['🎓', 'Cours des mannequins', 'liste de présence', '#/site/b2-presences']); });
+    // dimanche (liste de présence : Présences), jamais pendant les congés (js/presences-calcul.js) ; son heure n'est pas
+    // encore notée dans le site
+    const P2 = window.Presences;
+    if (P2) jours.forEach((j) => { if (j.d.getDay() === 0 && !P2.enVacances(j.cle)) j.lignes.push(['🎓', 'Cours des mannequins', 'liste de présence', '#/site/b2-presences']); });
     // cours de talons : le groupe en une ligne (nombre d'élèves), chaque cours privé avec l'élève et son thème
     const groupes = {};
     ((a && a.seances) || []).forEach((s) => {

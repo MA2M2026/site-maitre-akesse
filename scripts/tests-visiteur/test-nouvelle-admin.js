@@ -87,7 +87,9 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     const semaine = await p.textContent('.se-semaine');
     ok(/Cours privé · Mme KONÉ PAYÉE/.test(semaine) && /Mme TOURÉ RÉSERVE.*à confirmer \(paiement\)/.test(semaine) && !/YAO EXPIRÉE|BAMBA ANNULÉE/.test(semaine) && !/KONÉ PAYÉE[^·]*·[^·]*·[^·]*à confirmer/.test(semaine),
       n + 'cette semaine : cours privé payé, réservé « à confirmer », ni le réservé expiré (48 h) ni l’annulé');
-    ok(await p.locator('.se-semaine a[href="#/site/b2-presences"]:has-text("Cours des mannequins")').count() === 1, n + 'cette semaine : le cours des mannequins du dimanche (vers la liste de présence)');
+    // (jamais pendant les congés : décembre à février)
+    const dimancheEnConges = await p.evaluate(() => { const d = new Date(); for (let k = 0; k < 7; k++) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + k); if (!x.getDay()) return window.Presences.enVacances(x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0')); } return false; });
+    ok(await p.locator('.se-semaine a[href="#/site/b2-presences"]:has-text("Cours des mannequins")').count() === (dimancheEnConges ? 0 : 1), n + 'cette semaine : le cours des mannequins du dimanche (vers la liste de présence), pas pendant les congés');
     if (tel) ok(await p.isVisible('.onglets-bas') && (await p.$$eval('.onglets-bas a', (a) => a.map((x) => x.textContent))).join() === 'Accueil,Le site,Paiements,Compta', n + 'barre du bas : Accueil, Le site, Paiements, Compta');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'accueil : tous les textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
