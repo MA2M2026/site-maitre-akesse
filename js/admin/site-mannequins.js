@@ -48,6 +48,9 @@
       ? '<div class="ligne barre-selection"><button type="button" class="btn rouge" data-action="mannequins-convoquer"' + (choix.size ? '' : ' disabled') + '>📨 Convoquer la sélection (' + choix.size + ')</button><button type="button" class="btn" data-action="mannequins-selection">Annuler</button></div>'
       : '<div class="ligne"><button type="button" class="btn" data-action="mannequins-selection">☑️ Sélectionner pour convoquer</button></div>';
     return P.entete('Mannequins', '<span class="doux">' + P.pluriel(profils.length - sourdine, 'publiée', 'publiées') + (sourdine ? ' · ' + sourdine + ' en sourdine' : '') + '</span>') +
+      // (15/11/2026, « premium partout ») les chiffres du Book en carte façon carte bancaire (P.carteHero, js/admin/coque.js)
+      (P.carteHero ? P.carteHero({ titre: 'THE BOOK', grand: String(profils.length - sourdine), unite: 'en ligne',
+        tuiles: [[profils.filter((p) => !p.desactive && p.niveau_mannequin === 'Professionnel').length, 'Main Board'], [profils.filter((p) => !p.desactive && p.niveau_mannequin !== 'Professionnel').length, 'New Face'], [sourdine, 'en sourdine']] }) : '') +
       '<p class="doux petit-texte">Ici : les mannequins publiées dans The Book du site. Les mensualités de formation se suivent dans le <a href="#/paiements/registre">registre du Suivi des paiements</a>.</p>' +
       '<form class="ligne" data-form="mannequins-chercher" role="search"><label class="fl" for="mq-cherche" style="flex:1;min-width:200px">Rechercher un nom' +
       '<input id="mq-cherche" name="cherche" type="search" value="' + P.esc(P.etat.chercheMannequins || '') + '"></label><button class="btn" type="submit">Rechercher</button></form>' +

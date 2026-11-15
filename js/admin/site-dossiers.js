@@ -201,7 +201,10 @@
     // CHAQUE filtre (Nouvelles, Retenues, Refusées, À revoir, En attente, Toutes), pas seulement les nouvelles
     const aEtudier = e.filtre === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[e.filtre] || 0);
     const etudier = boutonEtude(source, e.filtre, aEtudier);
-    return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + filtres + etudier +
+    // (15/11/2026, « premium partout ») les chiffres en carte façon carte bancaire (P.carteHero, js/admin/coque.js)
+    const hero = P.carteHero ? P.carteHero({ titre: String(conf.titre).toUpperCase(), grand: String(total), unite: total > 1 ? 'dossiers' : 'dossier',
+      tuiles: Object.keys(conf.libelles).filter((k) => !conf.aPart.includes(k)).slice(0, 3).map((k) => [nb[k] || 0, String(conf.libelles[k]).toLowerCase()]) }) : '';
+    return P.entete(conf.titre, '<span class="doux">' + total + ' au total</span>') + hero + filtres + etudier +
       (cartes ? cartes + plus :
         '<div class="carte vide">Aucun dossier « ' + P.esc(e.filtre === 'toutes' ? 'toutes' : conf.libelles[e.filtre]) + ' » pour le moment.</div>');
   }

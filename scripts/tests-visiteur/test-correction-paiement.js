@@ -93,11 +93,8 @@ function donnees(role) {
     };
     const t = (p) => p.evaluate(() => document.querySelector('.contenu').innerText.replace(/\s+/g, ' '));
     const e = await connecter('principal'), p = e.p;
-    ok(/Programme de formation\s*Ce mois-ci : La pose photo : les bases \(angles, mains, regard\)\s*· niveau 1 \(Les fondations\), mois 3 sur 9\s*2 mois faits sur 18/.test(await p.evaluate(() => (document.querySelector('.pf-programme') || {}).innerText || '').then((x) => x.replace(/\s+/g, ' '))),
-      nomEcran + ' : fiche du mannequin : « Programme de formation », thème du mois, 2 mois faits sur 18');
-    // (15/11/2026) sa carte se règle dans « Mannequins » : ici, seulement un lien vers sa fiche
-    ok(/Sa carte de mannequin/.test(await p.textContent('.ce-lien')) && (await p.getAttribute('.ce-lien', 'href')) === '#/site/b2-mannequins-publies/fiche-awa' && await p.locator('.ce-puce').count() === 0,
-      nomEcran + ' : Paiements : un lien « Sa carte de mannequin » vers sa fiche de « Mannequins »');
+    // (15/11/2026, décision de la propriétaire) programme de formation et carte : seulement dans « Mannequins », plus ici
+    ok(await p.locator('.pf-programme, .ce-lien, .ce-carte').count() === 0, nomEcran + ' : Paiements : ni programme de formation ni carte (rangés dans « Mannequins »)');
     ok((await p.$$('[data-action="paiement-corriger"]')).length === 3 && (await p.$$('[data-action="paiement-annuler"]')).length === 3, nomEcran + ' : l’administrateur principal voit « Corriger » et « Annuler » sur chaque paiement');
     // corriger le montant et le moyen d'une mensualité
     await p.click('[data-action="paiement-corriger"][data-id="pm1"]'); await p.waitForSelector('form[data-form="paiement-corriger"]', { timeout: 4000 });

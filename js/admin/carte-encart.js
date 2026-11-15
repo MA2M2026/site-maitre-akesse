@@ -1,9 +1,10 @@
-// « Sa carte de mannequin » dans l'Administration (15/11/2026, retours de la propriétaire sur sa tablette) : rangée
-// dans la fiche de la mannequin de « Mannequins » (Administration du site), plus dans les Paiements. Une seule carte
-// claire, en 4 réglages qu'on TOUCHE (rien à écrire) : 1. carte activée, 2. catégorie (Automatique = la règle des
-// 2 ans), 3. validité, 4. formation écrite sur la carte (Automatique, Recyclage, Révision, Formation terminée, ou un
-// niveau et un mois, rangés en colonnes). Le choix en cours est en rouge plein avec ✓ ; chaque toucher est enregistré
-// tout de suite et l'encart se redessine. Aperçu de SA carte (recto/verso), « Télécharger », « Imprimer (PDF) ».
+// « Sa carte de mannequin » dans l'Administration (15/11/2026, retours de la propriétaire sur sa tablette) : dans la
+// fiche de la mannequin de « Mannequins ». COHÉRENCE (demande de la propriétaire) : une seule source, deux questions qu'on
+// touche — son parcours à l'arrivée (débutante chez nous / déjà formée ou expérimentée ailleurs) et sa position dans
+// la formation (le mois en cours) — et TOUT le reste est calculé par la base et seulement affiché : catégorie,
+// « membre depuis » (en remontant ses mois de cours), formation écrite sur la carte, validité. Plus de catégorie ni de
+// formation choisies à la main : elles ne peuvent plus se contredire. Le choix en cours est en rouge plein avec ✓.
+// Aperçu de SA carte (recto/verso), « Télécharger », « Imprimer (PDF) ».
 // Base : carte_mannequin_par_fiche et carte_mannequin_regler (supabase-carte-mannequin.sql) ; dessin et calcul :
 // js/carte-mannequin.js (le même que dans son application).
 (function () {
@@ -22,6 +23,25 @@
   const resume = () => (typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(etat.programme) : null);
   const formationAuto = () => window.CarteMannequin ? window.CarteMannequin.formation(resume(), Object.assign({}, etat.carte, { formation: null }), true, 'selon son programme') : '';
 
+  // Programme de formation (14/11/2026 ; rangé dans « Mannequins » le 15/11/2026, demande de la propriétaire) : le mois
+  // en cours, les mois faits, et les mois en colonnes (un niveau par colonne)
+  function blocProgramme(programme) {
+    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
+    if (!r) return '';
+    const x = r.enCours || r.prochain;
+    const nomMois = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? P.esc(P.MOIS[+m[2] - 1] + ' ' + m[1]) : ''; };
+    // (14/11/2026) formation finie : la Révision (thème du mois de mars à novembre)
+    const y = r.termine ? r.revProchain : null;
+    return '<div class="carte pf-programme"><h2>Programme de formation</h2>' +
+      (r.termine ? '<p><b>Formation terminée ✓</b>' + (y ? ' <span class="doux">· Révision, ' + (r.revEnCours ? 'ce mois-ci' : 'prochain thème (' + nomMois(y.date) + ')') + ' : ' + P.esc(y.theme) + ' (mois ' + y.mois_niveau + ' sur 9)</span>' : '') + '</p>' :
+      '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
+      (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
+      '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
+      // (15/11/2026, demande de la propriétaire) les mois en colonnes : un niveau par colonne, plus court à lire
+      '<details><summary>Voir les ' + r.total + ' mois</summary><div class="pf-colonnes">' + [...new Set(r.mois.map((m) => m.niveau))].map((n) =>
+        '<div><h3>Niveau ' + n + ' · ' + P.esc(MA2M_NIVEAUX_FORMATION[n] || '') + '</h3><ol class="pf-mois">' + r.mois.filter((m) => m.niveau === n).map((m) => '<li class="' + P.esc(m.etat) + '"><b>' + m.mois_niveau + '</b><span>' + P.esc(m.theme) +
+          '<small>' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</small></span></li>').join('') + '</ol></div>').join('') + '</div></details></div>';
+  }
   // ---- l'encart (HTML) ; null : rien à montrer (pas de compte au registre, fichier SQL pas collé)
   async function html(fiche) {
     etat = null;
@@ -29,37 +49,46 @@
     try { r = await P.rpc('carte_mannequin_par_fiche', { p_fiche: fiche }); } catch (e) { if (pas(e)) return ''; throw e; }
     if (!r || !r.carte) return '<section class="carte ce-carte"><h2>Sa carte de mannequin</h2><p class="doux">Elle n’est pas encore au registre de l’agence : sa carte sera possible dès qu’elle y sera.</p></section>';
     etat = { fiche, agence: r.agence_id, carte: r.carte, programme: r.programme };
-    return dessiner();
+    return blocProgramme(r.programme) + dessiner();
   }
   function dessiner() {
-    const c = etat.carte, auto = !c.categorie_manuelle;
-    const r = resume(), niveaux = r ? Math.max(1, Math.round(r.total / 9)) : 2;
+    const c = etat.carte, r = resume(), formee = c.parcours === 'formee';
+    const peutFormation = !!(P.moi && P.moi.espaces && P.moi.espaces.paiements);   // (parcours et position : équipe des paiements ou principal)
+    const mois = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? P.MOIS[+m[2] - 1] + ' ' + m[1] : '—'; };
     const aujourdhui = new Date().toISOString().slice(0, 10), expiree = c.valable && c.valable < aujourdhui;
-    const mois = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? P.MOIS[+m[2] - 1] + ' ' + m[1] : ''; };
-    // 4. formation : les choix généraux, puis les mois du programme en colonnes (un niveau par colonne)
-    const colonnes = [];
-    for (let n = 1; n <= niveaux; n++) {
-      colonnes.push('<div class="ce-col"><b>Niveau ' + n + ' · mois</b>' + Array.from({ length: 9 }, (_, i) => puce('formation', 'Niveau ' + n + ' · mois ' + (i + 1), c.formation || null, String(i + 1))).join('') + '</div>');
+    // position actuelle : le rang du mois en cours (ou du prochain) ; formation finie : niveaux × 9 + 1
+    const x = r && (r.enCours || r.prochain), total = r ? r.total : (formee ? 9 : 18);
+    const rang = r && r.termine ? total + 1 : x ? x.rang : null;
+    const p = (reglage, valeur, actuel, texte, sous) => peutFormation ? puce(reglage, valeur, actuel, texte, sous)
+      : '<span class="ce-puce' + (valeur === actuel ? ' choisi' : '') + ' ce-fige">' + (valeur === actuel ? '<i aria-hidden="true">✓</i>' : '') + '<span>' + P.esc(texte) + '</span></span>';
+    const grilles = [];
+    for (let n = 1; n <= total / 9; n++) {
+      grilles.push('<div class="ce-col"><b>' + (formee ? 'Recyclage' : 'Niveau ' + n) + ' · mois</b>' +
+        Array.from({ length: 9 }, (_, k) => p('position', String((n - 1) * 9 + k + 1), rang === null ? null : String(rang), String(k + 1))).join('') + '</div>');
     }
+    const categorie = window.CarteMannequin ? window.CarteMannequin.categorieCarte(c.categorie) : c.categorie;
+    const pourquoi = formee ? 'déjà formée ou expérimentée à son arrivée' : c.categorie === 'Professionnel' ? '2 ans de formation ou d’expérience' : 'moins de 2 ans de formation, sans expérience avant';
     return '<section class="carte ce-carte" id="ce-carte"><div class="ce-tete"><h2>Sa carte de mannequin</h2>' +
         P.pastille(c.active ? 'Activée ✓' : 'Pas encore activée', c.active ? 'ok' : 'alerte') + '</div>' +
       '<div class="ce-apercu"><img class="ca-carte-img" alt="Sa carte de mannequin (' + face + ')" width="1012" height="638">' +
         '<div class="ce-apercu-btns"><button type="button" class="btn petit" data-action="carte-face">↻ ' + (face === 'recto' ? 'Verso' : 'Recto') + '</button>' +
         '<button type="button" class="btn petit" data-action="carte-fichier" data-valeur="image">⬇️ Télécharger</button>' +
         '<button type="button" class="btn petit" data-action="carte-fichier" data-valeur="pdf">🖨️ Imprimer</button></div></div>' +
+      // ce que la carte dit, calculé (rien à choisir ici)
+      '<dl class="ce-resume"><div><dt>Catégorie</dt><dd>' + P.esc(categorie) + '<small>' + P.esc(pourquoi) + '</small></dd></div>' +
+        '<div><dt>Formation</dt><dd>' + P.esc(formationAuto() || '—') + '</dd></div>' +
+        '<div><dt>Membre depuis</dt><dd>' + P.esc(mois(c.depuis)) + '<small>le début de sa formation chez nous</small></dd></div>' +
+        '<div><dt>Valable jusqu’en</dt><dd' + (expiree ? ' class="ce-expiree"' : '') + '>' + P.esc(mois(c.valable)) + (expiree ? '<small>expirée : renouvelez-la</small>' : '') + '</dd></div></dl>' +
       '<div class="ce-reglage"><h3><em>1</em>Carte</h3><p class="doux">Activée : elle la voit et la télécharge dans son application.</p><div class="ce-puces">' +
         puce('active', 'false', String(!!c.active), 'Pas activée') + puce('active', 'true', String(!!c.active), 'Activée') + '</div></div>' +
-      '<div class="ce-reglage"><h3><em>2</em>Catégorie</h3><p class="doux">Automatique : la règle des 2 ans (2 ans à l’agence ou 2 ans d’expérience → Professionnelle). Aujourd’hui : <b>' +
-        P.esc(window.CarteMannequin ? window.CarteMannequin.categorieCarte(c.categorie) : c.categorie) + '</b>.</p><div class="ce-puces">' +
-        puce('categorie', null, c.categorie_manuelle || null, 'Automatique') + puce('categorie', 'New Face', c.categorie_manuelle || null, 'New Face') +
-        puce('categorie', 'Professionnel', c.categorie_manuelle || null, 'Professionnelle') + '</div></div>' +
-      '<div class="ce-reglage"><h3><em>3</em>Validité</h3><p class="doux">Durée du contrat, renouvelable. ' + (expiree ? '<b class="ce-expiree">Expirée depuis ' : 'Valable jusqu’en <b>') +
-        P.esc(mois(c.valable) || '—') + '</b>.</p><div class="ce-puces">' + [3, 4, 5].map((n) => puce('validite_ans', String(n), String(c.validite_ans), n + ' ans')).join('') +
+      '<div class="ce-reglage"><h3><em>2</em>Son parcours à son arrivée</h3><p class="doux">Déjà formée ou expérimentée ailleurs : elle est Professionnelle tout de suite et fait le recyclage de 9 mois.</p><div class="ce-puces">' +
+        p('parcours', 'debutante', formee ? 'formee' : 'debutante', 'Débutante chez nous', '2 niveaux · 18 mois') + p('parcours', 'formee', formee ? 'formee' : 'debutante', 'Déjà formée ou expérimentée', 'recyclage · 9 mois') + '</div></div>' +
+      '<div class="ce-reglage"><h3><em>3</em>Où en est-elle ?</h3><p class="doux">Touchez le mois de formation qu’elle suit en ce moment : la date « membre depuis » et sa catégorie se recalculent.</p>' +
+        '<div class="ce-cols">' + grilles.join('') + '</div><div class="ce-puces ce-fin">' + p('position', String(total + 1), rang === null ? null : String(rang), 'Formation terminée') + '</div>' +
+        (peutFormation ? '' : '<p class="doux petit-texte">Seule l’équipe des paiements (ou l’administrateur principal) change le parcours et la position : ils comptent aussi pour ses mensualités.</p>') + '</div>' +
+      '<div class="ce-reglage"><h3><em>4</em>Validité</h3><p class="doux">Durée du contrat, à partir du début de sa formation, renouvelable.</p><div class="ce-puces">' +
+        [3, 4, 5].map((n) => puce('validite_ans', String(n), String(c.validite_ans), n + ' ans')).join('') +
         '<button type="button" class="ce-puce ce-renouveler" data-bouton-libre data-action="carte-regler" data-reglage="renouveler" data-valeur="1"><span>↻ Renouveler<small>à partir d’aujourd’hui</small></span></button></div></div>' +
-      '<div class="ce-reglage"><h3><em>4</em>Formation écrite sur la carte</h3><p class="doux">Touchez ce qui doit paraître.</p><div class="ce-puces">' +
-        puce('formation', null, c.formation || null, 'Automatique', formationAuto()) + puce('formation', 'Recyclage', c.formation || null, 'Recyclage') +
-        puce('formation', 'Révision', c.formation || null, 'Révision') + puce('formation', 'Formation terminée', c.formation || null, 'Formation terminée') + '</div>' +
-        '<div class="ce-cols">' + colonnes.join('') + '</div></div>' +
       '<div class="ce-reglage ce-numero"><h3>N° de mannequin</h3><b>' + P.esc(c.matricule || 'Donné à l’activation') + '</b></div></section>';
   }
   // ---- après l'affichage : l'aperçu (profil et photos lus une fois)
@@ -88,10 +117,13 @@
     if (!etat) return;
     const reglage = el.getAttribute('data-reglage'), v = el.getAttribute('data-valeur');
     if (reglage === 'renouveler' && !confirm('Renouveler sa carte : le contrat repart d’aujourd’hui pour la durée choisie ?')) return;
-    const valeur = reglage === 'active' ? v === 'true' : reglage === 'validite_ans' ? Number(v) : v === '' ? null : v;
+    if (reglage === 'parcours' && !confirm('Changer son parcours ? Sa formation repart du bon nombre de mois (18 ou 9) : vérifiez ensuite « Où en est-elle ? ».')) return;
+    const valeur = reglage === 'active' ? v === 'true' : reglage === 'validite_ans' || reglage === 'position' ? Number(v) : v === '' ? null : v;
     el.disabled = true;
     try {
       etat.carte = await P.sensible(() => P.rpc('carte_mannequin_regler', { p_agence: etat.agence, p_reglages: { [reglage]: valeur } }));
+      // parcours et position : son programme, « membre depuis » et sa catégorie changent → relus
+      if (reglage === 'parcours' || reglage === 'position') { const r = await P.rpc('carte_mannequin_par_fiche', { p_fiche: etat.fiche }); if (r && r.carte) { etat.carte = r.carte; etat.programme = r.programme; } }
       P.message(reglage === 'active' ? (valeur ? 'Carte activée : elle la voit dans son application ✓' : 'Carte désactivée ✓') : reglage === 'renouveler' ? 'Carte renouvelée à partir d’aujourd’hui ✓' : 'C’est noté ✓');
       rafraichir();
     } finally { el.disabled = false; }
