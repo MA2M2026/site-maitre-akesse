@@ -364,9 +364,10 @@
         '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '') +
       (avenir.length > 1 ? '<h2 class="ap-titre-sec">Ensuite</h2>' + avenir.slice(1).map(billetMini).join('') : '');
   }
-  // « Mon profil » façon réseau social (11/11/2026, maquette validée par la propriétaire) : couverture et photo ronde
-  // qu'on touche pour choisir une photo dans la galerie (elle rejoint aussi le Book), chiffres, phrase, boutons
-  // Compcard / Mon CV / Partager mon book, grille de photos de 3 comme sur Instagram.
+  // « Mon profil » (11/11/2026 façon réseau social ; 15/11/2026 premium, maquette validée : maquettes/app-profil.html) :
+  // grande couverture avec son nom (on la touche pour la changer), photo ronde, sa carte de mannequin façon carte
+  // bancaire (la même que la carte membre des Paiements), trois chiffres, « profil complet » en anneau, ses
+  // mensurations, ses documents (Compcard, CV, photos, programme) en relevé, puis son book en grille.
   function ecranProfil() {
     const p = etat.profil, a = etat.analyse || { score: 0 }, v = etat.vitrine || {};
     const mesures = [p.city || '', window.Partage.enMetres(p.height_cm), [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
@@ -376,19 +377,35 @@
     const cours = r && r.ceMois.bilan.comptees ? r.ceMois.bilan.presents + '/' + r.ceMois.bilan.comptees : '–';
     const etatProfil = p.published ? ['vert', 'Profil en ligne sur le Book'] : v.en_attente_validation ? ['orange', 'En cours de validation par l’agence'] : ['gris', 'Pas encore en ligne'];
     const champPhoto = (role, texte) => '<input class="ap-cache" type="file" accept="image/*" data-photo-role="' + role + '" aria-label="' + texte + '">';
-    return '<section class="ap-vitrine">' +
-      '<label class="ap-vitrine-couv' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
+    const mots = String(p.full_name || '').trim().split(/\s+/), prog = resumeProgrammeFormation(etat.programme);  // (js/app.js)
+    const entree = etat.presences && etat.presences.date_entree;
+    const formation = prog ? (prog.termine ? 'Terminée' + (prog.revProchain ? ' · révision' : '') : prog.prochain ? 'Mois ' + prog.prochain.rang + ' sur ' + prog.total : '') : niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat';
+    const mesure = (n, titre) => (n ? '<div><b>' + esc(n) + '</b><span>' + titre + '</span></div>' : '');
+    const doc = (lien, ic, titre, texte) => '<a href="' + lien + '"><em aria-hidden="true">' + ic + '</em><span><small>' + titre + '</small>' + esc(texte) + '</span><i aria-hidden="true">›</i></a>';
+    return '<section class="ap-vitrine ap-pr">' +
+      '<label class="ap-vitrine-couv ap-pr-une' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
         '<span class="ap-vitrine-modif">📷 Couverture</span>' + champPhoto('photo_couverture', 'Changer ma photo de couverture') + '</label>' +
-      '<div class="ap-vitrine-haut"><label class="ap-vitrine-avatar">' + (vues.profil ? '<img src="' + url(vues.profil) + '" alt="">' : '<span>' + esc(initialesDe(p.full_name)) + '</span>') +
+      '<div class="ap-pr-tete"><label class="ap-vitrine-avatar">' + (vues.profil ? '<img src="' + url(vues.profil) + '" alt="">' : '<span>' + esc(initialesDe(p.full_name)) + '</span>') +
         '<i aria-hidden="true">＋</i>' + champPhoto('principale', 'Changer ma photo de profil') + '</label>' +
-        (p.niveau_mannequin ? '<span class="ap-vitrine-niveau">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span>' : '') +
-        '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div></div>' +
-      '<h1 class="ap-vitrine-nom">' + esc(p.full_name) + '</h1>' + (mesures ? '<p class="ap-vitrine-mesures">' + esc(mesures) + '</p>' : '') +
-      (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
-      '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
-      (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html">Profil complet à ' + a.score + ' % · compléter ›</a>' : '') +
-      '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
-      '<div class="ap-vitrine-raccourcis"><a href="/app/espace-mannequin.html#compcard"><span>🗂️</span>Compcard</a><a href="/app/espace-mannequin.html#cv"><span>📄</span>Mon CV</a><a href="/app/espace-mannequin.html#photos"><span>📸</span>Mes photos</a></div>' +
+        '<div class="ap-pr-titre">' + (p.niveau_mannequin ? '<small class="ap-vitrine-niveau">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</small>' : '') +
+        '<h1 class="ap-vitrine-nom">' + esc(mots[0] || '') + (mots.length > 1 ? ' <em>' + esc(mots.slice(1).join(' ')) + '</em>' : '') + '</h1>' +
+        (mesures ? '<p class="ap-vitrine-mesures">' + esc(mesures) + '</p>' : '') + '</div></div>' +
+      '<div class="ap-pr-corps">' +
+        '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
+        (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
+        carteMA2M('MANNEQUIN MA2M', p.full_name, [['FORMATION', formation], ['DEPUIS', entree ? moisCourtDe(entree) + ' ' + String(entree).slice(0, 4) : '']]) +
+        '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div>' +
+        (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html"><span class="ap-pr-anneau" style="--p:' + Math.max(0, Math.min(100, a.score)) + '%"><i>' + a.score + ' %</i></span>' +
+          '<span><b>Profil complet à ' + a.score + ' %</b><small>Complétez-le : les recruteurs le voient.</small></span><i aria-hidden="true">›</i></a>' : '') +
+        '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
+        ([p.height_cm, p.chest_cm, p.waist_cm, p.hips_cm].some(Boolean) ? '<h2 class="ap-titre-sec">Mes mensurations</h2><div class="ap-pr-mesures">' +
+          mesure(p.height_cm, 'taille') + mesure(p.chest_cm, 'poitrine') + mesure(p.waist_cm, 'tour de taille') + mesure(p.hips_cm, 'hanches') + '</div>' : '') +
+        '<h2 class="ap-titre-sec">Mes documents</h2><div class="ap-vitrine-raccourcis">' +
+          doc('/app/espace-mannequin.html#compcard', '🗂️', 'Compcard', 'Ma carte de présentation') +
+          doc('/app/espace-mannequin.html#cv', '📄', 'Mon CV', etat.nbProjets + (etat.nbProjets > 1 ? ' expériences' : ' expérience')) +
+          doc('/app/espace-mannequin.html#photos', '📸', 'Mes photos', etat.photos.length + ' photo' + (etat.photos.length > 1 ? 's' : '') + ' dans mon book') +
+          (prog ? doc('#programme', '🎓', 'Mon programme', prog.prochain ? 'Mois ' + prog.prochain.rang + ' · ' + prog.prochain.theme : 'Ma formation') : '') + '</div>' +
+        '<h2 class="ap-titre-sec">Mon book</h2></div>' +
       '</section>' +
       '<div class="ap-vitrine-grille">' + etat.photos.slice().sort((x, y) => String(y.created_at).localeCompare(String(x.created_at))).map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
         '<label class="ap-vitrine-ajout">＋<span>Ajouter</span>' + champPhoto('', 'Ajouter une photo au Book') + '</label></div>' +
@@ -435,13 +452,17 @@
   const moisCourt = moisCourtDe;  // (js/app.js)
   // (noms des moyens : js/moyens-paiement.js, les mêmes que l'Administration)
   const MODES_PAIEMENT = Object.assign({}, window.MoyensPaiement ? window.MoyensPaiement.NOMS : { wave: 'Wave', especes: 'Espèces' }, { avant_systeme: 'Avant l’application' });
+  // la carte façon carte bancaire : carte membre (Paiements) et carte de mannequin (Mon profil), écrite une fois
+  function carteMA2M(titre, nom, champs) {
+    const champ = (x) => (x[1] ? '<div><b>' + x[0] + '</b>' + esc(x[1]) + '</div>' : '');
+    return '<div class="ap-cb" aria-label="' + esc(titre === 'CARTE MEMBRE' ? 'Ma carte de membre' : 'Ma carte de mannequin') + '"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>' + esc(titre) + '</span></div>' +
+      '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(nom || '').toUpperCase()) + '</div>' +
+      '<div class="ap-cb-bas">' + champs.map(champ).join('') + '</div></div>';
+  }
   function carteMembre(m) {
     const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
-    const champ = (titre, valeur) => (valeur ? '<div><b>' + titre + '</b>' + esc(valeur) + '</div>' : '');
-    return '<div class="ap-cb" aria-label="Ma carte de membre"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>CARTE MEMBRE</span></div>' +
-      '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(m.nom || p.full_name || '').toUpperCase()) + '</div>' +
-      '<div class="ap-cb-bas">' + champ('FORMATION', niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat') +
-        champ('DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : '') + champ('MENSUALITÉ', fcfa(m.mensualite)) + '</div></div>';
+    return carteMA2M('CARTE MEMBRE', m.nom || p.full_name, [['FORMATION', niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat'],
+      ['DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : ''], ['MENSUALITÉ', fcfa(m.mensualite)]]);
   }
   function ecranPaiements() {
     const m = etat.mensualites;

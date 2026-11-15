@@ -5181,3 +5181,11 @@ les jours qui ont quelque chose — projets de l'agenda, cours de talons (le gro
 chaque cours privé avec l'élève et son thème). Chaque lecture est facultative. Styles : css/admin-vivante.css.
 Test : test-nouvelle-admin.js. (Le « cours des mannequins » de la maquette n'est pas affiché : son thème dépend de chaque
 mannequin.)
+
+## « Mon profil » premium (application des mannequins, 15/11/2026)
+Maquette validée : `maquettes/app-profil.html`. `ecranProfil` (js/mannequin-app.js) : grande couverture (on la touche
+pour la changer) avec le nom, photo ronde (on la touche pour la changer), état « en ligne », carte de mannequin
+façon carte bancaire (`carteMA2M`, la même fonction que la carte membre des Paiements : formation d'après son programme,
+date d'entrée), trois chiffres en cartes blanches, « profil complet » en anneau (`.ap-pr-anneau`), mensurations,
+« Mes documents » en relevé (Compcard, CV, photos, programme), puis le book en grille. Styles `.ap-pr*` dans
+css/mannequin-app.css (seulement des fonds rouges ou blancs). Test : `test-app-mannequin.js`.
