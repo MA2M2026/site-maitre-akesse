@@ -17,6 +17,59 @@
   P.visage = (url, nom, classe, distant) => '<span class="vis ' + (classe || '') + '"><span class="ini" aria-hidden="true">' + P.esc(P.initiales(nom)) + '</span>' +
     (url ? '<img src="' + P.esc(distant ? url : urlLegere(url)) + '" alt="" loading="lazy" decoding="async"' + (distant ? ' referrerpolicy="no-referrer"' : '') + '>' : '') + '</span>';
   P.visageDistant = (url, nom, classe) => P.visage(url, nom, classe, true);
+
+  // (15/11/2026, maquettes/URGENT-photos-candidatures.md) Filet de sécurité des photos envoyées vers Google Drive,
+  // partagé par les candidatures (js/admin/site-dossiers.js) et les cours de talons (js/admin/site-cours-talons.js) :
+  // un dossier sans photo affiche « Photos dans Drive », le lien du dossier s'il est connu, et le bouton « Récupérer
+  // les photos depuis Drive » (la base demande au programme Google de retrouver le dossier et d'y rattacher les
+  // photos : medias_drive_relancer, supabase-medias-drive.sql). source : 'candidature' ou 'cours_talons'.
+  P.drive = {
+    // identifiant du dossier Drive de chaque référence (ceux connus de la base), { ref: idDossier }
+    async dossiers(refs) {
+      if (!refs.length) return {};
+      const { data, error } = await sb.from('medias_drive').select('ref, lien').eq('genre', 'dossier').in('ref', refs).order('id');
+      const parRef = {};
+      if (!error) (data || []).forEach((x) => { if (!parRef[x.ref]) parRef[x.ref] = x.lien; });
+      return parRef;
+    },
+    encart(source, ref, dossierId) {
+      const lien = /^[\w-]{10,120}$/.test(String(dossierId || '')) ? 'https://drive.google.com/drive/folders/' + dossierId : '';
+      return '<div class="drive-secours"><p><strong>📁 Photos dans Drive</strong> · aucune photo n’est encore rattachée à ce dossier.' +
+        (lien ? '' : ' <span class="doux">(Dossier Drive pas encore connu du site.)</span>') + '</p><div class="ligne">' +
+        (lien ? '<a class="btn petit" href="' + P.esc(lien) + '" target="_blank" rel="noopener noreferrer">Ouvrir le dossier Drive ↗</a>' : '') +
+        '<button type="button" class="btn petit rouge" data-action="drive-recuperer" data-source="' + P.esc(source) + '" data-ref="' + P.esc(ref) + '">Récupérer les photos depuis Drive</button></div>' +
+        '<p class="doux petit-texte" role="status" data-drive-msg></p></div>';
+    },
+    async nbPhotos(source, ref) {
+      if (source === 'candidature') {
+        const { data } = await sb.from('casting_photos').select('id').eq('application_id', ref);
+        return (data || []).length;
+      }
+      const { data } = await sb.from('cours_talons').select('photos').eq('id', ref).maybeSingle();
+      return data && Array.isArray(data.photos) ? data.photos.length : 0;
+    }
+  };
+  P.actions['drive-recuperer'] = async (el) => {
+    const source = el.dataset.source, ref = el.dataset.ref;
+    const msg = (el.closest('.drive-secours') || document).querySelector('[data-drive-msg]');
+    const dire = (t) => { if (msg) msg.textContent = t; };
+    el.disabled = true;
+    dire('Recherche dans Google Drive…');
+    const { data, error } = await sb.rpc('medias_drive_relancer', { p_source: source, p_ref: ref });
+    if (error) { el.disabled = false; dire('Recherche impossible : ' + (error.message || 'erreur inconnue') + '. Ouvrez le dossier Drive.'); return; }
+    if (data === false) { el.disabled = false; dire('Le programme Google n’est pas encore mis à jour : ouvrez le dossier Drive en attendant.'); return; }
+    // le programme Google cherche puis enregistre lui-même ce qu'il trouve (quelques secondes) : on regarde toutes les 4 s,
+    // tant que l'agence reste sur cette page (ailleurs, on ne redessine rien : elle écrit peut-être autre chose)
+    const ici = location.hash;
+    for (let essai = 0; essai < 15; essai++) {
+      await new Promise((r) => setTimeout(r, 4000));
+      if (location.hash !== ici || !el.isConnected) return;
+      const nb = await P.drive.nbPhotos(source, ref).catch(() => 0);
+      if (nb) { dire(nb + ' photo' + (nb > 1 ? 's récupérées' : ' récupérée') + ' ✓'); setTimeout(() => { if (location.hash === ici) P.afficher(); }, 900); return; }
+    }
+    el.disabled = false;
+    dire('Aucune photo trouvée dans Drive pour l’instant. Réessayez dans quelques minutes, ou demandez les photos sur WhatsApp.');
+  };
   // Grille de cases à cocher avec visages (Programmation défilé, Informations agence) : un titre, le
   // nombre, les personnes par ordre alphabétique ; attributs(x) = ce que porte la case de chacune
   P.casesVisages = (titre, l, attributs) => {

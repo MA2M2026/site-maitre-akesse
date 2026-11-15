@@ -103,6 +103,17 @@ function construireNotification(table, record) {
       mannequin: record.user_id
     };
   }
+  // (15/11/2026, supabase-medias-drive.sql) une candidature ou une inscription arrivée sans photo enregistrée, et
+  // dont les photos restent introuvables dans Drive après 4 recherches automatiques
+  if (table === 'medias_drive_alertes') {
+    const quoi = record.source === 'cours_talons' ? 'Inscription au cours de talons' : 'Candidature';
+    return {
+      cle: 'evenement_photos_manquantes',
+      titre: '📷 Photos manquantes',
+      texte: quoi + ' de ' + String(record.nom || '?').slice(0, 60) + ' : aucune photo enregistrée (à vérifier dans Drive)',
+      url: record.source === 'cours_talons' ? '/admin/#/site/b2-cours-talons' : '/admin/#/site/b2-candidatures/' + encodeURIComponent(record.ref || '')
+    };
+  }
   if (table === 'blocages_connexion') {
     const lieu = ({ admin: 'connexion admin', 'admin-code': 'code de validation admin', mannequin: 'connexion espace mannequin', 'inscription-code': "code d'inscription", 'portail-code': "code d'invitation mannequin" })[record.espace] || 'connexion';
     return {

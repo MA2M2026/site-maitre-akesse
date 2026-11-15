@@ -100,11 +100,14 @@
       (d.date_seance ? 'Votre première séance : le ' + P.date(d.date_seance) + '.\n\n' : '') + 'À très bientôt !\nMaître Akesse Model Management';
   }
 
+  let dossiersDrive = {};
   async function page(args) {
     // la notification de la veille ouvre …/b2-cours-talons/planning : le planning, une fois (l'adresse redevient normale)
     if (args && args[0] === 'planning') { filtre = 'planning'; history.replaceState(null, '', '#/site/b2-cours-talons'); }
     try {
       lignes = await P.bd(sb.from('cours_talons').select('*').order('cree_le', { ascending: false }).limit(500));
+      // (15/11/2026) inscriptions sans photo : leur dossier Drive, s'il est connu (P.drive, js/admin/coque.js)
+      dossiersDrive = await P.drive.dossiers(lignes.filter((d) => !photosDe(d).length).map((d) => d.id)).catch(() => ({}));
     } catch (e) {
       if (!pasInstallee(e)) throw e;
       return P.entete('Cours de talons') + '<div class="carte"><h2>Pas encore activé</h2><p class="doux">Pour recevoir les inscriptions en ligne, collez le fichier <strong>supabase-cours-talons.sql</strong> dans Supabase (SQL Editor, puis Run). En attendant, la page publique propose aux personnes d’envoyer leur inscription sur WhatsApp.</p></div>';
@@ -239,7 +242,7 @@
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
-      (galerie || (https(d.video) ? '' : '<p class="doux">Photos et vidéo non reçues (demandez-les sur WhatsApp).</p>')) +
+      (galerie || P.drive.encart('cours_talons', d.id, dossiersDrive[d.id])) +
       '<div class="ct-actions">' + boutons.join('') + '</div>' + messagesPrets(d, wa, waParent) +
       (payee ? programme(d, wa, waParent) : '') +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +

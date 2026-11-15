@@ -424,9 +424,9 @@ async function envoyerMedias(etat) {
   let dossierDrive = null;
   if (etat.photosFaites) { dossierDrive = etat.dossier || null; nbPhotosEchouees = etat.nbPhotosEchouees || 0; }
   else {
-    // Jauges (10/11/2026) : UNE PAR PHOTO, préparée (0 → 25 %), puis envoyées ensemble (un seul envoi : le programme
-    // Google crée un dossier par envoi) ; pendant l'envoi les jauges avancent selon le temps estimé, sans dépasser
-    // 95 % avant la réponse de Google, puis passent au vert. Photos réduites à 1600 px (PHOTO_COTE_ENVOI, js/app.js).
+    // Jauges et envoi : envoyerPhotosAvecJauges (js/app.js, partagé avec les cours de talons). Depuis le 15/11/2026,
+    // le programme Google enregistre LUI-MÊME les liens dans la base (enregistre = true) : même si sa réponse se perd
+    // en route, les photos arrivent dans l'Administration (et la base les recherche dans Drive toutes les 15 min).
     document.getElementById('ca-envoi-jauges').classList.remove('u-hidden');
     const boiteJauges = document.getElementById('ca-jauges-photos');
     boiteJauges.textContent = '';
@@ -434,45 +434,24 @@ async function envoyerMedias(etat) {
     const nomPhoto = (i) => 'Photo ' + (i + 1);
     idsPhotos.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     majJauge('ca-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
-    let arreterPhotos = () => {};
-    const rangsEnvoyes = [];
     try {
-      const photosBase64 = [];
-      for (let i = 0; i < fichiersPhotos.length; i++) {
-        majJauge(idsPhotos[i], 10, nomPhoto(i) + T(' : préparation…', ': preparing…'));
-        try {
-          photosBase64.push(await fichierEnBase64(fichiersPhotos[i]));  // (déjà prête en mémoire depuis le choix)
-          rangsEnvoyes.push(i);
-          majJauge(idsPhotos[i], 25, nomPhoto(i) + T(' : prête', ': ready'));
-        } catch (e) {
-          nbPhotosEchouees++;
-          jaugeEnErreur(idsPhotos[i], nomPhoto(i) + T(' : illisible', ': unreadable'));
-        }
-      }
-
-      const octetsPhotos = photosBase64.reduce((t, b) => t + b.length, 0);
-      const debitEstime = ((navigator.connection && navigator.connection.downlink) || 1) * 125000 * 0.6; // octets/s
-      const idsEnvoyes = rangsEnvoyes.map((i) => idsPhotos[i]);
-      idsEnvoyes.forEach((id, k) => majJauge(id, 25, nomPhoto(rangsEnvoyes[k]) + T(' : envoi…', ': sending…')));
-      arreterPhotos = avancerDoucement(idsEnvoyes, 25, 95, Math.max(3000, (octetsPhotos / debitEstime + 3) * 1000 / 1.6), null);
-      const { liens, echec, dossier } = await envoyerPhotosVersDrive(URL_SCRIPT_PHOTOS_CASTING, {
+      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsPhotos, nomPhoto, {
         nom: candidature.full_name,
         email: candidature.email,
         phone: candidature.phone,
         type: PARCOURS,
         projet: projetNom || '',
-        photos: photosBase64
+        source: 'candidature',
+        ref: candidature.id
       });
-
-      arreterPhotos();
-      // (Google peut écarter une photo sans dire laquelle : comptée comme manquante, jauges selon jaugesPhotosArrivees)
-      const manquantes = jaugesPhotosArrivees(idsPhotos, rangsEnvoyes, echec ? 0 : liens.length, nomPhoto);
-      if (!echec) nbPhotosEchouees = Math.max(nbPhotosEchouees, manquantes);
+      nbPhotosEchouees = manquantes;
       dossierDrive = dossier || null;
-      if (!echec) {
+      // (ancien programme Google, sans enregistrement de son côté : la page enregistre elle-même, comme avant ;
+      // une photo déjà enregistrée par Google est refusée en double par la base, code 23505, sans souci)
+      if (!echec && !enregistre) {
         for (const lien of liens) {
           const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
-          if (erreurInsertPhoto) {
+          if (erreurInsertPhoto && erreurInsertPhoto.code !== '23505') {
             nbPhotosEchouees++;
             sb.from('journal_erreurs').insert({
               message: 'DIAGNOSTIC casting_photos insert: ' + erreurInsertPhoto.message,
@@ -481,14 +460,11 @@ async function envoyerMedias(etat) {
             }).then(() => {}).catch(() => {});
           }
         }
-      } else {
-        nbPhotosEchouees = fichiersPhotos.length;
       }
     } catch (e) {
       // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà
       // enregistré côté Supabase) — on signale juste que les photos n'ont pas pu partir.
       nbPhotosEchouees = fichiersPhotos.length;
-      arreterPhotos();
       idsPhotos.forEach((id, i) => jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent')));
     }
     Promise.resolve(journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees)).catch(() => {});
@@ -510,7 +486,7 @@ async function envoyerMedias(etat) {
     try {
       lienVideo = await envoyerVideoAvecJauge(URL_SCRIPT_PHOTOS_CASTING, {
         nom: candidature.full_name, email: candidature.email, phone: candidature.phone,
-        type: PARCOURS, projet: projetNom || '', dossier: dossierDrive
+        type: PARCOURS, projet: projetNom || '', dossier: dossierDrive, source: 'candidature', ref: candidature.id
       }, videoChoisie, 'ca-jauge-video');
       if (lienVideo) {
         etat.lienVideo = lienVideo; await EnvoiFiable.garder('candidature', etat);

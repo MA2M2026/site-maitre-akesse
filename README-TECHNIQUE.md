@@ -5225,3 +5225,34 @@ ce qu'elle donne aujourd'hui, Recyclage, Révision, Formation terminée, ou un n
 Base : `carte_mannequin_par_fiche(fiche)` et `carte_mannequin_regler(agence, réglages)` (équipe du site OU des
 paiements). Le programme de formation des Paiements montre ses mois en colonnes (un niveau par colonne).
 Tests : `test-nouvelle-admin-mannequins.js` (encart), `test-correction-paiement.js` (lien).
+
+### Photos et vidéos vers Google Drive : enregistrées par le serveur (15/11/2026, solution définitive)
+Problème : le programme Google rangeait les photos dans Drive puis renvoyait leurs liens AU TÉLÉPHONE, qui les
+enregistrait ; réponse perdue = photos dans Drive mais absentes de l'Administration (18 candidatures sur 20, du 19/10
+au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-candidatures.md`.
+- **Chaque envoi porte un numéro** : `source` (`candidature` ou `cours_talons`) et `ref` (id de la candidature, ou de
+  l'inscription au cours de talons, tiré par la page ; nouvelles photos = nouveau numéro, `mediasChanges`).
+- **Programme Google** (`scripts/apps-script-photos-drive.gs`) : enregistre LUI-MÊME dans la base, par
+  `media_drive_recu(secret, source, ref, dossier, photos[], video)`, d'abord le DOSSIER (avant de ranger les photos :
+  l'Administration a toujours au moins le dossier), puis les photos, puis la vidéo. Un envoi recommencé (même ref)
+  réutilise le même dossier (`dossierDeLEnvoi` : verrou + cache 6 h + dossier connu de la base) et les mêmes fichiers
+  (`photo-N.jpg`). Action `retrouver` : retrouve le dossier d'une personne (connu de la base, sinon dossier à son nom
+  créé à moins de 3 h de son envoi, celui qui a le plus de photos) et enregistre ses photos. Mot secret : propriété
+  `SECRET_SITE` des Propriétés du script (jamais dans le dépôt) ; son empreinte SHA-256 est dans
+  `medias_drive_reglage`. Sans le mot secret, le programme marche comme avant.
+- **Base** (`supabase-medias-drive.sql`) : journal `medias_drive` (ref, genre photo/vidéo/dossier, lien) ;
+  `medias_drive_appliquer` range dans `casting_photos` / `casting_applications.video_url` ou `cours_talons.photos` /
+  `video` ; l'inscription au cours de talons, enregistrée APRÈS ses photos, reprend ce qui l'attend (déclencheur
+  `cours_talons_z_medias_drive`). Index unique `casting_photos_une_fois` (jamais deux fois la même photo).
+- **Page** : outil unique `envoyerPhotosAvecJauges` (js/app.js), utilisé par les candidatures (castings, Intégrer
+  l'agence) et les cours de talons. Si Google répond `enregistre: true`, la page n'écrit plus les photos ; sinon (ancien
+  programme) elle les écrit comme avant.
+- **Surveillance** : pg_cron `medias-drive-surveillance` (toutes les 15 min, `medias_drive_surveiller(3)`) : dossier de
+  moins de 3 jours sans photo → la base demande `retrouver` au programme Google (pg_net, 4 fois au plus, toutes les
+  25 min) ; toujours rien → `medias_drive_alertes` (notification « 📷 Photos manquantes », api/notifications-webhook.js)
+  + ligne au journal des erreurs. Ne tourne qu'une fois le nouveau programme Google en place (`script_a_jour`). Photos
+  supprimées par l'agence : jamais remises par la surveillance. Rattrapage des anciens dossiers :
+  `select medias_drive_surveiller(60);`.
+- **Administration** : `P.drive` (js/admin/coque.js) : un dossier sans photo affiche « Photos dans Drive », le lien du
+  dossier et « Récupérer les photos depuis Drive » (`medias_drive_relancer`, réservé aux administrateurs).
+- Test : `test-photos-drive.js` (Google lent ou coupé, ancien programme, cours de talons, Administration).
