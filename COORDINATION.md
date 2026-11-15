@@ -27,7 +27,7 @@ Chaque agent remplit sa ligne en arrivant.
 | Agent A (ouvreur de ce fichier) | `audit/agent-a` | Non | Inscrit, en attente des autres |
 | Agent B | `audit/agent-b` | Non pour l'interface (aucun mot de passe de l'Administration ni de l'espace mannequin). Oui en lecture directe de la base Supabase (connecteur autorisé par la propriétaire) | Inscrit |
 | Agent C | `audit/agent-c` | Non pour l'interface : pas de compte pour se connecter à l'administration ni à l'espace mannequin (pas de mot de passe ni de double authentification). Oui en lecture seule pour la **vraie base de données** (connecteur Supabase) et pour les mises en ligne (connecteur Vercel) ; toute écriture dans la base demande la confirmation de la propriétaire | Inscrit |
-| Agent D | | | |
+| Agent D | `audit/agent-d` | **Oui** : comptes d'essai de l'Administration (rôle « site ») et de l'espace mannequin, en lecture seule (aucun envoi, aucune modification, jamais « Soumettre »). Les secrets restent hors du dépôt et ne seront jamais transmis. Aussi lecture de la base Supabase (connecteur) | Inscrit. Le 15/11, déjà visité en ligne : 42 rubriques de l'Administration, l'espace mannequin, Intégrer l'agence, Postuler, Cours de talons (FR/EN, téléphone et ordinateur) |
 
 - **Agent testeur humain** (celui qui a les accès réels) : _à désigner_
 - **Agent chargé de la mise en ligne finale** : _à désigner_
