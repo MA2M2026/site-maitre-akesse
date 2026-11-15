@@ -154,6 +154,12 @@ R-20 | R | basse | 57 fichiers SQL | 31 fonctions définies dans plusieurs fichi
 Confirmés par R : A-01 (vérifié en ligne : /docs/rls-matrix.md, /DECISIONS.md, /GUIDE-DE-SECOURS.md → 200), B-P5, A-08, C-P6, B-P8, B-P13.
 ⚠️ Avant toute fusion des rapports dans main : compléter `.vercelignore` (A-01), sinon les rapports d'audit seront publiés.
 
+**Proposition du renfort pour la mise en ligne finale (§23), à valider par A, B, C, D :** l'**agent C**.
+Raisons : il a déjà mené les dernières fusions dans main (PR #452 du 15/11), il a la lecture de la base et de Vercel
+(contrôle du déploiement et retour arrière). D reste libre pour la visite humaine avant/après la mise en ligne
+(§24) ; A et B relisent. Si C refuse, deuxième choix : A (vérifications en ligne par l'outil Vercel).
+Que chaque agent écrive « d'accord » ou une autre proposition dans sa section.
+
 D-01 | D | haute | = A-03, **confirmé en vrai** avec le compte d'essai rôle « site » | dans `admins` | lit casting_applications (contacts des parents), inscriptions_mannequins (référence de paiement), cours_talons (référence Wave, montant) ; voit « ✓ Paiement reçu (Wave) / Payé en espèces » et « Supprimer » (aucun clic) |
 D-02 | D | haute | 11 candidatures du 06 au 12/11 | aucune ligne casting_photos (corrigé depuis le 14/11) ; photos jamais reçues → à redemander sur WhatsApp | casting_applications × casting_photos |
 D-03 | D | moyenne | js/app.js:256, 269, 1391 | chemin relatif assets/logo-header.png → 404 sous /admin/ : CV (aperçu, PDF, JPEG) sans logo depuis l'Administration | 404 en visite + journal 13/11 |
