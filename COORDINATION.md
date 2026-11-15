@@ -36,10 +36,10 @@ Chaque agent remplit sa ligne en arrivant.
 
 | Phase | A | B | C | D |
 |-------|---|---|---|---|
-| Audit site public | | | ✅ fait (232 visites, liens, lenteur) | |
-| Audit du code | | | ✅ fait | |
-| Audit sécurité | | | ✅ fait (lecture seule) | |
-| Rapport individuel déposé | | | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | |
+| Audit site public | | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) | |
+| Audit du code | | ✅ fait | ✅ fait | |
+| Audit sécurité | | ✅ fait (lecture seule) | ✅ fait (lecture seule) | |
+| Rapport individuel déposé | | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | |
 
 Les rapports individuels vont dans `docs/audit/rapport-agent-X.md`.
 
@@ -56,6 +56,15 @@ C-F8 | C | aucun secret dans le dépôt, npm audit : 0 faille | git ls-files, np
 C-F12 | C | connexion lente : 1er affichage 0,9 à 2,3 s, grande image ≤ 2,6 s | mesures Playwright 1,6 Mb/s, processeur ×4 |
 (détail et autres points forts : docs/audit/rapport-agent-c.md, branche audit/agent-c)
 
+B-F1 | B | les 116 adresses du plan du site répondent sur téléphone et ordinateur, aucune image cassée, aucun débordement à 390 px | visite automatique (232 visites) |
+B-F2 | B | accessibilité 100 et référencement 100 | Lighthouse accueil, /mannequins, /integrer-agence, /book/… |
+B-F3 | B | données privées illisibles sans connexion (17 tables essayées), profils et photos non publiés invisibles (recoupe C-F1/C-F2) | lectures avec la clé publique |
+B-F4 | B | fonctions sensibles : administratrice + appareil vérifiés (portail_admin_ok) | contacts_mannequins_admin, profils_prives, fiche_evenement_admin |
+B-F5 | B | en-têtes HTTPS complets, CSP stricte de l'Administration | curl -I, vercel.json |
+B-F6 | B | envoi des photos du Book signé (= C-F5) ; npm audit 0 (≈ C-F8) | api/r2-presigner.js:20-60 |
+B-F7 | B | photos des candidatures enregistrées par le serveur + surveillance 15 min + contrôle du matin (15/11) | supabase-medias-drive*.sql |
+(détail : docs/audit/rapport-agent-b.md, branche audit/agent-b)
+
 ## 4. Problèmes proposés
 
 Format : `ID | agent | gravité (critique/haute/moyenne/basse) | lieu | cause | preuve | confirmé par`
@@ -70,6 +79,21 @@ C-P7 | C | basse | js/ (dont 14 dans app.js) | 57 catch vides + 92 .catch silenc
 C-P8 | C | basse | /actualites?actu=… ouverte | deux h1 | navigateur |
 C-P9 | C | basse | toutes les pages | ~650 Ko de JS non compressé (app.js 221 Ko + Supabase 202 Ko) | mesure du réseau |
 C-P10 | C | basse | pages HTML | access-control-allow-origin: * (défaut Vercel), sans danger sans cookie | curl -I |
+
+B-P1 | B | moyenne | 34 pages téléphone (cours-talons 0,37, candidature 0,19–0,31), 13 ordinateur | mise en page qui saute au chargement (recoupe C-P2, plus large) | PerformanceObserver layout-shift, visite 4G lente |
+B-P2 | B | moyenne | accueil, photo de couverture | adresse connue seulement après lecture de la base : 2,3 s d'attente, LCP 3,4 s téléphone | Lighthouse (détail du LCP) |
+B-P3 | B | moyenne | articles /actualites?actu=…, Book | photos trop lourdes : LCP 8–9 s en 4G lente ; Book 548 Ko économisables | visite + Lighthouse |
+B-P4 | B | moyenne | 6 pages sans règle stricte (= C-P1, + 404.html) ; vercel.json:68 garde 'unsafe-inline' | règle commune trop large | grep http-equiv |
+B-P5 | B | moyenne | api/portail.js:294 | ANTI_ROBOTS_STRICT = false : un robot sans jeton passe | code |
+B-P6 | B | moyenne | js/app.js:2768 + programme Google | clé publique : n'importe qui peut ranger 20 × 15 Mo par appel dans le Drive de l'agence | code |
+B-P7 | B | basse | Supabase Auth | protection mots de passe piratés désactivée | avertissements Supabase |
+B-P8 | B | basse | 3 fonctions SQL | search_path non fixé | avertissements Supabase |
+B-P9 | B | basse | 93 fonctions security definer exécutables sans connexion (dont fonctions de déclencheur) | droit par défaut laissé à anon | avertissements Supabase |
+B-P10 | B | basse | photos des candidates sur Drive | partagées « toute personne ayant le lien » | programme Google |
+B-P11 | B | basse | js/photos.js:150 | sonde volontaire vers une adresse inexistante → 404 en console | visite 4G lente |
+B-P12 | B | basse | js/app.js:2448, 2463, 3709 | 3 fonctions jamais appelées | git grep |
+B-P13 | B | info | maquettes/essai-medias-drive.sql:283 | fiabilité SonarQube C→E (mon fichier du 15/11) ; corrigé sur claude/photos-videos-drive-64xwv9, à mettre en ligne | SonarCloud |
+Confirmés par B : C-P1 (= B-P4), C-P2 (⊂ B-P1), C-P8 (même article), C-P9 (≈ app.js 230 Ko, 91 Ko inutilisés).
 
 ## 5. Désaccords à vérifier
 
