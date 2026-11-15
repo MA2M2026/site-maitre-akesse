@@ -423,7 +423,7 @@
       const corps = el('div', 'cal-corps');
       const principal = el('div', 'cal-principal');
       ({ annee: vueAnnee, mois: vueMois, semaine: vueSemaine, jour: vueJour })[vue](principal);
-      const cote = el('aside', 'cal-panneau');
+      const cote = el('div', 'cal-panneau');   // (16/11/2026, accessibilité) pas d'« aside » : il est dans le contenu principal
       panneau(cote);
       corps.appendChild(principal);
       corps.appendChild(cote);

@@ -1624,3 +1624,12 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ce-col { grid-template-columns: repeat(3, 1fr); }
 .ce-col > b { grid-column: 1 / -1; }
 .ce-col .ce-puce { justify-content: center; padding: 6px 4px; }
+/* ce que la carte dit (calculé, 15/11/2026) et puces figées (sans le droit de changer) */
+.ce-resume { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 14px 0 6px; }
+.ce-resume > div { border-radius: 14px; background: #FBF4F5; padding: 10px 12px; }
+.ce-resume dt { font: 600 10.5px 'Work Sans', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; }
+.ce-resume dd { margin: 2px 0 0; font: 600 15px 'Work Sans', sans-serif; color: #2A1416; }
+.ce-resume dd small { display: block; font-weight: 400; font-size: 12px; color: #6E4F53; }
+.ce-resume dd.ce-expiree { color: #7C2128; }
+.ce-fige { cursor: default; opacity: .85; }
+.ce-fin { margin-top: 10px; }

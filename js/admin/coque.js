@@ -574,6 +574,7 @@
   // (15/11/2026, « premium partout ») LA carte façon carte bancaire des tableaux de bord, écrite une fois : accueil
   // (« L'agence ce mois-ci »), Tableau du mois (Paiements), Tableau de bord (Comptabilité).
   // o : { titre, grand (texte), unite, legende, tuiles: [[nombre, texte]], suite (HTML déjà échappé) }
+  P.sansFcfa = (n) => P.fcfa(n).replace(/\s*FCFA$/, '');   // (montant dans la carte, qui dit déjà « FCFA »)
   P.carteHero = (o) => {
     const tuile = (t) => (t[0] === null || t[0] === undefined ? '' : '<div><b>' + P.esc(String(t[0])) + '</b><span>' + P.esc(t[1]) + '</span></div>');
     const tuiles = (o.tuiles || []).map(tuile).join('');
@@ -584,7 +585,7 @@
   function carteAgence(a) {
     if (!a || (a.encaisse === null && a.actives === null && a.eleves === null)) return '';
     const mois = P.MOIS[new Date().getMonth()];
-    return P.carteHero({ titre: 'L’AGENCE CE MOIS-CI', grand: a.encaisse !== null ? P.fcfa(a.encaisse).replace(/\s*FCFA$/, '') : null, unite: 'FCFA',
+    return P.carteHero({ titre: 'L’AGENCE CE MOIS-CI', grand: a.encaisse !== null ? P.sansFcfa(a.encaisse) : null, unite: 'FCFA',
       legende: a.encaisse !== null ? 'encaissés en ' + mois + ' · mensualités, cours de talons, cachets…' : '',
       tuiles: [[a.actives, 'mannequins actives'], [a.eleves, 'élèves des cours de talons']] });
   }
@@ -599,10 +600,10 @@
       if (p.date_debut <= j.cle && (p.date_fin || p.date_debut) >= j.cle) j.lignes.push(['📅', p.titre, [p.type === 'casting' ? 'casting' : p.type === 'defile' ? 'défilé' : '', [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · '), '#/site/b2-convocations']);
     }));
     // (15/11/2026, maquette validée : maquettes/accueil-administration.html) le cours des mannequins de l'agence, chaque
-    // dimanche (liste de présence : Présences), jamais pendant les congés (js/presences-calcul.js) ; son heure n'est pas
-    // encore notée dans le site
+    // dimanche de 15 h à 18 h (heures données par la propriétaire le 15/11/2026 ; liste de présence : Présences), jamais
+    // pendant les congés (js/presences-calcul.js)
     const P2 = window.Presences;
-    if (P2) jours.forEach((j) => { if (j.d.getDay() === 0 && !P2.enVacances(j.cle)) j.lignes.push(['🎓', 'Cours des mannequins', 'liste de présence', '#/site/b2-presences']); });
+    if (P2) jours.forEach((j) => { if (j.d.getDay() === 0 && !P2.enVacances(j.cle)) j.lignes.push(['🎓', 'Cours des mannequins', '15 h – 18 h · liste de présence', '#/site/b2-presences']); });
     // cours de talons : le groupe en une ligne (nombre d'élèves), chaque cours privé avec l'élève et son thème
     const groupes = {};
     ((a && a.seances) || []).forEach((s) => {

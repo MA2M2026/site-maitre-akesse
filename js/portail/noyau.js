@@ -98,6 +98,8 @@
     return l;
   };
   P.pastille = (texte, ton) => '<span class="pastille ' + (ton || 'neutre') + '">' + P.esc(texte) + '</span>';
+  // « novembre 2026 » depuis « 2026-11-… » (partagé : paiements, programme et carte des mannequins) ; vide : texte de secours
+  P.libelleMois = (d, vide = '') => { const m = /^(\d{4})-(\d{2})/.exec(String(d || '')); return m ? P.MOIS[Number(m[2]) - 1] + ' ' + m[1] : vide; };
   P.chiffre = (libelle, valeur, couleur) => '<div class="carte chiffre"><div class="l">' + P.esc(libelle) + '</div><div class="v ' + (couleur || '') + '">' + valeur + '</div></div>';
   P.barre = (libelle, valeur, max, rouge, texte) => '<div class="barre"><div class="t"><span>' + P.esc(libelle) + '</span><span>' + (texte || P.fcfa(valeur)) +
     '</span></div><div class="piste"><div class="rempli' + (rouge ? ' rouge' : '') + '" style="width:' + Math.max(2, Math.round(valeur / Math.max(max, 1) * 100)) + '%"></div></div></div>';

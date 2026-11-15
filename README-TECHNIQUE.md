@@ -5179,8 +5179,8 @@ recherche et « Envoyer un message » (leurs résultats doivent rester visibles 
 mannequins actives (Paiements), les élèves des cours de talons (Site) ; « Cette semaine » (`.se-*`, Site) : aujourd'hui et
 les jours qui ont quelque chose — projets de l'agenda, cours de talons (le groupe en une ligne avec le nombre d'élèves,
 chaque cours privé avec l'élève et son thème). Chaque lecture est facultative. Styles : css/admin-vivante.css.
-Test : test-nouvelle-admin.js. « Cours des mannequins » chaque dimanche (15/11/2026, sans heure ni thème : son heure
-n'est pas encore notée dans le site, son thème dépend de chaque mannequin), jamais pendant les congés
+Test : test-nouvelle-admin.js. « Cours des mannequins » chaque dimanche, 15 h – 18 h (15/11/2026 ; sans thème : il dépend
+de chaque mannequin), jamais pendant les congés
 (`Presences.enVacances`), mène à la liste de présence.
 
 ## « Mon profil » premium (application des mannequins, 15/11/2026)
@@ -5225,6 +5225,41 @@ ce qu'elle donne aujourd'hui, Recyclage, Révision, Formation terminée, ou un n
 Base : `carte_mannequin_par_fiche(fiche)` et `carte_mannequin_regler(agence, réglages)` (équipe du site OU des
 paiements). Le programme de formation des Paiements montre ses mois en colonnes (un niveau par colonne).
 Tests : `test-nouvelle-admin-mannequins.js` (encart), `test-correction-paiement.js` (lien).
+- **Programme de formation rangé dans « Mannequins »** (15/11/2026) : `blocProgramme` (js/admin/carte-encart.js) dans la
+  fiche de la mannequin, au-dessus de sa carte ; plus rien dans les Paiements (décision de la propriétaire :
+  l'équipe des paiements n'a pas à voir la fiche des mannequins). Le code de l'espace
+  et les informations du registre restent dans les Paiements (ils existent avant son espace).
+
+### Carte : cohérence (15/11/2026, retours de la propriétaire)
+Plus de catégorie ni de formation choisies à la main (elles se contredisaient : « Niveau 2 · mois 6 » avec « membre
+depuis octobre 2026 », « New Face » pour une mannequin expérimentée). UNE source : `agence_mannequins.parcours_arrivee`
+(débutante / formée) et la position dans la formation (`formation_mois_faits`, les mêmes que l'assistant de reprise,
+recalculés par `carte_mannequin_regler(…, {position})` pour que le mois en cours soit celui touché). Calculé :
+`formation_debut_reel` (on remonte les mois de cours déjà faits, sans les congés), `mannequin_depuis` (le plus ancien
+de l'entrée au registre et du début réel), catégorie (formée à l'arrivée, ou 2 ans depuis le début réel, ou
+expérience de sa fiche), validité (à partir du début réel). L'installation retire les anciens choix à la main.
+
+### Fiche publique rangée tout de suite (16/11/2026)
+`supabase-categorie-immediate.sql` (À COLLER après supabase-carte-mannequin.sql, contrôle « 2 éléments sur 2 » ; essais
+`scripts/base-essai/essais-categorie-immediate.sql`) : deux déclencheurs AFTER appellent `categories_mannequins_mettre_a_
+jour(compte)` dès que change ce qui décide de la catégorie : `categorie_suivre_registre` (agence_mannequins :
+parcours_arrivee, formation_mois_faits, formation_niveaux, date_entree, user_id) et `categorie_suivre_experiences`
+(model_projects : ajout, période, retrait). La fiche publique (« New Face » / « Main Board ») suit donc la carte sans
+attendre 4 h ; le rangement de la nuit reste pour le temps qui passe (2 ans).
+Le même fichier contient désormais `carte_mannequin_regler` (déplacée, corrigée à la relecture du 16/11/2026) : choisir
+le parcours garde vides des `formation_mois_faits` jamais réglés (sinon `formation_debut`, donc les mensualités,
+basculaient au calcul de la reprise) ; une position en deçà des mois déjà comptés depuis l'arrivée est refusée avec un
+message clair. Contrôle « 3 éléments sur 3 ». À savoir : parcours et position restent réservés à l'équipe des paiements
+(ou au principal) alors que l'encart est dans « Mannequins » (espace du site) : en pratique, le principal les règle.
+
+## Premium : Messages, Réglages et Comptabilité (16/11/2026)
+La carte façon carte bancaire (`P.carteHero`, js/admin/coque.js ; montants sans « FCFA » : `P.sansFcfa`) est aussi en
+tête des tuiles **Messages** (messages de contact des 7 derniers jours, informations envoyées ce mois) et **Réglages**
+(erreurs du site sur 7 jours, codes d'accès pas encore utilisés) : champ `hero` des TUILES (js/admin/site.js), un
+chiffre illisible est omis. Dans la Comptabilité, elle remplace les cases blanches de **Dépenses**, **Trésorerie** (total
+et un compte par tuile), **Ce qu'on nous doit / Ce qu'on doit** (reste et nombre en retard) et **Impôts et taxes**.
+Parcours et position : équipe des paiements ou principal (ils comptent pour les mensualités). Nom trop long sur la
+carte : sur deux lignes. Contrôle « 13 éléments sur 13 » (12 depuis le 16/11/2026 : `carte_mannequin_regler` est passée dans supabase-categorie-immediate.sql).
 
 ### Photos et vidéos vers Google Drive : enregistrées par le serveur (15/11/2026, solution définitive)
 Problème : le programme Google rangeait les photos dans Drive puis renvoyait leurs liens AU TÉLÉPHONE, qui les

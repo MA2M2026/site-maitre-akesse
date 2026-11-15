@@ -10,18 +10,18 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work Sans', sans-serif; }
 .page { max-width: 480px; margin: 0 auto; padding: 22px 16px 40px; }
-.etiquette { font: 700 10px 'Work Sans'; letter-spacing: .22em; text-transform: uppercase; opacity: .85; margin: 24px 0 10px; }
+.etiquette { font: 700 10px 'Work Sans', sans-serif; letter-spacing: .22em; text-transform: uppercase; opacity: .85; margin: 24px 0 10px; }
 .carte { position: relative; width: 100%; aspect-ratio: 85.6 / 54; border-radius: 16px; overflow: hidden; color: #fff;
   background: radial-gradient(120% 140% at 0% 0%, #9A2B36 0%, #6E1A22 45%, #3E0C12 100%);
   box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 28px 50px -22px rgba(20,2,5,.95); }
 .carte svg.guill { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16; }
 .carte .reflet { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.10) 45%, transparent 60%); }
 .carte > :not(svg):not(.reflet) { position: relative; z-index: 1; }
-.micro { position: absolute !important; left: 0; right: 0; top: 0; height: 9px; font: 600 5px/9px 'Work Sans'; letter-spacing: .3em; color: rgba(255,255,255,.35); white-space: nowrap; overflow: hidden; }
+.micro { position: absolute !important; left: 0; right: 0; top: 0; height: 9px; font: 600 5px/9px 'Work Sans', sans-serif; letter-spacing: .3em; color: rgba(255,255,255,.35); white-space: nowrap; overflow: hidden; }
 /* recto */
 .r-tete { display: flex; justify-content: space-between; align-items: center; padding: 15px 15px 0; }
 .r-tete img { height: 16px; }
-.r-tete span { font: 500 8px 'Work Sans'; letter-spacing: .42em; }
+.r-tete span { font: 500 8px 'Work Sans', sans-serif; letter-spacing: .42em; }
 .r-corps { display: flex; gap: 13px; padding: 10px 15px 0; }
 .photo { flex: 0 0 29%; aspect-ratio: 3 / 4; border-radius: 9px; background: #fff url(../assets/cours-talons/mannequin-podium.jpg) 50% 18% / cover; box-shadow: 0 0 0 1.5px rgba(255,255,255,.9), 0 10px 20px -10px rgba(0,0,0,.8); }
 .infos { flex: 1; min-width: 0; }
@@ -29,29 +29,29 @@ body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work San
 .prenom { font: italic 400 18px/1.15 'Cormorant Garamond', serif; color: #F6E3E6; }
 .trait { width: 26px; height: 1px; background: rgba(255,255,255,.55); margin: 7px 0 6px; }
 .lignes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
-.lignes div { font: 400 10px/1.25 'Work Sans'; }
-.lignes b { display: block; font: 500 6.5px 'Work Sans'; letter-spacing: .22em; color: #EBC9CE; margin-bottom: 1px; }
+.lignes div { font: 400 10px/1.25 'Work Sans', sans-serif; }
+.lignes b { display: block; font: 500 6.5px 'Work Sans', sans-serif; letter-spacing: .22em; color: #EBC9CE; margin-bottom: 1px; }
 .fantome { position: absolute !important; right: 15px; top: 46px; width: 34px; height: 45px; border-radius: 5px; background: url(../assets/cours-talons/mannequin-podium.jpg) 50% 18% / cover; filter: grayscale(1) contrast(.9); opacity: .28; mix-blend-mode: screen; }
 .sceau { position: absolute !important; right: 14px; bottom: 9px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
   background: conic-gradient(from 20deg, #ffffff55, #f3c6cf88, #ffffff22, #e9b6c088, #ffffff55); box-shadow: 0 0 0 1px rgba(255,255,255,.4) inset; }
 .sceau i { font: italic 600 9.5px 'Cormorant Garamond', serif; color: #fff; letter-spacing: .05em; }
 .r-pied { position: absolute !important; left: 15px; right: 15px; bottom: 11px; display: flex; justify-content: space-between; align-items: flex-end; }
-.matricule { font: 500 11px 'Work Sans'; letter-spacing: .14em; white-space: nowrap; }
-.matricule small { display: block; font: 500 6.5px 'Work Sans'; letter-spacing: .22em; color: #EBC9CE; }
-.dates { display: flex; gap: 10px; margin-right: 56px; font: 400 9px 'Work Sans'; white-space: nowrap; }
-.dates b { display: block; font: 500 6px 'Work Sans'; letter-spacing: .16em; color: #EBC9CE; }
+.matricule { font: 500 11px 'Work Sans', sans-serif; letter-spacing: .14em; white-space: nowrap; }
+.matricule small { display: block; font: 500 6.5px 'Work Sans', sans-serif; letter-spacing: .22em; color: #EBC9CE; }
+.dates { display: flex; gap: 10px; margin-right: 56px; font: 400 9px 'Work Sans', sans-serif; white-space: nowrap; }
+.dates b { display: block; font: 500 6px 'Work Sans', sans-serif; letter-spacing: .16em; color: #EBC9CE; }
 /* verso épuré */
 .v-haut { display: flex; justify-content: space-between; align-items: center; padding: 15px 15px 0; }
-.v-haut span { font: 500 7.5px 'Work Sans'; letter-spacing: .42em; color: #EBC9CE; }
+.v-haut span { font: 500 7.5px 'Work Sans', sans-serif; letter-spacing: .42em; color: #EBC9CE; }
 .v-haut img { height: 13px; opacity: .9; }
 .v-corps { display: flex; gap: 15px; align-items: center; padding: 12px 15px 0; }
 .qr { flex: 0 0 27%; aspect-ratio: 1; border-radius: 10px; background: #fff; padding: 6px; }
 .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.v-texte { flex: 1; font: 300 10px/1.55 'Work Sans'; color: #F6E3E6; }
-.v-texte b { display: block; font: 500 6.5px 'Work Sans'; letter-spacing: .24em; color: #fff; margin: 0 0 2px; }
+.v-texte { flex: 1; font: 300 10px/1.55 'Work Sans', sans-serif; color: #F6E3E6; }
+.v-texte b { display: block; font: 500 6.5px 'Work Sans', sans-serif; letter-spacing: .24em; color: #fff; margin: 0 0 2px; }
 .v-texte p { margin: 0 0 7px; }
 .mrz { position: absolute !important; left: 15px; right: 15px; bottom: 26px; font: 500 8.5px/1.5 'Courier New', monospace; letter-spacing: .14em; color: rgba(255,255,255,.75); }
-.v-pied { position: absolute !important; left: 15px; right: 15px; bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; font: 300 7px 'Work Sans'; color: #EBC9CE; letter-spacing: .06em; }
+.v-pied { position: absolute !important; left: 15px; right: 15px; bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; font: 300 7px 'Work Sans', sans-serif; color: #EBC9CE; letter-spacing: .06em; }
 .v-pied i { font: italic 400 13px 'Cormorant Garamond', serif; color: #fff; letter-spacing: 0; }
 .boutons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 .blanc { padding: 14px; border-radius: 16px; background: #fff; color: #7C2128; text-align: center; font-weight: 700; }

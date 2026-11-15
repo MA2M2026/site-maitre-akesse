@@ -164,7 +164,7 @@ function donnees(role, fichiers) {
 
     // ---------- D. Impôts et taxes ----------
     await aller(p, 'impots'); t = await texte(p);
-    ok(/En retard\s*1/i.test(t) && /Reste à payer\s*120 000 FCFA/i.test(t) && /Désactivée/i.test(t), nomEcran + ' : patente en retard, 120 000 à payer, TVA désactivée');
+    ok(/1\s*en retard/i.test(t) && /120 000\s*FCFA\s*reste à payer/i.test(t) && /Désactivée/i.test(t), nomEcran + ' : patente en retard, 120 000 à payer, TVA désactivée');
     ok(!(await p.$('[data-action="compta-impot-payer"][data-id="i2"]')), nomEcran + ' : la CNPS payée n’a plus de bouton « Payer »');
     await controler(p, nomEcran + ' : impôts');
     await p.fill('#im-nom', 'ITS (impôt sur les salaires)'); await p.fill('#im-montant', '15000'); await p.fill('#im-date', '2026-01-31'); await p.selectOption('#im-repet', 'm');

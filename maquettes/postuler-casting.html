@@ -38,7 +38,7 @@ h2.titre::after { content: ''; display: block; width: 90px; height: 1px; margin:
 .autre { display: block; text-align: center; margin-top: 12px; padding: 12px; border-radius: 14px; border: 1px dashed rgba(255,255,255,.45); font-size: 13.5px; }
 .champ { margin-top: 14px; }
 .champ label, .lab { display: block; font-size: 11.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
-.champ input, .champ select { width: 100%; padding: 13px 14px; border-radius: 12px; border: 0; font: 15px 'Work Sans'; }
+.champ input, .champ select { width: 100%; padding: 13px 14px; border-radius: 12px; border: 0; font: 15px 'Work Sans', sans-serif; }
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .pastilles { display: flex; gap: 8px; flex-wrap: wrap; }
 .pastilles span { padding: 10px 16px; border-radius: 999px; border: 1px solid var(--lisere); font-size: 14px; }
@@ -77,10 +77,10 @@ h2.titre::after { content: ''; display: block; width: 90px; height: 1px; margin:
   <div class="v v-2 ecrin">
     <div class="etape-titre"><span>2</span><h3>Parlez-nous de vous</h3></div>
     <div class="champ"><span class="lab">Civilité *</span><div class="pastilles"><span class="on">Madame</span><span>Mademoiselle</span><span>Monsieur</span></div></div>
-    <div class="champ"><label>Nom complet *</label><input value="Awa Koné"></div>
-    <div class="duo"><div class="champ"><label>WhatsApp *</label><input value="07 00 00 00 00"></div><div class="champ"><label>Date de naissance *</label><input value="12/03/2004"></div></div>
+    <div class="champ"><label>Nom complet *</label><input aria-label="Champ d’exemple" value="Awa Koné"></div>
+    <div class="duo"><div class="champ"><label>WhatsApp *</label><input aria-label="Champ d’exemple" value="07 00 00 00 00"></div><div class="champ"><label>Date de naissance *</label><input aria-label="Champ d’exemple" value="12/03/2004"></div></div>
     <div class="duo"><div class="champ"><label>Ville *</label><select><option>Abidjan</option></select></div><div class="champ"><label>Commune *</label><select><option>Cocody</option></select></div></div>
-    <div class="champ"><label>E-mail *</label><input value="awa@exemple.ci"></div>
+    <div class="champ"><label>E-mail *</label><input aria-label="Champ d’exemple" value="awa@exemple.ci"></div>
     <div class="boutons"><span class="btn">← Retour</span><span class="btn plein">Suivant →</span></div>
   </div>
 

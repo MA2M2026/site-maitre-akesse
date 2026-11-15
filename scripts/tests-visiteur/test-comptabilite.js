@@ -183,7 +183,8 @@ function donnees(role) {
 
     // Trésorerie : virement, compte ajouté, solde de départ
     await aller(p, 'tresorerie'); t = await texte(p);
-    ok(/Total disponible\s*130 000 FCFA/i.test(t), nomEcran + ' : total disponible de la trésorerie');
+    // (16/11/2026) le total en carte façon carte bancaire (P.carteHero)
+    ok(/Trésorerie\s*130 000\s*FCFA\s*disponible sur tous les comptes/i.test(t) && (await p.isVisible('.ag-carte')), nomEcran + ' : total disponible de la trésorerie');
     await controler(p, nomEcran + ' : trésorerie');
     await ouvrirSaisies(p); await p.fill('#vi-montant', '10000'); await p.fill('#vi-libelle', 'Dépôt à la banque');
     await p.selectOption('#vi-vers', 'c1'); await p.selectOption('#vi-de', 'c1');
@@ -209,7 +210,7 @@ function donnees(role) {
 
     // Morceau B — ce qu'on nous doit : reste, retard, encaissement partiel
     await aller(p, 'a-recevoir'); t = await texte(p);
-    ok(/Reste à encaisser\s*260 000 FCFA/i.test(t) && t.includes('En retard') && !(await p.$('[data-action="compta-annuler"][data-id="d1"]')),
+    ok(/Reste à encaisser\s*260 000\s*FCFA/i.test(t) && /1\s*en retard/i.test(t) && !(await p.$('[data-action="compta-annuler"][data-id="d1"]')),
       nomEcran + ' : créance en retard, reste 260 000, pas d’annulation après un règlement');
     ok((await p.$$eval('#dt-tiers option', (l) => l.map((o) => o.textContent))).join('|') === 'Sococé', nomEcran + ' : seuls les clients sont proposés');
     await controler(p, nomEcran + ' : ce qu’on nous doit');

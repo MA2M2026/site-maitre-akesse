@@ -16,7 +16,9 @@ insert into model_projects (model_id, type_projet, titre, periode) values ('0000
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b01') = 'New Face', 'arrivée il y a 4 mois, sans expérience : New Face (même si elle avait coché « Professionnel »)');
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b02') = 'Professionnel', '2 ans à l''agence : Professionnelle');
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b03') = 'Professionnel', 'arrivée le mois dernier, défilés depuis 2020 : Professionnelle tout de suite');
-select essai(categories_mannequins_mettre_a_jour() >= 2, 'les fiches sont rangées d''un coup (celles qui ont changé)');
+-- (16/11/2026) les fiches sont déjà rangées par les déclencheurs (supabase-categorie-immediate.sql) : le rangement de la
+-- nuit les range aussi si besoin, sans erreur
+select essai(categories_mannequins_mettre_a_jour() >= 0, 'rangement de toutes les fiches : il passe');
 select essai((select string_agg(niveau_mannequin, ',' order by full_name) from model_profiles where id::text like '00000000-0000-0000-0000-0000000c0b0%') = 'New Face,Professionnel,Professionnel', 'fiches : AYA New Face, FATOU et MARIAM Professionnelles');
 select essai(categories_mannequins_mettre_a_jour() = 0, 'relancé : rien à changer');
 -- carte : rien tant que l'agence ne l'active pas
@@ -80,5 +82,30 @@ reset role;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000c0b01","role":"authenticated"}', false);
 set role authenticated;
 select essai_refuse($$select carte_mannequin_regler('00000000-0000-0000-0000-000000000000', '{"active":true}')$$, 'une mannequin ne règle pas sa carte');
+reset role;
+select set_config('request.jwt.claims', '', false);
+-- (15/11/2026, cohérence) le parcours et la position dans la formation décident de tout
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select (carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->>'agence_id') as ag1 \gset
+-- débutante au niveau 2, mois 6 (rang 15) : « membre depuis » remonte ses 14 mois de cours déjà faits (sans les congés)
+select essai((carte_mannequin_regler(:'ag1', '{"parcours":"debutante"}')->>'parcours') = 'debutante', 'parcours : débutante chez nous');
+select carte_mannequin_regler(:'ag1', '{"position":15}');
+reset role;
+select essai((select r->>'niveau' || '·' || (r->>'mois_niveau') from json_array_elements(formation_programme_calcul(:'ag1'::uuid)->'mois') r where r->>'etat' in ('en_cours', 'a_venir') order by (r->>'rang')::int limit 1) = '2·6',
+  'position choisie : le mois en cours (ou le prochain) est niveau 2, mois 6');
+select essai(mannequin_depuis(:'ag1'::uuid) <= (current_date - interval '15 months')::date, '« membre depuis » : au moins 15 mois plus tôt (jamais le mois où la fiche a été créée)');
+select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b01') = (case when mannequin_depuis(:'ag1'::uuid) <= (current_date - interval '2 years')::date then 'Professionnel' else 'New Face' end),
+  'catégorie : suit le début réel de sa formation (2 ans → Professionnelle)');
+-- déjà formée ailleurs : Professionnelle tout de suite, recyclage de 9 mois
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai((carte_mannequin_regler(:'ag1', '{"parcours":"formee"}')->>'categorie') = 'Professionnel', 'déjà formée ailleurs : Professionnelle tout de suite');
+reset role;
+select essai((select formation_niveaux from agence_mannequins where id = :'ag1') = 1, 'déjà formée : le recyclage (9 mois)');
+-- l'équipe du site ne change ni le parcours ni la position (ils comptent pour les mensualités)
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select essai_refuse($$select carte_mannequin_regler((carte_mannequin_par_fiche('00000000-0000-0000-0000-0000000c0b01')->>'agence_id')::uuid, '{"position":3}')$$, 'équipe du site : pas la position dans la formation');
 reset role;
 select set_config('request.jwt.claims', '', false);

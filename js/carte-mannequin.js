@@ -94,9 +94,26 @@ window.CarteMannequin = (function () {
     // nom, catégorie, champs
     const ix = 120 * u;
     ctx.save(); ctx.font = SERIF(500, 22);
-    let nom = String(d.nom || '').toUpperCase(), taille = 22;
-    while (taille > 13 && (ctx.measureText(nom).width + nom.length * 0.06 * taille * u) > W - ix - 60 * u) { taille -= 1; ctx.font = SERIF(500, taille); }
-    texte(ctx, nom, ix, 66 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+    // (15/11/2026, nom coupé sur la carte d'une mannequin) le nom tient toujours : sur une ligne en rapetissant, sinon
+    // sur deux lignes (coupées entre deux mots)
+    const nom = String(d.nom || '').toUpperCase(), largeurMax = W - ix - 56 * u;
+    const mesure = (t, taille) => { ctx.font = SERIF(500, taille); return ctx.measureText(t).width + t.length * 0.06 * taille * u; };
+    let taille = 22;
+    while (taille > 15 && mesure(nom, taille) > largeurMax) taille -= 1;
+    if (mesure(nom, taille) <= largeurMax) texte(ctx, nom, ix, 66 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+    else {
+      const mots = nom.split(/\s+/);
+      let coupe = 1;
+      for (let k = 1; k < mots.length; k++) { if (mesure(mots.slice(0, k).join(' '), 15) <= largeurMax) coupe = k; }
+      let l1 = mots.slice(0, coupe).join(' '), l2 = mots.slice(coupe).join(' ');
+      taille = 15;
+      while (taille > 10 && (mesure(l1, taille) > largeurMax || mesure(l2, taille) > largeurMax)) taille -= 0.5;
+      // (16/11/2026, relecture) chaque ligne tient : un mot trop long est coupé lui aussi ; un seul mot reste à hauteur du nom
+      const couper = (t) => { while (mesure(t, taille) > largeurMax && t.length > 2) t = t.slice(0, -2) + '…'; return t; };
+      l1 = couper(l1); l2 = couper(l2);
+      texte(ctx, l1, ix, (l2 ? 52 : 66) * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+      if (l2) texte(ctx, l2, ix, 52 * u + taille * 1.15 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+    }
     ctx.restore();
     ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(ix, 76 * u, 26 * u, 1 * u);
     const col2 = ix + 112 * u, l1 = 104 * u, l2 = W - 60 * u - col2;
@@ -180,7 +197,8 @@ window.CarteMannequin = (function () {
     if (c.formation) return c.formation;
     const x = r && (r.termine ? r.revProchain : r.prochain);
     if (r && r.termine) return x ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Formation terminée';
-    if (x && c.categorie === 'Professionnel' && r.total === 9) return 'Recyclage · mois ' + x.mois_niveau + ' sur 9';
+    // (15/11/2026) déjà formée ou expérimentée ailleurs à son arrivée : le recyclage de 9 mois
+    if (x && (c.parcours === 'formee' || (c.categorie === 'Professionnel' && r.total === 9))) return 'Recyclage · mois ' + x.mois_niveau + ' sur 9';
     if (x) return 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + (court ? '' : ' sur 9');
     return secours || '';
   }

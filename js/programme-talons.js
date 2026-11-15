@@ -95,7 +95,7 @@
     // séances
     var frise = $('pt-seances'); frise.textContent = '';
     if (!seances.length && !reste) { var vide = document.createElement('p'); vide.className = 'pt-vide'; vide.textContent = 'Les dates de vos séances apparaîtront ici.'; frise.appendChild(vide); }
-    var moisAffiche = 0;
+    var moisAffiche = '';
     seances.forEach(function (s) {
       // titre de chaque mois (groupe sur plusieurs mois) ou de chaque thème (privé) : le module de SON programme
       // (« Les bases », « La prestance »… selon son parcours), puis « Perfectionnement »
