@@ -5033,7 +5033,30 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   paie plus tard, l'agence refixe ses dates ; ses souhaits restent écrits). Les heures sont celles d'Abidjan (UTC),
   dit sur la page. SQL pas encore collé : la page propose seulement « à convenir » (champ libre). À l'accueil de
   l'Administration (« Cette semaine », js/admin/coque.js, `seancesSemaine`), une séance réservée non payée apparaît
-  « à confirmer (paiement) » tant que `occupe` est vrai. Tests : `test-cours-talons.js` (choix, 1 h 30, chaque semaine, retrait, limite,
+  « à confirmer (paiement) » tant que `occupe` est vrai.
+- **Créneaux v2** (15/11/2026, maquette validée : `maquettes/creneaux-prives-v2.html` ; même fichier
+  `supabase-creneaux-prives.sql`, contrôle « 10 éléments sur 10 ») :
+  - **Trois façons** à l'inscription (`cours_talons.choix_creneaux`) : « Je choisis maintenant » (créneaux gardés 48 h),
+    « Je choisirai après mon paiement » (rien de réservé ; une fois payée elle choisit sur son lien), « Dates à convenir
+    ensemble » (l'agence appelle ; la page ne propose pas de choisir et la base refuse).
+  - **Le choix des créneaux est écrit une fois** : `js/talons-creneaux.js` (`TalonsCreneaux.creer`, `pourAgence`,
+    `dateLongue`) + `css/talons-creneaux.css` (couleurs par variables `--cr-*` : blanc sur rouge dans le formulaire,
+    rouge sur blanc sur la page de l'élève), utilisés par js/cours-talons.js et js/programme-talons.js.
+  - **Page de l'élève** (programme-talons.html, `#pt-bloc-choisir`) : séances payées pas encore placées « À choisir »
+    → `programme_talons_choisir(jeton, créneaux)` ; « Déplacer » sur chaque séance à plus de 24 h →
+    `programme_talons_deplacer(jeton, séance, début)` (`cours_talons_creneaux_libres(…, p_jeton, p_seance)` laisse de
+    côté la séance qu'elle déplace). Seulement une inscription « inscrite » (pas terminée). `programme_talons_lire`
+    rend aussi `choix_creneaux` (même texte dans supabase-programme-talons.sql). `LienPublic.rpc` joint maintenant le
+    message de la base à l'erreur (« CRENEAU_PRIS »…).
+  - **Indisponibilités de l'agence** (table `cours_talons_indispo`, équipe du site ; Administration → Cours de talons →
+    « Mes indisponibilités ») : un jour entier, plusieurs jours, ou des heures (sur plusieurs jours : ces heures CHAQUE
+    jour, une ligne par jour) ; jamais proposées, refusées par la base. Une séance déjà prévue (et encore `occupe`)
+    pendant une indisponibilité est signalée avec un message WhatsApp (bouton « Déplacer » de sa page si la séance est
+    à plus de 24 h, sinon « nous vous proposons une autre date »).
+  - Fiche de l'élève : ligne « Créneaux » (sa façon, « N à placer ») ; le message « Son programme » l'invite à choisir
+    ses créneaux sur son lien quand il en reste à placer (jamais pour « à convenir »).
+  - Tests : `test-cours-talons.js` (trois façons), `test-programme-talons.js` (choisir, créneau pris, déplacer, à
+    convenir, terminée), `test-admin-cours-talons.js` (indisponibilités, séance touchée, « 3 à placer »), essais SQL. Tests : `test-cours-talons.js` (choix, 1 h 30, chaque semaine, retrait, limite,
   à convenir, créneau pris entre-temps), `test-nouvelle-admin.js` (cette semaine).
 - **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
   paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).

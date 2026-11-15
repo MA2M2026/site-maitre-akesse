@@ -31,6 +31,9 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
         photos: [], decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-10-06T10:00:00Z', mois_payes: 1, jeton: 'e'.repeat(36) },
       { id: 't5', cree_le: '2026-10-04T10:00:00Z', formule: 'groupe', nb_seances: 4, nb_mois: 3, paiement: 'mensuel', mois_payes: 1, civilite: 'madame', nom: 'FATOU TROIS MOIS', telephone: '+2250700000005', age: 31,
         photos: [], decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-10-04T12:00:00Z', jeton: 'd'.repeat(36) },
+      // (15/11/2026) privé payé, « je choisirai après mon paiement » : ses 3 séances sont à placer
+      { id: 't6', cree_le: '2026-10-03T10:00:00Z', formule: 'prive_salle', nb_seances: 3, choix_creneaux: 'apres', civilite: 'madame', nom: 'NADIA APRÈS', telephone: '+2250700000006', age: 29,
+        photos: [], decision: 'maintenant', statut: 'inscrite', montant: 75000, valide_le: '2026-10-03T12:00:00Z', jeton: 'c'.repeat(36) },
       { id: 't3', cree_le: '2026-10-01T10:00:00Z', formule: 'groupe', nb_seances: 4, nom: 'ANCIENNE ÉLÈVE', telephone: '+2250700000003', age: 30, photos: [], decision: 'maintenant', statut: 'terminee', montant: 30000, valide_le: '2026-10-02T10:00:00Z' }];
     d.rpc = Object.assign({}, d.rpc, { cours_talons_valider: (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); Object.assign(l, { statut: 'inscrite', montant: c.p_montant, valide_le: '2026-11-08T12:00:00Z', mois_payes: l.paiement === 'mensuel' ? 1 : (l.nb_mois || 1) });
       // (14/11/2026) la base remplit toute seule les 4 dimanches d'un groupe (déclencheur de supabase-programme-talons.sql)
@@ -40,6 +43,10 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     d.tables.cours_talons_seances = [];
     d.rpc.cours_talons_mois_payer = (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); l.mois_payes = (l.mois_payes || 0) + 1; l.nb_mois = Math.max(l.nb_mois || 1, l.mois_payes); return l; };
     await brancher(p, d, journal); await photosLocales(p);
+    // (15/11/2026) indisponibilités de l'agence : le dimanche 6 janvier 2030 (une séance du groupe tombe dedans) ;
+    // fichier pas encore collé (cas « programme pas collé ») : table absente, rien ne casse
+    d.tables.cours_talons_indispo = [{ id: 'i1', debut: '2030-01-06T00:00:00Z', fin: '2030-01-07T00:00:00Z', raison: 'Voyage' }];
+    if (sansProgramme) await p.route(/\/rest\/v1\/cours_talons_indispo/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons_indispo" does not exist' }) }));
     if (sansProgramme) await p.route(/\/rest\/v1\/cours_talons_seances/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons_seances" does not exist' }) }));
     if (absente) await p.route(/\/rest\/v1\/cours_talons/, (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: '42P01', message: 'relation "public.cours_talons" does not exist' }) }));
     await seConnecter(p, URL_ADMIN); await p.waitForSelector('.accueil-tete');
@@ -91,11 +98,36 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const appel = journal.find((j) => j[0] === 'rpc' && j[1] === 'cours_talons_valider');
     ok(appel && JSON.parse(appel[2]).p_id === 't2' && JSON.parse(appel[2]).p_montant === 30000 && JSON.parse(appel[2]).p_especes === false, n + 'paiement Orange Money validé par la base (une recette « Cours de talons » en Compta, sur le compte du moyen)');
     t = await texte();
-    ok(!t.includes('AWA DIALLO'), n + 'l’inscription payée quitte « À traiter »');
+    ok(await p.locator('.ct-fiche[data-id="t2"]').count() === 0, n + 'l’inscription payée quitte « À traiter »');
     await p.click('[data-action="talons-filtre"][data-valeur="inscrite"]'); await p.waitForTimeout(500);
     ok((await texte()).includes('AWA DIALLO'), n + 'elle est dans « Inscrites »');
     // (14/11/2026) « Son programme » : les 4 dimanches remplis par la base, son lien personnel envoyé sur WhatsApp
     const fiche2 = '.ct-fiche[data-id="t2"] ';
+    if (sansProgramme) ok(await p.locator('.ct-indispo').count() === 0, n + 'indisponibilités pas encore installées : rien n’apparaît');
+    else if (!absente) {
+      // (15/11/2026) « Mes indisponibilités » : la liste, la séance touchée et son message WhatsApp
+      ok(/Dimanche 6 janvier · toute la journée/.test(await p.textContent('.ct-indispo')) && /Voyage/.test(await p.textContent('.ct-indispo')), n + 'indisponibilités : « Dimanche 6 janvier · toute la journée », sa raison');
+      const touche = decodeURIComponent(await p.getAttribute('.ct-touchee a', 'href'));
+      ok(/1 séance déjà prévue tombe/.test(await p.textContent('.ct-touchees')) && /^https:\/\/wa\.me\/2250700000002\?text=Bonjour Madame AWA DIALLO/.test(touche) && /ne pourra pas avoir lieu/.test(touche),
+        n + 'séance déjà prévue pendant l’indisponibilité : signalée, message WhatsApp prêt');
+      if (!(await p.getAttribute('.ct-indispo', 'open') !== null)) await p.click('.ct-indispo summary');
+      await p.fill('#ct-i-du', '2030-02-02'); await p.fill('#ct-i-de', '10:00'); await p.fill('#ct-i-a', '14:00'); await p.fill('#ct-i-raison', 'Shooting');
+      await p.click('form[data-form="talons-indispo"] button[type="submit"]'); await p.waitForTimeout(800);
+      const ajoutI = d.tables.cours_talons_indispo.find((x) => x.raison === 'Shooting');
+      ok(ajoutI && ajoutI.debut === '2030-02-02T10:00:00.000Z' && ajoutI.fin === '2030-02-02T14:00:00.000Z' && /Samedi 2 février · 10 h – 14 h/.test(await p.textContent('.ct-indispo')), n + 'indisponibilité ajoutée : samedi 2 février, 10 h – 14 h');
+      // plusieurs jours, de 10 h à 12 h : ces heures-là chaque jour (3 lignes), pas un bloc continu
+      if (!(await p.getAttribute('.ct-indispo', 'open') !== null)) await p.click('.ct-indispo summary');
+      await p.fill('#ct-i-du', '2030-03-04'); await p.fill('#ct-i-au', '2030-03-06'); await p.fill('#ct-i-de', '10:00'); await p.fill('#ct-i-a', '12:00'); await p.fill('#ct-i-raison', 'Matinées');
+      await p.click('form[data-form="talons-indispo"] button[type="submit"]'); await p.waitForTimeout(800);
+      const matins = d.tables.cours_talons_indispo.filter((x) => x.raison === 'Matinées');
+      ok(matins.length === 3 && matins.every((x) => /T10:00:00.000Z$/.test(x.debut) && /T12:00:00.000Z$/.test(x.fin)) && matins[2].debut.startsWith('2030-03-06'), n + 'du 4 au 6 mars, de 10 h à 12 h : ces heures chaque jour (3 indisponibilités)');
+      await p.click('[data-action="talons-indispo-retirer"][data-id="i1"]'); await p.waitForTimeout(800);
+      ok(!d.tables.cours_talons_indispo.some((x) => x.id === 'i1') && await p.locator('.ct-touchees').count() === 0, n + 'indisponibilité retirée : la séance n’est plus signalée');
+      const f6 = '.ct-fiche[data-id="t6"] ';
+      ok(/Créneaux\s*Elle les choisit après son paiement, sur son lien · 3 à placer/.test(await p.textContent(f6 + '.ct-infos')), n + 'privé « après mon paiement » : « 3 à placer »');
+      const choisirMsg = decodeURIComponent(await p.getAttribute(f6 + '.ct-msg[data-msg="programme"] a[data-pour="eleve"]', 'href'));
+      ok(/vous choisissez vos créneaux \(3 séances\)/.test(choisirMsg) && choisirMsg.includes('programme-talons?c=' + 'c'.repeat(36)), n + 'son message : « vous choisissez vos créneaux (3 séances) » avec son lien');
+    }
     if (sansProgramme) {
       ok(/supabase-programme-talons\.sql/.test(await p.textContent(fiche2 + '.ct-programme')) && !errs.length, n + 'programme pas encore collé : message clair, la fiche marche');
     } else {

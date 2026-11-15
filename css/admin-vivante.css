@@ -1529,3 +1529,17 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .se-jour li i { font-style: normal; }
 .se-jour li small { color: #6E4F53; }
 .se-vide { margin: 0; padding-top: 10px; color: #6E4F53; font-size: 13px; }
+/* « Mes indisponibilités » (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html ; js/admin/site-cours-talons.js) */
+.ct-indispo > summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.ct-indispo > summary::-webkit-details-marker { display: none; }
+.ct-indispo > summary h2 { margin: 0; }
+.ct-indispo > summary::after { content: '▾'; margin-left: auto; color: #7C2128; }
+.ct-indispo[open] > summary::after { content: '▴'; }
+.ct-indispo > summary:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
+.ct-indispo-l small { display: block; color: #6E4F53; }
+.ct-indispo-l .ct-mini { flex: none; margin-left: auto; min-height: 34px; padding: 6px 12px; border-radius: 999px; border: 1px solid #EADCDD; background: #FFFFFF; color: #7C2128; font: 600 12px 'Work Sans', sans-serif; cursor: pointer; }
+.ct-touchees { margin: 14px 0; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; color: #2A1416; font-size: 13.5px; }
+.ct-touchees p { margin: 0 0 8px; }
+.ct-touchee { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid #F2E7E8; }
+.ct-touchee span { flex: 1 1 100%; }
+.ct-indispo-ajout { margin-top: 14px; }

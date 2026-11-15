@@ -117,109 +117,37 @@
     });
     boite.classList.toggle('u-hidden', !mois.length);
   }
-  // ---------- (14/11/2026, maquette validée : maquettes/creneaux-prives.html) cours privés : l'élève choisit ses
-  // créneaux LIBRES (lus dans la base : cours_talons_creneaux_libres, supabase-creneaux-prives.sql), du lundi au
-  // samedi, 10 h – 20 h, séances de 2 h, 1 h 30 de pause entre deux cours ; ou « dates à convenir ensemble ». La base
-  // revérifie tout à l'enregistrement et garde les créneaux 48 h. Fichier SQL pas encore collé : « à convenir ».
-  const HEURES = [10, 11, 12, 13, 14, 15, 16, 17, 18];
-  const JOURS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const MOIS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const TC = window.TalonsCommun;
-  const JOURS_A_VOIR = 42, JOURS_LUS = 245;   // 6 semaines affichées ; 35 semaines lues (« chaque semaine », jusqu'à 28 séances)
-  const ECART = 3.5 * 3600000;                 // 2 h de cours + 1 h 30 de pause
-  let libres = null, chargementLibres = null, jourChoisi = null, choisis = [];   // libres : null = en lecture, false = pas disponible
-  const cleHeure = (t) => new Date(t).toISOString().slice(0, 13);
+  // ---------- (14 et 15/11/2026, maquettes validées : maquettes/creneaux-prives.html et creneaux-prives-v2.html) cours
+  // privés : trois façons — « je choisis maintenant » (créneaux libres, gardés 48 h), « je choisirai après mon
+  // paiement » (sur son lien personnel), « dates à convenir ensemble ». Le choix des créneaux est commun avec la page de
+  // l'élève : js/talons-creneaux.js. Base : supabase-creneaux-prives.sql ; pas encore collé → « à convenir » seulement.
+  const TCr = window.TalonsCreneaux;
   const prive = () => !!formule() && formule() !== 'groupe';
-  const convenir = () => $('ct-convenir').checked;
-  const demainUTC = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1)); };
-  function chargerLibres() {
-    if (chargementLibres) return chargementLibres;
-    const lire = typeof sb !== 'undefined' && sb ? sb.rpc('cours_talons_creneaux_libres', { p_du: demainUTC().toISOString().slice(0, 10), p_jours: JOURS_LUS }) : Promise.resolve({ error: true });
-    chargementLibres = Promise.resolve(lire).then((r) => { libres = r && !r.error && Array.isArray(r.data) ? new Set(r.data.map(cleHeure)) : false; })
-      .catch(() => { libres = false; }).then(majCreneaux);
-    return chargementLibres;
-  }
-  // libre pour elle : libre dans la base et à 3 h 30 au moins de ses autres choix
-  const libreIci = (t) => !!libres && libres.has(cleHeure(t)) && !choisis.some((c) => c !== t.toISOString() && Math.abs(new Date(c) - t) < ECART);
-  // « mardi 17 novembre » / « Tuesday 17 November » ; « mar. 17 nov. 14 h » pour l'agence (toujours en français)
-  const dateLongue = (t) => { const d = new Date(t); const j = EN ? JOURS_EN[d.getUTCDay()] : TC.JOURS[d.getUTCDay()];
-    return j.charAt(0).toUpperCase() + j.slice(1) + ' ' + (d.getUTCDate() === 1 && !EN ? '1er' : d.getUTCDate()) + ' ' + (EN ? MOIS_EN[d.getUTCMonth()] : TC.MOIS[d.getUTCMonth()]); };
-  const heureEN = (h) => (h > 12 ? h - 12 + ' pm' : h === 12 ? '12 pm' : h + ' am');
-  const heureTexte = (h) => (EN ? heureEN(h) : h + ' h');
-  const pourAgence = (l) => l.map((t) => { const d = new Date(t); return TC.JOURS[d.getUTCDay()].slice(0, 3) + '. ' + d.getUTCDate() + ' ' + TC.MOIS_COURTS[d.getUTCMonth()] + ' ' + d.getUTCHours() + ' h'; }).join(', ');
-  function bouton(classe, html, quoi, valeur, actif, etiquette) {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = classe; b.innerHTML = html; b.dataset[quoi] = valeur; b.disabled = !actif;
-    b.setAttribute('data-bouton-libre', '');   // (style du site écarté : css/bouton-ma2m.css)
-    if (etiquette) b.setAttribute('aria-label', etiquette);
-    return b;
-  }
-  function dessinerCreneaux() {
-    const jours = $('ct-jours'), heures = $('ct-heures'), liste = $('ct-choisis');
-    jours.textContent = ''; heures.textContent = ''; liste.textContent = '';
-    if (libres === null) { jours.textContent = T('Lecture des créneaux libres…', 'Loading free slots…'); return; }
-    const d0 = demainUTC();
-    const avecLibre = (d) => HEURES.some((h) => libreIci(new Date(d.getTime() + h * 3600000)));
-    const jourListe = [];
-    for (let k = 0; k < JOURS_A_VOIR; k++) { const d = new Date(d0.getTime() + k * 86400000); if (d.getUTCDay() !== 0) jourListe.push(d); }
-    if (!jourChoisi || !jourListe.some((d) => d.toISOString().slice(0, 10) === jourChoisi)) jourChoisi = (jourListe.find(avecLibre) || jourListe[0]).toISOString().slice(0, 10);
-    jourListe.forEach((d) => {
-      const iso = d.toISOString().slice(0, 10), j = (EN ? JOURS_EN : TC.JOURS)[d.getUTCDay()];
-      const b = bouton('ct-jour' + (iso === jourChoisi ? ' on' : ''), '<small>' + j.slice(0, 3) + '</small><b>' + d.getUTCDate() + '</b><i>' + (EN ? MOIS_EN[d.getUTCMonth()].slice(0, 3) : TC.MOIS_COURTS[d.getUTCMonth()]) + '</i>',
-        'jour', iso, avecLibre(d) || choisis.some((c) => c.slice(0, 10) === iso), dateLongue(d));
-      b.setAttribute('aria-pressed', iso === jourChoisi ? 'true' : 'false');
-      jours.appendChild(b);
-    });
-    HEURES.forEach((h) => {
-      const t = new Date(Date.parse(jourChoisi + 'T00:00:00Z') + h * 3600000), iso = t.toISOString(), pris = choisis.includes(iso);
-      const b = bouton('ct-heure' + (pris ? ' on' : libreIci(t) ? '' : ' pris'), heureTexte(h), 'heure', iso, pris || libreIci(t),
-        dateLongue(t) + ', ' + heureTexte(h) + (pris ? T(' (choisi)', ' (chosen)') : libreIci(t) ? '' : T(' (déjà pris)', ' (taken)')));
-      b.setAttribute('aria-pressed', pris ? 'true' : 'false');
-      heures.appendChild(b);
-    });
-    const nb = nbSeances(), reste = nb - choisis.length;
-    $('ct-choisis-titre').textContent = (nb > 1 ? T('Vos ' + nb + ' séances', 'Your ' + nb + ' sessions') : T('Votre séance', 'Your session')) + (reste > 0 ? T(' · encore ' + reste + ' à choisir', ' · ' + reste + ' still to choose') : '');
-    choisis.forEach((iso, i) => {
-      const li = document.createElement('li'), h = new Date(iso).getUTCHours();
-      const em = document.createElement('em'); em.textContent = String(i + 1);
-      const s = document.createElement('span'); s.textContent = dateLongue(iso);
-      const sm = document.createElement('small'); sm.textContent = heureTexte(h) + ' – ' + heureTexte(h + 2);
-      const x = bouton('ct-retirer', '✕', 'retirer', iso, true, T('Retirer la séance du ', 'Remove the session of ') + dateLongue(iso));
-      li.append(em, s, sm, x); liste.appendChild(li);
-    });
-    liste.classList.toggle('u-hidden', !choisis.length);
-  }
-  // « chaque semaine » : le même jour et la même heure, semaine après semaine (une semaine déjà prise est sautée)
-  function remplirSemaines(iso) {
-    choisis = [];
-    for (let w = 0; choisis.length < nbSeances() && w < JOURS_LUS / 7; w++) { const t = new Date(Date.parse(iso) + w * 7 * 86400000); if (libreIci(t)) choisis.push(t.toISOString()); }
-  }
+  const choixCreneaux = () => (form.querySelector('input[name="choix_creneaux"]:checked') || {}).value || '';
+  const convenir = () => choixCreneaux() === 'convenir';
+  const maintenantChoisi = () => choixCreneaux() === 'maintenant';
+  const selecteur = TCr.creer({
+    jours: $('ct-jours'), heures: $('ct-heures'), liste: $('ct-choisis'), titre: $('ct-choisis-titre'), repeter: $('ct-repeter'), en: EN, nb: () => nbSeances(),
+    lire: (du, jours) => (typeof sb !== 'undefined' && sb ? sb.rpc('cours_talons_creneaux_libres', { p_du: du, p_jours: jours }).then((r) => (r.error ? null : r.data)) : null),
+    trop: (nb) => afficherMsg(msg, T('Vous avez déjà choisi vos ' + nb + ' séances : retirez-en une pour en choisir une autre.', 'You have already chosen your ' + nb + ' sessions: remove one to choose another.'), 'err'),
+    change: () => { msg.className = 'form-msg'; msg.textContent = ''; majCreneaux(); }
+  });
+  const choisis = () => selecteur.choisis();
   function majCreneaux() {
     const p = prive();
-    if (p && libres === null) chargerLibres();
-    if (libres === false) { $('ct-convenir').checked = true; $('ct-convenir').disabled = true; }
-    choisis = choisis.slice(0, nbSeances());
-    // plus de séances après un choix « chaque semaine » : la suite est complétée
-    if (libres && choisis.length && choisis.length < nbSeances() && $('ct-repeter').checked) remplirSemaines(choisis[0]);
-    $('ct-bloc-creneaux').classList.toggle('u-hidden', !p || convenir());
-    $('ct-bloc-convenir').classList.toggle('u-hidden', !p);
+    if (p && selecteur.etat() === null) selecteur.charger();
+    // base pas prête : seulement « à convenir »
+    const pret = selecteur.etat() !== false;
+    if (!pret && p) { form.querySelector('input[name="choix_creneaux"][value="convenir"]').checked = true; }
+    $('ct-facon-maintenant').classList.toggle('u-hidden', !pret);
+    $('ct-facon-apres').classList.toggle('u-hidden', !pret);
+    selecteur.ajuster();
+    $('ct-bloc-facons').classList.toggle('u-hidden', !p);
+    $('ct-bloc-creneaux').classList.toggle('u-hidden', !p || !maintenantChoisi());
     $('ct-bloc-dispo').classList.toggle('u-hidden', !p || !convenir());
-    if (p && !convenir()) dessinerCreneaux();
+    if (p && maintenantChoisi()) selecteur.dessiner();
   }
-  $('ct-jours').addEventListener('click', (e) => { const b = e.target.closest('[data-jour]'); if (b) { jourChoisi = b.dataset.jour; dessinerCreneaux(); } });
-  $('ct-choisis').addEventListener('click', (e) => { const b = e.target.closest('[data-retirer]'); if (b) { choisis = choisis.filter((c) => c !== b.dataset.retirer); dessinerCreneaux(); } });
-  $('ct-heures').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-heure]');
-    if (!b) return;
-    const iso = b.dataset.heure, nb = nbSeances();
-    if (choisis.includes(iso)) choisis = choisis.filter((c) => c !== iso);
-    else if ($('ct-repeter').checked) remplirSemaines(iso);
-    else if (choisis.length >= nb) { afficherMsg(msg, T('Vous avez déjà choisi vos ' + nb + ' séances : retirez-en une pour en choisir une autre.', 'You have already chosen your ' + nb + ' sessions: remove one to choose another.'), 'err'); return; }
-    else choisis = choisis.concat(iso).sort();
-    msg.className = 'form-msg'; msg.textContent = '';
-    dessinerCreneaux();
-  });
-  $('ct-convenir').addEventListener('change', majCreneaux);
+  form.querySelectorAll('input[name="choix_creneaux"]').forEach((r) => r.addEventListener('change', majCreneaux));
   function majFormule() {
     const f = formule();
     $('ct-bloc-prive').classList.toggle('u-hidden', !f || f === 'groupe');
@@ -292,9 +220,10 @@
       if (parcours() === 'base' && formule() !== 'groupe' && modulesTous().length > MAX_MOIS_PRIVE) return erreur(T('En privé : 7 mois de thèmes au plus (28 séances). Retirez un thème ou passez-en un à 1 mois.', 'Private lessons: 7 months of themes at most (28 sessions). Remove a theme or set one to 1 month.'), form.querySelector('#ct-themes input:checked'));
       if (parcours() === 'base' && !modulesChoisis().length) return erreur(T('Cochez au moins un thème à travailler.', 'Please tick at least one theme to work on.'), form.querySelector('#ct-themes input'));
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
-      if (prive() && !convenir() && choisis.length < nbSeances()) {
-        const reste = nbSeances() - choisis.length;
-        return erreur(T('Choisissez vos créneaux (encore ' + reste + '), ou « Dates à convenir ensemble ».', 'Please choose your time slots (' + reste + ' more), or “Dates to be agreed together”.'), $('ct-heures').querySelector('button:not([disabled])') || $('ct-convenir'));
+      if (prive() && !choixCreneaux()) return erreur(T('Dites-nous quand vous choisirez vos créneaux.', 'Please tell us when you will choose your time slots.'), form.querySelector('input[name="choix_creneaux"]'));
+      if (prive() && maintenantChoisi() && choisis().length < nbSeances()) {
+        const reste = nbSeances() - choisis().length;
+        return erreur(T('Choisissez vos créneaux (encore ' + reste + '), ou une autre façon ci-dessus.', 'Please choose your time slots (' + reste + ' more), or another option above.'), $('ct-heures').querySelector('button:not([disabled])') || $('ct-bloc-facons'));
       }
     }
     if (n === 2) {
@@ -451,8 +380,10 @@
       concours_date: ['miss', 'beaute'].includes($('ct-objectif').value) ? ($('ct-concours-date').value || null) : null,
       niveau: (form.querySelector('input[name="niveau"]:checked') || {}).value || null,
       // (14/11/2026) créneaux choisis (la base les réserve) ; ils sont aussi écrits pour l'agence (résumé WhatsApp)
-      creneaux: prive() && !convenir() ? choisis.slice() : null,
-      disponibilites: f === 'groupe' ? null : !convenir() ? ('Créneaux choisis : ' + pourAgence(choisis)).slice(0, 600) : ($('ct-dispo').value.trim() || null),
+      creneaux: prive() && maintenantChoisi() ? choisis() : null,
+      choix_creneaux: prive() ? choixCreneaux() || 'convenir' : null,
+      disponibilites: f === 'groupe' ? null : maintenantChoisi() ? ('Créneaux choisis : ' + TCr.pourAgence(choisis())).slice(0, 600)
+        : choixCreneaux() === 'apres' ? 'Choisira ses créneaux après son paiement (sur son lien)' : ($('ct-dispo').value.trim() || null),
       adresse: f === 'prive_exterieur' ? $('ct-adresse').value.trim() : null,
       parent_nom: mineure() ? $('ct-parent-nom').value.trim() : null,
       parent_telephone: mineure() ? composerTelephone($('ct-parent-indicatif'), $('ct-parent-telephone')) : null,
@@ -488,16 +419,15 @@
     // l'inscription part sans créneau, ses souhaits écrits pour l'agence, qui l'appelle.
     if (error && error.creneauPris && !reprise) {
       await EnvoiFiable.oublier('cours-talons');
-      envoiEnCours = false; libres = null; chargementLibres = null;
-      await chargerLibres();
-      choisis = choisis.filter((c) => libres && libres.has(cleHeure(c)));
+      envoiEnCours = false;
+      await selecteur.relire();
       majCreneaux();
       montrer(1);
       erreur(T('Un de vos créneaux n’est plus disponible (réservé entre-temps). Choisissez-en un autre, puis renvoyez votre inscription (vos photos et votre vidéo sont gardées).', 'One of your slots is no longer available (booked in the meantime). Please choose another one, then send your sign-up again (your photos and video are kept).'), $('ct-heures'));
       return;
     }
     if (error && error.creneauPris) {
-      Object.assign(ligne, { creneaux: null, disponibilites: ('À convenir (créneaux souhaités, un n’était plus libre) : ' + pourAgence(etat.ligne.creneaux || [])).slice(0, 600) });
+      Object.assign(ligne, { creneaux: null, choix_creneaux: 'convenir', disponibilites: ('À convenir (créneaux souhaités, un n’était plus libre) : ' + TCr.pourAgence(etat.ligne.creneaux || [])).slice(0, 600) });
       ({ error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok')));
     }
     const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(ligne, etat.montant));
@@ -518,10 +448,14 @@
     p1.textContent = error
       ? T('Merci ! Les inscriptions en ligne ouvrent très bientôt : touchez le bouton ci-dessous pour envoyer votre inscription à l’agence sur WhatsApp.', 'Thank you! Online sign-ups open very soon: tap the button below to send your sign-up to the agency on WhatsApp.')
       : (ligne.decision === 'maintenant'
-        ? (ligne.creneaux && ligne.creneaux.length
+        ? (ligne.choix_creneaux === 'apres'
+          ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, vous recevrez votre lien personnel pour choisir vos créneaux.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, you will receive your personal link to choose your slots.')
+          : ligne.creneaux && ligne.creneaux.length
           ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, elle vous confirme vos créneaux sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, it confirms your slots on WhatsApp.')
           : T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, it confirms your place on WhatsApp.'))
-        : ligne.creneaux && ligne.creneaux.length
+        : ligne.choix_creneaux === 'apres'
+          ? T('Merci ! Votre inscription est bien reçue. Dès votre paiement validé, vous recevrez votre lien personnel pour choisir vos créneaux.', 'Thank you! Your sign-up has been received. Once your payment is confirmed, you will receive your personal link to choose your slots.')
+          : ligne.creneaux && ligne.creneaux.length
           ? T('Merci ! Votre inscription est bien reçue et vos créneaux sont gardés 48 h, le temps de votre paiement. L’agence vous recontacte sur WhatsApp.', 'Thank you! Your sign-up has been received and your slots are held for 48 hours while you pay. The agency will contact you on WhatsApp.')
           : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
     merci.appendChild(p1);

@@ -143,37 +143,19 @@
 .ct-carte-plus { font-size: 0.92rem; }
 .ct-carte-plus a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
-/* (14/11/2026, maquette validée : maquettes/creneaux-prives.html) cours privés : créneaux libres, ou « à convenir » */
+/* (15/11/2026) cours privés : les trois façons ; le choix des créneaux lui-même est dans css/talons-creneaux.css
+   (commun avec la page « Mon programme ») */
+.ct-facons { display: grid; gap: 0.6rem; margin-top: 0.5rem; }
+.ct-facon { position: relative; display: block; cursor: pointer; }
+.ct-facon.u-hidden { display: none; }
+.ct-facon input { position: absolute; opacity: 0; pointer-events: none; }
+.ct-facon > span { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.85rem 1rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; }
+.ct-facon > span > i { flex: 0 0 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center; font-style: normal; background: rgba(255, 255, 255, 0.12); }
+.ct-facon strong { display: block; font-size: 0.98rem; }
+.ct-facon em { display: block; font-style: normal; font-size: 0.86rem; opacity: 0.88; }
+.ct-facon:hover > span { background: var(--lx-verre-fort); }
+.ct-facon input:checked + span { background: #fff; border-color: #fff; color: var(--rouge-profond); }
+.ct-facon input:checked + span > i { background: #F3DDE0; }
+.ct-facon input:checked + span em { color: #6E4F53; opacity: 1; }
+.ct-facon input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
 .ct-creneaux { margin-top: 1.2rem; }
-.ct-jours { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.2rem 0 0.5rem; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
-.ct-jour, .ct-heure, .ct-retirer { font: inherit; cursor: pointer; color: #fff; background: transparent; border: 1px solid rgba(255, 255, 255, 0.35); }
-.ct-jour { flex: 0 0 3.8rem; display: grid; justify-items: center; gap: 0.05rem; padding: 0.5rem 0; border-radius: 14px; }
-.ct-jour small { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.88; }
-.ct-jour b { font: 600 1.45rem/1.05 'Cormorant Garamond', Georgia, serif; }
-.ct-jour i { font-style: normal; font-size: 0.66rem; opacity: 0.85; }
-.ct-jour.on { background: #fff; border-color: #fff; color: var(--rouge-profond); }
-.ct-jour:disabled { opacity: 0.35; cursor: default; }
-.ct-heures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.8rem; }
-.ct-heure { padding: 0.75rem 0; border-radius: 12px; font-weight: 600; font-size: 0.95rem; }
-.ct-heure.on { background: #fff; border-color: #fff; color: var(--rouge-profond); }
-.ct-heure.pris, .ct-heure:disabled { opacity: 0.4; text-decoration: line-through; font-weight: 400; cursor: default; }
-.ct-jour:not(:disabled):hover, .ct-heure:not(:disabled):not(.on):hover { background: var(--lx-verre-fort); }
-.ct-jour:focus-visible, .ct-heure:focus-visible, .ct-retirer:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.ct-legende { margin: 0.5rem 0 0; font-size: 0.82rem; opacity: 0.88; }
-.ct-repeter { display: flex; gap: 0.7rem; align-items: center; margin: 1rem 0 1.2rem; padding: 0.8rem 0.9rem; border-radius: 14px; background: rgba(255, 255, 255, 0.1); cursor: pointer; font-size: 0.93rem; }
-.ct-repeter input { width: 1.2rem; height: 1.2rem; accent-color: #fff; flex: none; }
-.ct-choisis { list-style: none; margin: 0.5rem 0 0; padding: 0; border-radius: 16px; overflow: hidden; background: #fff; color: #2A1416; }
-.ct-choisis li { display: flex; gap: 0.7rem; align-items: center; padding: 0.65rem 0.8rem; border-top: 1px solid #F2E7E8; font-size: 0.92rem; }
-.ct-choisis li:first-child { border-top: 0; }
-.ct-choisis em { flex: 0 0 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; color: #7C2128; font: italic 600 0.95rem 'Cormorant Garamond', Georgia, serif; }
-.ct-choisis span { flex: 1; min-width: 0; }
-.ct-choisis small { color: #6E4F53; white-space: nowrap; }
-.ct-choisis .ct-retirer { flex: none; width: 2rem; height: 2rem; border-radius: 50%; color: #7C2128; border-color: #EADCDD; }
-.ct-garde { display: flex; gap: 0.6rem; margin: 0.9rem 0 0; padding: 0.8rem 0.9rem; border-radius: 14px; border: 1px dashed rgba(255, 255, 255, 0.55); font-size: 0.88rem; line-height: 1.55; }
-.ct-ou { margin: 1.1rem 0 0.6rem; text-align: center; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.85; }
-.ct-convenir { position: relative; display: block; margin-top: 0.9rem; cursor: pointer; }
-.ct-convenir input { position: absolute; opacity: 0; pointer-events: none; }
-.ct-convenir > span { display: grid; gap: 0.15rem; padding: 0.9rem 1rem; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.5); text-align: center; }
-.ct-convenir em { font-style: normal; font-size: 0.88rem; opacity: 0.88; }
-.ct-convenir input:checked + span { background: #fff; border-color: #fff; color: var(--rouge-profond); }
-.ct-convenir input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }

@@ -13,7 +13,8 @@
         method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify(params)
       }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        // (15/11/2026) le message de la base suit le code (ex. « CRENEAU_PRIS » pour la page « Mon programme »)
+        if (!r.ok) return r.json().catch(function () { return {}; }).then(function (j) { throw new Error('HTTP ' + r.status + (j && j.message ? ' ' + j.message : '')); });
         return r.json();
       });
     },

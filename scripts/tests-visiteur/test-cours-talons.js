@@ -114,9 +114,22 @@ async function navigateur() {
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
     // (14/11/2026) cours privés : créneaux libres seulement, ou « dates à convenir ensemble »
     if (pasPret === true) {
-      ok(await p.isHidden('#ct-bloc-creneaux') && await p.isChecked('#ct-convenir') && await p.isVisible('#ct-dispo'), n + 'créneaux pas encore installés : « dates à convenir », le champ des disponibilités');
+      await p.waitForTimeout(500);
+      if (process.env.DEBUG_CT) console.log(await p.evaluate(() => ['ct-bloc-facons', 'ct-facon-maintenant', 'ct-facon-apres', 'ct-bloc-creneaux', 'ct-dispo'].map((i) => i + ':' + !!document.getElementById(i).offsetParent).join(' ') + ' conv:' + document.querySelector('input[name="choix_creneaux"][value="convenir"]').checked));
+      ok(await p.isVisible('#ct-bloc-facons') && await p.isHidden('#ct-facon-maintenant') && await p.isHidden('#ct-facon-apres') && await p.isHidden('#ct-bloc-creneaux') && await p.isChecked('input[name="choix_creneaux"][value="convenir"]') && await p.isVisible('#ct-dispo'), n + 'créneaux pas encore installés : « dates à convenir », le champ des disponibilités');
       await p.fill('#ct-dispo', 'samedi matin');
     } else {
+      // (15/11/2026, maquette v2) trois façons : maintenant, après le paiement, à convenir
+      await p.waitForTimeout(500);
+      ok(await p.isVisible('#ct-facon-maintenant') && await p.isVisible('#ct-facon-apres') && await p.isVisible('#ct-facon-convenir') && await p.isHidden('#ct-bloc-creneaux') && await p.isHidden('#ct-dispo'), n + 'cours privés : trois façons de choisir ses créneaux');
+      await p.click('#ct-suivant');
+      ok(/quand vous choisirez|when you will choose/.test(await p.textContent('#ct-msg')), n + 'sans façon choisie : on reste à l’étape 1 avec un message');
+    }
+    if (pasPret !== true && en) {
+      await p.click('#ct-facon-apres');
+      ok(await p.isHidden('#ct-bloc-creneaux') && await p.isHidden('#ct-dispo'), n + '« je choisirai après mon paiement » : rien à choisir maintenant');
+    } else if (pasPret !== true) {
+      await p.click('#ct-facon-maintenant');
       await p.waitForSelector('#ct-jours button', { timeout: 5000 }).catch(() => {});
       ok(await p.isVisible('#ct-bloc-creneaux') && await p.isHidden('#ct-dispo') && await p.locator('#ct-jours button').count() === 36, n + 'créneaux : 6 semaines du lundi au samedi (36 jours), pas de champ libre');
       ok(!(await p.$$eval('#ct-jours small', (l) => l.map((x) => x.textContent.toLowerCase()))).some((j) => /^(dim|sun)/.test(j)), n + 'jamais le dimanche (réservé au groupe)');
@@ -152,9 +165,9 @@ async function navigateur() {
       await p.click('#ct-heures [data-heure="' + samedi + 'T18:00:00.000Z"]');
       ok(/déjà choisi|already chosen/.test(await p.textContent('#ct-msg')) && await p.locator('#ct-choisis li').count() === 10, n + 'pas plus de créneaux que de séances');
       // « dates à convenir » puis retour aux créneaux
-      await p.click('#ct-bloc-convenir');
+      await p.click('#ct-facon-convenir');
       ok(await p.isHidden('#ct-bloc-creneaux') && await p.isVisible('#ct-dispo'), n + '« dates à convenir ensemble » : les créneaux disparaissent, le champ des disponibilités apparaît');
-      await p.click('#ct-bloc-convenir');
+      await p.click('#ct-facon-maintenant');
       ok(await p.locator('#ct-choisis li').count() === 10, n + 'retour aux créneaux : les choix sont gardés');
     }
     await p.click('#ct-suivant');
@@ -237,8 +250,9 @@ async function navigateur() {
       ok(envoi.length === 1 && journal.some((j) => j[0] === 'ANTI-ROBOT' && j[1] === 'cours_talons'), n + 'inscription envoyée une fois, par le serveur (anti-robots)');
       ok(l.parcours === 'debut' && l.modules === null, n + 'parcours « je débute » envoyé (sans thèmes)');
       ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
-      ok(Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
-      ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
+      if (en) ok(l.choix_creneaux === 'apres' && !l.creneaux && /lien personnel|personal link/.test(merci), n + '« après mon paiement » envoyé, sans créneau ; merci : « vous recevrez votre lien personnel »');
+      else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
+      if (!en) ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
       ok(Array.isArray(l.photos) && l.photos.length === 2 && l.video === 'https://drive.google.com/video-marche' && !('statut' in l) && !('montant' in l), n + 'liens Drive des 2 photos et de la vidéo ; ni statut ni montant envoyés (la base décide)');

@@ -51,3 +51,6 @@
   quelle heure pile de 10 h à 18 h**, 1 h 30 de pause entre deux cours, créneaux gardés 48 h, ou « dates à convenir ».
 - Construite le 14/11/2026 (README-TECHNIQUE.md, « Créneaux des cours privés ») : `supabase-creneaux-prives.sql` à
   coller par la propriétaire. Prochaine : étape 4, planning jour par jour et notification 24 h avant.
+- **15/11/2026, v2 validée** (« Je valide », `maquettes/creneaux-prives-v2.html`) : trois façons à l'inscription
+  (maintenant / après mon paiement / à convenir), choix ou déplacement (jusqu'à 24 h avant) sur son lien une fois
+  payée, « Mes indisponibilités » de l'agence. Construite le même jour (README-TECHNIQUE.md, « Créneaux v2 »).

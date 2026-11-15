@@ -97,3 +97,64 @@ reset role;
 select essai(not exists (select 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0903'), 'réservation expirée retirée à la réservation suivante');
 select essai(exists (select 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0907') and exists (select 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0909'), 'séance à la main et « paiement envoyé » : gardées');
 select essai((select bool_and(reservee) from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0910'), 'séance réservée par l''élève : marquée « réservée »');
+-- v2 (15/11/2026) : indisponibilités de l'agence ; « je choisirai après mon paiement » ; déplacer une séance
+select (current_date + 70 + ((3 - extract(dow from current_date + 70)::int + 7) % 7))::date as merc \gset
+-- l'agence n'est pas là le mercredi de 10 h à 14 h
+insert into cours_talons_indispo (debut, fin, raison) values ((:'merc'::date + time '10:00') at time zone 'UTC', (:'merc'::date + time '14:00') at time zone 'UTC', 'Shooting');
+set role anon;
+select essai((select array_agg(extract(hour from t at time zone 'UTC')::int order by t) from cours_talons_creneaux_libres(:'merc', 1) t) = array[14, 15, 16, 17, 18], 'indisponibilité de 10 h à 14 h : rien proposé avant 14 h');
+select essai_refuse($$set role anon; select count(*) from cours_talons_indispo$$, 'visiteur : ne lit pas les indisponibilités');
+reset role;
+select essai_refuse($$set role service_role; select formulaire_public_enregistrer('cours_talons', jsonb_build_object('id', '00000000-0000-0000-0000-0000000c0911', 'formule', 'prive_salle', 'nb_seances', 1,
+  'nom', 'Pendant Indispo', 'telephone', '+2250700000211', 'age', 30, 'creneaux', jsonb_build_array((current_date + 70 + ((3 - extract(dow from current_date + 70)::int + 7) % 7) + time '12:00') at time zone 'UTC')), '4.4.5.11')$$, 'réserver pendant une indisponibilité : refusé');
+reset role;
+-- « je choisirai après mon paiement » : rien de réservé, puis elle choisit sur son lien une fois payée
+set role service_role;
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0912","formule":"prive_salle","nb_seances":3,"nom":"Choisira Apres","telephone":"+2250700000212","age":30,"choix_creneaux":"apres"}'::jsonb, '4.4.5.12');
+select formulaire_public_enregistrer('cours_talons', '{"id":"00000000-0000-0000-0000-0000000c0913","formule":"prive_salle","nb_seances":1,"nom":"Faux Maintenant","telephone":"+2250700000213","age":30,"choix_creneaux":"maintenant"}'::jsonb, '4.4.5.13');
+reset role;
+select essai((select choix_creneaux from cours_talons where id = '00000000-0000-0000-0000-0000000c0912') = 'apres' and not exists (select 1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0912'), '« après mon paiement » : noté, rien de réservé');
+select essai((select choix_creneaux from cours_talons where id = '00000000-0000-0000-0000-0000000c0913') = 'convenir', '« maintenant » sans aucun créneau : rangé dans « à convenir »');
+select jeton as japres from cours_talons where id = '00000000-0000-0000-0000-0000000c0912' \gset
+select essai_refuse($$set role anon; select programme_talons_choisir('$$ || :'japres' || $$', array[(current_date + 80 + time '10:00') at time zone 'UTC'])$$, 'avant le paiement : elle ne peut pas encore choisir');
+reset role;
+update cours_talons set statut = 'inscrite', valide_le = now() where id = '00000000-0000-0000-0000-0000000c0912';
+select (current_date + 90 + ((1 - extract(dow from current_date + 90)::int + 7) % 7))::date as lundi \gset
+set role anon;
+select essai(programme_talons_choisir(:'japres', array[(:'lundi'::date + time '10:00') at time zone 'UTC', (:'lundi'::date + 7 + time '10:00') at time zone 'UTC']) = 2, 'payée : elle choisit 2 créneaux sur son lien');
+reset role;
+select essai((select count(*) from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0912') = 2, 'ses 2 séances sont dans son programme');
+select essai_refuse($$set role anon; select programme_talons_choisir('$$ || :'japres' || $$', array[(current_date + 120 + time '10:00') at time zone 'UTC', (current_date + 121 + time '10:00') at time zone 'UTC'])$$, 'plus que les séances restantes (1) : refusé');
+reset role;
+select essai_refuse($$set role anon; select programme_talons_choisir('$$ || :'japres' || $$', array[(current_date + 90 + ((1 - extract(dow from current_date + 90)::int + 7) % 7) + time '12:00') at time zone 'UTC'])$$, 'à moins de 1 h 30 de sa propre séance : refusé');
+reset role;
+select essai_refuse($$set role anon; select programme_talons_choisir('ffffffffffffffffffffffffffffffffffff', array[(current_date + 130 + time '10:00') at time zone 'UTC'])$$, 'mauvais lien : refusé');
+reset role;
+-- déplacer : la séance du lundi passe au mardi 15 h ; jamais à moins de 24 h, jamais la séance d'une autre
+select id as s1 from cours_talons_seances where inscription_id = '00000000-0000-0000-0000-0000000c0912' order by debut limit 1 \gset
+set role anon;
+select essai(programme_talons_deplacer(:'japres', :'s1', (:'lundi'::date + 1 + time '15:00') at time zone 'UTC'), 'elle déplace sa séance au mardi 15 h');
+reset role;
+select essai((select debut = (:'lundi'::date + 1 + time '15:00') at time zone 'UTC' and fin - debut = interval '2 hours' from cours_talons_seances where id = :'s1'), 'séance déplacée, toujours 2 h');
+set role anon;
+select essai(programme_talons_deplacer(:'japres', :'s1', (:'lundi'::date + 1 + time '16:00') at time zone 'UTC'), 'déplacer d''une heure seulement : permis (sa propre séance ne la bloque pas)');
+reset role;
+update cours_talons_seances set debut = now() + interval '20 hours', fin = now() + interval '22 hours' where id = :'s1';
+select essai_refuse($$set role anon; select programme_talons_deplacer('$$ || :'japres' || $$', '$$ || :'s1' || $$', (current_date + 140 + time '10:00') at time zone 'UTC')$$, 'à moins de 24 h : plus déplaçable');
+reset role;
+select id as autre from cours_talons_seances where inscription_id <> '00000000-0000-0000-0000-0000000c0912' limit 1 \gset
+select essai_refuse($$set role anon; select programme_talons_deplacer('$$ || :'japres' || $$', '$$ || :'autre' || $$', (current_date + 150 + time '10:00') at time zone 'UTC')$$, 'la séance d''une autre élève : refusé');
+reset role;
+-- « Déplacer » : sur sa page, les heures voisines de SA séance ne sont pas bloquées par elle (jamais celles d'une autre)
+update cours_talons_seances set debut = (:'lundi'::date + 14 + time '14:00') at time zone 'UTC', fin = (:'lundi'::date + 14 + time '16:00') at time zone 'UTC' where id = :'s1';
+set role anon;
+select essai((select count(*) from cours_talons_creneaux_libres(:'lundi'::date + 14, 1)) = 2, 'lundi avec sa séance de 14 h : seulement 10 h et 18 h pour les autres');
+select essai((select count(*) from cours_talons_creneaux_libres(:'lundi'::date + 14, 1, :'japres', :'s1')) = 9, 'en la déplaçant : toutes les heures du lundi lui sont proposées');
+select essai((select count(*) from cours_talons_creneaux_libres(:'lundi'::date + 14, 1, 'ffffffffffffffffffffffffffffffffffff', :'s1')) = 2, 'un autre lien ne libère pas sa séance');
+select essai(programme_talons_lire(:'japres')->>'choix_creneaux' = 'apres', 'sa page connaît sa façon de choisir (« après »)');
+reset role;
+-- « à convenir » : l'agence fixe les dates, la page ne laisse pas choisir
+update cours_talons set statut = 'inscrite', valide_le = now(), choix_creneaux = 'convenir' where id = '00000000-0000-0000-0000-0000000c0907';
+select jeton as jconv from cours_talons where id = '00000000-0000-0000-0000-0000000c0907' \gset
+select essai_refuse($$set role anon; select programme_talons_choisir('$$ || :'jconv' || $$', array[(current_date + 160 + time '10:00') at time zone 'UTC'])$$, '« à convenir » : elle ne choisit pas elle-même');
+reset role;

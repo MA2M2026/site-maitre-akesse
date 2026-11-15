@@ -19,7 +19,7 @@
   function jourCle(d) { return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); }
   function plage(s) { return heure(s.debut) + ' – ' + heure(s.fin); }
   function dateCourte(d) { return d.getUTCDate() + ' ' + MOIS_COURTS[d.getUTCMonth()]; }
-  function dateLongue(d) { var j = JOURS[d.getUTCDay()]; return j.charAt(0).toUpperCase() + j.slice(1) + ' ' + (d.getUTCDate() === 1 ? '1er' : d.getUTCDate()) + ' ' + MOIS[d.getUTCMonth()]; }
+  function dateLongue(d) { return window.TalonsCreneaux.dateLongue(d, false); }   // (js/talons-creneaux.js)
   function erreur(texte) { $('pt-accroche').textContent = texte; }
 
   if (!L || !L.jetonValable(jeton)) { erreur('Ce lien n’est pas valable. Écrivez-nous sur WhatsApp, nous vous renverrons votre programme.'); return; }
@@ -42,6 +42,14 @@
         mois: mois, aRegler: mois > moisPayes, faite: !!s.faite || (fin < maintenant && mois <= moisPayes) };   // (un dimanche non payé n'est jamais « fait »)
     }).filter(function (s) { return !isNaN(s.debut) && !isNaN(s.fin); });
     var aVenir = seances.filter(function (s) { return !s.faite; });
+    // (15/11/2026) cours privés : séances payées pas encore placées (elle les choisit ici) ; une séance se déplace
+    // jusqu'à 24 h avant
+    // (seulement une inscription en cours : « terminée », plus rien à choisir ni à déplacer ; « à convenir » : l'agence
+    // fixe les dates avec elle)
+    var ouverte = !groupe && p.statut === 'inscrite';
+    var reste = ouverte ? Math.max(0, (p.nb_seances || 0) - seances.length) : 0;
+    var choisirIci = reste > 0 && p.choix_creneaux !== 'convenir';
+    var deplacable = function (s) { return ouverte && !s.faite && s.id && s.debut.getTime() - maintenant.getTime() > JOUR; };
     var aAjouter = aVenir.filter(function (s) { return !s.aRegler; });
     var prochaine = aAjouter[0] || null;   // (jamais une séance d'un mois pas encore réglé)
     var demain = false;
@@ -76,6 +84,9 @@
     } else if (aVenir.length) {
       $('pt-proch-titre').textContent = 'Votre mois suivant est à régler';
       $('pt-proch-detail').textContent = 'Dès votre paiement (' + T.fcfa(p.prix_mois || T.PRIX_MOIS) + '), ses séances s’ajoutent à votre programme. Écrivez-nous sur WhatsApp.';
+    } else if (choisirIci) {
+      $('pt-proch-titre').textContent = 'Choisissez vos créneaux';
+      $('pt-proch-detail').textContent = (reste > 1 ? 'Vos ' + reste + ' séances sont réglées' : 'Votre séance est réglée') + ' : choisissez vos dates ci-dessous, quand vous serez décidée.';
     } else {
       $('pt-proch-titre').textContent = seances.length ? 'Programme terminé : bravo !' : 'Vos séances seront bientôt programmées';
       $('pt-proch-detail').textContent = seances.length ? 'Merci d’avoir suivi l’Atelier Talons & Élégance.' : 'Nous vous écrirons sur WhatsApp avec les dates.';
@@ -83,7 +94,7 @@
 
     // séances
     var frise = $('pt-seances'); frise.textContent = '';
-    if (!seances.length) { var vide = document.createElement('p'); vide.className = 'pt-vide'; vide.textContent = 'Les dates de vos séances apparaîtront ici.'; frise.appendChild(vide); }
+    if (!seances.length && !reste) { var vide = document.createElement('p'); vide.className = 'pt-vide'; vide.textContent = 'Les dates de vos séances apparaîtront ici.'; frise.appendChild(vide); }
     var moisAffiche = 0;
     seances.forEach(function (s) {
       // titre de chaque mois (groupe sur plusieurs mois) ou de chaque thème (privé) : le module de SON programme
@@ -108,8 +119,24 @@
       var b = document.createElement('b'); b.textContent = s.theme || 'Séance ' + s.n;
       var c = document.createElement('span'); c.textContent = plage(s) + ' · ' + s.lieu;
       t.appendChild(a); t.appendChild(b); t.appendChild(c);
-      l.appendChild(date); l.appendChild(t); frise.appendChild(l);
+      l.appendChild(date); l.appendChild(t);
+      if (deplacable(s)) {
+        var dep = document.createElement('button'); dep.type = 'button'; dep.className = 'pt-deplacer'; dep.dataset.seance = s.id; dep.textContent = 'Déplacer';
+        dep.setAttribute('aria-label', 'Déplacer la séance ' + s.n + ' du ' + dateLongue(s.debut));
+        l.appendChild(dep);
+      }
+      frise.appendChild(l);
     });
+    // séances payées pas encore placées : « À choisir »
+    for (var r = 0; r < reste; r++) {
+      var lc = document.createElement('div'); lc.className = 'pt-seance a-choisir';
+      var dc = document.createElement('div'); dc.className = 'pt-date'; var bc = document.createElement('b'); bc.textContent = String(seances.length + r + 1); dc.appendChild(bc);
+      var tc = document.createElement('div'); tc.className = 'pt-seance-t';
+      var sc = document.createElement('small'); sc.textContent = 'Séance ' + (seances.length + r + 1);
+      var bt = document.createElement('b'); bt.textContent = choisirIci ? 'À choisir' : 'Date à fixer avec l’agence';
+      tc.appendChild(sc); tc.appendChild(bt); lc.appendChild(dc); lc.appendChild(tc); frise.appendChild(lc);
+    }
+    creneaux(seances, choisirIci ? reste : 0);
 
     // le jour J (lieu et heure de la prochaine séance, sinon de la dernière)
     var reference = prochaine || seances[seances.length - 1];
@@ -134,6 +161,68 @@
       bouton.addEventListener('click', function () { telechargerIcs(aAjouter, p, nom); });
     }
     $('pt-contenu').hidden = false;
+  }
+
+  // (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html) choisir ses créneaux restants, ou déplacer une
+  // séance : le choix est commun avec le formulaire d'inscription (js/talons-creneaux.js) ; la base revérifie tout
+  // (programme_talons_choisir / programme_talons_deplacer, supabase-creneaux-prives.sql)
+  function creneaux(seances, reste) {
+    var bloc = $('pt-bloc-choisir'), TCr = window.TalonsCreneaux;
+    if (!TCr || (!reste && !document.querySelector('.pt-deplacer'))) return;
+    var mode = reste ? { choisir: true } : null;
+    var msg = $('pt-choisir-msg');
+    var dire = function (texte, err) { msg.textContent = texte; msg.className = 'pt-note' + (err ? ' err' : ''); };
+    var sel = TCr.creer({
+      jours: $('pt-jours'), heures: $('pt-heures'), liste: $('pt-choisis'), titre: $('pt-choisis-titre'), repeter: $('pt-repeter'), en: false,
+      nb: function () { return mode && mode.seance ? 1 : reste; },
+      // (déplacer : sa propre séance ne bloque pas les heures voisines)
+      lire: function (du, jours) { return L.rpc('cours_talons_creneaux_libres', mode && mode.seance ? { p_du: du, p_jours: jours, p_jeton: jeton, p_seance: mode.seance.id } : { p_du: du, p_jours: jours }); },
+      trop: function (nb) { dire('Vous avez déjà choisi vos ' + nb + ' séances : retirez-en une pour en choisir une autre.', true); },
+      change: function () { dire(''); if (mode) sel.dessiner(); }
+    });
+    function ouvrir(m) {
+      mode = m;
+      var dep = !!m.seance;
+      sel.vider();
+      $('pt-repeter').checked = !dep; $('pt-bloc-repeter').hidden = dep;
+      $('pt-choisir-sur').textContent = dep ? 'Déplacer une séance' : 'Vos créneaux';
+      $('pt-choisir-titre').textContent = '';
+      $('pt-choisir-titre').append(dep ? 'Séance du ' + dateLongue(m.seance.debut) + ' · ' : 'Choisissez ');
+      var em = document.createElement('em'); em.textContent = dep ? 'nouveau créneau' : 'vos créneaux'; $('pt-choisir-titre').appendChild(em);
+      $('pt-valider').textContent = dep ? 'Confirmer le déplacement' : 'Valider mes créneaux';
+      $('pt-annuler').hidden = !dep;
+      bloc.hidden = false; dire('');
+      sel.charger(true);   // (relu : en déplaçant, sa séance est laissée de côté)
+    }
+    $('pt-seances').addEventListener('click', function (e) {
+      var b = e.target.closest('.pt-deplacer');
+      if (!b) return;
+      var s = seances.filter(function (x) { return x.id === b.dataset.seance; })[0];
+      if (!s) return;
+      ouvrir({ seance: s });
+      if (typeof bloc.scrollIntoView === 'function') bloc.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    $('pt-annuler').addEventListener('click', function () { if (reste) ouvrir({ choisir: true }); else { mode = null; bloc.hidden = true; } });
+    $('pt-valider').addEventListener('click', function () {
+      var l = sel.choisis();
+      if (!l.length) { dire(mode.seance ? 'Touchez une heure libre pour le nouveau créneau.' : 'Touchez un jour puis une heure libre.', true); return; }
+      var bouton = $('pt-valider'); bouton.disabled = true;
+      dire('Enregistrement…');
+      var appel = mode.seance ? L.rpc('programme_talons_deplacer', { p_jeton: jeton, p_seance: mode.seance.id, p_debut: l[0] })
+        : L.rpc('programme_talons_choisir', { p_jeton: jeton, p_creneaux: l });
+      appel.then(function () {
+        dire(mode.seance ? 'C’est noté : votre séance est déplacée.' : 'C’est noté : vos créneaux sont réservés.');
+        setTimeout(function () { location.reload(); }, 900);
+      }, function (e) {
+        bouton.disabled = false;
+        var m = String((e && e.message) || '');
+        if (/LIEN_INVALIDE/.test(m)) dire('Votre inscription ne permet plus de choisir ici. Écrivez-nous sur WhatsApp.', true);
+        else if (/SEANCE_FIGEE/.test(m)) dire('Cette séance ne peut plus être déplacée (moins de 24 h avant). Écrivez-nous sur WhatsApp.', true);
+        else if (/CRENEAU_PRIS|CRENEAUX_INVALIDES/.test(m)) sel.relire().then(function () { sel.dessiner(); dire('Un de ces créneaux vient d’être pris : choisissez-en un autre.', true); });
+        else dire('Connexion impossible pour le moment. Réessayez dans un instant.', true);
+      });
+    });
+    if (reste) ouvrir({ choisir: true });
   }
 
   // calendrier : le mois de la prochaine séance ; flèches pour aller d'un mois à l'autre entre la première et la dernière

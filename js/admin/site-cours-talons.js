@@ -29,6 +29,9 @@
   const T = window.TalonsCommun;   // js/talons-commun.js (heures, mois, lieu de la salle, vouvoiement)
   const LIEU_SALLE = T.LIEU_SALLE;
   let seancesDe = {}, programmeAbsent = false;
+  // (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html) indisponibilités de l'agence (supabase-creneaux-prives.sql)
+  let indispos = [], indispoAbsent = false;
+  const indispoPasInstallee = P.pasActivee('cours_talons_indispo');
   const quandSeance = (s) => { const a = new Date(s.debut), b = new Date(s.fin); const j = T.JOURS[a.getUTCDay()];
     return j.charAt(0).toUpperCase() + j.slice(1, 3) + '. ' + a.getUTCDate() + ' ' + T.MOIS_COURTS[a.getUTCMonth()] + ' · ' + T.heure(a) + ' – ' + T.heure(b); };
   const civilite = (d) => T.civilite(d.civilite, d.age) + ' ' + String(d.nom || '').trim();
@@ -105,13 +108,19 @@
     // titres des thèmes : lus une seule fois (programme pas encore collé : numéros seulement)
     const titres = Object.keys(titresProgramme).length ? null : P.bd(sb.from('cours_talons_programme').select('mois,titre'))
       .then((l) => { (l || []).forEach((x) => { titresProgramme[x.mois] = x.titre; }); }).catch(() => {});
-    if (lignes.some((d) => d.statut === 'inscrite' || d.statut === 'terminee')) {
+    // (15/11/2026) toutes les séances : aussi celles réservées à l'inscription (cours privés pas encore payés)
+    const indispoLu = P.bd(sb.from('cours_talons_indispo').select('*').gte('fin', new Date().toISOString()).order('debut').limit(200))
+      .then((l) => { indispos = l || []; indispoAbsent = false; }, (e) => { indispos = []; indispoAbsent = true; if (!indispoPasInstallee(e)) console.warn(e); });
+    if (lignes.length) {
       try {
-        const l = await P.bd(sb.from('cours_talons_seances').select('*').order('debut', { ascending: true }).limit(5000));
+        // « occupe » (calculé par la base, supabase-creneaux-prives.sql : une réservation pas payée expire après 48 h) ;
+        // relu sans lui tant que ce fichier n'est pas collé
+        const lire = (champs) => P.bd(sb.from('cours_talons_seances').select(champs).order('debut', { ascending: true }).limit(5000));
+        let l; try { l = await lire('*, occupe'); } catch (e) { if (programmePasInstalle(e)) throw e; l = await lire('*'); }
         (l || []).forEach((x) => { (seancesDe[x.inscription_id] = seancesDe[x.inscription_id] || []).push(x); });
       } catch (e) { if (!programmePasInstalle(e)) throw e; programmeAbsent = true; }
     }
-    await titres;
+    await titres; await indispoLu;
     const compte = (f) => lignes.filter((d) => f === 'toutes' || (f === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === f)).length;
     const visibles = lignes.filter((d) => filtre === 'toutes' || (filtre === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === filtre));
     const encaisse = lignes.filter((d) => d.statut === 'inscrite' || d.statut === 'terminee').reduce((t, d) => t + (d.montant || 0), 0);
@@ -120,6 +129,7 @@
     return P.entete('Cours de talons', '<a class="btn petit" href="/cours-talons" target="_blank" rel="noopener">Voir la page publique</a>') +
       '<p class="doux">Inscriptions à l’Atelier Talons &amp; Élégance (ouvert à toutes, sans intégrer l’agence). Groupe : 30 000 FCFA les 4 dimanches ; privé : 25 000 FCFA la séance en salle, 30 000 à 35 000 FCFA la séance à l’extérieur.</p>' +
       '<div class="chiffres">' + P.chiffre('À traiter', String(compte('a_traiter'))) + P.chiffre('Inscrites', String(compte('inscrite'))) + P.chiffre('Encaissé (inscrites et terminées)', P.fcfa(encaisse)) + '</div>' +
+      indisponibilites() +
       '<div class="carte f">' + onglets + '</div>' +
       // (13/11/2026, demande de la propriétaire) regroupées par jour d'inscription, les plus récentes en haut, comme les castings
       (visibles.length ? P.parJour(visibles, (d) => d.cree_le).map((g) => '<section class="jour-groupe"><h2 class="jour-titre">' + P.esc(g.titre) +
@@ -135,6 +145,9 @@
       // (14/11/2026) son parcours : elle débute (tout le programme) ou elle a la base (ses thèmes choisis)
       ['Parcours', d.parcours === 'base' ? 'A déjà la base · ' + resumeModules(d.modules) : d.parcours === 'debut' ? 'Débute : tout le programme, dans l’ordre' : ''],
       ['Formule', FORMULES[d.formule] + ' · ' + (d.formule === 'groupe' ? dureeGroupe(d) : seances(d))], ['Montant', P.fcfa(d.montant)],
+      // (15/11/2026) cours privés : la façon de choisir ses créneaux, et ce qui reste à placer une fois payée
+      ['Créneaux', d.formule === 'groupe' ? '' : ({ maintenant: 'Choisis à l’inscription', apres: 'Elle les choisit après son paiement, sur son lien', convenir: 'À convenir ensemble' }[d.choix_creneaux] || '') +
+        (d.valide_le && resteAChoisir(d) ? (d.choix_creneaux ? ' · ' : '') + resteAChoisir(d) + ' à placer' : '')],
       ['Mois payés', d.formule === 'groupe' && d.valide_le ? (d.mois_payes || 0) + ' / ' + nbMois(d) : ''],
       // (13/11/2026) le moyen choisi par la personne (Orange Money, carte…), Wave sinon
       ['Paiement', d.decision === 'maintenant' ? 'Payé par ' + nomMoyen(d.moyen) + ' à l’inscription' + (d.reference_wave ? ' (réf. ' + d.reference_wave + ')' : '') + ', à vérifier' : 'Paiera plus tard'],
@@ -225,7 +238,13 @@
       LIEN_WAVE_AGENCE + T.PRIX_MOIS + '\n\nLes dimanches de ce mois sont déjà dans ' + (parent ? 'son' : 'votre') + ' programme ; ils seront confirmés dès le paiement' + (d.jeton ? ' :\n' + LIEN_PROGRAMME + d.jeton : '.') +
       '\n\nMerci, à dimanche !\nMaître Akesse Model Management';
   }
+  // séances payées pas encore placées (cours privés : elle les choisit sur son lien)
+  const resteAChoisir = (d) => (d.formule === 'groupe' ? 0 : Math.max(0, (d.nb_seances || 0) - (seancesDe[d.id] || []).length));
   function messageProgramme(d, parent) {
+    const reste = d.choix_creneaux === 'convenir' ? 0 : resteAChoisir(d);
+    if (reste) return bonjour(d, parent) + (parent ? 'L’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance est confirmée, merci !\n' : 'Votre inscription à l’Atelier Talons & Élégance est confirmée, merci !\n') +
+      'Sur ' + (parent ? 'sa' : 'votre') + ' page personnelle, ' + (parent ? 'elle choisit ses' : 'vous choisissez vos') + ' créneaux (' + reste + ' séance' + (reste > 1 ? 's' : '') + ') parmi les heures libres, quand ' + (parent ? 'elle sera décidée' : 'vous serez décidée') + ' :\n' +
+      LIEN_PROGRAMME + d.jeton + '\n\nÀ très bientôt,\n' + SIGNATURE;
     if (parent) return bonjour(d, true) + 'L’inscription de ' + civilite(d) + ' à l’Atelier Talons & Élégance est confirmée, merci !\n' +
       'Voici son programme personnel : ses séances, le lieu, et un bouton pour les ajouter d’un coup à votre calendrier (avec un rappel la veille) :\n' +
       LIEN_PROGRAMME + d.jeton + '\n\nÀ très bientôt,\nMaître Akesse Model Management';
@@ -233,6 +252,76 @@
       'Voici votre programme personnel : vos séances, le lieu, et un bouton pour les ajouter d’un coup à votre calendrier (avec un rappel la veille) :\n' +
       LIEN_PROGRAMME + d.jeton + '\n\nÀ très bientôt,\nMaître Akesse Model Management';
   }
+  // « Mes indisponibilités » : ces heures ne sont plus proposées aux élèves ; une séance déjà prévue pendant l'une d'elles
+  // est signalée, avec un message WhatsApp pour lui faire choisir un autre créneau (sur son lien, « Déplacer »)
+  const quandIndispo = (i) => { const a = new Date(i.debut), b = new Date(i.fin); const jour = (d) => { const j = T.JOURS[d.getUTCDay()]; return j.charAt(0).toUpperCase() + j.slice(1) + ' ' + d.getUTCDate() + ' ' + T.MOIS[d.getUTCMonth()]; };
+    const journees = !a.getUTCHours() && !a.getUTCMinutes() && !b.getUTCHours() && !b.getUTCMinutes();
+    const veille = new Date(b.getTime() - 86400000);
+    if (journees) return veille.getTime() === a.getTime() ? jour(a) + ' · toute la journée' : 'Du ' + jour(a) + ' au ' + jour(veille) + ' · journées entières';
+    return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10) ? jour(a) + ' · ' + T.heure(a) + ' – ' + T.heure(b) : 'Du ' + jour(a) + ', ' + T.heure(a) + ' au ' + jour(b) + ', ' + T.heure(b); };
+  function seancesTouchees() {
+    const l = [];
+    lignes.filter((d) => !['annulee', 'terminee'].includes(d.statut)).forEach((d) => (seancesDe[d.id] || []).forEach((s) => {
+      if (s.faite || s.occupe === false || new Date(s.fin) < new Date()) return;
+      const i = indispos.find((x) => new Date(x.debut) < new Date(s.fin) && new Date(x.fin) > new Date(s.debut));
+      if (i) l.push({ d, s });
+    }));
+    return l;
+  }
+  function messageIndispo(d, s, parent) {
+    // (son bouton « Déplacer » n'existe que plus de 24 h avant la séance)
+    const deplacer = d.statut === 'inscrite' && d.formule !== 'groupe' && d.jeton && new Date(s.debut).getTime() - Date.now() > 86400000;
+    return bonjour(d, parent) + 'Nous sommes désolés : ' + (parent ? 'la séance de ' + civilite(d) : 'votre séance') + ' du ' + quandSeance(s) + ' ne pourra pas avoir lieu, l’agence n’est pas disponible ce jour-là.\n' +
+      (deplacer ? 'Vous pouvez choisir un autre créneau libre sur ' + (parent ? 'sa' : 'votre') + ' page (bouton « Déplacer ») :\n' + LIEN_PROGRAMME + d.jeton + '\n'
+        : 'Nous vous proposons une autre date très vite.\n') + '\nMerci de votre compréhension,\n' + SIGNATURE;
+  }
+  function indisponibilites() {
+    if (indispoAbsent) return '';
+    const touchees = seancesTouchees();
+    const lien = (num, texte, msg) => '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(msg) + '">' + texte + '</a>';
+    return '<details class="carte ct-indispo"' + (touchees.length ? ' open' : '') + '><summary><h2>Mes indisponibilités</h2><span class="nb">' + indispos.length + '</span></summary>' +
+      '<p class="doux">Ces heures ne sont plus proposées aux élèves des cours privés.</p>' +
+      (indispos.length ? '<div class="pp-releve">' + indispos.map((i) => '<div class="pp-op ct-indispo-l"><em>🚫</em><span>' + P.esc(quandIndispo(i)) + (i.raison ? '<small>' + P.esc(i.raison) + '</small>' : '') + '</span>' +
+        '<button type="button" class="ct-mini" data-action="talons-indispo-retirer" data-id="' + P.esc(i.id) + '">✕ Retirer</button></div>').join('') + '</div>' : '<p class="doux">Aucune pour le moment.</p>') +
+      (touchees.length ? '<div class="ct-touchees"><p><b>⚠️ ' + touchees.length + (touchees.length > 1 ? ' séances déjà prévues tombent' : ' séance déjà prévue tombe') + ' pendant une indisponibilité :</b></p>' +
+        touchees.map((x) => { const wa = numeroWhatsApp(x.d.telephone), waP = numeroWhatsApp(x.d.parent_telephone);
+          return '<div class="ct-touchee"><span>' + P.esc(civilite(x.d) + ' · ' + quandSeance(x.s)) + '</span>' + (wa ? lien(wa, '💬 Lui demander un autre créneau', messageIndispo(x.d, x.s, false)) : '') + (waP ? lien(waP, '💬 Au parent', messageIndispo(x.d, x.s, true)) : '') + '</div>'; }).join('') + '</div>' : '') +
+      '<form class="f ct-indispo-ajout" data-form="talons-indispo">' +
+        '<label class="fl" for="ct-i-du">Du<input id="ct-i-du" name="du" type="date" required></label>' +
+        '<label class="fl" for="ct-i-au">Au (facultatif)<input id="ct-i-au" name="au" type="date"></label>' +
+        '<label class="fl" for="ct-i-de">De (vide : toute la journée ; sinon ces heures chaque jour)<input id="ct-i-de" name="de" type="time"></label>' +
+        '<label class="fl" for="ct-i-a">À<input id="ct-i-a" name="a" type="time"></label>' +
+        '<label class="fl large" for="ct-i-raison">Raison (pour vous)<input id="ct-i-raison" name="raison" maxlength="120" placeholder="Ex. : voyage, shooting"></label>' +
+        '<div class="ligne large"><button class="btn rouge" type="submit">Ajouter l’indisponibilité</button></div></form></details>';
+  }
+  P.formulaires['talons-indispo'] = async (f) => {
+    const du = String(f.get('du') || ''), au = String(f.get('au') || '') || du, de = String(f.get('de') || ''), a = String(f.get('a') || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(du) || !/^\d{4}-\d{2}-\d{2}$/.test(au)) { P.message('Choisissez la date.'); return; }
+    if (!de !== !a) { P.message('Indiquez les deux heures (de … à …), ou aucune pour la journée entière.'); return; }
+    // Abidjan = UTC ; journée entière : de 0 h au lendemain 0 h
+    // (plusieurs jours avec des heures : ces heures-là CHAQUE jour, une ligne par jour)
+    const j0 = Date.parse(du + 'T00:00:00Z'), j1 = Date.parse(au + 'T00:00:00Z'), raison = String(f.get('raison') || '').trim() || null;
+    if (isNaN(j0) || isNaN(j1) || j1 < j0) { P.message('Le dernier jour doit être après le premier.'); return; }
+    if (j1 - j0 >= 120 * 86400000) { P.message('120 jours au plus d’un coup.'); return; }
+    let lignesI;
+    if (!de) lignesI = [{ debut: new Date(j0).toISOString(), fin: new Date(j1 + 86400000).toISOString(), raison }];
+    else {
+      if (a <= de) { P.message('L’heure de fin doit être après l’heure de début.'); return; }
+      lignesI = [];
+      for (let t = j0; t <= j1; t += 86400000) { const jour = new Date(t).toISOString().slice(0, 10); lignesI.push({ debut: jour + 'T' + de + ':00.000Z', fin: jour + 'T' + a + ':00.000Z', raison }); }
+    }
+    const r = await P.bd(sb.from('cours_talons_indispo').insert(lignesI).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été ajouté : reconnectez-vous puis réessayez.'); return; }
+    P.message('Indisponibilité ajoutée : ces heures ne sont plus proposées.');
+    return P.afficher();
+  };
+  P.actions['talons-indispo-retirer'] = async (el) => {
+    if (!confirm('Retirer cette indisponibilité ? Ces heures seront de nouveau proposées aux élèves.')) return;
+    const r = await P.bd(sb.from('cours_talons_indispo').delete().eq('id', el.dataset.id).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été retiré : reconnectez-vous puis réessayez.'); return; }
+    P.message('Indisponibilité retirée.');
+    return P.afficher();
+  };
   P.formulaires['talons-seance'] = async (f, form) => {
     const id = form && form.dataset.id;
     const date = String(f.get('date') || ''), heure = String(f.get('heure') || '');
