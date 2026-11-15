@@ -1543,3 +1543,19 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ct-touchee { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid #F2E7E8; }
 .ct-touchee span { flex: 1 1 100%; }
 .ct-indispo-ajout { margin-top: 14px; }
+/* « Planning » des cours de talons (15/11/2026, maquette validée : maquettes/planning-talons.html), jours comme « Cette semaine » */
+.pl-planning .se-date small + b + small { margin-top: 1px; }
+.pl-jour { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.pl-s { border-radius: 14px; border: 1px solid #F2E7E8; padding: 10px 12px; }
+.pl-s > b { display: block; font-size: 14px; color: #2A1416; }
+.pl-s > small { display: block; color: #6E4F53; font-size: 12.5px; overflow-wrap: anywhere; }
+.pl-boutons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pl-eleves { margin-top: 8px; }
+.pl-eleves > summary { cursor: pointer; color: #7C2128; font-weight: 600; font-size: 13px; min-height: 32px; display: flex; align-items: center; }
+.pl-eleves > summary:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
+.pl-eleve { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0; border-top: 1px solid #F2E7E8; font-size: 13.5px; }
+.pl-eleve span { flex: 1 1 140px; }
+.pl-indispo { border-radius: 14px; padding: 10px 12px; background: #FBF4F5; color: #6E4F53; font-size: 13px; }
+/* boutons du planning, sur fond blanc : contour rose, le rappel en rouge plein */
+.pl-planning .btn { border-color: #EADCDD; background: #FFFFFF; color: #7C2128; }
+.pl-planning .btn.rouge { background: #7C2128; border-color: #7C2128; color: #FFFFFF; }

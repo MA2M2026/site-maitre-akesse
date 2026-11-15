@@ -57,3 +57,6 @@
 - **15/11/2026** : `supabase-creneaux-prives.sql` collé par la propriétaire (contrôle 10 sur 10). Essai sur la VRAIE base,
   avec son accord, tout annulé à la fin (vérifié : rien ne reste) : réservation de 2 créneaux, heure voisine refusée
   (CRENEAU_PRIS), indisponibilité respectée, choix après paiement sur son lien, déplacement, page — tout conforme.
+- **15/11/2026, étape 4 validée** (« Excellent », `maquettes/planning-talons.html`) : notification sur le téléphone de
+  l'agence la veille de chaque cours, et onglet « Planning » (4 semaines, rappels WhatsApp prêts). Construite le même
+  jour ; `supabase-rappels-talons.sql` à coller par la propriétaire.

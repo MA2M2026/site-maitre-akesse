@@ -15,7 +15,8 @@
     inscrite: ['Inscrite (payé)', 'vert'], terminee: ['Terminée', 'neutre'], annulee: ['Annulée', 'rouge'] };
   const OBJECTIFS = { miss: 'Concours de Miss', beaute: 'Concours de beauté', elegance: 'Élégance, prestance', evenement: 'Événement', autre: 'Autre' };
   const NIVEAUX = { debutante: 'Débutante', un_peu: 'Marche un peu en talons', a_l_aise: 'Déjà à l’aise' };
-  const FILTRES = [['a_traiter', 'À traiter'], ['inscrite', 'Inscrites'], ['terminee', 'Terminées'], ['annulee', 'Annulées'], ['toutes', 'Toutes']];
+  // (15/11/2026, maquette validée : maquettes/planning-talons.html) « Planning » : les cours des 4 prochaines semaines, jour par jour
+  const FILTRES = [['planning', 'Planning'], ['a_traiter', 'À traiter'], ['inscrite', 'Inscrites'], ['terminee', 'Terminées'], ['annulee', 'Annulées'], ['toutes', 'Toutes']];
   const A_TRAITER = ['nouvelle', 'plus_tard', 'paiement_envoye'];
   let filtre = 'a_traiter';
   let lignes = [];
@@ -35,6 +36,11 @@
   const quandSeance = (s) => { const a = new Date(s.debut), b = new Date(s.fin); const j = T.JOURS[a.getUTCDay()];
     return j.charAt(0).toUpperCase() + j.slice(1, 3) + '. ' + a.getUTCDate() + ' ' + T.MOIS_COURTS[a.getUTCMonth()] + ' · ' + T.heure(a) + ' – ' + T.heure(b); };
   const civilite = (d) => T.civilite(d.civilite, d.age) + ' ' + String(d.nom || '').trim();
+  // (15/11/2026) un seul endroit pour les liens WhatsApp de cette page (message écrit facultatif) et pour minuit (UTC = Abidjan)
+  const lienWhatsApp = (num, texte, msg, classes, attrs) => '<a class="btn ' + (classes || 'petit') + '"' + (attrs || '') + ' target="_blank" rel="noopener" href="https://wa.me/' + num +
+    (msg ? '?text=' + encodeURIComponent(msg) : '') + '">' + texte + '</a>';
+  const JOUR_MS = 86400000;
+  const debutJourUTC = (d) => { const x = d || new Date(); return Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate()); };
   // (14/11/2026) groupe sur plusieurs mois : durée, façon de payer, mois payés
   const nbMois = (d) => d.nb_mois || 1;
   // titres des thèmes (cours_talons_programme, lu une fois par page) ; {3,3,4} → « La prestance (2 mois), Le podium (1 mois) »
@@ -59,9 +65,8 @@
   const prochaineSeance = (d) => (seancesDe[d.id] || []).find((s) => !s.faite && new Date(s.fin).getTime() > Date.now() && !(s.mois > (d.mois_payes || 0) && d.formule === 'groupe'));
   // le rappel de la prochaine séance : « demain » quand c'est demain, sinon le jour et la date
   function messageRappel(d, s, parent) {
-    const a = new Date(s.debut), b = new Date(s.fin), auj = new Date();
-    const demain = new Date(Date.UTC(auj.getUTCFullYear(), auj.getUTCMonth(), auj.getUTCDate() + 1));
-    const estDemain = a.getUTCFullYear() === demain.getUTCFullYear() && a.getUTCMonth() === demain.getUTCMonth() && a.getUTCDate() === demain.getUTCDate();
+    const a = new Date(s.debut), b = new Date(s.fin);
+    const estDemain = debutJourUTC(a) === debutJourUTC() + JOUR_MS;
     const quand = (estDemain ? 'demain, ' : 'le ') + T.JOURS[a.getUTCDay()] + ' ' + a.getUTCDate() + ' ' + T.MOIS[a.getUTCMonth()] + ', de ' + T.heure(a) + ' à ' + T.heure(b);
     return bonjour(d, parent) + 'Petit rappel : ' + (parent ? 'la séance de ' + civilite(d) : 'votre séance') + ' de l’Atelier Talons & Élégance, c’est ' + quand + '.\n' +
       'Lieu : ' + (s.lieu || LIEU_SALLE) + '.\n' + (s.theme ? 'Thème : ' + s.theme + '.\n' : '') +
@@ -80,7 +85,7 @@
       s ? ['rappel', '⏰', 'Rappel de la prochaine séance', quandSeance(s) + (s.theme ? ' · « ' + s.theme + ' »' : '') + '. À envoyer la veille.', (p) => messageRappel(d, s, p)] : null
     ].filter(Boolean);
     if (!tuiles.length) return '';
-    const lien = (num, texte, pour, msg) => '<a class="btn petit' + (pour === 'eleve' ? ' rouge' : '') + '" data-pour="' + pour + '" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(msg) + '">' + texte + '</a>';
+    const lien = (num, texte, pour, msg) => lienWhatsApp(num, texte, msg, 'petit' + (pour === 'eleve' ? ' rouge' : ''), ' data-pour="' + pour + '"');
     return '<section class="ct-messages"><h3>Messages prêts à envoyer</h3><p class="doux petit-texte">Un appui ouvre WhatsApp avec le message écrit ; vous le relisez puis l’envoyez.</p><div class="ct-msgs">' +
       tuiles.map((t) => '<div class="ct-msg" data-msg="' + t[0] + '"><i aria-hidden="true">' + t[1] + '</i><div class="ct-msg-txt"><b>' + P.esc(t[2]) + '</b><small>' + P.esc(t[3]) + '</small></div>' +
         '<div class="ct-msg-btn">' + (wa ? lien(wa, 'À elle', 'eleve', t[4](false)) : '') + (waParent ? lien(waParent, 'Au parent', 'parent', t[4](true)) : '') + '</div></div>').join('') + '</div></section>';
@@ -95,7 +100,9 @@
       (d.date_seance ? 'Votre première séance : le ' + P.date(d.date_seance) + '.\n\n' : '') + 'À très bientôt !\nMaître Akesse Model Management';
   }
 
-  async function page() {
+  async function page(args) {
+    // la notification de la veille ouvre …/b2-cours-talons/planning : le planning, une fois (l'adresse redevient normale)
+    if (args && args[0] === 'planning') { filtre = 'planning'; history.replaceState(null, '', '#/site/b2-cours-talons'); }
     try {
       lignes = await P.bd(sb.from('cours_talons').select('*').order('cree_le', { ascending: false }).limit(500));
     } catch (e) {
@@ -121,7 +128,8 @@
       } catch (e) { if (!programmePasInstalle(e)) throw e; programmeAbsent = true; }
     }
     await titres; await indispoLu;
-    const compte = (f) => lignes.filter((d) => f === 'toutes' || (f === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === f)).length;
+    calculerPlanning();
+    const compte = (f) => f === 'planning' ? plan.nb : lignes.filter((d) => f === 'toutes' || (f === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === f)).length;
     const visibles = lignes.filter((d) => filtre === 'toutes' || (filtre === 'a_traiter' ? A_TRAITER.includes(d.statut) : d.statut === filtre));
     const encaisse = lignes.filter((d) => d.statut === 'inscrite' || d.statut === 'terminee').reduce((t, d) => t + (d.montant || 0), 0);
     const onglets = '<div class="ligne">' + FILTRES.map((f) => '<button type="button" class="btn petit' + (f[0] === filtre ? ' rouge' : '') + '" data-action="talons-filtre" data-valeur="' + f[0] + '">' +
@@ -132,9 +140,66 @@
       indisponibilites() +
       '<div class="carte f">' + onglets + '</div>' +
       // (13/11/2026, demande de la propriétaire) regroupées par jour d'inscription, les plus récentes en haut, comme les castings
-      (visibles.length ? P.parJour(visibles, (d) => d.cree_le).map((g) => '<section class="jour-groupe"><h2 class="jour-titre">' + P.esc(g.titre) +
+      (filtre === 'planning' ? planning() : visibles.length ? P.parJour(visibles, (d) => d.cree_le).map((g) => '<section class="jour-groupe"><h2 class="jour-titre">' + P.esc(g.titre) +
         ' <span class="nb">' + g.elements.length + '</span></h2>' + g.elements.map(fiche).join('') + '</section>').join('') : '<div class="carte vide">Aucune inscription ici pour le moment.</div>');
   }
+
+  // Planning : les séances qui comptent (pas faites, pas finies, pas annulées, pas une réservation expirée, pas un mois du
+  // groupe encore à régler), d'aujourd'hui aux 4 semaines suivantes ; le groupe d'une même heure en UN cours ; avec les
+  // indisponibilités. Calculé une fois par affichage (page) : le nombre de l'onglet est celui des cours montrés.
+  const SEMAINES_PLANNING = 4;
+  let plan = { jours: {}, nb: 0 };
+  function calculerPlanning() {
+    const j0 = debutJourUTC(), j1 = j0 + SEMAINES_PLANNING * 7 * JOUR_MS, maintenant = Date.now();
+    const l = [];
+    lignes.filter((d) => !['annulee', 'terminee'].includes(d.statut)).forEach((d) => (seancesDe[d.id] || []).forEach((s) => {
+      const t = Date.parse(s.debut);
+      if (s.faite || s.occupe === false || Date.parse(s.fin) <= maintenant || t >= j1 || (d.formule === 'groupe' && s.mois > (d.mois_payes || 0))) return;
+      l.push({ d, s, t });
+    }));
+    const jours = {};
+    const jourDe = (k) => (jours[k] = jours[k] || { cours: [], indispo: [] });
+    let nb = 0;
+    l.sort((x, y) => x.t - y.t).forEach((x) => {
+      const j = jourDe(x.s.debut.slice(0, 10));
+      const g = x.d.formule === 'groupe' && j.cours.find((c) => c.groupe && c.debut === x.s.debut);
+      if (g) { g.eleves.push(x); return; }
+      j.cours.push(x.d.formule === 'groupe' ? { groupe: true, debut: x.s.debut, s: x.s, eleves: [x] } : { s: x.s, d: x.d });
+      nb++;
+    });
+    for (let k = 0; k < SEMAINES_PLANNING * 7; k++) {
+      const d0 = j0 + k * JOUR_MS;
+      indispos.filter((i) => Date.parse(i.debut) < d0 + JOUR_MS && Date.parse(i.fin) > d0).forEach((i) => jourDe(new Date(d0).toISOString().slice(0, 10)).indispo.push(i));
+    }
+    plan = { jours, nb };
+  }
+  function planning() {
+    const jours = plan.jours, j0 = debutJourUTC();
+    const cles = Object.keys(jours).sort();
+    if (!cles.length) return '<div class="carte vide">Aucun cours prévu dans les 4 prochaines semaines.</div>';
+    const rappels = (d, s) => { const w = numeroWhatsApp(d.telephone), wp = numeroWhatsApp(d.parent_telephone);
+      return (w ? lienWhatsApp(w, '💬 Rappel', messageRappel(d, s, false), 'petit rouge') : '') + (wp ? lienWhatsApp(wp, '💬 Au parent', messageRappel(d, s, true)) : ''); };
+    const heures = (s) => T.heure(new Date(s.debut)) + ' – ' + T.heure(new Date(s.fin));
+    const carte = (c) => {
+      if (c.groupe) return '<div class="pl-s"><b>' + P.esc(heures(c.s) + ' · Cours en groupe') + '</b><small>' + P.esc([c.s.theme ? '« ' + c.s.theme + ' »' : '', c.s.lieu || LIEU_SALLE, c.eleves.length + (c.eleves.length > 1 ? ' élèves' : ' élève')].filter(Boolean).join(' · ')) + '</small>' +
+        '<details class="pl-eleves"><summary>Voir les élèves (' + c.eleves.length + ')</summary>' + c.eleves.map((x) => '<div class="pl-eleve"><span>' + P.esc(civilite(x.d)) + '</span>' + rappels(x.d, x.s) + '</div>').join('') + '</details></div>';
+      return '<div class="pl-s"><b>' + P.esc(heures(c.s) + ' · ' + civilite(c.d)) + '</b><small>' + P.esc([c.s.theme ? '« ' + c.s.theme + ' »' : '', c.s.lieu || LIEU_SALLE, c.d.valide_le ? 'privé' : 'à confirmer (paiement)'].filter(Boolean).join(' · ')) + '</small>' +
+        '<div class="pl-boutons">' + rappels(c.d, c.s) + '<button type="button" class="btn petit" data-action="talons-voir-fiche" data-id="' + P.esc(c.d.id) + '">Sa fiche</button></div></div>';
+    };
+    const COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'], demain = new Date(j0 + JOUR_MS).toISOString().slice(0, 10);
+    return '<div class="se-semaine pl-planning">' + cles.map((k) => { const d = new Date(k + 'T00:00:00Z'), j = jours[k];
+      return '<div class="se-jour' + (k === demain ? ' auj' : '') + '"><div class="se-date"><small>' + COURTS[d.getUTCDay()] + '</small><b>' + d.getUTCDate() + '</b><small>' + T.MOIS_COURTS[d.getUTCMonth()] + '</small></div><div class="pl-jour">' +
+        j.indispo.map((i) => '<div class="pl-indispo">🚫 Indisponible · ' + P.esc(quandIndispo(i)) + (i.raison ? ' · ' + P.esc(i.raison) : '') + '</div>').join('') + j.cours.map(carte).join('') + '</div></div>'; }).join('') + '</div>' +
+      '<p class="doux petit-texte">Demain est en rouge. La veille de chaque cours, une notification arrive sur votre téléphone. Les élèves ont aussi le rappel de la veille dans leur calendrier.</p>';
+  }
+  P.actions['talons-voir-fiche'] = async (el) => {
+    const d = lignes.find((x) => x.id === el.dataset.id);
+    if (!d) return;
+    filtre = A_TRAITER.includes(d.statut) ? 'a_traiter' : d.statut;
+    await P.afficher();
+    const f = document.querySelector('.ct-fiche[data-id="' + CSS.escape(d.id) + '"]');
+    if (f && typeof f.scrollIntoView === 'function') f.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
 
   function fiche(d) {
     const st = STATUTS[d.statut] || [d.statut, 'neutre'];
@@ -168,8 +233,8 @@
     // la vidéo d'abord, puis les messages
     const boutons = [
       https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
-      wa ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + wa + '">💬 WhatsApp</a>' : '',
-      waParent ? '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '">💬 Parent</a>' : ''
+      wa ? lienWhatsApp(wa, '💬 WhatsApp') : '',
+      waParent ? lienWhatsApp(waParent, '💬 Parent') : ''
     ];   // (14/11/2026) le lien Wave est dans « Messages prêts à envoyer », sous ces boutons
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
@@ -210,8 +275,8 @@
     // groupe : le mois suivant payé (ou un mois de plus quand tout est payé) → cours_talons_mois_payer
     const moisSuivant = groupe && d.statut === 'inscrite' ? '<div class="ct-mois">' + ((d.mois_payes || 0) < nbMois(d)
       ? '<p><b>Mois payés : ' + (d.mois_payes || 0) + ' / ' + nbMois(d) + '</b> · prochain mois à régler : ' + P.fcfa(T.PRIX_MOIS) + '</p>' +
-        (wa ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + wa + '?text=' + encodeURIComponent(messageMois(d)) + '">💳 Lien du mois ' + ((d.mois_payes || 0) + 1) + ' (WhatsApp)</a>' : '') +
-        (waParent ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + waParent + '?text=' + encodeURIComponent(messageMois(d, true)) + '">💳 Au parent</a>' : '') +
+        (wa ? lienWhatsApp(wa, '💳 Lien du mois ' + ((d.mois_payes || 0) + 1) + ' (WhatsApp)', messageMois(d), ' ') : '') +
+        (waParent ? lienWhatsApp(waParent, '💳 Au parent', messageMois(d, true), ' ') : '') +
         '<button type="button" class="btn rouge" data-action="talons-mois" data-id="' + id + '">✓ Mois ' + ((d.mois_payes || 0) + 1) + ' payé (' + P.esc(nomMoyen(d.moyen)) + ')</button>' +
         '<button type="button" class="btn" data-action="talons-mois" data-id="' + id + '" data-valeur="especes">✓ Payé en espèces</button>'
       : '<p><b>Tous ses mois sont payés (' + nbMois(d) + ').</b> Elle continue ? Un mois de plus ajoute 4 dimanches à la suite.</p>' +
@@ -278,7 +343,7 @@
   function indisponibilites() {
     if (indispoAbsent) return '';
     const touchees = seancesTouchees();
-    const lien = (num, texte, msg) => '<a class="btn petit" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(msg) + '">' + texte + '</a>';
+    const lien = (num, texte, msg) => lienWhatsApp(num, texte, msg);
     return '<details class="carte ct-indispo"' + (touchees.length ? ' open' : '') + '><summary><h2>Mes indisponibilités</h2><span class="nb">' + indispos.length + '</span></summary>' +
       '<p class="doux">Ces heures ne sont plus proposées aux élèves des cours privés.</p>' +
       (indispos.length ? '<div class="pp-releve">' + indispos.map((i) => '<div class="pp-op ct-indispo-l"><em>🚫</em><span>' + P.esc(quandIndispo(i)) + (i.raison ? '<small>' + P.esc(i.raison) + '</small>' : '') + '</span>' +

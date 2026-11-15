@@ -5056,7 +5056,22 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   - Fiche de l'élève : ligne « Créneaux » (sa façon, « N à placer ») ; le message « Son programme » l'invite à choisir
     ses créneaux sur son lien quand il en reste à placer (jamais pour « à convenir »).
   - Tests : `test-cours-talons.js` (trois façons), `test-programme-talons.js` (choisir, créneau pris, déplacer, à
-    convenir, terminée), `test-admin-cours-talons.js` (indisponibilités, séance touchée, « 3 à placer »), essais SQL. Tests : `test-cours-talons.js` (choix, 1 h 30, chaque semaine, retrait, limite,
+    convenir, terminée), `test-admin-cours-talons.js` (indisponibilités, séance touchée, « 3 à placer »), essais SQL.
+- **Planning et notification de la veille** (15/11/2026, maquette validée : `maquettes/planning-talons.html`) :
+  - **Planning** (Administration → Cours de talons → onglet « Planning », js/admin/site-cours-talons.js, `coursPrevus`
+    / `planning`, styles `.pl-*` + `.se-*` de l'accueil) : les 4 prochaines semaines jour par jour, le groupe d'une même
+    heure en un cours (« Voir les élèves », un rappel WhatsApp par élève et au parent), chaque cours privé (« à
+    confirmer (paiement) » s'il n'est pas payé, « Rappel », « Sa fiche »), les indisponibilités. Ne montre que les
+    séances qui comptent (`occupe`, pas faites, pas annulées, pas un mois du groupe encore à régler).
+    `…/b2-cours-talons/planning` ouvre le planning (l'adresse redevient normale).
+  - **Notification la veille** (`supabase-rappels-talons.sql`, À COLLER, contrôle « 4 éléments sur 4 » ; essais
+    `scripts/base-essai/essais-rappels-talons.sql`) : `cours_talons_rappels_preparer()` toutes les heures (pg_cron
+    `talons-rappels-veille`) note dans `cours_talons_rappels` les cours qui commencent dans 23 à 24 h (groupe : une
+    ligne, `nb` élèves ; privé : une ligne par séance), jamais deux fois (clé). Chaque ligne passe par
+    `notifier_push_notification` (même chemin et même secret que les inscriptions), api/notifications-webhook.js écrit
+    « 👠 Demain 15 h : cours en groupe · 6 élèves · lieu · « thème » » et ouvre le planning ; réglage
+    `evenement_rappel_talons`. Rien n'est envoyé aux élèves (elles ont le rappel de la veille dans leur calendrier).
+    Test : `test-notifications-app.js`. Tests : `test-cours-talons.js` (choix, 1 h 30, chaque semaine, retrait, limite,
   à convenir, créneau pris entre-temps), `test-nouvelle-admin.js` (cette semaine).
 - **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
   paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).

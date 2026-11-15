@@ -40,7 +40,16 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       if (l.formule === 'groupe') d.tables.cours_talons_seances.push(...[0, 1, 2, 3].map((i) => ({ id: 's' + i, inscription_id: l.id, debut: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T15:00:00Z',
         fin: '2030-01-' + String(6 + 7 * i).padStart(2, '0') + 'T18:00:00Z', lieu: 'Salle MA2M, Riviera Faya', mois: 1, theme: ['Posture et équilibre', 'Démarche et port de tête', 'Fluidité et tours', 'Le défilé final'][i], faite: false })));
       return l; } });
-    d.tables.cours_talons_seances = [];
+    // (15/11/2026) planning : demain 15 h, le groupe (2 élèves inscrites) ; dans 3 jours 10 h, le cours privé réservé de
+    // KOUASSI MARIE (pas encore payé : « à confirmer »)
+    const plus = (j, h) => { const x = new Date(); x.setUTCHours(h, 0, 0, 0); x.setUTCDate(x.getUTCDate() + j); return x.toISOString(); };
+    d.tables.cours_talons_seances = [
+      { id: 'pg4', inscription_id: 't4', debut: plus(1, 15), fin: plus(1, 18), lieu: 'Salle MA2M, Riviera Faya', theme: 'Posture et équilibre', mois: 1, faite: false },
+      { id: 'pg5', inscription_id: 't5', debut: plus(1, 15), fin: plus(1, 18), lieu: 'Salle MA2M, Riviera Faya', theme: 'Posture et équilibre', mois: 1, faite: false },
+      { id: 'pp1', inscription_id: 't1', debut: plus(3, 10), fin: plus(3, 12), lieu: 'Salle MA2M, Riviera Faya', theme: 'Les bases', faite: false, reservee: true },
+      // jamais au planning : un dimanche du mois 2 pas encore réglé (FATOU, 1 mois payé sur 3), un cours déjà fini (pas coché « fait »)
+      { id: 'pm2', inscription_id: 't5', debut: plus(5, 15), fin: plus(5, 18), lieu: 'Salle MA2M, Riviera Faya', theme: 'Mois deux', mois: 2, faite: false },
+      { id: 'pfini', inscription_id: 't1', debut: new Date(Date.now() - 3 * 3600000).toISOString(), fin: new Date(Date.now() - 3600000).toISOString(), lieu: 'Salle MA2M, Riviera Faya', theme: 'Déjà fini', faite: false, reservee: true }];
     d.rpc.cours_talons_mois_payer = (c) => { const l = d.tables.cours_talons.find((x) => x.id === c.p_id); l.mois_payes = (l.mois_payes || 0) + 1; l.nb_mois = Math.max(l.nb_mois || 1, l.mois_payes); return l; };
     await brancher(p, d, journal); await photosLocales(p);
     // (15/11/2026) indisponibilités de l'agence : le dimanche 6 janvier 2030 (une séance du groupe tombe dedans) ;
@@ -127,6 +136,25 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       ok(/Créneaux\s*Elle les choisit après son paiement, sur son lien · 3 à placer/.test(await p.textContent(f6 + '.ct-infos')), n + 'privé « après mon paiement » : « 3 à placer »');
       const choisirMsg = decodeURIComponent(await p.getAttribute(f6 + '.ct-msg[data-msg="programme"] a[data-pour="eleve"]', 'href'));
       ok(/vous choisissez vos créneaux \(3 séances\)/.test(choisirMsg) && choisirMsg.includes('programme-talons?c=' + 'c'.repeat(36)), n + 'son message : « vous choisissez vos créneaux (3 séances) » avec son lien');
+    }
+    if (!sansProgramme && !absente) {
+      // (15/11/2026) « Planning » : jour par jour, le groupe en un cours, le privé « à confirmer », rappels WhatsApp prêts
+      await p.click('[data-action="talons-filtre"][data-valeur="planning"]'); await p.waitForTimeout(600);
+      const pl = await p.textContent('.pl-planning');
+      ok(!/Mois deux|Déjà fini/.test(pl) && /Planning \(2\)/.test(await p.textContent('[data-action="talons-filtre"][data-valeur="planning"]')), n + 'planning : ni le mois pas encore réglé, ni un cours déjà fini ; l’onglet compte les cours montrés (2)');
+      ok(/Cours en groupe/.test(pl) && /2 élèves/.test(pl) && /Mademoiselle KOUASSI MARIE/.test(pl) && /à confirmer \(paiement\)/.test(pl) && await p.locator('.pl-planning .se-jour.auj').count() === 1, n + 'planning : demain le groupe (2 élèves, en rouge), puis le cours privé « à confirmer »');
+      await p.click('.pl-eleves summary');
+      const rap = decodeURIComponent(await p.getAttribute('.pl-eleve a.rouge', 'href'));
+      const jourDemain = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'][new Date(Date.now() + 86400000).getUTCDay()];
+      ok(rap.includes('c’est demain, ' + jourDemain) && /Posture et équilibre/.test(rap), n + 'groupe : un rappel « c’est demain » prêt pour chaque élève');
+      if (process.env.CAPTURES) await p.locator('.pl-planning').screenshot({ path: process.env.CAPTURES + '/planning-' + ecran.width + '.png' });
+      ok(await p.locator('.pl-s:has-text("KOUASSI") a:has-text("Au parent")').count() === 1, n + 'mineure : rappel aussi au parent');
+      await p.click('.pl-s:has-text("KOUASSI") [data-action="talons-voir-fiche"]'); await p.waitForTimeout(800);
+      ok(await p.isVisible('.ct-fiche[data-id="t1"]') && await p.locator('.pl-planning').count() === 0, n + '« Sa fiche » : ouvre sa fiche');
+      // la notification de la veille ouvre directement le planning
+      await p.goto(URL_ADMIN + '#/site/b2-cours-talons/planning'); await p.waitForSelector('.pl-planning', { timeout: 10000 }).catch(() => {});
+      ok(await p.locator('.pl-planning').count() === 1 && await p.evaluate(() => location.hash) === '#/site/b2-cours-talons', n + 'lien de la notification : le planning s’ouvre, l’adresse redevient normale');
+      await p.click('[data-action="talons-filtre"][data-valeur="inscrite"]'); await p.waitForTimeout(600);
     }
     if (sansProgramme) {
       ok(/supabase-programme-talons\.sql/.test(await p.textContent(fiche2 + '.ct-programme')) && !errs.length, n + 'programme pas encore collé : message clair, la fiche marche');
