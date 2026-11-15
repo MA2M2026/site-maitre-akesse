@@ -73,6 +73,16 @@ A-F8 | A | node --check sans erreur partout, aucun JS/CSS orphelin, aucun consol
 Confirmés par A : C-F5 = B-F6, B-F5, C-F7.
 (détail : docs/audit/rapport-agent-a.md, branche audit/agent-a)
 
+### Renfort (session hors lettre, à la demande de la propriétaire)
+
+Rapports complets : `outils/audit-renfort/rapport-renfort-1..4.md` sur cette branche (dossier jamais publié par Vercel).
+Seulement ce qui complète A, B et C :
+R-F1 | R | données des fiches complètes : 0 profil publié sans photo / adresse / taille, 0 photo sans miniature ni moyenne | requête en lecture sur la base réelle |
+R-F2 | R | fonctions appelables sans connexion qui touchent du privé : clé ou jeton exigé (photos_a_sauvegarder, media_drive_*, places_*, programme_talons_*, convocation_*) | corps des fonctions (pg_get_functiondef) |
+R-F3 | R | les données métier du site viennent bien de la base : 28 profils, 10 actualités, 5 événements, 5 partenaires affichés = base | requêtes réseau observées |
+R-F4 | R | TLS A+, Mozilla Observatory A+, npm audit 0, Lighthouse accessibilité et SEO 100 partout, performance ordinateur 95-100 | api.ssllabs.com, observatory, Lighthouse |
+R-F5 | R | compcard PDF/JPEG téléchargée en ~1 s ; parcours « sélection dans The Book puis envoi » fonctionne | visite |
+
 ## 4. Problèmes proposés
 
 Format : `ID | agent | gravité (critique/haute/moyenne/basse) | lieu | cause | preuve | confirmé par`
@@ -111,6 +121,31 @@ A-08 | A | basse | formulaire_public_enregistrer (supabase-cours-talons.sql) | t
 A-02 | A | basse | assets/reseaux/*.mp4 | 230 Mo de vidéos jamais utilisées, publiées | recherche dans le dépôt |
 A-10 | A | basse | api/supprimer-mannequin.js:89, api/portail.js (fin), api/r2-presigner.js:80 | détail technique des erreurs renvoyé à l'écran | code |
 Confirmés par A : C-P1 = B-P4 (= A-05), B-P5 (= A-07), C-P5 (= A-09).
+
+### Renfort (session hors lettre) — seulement ce qui n'est pas déjà dans A, B, C
+
+R-01 | R | haute | api/portail.js:335-415 (« Créer mon compte » de l'équipe) | compte créé déjà confirmé pour n'importe quelle adresse, sans preuve de possession ; si l'agence invite ensuite cette adresse, le rôle va au compte de l'intrus | code (pas essayé : écriture interdite). À essayer par D avec une adresse de test, accord propriétaire |
+R-02 | R | haute (à confirmer par D) | fiche mannequin : réglages « première publication faite » et date de naissance | rien dans le code n'empêche la mannequin de les changer elle-même → publication sur le Book sans validation (cas d'une mineure) | code. D : compte mannequin de test |
+R-03 | R | moyenne | middleware.js (scripts réservés de l'Administration) | une adresse encodée contourne la protection : /js/admin/site%2Dmannequins.js → 200 (45 Ko), /js/admin/site-mannequins.js → 404. Contredit C-P4 « pièces site-* protégées » | curl sur le site en ligne (revérifié par R) |
+R-04 | R | haute | /candidature sur Android | le bouton flottant « Appli MA2M » recouvre la moitié droite de « Envoyer ma candidature » : un appui à cet endroit n'envoie rien (déjà vu le 08/11) | capture Android 412 px |
+R-05 | R | haute | formulaire de candidature (photos) | tout fichier compte comme photo (PDF, HEIC illisible) sans message : le minimum de 3 photos est atteint avec 1 vraie photo | essai navigateur, envoi bloqué |
+R-06 | R | haute | formulaire de candidature (envoi) | une capture PNG de 13 Mo n'est pas allégée ; toutes les photos partent en un seul envoi (~18 Mo) : > 3 min en 4G, une coupure fait tout échouer | mesure réseau simulé |
+R-07 | R | moyenne | formulaire de candidature | deux appuis très rapides sur « Envoyer » → deux envois (iPhone) ; faux fichier vidéo affiché « Vidéo prête » | essai navigateur |
+R-08 | R | haute (décision propriétaire) | /integrer-agence | 9 mois d'Académie présentés sans jamais parler du prix (des mensualités existent) ; aucune confirmation ni délai de réponse donnés à la candidate | visite |
+R-09 | R | moyenne | demande de booking (sélection) | la demande peut arriver à l'agence sans la liste des mannequins choisies alors que le recruteur voit « Merci » | code + essai, envoi bloqué |
+R-10 | R | moyenne | The Book | outils de booking pauvres : une seule barre de recherche, pas de fourchettes de mesures visibles d'emblée, sélection = nom + taille, impossible à partager | visite recruteur / styliste |
+R-11 | R | haute | pages HTML | jamais servies depuis le cache (Vercel) ; The Book : plus gros élément à 5,7-6,7 s sur Android moyen en réseau lent | Lighthouse, curl -I. Recoupe B-P3 |
+R-12 | R | haute (décision propriétaire) | accueil | rien pour les marques et promoteurs ; adresses Gmail ; Services = un seul « Nous contacter » ; le parcours « sélectionner puis envoyer » n'est expliqué nulle part | visite promoteur / partenaire |
+R-13 | R | moyenne | fiches EN | hreflang absents | code source servi |
+R-14 | R | moyenne | réception WhatsApp | non signée possible si WHATSAPP_APP_SECRET absent (recoupe A-06) | code |
+R-15 | R | moyenne | /admin/ : CV d'une mannequin ; js/app.js:256 et 269 | logo en chemin relatif assets/logo-header.png → /admin/assets/… introuvable : CV sans logo | journal des vraies visites (13/11) + code |
+R-16 | R | moyenne | fiches /book/… sur téléphone (.fiche-telecharger) | rangée « Compcard PDF JPEG » dépasse de 12 px | journal des vraies visites |
+R-17 | R | moyenne | /integrer-agence (Chrome 101, Android 8.1) | « Identifier 'enMo' has already been declared » : app.js exécuté deux fois | journal des vraies visites |
+R-18 | R | moyenne | /integrer-agence, /cours-talons | chez de vrais visiteurs : 14 à 70 s et 44 s de chargement complet | journal des vraies visites (7 jours) |
+R-19 | R | moyenne | images Actualités / Événements | fichiers jusqu'à 515 Ko affichés en petit (~1,8 Mo sur /actualites) ; recoupe B-P3 | mesure réseau |
+R-20 | R | basse | 57 fichiers SQL | 31 fonctions définies dans plusieurs fichiers + 12 secours « SQL pas encore collé » : recoller un vieux fichier remet une vieille fonction (complète C-P3) | git grep |
+Confirmés par R : A-01 (vérifié en ligne : /docs/rls-matrix.md, /DECISIONS.md, /GUIDE-DE-SECOURS.md → 200), B-P5, A-08, C-P6, B-P8, B-P13.
+⚠️ Avant toute fusion des rapports dans main : compléter `.vercelignore` (A-01), sinon les rapports d'audit seront publiés.
 
 ## 5. Désaccords à vérifier
 
