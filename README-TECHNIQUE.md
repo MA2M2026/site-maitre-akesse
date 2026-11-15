@@ -5190,3 +5190,24 @@ façon carte bancaire (`carteMA2M`, la même fonction que la carte membre des Pa
 date d'entrée), trois chiffres en cartes blanches, « profil complet » en anneau (`.ap-pr-anneau`), mensurations,
 « Mes documents » en relevé (Compcard, CV, photos, programme), puis le book en grille. Styles `.ap-pr*` dans
 css/mannequin-app.css (seulement des fonds rouges ou blancs). Test : `test-app-mannequin.js`.
+
+## Carte « MANNEQUIN MA2M » et catégorie New Face / Professionnelle (15/11/2026)
+Maquette validée : `maquettes/carte-identite-mannequin-v2.html` (décisions : titre « MANNEQUIN MA2M », validité = durée
+du contrat, 3/4/5 ans renouvelable ; verso épuré ; l'agence active la carte). Base : `supabase-carte-mannequin.sql`
+(À COLLER, contrôle « 8 éléments sur 8 » ; essais `scripts/base-essai/essais-carte-mannequin.sql`).
+- **Catégorie** (`categorie_mannequin_calculee`) : Professionnelle si 2 ans ou plus à l'agence (date d'entrée), ou
+  `years_experience` ≥ 2, ou une expérience (`model_projects.periode`) d'il y a 2 ans ou plus ; sinon New Face ; le choix
+  de l'agence (`model_profiles.niveau_manuel`, via `mannequin_categorie_choisir`) passe avant. `categories_mannequins_
+  mettre_a_jour()` range `niveau_mannequin` de toutes les fiches tous les jours à 4 h (pg_cron `categories-mannequins`)
+  et une première fois à l'installation. La fiche publique garde « New Face » / « Main Board » (décision du 15/11/2026).
+- **Carte** : `agence_mannequins.carte_active`, `carte_validite_ans`, `carte_formation` (texte imposé, vide = programme),
+  `carte_numero` (donné à la première activation, jamais changé : « MA2M · année d'entrée · 0142 »).
+  `ma_carte_mannequin()` (la mannequin, seulement activée), `carte_mannequin_de(id)` (Paiements).
+- **Dessin** : `js/carte-mannequin.js` (canvas 1012 × 638, guillochis, sceau, photo fantôme, QR vers son book, ligne
+  machine) : la même image à l'écran (« Mon profil » de l'application, à la place de la petite carte quand elle est
+  activée, « Voir le verso »), en téléchargement (recto + verso en une image PNG) et en PDF au format carte (85,6 × 54 mm).
+  « Formation » : le texte de l'agence, sinon « Niveau 1 · mois 4 », « Recyclage · mois 2 sur 9 » (professionnelle sur
+  1 niveau), « Formation terminée ».
+- **Administration** : encart « Sa carte de mannequin » dans la fiche (espace Paiements, `encartCarte`) : activée,
+  catégorie (Calcul / New Face / Professionnelle), validité, formation affichée, numéro.
+- Tests : `test-app-mannequin.js` (carte dessinée, verso, image, PDF), `test-correction-paiement.js` (encart).

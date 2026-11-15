@@ -37,6 +37,9 @@ function donnees(role) {
       portail_enregistrer_appareil: { ok: true, nouveau: false },
       portail_code_appareil_etat: { defini: true, verrouille: false },
       compta_soldes: [{ compte_id: 'c1', nom: 'Caisse (espèces)', type: 'caisse', solde: 0 }],
+      // (15/11/2026) sa carte de mannequin : pas encore activée, catégorie calculée
+      carte_mannequin_de: { active: false, nom: 'KONE AWA', matricule: null, depuis: '2025-09-01', valable: '2030-09-01', validite_ans: 5, categorie: 'New Face', categorie_manuelle: null, formation: null, niveaux: 2 },
+      mannequin_categorie_choisir: 'Professionnel',
       // (14/11/2026) programme de formation dans la fiche : 2 mois faits, le 3e en cours
       programme_formation_de: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2, mois_niveau: (i % 9) + 1,
         theme: i === 2 ? 'La pose photo : les bases (angles, mains, regard)' : 'Thème ' + (i + 1), date: '2027-' + String(3 + i).padStart(2, '0') + '-01', etat: i < 2 ? 'fait' : i === 2 ? 'en_cours' : 'a_venir' })).slice(0, 18) }
@@ -92,6 +95,17 @@ function donnees(role) {
     const e = await connecter('principal'), p = e.p;
     ok(/Programme de formation\s*Ce mois-ci : La pose photo : les bases \(angles, mains, regard\)\s*· niveau 1 \(Les fondations\), mois 3 sur 9\s*2 mois faits sur 18/.test(await p.evaluate(() => (document.querySelector('.pf-programme') || {}).innerText || '').then((x) => x.replace(/\s+/g, ' '))),
       nomEcran + ' : fiche du mannequin : « Programme de formation », thème du mois, 2 mois faits sur 18');
+    // (15/11/2026) « Sa carte de mannequin » : activer, catégorie à la main, validité, formation affichée
+    const encart = await p.evaluate(() => (document.querySelector('.ca-carte') || {}).innerText || '').then((x) => x.replace(/\s+/g, ' '));
+    ok(/Sa carte de mannequin/.test(encart) && /Elle ne la voit pas encore/.test(encart) && /Calculée : New Face/.test(encart) && /jusqu’au septembre 2030/.test(encart), nomEcran + ' : encart « Sa carte de mannequin » (pas activée, catégorie calculée, validité)');
+    await p.click('[data-action="carte-reglage"][data-champ="carte_active"][data-valeur="true"]'); await p.waitForTimeout(600);
+    ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_active":true/.test(j[3] || '')), nomEcran + ' : « Carte activée : Oui » enregistré');
+    await p.click('[data-action="carte-reglage"][data-champ="categorie"][data-valeur="Professionnel"]'); await p.waitForTimeout(600);
+    ok(e.journal.some((j) => j[0] === 'rpc' && j[1] === 'mannequin_categorie_choisir' && /"p_niveau":"Professionnel"/.test(j[2] || '')), nomEcran + ' : catégorie choisie à la main (Professionnelle)');
+    await p.click('[data-action="carte-reglage"][data-champ="carte_validite_ans"][data-valeur="3"]'); await p.waitForTimeout(600);
+    ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_validite_ans":3/.test(j[3] || '')), nomEcran + ' : validité 3 ans enregistrée');
+    await p.fill('.ca-carte input[name="formation"]', 'Recyclage'); await p.click('form[data-form="carte-formation"] button[type="submit"]'); await p.waitForTimeout(600);
+    ok(e.journal.some((j) => j[0] === 'PATCH' && j[1] === 'agence_mannequins' && /"carte_formation":"Recyclage"/.test(j[3] || '')), nomEcran + ' : « Formation affichée » enregistrée');
     ok((await p.$$('[data-action="paiement-corriger"]')).length === 3 && (await p.$$('[data-action="paiement-annuler"]')).length === 3, nomEcran + ' : l’administrateur principal voit « Corriger » et « Annuler » sur chaque paiement');
     // corriger le montant et le moyen d'une mensualité
     await p.click('[data-action="paiement-corriger"][data-id="pm1"]'); await p.waitForSelector('form[data-form="paiement-corriger"]', { timeout: 4000 });

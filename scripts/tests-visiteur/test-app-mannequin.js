@@ -54,7 +54,9 @@ function donnees() {
       mon_programme_formation: { niveaux: 2, total: 18, mois: Array.from({ length: 18 }, (_, i) => ({ rang: i + 1, niveau: i < 9 ? 1 : 2, mois_niveau: (i % 9) + 1,
         theme: ['Posture et démarche de base', 'Le podium : marche, demi-tours, arrêts', 'La pose photo : les bases (angles, mains, regard)', 'Expression et regard'][i] || 'Thème ' + (i + 1),
         date: moisDe(i - 3), etat: i < 3 ? 'fait' : i === 3 ? 'en_cours' : 'a_venir' })) },
-      mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }]
+      mes_cachets: [{ numero: 'C-0001', montant: 25000, motif: null, prestation: 'Border Forum', paye_le: jour(-8) + 'T10:00:00Z', jeton: 'x' }],
+      // (15/11/2026) carte « MANNEQUIN MA2M » activée par l'agence (supabase-carte-mannequin.sql)
+      ma_carte_mannequin: { active: true, nom: 'AYA KOUASSI', matricule: 'MA2M · 2025 · 0142', depuis: '2025-09-01', valable: '2030-09-01', validite_ans: 5, categorie: 'New Face', formation: null, niveaux: 2, slug: 'aya-kouassi' }
     }
   };
 }
@@ -77,7 +79,7 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
   const b = await chromium.launch();
   for (const [nom, ecran] of [['téléphone', { width: 390, height: 844 }], ['tablette', { width: 800, height: 1200 }], ['ordinateur', { width: 1280, height: 860 }]]) {
     const tel = ecran.width < 700, n = nom + ' : ';
-    const ctx = await b.newContext({ viewport: ecran, isMobile: ecran.width < 1000, hasTouch: ecran.width < 1000, serviceWorkers: 'block' });
+    const ctx = await b.newContext({ viewport: ecran, isMobile: ecran.width < 1000, hasTouch: ecran.width < 1000, serviceWorkers: 'block', acceptDownloads: true });
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
     // téléphone : il sait recevoir des notifications (simulées : un vrai abonnement demande les
@@ -206,10 +208,25 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
     ok(!!(await p.$('.ap-vitrine-avatar img')) && !!(await p.$('.ap-vitrine-couv input[type=file][data-photo-role="photo_couverture"]')) && !!(await p.$('.ap-vitrine-avatar input[type=file][data-photo-role="principale"]'))
       && /3\s*photos/.test(await p.textContent('.ap-vitrine-chiffres')) && (await p.$$('.ap-vitrine-raccourcis a')).length >= 3,
       n + 'Mon profil : photo ronde et couverture qu’on touche pour choisir dans la galerie, chiffres, « Mes documents » Compcard / CV / Photos');
+    // (15/11/2026) carte officielle « MANNEQUIN MA2M » : dessinée (image), retournée, téléchargée en image et en PDF
+    await p.waitForFunction(() => /^data:image\/png/.test((document.querySelector('.ap-carte-img') || {}).src || ''), null, { timeout: 15000 }).catch(() => {});
+    const carteImg = await p.evaluate(() => { const i = document.querySelector('.ap-carte-img'); return i ? [i.naturalWidth, i.naturalHeight, i.src.length] : null; });
+    ok(carteImg && carteImg[0] === 1012 && carteImg[1] === 638 && carteImg[2] > 20000, n + 'carte officielle : dessinée au format carte (1012 × 638) ' + JSON.stringify(carteImg));
+    if (process.env.CAPTURES) await p.evaluate(() => document.querySelector('.ap-carte-img').src).then((src) => require('fs').writeFileSync(path.join(process.env.CAPTURES, nom + '-carte-recto.png'), Buffer.from(src.split(',')[1], 'base64')));
+    await p.click('[data-carte="retourner"]'); await p.waitForTimeout(300);
+    await p.waitForFunction(() => /verso/.test((document.querySelector('.ap-carte-img') || {}).alt || '') && /^data:image\/png/.test(document.querySelector('.ap-carte-img').src || ''), null, { timeout: 15000 }).catch(() => {});
+    ok(/verso/.test(await p.getAttribute('.ap-carte-img', 'alt')) && /Voir le recto/.test(await p.textContent('[data-carte="retourner"]')), n + 'carte : « Voir le verso » la retourne');
+    if (process.env.CAPTURES) await p.evaluate(() => document.querySelector('.ap-carte-img').src).then((src) => require('fs').writeFileSync(path.join(process.env.CAPTURES, nom + '-carte-verso.png'), Buffer.from(src.split(',')[1], 'base64')));
+    const [dlImg] = await Promise.all([p.waitForEvent('download', { timeout: 20000 }).catch(() => null), p.click('[data-carte="image"]')]);
+    ok(dlImg && /^carte-ma2m-aya-kouassi-.*\.png$/.test(dlImg.suggestedFilename()), n + '« Télécharger ma carte » : une image (recto et verso) ' + (dlImg ? dlImg.suggestedFilename() : ''));
+    if (process.env.CAPTURES && dlImg) await dlImg.saveAs(path.join(process.env.CAPTURES, nom + '-carte-telechargee.png'));
+    const [dlPdf] = await Promise.all([p.waitForEvent('download', { timeout: 30000 }).catch(() => null), p.click('[data-carte="pdf"]')]);
+    ok(dlPdf && /\.pdf$/.test(dlPdf.suggestedFilename()), n + '« Imprimer (PDF) » : le PDF au format carte');
+    await p.click('[data-carte="retourner"]'); await p.waitForTimeout(300);
     // (15/11/2026, maquette premium validée) carte de mannequin façon carte bancaire, profil complet en anneau, mensurations
-    ok(/MANNEQUIN MA2M/.test(await p.textContent('.ap-pr .ap-cb')) && /AYA KOUASSI/.test(await p.textContent('.ap-pr .ap-cb-nom')) && await p.locator('.ap-pr-anneau').count() === (/Profil complet/.test(profil) ? 1 : 0)
+    ok(await p.locator('.ap-pr .ap-cb').count() === 0 && await p.locator('.ap-pr-anneau').count() === (/Profil complet/.test(profil) ? 1 : 0)
       && /1,78 m\s*hauteur/.test(await p.textContent('.ap-pr-mesures')) && /61\s*taille \(cm\)/.test(await p.textContent('.ap-pr-mesures')) && /90\s*hanches/.test(await p.textContent('.ap-pr-mesures'))
-      && (await p.textContent('.ap-pr .ap-cb')).includes('mois') && !/null|undefined/.test(await p.textContent('.ap-pr')), n + 'Mon profil premium : carte de mannequin, profil complet en anneau, mensurations');
+      && !/null|undefined/.test(await p.textContent('.ap-pr')), n + 'Mon profil premium : la carte officielle à la place de la petite carte, profil complet en anneau, mensurations');
     if (process.env.CAPTURES) await p.screenshot({ path: path.join(process.env.CAPTURES, nom + '-3-profil-entier.png'), fullPage: true });
     // (MAQUETTE_CARTE=1 : l'écran réel, puis le même avec le bouton « Télécharger ma carte » proposé sous la carte)
     if (process.env.CAPTURES && process.env.MAQUETTE_CARTE) {

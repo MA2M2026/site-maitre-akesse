@@ -77,7 +77,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus, programme] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus, programme, carte] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -92,7 +92,8 @@
       // (11/11/2026, « Mon profil » façon réseau social) adresse publique du book, phrase de la mannequin, demande en cours
       sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle(),
       sb.rpc('mes_recus'),  // (11/11/2026) paiements validés, pour « Mes opérations » de l'écran Paiements (supabase-bloc2-complements.sql)
-      sb.rpc('mon_programme_formation')  // (14/11/2026) programme de formation (supabase-programme-mannequins.sql) ; absent : rien ne s'affiche
+      sb.rpc('mon_programme_formation'),  // (14/11/2026) programme de formation (supabase-programme-mannequins.sql) ; absent : rien ne s'affiche
+      sb.rpc('ma_carte_mannequin')  // (15/11/2026) sa carte « MANNEQUIN MA2M », quand l'agence l'a activée (supabase-carte-mannequin.sql)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -104,7 +105,8 @@
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
       messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || [],
-      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || [], programme: donnees(programme) || null
+      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || [], programme: donnees(programme) || null,
+      carte: (donnees(carte) || {}).active ? donnees(carte) : null
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -393,7 +395,7 @@
       '<div class="ap-pr-corps">' +
         '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
         (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
-        carteMA2M('MANNEQUIN MA2M', 'Ma carte de mannequin', p.full_name, [['FORMATION', formationTexte()], ['DEPUIS', depuisTexte()]]) +
+        (etat.carte ? carteOfficielle() : carteMA2M('MANNEQUIN MA2M', 'Ma carte de mannequin', p.full_name, [['FORMATION', formationTexte()], ['DEPUIS', depuisTexte()]])) +
         '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div>' +
         (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html"><span class="ap-pr-anneau" style="--p:' + Math.max(0, Math.min(100, a.score)) + '%"><i>' + a.score + ' %</i></span>' +
           '<span><b>Profil complet à ' + a.score + ' %</b><small>Complétez-le : les recruteurs le voient.</small></span><i aria-hidden="true">›</i></a>' : '') +
@@ -460,6 +462,44 @@
     if (r && r.termine) return x ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Terminée';
     if (x) return 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + ' sur 9';
     return niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat';
+  }
+  // (15/11/2026, maquette validée : maquettes/carte-identite-mannequin-v2.html) la carte officielle, quand l'agence l'a
+  // activée : dessinée par js/carte-mannequin.js (la même image à l'écran, en téléchargement et en PDF), recto ou verso
+  let faceCarte = 'recto';
+  function donneesCarte() {
+    const p = etat.profil || {}, c = etat.carte || {}, r = resumeProgrammeFormation(etat.programme);  // (js/app.js)
+    const x = r && (r.termine ? r.revProchain : r.prochain);
+    // « Formation » : le texte choisi par l'agence, sinon son programme (une professionnelle sur 9 mois : recyclage)
+    const formation = c.formation || (r && r.termine ? 'Formation terminée'
+      : x ? (c.categorie === 'Professionnel' && c.niveaux === 1 ? 'Recyclage · mois ' + x.mois_niveau + ' sur 9' : 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau) : '');
+    const vues = photosAffichees(etat.photos), ph = vues.profil || vues.couverture;
+    return { nom: c.nom || p.full_name, categorie: c.categorie, formation, taille: window.Partage.enMetres(p.height_cm),
+      mensurations: [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join(' · ') : '',
+      depuis: c.depuis, valable: c.valable, matricule: c.matricule,
+      photo: ph ? urlPhotoMemeOrigine(ph.url_petite || ph.url_miniature || ph.url) : '',
+      lienBook: 'https://www.maitreakessemodelmanagement.com/' + lienFicheMannequin({ id: etat.uid, slug: c.slug }) };
+  }
+  function carteOfficielle() {
+    return '<div class="ap-carte-officielle"><img class="ap-carte-img" alt="Ma carte de mannequin MA2M (' + faceCarte + ')" width="1012" height="638">' +
+      '<div class="ap-btns ap-carte-btns"><button type="button" class="ap-btn rouge" data-carte="image">⬇️ Télécharger ma carte</button>' +
+      '<button type="button" class="ap-btn" data-carte="pdf">🖨️ Imprimer (PDF)</button></div>' +
+      '<button type="button" class="ap-lien ap-carte-retourner" data-carte="retourner">↻ Voir le ' + (faceCarte === 'recto' ? 'verso' : 'recto') + '</button></div>';
+  }
+  async function dessinerCarteEcran() {
+    const img = racine.querySelector('.ap-carte-img');
+    if (!img || !window.CarteMannequin) return;
+    try { const c = await window.CarteMannequin.dessiner(faceCarte, donneesCarte()); img.src = c.toDataURL('image/png'); }
+    catch (e) { if (window.signalerErreur) window.signalerErreur('Carte de mannequin non dessinée (application)', (e && e.message) || String(e)); }
+  }
+  async function actionCarte(quoi, bouton) {
+    if (quoi === 'retourner') { faceCarte = faceCarte === 'recto' ? 'verso' : 'recto'; afficher(); return; }
+    if (bouton) bouton.disabled = true;
+    message(quoi === 'pdf' ? 'Préparation du PDF…' : 'Préparation de votre carte…');
+    try {
+      if (quoi === 'pdf') await window.CarteMannequin.telechargerPdf(donneesCarte()); else await window.CarteMannequin.telechargerImage(donneesCarte());
+      message(quoi === 'pdf' ? 'PDF de votre carte prêt ✨' : 'Votre carte est enregistrée ✨');
+    } catch (e) { message('La carte n’a pas pu être préparée : réessayez.'); }
+    finally { if (bouton) bouton.disabled = false; }
   }
   function depuisTexte() { const e = etat.presences && etat.presences.date_entree; return e ? moisCourtDe(e) + ' ' + String(e).slice(0, 4) : ''; }
   function carteMA2M(titre, etiquette, nom, champs) {
@@ -621,6 +661,7 @@
     const tete = o === 'accueil' ? '<img class="ap-logo" src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="150" height="45">' : '<h1 class="ap-h-onglet">' + TITRES[o] + '</h1>';
     racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Messages et alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
       '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' + window.MA2M_APP.nav(o, { evenements: nbRepondre, alertes: nbAlertes }, true);
+    if (o === 'profil' && etat.carte) void dessinerCarteEcran();
     document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
   }
 
@@ -665,6 +706,8 @@
     const notif = e.target.closest('[data-notifications]');
     if (notif) { await activerNotifications(notif); return; }
     if (e.target.closest('[data-partager-book]')) { await partagerBook(); return; }
+    const carteBtn = e.target.closest('[data-carte]');
+    if (carteBtn) { await actionCarte(carteBtn.dataset.carte, carteBtn); return; }
     const payer = e.target.closest('[data-payer]');
     if (payer) { ouvrirVolet(payer.dataset.payer); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');

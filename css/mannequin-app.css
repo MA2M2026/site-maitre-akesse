@@ -657,3 +657,9 @@ button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer;
 .ap-pr + .ap-vitrine-grille .ap-vitrine-ajout { background: transparent; border: 1px dashed rgba(255, 255, 255, 0.6); }
 /* le nom posé sur la couverture laisse passer le toucher : toute la couverture ouvre la galerie */
 .ap-pr-titre { pointer-events: none; }
+
+/* carte officielle « MANNEQUIN MA2M » (15/11/2026, js/carte-mannequin.js) : l'image dessinée, ses boutons */
+.ap-carte-officielle { margin-top: 16px; }
+.ap-carte-img { display: block; width: 100%; height: auto; aspect-ratio: 1012 / 638; border-radius: 16px; background: #5A141B; box-shadow: 0 28px 50px -22px rgba(20, 2, 5, 0.95); }
+.ap-carte-btns { margin-top: 12px; }
+.ap-carte-retourner { display: block; margin: 6px auto 0; color: #FFFFFF; }

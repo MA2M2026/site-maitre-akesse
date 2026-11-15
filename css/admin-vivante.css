@@ -1559,3 +1559,8 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 /* boutons du planning, sur fond blanc : contour rose, le rappel en rouge plein */
 .pl-planning .btn { border-color: #EADCDD; background: #FFFFFF; color: #7C2128; }
 .pl-planning .btn.rouge { background: #7C2128; border-color: #7C2128; color: #FFFFFF; }
+/* « Sa carte de mannequin » (15/11/2026, js/portail/espace-paiements.js encartCarte) */
+.ca-carte .ca-ligne { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid #F2E7E8; }
+.ca-carte .ca-ligne > span, .ca-carte .ca-ligne > label { flex: 1 1 220px; min-width: 0; }
+.ca-carte .ca-ligne small { display: block; color: #6E4F53; font-size: 12.5px; font-weight: 400; }
+.ca-carte .ca-numero { color: #7C2128; letter-spacing: .08em; }
