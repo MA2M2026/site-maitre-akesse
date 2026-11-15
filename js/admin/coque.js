@@ -534,6 +534,9 @@
     ((site && site.projets) || []).forEach((p) => jours.forEach((j) => {
       if (p.date_debut <= j.cle && (p.date_fin || p.date_debut) >= j.cle) j.lignes.push(['📅', p.titre, [p.type === 'casting' ? 'casting' : p.type === 'defile' ? 'défilé' : '', [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · '), '#/site/b2-convocations']);
     }));
+    // (15/11/2026, maquette validée : maquettes/accueil-administration.html) le cours des mannequins de l'agence, chaque
+    // dimanche (liste de présence : Présences) ; son heure n'est pas encore notée dans le site
+    jours.forEach((j) => { if (j.d.getDay() === 0) j.lignes.push(['🎓', 'Cours des mannequins', 'liste de présence', '#/site/b2-presences']); });
     // cours de talons : le groupe en une ligne (nombre d'élèves), chaque cours privé avec l'élève et son thème
     const groupes = {};
     ((a && a.seances) || []).forEach((s) => {
