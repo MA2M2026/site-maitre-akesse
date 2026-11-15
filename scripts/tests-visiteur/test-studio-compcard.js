@@ -50,6 +50,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   ok(pdf && /\.pdf$/.test(pdf.suggestedFilename()), '« PDF » : la compcard téléchargée en PDF');
   const [img] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }).catch(() => null), p.click('#scJpeg')]);
   ok(img && /\.jpg$/.test(img.suggestedFilename()), '« Image » : la compcard téléchargée en image');
+  if (process.env.CAPTURES && img) await img.saveAs(path.join(process.env.CAPTURES, 'compcard-image.jpg'));
   ok((await p.getAttribute('.sc-retour', 'href')) === '/app/#profil', '« ‹ » ramène à Mon profil');
   ok(!errs.length, 'aucune erreur ' + (errs.length ? JSON.stringify(errs.slice(0, 3)) : ''));
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');

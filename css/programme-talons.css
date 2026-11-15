@@ -98,3 +98,19 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-mois-tete:first-child { margin-top: 0; }
 .pt-mois-tete.a-regler { background: #FFFFFF; border: 1px dashed var(--pt-ligne); color: var(--pt-gris); }
 .pt-seance.a-regler { opacity: .5; }
+
+/* (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html) choisir ses créneaux / déplacer une séance :
+   le choix lui-même vient de css/talons-creneaux.css, ici en rouge sur blanc */
+.pt-creneaux { --cr-encre: #7C2128; --cr-bord: #EADCDD; --cr-plein: #7C2128; --cr-plein-encre: #FFFFFF; --cr-survol: #FBF4F5; --cr-fond-doux: #FBF4F5; }
+.pt-creneaux h2 em { font-style: italic; font-weight: 400; }
+.pt-aide { color: var(--pt-gris); font-size: 14px; margin-bottom: 12px !important; }
+.pt-choisis-titre { margin: 4px 0 8px !important; }
+.pt-creneaux .ct-choisis { border: 1px solid var(--pt-ligne); }
+.pt-creneaux .pp-gros { margin-top: 16px; width: 100%; }
+.pt-annuler { width: 100%; margin-top: 10px; cursor: pointer; }
+.pt-creneaux .pt-note { margin-top: 10px !important; font-size: 13px; }
+.pt-creneaux .pt-note.err { color: var(--pt-rouge); font-weight: 600; }
+.pt-deplacer { flex: none; margin-left: auto; min-height: 34px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--pt-ligne); background: #FFFFFF; color: var(--pt-rouge); font: 600 12px 'Work Sans', sans-serif; cursor: pointer; }
+.pt-deplacer:focus-visible { outline: 2px solid var(--pt-rouge); outline-offset: 2px; }
+.pt-seance.a-choisir b { color: var(--pt-rouge); }
+.pt-annuler[hidden], .pt-creneaux[hidden] { display: none; }

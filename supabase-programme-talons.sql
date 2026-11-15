@@ -226,6 +226,7 @@ language sql stable security definer set search_path = public as $$
     'titres_mois', (select jsonb_object_agg(mois, titre) from cours_talons_programme),
     'parcours', c.parcours, 'modules', c.modules,
     'nb_mois', c.nb_mois, 'mois_payes', c.mois_payes, 'paiement', c.paiement, 'prix_mois', cours_talons_prix_mois(),
+    'choix_creneaux', to_jsonb(c)->>'choix_creneaux',   -- (15/11/2026, colonne de supabase-creneaux-prives.sql ; même texte là-bas)
     'numero', 'TAL-' || upper(left(replace(c.id::text, '-', ''), 6)),
     'seances', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'mois', s.mois, 'module', s.module, 'debut', s.debut, 'fin', s.fin, 'lieu', s.lieu, 'theme', s.theme, 'faite', s.faite) order by s.debut)
       from cours_talons_seances s where s.inscription_id = c.id), '[]'::jsonb))

@@ -77,7 +77,7 @@
   }
   const donnees = (x) => (x.status === 'fulfilled' && x.value && !x.value.error ? x.value.data : null);
   async function charger(uid) {
-    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus, programme] = await Promise.allSettled([
+    const [profil, photos, projets, evenements, mensualites, cachets, castings, messages, presences, mdm, bulletins, vitrine, recus, programme, carte] = await Promise.allSettled([
       lireProfil(uid).then((data) => ({ data })),
       sb.from('model_photos').select('id, url, url_miniature, url_petite, principale, photo_couverture, tri_statut, created_at').eq('model_id', uid),
       sb.from('model_projects').select('id').eq('model_id', uid),
@@ -92,7 +92,8 @@
       // (11/11/2026, « Mon profil » façon réseau social) adresse publique du book, phrase de la mannequin, demande en cours
       sb.from('model_profiles').select('slug, citation, en_attente_validation').eq('id', uid).maybeSingle(),
       sb.rpc('mes_recus'),  // (11/11/2026) paiements validés, pour « Mes opérations » de l'écran Paiements (supabase-bloc2-complements.sql)
-      sb.rpc('mon_programme_formation')  // (14/11/2026) programme de formation (supabase-programme-mannequins.sql) ; absent : rien ne s'affiche
+      sb.rpc('mon_programme_formation'),  // (14/11/2026) programme de formation (supabase-programme-mannequins.sql) ; absent : rien ne s'affiche
+      sb.rpc('ma_carte_mannequin')  // (15/11/2026) sa carte « MANNEQUIN MA2M », quand l'agence l'a activée (supabase-carte-mannequin.sql)
     ]);
     if (profil.status === 'rejected') throw profil.reason;  // (connexion coupée : « Réessayer »)
     const p = donnees(profil);
@@ -104,7 +105,8 @@
       evenements: donnees(evenements) || [], evenementsActifs: !!donnees(evenements),
       mensualites: donnees(mensualites), cachets: donnees(cachets) || [], castings: donnees(castings) || [],
       messages: donnees(messages) || [], presences: donnees(presences) || null, mannequinDuMois: donnees(mdm) || null, bulletins: donnees(bulletins) || [],
-      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || [], programme: donnees(programme) || null
+      vitrine: donnees(vitrine) || {}, recus: donnees(recus) || [], programme: donnees(programme) || null,
+      carte: (donnees(carte) || {}).active ? donnees(carte) : null
     };
   }
   // boîte de réception (3e voie, 26/10/2026 : tout ce que l'agence envoie par WhatsApp et e-mail
@@ -364,31 +366,48 @@
         '<p class="ap-petit">À montrer à l’entrée de « ' + esc(confirmes[0].titre) + ' ». L’agence vous remet aussi votre carte imprimée.</p>' : '') +
       (avenir.length > 1 ? '<h2 class="ap-titre-sec">Ensuite</h2>' + avenir.slice(1).map(billetMini).join('') : '');
   }
-  // « Mon profil » façon réseau social (11/11/2026, maquette validée par la propriétaire) : couverture et photo ronde
-  // qu'on touche pour choisir une photo dans la galerie (elle rejoint aussi le Book), chiffres, phrase, boutons
-  // Compcard / Mon CV / Partager mon book, grille de photos de 3 comme sur Instagram.
+  // « Mon profil » (11/11/2026 façon réseau social ; 15/11/2026 premium, maquette validée : maquettes/app-profil.html) :
+  // grande couverture avec son nom (on la touche pour la changer), photo ronde, sa carte de mannequin façon carte
+  // bancaire (la même que la carte membre des Paiements), trois chiffres, « profil complet » en anneau, ses
+  // mensurations, ses documents (Compcard, CV, photos, programme) en relevé, puis son book en grille.
   function ecranProfil() {
     const p = etat.profil, a = etat.analyse || { score: 0 }, v = etat.vitrine || {};
-    const mesures = [p.city || '', window.Partage.enMetres(p.height_cm), [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join('-') : ''].filter(Boolean).join(' · ');
+    // (sa ville sous son nom ; ses mensurations une seule fois, dans « Mes mensurations »)
+    const mesures = p.city || '';
     const vues = photosAffichees(etat.photos);  // (js/app.js : même règle que la fiche publique)
     const url = (x) => (x ? esc(urlPhotoMemeOrigine(x.url_miniature || x.url_petite || x.url)) : '');
     const r = presencesCalculees();
     const cours = r && r.ceMois.bilan.comptees ? r.ceMois.bilan.presents + '/' + r.ceMois.bilan.comptees : '–';
     const etatProfil = p.published ? ['vert', 'Profil en ligne sur le Book'] : v.en_attente_validation ? ['orange', 'En cours de validation par l’agence'] : ['gris', 'Pas encore en ligne'];
     const champPhoto = (role, texte) => '<input class="ap-cache" type="file" accept="image/*" data-photo-role="' + role + '" aria-label="' + texte + '">';
-    return '<section class="ap-vitrine">' +
-      '<label class="ap-vitrine-couv' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
+    const mots = String(p.full_name || '').trim().split(/\s+/), prog = resumeProgrammeFormation(etat.programme);  // (js/app.js)
+    const mesure = (n, titre) => (n ? '<div><b>' + esc(n) + '</b><span>' + titre + '</span></div>' : '');
+    const moisProg = prog && (prog.termine ? prog.revProchain : prog.prochain);
+    const doc = (lien, ic, titre, texte) => '<a href="' + lien + '"><em aria-hidden="true">' + ic + '</em><span><small>' + titre + '</small>' + esc(texte) + '</span><i aria-hidden="true">›</i></a>';
+    return '<section class="ap-vitrine ap-pr">' +
+      '<label class="ap-vitrine-couv ap-pr-une' + (vues.couvertureChoisie ? '' : ' vide') + '">' + (vues.couverture ? '<img src="' + url(vues.couverture) + '" alt="">' : '') +
         '<span class="ap-vitrine-modif">📷 Couverture</span>' + champPhoto('photo_couverture', 'Changer ma photo de couverture') + '</label>' +
-      '<div class="ap-vitrine-haut"><label class="ap-vitrine-avatar">' + (vues.profil ? '<img src="' + url(vues.profil) + '" alt="">' : '<span>' + esc(initialesDe(p.full_name)) + '</span>') +
+      '<div class="ap-pr-tete"><label class="ap-vitrine-avatar">' + (vues.profil ? '<img src="' + url(vues.profil) + '" alt="">' : '<span>' + esc(initialesDe(p.full_name)) + '</span>') +
         '<i aria-hidden="true">＋</i>' + champPhoto('principale', 'Changer ma photo de profil') + '</label>' +
-        (p.niveau_mannequin ? '<span class="ap-vitrine-niveau">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</span>' : '') +
-        '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div></div>' +
-      '<h1 class="ap-vitrine-nom">' + esc(p.full_name) + '</h1>' + (mesures ? '<p class="ap-vitrine-mesures">' + esc(mesures) + '</p>' : '') +
-      (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
-      '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
-      (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html">Profil complet à ' + a.score + ' % · compléter ›</a>' : '') +
-      '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
-      '<div class="ap-vitrine-raccourcis"><a href="/app/espace-mannequin.html#compcard"><span>🗂️</span>Compcard</a><a href="/app/espace-mannequin.html#cv"><span>📄</span>Mon CV</a><a href="/app/espace-mannequin.html#photos"><span>📸</span>Mes photos</a></div>' +
+        '<div class="ap-pr-titre">' + (p.niveau_mannequin ? '<small class="ap-vitrine-niveau">' + esc(niveauNormalise(p.niveau_mannequin, p.years_experience)) + '</small>' : '') +
+        '<h1 class="ap-vitrine-nom">' + esc(mots[0] || '') + (mots.length > 1 ? ' <em>' + esc(mots.slice(1).join(' ')) + '</em>' : '') + '</h1>' +
+        (mesures ? '<p class="ap-vitrine-mesures">' + esc(mesures) + '</p>' : '') + '</div></div>' +
+      '<div class="ap-pr-corps">' +
+        '<span class="ap-vitrine-etat ' + etatProfil[0] + '"><i></i>' + etatProfil[1] + '</span>' +
+        (v.citation ? '<p class="ap-vitrine-phrase">« ' + esc(v.citation) + ' »</p>' : '') +
+        (etat.carte ? carteOfficielle() : carteMA2M('MANNEQUIN MA2M', 'Ma carte de mannequin', p.full_name, [['FORMATION', formationTexte()], ['DEPUIS', depuisTexte()]])) +
+        '<div class="ap-vitrine-chiffres"><div><b>' + etat.photos.length + '</b>photos</div><div><b>' + etat.nbProjets + '</b>' + (etat.nbProjets > 1 ? 'expériences' : 'expérience') + '</div><div><b>' + cours + '</b>cours</div></div>' +
+        (a.score < 100 ? '<a class="ap-vitrine-score" href="/app/espace-mannequin.html"><span class="ap-pr-anneau" style="--p:' + Math.max(0, Math.min(100, a.score)) + '%"><i>' + a.score + ' %</i></span>' +
+          '<span><b>Profil complet à ' + a.score + ' %</b><small>Complétez-le : les recruteurs le voient.</small></span><i aria-hidden="true">›</i></a>' : '') +
+        '<div class="ap-vitrine-btns"><a class="ap-btn rouge" href="/app/espace-mannequin.html">Modifier mon profil</a><button type="button" class="ap-btn" data-partager-book>Partager mon book</button></div>' +
+        ([p.height_cm, p.chest_cm, p.waist_cm, p.hips_cm].some(Boolean) ? '<h2 class="ap-titre-sec">Mes mensurations</h2><div class="ap-pr-mesures">' +
+          mesure(p.height_cm ? window.Partage.enMetres(p.height_cm) : '', 'hauteur') + mesure(p.chest_cm, 'poitrine (cm)') + mesure(p.waist_cm, 'taille (cm)') + mesure(p.hips_cm, 'hanches (cm)') + '</div>' : '') +
+        '<h2 class="ap-titre-sec">Mes documents</h2><div class="ap-vitrine-raccourcis">' +
+          doc('/app/espace-mannequin.html#compcard', '🗂️', 'Compcard', 'Ma carte de présentation') +
+          doc('/app/espace-mannequin.html#cv', '📄', 'Mon CV', 'Mes expériences') +
+          doc('/app/espace-mannequin.html#photos', '📸', 'Mes photos', 'Choisir et ranger mon book') +
+          (prog ? doc('#programme', '🎓', 'Mon programme', moisProg && moisProg.theme ? moisProg.theme : 'Ma formation, mois après mois') : '') + '</div>' +
+        '<h2 class="ap-titre-sec">Mon book</h2></div>' +
       '</section>' +
       '<div class="ap-vitrine-grille">' + etat.photos.slice().sort((x, y) => String(y.created_at).localeCompare(String(x.created_at))).map((x) => '<img src="' + esc(urlPhotoMemeOrigine(x.url_petite || x.url_miniature || x.url)) + '" alt="" loading="lazy">').join('') +
         '<label class="ap-vitrine-ajout">＋<span>Ajouter</span>' + champPhoto('', 'Ajouter une photo au Book') + '</label></div>' +
@@ -435,13 +454,67 @@
   const moisCourt = moisCourtDe;  // (js/app.js)
   // (noms des moyens : js/moyens-paiement.js, les mêmes que l'Administration)
   const MODES_PAIEMENT = Object.assign({}, window.MoyensPaiement ? window.MoyensPaiement.NOMS : { wave: 'Wave', especes: 'Espèces' }, { avant_systeme: 'Avant l’application' });
+  // la carte façon carte bancaire : carte membre (Paiements) et carte de mannequin (Mon profil), écrite une fois, avec
+  // les mêmes « FORMATION » (son programme, comme la carte de l'accueil) et « DEPUIS » (son entrée à l'agence)
+  // « Formation » : le texte imposé par l'agence (carte), sinon son programme — révision, recyclage (professionnelle sur
+  // 1 niveau de 9 mois), niveau et mois ; « court » : sans « sur 9 » pour le niveau (la carte officielle)
+  function formationTexte(court) {
+    const p = etat.profil || {}, c = etat.carte || {}, r = resumeProgrammeFormation(etat.programme);  // (js/app.js)
+    if (c.formation) return c.formation;
+    const x = r && (r.termine ? r.revProchain : r.prochain);
+    if (r && r.termine) return x ? 'Révision · mois ' + x.mois_niveau + ' sur 9' : 'Formation terminée';
+    if (x && c.categorie === 'Professionnel' && r.total === 9) return 'Recyclage · mois ' + x.mois_niveau + ' sur 9';
+    if (x) return 'Niveau ' + x.niveau + ' · mois ' + x.mois_niveau + (court ? '' : ' sur 9');
+    return niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat';
+  }
+  // (15/11/2026, maquette validée : maquettes/carte-identite-mannequin-v2.html) la carte officielle, quand l'agence l'a
+  // activée : dessinée par js/carte-mannequin.js (la même image à l'écran, en téléchargement et en PDF), recto ou verso
+  let faceCarte = 'recto';
+  function donneesCarte() {
+    const p = etat.profil || {}, c = etat.carte || {};
+    const formation = formationTexte(true);
+    const vues = photosAffichees(etat.photos), ph = vues.profil || vues.couverture;
+    return { nom: c.nom || p.full_name, categorie: c.categorie, formation, taille: window.Partage.enMetres(p.height_cm),
+      mensurations: [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join(' · ') : '',
+      depuis: c.depuis, valable: c.valable, matricule: c.matricule,
+      photo: ph ? urlPhotoMemeOrigine(ph.url_petite || ph.url_miniature || ph.url) : '',
+      lienBook: c.en_ligne ? MA2M_SITE + '/' + lienFicheMannequin({ id: etat.uid, slug: c.slug }) : '' };
+  }
+  function carteOfficielle() {
+    return '<div class="ap-carte-officielle"><img class="ap-carte-img" alt="Ma carte de mannequin MA2M (' + faceCarte + ')" width="1012" height="638">' +
+      '<div class="ap-btns ap-carte-btns"><button type="button" class="ap-btn rouge" data-carte="image">⬇️ Télécharger ma carte</button>' +
+      '<button type="button" class="ap-btn" data-carte="pdf">🖨️ Imprimer (PDF)</button></div>' +
+      '<button type="button" class="ap-lien ap-carte-retourner" data-carte="retourner">↻ Voir le ' + (faceCarte === 'recto' ? 'verso' : 'recto') + '</button></div>';
+  }
+  const imagesCarte = {};   // { face + données : image } — pas redessinée à chaque affichage de l'onglet
+  async function dessinerCarteEcran() {
+    const img = racine.querySelector('.ap-carte-img');
+    if (!img || !window.CarteMannequin) return;
+    const cle = faceCarte + JSON.stringify(donneesCarte());
+    if (imagesCarte[cle]) { img.src = imagesCarte[cle]; return; }
+    try { const c = await window.CarteMannequin.dessiner(faceCarte, donneesCarte()); imagesCarte[cle] = c.toDataURL('image/png'); img.src = imagesCarte[cle]; }
+    catch (e) { if (window.signalerErreur) window.signalerErreur('Carte de mannequin non dessinée (application)', (e && e.message) || String(e)); }
+  }
+  async function actionCarte(quoi, bouton) {
+    if (quoi === 'retourner') { faceCarte = faceCarte === 'recto' ? 'verso' : 'recto'; afficher(); return; }
+    if (bouton) bouton.disabled = true;
+    message(quoi === 'pdf' ? 'Préparation du PDF…' : 'Préparation de votre carte…');
+    try {
+      if (quoi === 'pdf') await window.CarteMannequin.telechargerPdf(donneesCarte()); else await window.CarteMannequin.telechargerImage(donneesCarte());
+      message(quoi === 'pdf' ? 'PDF de votre carte prêt ✨' : 'Votre carte est enregistrée ✨');
+    } catch (e) { message('La carte n’a pas pu être préparée : réessayez.'); }
+    finally { if (bouton) bouton.disabled = false; }
+  }
+  function depuisTexte() { const e = etat.presences && etat.presences.date_entree; return e ? moisCourtDe(e) + ' ' + String(e).slice(0, 4) : ''; }
+  function carteMA2M(titre, etiquette, nom, champs) {
+    const champ = (x) => (x[1] ? '<div><b>' + x[0] + '</b>' + esc(x[1]) + '</div>' : '');
+    return '<div class="ap-cb" aria-label="' + esc(etiquette) + '"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>' + esc(titre) + '</span></div>' +
+      '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(nom || '').toUpperCase()) + '</div>' +
+      '<div class="ap-cb-bas">' + champs.map(champ).join('') + '</div></div>';
+  }
   function carteMembre(m) {
-    const p = etat.profil || {}, entree = etat.presences && etat.presences.date_entree;
-    const champ = (titre, valeur) => (valeur ? '<div><b>' + titre + '</b>' + esc(valeur) + '</div>' : '');
-    return '<div class="ap-cb" aria-label="Ma carte de membre"><div class="ap-cb-tete"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"><span>CARTE MEMBRE</span></div>' +
-      '<i class="ap-cb-puce" aria-hidden="true"></i><div class="ap-cb-nom">' + esc(String(m.nom || p.full_name || '').toUpperCase()) + '</div>' +
-      '<div class="ap-cb-bas">' + champ('FORMATION', niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat') +
-        champ('DEPUIS', entree ? moisCourt(entree) + ' ' + String(entree).slice(0, 4) : '') + champ('MENSUALITÉ', fcfa(m.mensualite)) + '</div></div>';
+    const p = etat.profil || {};
+    return carteMA2M('CARTE MEMBRE', 'Ma carte de membre', m.nom || p.full_name, [['FORMATION', formationTexte()], ['DEPUIS', depuisTexte()], ['MENSUALITÉ', fcfa(m.mensualite)]]);
   }
   function ecranPaiements() {
     const m = etat.mensualites;
@@ -592,6 +665,7 @@
     const tete = o === 'accueil' ? '<img class="ap-logo" src="/assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="150" height="45">' : '<h1 class="ap-h-onglet">' + TITRES[o] + '</h1>';
     racine.innerHTML = '<header class="ap-tete">' + tete + (o === 'alertes' ? '' : '<a class="ap-cloche" href="#alertes" aria-label="Messages et alertes (' + nbAlertes + ')">🔔' + (nbAlertes ? '<b>' + nbAlertes + '</b>' : '') + '</a>') + '</header>' +
       '<main class="ap-ecran" id="ap-ecran">' + ECRANS[o]() + '</main>' + window.MA2M_APP.nav(o, { evenements: nbRepondre, alertes: nbAlertes }, true);
+    if (o === 'profil' && etat.carte) void dessinerCarteEcran();
     document.title = (o === 'accueil' ? '' : TITRES[o] + ' · ') + 'MA2M Mannequin';
   }
 
@@ -636,6 +710,8 @@
     const notif = e.target.closest('[data-notifications]');
     if (notif) { await activerNotifications(notif); return; }
     if (e.target.closest('[data-partager-book]')) { await partagerBook(); return; }
+    const carteBtn = e.target.closest('[data-carte]');
+    if (carteBtn) { await actionCarte(carteBtn.dataset.carte, carteBtn); return; }
     const payer = e.target.closest('[data-payer]');
     if (payer) { ouvrirVolet(payer.dataset.payer); return; }
     const rep = e.target.closest('[data-repondre]'), per = e.target.closest('[data-periode]'), pas = e.target.closest('[data-passages]'), tout = e.target.closest('[data-programme]');

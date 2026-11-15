@@ -13,11 +13,13 @@
 <meta name="description" content="Votre programme personnel de l'Atelier Talons & Élégance de Maître Akesse Model Management.">
 <link rel="stylesheet" href="/css/polices.css?v=f8b78de5">
 <link rel="stylesheet" href="/css/paiements-premium.css?v=e68257b9">
-<link rel="stylesheet" href="/css/programme-talons.css?v=927165b4">
+<link rel="stylesheet" href="/css/talons-creneaux.css?v=5b55f382">
+<link rel="stylesheet" href="/css/programme-talons.css?v=06ecf03a">
 <script src="/js/supabase-config.js?v=9e1844d8" defer></script>
-<script src="/js/lien-public.js?v=cb582da9" defer></script>
-<script src="/js/talons-commun.js?v=a4128d3b" defer></script>
-<script src="/js/programme-talons.js?v=a3be3074" defer></script>
+<script src="/js/lien-public.js?v=4be50796" defer></script>
+<script src="/js/talons-commun.js?v=53eea3d0" defer></script>
+<script src="/js/talons-creneaux.js?v=2317128a" defer></script>
+<script src="/js/programme-talons.js?v=465edfa0" defer></script>
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <meta name="theme-color" content="#4A1016">
 </head>
@@ -64,6 +66,21 @@
         <button type="button" class="pt-fl" id="pt-apres" aria-label="Mois suivant"><svg class="pt-ic"><use href="#i-droite"/></svg></button>
       </div>
       <div class="pt-cal" id="pt-cal"></div>
+    </section>
+
+    <!-- (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html) cours privés : choisir ses créneaux une fois payée, ou déplacer une séance (jusqu'à 24 h avant) ; js/talons-creneaux.js -->
+    <section class="pt-bloc pt-creneaux" id="pt-bloc-choisir" aria-labelledby="pt-choisir-titre" hidden>
+      <p class="pt-surtitre" id="pt-choisir-sur">Vos créneaux</p>
+      <h2 id="pt-choisir-titre">Choisissez <em>vos créneaux</em></h2>
+      <p class="pt-aide" id="pt-choisir-aide">Seuls les créneaux libres sont proposés (heure d’Abidjan). Chaque séance dure 2 h.</p>
+      <div class="ct-jours" id="pt-jours" role="group" aria-label="Jour"></div>
+      <div class="ct-heures" id="pt-heures" role="group" aria-label="Heure"></div>
+      <label class="ct-repeter" id="pt-bloc-repeter"><input type="checkbox" id="pt-repeter" checked><span>Même jour, même heure chaque semaine</span></label>
+      <p class="pt-surtitre pt-choisis-titre" id="pt-choisis-titre"></p>
+      <ol class="ct-choisis" id="pt-choisis" aria-live="polite"></ol>
+      <button class="pp-gros" id="pt-valider" type="button">Valider mes créneaux</button>
+      <button class="pt-second pt-annuler" id="pt-annuler" type="button" hidden>Annuler</button>
+      <p class="pt-note" id="pt-choisir-msg" role="status"></p>
     </section>
 
     <section class="pt-bloc" aria-labelledby="pt-seances-titre">

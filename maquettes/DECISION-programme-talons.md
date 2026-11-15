@@ -42,3 +42,26 @@
   1. montrer ce programme en premium sur la page publique des cours de talons (inscription) ;
   2. un programme du même genre pour les mannequins de l'agence, et ce style premium dans l'Administration,
      l'application, l'inscription, « Postuler à un casting », « Intégrer l'agence », la candidature.
+
+## Étape 2 : messages WhatsApp tout prêts (14/11/2026) — **validée** (« Oui oui »)
+
+## Étape 3 : cours privés (14/11/2026)
+- Horaires donnés par la propriétaire : **du lundi au samedi, de 10 h à 20 h**.
+- Maquette `maquettes/creneaux-prives.html` **validée** (« Je valide »), avec : séance de **2 h**, début à **n'importe
+  quelle heure pile de 10 h à 18 h**, 1 h 30 de pause entre deux cours, créneaux gardés 48 h, ou « dates à convenir ».
+- Construite le 14/11/2026 (README-TECHNIQUE.md, « Créneaux des cours privés ») : `supabase-creneaux-prives.sql` à
+  coller par la propriétaire. Prochaine : étape 4, planning jour par jour et notification 24 h avant.
+- **15/11/2026, v2 validée** (« Je valide », `maquettes/creneaux-prives-v2.html`) : trois façons à l'inscription
+  (maintenant / après mon paiement / à convenir), choix ou déplacement (jusqu'à 24 h avant) sur son lien une fois
+  payée, « Mes indisponibilités » de l'agence. Construite le même jour (README-TECHNIQUE.md, « Créneaux v2 »).
+- **15/11/2026** : `supabase-creneaux-prives.sql` collé par la propriétaire (contrôle 10 sur 10). Essai sur la VRAIE base,
+  avec son accord, tout annulé à la fin (vérifié : rien ne reste) : réservation de 2 créneaux, heure voisine refusée
+  (CRENEAU_PRIS), indisponibilité respectée, choix après paiement sur son lien, déplacement, page — tout conforme.
+- **15/11/2026, étape 4 validée** (« Excellent », `maquettes/planning-talons.html`) : notification sur le téléphone de
+  l'agence la veille de chaque cours, et onglet « Planning » (4 semaines, rappels WhatsApp prêts). Construite le même
+  jour ; `supabase-rappels-talons.sql` à coller par la propriétaire.
+- **15/11/2026** : `supabase-rappels-talons.sql` collé (contrôle 4 sur 4). **Décision de la propriétaire : tout finaliser
+  (premium de l'application et des autres pages de l'Administration, SonarQube, cours des mannequins du dimanche)
+  puis UNE SEULE mise en ligne.** La mise en ligne programmée du 15/11 à 9 h 07 est désactivée. L'essai réel de la
+  notification de la veille se fera après cette mise en ligne (le texte de la notification vient du site en ligne).
+  Aucune séance à venir dans la base : aucun rappel ne se perd d'ici là.

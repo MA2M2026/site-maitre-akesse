@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE v2 (15/11/2026, à valider par la propriétaire) : cours privés réorganisés.
+     1) à l'inscription, 3 façons : « je choisis maintenant », « je choisirai après mon paiement » (elle reçoit un lien),
+        « dates à convenir ensemble » ;
+     2) la page de l'élève (son lien personnel) : choisir ou déplacer ses créneaux, une fois payée ;
+     3) l'Administration : « Mes indisponibilités » (ces heures ne sont plus proposées) et les séances touchées.
+     ?vue=1 | 2 | 3. Données d'exemple. -->
+<title>Maquette créneaux v2</title>
+<link rel="stylesheet" href="../css/polices.css?v=f8b78de5">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font: 400 15px/1.55 'Work Sans', sans-serif; }
+.v { display: none; } body.v1 .v-1, body.v2 .v-2, body.v3 .v-3 { display: block; }
+body.v1 { background: #7C2128; color: #fff; }
+body.v2 { background: #FBF4F5; color: #2a1416; }
+body.v3 { background: #7C2128; color: #2a1416; }
+.page { max-width: 520px; margin: 0 auto; padding: 22px 16px 50px; }
+.etiquette { font: 700 10px 'Work Sans'; letter-spacing: .22em; text-transform: uppercase; opacity: .85; margin: 0 0 8px; }
+h2 { margin: 0 0 6px; font: 500 30px/1.1 'Cormorant Garamond', serif; } h2 em { font-weight: 400; }
+.sous { margin: 0 0 18px; opacity: .9; font-size: 14px; }
+.label { display: block; margin: 20px 0 8px; font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+/* 1. trois façons */
+.facon { display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,.35); }
+.facon i { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-style: normal; background: rgba(255,255,255,.12); }
+.facon b { display: block; font-size: 15px; } .facon small { display: block; opacity: .88; font-size: 13px; }
+.facon.on { background: #fff; color: #7C2128; border-color: #fff; } .facon.on i { background: #F3DDE0; }
+.facon.on small { color: #6E4F53; opacity: 1; }
+.info { margin-top: 14px; padding: 12px 14px; border-radius: 14px; border: 1px dashed rgba(255,255,255,.55); font-size: 13.5px; }
+/* 2. page de l'élève */
+.carte { background: #fff; border-radius: 20px; padding: 18px 16px; box-shadow: 0 20px 40px -28px rgba(90,20,27,.6); margin-bottom: 14px; }
+.cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; color: #fff; margin-bottom: 16px; background: linear-gradient(135deg, #5A141B, #8A2530 55%, #5A141B); }
+.cb small { font: 600 9px 'Work Sans'; letter-spacing: .3em; } .cb b { display: block; margin-top: 18px; font: 600 24px 'Cormorant Garamond', serif; }
+.cb span { font-size: 12.5px; color: #F3DDE0; }
+.jours { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+.jours div { flex: 0 0 56px; text-align: center; padding: 8px 0; border-radius: 14px; border: 1px solid #EADCDD; }
+.jours small { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; }
+.jours b { font: 600 22px/1.1 'Cormorant Garamond', serif; color: #7C2128; }
+.jours .on { background: #7C2128; border-color: #7C2128; } .jours .on small, .jours .on b { color: #fff; }
+.jours .ferme { opacity: .35; }
+.heures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.heures div { padding: 10px 0; text-align: center; border-radius: 12px; border: 1px solid #EADCDD; font-weight: 600; font-size: 14px; color: #7C2128; }
+.heures .pris { opacity: .35; text-decoration: line-through; font-weight: 400; } .heures .on { background: #7C2128; color: #fff; border-color: #7C2128; }
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste li { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid #F2E7E8; font-size: 14px; }
+.liste li:first-child { border-top: 0; }
+.liste em { flex: 0 0 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; color: #7C2128; font: italic 600 15px 'Cormorant Garamond', serif; }
+.liste small { margin-left: auto; color: #6E4F53; }
+.liste .alerte { color: #7C2128; font-weight: 600; }
+.mini { padding: 4px 10px; border-radius: 999px; border: 1px solid #EADCDD; font-size: 12px; color: #7C2128; font-weight: 600; white-space: nowrap; }
+.gros { display: block; width: 100%; margin-top: 14px; padding: 15px; border-radius: 16px; background: #7C2128; color: #fff; text-align: center; font-weight: 700; }
+.note { font-size: 13px; color: #6E4F53; margin: 10px 0 0; }
+/* 3. administration */
+.v-3 .titre { color: #fff; }
+.v-3 .carte h3 { margin: 0 0 4px; font: 600 20px 'Cormorant Garamond', serif; color: #7C2128; }
+.ligne { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid #F2E7E8; font-size: 14px; }
+.ligne:first-of-type { border-top: 0; }
+.ligne i { font-style: normal; } .ligne small { display: block; color: #6E4F53; }
+.ligne .mini { margin-left: auto; }
+.champs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.champs div { padding: 10px 12px; border-radius: 12px; border: 1px solid #EADCDD; font-size: 13px; color: #6E4F53; }
+.champs div b { display: block; color: #2a1416; font-size: 14px; }
+.champs .large { grid-column: 1 / -1; }
+.touche { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; font-size: 13.5px; }
+.touche b { color: #7C2128; }
+.wa { display: inline-block; margin-top: 8px; padding: 8px 14px; border-radius: 999px; background: #7C2128; color: #fff; font-weight: 600; font-size: 13px; }
+</style></head>
+<body>
+<div class="page">
+
+  <!-- 1. INSCRIPTION -->
+  <div class="v v-1">
+    <p class="etiquette">1 · À l’inscription</p>
+    <h2>Vos <em>créneaux</em></h2>
+    <p class="sous">Trois façons, au choix de l’élève :</p>
+    <div class="facon"><i>📅</i><div><b>Je choisis maintenant</b><small>Les créneaux libres, gardés 48 h le temps du paiement.</small></div></div>
+    <div class="facon on"><i>⏳</i><div><b>Je choisirai après mon paiement</b><small>Vous recevrez votre lien personnel : vous y choisirez vos créneaux quand vous serez décidée.</small></div></div>
+    <div class="facon"><i>📞</i><div><b>Dates à convenir ensemble</b><small>L’agence vous appelle pour fixer les dates.</small></div></div>
+    <div class="info">Avec « Je choisirai après mon paiement », rien n’est réservé tout de suite : les créneaux restent ouverts à toutes jusqu’à son choix.</div>
+  </div>
+
+  <!-- 2. PAGE DE L'ÉLÈVE (son lien personnel, une fois payée) -->
+  <div class="v v-2">
+    <p class="etiquette">2 · Sur son lien personnel, une fois payée</p>
+    <div class="cb"><small>ATELIER TALONS &amp; ÉLÉGANCE</small><b>Madame Koné</b><span>4 séances privées · payées ✓</span></div>
+    <div class="carte">
+      <h2 style="font-size:24px">Choisissez <em>vos créneaux</em></h2>
+      <p class="note" style="margin:0 0 12px">Seuls les créneaux libres sont proposés (heure d’Abidjan). 2 sur 4 choisis.</p>
+      <div class="jours"><div><small>Lun</small><b>16</b></div><div class="on"><small>Mar</small><b>17</b></div><div class="ferme"><small>Mer</small><b>18</b></div><div><small>Jeu</small><b>19</b></div><div><small>Ven</small><b>20</b></div><div><small>Sam</small><b>21</b></div></div>
+      <div class="heures"><div class="pris">10 h</div><div class="pris">11 h</div><div>12 h</div><div>13 h</div><div class="on">14 h</div><div>15 h</div><div>16 h</div><div class="pris">17 h</div><div class="pris">18 h</div></div>
+      <p class="note">Le mercredi 18 est grisé : l’agence n’est pas disponible ce jour-là.</p>
+      <span class="gros">Valider mes créneaux</span>
+    </div>
+    <div class="carte">
+      <p class="label" style="margin-top:0;color:#6E4F53">Mes séances</p>
+      <ol class="liste">
+        <li><em>1</em>Mardi 17 novembre<small>14 h – 16 h</small></li>
+        <li><em>2</em>Mardi 24 novembre<small>14 h – 16 h</small></li>
+        <li><em>3</em><span class="alerte">À choisir</span></li>
+        <li><em>4</em><span class="alerte">À choisir</span></li>
+      </ol>
+      <p class="note">Besoin de changer ? Vous pouvez déplacer une séance jusqu’à 24 h avant.</p>
+    </div>
+  </div>
+
+  <!-- 3. ADMINISTRATION -->
+  <div class="v v-3">
+    <p class="etiquette titre">3 · Administration · Cours de talons</p>
+    <div class="carte">
+      <h3>Mes indisponibilités</h3>
+      <p class="note" style="margin:0 0 6px">Ces heures ne sont plus proposées aux élèves.</p>
+      <div class="ligne"><i>🚫</i><div>Mercredi 18 novembre<small>Toute la journée · Voyage</small></div><span class="mini">✕ Retirer</span></div>
+      <div class="ligne"><i>🚫</i><div>Samedi 21 novembre<small>10 h – 14 h · Shooting</small></div><span class="mini">✕ Retirer</span></div>
+      <p class="label" style="color:#6E4F53">Ajouter une indisponibilité</p>
+      <div class="champs"><div><b>Du 25/11</b>date</div><div><b>Au 25/11</b>date</div><div><b>Toute la journée</b>ou de … à …</div><div><b>Raison</b>(pour vous)</div></div>
+      <span class="gros">Ajouter</span>
+      <div class="touche">⚠️ <b>1 séance déjà réservée</b> tombe pendant cette indisponibilité : Mme Koné, mer. 25 nov., 14 h.<br>
+        <span class="wa">💬 Lui demander de choisir un autre créneau</span></div>
+    </div>
+  </div>
+</div>
+<script>
+document.body.className = 'v' + (new URLSearchParams(location.search).get('vue') || '1');
+</script>
+</body></html>

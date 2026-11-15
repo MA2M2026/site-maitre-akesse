@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE (15/11/2026, à valider par la propriétaire) : « Mon profil » de l'application des mannequins, plus premium,
+     même esprit que l'inscription et les paiements (carte façon carte bancaire, relevé, tuiles fines). Seulement des
+     fonds rouges ou blancs (règle de l'application). Données d'exemple. -->
+<title>Maquette profil application</title>
+<link rel="stylesheet" href="../css/polices.css?v=f8b78de5">
+<style>
+:root { --rouge: #7C2128; --fonce: #5A141B; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--rouge); color: #fff; font: 400 15px/1.5 'Work Sans', sans-serif; }
+.page { max-width: 480px; margin: 0 auto; padding-bottom: 90px; }
+.tete { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; }
+.tete span { font: 600 10px 'Work Sans'; letter-spacing: .32em; text-transform: uppercase; opacity: .9; }
+.tete b { width: 38px; height: 38px; border-radius: 50%; background: #fff; color: var(--rouge); display: grid; place-items: center; font-size: 16px; }
+.une { position: relative; height: 330px; overflow: hidden; background: url(../assets/cours-talons/mannequin-podium.jpg) 50% 20% / cover; }
+.une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,6,10,.15) 35%, #7C2128 100%); }
+.une div { position: absolute; z-index: 1; left: 20px; right: 20px; bottom: 16px; }
+.une small { font: 600 10px 'Work Sans'; letter-spacing: .3em; text-transform: uppercase; color: #F3DDE0; }
+.une h1 { margin: 4px 0 0; font: 500 44px/1 'Cormorant Garamond', serif; } .une h1 em { font-weight: 400; }
+.une p { margin: 6px 0 0; font-size: 13.5px; color: #F3DDE0; }
+.couv { position: absolute; z-index: 1; top: 14px; right: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(124,33,40,.85); font-size: 12px; font-weight: 600; }
+.bloc { padding: 0 16px; margin-top: 18px; }
+.cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; background: linear-gradient(135deg, #5A141B, #8A2530 55%, #5A141B); box-shadow: 0 22px 40px -18px rgba(40,6,10,.9); }
+.cb::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.07); }
+.cb > * { position: relative; }
+.cb .h { display: flex; justify-content: space-between; align-items: center; font: 600 9px 'Work Sans'; letter-spacing: .3em; }
+.cb .h img { height: 20px; }
+.cb .nom { margin: 22px 0 2px; font: 600 24px 'Cormorant Garamond', serif; letter-spacing: .05em; }
+.cb .bas { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 12.5px; }
+.cb .bas b { display: block; font-size: 9px; letter-spacing: .2em; color: #F3DDE0; }
+.chiffres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.chiffres div { background: #fff; color: #2a1416; border-radius: 16px; padding: 12px 8px; text-align: center; }
+.chiffres b { display: block; font: 600 26px/1 'Cormorant Garamond', serif; color: var(--rouge); }
+.chiffres span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #6E4F53; }
+.complet { display: flex; gap: 14px; align-items: center; margin-top: 12px; padding: 14px; border-radius: 18px; background: #fff; color: #2a1416; }
+.anneau { flex: 0 0 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(#7C2128 0 31%, #F3DDE0 31% 100%); }
+.anneau i { width: 44px; height: 44px; border-radius: 50%; background: #fff; display: grid; place-items: center; font: 600 16px 'Cormorant Garamond', serif; font-style: normal; color: var(--rouge); }
+.complet b { display: block; } .complet small { color: #6E4F53; font-size: 12.5px; }
+.complet span.fl { margin-left: auto; color: var(--rouge); font-size: 20px; }
+.boutons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.blanc { padding: 15px; border-radius: 16px; background: #fff; color: var(--rouge); text-align: center; font-weight: 700; }
+.contour { padding: 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,.6); text-align: center; font-weight: 600; }
+.titre { margin: 26px 0 10px; font: 700 11px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; }
+.releve { background: #fff; color: #2a1416; border-radius: 18px; overflow: hidden; }
+.releve div { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid #F2E7E8; font-size: 14px; }
+.releve div:first-child { border-top: 0; }
+.releve em { flex: 0 0 34px; height: 34px; border-radius: 50%; background: #F3DDE0; display: grid; place-items: center; font-style: normal; }
+.releve small { display: block; color: #6E4F53; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.releve .fl { margin-left: auto; color: var(--rouge); }
+.mesures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.mesures div { border-radius: 14px; border: 1px solid rgba(255,255,255,.35); padding: 10px 6px; text-align: center; }
+.mesures b { display: block; font: 600 20px 'Cormorant Garamond', serif; } .mesures span { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #F3DDE0; }
+.book { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.book div { aspect-ratio: 3 / 4; border-radius: 12px; background: #fff url(../assets/cours-talons/mannequin-podium.jpg) 50% 20% / cover; }
+.book .plus { background: transparent; border: 1px dashed rgba(255,255,255,.6); display: grid; place-items: center; font-size: 26px; }
+.nav { position: sticky; bottom: 0; display: flex; justify-content: space-around; padding: 10px 0 14px; background: #fff; color: #6E4F53; font-size: 11px; }
+.nav b { color: var(--rouge); }
+</style></head>
+<body><div class="page">
+  <div class="tete"><span>Mon profil</span><b>🔔</b></div>
+  <div class="une"><span class="couv">📷 Couverture</span><div><small>New face · Profil en ligne</small><h1>Aya <em>Kouassi</em></h1><p>Abidjan · 1,78 m · 84-61-90</p></div></div>
+
+  <div class="bloc">
+    <div class="cb"><div class="h"><img src="../assets/logo-header.png" alt=""><span>MANNEQUIN MA2M</span></div>
+      <div class="nom">AYA KOUASSI</div>
+      <div class="bas"><div><b>N°</b>MA2M-0142</div><div><b>FORMATION</b>Niveau 1 · mois 3</div><div><b>DEPUIS</b>sept. 2026</div></div></div>
+
+    <div class="chiffres"><div><b>4</b><span>photos</span></div><div><b>1</b><span>expérience</span></div><div><b>0/2</b><span>cours</span></div></div>
+
+    <div class="complet"><div class="anneau"><i>31 %</i></div><div><b>Profil complet à 31 %</b><small>Ajoutez vos mensurations et 2 photos : les recruteurs le voient.</small></div><span class="fl">›</span></div>
+
+    <div class="boutons"><span class="blanc">Modifier mon profil</span><span class="contour">Partager mon book</span></div>
+
+    <p class="titre">Mes mensurations</p>
+    <div class="mesures"><div><b>178</b><span>taille</span></div><div><b>84</b><span>poitrine</span></div><div><b>61</b><span>tour de taille</span></div><div><b>90</b><span>hanches</span></div></div>
+
+    <p class="titre">Mes documents</p>
+    <div class="releve">
+      <div><em>🗂️</em><span><small>Compcard</small>Prête à envoyer</span><span class="fl">›</span></div>
+      <div><em>📄</em><span><small>Mon CV</small>1 expérience</span><span class="fl">›</span></div>
+      <div><em>🎓</em><span><small>Mon programme</small>Mois 3 · Posture et démarche</span><span class="fl">›</span></div>
+    </div>
+
+    <p class="titre">Mon book</p>
+    <div class="book"><div></div><div></div><div></div><div></div><div class="plus">＋</div></div>
+  </div>
+</div>
+<div class="nav"><span>Accueil</span><span>Événements</span><b>Profil</b><span>Paiements</span><span>Messages</span></div>
+</body></html>

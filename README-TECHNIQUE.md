@@ -5004,8 +5004,75 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   Essais : `scripts/base-essai/essais-programme-talons.sql`.
 - **Administration** (`js/admin/site-cours-talons.js`, fiche d'une élève payée) : « Son programme » en relevé
   (`pp-releve`), « Faite ? » / ✕ par séance, « ＋ Ajouter une séance » (date, heure, durée, lieu, thème),
-  « Envoyer son programme (WhatsApp) » (« Bonjour Madame … » + lien) et « Voir sa page ». Fichier pas encore collé :
+  et « Voir sa page ». Fichier pas encore collé :
   la fiche le dit, le reste marche. Styles : `.ct-programme`, `.ct-seance`, `.ct-mini` (css/admin-vivante.css).
+- **Messages prêts à envoyer** (14/11/2026, `messagesPrets` dans js/admin/site-cours-talons.js, styles `.ct-msg*`) :
+  dans chaque fiche, une tuile par message utile maintenant, avec « À elle » et (mineure) « Au parent » ; un appui ouvre
+  WhatsApp avec le message écrit (vouvoiement). Pas encore payée : « Inscription reçue » (`messageInscription`) et
+  « Lien de paiement » (`messagePaiement`, montant Wave). Payée : « Son programme » (`messageProgramme`) et « Rappel de
+  la prochaine séance » (`messageRappel` : « demain » si c'est demain, heures, lieu, thème, « À prévoir »
+  = `TalonsCommun.A_PREVOIR`, partagé avec le calendrier de la page de l'élève, et son lien). La prochaine séance
+  (`prochaineSeance`) : pas faite, pas passée et, en groupe, d'un mois déjà payé. Rien n'est envoyé tout seul.
+- **Créneaux des cours privés** (14/11/2026, maquette validée : `maquettes/creneaux-prives.html` ; base :
+  `supabase-creneaux-prives.sql`, À COLLER par la propriétaire, essais `scripts/base-essai/essais-creneaux-prives.sql`).
+  Règles de la propriétaire : du **lundi au samedi, 10 h – 20 h**, séance de **2 h** commençant à une heure pile (10 h à
+  18 h), **1 h 30 de pause** au moins entre deux cours, créneaux **gardés 48 h** le temps du paiement, ou « **dates à
+  convenir ensemble** ». Le formulaire (cours-talons.html FR/EN, js/cours-talons.js, styles `.ct-jour`, `.ct-heure`,
+  `.ct-choisis`… dans css/cours-talons.css) lit les heures libres (`cours_talons_creneaux_libres(p_du, p_jours)`,
+  ouverte aux visiteurs, ne rend QUE des heures : ni nom ni séance), 6 semaines affichées, 26 lues ; « Même jour, même
+  heure chaque semaine » remplit toutes les séances d'un coup (une semaine prise est sautée). La ligne envoyée porte
+  `creneaux` (timestamptz[]) et, pour l'agence, « Créneaux choisis : … » dans `disponibilites`. La base revérifie tout
+  (`cours_talons_creneaux_avant`, puis `cours_talons_creneaux_reserver` après l'enregistrement, sous un verrou) et crée
+  les séances (2 h, salle ou adresse, thème suivant de son programme). Un créneau pris entre-temps : rien n'est
+  enregistré (`CRENEAU_PRIS` → api/portail.js répond 409 `creneauPris`), la page la ramène au choix des créneaux (photos
+  et vidéo gardées) ; à la reprise d'un envoi coupé, l'inscription part sans créneau (« à convenir », ses souhaits
+  écrits). **Une seule règle « occupé »** : la fonction `occupe(cours_talons_seances)` (aussi colonne calculée lue par
+  l'Administration) — jamais une inscription annulée ; une séance **réservée par l'élève** (`reservee`) d'une
+  inscription « paiera plus tard » / « nouvelle » pas validée ne compte que 48 h ; « paiement envoyé » et les séances
+  ajoutées à la main comptent toujours. Les réservations expirées sont retirées à la réservation suivante (si l'élève
+  paie plus tard, l'agence refixe ses dates ; ses souhaits restent écrits). Les heures sont celles d'Abidjan (UTC),
+  dit sur la page. SQL pas encore collé : la page propose seulement « à convenir » (champ libre). À l'accueil de
+  l'Administration (« Cette semaine », js/admin/coque.js, `seancesSemaine`), une séance réservée non payée apparaît
+  « à confirmer (paiement) » tant que `occupe` est vrai.
+- **Créneaux v2** (15/11/2026, maquette validée : `maquettes/creneaux-prives-v2.html` ; même fichier
+  `supabase-creneaux-prives.sql`, contrôle « 10 éléments sur 10 ») :
+  - **Trois façons** à l'inscription (`cours_talons.choix_creneaux`) : « Je choisis maintenant » (créneaux gardés 48 h),
+    « Je choisirai après mon paiement » (rien de réservé ; une fois payée elle choisit sur son lien), « Dates à convenir
+    ensemble » (l'agence appelle ; la page ne propose pas de choisir et la base refuse).
+  - **Le choix des créneaux est écrit une fois** : `js/talons-creneaux.js` (`TalonsCreneaux.creer`, `pourAgence`,
+    `dateLongue`) + `css/talons-creneaux.css` (couleurs par variables `--cr-*` : blanc sur rouge dans le formulaire,
+    rouge sur blanc sur la page de l'élève), utilisés par js/cours-talons.js et js/programme-talons.js.
+  - **Page de l'élève** (programme-talons.html, `#pt-bloc-choisir`) : séances payées pas encore placées « À choisir »
+    → `programme_talons_choisir(jeton, créneaux)` ; « Déplacer » sur chaque séance à plus de 24 h →
+    `programme_talons_deplacer(jeton, séance, début)` (`cours_talons_creneaux_libres(…, p_jeton, p_seance)` laisse de
+    côté la séance qu'elle déplace). Seulement une inscription « inscrite » (pas terminée). `programme_talons_lire`
+    rend aussi `choix_creneaux` (même texte dans supabase-programme-talons.sql). `LienPublic.rpc` joint maintenant le
+    message de la base à l'erreur (« CRENEAU_PRIS »…).
+  - **Indisponibilités de l'agence** (table `cours_talons_indispo`, équipe du site ; Administration → Cours de talons →
+    « Mes indisponibilités ») : un jour entier, plusieurs jours, ou des heures (sur plusieurs jours : ces heures CHAQUE
+    jour, une ligne par jour) ; jamais proposées, refusées par la base. Une séance déjà prévue (et encore `occupe`)
+    pendant une indisponibilité est signalée avec un message WhatsApp (bouton « Déplacer » de sa page si la séance est
+    à plus de 24 h, sinon « nous vous proposons une autre date »).
+  - Fiche de l'élève : ligne « Créneaux » (sa façon, « N à placer ») ; le message « Son programme » l'invite à choisir
+    ses créneaux sur son lien quand il en reste à placer (jamais pour « à convenir »).
+  - Tests : `test-cours-talons.js` (trois façons), `test-programme-talons.js` (choisir, créneau pris, déplacer, à
+    convenir, terminée), `test-admin-cours-talons.js` (indisponibilités, séance touchée, « 3 à placer »), essais SQL.
+- **Planning et notification de la veille** (15/11/2026, maquette validée : `maquettes/planning-talons.html`) :
+  - **Planning** (Administration → Cours de talons → onglet « Planning », js/admin/site-cours-talons.js, `coursPrevus`
+    / `planning`, styles `.pl-*` + `.se-*` de l'accueil) : les 4 prochaines semaines jour par jour, le groupe d'une même
+    heure en un cours (« Voir les élèves », un rappel WhatsApp par élève et au parent), chaque cours privé (« à
+    confirmer (paiement) » s'il n'est pas payé, « Rappel », « Sa fiche »), les indisponibilités. Ne montre que les
+    séances qui comptent (`occupe`, pas faites, pas annulées, pas un mois du groupe encore à régler).
+    `…/b2-cours-talons/planning` ouvre le planning (l'adresse redevient normale).
+  - **Notification la veille** (`supabase-rappels-talons.sql`, À COLLER, contrôle « 4 éléments sur 4 » ; essais
+    `scripts/base-essai/essais-rappels-talons.sql`) : `cours_talons_rappels_preparer()` toutes les heures (pg_cron
+    `talons-rappels-veille`) note dans `cours_talons_rappels` les cours qui commencent dans 23 à 24 h (groupe : une
+    ligne, `nb` élèves ; privé : une ligne par séance), jamais deux fois (clé). Chaque ligne passe par
+    `notifier_push_notification` (même chemin et même secret que les inscriptions), api/notifications-webhook.js écrit
+    « 👠 Demain 15 h : cours en groupe · 6 élèves · lieu · « thème » » et ouvre le planning ; réglage
+    `evenement_rappel_talons`. Rien n'est envoyé aux élèves (elles ont le rappel de la veille dans leur calendrier).
+    Test : `test-notifications-app.js`. Tests : `test-cours-talons.js` (choix, 1 h 30, chaque semaine, retrait, limite,
+  à convenir, créneau pris entre-temps), `test-nouvelle-admin.js` (cette semaine).
 - **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
   paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).
 - **Civilité et plusieurs mois** (14/11/2026, demandes de la propriétaire) : le formulaire (cours-talons.html FR/EN,
@@ -5093,3 +5160,54 @@ Maquette et décision : `maquettes/postuler-casting.html`, `maquettes/DECISION-p
   (`.ct-*` / `.lx-*` : css/luxe.css).
 - Tests : test-visiteur.js (4 pages : étapes, refus des moins de 14 ans à l'étape 2, photos manquantes, cartes, résumé,
   « Changer », envoi), test-integrer-parcours.js, test-whatsapp-discret.js.
+
+## Inscription des nouveaux mannequins, version premium (14/11/2026, maquette validée)
+
+Maquette et décision : `maquettes/inscription-mannequin.html`, `maquettes/DECISION-inscription-mannequin.md`. Même
+déroulé et même serveur qu'avant (js/inscription-simplifiee.js) ; seule la présentation change : barre des étapes nommées
+(`.lx-progression`, css/luxe.css désormais chargé par app/inscription-mannequin.html), accueil « Bienvenue chez MA2M »
+avec photo (`.inn-une`), « Bonjour …, félicitations ! » + carte « Future mannequin MA2M » (`.inn-cb`) + informations en
+relevé (`.inn-releve`), boutons blanc / contour (`data-bouton-libre`), merci avec la suite en 3 points (`.inn-suite`) et les
+3 premiers mois du programme (`formation_programme`, niveau 1, lisible sans compte : supabase-programme-mannequins.sql ;
+fichier d'appoint supabase-programme-lecture-publique.sql, collé le 14/11/2026). Test : test-inscription.js.
+
+## Accueil de l'Administration : « L'agence ce mois-ci » et « Cette semaine » (14/11/2026, maquette validée)
+
+Maquette : `maquettes/accueil-administration.html`. js/admin/coque.js (`donneesAgence`, `carteAgence`, `semaine`), sous la
+recherche et « Envoyer un message » (leurs résultats doivent rester visibles sur téléphone) : carte façon carte bancaire
+(`.ag-*`) avec l'encaissé du mois (recettes de `compta_ecritures` non annulées : rôle Comptabilité seulement), les
+mannequins actives (Paiements), les élèves des cours de talons (Site) ; « Cette semaine » (`.se-*`, Site) : aujourd'hui et
+les jours qui ont quelque chose — projets de l'agenda, cours de talons (le groupe en une ligne avec le nombre d'élèves,
+chaque cours privé avec l'élève et son thème). Chaque lecture est facultative. Styles : css/admin-vivante.css.
+Test : test-nouvelle-admin.js. « Cours des mannequins » chaque dimanche (15/11/2026, sans heure ni thème : son heure
+n'est pas encore notée dans le site, son thème dépend de chaque mannequin), jamais pendant les congés
+(`Presences.enVacances`), mène à la liste de présence.
+
+## « Mon profil » premium (application des mannequins, 15/11/2026)
+Maquette validée : `maquettes/app-profil.html`. `ecranProfil` (js/mannequin-app.js) : grande couverture (on la touche
+pour la changer) avec le nom, photo ronde (on la touche pour la changer), état « en ligne », carte de mannequin
+façon carte bancaire (`carteMA2M`, la même fonction que la carte membre des Paiements : formation d'après son programme,
+date d'entrée), trois chiffres en cartes blanches, « profil complet » en anneau (`.ap-pr-anneau`), mensurations,
+« Mes documents » en relevé (Compcard, CV, photos, programme), puis le book en grille. Styles `.ap-pr*` dans
+css/mannequin-app.css (seulement des fonds rouges ou blancs). Test : `test-app-mannequin.js`.
+
+## Carte « MANNEQUIN MA2M » et catégorie New Face / Professionnelle (15/11/2026)
+Maquette validée : `maquettes/carte-identite-mannequin-v2.html` (décisions : titre « MANNEQUIN MA2M », validité = durée
+du contrat, 3/4/5 ans renouvelable ; verso épuré ; l'agence active la carte). Base : `supabase-carte-mannequin.sql`
+(À COLLER, contrôle « 8 éléments sur 8 » ; essais `scripts/base-essai/essais-carte-mannequin.sql`).
+- **Catégorie** (`categorie_mannequin_calculee`) : Professionnelle si 2 ans ou plus à l'agence (date d'entrée), ou
+  `years_experience` ≥ 2, ou une expérience (`model_projects.periode`) d'il y a 2 ans ou plus ; sinon New Face ; le choix
+  de l'agence (`model_profiles.niveau_manuel`, via `mannequin_categorie_choisir`) passe avant. `categories_mannequins_
+  mettre_a_jour()` range `niveau_mannequin` de toutes les fiches tous les jours à 4 h (pg_cron `categories-mannequins`)
+  et une première fois à l'installation. La fiche publique garde « New Face » / « Main Board » (décision du 15/11/2026).
+- **Carte** : `agence_mannequins.carte_active`, `carte_validite_ans`, `carte_formation` (texte imposé, vide = programme),
+  `carte_numero` (donné à la première activation, jamais changé : « MA2M · année d'entrée · 0142 »).
+  `ma_carte_mannequin()` (la mannequin, seulement activée), `carte_mannequin_de(id)` (Paiements).
+- **Dessin** : `js/carte-mannequin.js` (canvas 1012 × 638, guillochis, sceau, photo fantôme, QR vers son book, ligne
+  machine) : la même image à l'écran (« Mon profil » de l'application, à la place de la petite carte quand elle est
+  activée, « Voir le verso »), en téléchargement (recto + verso en une image PNG) et en PDF au format carte (85,6 × 54 mm).
+  « Formation » : le texte de l'agence, sinon « Niveau 1 · mois 4 », « Recyclage · mois 2 sur 9 » (professionnelle sur
+  1 niveau), « Formation terminée ».
+- **Administration** : encart « Sa carte de mannequin » dans la fiche (espace Paiements, `encartCarte`) : activée,
+  catégorie (Calcul / New Face / Professionnelle), validité, formation affichée, numéro.
+- Tests : `test-app-mannequin.js` (carte dessinée, verso, image, PDF), `test-correction-paiement.js` (encart).

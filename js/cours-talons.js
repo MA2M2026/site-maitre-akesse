@@ -117,10 +117,42 @@
     });
     boite.classList.toggle('u-hidden', !mois.length);
   }
+  // ---------- (14 et 15/11/2026, maquettes validées : maquettes/creneaux-prives.html et creneaux-prives-v2.html) cours
+  // privés : trois façons — « je choisis maintenant » (créneaux libres, gardés 48 h), « je choisirai après mon
+  // paiement » (sur son lien personnel), « dates à convenir ensemble ». Le choix des créneaux est commun avec la page de
+  // l'élève : js/talons-creneaux.js. Base : supabase-creneaux-prives.sql ; pas encore collé → « à convenir » seulement.
+  const TCr = window.TalonsCreneaux;
+  const prive = () => !!formule() && formule() !== 'groupe';
+  const choixCreneaux = () => (form.querySelector('input[name="choix_creneaux"]:checked') || {}).value || '';
+  const convenir = () => choixCreneaux() === 'convenir';
+  const maintenantChoisi = () => choixCreneaux() === 'maintenant';
+  const selecteur = TCr.creer({
+    jours: $('ct-jours'), heures: $('ct-heures'), liste: $('ct-choisis'), titre: $('ct-choisis-titre'), repeter: $('ct-repeter'), en: EN, nb: () => nbSeances(),
+    lire: (du, jours) => (typeof sb !== 'undefined' && sb ? sb.rpc('cours_talons_creneaux_libres', { p_du: du, p_jours: jours }).then((r) => (r.error ? null : r.data)) : null),
+    trop: (nb) => afficherMsg(msg, T('Vous avez déjà choisi vos ' + nb + ' séances : retirez-en une pour en choisir une autre.', 'You have already chosen your ' + nb + ' sessions: remove one to choose another.'), 'err'),
+    change: () => { msg.className = 'form-msg'; msg.textContent = ''; majCreneaux(); }
+  });
+  const choisis = () => selecteur.choisis();
+  function majCreneaux() {
+    const p = prive();
+    if (p && selecteur.etat() === null) selecteur.charger();
+    // base pas prête : seulement « à convenir »
+    const pret = selecteur.etat() !== false;
+    if (!pret && p) { form.querySelector('input[name="choix_creneaux"][value="convenir"]').checked = true; }
+    $('ct-facon-maintenant').classList.toggle('u-hidden', !pret);
+    $('ct-facon-apres').classList.toggle('u-hidden', !pret);
+    selecteur.ajuster();
+    $('ct-bloc-facons').classList.toggle('u-hidden', !p);
+    $('ct-bloc-creneaux').classList.toggle('u-hidden', !p || !maintenantChoisi());
+    $('ct-bloc-dispo').classList.toggle('u-hidden', !p || !convenir());
+    if (p && maintenantChoisi()) selecteur.dessiner();
+  }
+  form.querySelectorAll('input[name="choix_creneaux"]').forEach((r) => r.addEventListener('change', majCreneaux));
   function majFormule() {
     const f = formule();
     $('ct-bloc-prive').classList.toggle('u-hidden', !f || f === 'groupe');
     $('ct-bloc-adresse').classList.toggle('u-hidden', f !== 'prive_exterieur');
+    majCreneaux();
     const base = parcours() === 'base';
     $('ct-bloc-parcours').classList.toggle('u-hidden', !f);
     $('ct-bloc-themes').classList.toggle('u-hidden', !base);
@@ -188,6 +220,11 @@
       if (parcours() === 'base' && formule() !== 'groupe' && modulesTous().length > MAX_MOIS_PRIVE) return erreur(T('En privé : 7 mois de thèmes au plus (28 séances). Retirez un thème ou passez-en un à 1 mois.', 'Private lessons: 7 months of themes at most (28 sessions). Remove a theme or set one to 1 month.'), form.querySelector('#ct-themes input:checked'));
       if (parcours() === 'base' && !modulesChoisis().length) return erreur(T('Cochez au moins un thème à travailler.', 'Please tick at least one theme to work on.'), form.querySelector('#ct-themes input'));
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
+      if (prive() && !choixCreneaux()) return erreur(T('Dites-nous quand vous choisirez vos créneaux.', 'Please tell us when you will choose your time slots.'), form.querySelector('input[name="choix_creneaux"]'));
+      if (prive() && maintenantChoisi() && choisis().length < nbSeances()) {
+        const reste = nbSeances() - choisis().length;
+        return erreur(T('Choisissez vos créneaux (encore ' + reste + '), ou une autre façon ci-dessus.', 'Please choose your time slots (' + reste + ' more), or another option above.'), $('ct-heures').querySelector('button:not([disabled])') || $('ct-bloc-facons'));
+      }
     }
     if (n === 2) {
       if (!civilite()) return erreur(T('Choisissez : Madame ou Mademoiselle.', 'Please choose: Mrs or Miss.'), form.querySelector('input[name="civilite"]'));
@@ -342,7 +379,11 @@
       concours: ['miss', 'beaute'].includes($('ct-objectif').value) ? ($('ct-concours').value.trim() || null) : null,
       concours_date: ['miss', 'beaute'].includes($('ct-objectif').value) ? ($('ct-concours-date').value || null) : null,
       niveau: (form.querySelector('input[name="niveau"]:checked') || {}).value || null,
-      disponibilites: f === 'groupe' ? null : ($('ct-dispo').value.trim() || null),
+      // (14/11/2026) créneaux choisis (la base les réserve) ; ils sont aussi écrits pour l'agence (résumé WhatsApp)
+      creneaux: prive() && maintenantChoisi() ? choisis() : null,
+      choix_creneaux: prive() ? choixCreneaux() || 'convenir' : null,
+      disponibilites: f === 'groupe' ? null : maintenantChoisi() ? ('Créneaux choisis : ' + TCr.pourAgence(choisis())).slice(0, 600)
+        : choixCreneaux() === 'apres' ? 'Choisira ses créneaux après son paiement (sur son lien)' : ($('ct-dispo').value.trim() || null),
       adresse: f === 'prive_exterieur' ? $('ct-adresse').value.trim() : null,
       parent_nom: mineure() ? $('ct-parent-nom').value.trim() : null,
       parent_telephone: mineure() ? composerTelephone($('ct-parent-indicatif'), $('ct-parent-telephone')) : null,
@@ -365,14 +406,30 @@
       l.photos.length ? 'Photos : ' + l.photos.join(' ') : 'Photos : non reçues', 'Vidéo : ' + (l.video || 'non reçue')].filter(Boolean).join('\n');
   }
 
-  async function terminerInscription(etat) {
+  async function terminerInscription(etat, reprise) {
     afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… Vous pouvez passer sur une autre application : l’envoi continue, et s’il est coupé, il reprendra quand vous reviendrez sur cette page.', 'Sending your photos and video… You can switch to another app: sending continues, and if it is interrupted it will resume when you come back to this page.'), 'ok');
     await envoyerMedias(etat);
     afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
     const envoi = { liens: etat.d.liens.slice() }, lienVideo = etat.d.video;
     // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
     const ligne = Object.assign({}, etat.ligne, { photos: envoi.liens, video: lienVideo || null });
-    const { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
+    let { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
+    // (14/11/2026) un créneau pris entre-temps par une autre élève : rien n'est enregistré. Sur la page, elle en
+    // choisit un autre (photos et vidéo déjà envoyées gardées) ; à la reprise d'un envoi coupé (formulaire vide),
+    // l'inscription part sans créneau, ses souhaits écrits pour l'agence, qui l'appelle.
+    if (error && error.creneauPris && !reprise) {
+      await EnvoiFiable.oublier('cours-talons');
+      envoiEnCours = false;
+      await selecteur.relire();
+      majCreneaux();
+      montrer(1);
+      erreur(T('Un de vos créneaux n’est plus disponible (réservé entre-temps). Choisissez-en un autre, puis renvoyez votre inscription (vos photos et votre vidéo sont gardées).', 'One of your slots is no longer available (booked in the meantime). Please choose another one, then send your sign-up again (your photos and video are kept).'), $('ct-heures'));
+      return;
+    }
+    if (error && error.creneauPris) {
+      Object.assign(ligne, { creneaux: null, choix_creneaux: 'convenir', disponibilites: ('À convenir (créneaux souhaités, un n’était plus libre) : ' + TCr.pourAgence(etat.ligne.creneaux || [])).slice(0, 600) });
+      ({ error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok')));
+    }
     const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(ligne, etat.montant));
     if (error && !error.pasPret) {
       afficherMsg(msg, T('Une erreur est survenue. Réessayez, ou envoyez votre inscription sur WhatsApp.', 'An error occurred. Please try again, or send your sign-up on WhatsApp.'), 'err');
@@ -391,8 +448,16 @@
     p1.textContent = error
       ? T('Merci ! Les inscriptions en ligne ouvrent très bientôt : touchez le bouton ci-dessous pour envoyer votre inscription à l’agence sur WhatsApp.', 'Thank you! Online sign-ups open very soon: tap the button below to send your sign-up to the agency on WhatsApp.')
       : (ligne.decision === 'maintenant'
-        ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, it confirms your place on WhatsApp.')
-        : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
+        ? (ligne.choix_creneaux === 'apres'
+          ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, vous recevrez votre lien personnel pour choisir vos créneaux.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, you will receive your personal link to choose your slots.')
+          : ligne.creneaux && ligne.creneaux.length
+          ? T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, elle vous confirme vos créneaux sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, it confirms your slots on WhatsApp.')
+          : T('Merci ! Votre inscription est bien reçue. Dès que l’agence voit votre paiement, elle vous confirme votre place sur WhatsApp.', 'Thank you! Your sign-up has been received. As soon as the agency sees your payment, it confirms your place on WhatsApp.'))
+        : ligne.choix_creneaux === 'apres'
+          ? T('Merci ! Votre inscription est bien reçue. Dès votre paiement validé, vous recevrez votre lien personnel pour choisir vos créneaux.', 'Thank you! Your sign-up has been received. Once your payment is confirmed, you will receive your personal link to choose your slots.')
+          : ligne.creneaux && ligne.creneaux.length
+          ? T('Merci ! Votre inscription est bien reçue et vos créneaux sont gardés 48 h, le temps de votre paiement. L’agence vous recontacte sur WhatsApp.', 'Thank you! Your sign-up has been received and your slots are held for 48 hours while you pay. The agency will contact you on WhatsApp.')
+          : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
     merci.appendChild(p1);
     if (envoi.liens.length && lienVideo) {
       const pOk = document.createElement('p');
@@ -449,6 +514,6 @@
     annuler.type = 'button'; annuler.className = 'lien-annuler-envoi'; annuler.textContent = T('Annuler cet envoi', 'Cancel this submission');
     annuler.addEventListener('click', async () => { await EnvoiFiable.oublier('cours-talons'); location.reload(); });
     msg.appendChild(annuler);
-    try { await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), false); } finally { btn.disabled = false; }
+    try { await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat, true), false); } finally { btn.disabled = false; }
   })();
 })();

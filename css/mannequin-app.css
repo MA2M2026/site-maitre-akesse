@@ -611,3 +611,55 @@ button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer;
 .ap-prog-mois.en_cours { background: #7C2128; color: #FFFFFF; box-shadow: 0 0 0 2px #FFFFFF, var(--ap-ombre); }
 .ap-prog-mois.en_cours em { background: #FFFFFF; color: #7C2128; }
 .ap-prog-mois.en_cours strong, .ap-prog-mois.en_cours small { color: #FFFFFF; }
+
+/* « Mon profil » premium (15/11/2026, maquette validée : maquettes/app-profil.html ; js/mannequin-app.js ecranProfil) :
+   grande couverture avec le nom, carte de mannequin (.ap-cb, la même que la carte membre), chiffres et relevé en blanc */
+.ap-pr .ap-pr-une { height: 300px; }
+.ap-pr .ap-pr-une::after { background: linear-gradient(180deg, rgba(40, 6, 10, 0.12) 30%, var(--fond, #7C2128) 100%); }
+.ap-pr-tete { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 14px; margin-top: -96px; padding: 0 18px; }
+.ap-pr .ap-vitrine-avatar { width: 72px; height: 72px; flex: 0 0 72px; }
+.ap-pr .ap-vitrine-avatar i { width: 24px; height: 24px; top: -2px; right: -4px; font-size: 14px; }
+.ap-pr-titre { flex: 1; min-width: 0; }
+.ap-pr .ap-vitrine-niveau { position: static; display: inline-block; padding: 0; background: none; color: #F3DDE0; font: 600 10px 'Work Sans', sans-serif; letter-spacing: 0.3em; text-transform: uppercase; }
+.ap-pr .ap-vitrine-nom { margin: 2px 0 0; font: 500 38px/1 'Cormorant Garamond', serif; overflow-wrap: anywhere; }
+.ap-pr .ap-vitrine-nom em { font-weight: 400; }
+.ap-pr .ap-vitrine-mesures { margin: 6px 0 0; color: #F3DDE0; opacity: 1; }
+.ap-pr-corps { padding: 0 18px; }
+.ap-pr .ap-vitrine-etat { margin: 14px 0 0; }
+.ap-pr .ap-vitrine-phrase { margin: 10px 0 0; }
+.ap-pr .ap-cb { margin-top: 16px; min-height: 0; }
+.ap-pr .ap-vitrine-chiffres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; padding: 0; }
+.ap-pr .ap-vitrine-chiffres div { border-radius: 16px; padding: 12px 6px; background: #FFFFFF; color: #6E4F53; opacity: 1; font: 600 10.5px 'Work Sans', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; }
+.ap-pr .ap-vitrine-chiffres b { color: var(--rouge-mat, #7C2128); font-size: 26px; letter-spacing: 0; text-transform: none; }
+.ap-pr .ap-vitrine-score { display: flex; gap: 14px; align-items: center; margin: 12px 0 0; padding: 14px; border-radius: 18px; background: #FFFFFF; color: #2A1416; text-decoration: none; }
+.ap-pr-anneau { flex: 0 0 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(#7C2128 0 var(--p), #F3DDE0 var(--p) 100%); }
+.ap-pr-anneau i { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #FFFFFF; color: #7C2128; font: 600 15px 'Cormorant Garamond', serif; font-style: normal; }
+.ap-pr .ap-vitrine-score b { display: block; font-size: 14.5px; }
+.ap-pr .ap-vitrine-score small { display: block; color: #6E4F53; font-size: 12.5px; }
+.ap-pr .ap-vitrine-score > i { margin-left: auto; color: #7C2128; font-size: 20px; font-style: normal; }
+.ap-pr .ap-vitrine-btns { margin: 14px 0 0; }
+.ap-pr .ap-vitrine-btns .ap-btn { min-height: 48px; border-radius: 16px; }
+.ap-pr .ap-vitrine-btns button.ap-btn:not(.rouge) { background: transparent; border-color: rgba(255, 255, 255, 0.6); }
+.ap-pr-mesures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.ap-pr-mesures div { border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.35); padding: 10px 4px; text-align: center; }
+.ap-pr-mesures b { display: block; font: 600 22px/1.1 'Cormorant Garamond', serif; color: #FFFFFF; }
+.ap-pr-mesures span { font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #F3DDE0; }
+.ap-pr .ap-vitrine-raccourcis { display: block; margin: 0; border-radius: 18px; overflow: hidden; background: #FFFFFF; }
+.ap-pr .ap-vitrine-raccourcis a { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 0; border-top: 1px solid #F2E7E8; border-radius: 0; background: none; color: #2A1416; text-align: left; font-size: 14px; }
+.ap-pr .ap-vitrine-raccourcis a:first-child { border-top: 0; }
+.ap-pr .ap-vitrine-raccourcis em { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; font-style: normal; }
+.ap-pr .ap-vitrine-raccourcis small { display: block; color: #6E4F53; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+.ap-pr .ap-vitrine-raccourcis span { display: block; flex: 1; min-width: 0; margin: 0; font: 400 14px/1.4 'Work Sans', sans-serif; }
+.ap-pr .ap-vitrine-raccourcis i { color: #7C2128; font-style: normal; }
+.ap-pr .ap-vitrine-raccourcis a:focus-visible, .ap-pr .ap-vitrine-score:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
+.ap-pr + .ap-vitrine-grille { gap: 6px; margin: 0; padding-top: 0; border-top: 0; }
+.ap-pr + .ap-vitrine-grille img, .ap-pr + .ap-vitrine-grille .ap-vitrine-ajout { border-radius: 12px; }
+.ap-pr + .ap-vitrine-grille .ap-vitrine-ajout { background: transparent; border: 1px dashed rgba(255, 255, 255, 0.6); }
+/* le nom posé sur la couverture laisse passer le toucher : toute la couverture ouvre la galerie */
+.ap-pr-titre { pointer-events: none; }
+
+/* carte officielle « MANNEQUIN MA2M » (15/11/2026, js/carte-mannequin.js) : l'image dessinée, ses boutons */
+.ap-carte-officielle { margin-top: 16px; }
+.ap-carte-img { display: block; width: 100%; height: auto; aspect-ratio: 1012 / 638; border-radius: 16px; background: #5A141B; box-shadow: 0 28px 50px -22px rgba(20, 2, 5, 0.95); }
+.ap-carte-btns { margin-top: 12px; }
+.ap-carte-retourner { display: block; margin: 6px auto 0; color: #FFFFFF; }

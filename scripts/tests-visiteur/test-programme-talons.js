@@ -24,6 +24,10 @@ const mois3 = { nom: 'Fatou Bamba', civilite: 'Mademoiselle', formule: 'groupe',
 const J_BASE = 'e5'.repeat(18);
 const priveBase = { nom: 'Aminata Base', civilite: 'Madame', formule: 'prive_salle', nb_seances: 4, statut: 'inscrite', numero: 'TAL-BASE01', parcours: 'base', modules: [5],
   titres_mois: { 5: 'Les tenues', 7: 'Perfectionnement' }, seances: [['Robe longue et traîne', 2], ['Tailleur et tenue courte', 4]].map((x, i) => ({ id: 'b' + i, module: 5, debut: jour(x[1], 10), fin: jour(x[1], 12), lieu: 'Salle MA2M, Riviera Faya', theme: x[0], faite: false })) };
+// (15/11/2026) « dates à convenir ensemble » : la page ne propose pas de choisir ; une inscription terminée non plus
+const J_CONV = 'f6'.repeat(18), J_FINI = 'a7'.repeat(18);
+const priveConvenir = { nom: 'Mariam Convenir', civilite: 'Madame', formule: 'prive_salle', nb_seances: 2, statut: 'inscrite', numero: 'TAL-CONV01', choix_creneaux: 'convenir', seances: [] };
+const priveFini = { nom: 'Ancienne Privée', civilite: 'Madame', formule: 'prive_salle', nb_seances: 4, statut: 'terminee', numero: 'TAL-FINI01', seances: [{ id: 'f0', debut: jour(5, 10), fin: jour(5, 12), lieu: 'Salle MA2M, Riviera Faya', theme: 'Posture', faite: false }] };
 const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_salle', nb_seances: 2, statut: 'inscrite', numero: 'TAL-EF34GH', seances: [] };
 
 (async () => {
@@ -35,7 +39,11 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     const p = await ctx.newPage(); const journal = [], errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
-    await brancher(p, { tables: {}, rpc: { programme_talons_lire: (x) => x.p_jeton === J ? groupe : x.p_jeton === J_PRIVE ? prive : x.p_jeton === J_MOIS ? mois3 : x.p_jeton === J_BASE ? priveBase : null } }, journal);
+    // (15/11/2026) créneaux libres (du lundi au samedi, 10 h à 18 h), choisir et déplacer simulés
+    const libres = (c) => { const l = []; const d0 = Date.parse(c.p_du + 'T00:00:00Z'); for (let k = 0; k < c.p_jours; k++) { const d = new Date(d0 + k * 86400000); if (d.getUTCDay()) for (let h = 10; h <= 18; h++) l.push(new Date(d.getTime() + h * 3600000).toISOString()); } return l; };
+    const rpcs = { programme_talons_lire: (x) => x.p_jeton === J ? groupe : x.p_jeton === J_PRIVE ? prive : x.p_jeton === J_MOIS ? mois3 : x.p_jeton === J_BASE ? priveBase : x.p_jeton === J_CONV ? priveConvenir : x.p_jeton === J_FINI ? priveFini : null,
+      cours_talons_creneaux_libres: libres, programme_talons_choisir: { erreur: 'CRENEAU_PRIS' }, programme_talons_deplacer: () => true };
+    await brancher(p, { tables: {}, rpc: rpcs }, journal);
     const n = nom + ' : ';
     await p.goto(BASE + 'programme-talons.html?c=' + J); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
     ok(/Bienvenue,\s*Madame Awa Koné/.test(await p.textContent('#pt-titre')), n + 'vouvoiement : « Bienvenue, Madame Awa Koné »');
@@ -81,9 +89,41 @@ const prive = { nom: 'Petite Aya', civilite: 'Mademoiselle', formule: 'prive_sal
     await p.goto(BASE + 'programme-talons.html?c=' + J_BASE); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
     ok((await p.$$eval('.pt-mois-tete', (l) => l.map((x) => x.textContent))).join('|') === 'Les tenues' && /Robe longue et traîne/.test(await p.textContent('.pt-seance.proche')) && await p.$$eval('.pt-seance.a-regler', (l) => l.length) === 0,
       n + 'privé, j’ai la base : ses séances sous « Les tenues », rien « à régler »');
+    // (15/11/2026) déplacer une séance (plus de 24 h avant)
+    ok(await p.locator('.pt-deplacer').count() === 2, n + 'chaque séance à venir peut être déplacée');
+    await p.click('.pt-deplacer[data-seance="b0"]'); await p.waitForSelector('#pt-heures button', { timeout: 5000 }).catch(() => {});
+    ok(/Séance du .* · nouveau créneau/.test(await p.textContent('#pt-choisir-titre')) && await p.isHidden('#pt-bloc-repeter') && /Confirmer le déplacement/.test(await p.textContent('#pt-valider')), n + '« Déplacer » : choix d’un seul nouveau créneau');
+    const jourDep = await p.$eval('#pt-jours button:not([disabled])', (b) => b.dataset.jour);
+    await p.click('#pt-heures [data-heure="' + jourDep + 'T16:00:00.000Z"]'); await p.click('#pt-heures [data-heure="' + jourDep + 'T10:00:00.000Z"]');
+    ok(await p.locator('#pt-choisis li').count() === 1, n + 'un seul créneau gardé (le dernier touché)');
+    await p.click('#pt-valider'); await p.waitForTimeout(400);
+    const dep = journal.filter((j) => j[1] === 'programme_talons_deplacer').pop();
+    ok(dep && JSON.parse(dep[2]).p_seance === 'b0' && JSON.parse(dep[2]).p_debut === jourDep + 'T10:00:00.000Z', n + 'déplacement envoyé : la séance 1, au nouveau créneau');
+    await p.waitForTimeout(1200);
     // privé, mineure, séances pas encore fixées
     await p.goto(BASE + 'programme-talons.html?c=' + J_PRIVE); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
-    ok(/Mademoiselle Petite Aya/.test(await p.textContent('#pt-titre')) && /bientôt programmées/.test(await p.textContent('#pt-proch-titre')) && await p.isHidden('#pt-ics') && await p.isHidden('#pt-bloc-cal'), n + 'privé sans dates : « Mademoiselle », « bientôt programmées », pas de bouton calendrier');
+    // (15/11/2026) payée, « je choisirai après mon paiement » : elle choisit ses 2 créneaux ici
+    await p.waitForSelector('#pt-jours button', { timeout: 5000 }).catch(() => {});
+    ok(/Choisissez vos créneaux/.test(await p.textContent('#pt-proch-titre')) && await p.isVisible('#pt-bloc-choisir') && await p.$$eval('.pt-seance.a-choisir', (l) => l.length) === 2 && /À choisir/.test(await p.textContent('.pt-seance.a-choisir')),
+      n + 'privé payée sans dates : « Choisissez vos créneaux », 2 séances « À choisir »');
+    await p.click('#pt-valider');
+    ok(/Touchez un jour/.test(await p.textContent('#pt-choisir-msg')), n + 'rien choisi : « Touchez un jour puis une heure libre »');
+    const jourPt = await p.$eval('#pt-jours button:not([disabled])', (b) => b.dataset.jour);
+    await p.click('#pt-heures [data-heure="' + jourPt + 'T14:00:00.000Z"]');
+    ok(await p.locator('#pt-choisis li').count() === 2 && /Vos 2 séances/.test(await p.textContent('#pt-choisis-titre')), n + '« chaque semaine » : ses 2 séances d’un coup');
+    if (process.env.CAPTURES) await p.locator('#pt-bloc-choisir').screenshot({ path: process.env.CAPTURES + '/programme-choisir-' + vp.width + '.png' });
+    await p.click('#pt-valider'); await p.waitForTimeout(800);
+    ok(/vient d’être pris/.test(await p.textContent('#pt-choisir-msg')) && await p.isEnabled('#pt-valider'), n + 'créneau pris entre-temps : message clair, on peut rechoisir');
+    rpcs.programme_talons_choisir = () => 2;
+    await p.click('#pt-valider'); await p.waitForTimeout(400);
+    const appelChoisir = journal.filter((j) => j[1] === 'programme_talons_choisir').pop();
+    ok(appelChoisir && JSON.parse(appelChoisir[2]).p_jeton === J_PRIVE && JSON.parse(appelChoisir[2]).p_creneaux.length === 2 && /C’est noté/.test(await p.textContent('#pt-choisir-msg')), n + 'ses 2 créneaux envoyés à la base avec son lien : « C’est noté »');
+    await p.waitForTimeout(1200);
+    ok(/Mademoiselle Petite Aya/.test(await p.textContent('#pt-titre')) && await p.isHidden('#pt-ics') && await p.isHidden('#pt-bloc-cal'), n + 'privé sans dates : « Mademoiselle », « bientôt programmées », pas de bouton calendrier');
+    await p.goto(BASE + 'programme-talons.html?c=' + J_CONV); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
+    ok(await p.isHidden('#pt-bloc-choisir') && /bientôt programmées/.test(await p.textContent('#pt-proch-titre')) && /Date à fixer avec l’agence/.test(await p.textContent('.pt-seance.a-choisir')), n + '« à convenir » : pas de choix ici, « Date à fixer avec l’agence »');
+    await p.goto(BASE + 'programme-talons.html?c=' + J_FINI); await p.waitForSelector('#pt-contenu:not([hidden])', { timeout: 8000 });
+    ok(await p.isHidden('#pt-bloc-choisir') && await p.locator('.pt-deplacer').count() === 0 && await p.locator('.pt-seance.a-choisir').count() === 0, n + 'inscription terminée : ni choix ni « Déplacer »');
     // paiement pas validé (la base ne répond rien) et lien abîmé
     await p.goto(BASE + 'programme-talons.html?c=' + J_ATTENTE); await p.waitForTimeout(1200);
     ok(/pas encore validé/.test(await p.textContent('#pt-accroche')) && await p.isHidden('#pt-contenu') && await p.isVisible('#pt-wa'), n + 'paiement pas validé : message clair, WhatsApp toujours là');

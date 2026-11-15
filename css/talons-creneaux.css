@@ -1,0 +1,30 @@
+/* Choix des créneaux des cours privés de talons (js/talons-creneaux.js, 14-15/11/2026) : commun au formulaire
+   d'inscription (fond rouge) et à la page « Mon programme » (fond blanc). Couleurs par variables : rouge par défaut
+   (texte blanc) ; la page « Mon programme » les redéfinit (.pt-creneaux, css/programme-talons.css). */
+:root { --cr-encre: #fff; --cr-bord: rgba(255, 255, 255, 0.35); --cr-plein: #fff; --cr-plein-encre: #7C2128; --cr-survol: rgba(255, 255, 255, 0.16); --cr-fond-doux: rgba(255, 255, 255, 0.1); }
+.ct-jours { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.2rem 0 0.5rem; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.ct-jour, .ct-heure, .ct-retirer { font: inherit; cursor: pointer; color: var(--cr-encre); background: transparent; border: 1px solid var(--cr-bord); }
+.ct-jour { flex: 0 0 3.8rem; display: grid; justify-items: center; gap: 0.05rem; padding: 0.5rem 0; border-radius: 14px; }
+.ct-jour small { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.88; }
+.ct-jour b { font: 600 1.45rem/1.05 'Cormorant Garamond', Georgia, serif; }
+.ct-jour i { font-style: normal; font-size: 0.66rem; opacity: 0.85; }
+.ct-jour.on { background: var(--cr-plein); border-color: var(--cr-plein); color: var(--cr-plein-encre); }
+.ct-jour:disabled { opacity: 0.35; cursor: default; }
+.ct-heures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.8rem; }
+.ct-heure { padding: 0.75rem 0; border-radius: 12px; font-weight: 600; font-size: 0.95rem; }
+.ct-heure.on { background: var(--cr-plein); border-color: var(--cr-plein); color: var(--cr-plein-encre); }
+.ct-heure.pris, .ct-heure:disabled { opacity: 0.4; text-decoration: line-through; font-weight: 400; cursor: default; }
+.ct-jour:not(:disabled):hover, .ct-heure:not(:disabled):not(.on):hover { background: var(--cr-survol); }
+.ct-jour:focus-visible, .ct-heure:focus-visible, .ct-retirer:focus-visible { outline: 2px solid var(--cr-encre); outline-offset: 2px; }
+.ct-legende { margin: 0.5rem 0 0; font-size: 0.82rem; opacity: 0.88; }
+.ct-repeter { display: flex; gap: 0.7rem; align-items: center; margin: 1rem 0 1.2rem; padding: 0.8rem 0.9rem; border-radius: 14px; background: var(--cr-fond-doux); cursor: pointer; font-size: 0.93rem; }
+.ct-repeter input { width: 1.2rem; height: 1.2rem; accent-color: var(--cr-encre); flex: none; }
+.ct-choisis { list-style: none; margin: 0.5rem 0 0; padding: 0; border-radius: 16px; overflow: hidden; background: #fff; color: #2A1416; }
+.ct-choisis li { display: flex; gap: 0.7rem; align-items: center; padding: 0.65rem 0.8rem; border-top: 1px solid #F2E7E8; font-size: 0.92rem; }
+.ct-choisis li:first-child { border-top: 0; }
+.ct-choisis em { flex: 0 0 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; color: #7C2128; font: italic 600 0.95rem 'Cormorant Garamond', Georgia, serif; }
+.ct-choisis span { flex: 1; min-width: 0; }
+.ct-choisis small { color: #6E4F53; white-space: nowrap; }
+.ct-choisis .ct-retirer { flex: none; width: 2rem; height: 2rem; border-radius: 50%; color: #7C2128; border-color: #EADCDD; }
+.ct-garde { display: flex; gap: 0.6rem; margin: 0.9rem 0 0; padding: 0.8rem 0.9rem; border-radius: 14px; border: 1px dashed var(--cr-bord); font-size: 0.88rem; line-height: 1.55; }
+.ct-repeter[hidden] { display: none; }

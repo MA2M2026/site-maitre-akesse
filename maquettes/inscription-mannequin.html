@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE (14/11/2026, à valider par la propriétaire) : « Inscription nouveaux mannequins » (application) plus premium,
+     même déroulé : code → vos informations → règlement → paiement → merci. Données d'exemple.
+     ?vue=1 (code) | ?vue=2 (félicitations, vos informations) | ?vue=5 (merci + programme) -->
+<title>Maquette inscription mannequin</title>
+<link rel="stylesheet" href="../css/polices.css?v=f8b78de5">
+<style>
+:root { --rouge: #7C2128; --fonce: #5A141B; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--rouge); color: #fff; font: 400 15px/1.55 'Work Sans', sans-serif; }
+.v { display: none; } body.v1 .v-1, body.v2 .v-2, body.v5 .v-5 { display: block; }
+.tete { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; }
+.tete a { color: #fff; font-weight: 600; font-size: 14px; }
+.tete span { font: 600 10px 'Work Sans'; letter-spacing: .3em; text-transform: uppercase; opacity: .85; }
+.page { max-width: 480px; margin: 0 auto; padding: 0 16px 40px; }
+.prog { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); padding: 0; margin: 10px 0 22px; }
+.prog li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; opacity: .6; text-align: center; }
+.prog li::before { content: attr(data-n); position: relative; z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.55); background: var(--rouge); font: italic 500 17px 'Cormorant Garamond', serif; }
+.prog li + li::after { content: ''; position: absolute; top: 17px; right: 50%; width: 100%; height: 1px; background: rgba(255,255,255,.25); }
+.prog li.actif, .prog li.fait { opacity: 1; }
+.prog li.actif::before { background: #fff; color: var(--rouge); box-shadow: 0 0 0 5px rgba(255,255,255,.15); }
+.prog li.fait::before { content: '✓'; background: #fff; color: var(--rouge); font: 700 13px 'Work Sans'; }
+.une { position: relative; height: 300px; border-radius: 22px; overflow: hidden; background: url(../assets/cours-talons/mannequin-podium.jpg) 50% 15% / cover; }
+.une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,6,10,.1) 30%, rgba(74,16,22,.95) 100%); }
+.une div { position: absolute; z-index: 1; left: 20px; right: 20px; bottom: 18px; }
+.une small { font: 600 10px 'Work Sans'; letter-spacing: .3em; text-transform: uppercase; color: #F3DDE0; }
+.une h1 { margin: 6px 0 0; font: 500 38px/1 'Cormorant Garamond', serif; }
+.une h1 em { font-weight: 400; }
+.carte { margin-top: -26px; position: relative; z-index: 2; background: #fff; color: #2a1416; border-radius: 22px; padding: 22px 18px; box-shadow: 0 30px 60px -30px rgba(30,4,8,.8); }
+.carte p { margin: 0 0 14px; color: #6E4F53; font-size: 14px; }
+label { display: block; font: 600 11px 'Work Sans'; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; margin: 14px 0 6px; }
+.code { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #EADCDD; font: 600 24px 'Work Sans'; letter-spacing: .3em; text-align: center; color: var(--rouge); }
+input.date { width: 100%; padding: 14px; border-radius: 14px; border: 1.5px solid #EADCDD; font: 16px 'Work Sans'; }
+.gros { display: block; width: 100%; margin-top: 18px; padding: 16px; border-radius: 16px; background: var(--rouge); color: #fff; text-align: center; font-weight: 700; }
+.leger { display: block; width: 100%; margin-top: 10px; padding: 14px; border-radius: 16px; border: 1px solid #EADCDD; color: var(--rouge); text-align: center; font-weight: 600; }
+.petit { margin-top: 12px !important; font-size: 12px !important; text-align: center; }
+.bravo h2 { margin: 6px 0 4px; font: 500 40px/1 'Cormorant Garamond', serif; text-align: center; }
+.bravo h2 em { font-weight: 400; }
+.bravo p { text-align: center; opacity: .9; margin: 0 0 18px; }
+.cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; background: linear-gradient(135deg, #5A141B, #8A2530 55%, #5A141B); box-shadow: 0 22px 40px -18px rgba(90,20,27,.9); }
+.cb::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.07); }
+.cb > * { position: relative; }
+.cb .h { display: flex; justify-content: space-between; font: 600 9px 'Work Sans'; letter-spacing: .3em; }
+.cb .nom { font: 600 24px/1.1 'Cormorant Garamond', serif; letter-spacing: .05em; margin: 26px 0 4px; }
+.cb .bas { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 12px; }
+.cb .bas b { display: block; font-size: 9px; letter-spacing: .2em; color: #F3DDE0; }
+.releve { margin-top: 14px; background: #fff; color: #2a1416; border-radius: 18px; overflow: hidden; }
+.releve div { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid #F2E7E8; font-size: 14px; }
+.releve div:first-child { border-top: 0; }
+.releve em { flex: 0 0 32px; height: 32px; border-radius: 50%; background: #F3DDE0; display: grid; place-items: center; font-style: normal; }
+.releve small { display: block; color: #6E4F53; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.question { text-align: center; margin: 18px 0 0; font-weight: 600; }
+.blanc { display: block; width: 100%; margin-top: 12px; padding: 16px; border-radius: 16px; background: #fff; color: var(--rouge); text-align: center; font-weight: 700; }
+.contour { display: block; width: 100%; margin-top: 10px; padding: 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,.6); text-align: center; font-weight: 600; }
+.suite { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+.suite li { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,.3); }
+.suite li span { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.6); font: italic 500 17px 'Cormorant Garamond', serif; }
+.suite li.ok span { background: #fff; color: var(--rouge); font: 700 13px 'Work Sans'; }
+.titre-sec { margin: 26px 0 10px; font: 700 11px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; }
+.mois { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.mois div { background: #fff; color: #2a1416; border-radius: 14px; padding: 10px; }
+.mois small { display: block; font: 700 9px 'Work Sans'; letter-spacing: .14em; color: #6E4F53; text-transform: uppercase; }
+.mois b { display: block; font: 600 14px/1.15 'Cormorant Garamond', serif; margin-top: 4px; }
+</style></head>
+<body>
+<div class="tete"><a>‹ Retour</a><span>Inscription</span></div>
+<div class="page">
+  <ol class="prog" id="prog"><li data-n="1">Code</li><li data-n="2">Vos infos</li><li data-n="3">Règlement</li><li data-n="4">Paiement</li></ol>
+
+  <div class="v v-1">
+    <div class="une"><div><small>Retenue au casting</small><h1>Bienvenue chez <em>MA2M</em></h1></div></div>
+    <div class="carte">
+      <p>Entrez le code personnel que l’agence vous a envoyé, et votre date de naissance.</p>
+      <label>Code d’inscription</label><input class="code" value="K7Q2M9">
+      <label>Date de naissance</label><input class="date" value="12/03/2004">
+      <span class="gros">Continuer</span>
+      <p class="petit">Le code ne sert qu’une fois.</p>
+    </div>
+  </div>
+
+  <div class="v v-2 bravo">
+    <h2>Félicitations, <em>Awa</em> !</h2>
+    <p>Vous avez été retenue. Vos informations du casting sont déjà chez nous.</p>
+    <div class="cb"><div class="h"><span>FUTURE MANNEQUIN MA2M</span><span>2026</span></div><div class="nom">AWA KONÉ</div>
+      <div class="bas"><div><b>CASTING</b>Abidjan Fashion Week</div><div><b>FORMATION</b>Niveau 1</div></div></div>
+    <div class="releve">
+      <div><em>🎂</em><span><small>Naissance</small>12 mars 2004</span></div>
+      <div><em>📱</em><span><small>WhatsApp</small>+225 07 00 00 00 01</span></div>
+      <div><em>✉️</em><span><small>E-mail</small>awa@exemple.ci</span></div>
+      <div><em>📍</em><span><small>Ville</small>Abidjan, Cocody</span></div>
+    </div>
+    <p class="question">Ces informations sont-elles exactes ?</p>
+    <span class="blanc">Oui, continuer</span><span class="contour">Non, corriger</span>
+  </div>
+
+  <div class="v v-5 bravo">
+    <h2>Merci, <em>Awa</em> !</h2>
+    <p>Votre inscription est envoyée. Voici la suite.</p>
+    <ol class="suite">
+      <li class="ok"><span>✓</span><div><b>Paiement envoyé</b><br><small>L’agence le vérifie, sous 24 h.</small></div></li>
+      <li><span>2</span><div><b>Votre code d’espace</b><br><small>Par WhatsApp et e-mail, pour créer votre compte.</small></div></li>
+      <li><span>3</span><div><b>Votre programme</b><br><small>Dans l’application MA2M Mannequin, mois après mois.</small></div></li>
+    </ol>
+    <p class="titre-sec">Votre formation commence par…</p>
+    <div class="mois"><div><small>Mois 1</small><b>Posture et démarche de base</b></div><div><small>Mois 2</small><b>Le podium : marche, demi-tours</b></div><div><small>Mois 3</small><b>La pose photo : les bases</b></div></div>
+  </div>
+</div>
+<script>
+const v = new URLSearchParams(location.search).get('vue') || '1';
+document.body.className = 'v' + v;
+const e = { 1: 1, 2: 2, 5: 5 }[v];
+document.querySelectorAll('#prog li').forEach((li, i) => { li.className = i + 1 < e ? 'fait' : i + 1 === e ? 'actif' : ''; });
+</script>
+</body></html>

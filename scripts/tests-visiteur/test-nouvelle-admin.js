@@ -22,7 +22,15 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console : ' + m.text().slice(0, 140)); });
-    await brancher(p, donnees('principal'), journal); await photosLocales(p);
+    // (14/11/2026) cours de talons cette semaine : un privé payé, un réservé à l'inscription il y a 2 h (« à confirmer »),
+    // un réservé il y a 3 jours sans paiement (plus gardé) et un annulé (jamais montrés)
+    const dd = donnees('principal'), demain = new Date(Date.now() + 86400000); demain.setUTCHours(10, 0, 0, 0);
+    const seance = (h, c, occupe) => ({ debut: new Date(demain.getTime() + h * 3600000).toISOString(), theme: 'Posture et équilibre', inscription_id: c.nom, occupe, cours_talons: Object.assign({ formule: 'prive_salle', civilite: 'madame' }, c) });
+    dd.tables.cours_talons_seances = [seance(0, { nom: 'KONÉ PAYÉE', statut: 'inscrite', valide_le: '2026-11-01T10:00:00Z' }, true),
+      seance(4, { nom: 'TOURÉ RÉSERVE', statut: 'plus_tard' }, true),
+      seance(6, { nom: 'YAO EXPIRÉE', statut: 'plus_tard' }, false),   // (« occupe » calculé par la base : réservation de plus de 48 h)
+      seance(8, { nom: 'BAMBA ANNULÉE', statut: 'annulee', valide_le: '2026-11-01T10:00:00Z' }, false)];
+    await brancher(p, dd, journal); await photosLocales(p);
     // services de fond demandés par la page (l'Administration n'enregistre que le sien : /admin/sw.js)
     // notifications du téléphone simulées : l'appareil n'a encore jamais répondu ; « Oui » les autorise
     await p.addInitScript(() => {
@@ -73,6 +81,15 @@ const capture = (p, nom) => process.env.CAPTURES ? p.screenshot({ path: process.
     ok(acc.tuiles.join() === 'Castings,Mannequins,Événements,Messages,Paiements,Comptabilité,Le site,Réglages' && !acc.rubriques, n + '8 tuiles, plus de longue liste de rubriques (' + acc.tuiles.join(', ') + ')');
     ok(!acc.rangement.length, n + 'chaque rubrique est rangée dans une seule tuile ' + acc.rangement.join(','));
     ok(!acc.deborde, n + 'rien ne dépasse de l’écran');
+    // (14/11/2026, maquette validée) « L'agence ce mois-ci » et « Cette semaine » (aujourd'hui en premier, l'événement de l'agenda)
+    ok(await p.isVisible('.ag-carte') && /L’AGENCE CE MOIS-CI/.test(await p.textContent('.ag-carte')) && /FCFA/.test(await p.textContent('.ag-carte')) && /mannequins actives/.test(await p.textContent('.ag-carte'))
+      && await p.isVisible('.se-semaine') && await p.locator('.se-jour.auj').count() === 1, n + 'accueil : carte « L’agence ce mois-ci » et « Cette semaine »');
+    const semaine = await p.textContent('.se-semaine');
+    ok(/Cours privé · Mme KONÉ PAYÉE/.test(semaine) && /Mme TOURÉ RÉSERVE.*à confirmer \(paiement\)/.test(semaine) && !/YAO EXPIRÉE|BAMBA ANNULÉE/.test(semaine) && !/KONÉ PAYÉE[^·]*·[^·]*·[^·]*à confirmer/.test(semaine),
+      n + 'cette semaine : cours privé payé, réservé « à confirmer », ni le réservé expiré (48 h) ni l’annulé');
+    // (jamais pendant les congés : décembre à février)
+    const dimancheEnConges = await p.evaluate(() => { const d = new Date(); for (let k = 0; k < 7; k++) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + k); if (!x.getDay()) return window.Presences.enVacances(x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0')); } return false; });
+    ok(await p.locator('.se-semaine a[href="#/site/b2-presences"]:has-text("Cours des mannequins")').count() === (dimancheEnConges ? 0 : 1), n + 'cette semaine : le cours des mannequins du dimanche (vers la liste de présence), pas pendant les congés');
     if (tel) ok(await p.isVisible('.onglets-bas') && (await p.$$eval('.onglets-bas a', (a) => a.map((x) => x.textContent))).join() === 'Accueil,Le site,Paiements,Compta', n + 'barre du bas : Accueil, Le site, Paiements, Compta');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'accueil : tous les textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));

@@ -60,6 +60,21 @@ function construireNotification(table, record) {
       url: '/admin/#/site/b2-cours-talons'
     };
   }
+  // (15/11/2026, maquette validée : maquettes/planning-talons.html) la veille de chaque cours de talons
+  // (supabase-rappels-talons.sql : le groupe en une ligne, chaque cours privé) ; ouvre le planning
+  if (table === 'cours_talons_rappels') {
+    const d = new Date(record.debut), ok = !isNaN(d), h = ok ? ' ' + d.getUTCHours() + ' h' + (d.getUTCMinutes() ? ' ' + String(d.getUTCMinutes()).padStart(2, '0') : '') : '';   // (Abidjan = UTC)
+    // (un cours fixé moins de 24 h avant peut être aujourd'hui)
+    const quand = ok && d.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10) ? 'Aujourd’hui' : 'Demain';
+    const groupe = record.formule === 'groupe';
+    return {
+      cle: 'evenement_rappel_talons',
+      titre: '👠 ' + quand + h + ' : ' + (groupe ? 'cours en groupe' : 'cours privé'),
+      texte: [groupe ? (record.nb || 1) + ' élève' + ((record.nb || 1) > 1 ? 's' : '') : record.nom || 'Une élève', record.lieu, record.theme ? '« ' + record.theme + ' »' : '',
+        groupe ? '' : 'touchez pour lui envoyer son rappel'].filter(Boolean).join(' · '),
+      url: '/admin/#/site/b2-cours-talons/planning'
+    };
+  }
   if (table === 'recruiter_requests') {
     const qui = record.contact_name || record.company || 'Un recruteur';
     return {

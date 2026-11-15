@@ -2834,7 +2834,7 @@ async function envoyerFormulairePublic(table, ligne) {
   const r = await rep.json().catch(() => ({}));
   if (rep.ok) return { error: null };
   // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
-  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret } };
+  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris } };
 }
 async function insererAvecPatience(table, ligne, surAttente) {
   const attentes = [15, 25, 35];

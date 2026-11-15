@@ -1480,9 +1480,88 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ct-ajout summary::-webkit-details-marker { display: none; }
 .ct-mois { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; }
 .ct-mois p { flex: 1 1 100%; margin: 0; font-size: 13.5px; color: #2A1416; }
+/* « Messages prêts à envoyer » (14/11/2026, js/admin/site-cours-talons.js, messagesPrets) : une tuile par message */
+.ct-messages { margin: 0 0 18px; }
+.ct-messages h3 { margin: 0 0 4px; }
+.ct-messages > p { margin: 0 0 10px; }
+.ct-msgs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.ct-msg { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; padding: 12px 14px; border-radius: 16px; border: 1px solid #EADCDD; background: #FFFFFF; }
+.ct-msg > i { flex: 0 0 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #FBF4F5; font-style: normal; font-size: 17px; }
+.ct-msg-txt { flex: 1 1 140px; min-width: 0; }
+.ct-msg-txt b { display: block; color: #2A1416; font-size: 14px; }
+.ct-msg-txt small { display: block; color: #6E4F53; font-size: 12.5px; overflow-wrap: anywhere; }
+.ct-msg-btn { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+.ct-msg-btn .btn { flex: 1 1 0; justify-content: center; text-align: center; }
 /* Programme de formation dans la fiche d'un mannequin (14/11/2026, js/portail/espace-paiements.js) */
 .pf-programme details { margin-top: 8px; }
 .pf-programme summary { cursor: pointer; font-weight: 600; color: #7C2128; }
 .pf-mois { margin: 10px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; font-size: 13.5px; }
 .pf-mois li.en_cours { font-weight: 600; }
 .pf-mois li.en_cours::before { content: '▸ '; color: #7C2128; }
+
+/* Accueil de l'Administration (14/11/2026, maquette validée) : « L'agence ce mois-ci » (façon carte bancaire) et
+   « Cette semaine » jour par jour (js/admin/coque.js, carteAgence / semaine) */
+.ag-carte { position: relative; overflow: hidden; margin: 0 0 18px; border-radius: 20px; padding: 18px 20px; color: #FFFFFF;
+  background: linear-gradient(135deg, #5A141B 0%, #8A2530 55%, #5A141B 100%); box-shadow: 0 22px 40px -18px rgba(40, 6, 10, 0.9); }
+.ag-carte::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, 0.07); }
+.ag-carte > * { position: relative; }
+.ag-tete { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 600 9px 'Work Sans', sans-serif; letter-spacing: 0.3em; }
+.ag-tete img { height: 22px; width: auto; }
+.ag-grand { margin: 20px 0 2px; font: 600 38px/1 'Cormorant Garamond', Georgia, serif; }
+.ag-grand small { font-size: 20px; }
+.ag-leg { font-size: 12.5px; color: #F3DDE0; }
+.ag-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.ag-tuiles:empty { display: none; }
+.ag-tuiles > div { border-radius: 14px; padding: 12px; background: rgba(255, 255, 255, 0.1); }
+.ag-tuiles b { display: block; font: 600 28px/1 'Cormorant Garamond', Georgia, serif; }
+.ag-tuiles span { font-size: 12px; color: #F3DDE0; }
+.se-semaine { margin: 0 0 18px; border-radius: 18px; overflow: hidden; background: #FFFFFF; color: #2a1416; }
+.se-jour { display: flex; gap: 12px; padding: 12px 14px; border-top: 1px solid #F2E7E8; }
+.se-jour:first-child { border-top: 0; }
+.se-date { flex: 0 0 48px; align-self: flex-start; text-align: center; border-radius: 12px; padding: 6px 0; background: #FBF4F5; }
+.se-date small { display: block; font: 700 9px 'Work Sans', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: #6E4F53; }
+.se-date b { font: 600 22px/1 'Cormorant Garamond', Georgia, serif; color: #7C2128; }
+.se-jour.auj .se-date { background: #7C2128; }
+.se-jour.auj .se-date small, .se-jour.auj .se-date b { color: #FFFFFF; }
+.se-jour ul { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; display: grid; gap: 6px; }
+.se-jour li a { display: flex; gap: 8px; align-items: baseline; color: #2a1416; text-decoration: none; font-size: 13.5px; overflow-wrap: anywhere; }
+.se-jour li a:hover span { text-decoration: underline; }
+.se-jour li i { font-style: normal; }
+.se-jour li small { color: #6E4F53; }
+.se-vide { margin: 0; padding-top: 10px; color: #6E4F53; font-size: 13px; }
+/* « Mes indisponibilités » (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html ; js/admin/site-cours-talons.js) */
+.ct-indispo > summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.ct-indispo > summary::-webkit-details-marker { display: none; }
+.ct-indispo > summary h2 { margin: 0; }
+.ct-indispo > summary::after { content: '▾'; margin-left: auto; color: #7C2128; }
+.ct-indispo[open] > summary::after { content: '▴'; }
+.ct-indispo > summary:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
+.ct-indispo-l small { display: block; color: #6E4F53; }
+.ct-indispo-l .ct-mini { flex: none; margin-left: auto; min-height: 34px; padding: 6px 12px; border-radius: 999px; border: 1px solid #EADCDD; background: #FFFFFF; color: #7C2128; font: 600 12px 'Work Sans', sans-serif; cursor: pointer; }
+.ct-touchees { margin: 14px 0; padding: 12px 14px; border-radius: 14px; background: #FBF4F5; color: #2A1416; font-size: 13.5px; }
+.ct-touchees p { margin: 0 0 8px; }
+.ct-touchee { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid #F2E7E8; }
+.ct-touchee span { flex: 1 1 100%; }
+.ct-indispo-ajout { margin-top: 14px; }
+/* « Planning » des cours de talons (15/11/2026, maquette validée : maquettes/planning-talons.html), jours comme « Cette semaine » */
+.pl-planning .se-date small + b + small { margin-top: 1px; }
+.pl-jour { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.pl-s { border-radius: 14px; border: 1px solid #F2E7E8; padding: 10px 12px; }
+.pl-s > b { display: block; font-size: 14px; color: #2A1416; }
+.pl-s > small { display: block; color: #6E4F53; font-size: 12.5px; overflow-wrap: anywhere; }
+.pl-boutons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pl-eleves { margin-top: 8px; }
+.pl-eleves > summary { cursor: pointer; color: #7C2128; font-weight: 600; font-size: 13px; min-height: 32px; display: flex; align-items: center; }
+.pl-eleves > summary:focus-visible { outline: 2px solid #7C2128; outline-offset: 2px; }
+.pl-eleve { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0; border-top: 1px solid #F2E7E8; font-size: 13.5px; }
+.pl-eleve span { flex: 1 1 140px; }
+.pl-indispo { border-radius: 14px; padding: 10px 12px; background: #FBF4F5; color: #6E4F53; font-size: 13px; }
+/* boutons du planning, sur fond blanc : contour rose, le rappel en rouge plein */
+.pl-planning .btn { border-color: #EADCDD; background: #FFFFFF; color: #7C2128; }
+.pl-planning .btn.rouge { background: #7C2128; border-color: #7C2128; color: #FFFFFF; }
+/* « Sa carte de mannequin » (15/11/2026, js/portail/espace-paiements.js encartCarte) */
+.ca-carte .ca-ligne { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid #F2E7E8; }
+.ca-carte .ca-ligne > span, .ca-carte .ca-ligne > label { flex: 1 1 220px; min-width: 0; }
+.ca-carte .ca-ligne small { display: block; color: #6E4F53; font-size: 12.5px; font-weight: 400; }
+.ca-carte .ca-numero { color: #7C2128; letter-spacing: .08em; }
+.ca-carte .ca-expiree { color: #7C2128; }

@@ -37,7 +37,8 @@
 <link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41">
 <link rel="stylesheet" href="css/luxe.css?v=a5bd81c5">
 <link rel="stylesheet" href="css/paiements-premium.css?v=e68257b9">
-<link rel="stylesheet" href="css/cours-talons.css?v=ec169874">
+<link rel="stylesheet" href="css/talons-creneaux.css?v=5b55f382">
+<link rel="stylesheet" href="css/cours-talons.css?v=9d54b4a9">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -191,11 +192,28 @@
           <div class="form-champ u-hidden" id="ct-bloc-paiement-mois"><span class="ct-label">Comment souhaitez-vous payer ?</span><div class="ct-niveaux"><label class="ct-pastille"><input type="radio" name="paiement" value="tout" checked><span>Tout en une fois</span></label><label class="ct-pastille"><input type="radio" name="paiement" value="mensuel"><span>Mois par mois (30 000 FCFA par mois)</span></label></div></div>
         </div>
         <div id="ct-bloc-prive" class="u-hidden">
-          <div class="form-grille">
-            <div class="form-champ" id="ct-champ-nb"><label for="ct-nb">Nombre de séances</label><select id="ct-nb"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
-            <div class="form-champ"><label for="ct-dispo">Vos disponibilités</label><input type="text" id="ct-dispo" maxlength="600" placeholder="Ex. : samedi matin, en semaine après 17 h"></div>
-          </div>
+          <div class="form-champ" id="ct-champ-nb"><label for="ct-nb">Nombre de séances</label><select id="ct-nb"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
           <div class="form-champ u-hidden" id="ct-bloc-adresse"><label for="ct-adresse">Lieu des cours (quartier, adresse)</label><input type="text" id="ct-adresse" maxlength="300" placeholder="Ex. : Cocody Angré, près de…"></div>
+          <!-- (14/11/2026, maquette validée : maquettes/creneaux-prives.html) l'élève choisit ses créneaux LIBRES (lundi au samedi, 10 h – 20 h, séances de 2 h, 1 h 30 de pause entre deux cours, gardés 48 h) ou « dates à convenir ensemble » ; js/cours-talons.js, base : supabase-creneaux-prives.sql -->
+          <div id="ct-bloc-facons" class="u-hidden">
+            <span class="ct-label" id="ct-facons-titre">Vos créneaux</span>
+            <div class="ct-facons" role="radiogroup" aria-labelledby="ct-facons-titre">
+              <label class="ct-facon" id="ct-facon-maintenant"><input type="radio" name="choix_creneaux" value="maintenant"><span><i aria-hidden="true">📅</i><span><strong>Je choisis maintenant</strong><em>Les créneaux libres, gardés 48 h le temps du paiement.</em></span></span></label>
+              <label class="ct-facon" id="ct-facon-apres"><input type="radio" name="choix_creneaux" value="apres"><span><i aria-hidden="true">⏳</i><span><strong>Je choisirai après mon paiement</strong><em>Vous recevrez votre lien personnel : vous y choisirez vos créneaux quand vous serez décidée.</em></span></span></label>
+              <label class="ct-facon" id="ct-facon-convenir"><input type="radio" name="choix_creneaux" value="convenir"><span><i aria-hidden="true">📞</i><span><strong>Dates à convenir ensemble</strong><em>L’agence vous appelle pour fixer les dates.</em></span></span></label>
+            </div>
+          </div>
+          <div id="ct-bloc-creneaux" class="ct-creneaux u-hidden">
+            <p class="ct-aide">Seuls les créneaux libres sont proposés. Chaque séance dure 2 h, du lundi au samedi (heure d’Abidjan).</p>
+            <div class="ct-jours" id="ct-jours" role="group" aria-label="Jour"></div>
+            <div class="ct-heures" id="ct-heures" role="group" aria-label="Heure"></div>
+            <p class="ct-legende">Barré : déjà pris (un autre cours, avec 1 h 30 de pause entre deux cours).</p>
+            <label class="ct-repeter"><input type="checkbox" id="ct-repeter" checked><span>Même jour, même heure chaque semaine</span></label>
+            <span class="ct-label" id="ct-choisis-titre"></span>
+            <ol class="ct-choisis" id="ct-choisis" aria-live="polite"></ol>
+            <p class="ct-garde">⏳ <span>Ces créneaux sont <strong>gardés pour vous 48&nbsp;h</strong>, le temps de votre paiement. Sans paiement, ils sont libérés.</span></p>
+          </div>
+          <div class="form-champ u-hidden" id="ct-bloc-dispo"><label for="ct-dispo">Vos disponibilités</label><input type="text" id="ct-dispo" maxlength="600" placeholder="Ex. : samedi matin, en semaine après 17 h"></div>
         </div>
         <div id="ct-programme-choisi" class="ct-programme-choisi u-hidden" aria-live="polite"><span class="ct-label">Votre programme</span><ol></ol></div>
         <p class="ct-total" id="ct-total" aria-live="polite"></p>
@@ -295,13 +313,14 @@
 <script src="js/conversion-heic.js?v=82dc3921"></script>
 <script src="js/photos.js?v=c819e38b"></script>
 <script src="js/partage.js?v=6b9f7039"></script>
-<script src="js/app.js?v=6eceb3dc"></script>
+<script src="js/app.js?v=6fd64a75"></script>
 <script src="js/confort.js?v=cad83e86"></script>
 <script src="js/video-allegee.js?v=c3f34d58"></script>
 <script src="js/menu.js?v=9fe5a355"></script>
 <script src="js/diaporama-luxe.js?v=6c1722dd"></script>
 <script src="js/moyens-paiement.js?v=e15e92a3"></script>
-<script src="js/talons-commun.js?v=a4128d3b"></script>
-<script src="js/cours-talons.js?v=0d266928"></script>
+<script src="js/talons-commun.js?v=53eea3d0"></script>
+<script src="js/talons-creneaux.js?v=2317128a"></script>
+<script src="js/cours-talons.js?v=d0ed2207"></script>
 </body>
 </html>

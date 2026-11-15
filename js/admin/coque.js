@@ -484,7 +484,7 @@
     }
     const liste = profils || [];
     const photos = await essai(P.photosCouverture(liste.map((p) => p.id).concat(prochain ? prochain.mannequin_ids || [] : []).filter((x, i, l) => l.indexOf(x) === i))) || {};
-    return { profils: liste, photos, nouvelles, prochain, reponses, aValider, recruteurs };
+    return { profils: liste, photos, nouvelles, prochain, reponses, aValider, recruteurs, projets: projets || [] };
   }
   async function donneesPaiements() {
     const declares = await essai(nombre(sb.from('paiements_mannequins').select('id', { count: 'exact', head: true }).eq('statut', 'declare')));
@@ -495,6 +495,68 @@
     return { total: soldes ? soldes.reduce((s, x) => s + (Number(x.solde) || 0), 0) : null };
   }
 
+  // (14/11/2026, maquette validée par la propriétaire : maquettes/accueil-administration.html) « L'agence ce mois-ci » et
+  // « Cette semaine ». Chacun ne voit que ce que son rôle permet : l'argent (Comptabilité), les mannequins actives
+  // (Paiements), les élèves et les cours de talons, les castings et défilés (Site). Une lecture absente ne casse rien.
+  const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  // séances de talons de la semaine ; « occupe » (calculé par la base, supabase-creneaux-prives.sql) : relu sans lui
+  // tant que ce fichier n'est pas collé
+  async function seancesSemaine(auj, dans7) {
+    const lire = (champs) => P.bd(sb.from('cours_talons_seances').select('debut, theme, inscription_id' + champs + ', cours_talons(nom, formule, civilite, age, statut, valide_le)')
+      .gte('debut', new Date(auj.getFullYear(), auj.getMonth(), auj.getDate()).toISOString()).lte('debut', dans7.toISOString()).order('debut').limit(200));
+    try { return await lire(', occupe'); } catch (e) { return lire(''); }
+  }
+  async function donneesAgence() {
+    // (le calendrier des congés des cours du dimanche, js/presences-calcul.js, pour « Cette semaine »)
+    if (P.moi.espaces.site && !window.Presences && P.chargerScript) await essai(P.chargerScript('/js/presences-calcul.js'));
+    const auj = new Date(), debutMois = iso(new Date(auj.getFullYear(), auj.getMonth(), 1)), dans7 = new Date(auj.getTime() + 7 * 86400000);
+    const [recettes, actives, eleves, seances] = await Promise.all([
+      P.moi.espaces.compta ? essai(P.bd(sb.from('compta_ecritures').select('montant').eq('sens', 'recette').eq('annule', false).gte('date_op', debutMois).lte('date_op', iso(auj)).limit(5000))) : null,
+      P.moi.espaces.paiements ? essai(nombre(sb.from('agence_mannequins').select('id', { count: 'exact', head: true }).eq('statut', 'actif'))) : null,
+      P.moi.espaces.site ? essai(nombre(sb.from('cours_talons').select('id', { count: 'exact', head: true }).eq('statut', 'inscrite'))) : null,
+      P.moi.espaces.site ? essai(seancesSemaine(auj, dans7)) : null
+    ]);
+    return { encaisse: Array.isArray(recettes) ? recettes.reduce((t, x) => t + (Number(x.montant) || 0), 0) : null, actives, eleves, seances: seances || [] };
+  }
+  function carteAgence(a) {
+    if (!a || (a.encaisse === null && a.actives === null && a.eleves === null)) return '';
+    const mois = P.MOIS[new Date().getMonth()];
+    const tuile = (n, texte) => (n === null || n === undefined ? '' : '<div><b>' + P.esc(String(n)) + '</b><span>' + P.esc(texte) + '</span></div>');
+    return '<div class="ag-carte apparait" style="--i:1"><div class="ag-tete"><img src="/assets/logo-header.png" alt=""><span>L’AGENCE CE MOIS-CI</span></div>' +
+      (a.encaisse !== null ? '<div class="ag-grand">' + P.esc(P.fcfa(a.encaisse).replace(/\s*FCFA$/, '')) + ' <small>FCFA</small></div><div class="ag-leg">encaissés en ' + P.esc(mois) + ' · mensualités, cours de talons, cachets…</div>' : '') +
+      '<div class="ag-tuiles">' + tuile(a.actives, 'mannequins actives') + tuile(a.eleves, 'élèves des cours de talons') + '</div></div>';
+  }
+  const JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  function semaine(site, a) {
+    if (!P.moi.espaces.site) return '';
+    const auj = new Date(), jours = [];
+    for (let k = 0; k < 7; k++) { const d = new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() + k); jours.push({ d, cle: iso(d), lignes: [] }); }
+    const heure = (t) => { const d = new Date(t); return d.getUTCHours() + ' h' + (d.getUTCMinutes() ? ' ' + String(d.getUTCMinutes()).padStart(2, '0') : ''); };   // (Abidjan = UTC)
+    // castings, défilés, projets de l'agenda (à cheval sur plusieurs jours : chaque jour)
+    ((site && site.projets) || []).forEach((p) => jours.forEach((j) => {
+      if (p.date_debut <= j.cle && (p.date_fin || p.date_debut) >= j.cle) j.lignes.push(['📅', p.titre, [p.type === 'casting' ? 'casting' : p.type === 'defile' ? 'défilé' : '', [p.lieu, p.ville].filter(Boolean).join(', ')].filter(Boolean).join(' · '), '#/site/b2-convocations']);
+    }));
+    // (15/11/2026, maquette validée : maquettes/accueil-administration.html) le cours des mannequins de l'agence, chaque
+    // dimanche (liste de présence : Présences), jamais pendant les congés (js/presences-calcul.js) ; son heure n'est pas
+    // encore notée dans le site
+    const P2 = window.Presences;
+    if (P2) jours.forEach((j) => { if (j.d.getDay() === 0 && !P2.enVacances(j.cle)) j.lignes.push(['🎓', 'Cours des mannequins', 'liste de présence', '#/site/b2-presences']); });
+    // cours de talons : le groupe en une ligne (nombre d'élèves), chaque cours privé avec l'élève et son thème
+    const groupes = {};
+    ((a && a.seances) || []).forEach((s) => {
+      const c = s.cours_talons || {}, j = jours.find((x) => x.cle === iso(new Date(s.debut)));
+      // (14/11/2026) cours privés réservés à l'inscription : « occupe » est calculé par la base (supabase-creneaux-prives.sql :
+      // jamais une inscription annulée, une réservation pas payée seulement 48 h) ; pas encore payé → « à confirmer »
+      const aConfirmer = !c.valide_le && c.statut !== 'inscrite' && c.statut !== 'terminee';
+      if (!j || s.occupe === false || c.statut === 'annulee') return;
+      if (c.formule === 'groupe') { const k = j.cle + heure(s.debut); if (!groupes[k]) { groupes[k] = ['👠', 'Cours de talons en groupe', '', '#/site/b2-cours-talons', 0, heure(s.debut)]; j.lignes.push(groupes[k]); } groupes[k][4]++; groupes[k][2] = groupes[k][5] + ' · ' + groupes[k][4] + (groupes[k][4] > 1 ? ' élèves' : ' élève'); }
+      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && c.age < 18)) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : '', aConfirmer ? 'à confirmer (paiement)' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
+    });
+    const html = jours.filter((j, k) => k === 0 || j.lignes.length).map((j, k) => '<div class="se-jour' + (k === 0 ? ' auj' : '') + '"><div class="se-date"><small>' + JOURS_COURTS[j.d.getDay()] + '</small><b>' + j.d.getDate() + '</b></div>' +
+      (j.lignes.length ? '<ul>' + j.lignes.map((l) => '<li><a href="' + l[3] + '"><i aria-hidden="true">' + l[0] + '</i><span>' + P.esc(l[1]) + (l[2] ? ' <small>· ' + P.esc(l[2]) + '</small>' : '') + '</span></a></li>').join('') + '</ul>'
+        : '<p class="se-vide">Rien de prévu aujourd’hui</p>') + '</div>').join('');
+    return '<h2 class="tu-titre apparait" style="--i:1">Cette semaine</h2><div class="se-semaine apparait" style="--i:1">' + html + '</div>';
+  }
   function dateCourte(d) { const s = String(d).slice(0, 10).split('-'); return Number(s[2]) + ' ' + P.MOIS[Number(s[1]) - 1]; }
   // le prochain projet en une ligne (11/11/2026, accueil apaisé) : la date en carré blanc, le titre, les réponses
   function affiche(site) {
@@ -571,10 +633,11 @@
   }
   P.vuePortail = async () => {
     const d = dateDuJour();
-    const [site, paiements, compta] = await Promise.all([
+    const [site, paiements, compta, agence] = await Promise.all([
       P.moi.espaces.site ? essai(donneesSite()) : null,
       P.moi.espaces.paiements ? essai(donneesPaiements()) : null,
-      P.moi.espaces.compta ? essai(donneesCompta()) : null
+      P.moi.espaces.compta ? essai(donneesCompta()) : null,
+      essai(donneesAgence())
     ]);
     const phrase = {
       principal: 'voici l’essentiel.',
@@ -590,6 +653,8 @@
       '<div class="av-recherche apparait" style="--i:1"><label for="av-recherche" class="sr-only">Chercher une mannequin ou une rubrique</label>' +
         '<input id="av-recherche" type="search" autocomplete="off" placeholder="🔍 Chercher une mannequin, une rubrique…"><div id="av-resultats" class="av-resultats" hidden></div></div>' +
       (P.moi.espaces.site ? '<a class="av-envoyer apparait" style="--i:1" href="#/site/tuile-messages"><em aria-hidden="true">✉️</em><span>Envoyer un message<small>Convoquer, annoncer une sélection, informer…</small></span><i aria-hidden="true">›</i></a>' : '') +
+      // (14/11/2026) la recherche reste en haut (ses résultats doivent se voir sur téléphone), puis les nouvelles cartes
+      carteAgence(agence) + semaine(site, agence) +
       '<h2 class="tu-titre apparait" style="--i:1">À faire aujourd’hui</h2>' + taches(site, paiements) +
       (site ? affiche(site) : '') +
       tuilesAccueil(site, paiements) +

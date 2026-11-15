@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- MAQUETTE (15/11/2026, à valider par la propriétaire) : cours de talons, 1) notification sur le téléphone de l'agence
+     24 h avant chaque séance ; 2) « Planning » jour par jour dans l'Administration (Cours de talons), avec le rappel
+     WhatsApp prêt pour chaque élève. Données d'exemple. -->
+<title>Maquette planning talons</title>
+<link rel="stylesheet" href="../css/polices.css?v=f8b78de5">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #7C2128; color: #fff; font: 400 15px/1.5 'Work Sans', sans-serif; }
+.page { max-width: 480px; margin: 0 auto; padding: 22px 14px 50px; }
+.etiquette { font: 700 10px 'Work Sans'; letter-spacing: .22em; text-transform: uppercase; opacity: .85; margin: 0 0 10px; }
+.ecran { border-radius: 26px; padding: 16px 12px 20px; background: linear-gradient(160deg, #2a2a33, #15151b); }
+.heure { text-align: center; font: 300 46px/1 'Work Sans'; color: #fff; margin: 6px 0 2px; }
+.date { text-align: center; font-size: 13px; color: #cfcfd8; margin-bottom: 16px; }
+.notif { display: flex; gap: 10px; padding: 12px; border-radius: 18px; background: rgba(255,255,255,.18); backdrop-filter: blur(6px); color: #fff; }
+.notif img { width: 34px; height: 34px; border-radius: 9px; background: #7C2128; }
+.notif small { display: flex; justify-content: space-between; font-size: 11.5px; color: #e4e4ea; }
+.notif b { display: block; font-size: 14px; }
+.notif span { font-size: 13.5px; color: #f1f1f5; }
+.notif + .notif { margin-top: 8px; }
+.titre { margin: 30px 0 10px; font: 700 11px 'Work Sans'; letter-spacing: .2em; text-transform: uppercase; }
+.carte { background: #fff; color: #2a1416; border-radius: 20px; overflow: hidden; }
+.onglets { display: flex; gap: 6px; padding: 12px 12px 0; }
+.onglets span { padding: 7px 12px; border-radius: 999px; border: 1px solid #EADCDD; font-size: 12.5px; color: #7C2128; font-weight: 600; }
+.onglets .on { background: #7C2128; color: #fff; border-color: #7C2128; }
+.jour { display: flex; gap: 12px; padding: 14px; border-top: 1px solid #F2E7E8; }
+.jour:first-of-type { border-top: 0; }
+.d { flex: 0 0 50px; align-self: flex-start; text-align: center; border-radius: 12px; padding: 6px 0; background: #FBF4F5; }
+.d small { display: block; font: 700 9px 'Work Sans'; letter-spacing: .14em; text-transform: uppercase; color: #6E4F53; }
+.d b { font: 600 22px/1 'Cormorant Garamond', serif; color: #7C2128; }
+.demain .d { background: #7C2128; } .demain .d small, .demain .d b { color: #fff; }
+.l { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.s { border-radius: 14px; border: 1px solid #F2E7E8; padding: 10px 12px; }
+.s b { display: block; font-size: 14px; } .s small { display: block; color: #6E4F53; font-size: 12.5px; }
+.s .boutons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.btn { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid #EADCDD; color: #7C2128; }
+.btn.r { background: #7C2128; color: #fff; border-color: #7C2128; }
+.ok { color: #24603A; font-size: 12px; font-weight: 600; }
+.indispo { border-radius: 14px; padding: 10px 12px; background: #FBF4F5; color: #6E4F53; font-size: 13px; }
+.note { margin-top: 18px; padding: 14px; border-radius: 14px; background: rgba(0,0,0,.18); font-size: 13px; line-height: 1.6; }
+</style></head>
+<body><div class="page">
+  <p class="etiquette">1 · Sur votre téléphone, la veille</p>
+  <div class="ecran">
+    <div class="heure">15:00</div><div class="date">samedi 21 novembre</div>
+    <div class="notif"><img src="../icons/favicon-32.png" alt=""><div><small><span>MA2M Administration</span><span>maintenant</span></small><b>👠 Demain 15 h : cours en groupe</b><span>6 élèves · Salle MA2M, Riviera Faya · « Posture et équilibre »</span></div></div>
+    <div class="notif"><img src="../icons/favicon-32.png" alt=""><div><small><span>MA2M Administration</span><span>il y a 2 h</span></small><b>👠 Demain 10 h : cours privé</b><span>Mme Koné · Cocody Angré · touchez pour lui envoyer son rappel</span></div></div>
+  </div>
+
+  <p class="titre">2 · Administration · Cours de talons · Planning</p>
+  <div class="carte">
+    <div class="onglets"><span class="on">Planning</span><span>À traiter</span><span>Inscrites</span><span>Toutes</span></div>
+    <div class="jour demain"><div class="d"><small>Dim</small><b>22</b></div><div class="l">
+      <div class="s"><b>15 h – 18 h · Cours en groupe</b><small>« Posture et équilibre » · Salle MA2M · 6 élèves</small>
+        <div class="boutons"><span class="btn r">💬 Rappels (6)</span><span class="btn">Voir les élèves</span></div></div>
+    </div></div>
+    <div class="jour"><div class="d"><small>Lun</small><b>23</b></div><div class="l">
+      <div class="s"><b>10 h – 12 h · Mme Koné</b><small>« Les tenues » · Cocody Angré · privé</small>
+        <div class="boutons"><span class="btn r">💬 Rappel</span><span class="btn">Sa fiche</span></div></div>
+      <div class="s"><b>16 h – 18 h · Mlle Touré</b><small>« Posture et équilibre » · Salle MA2M · à confirmer (paiement)</small>
+        <div class="boutons"><span class="btn">💬 Rappel</span><span class="btn">Sa fiche</span></div></div>
+    </div></div>
+    <div class="jour"><div class="d"><small>Mer</small><b>25</b></div><div class="l">
+      <div class="indispo">🚫 Indisponible toute la journée · Voyage</div>
+    </div></div>
+    <div class="jour"><div class="d"><small>Sam</small><b>28</b></div><div class="l">
+      <div class="s"><b>14 h – 16 h · Mme Bamba</b><small>« Démarche et port de tête » · Salle MA2M</small>
+        <div class="boutons"><span class="btn r">💬 Rappel</span><span class="btn">Sa fiche</span></div></div>
+    </div></div>
+  </div>
+  <div class="note">Les jours sans cours ne sont pas montrés. Le planning couvre les 4 prochaines semaines.<br>
+    De leur côté, les élèves ont déjà le rappel de la veille dans leur calendrier (bouton « Ajouter à mon calendrier »).</div>
+</div></body></html>
