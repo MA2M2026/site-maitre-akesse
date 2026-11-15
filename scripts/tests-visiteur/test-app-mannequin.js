@@ -211,6 +211,15 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       && /1,78 m\s*hauteur/.test(await p.textContent('.ap-pr-mesures')) && /61\s*taille \(cm\)/.test(await p.textContent('.ap-pr-mesures')) && /90\s*hanches/.test(await p.textContent('.ap-pr-mesures'))
       && (await p.textContent('.ap-pr .ap-cb')).includes('mois') && !/null|undefined/.test(await p.textContent('.ap-pr')), n + 'Mon profil premium : carte de mannequin, profil complet en anneau, mensurations');
     if (process.env.CAPTURES) await p.screenshot({ path: path.join(process.env.CAPTURES, nom + '-3-profil-entier.png'), fullPage: true });
+    // (MAQUETTE_CARTE=1 : l'écran réel, puis le même avec le bouton « Télécharger ma carte » proposé sous la carte)
+    if (process.env.CAPTURES && process.env.MAQUETTE_CARTE) {
+      await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(300);
+      await p.screenshot({ path: path.join(process.env.CAPTURES, nom + '-carte-actuelle.png') });
+      await p.evaluate(() => { const c = document.querySelector('.ap-pr .ap-cb'); const b = document.createElement('div'); b.className = 'ap-btns';
+        b.innerHTML = '<button type="button" class="ap-btn" style="margin-top:10px">⬇️ Télécharger ma carte</button>'; c.after(b); });
+      await p.screenshot({ path: path.join(process.env.CAPTURES, nom + '-carte-maquette.png') });
+      await p.evaluate(() => document.querySelector('.ap-pr .ap-cb + .ap-btns').remove());
+    }
     // photo ronde touchée : la galerie, puis la photo part dans le Book et devient la photo de profil
     // stockage des photos simulé (comme test-envoi-photos.js) : rien ne part pour de vrai
     await p.route(/\/api\/r2-presigner/, (r) => { const c = JSON.parse(r.request().postData() || '{}');
