@@ -36,10 +36,10 @@ Chaque agent remplit sa ligne en arrivant.
 
 | Phase | A | B | C | D |
 |-------|---|---|---|---|
-| Audit site public | | | | |
-| Audit du code | | | | |
-| Audit sécurité | | | | |
-| Rapport individuel déposé | | | | |
+| Audit site public | | | ✅ fait (232 visites, liens, lenteur) | |
+| Audit du code | | | ✅ fait | |
+| Audit sécurité | | | ✅ fait (lecture seule) | |
+| Rapport individuel déposé | | | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | |
 
 Les rapports individuels vont dans `docs/audit/rapport-agent-X.md`.
 
@@ -47,9 +47,29 @@ Les rapports individuels vont dans `docs/audit/rapport-agent-X.md`.
 
 Format : `ID | agent | constat | preuve (page, fichier:ligne) | confirmé par`
 
+C-F1 | C | toutes les tables ont leurs règles de sécurité (RLS) | lecture pg_class : 0 table sans RLS |
+C-F2 | C | visiteurs : seulement les colonnes publiques des profils (ni téléphone, ni e-mail, ni naissance) | column_privileges anon sur model_profiles |
+C-F4 | C | formulaires publics passés par le serveur avec anti-robots | js/app.js:2796, api/portail.js:295 |
+C-F5 | C | envoi de photos : propriétaire ou admin, dossier imposé, type et taille signés | api/r2-presigner.js:20-60 |
+C-F7 | C | 35 pages sur 42 avec politique de sécurité stricte par empreintes | balise CSP des pages, scripts/verifier-csp.py |
+C-F8 | C | aucun secret dans le dépôt, npm audit : 0 faille | git ls-files, npm audit --omit=dev |
+C-F12 | C | connexion lente : 1er affichage 0,9 à 2,3 s, grande image ≤ 2,6 s | mesures Playwright 1,6 Mb/s, processeur ×4 |
+(détail et autres points forts : docs/audit/rapport-agent-c.md, branche audit/agent-c)
+
 ## 4. Problèmes proposés
 
 Format : `ID | agent | gravité (critique/haute/moyenne/basse) | lieu | cause | preuve | confirmé par`
+
+C-P1 | C | moyenne | accord-parent, confirmer, places, programme-talons, recu | pas de politique stricte par empreintes (les autres pages l'ont) | grep http-equiv dans les pages |
+C-P2 | C | moyenne | /parcours (ordinateur) ; fiches d'événement (téléphone, à confirmer) | contenu qui se décale au chargement (CLS 0,25 à 0,47) | PerformanceObserver layout-shift |
+C-P3 | C | moyenne | 57 fichiers supabase-*.sql | pas de suivi de version ; fichiers ≠ base réelle (ex. check_invite_code ouvert dans les fichiers, fermé en ligne) | supabase-extension.sql:1847 + appel public refusé |
+C-P4 | C | basse | js/portail/*.js, js/admin/carte-encart.js | téléchargeables sans clé (les pièces site-* sont protégées) | 200 sans clé ; middleware.js:81 |
+C-P5 | C | basse | package.json | @anthropic-ai/sdk installé, jamais utilisé | git grep vide |
+C-P6 | C | basse | photos.maitreakessemodelmanagement.com | cache 4 h alors que les noms ne changent jamais | curl -I : max-age=14400 |
+C-P7 | C | basse | js/ (dont 14 dans app.js) | 57 catch vides + 92 .catch silencieux | git grep |
+C-P8 | C | basse | /actualites?actu=… ouverte | deux h1 | navigateur |
+C-P9 | C | basse | toutes les pages | ~650 Ko de JS non compressé (app.js 221 Ko + Supabase 202 Ko) | mesure du réseau |
+C-P10 | C | basse | pages HTML | access-control-allow-origin: * (défaut Vercel), sans danger sans cookie | curl -I |
 
 ## 5. Désaccords à vérifier
 
