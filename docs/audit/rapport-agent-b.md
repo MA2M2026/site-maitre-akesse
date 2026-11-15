@@ -9,7 +9,7 @@ Le site public est **solide** : les 116 adresses du plan du site répondent sur 
 cassée ni page qui déborde ; accessibilité et référencement à 100/100 (Lighthouse) ; les données privées ne sont
 pas lisibles sans connexion. Les points à travailler sont surtout **le confort visuel au chargement** (la mise en
 page qui « saute » sur beaucoup de pages, la grande photo d'accueil qui arrive tard, des photos d'articles trop
-lourdes) et **quelques protections à resserrer** (scripts en ligne autorisés sur le site public, anti-robots en
+lourdes) et **quelques protections à resserrer** (6 pages sans règle de sécurité stricte, anti-robots en
 mode souple, clé publique du programme Google).
 
 ## Méthode et limites
@@ -53,7 +53,7 @@ mode souple, clé publique du programme Google).
 | P-B01 | Moyenne | 34 pages sur téléphone (ex. `/cours-talons` CLS 0,37, `/en/candidature` 0,31, `/candidature` 0,19), 13 sur ordinateur (ex. `/parcours` 0,33, `/en/actualites` 0,26) | Contenus ajoutés après l'affichage (textes et listes lus dans la base, polices) sans place réservée | La page « saute » pendant le chargement : la visiteuse peut toucher le mauvais bouton | Réserver la hauteur des blocs remplis plus tard (`min-height`, gabarits vides), `font-display` adapté | Faible (CSS) | CLS < 0,1 à la visite automatique |
 | P-B02 | Moyenne | Accueil, photo de couverture (`#couv-img`) | L'adresse de la photo n'est connue qu'après une lecture de la base par le script : 2,3 s d'attente avant même de la télécharger | Grande photo d'accueil à 3,4 s sur téléphone (cible : moins de 2,5 s) | Écrire l'adresse de la couverture dans la page (ou `preload`) au moment de la publication | Faible | Lighthouse : délai de chargement de la ressource LCP < 500 ms |
 | P-B03 | Moyenne | Articles (`/actualites?actu=…`), Book (`/book/…`) | Photos d'articles servies trop lourdes ; Book : 548 Ko d'économies possibles (Lighthouse) | Affichage du plus grand élément à 8–9 s sur téléphone en 4G lente pour certains articles | Servir les photos d'articles redimensionnées (même chaîne que les photos de mannequins : WebP, tailles) | Faible | LCP < 4 s sur ces pages |
-| P-B04 | Moyenne (sécurité) | `vercel.json:68`, CSP du site public | `script-src 'unsafe-inline'` alors qu'une seule page a un script en ligne (`reinitialiser-mot-de-passe.html:33,84`) | Une éventuelle faille d'injection (XSS) aurait plus d'effet | Sortir ce script dans un fichier, puis retirer `'unsafe-inline'` (comme l'Administration) | Moyen : toutes les pages publiques ; les 130 essais + `verifier-csp.py` le contrôlent | En-tête CSP sans `unsafe-inline`, aucune erreur CSP en visite |
+| P-B04 | Moyenne (sécurité) | `vercel.json:68` (règle commune) + pages **sans** règle propre : `accord-parent.html`, `confirmer.html`, `places.html`, `programme-talons.html`, `recu.html`, `404.html` | La règle commune autorise `script-src 'unsafe-inline'` ; les autres pages publiques ajoutent leur propre règle stricte par empreintes (`<meta http-equiv>`), qui l'emporte — pas ces 6 pages | Sur ces pages, une éventuelle faille d'injection (XSS) aurait plus d'effet (dont `accord-parent` et `recu`, qui montrent des données personnelles) | Donner à ces pages leur règle stricte par empreintes comme les autres (`scripts/verifier-csp.py`), puis retirer `'unsafe-inline'` de la règle commune | Moyen ; contrôlé par les 130 essais et `verifier-csp.py` | Aucune page publique sans règle stricte |
 | P-B05 | Moyenne (sécurité) | `api/portail.js:294` | `ANTI_ROBOTS_STRICT = false` (mis le 01/11 pendant une panne de Cloudflare Turnstile) | Un robot sans jeton valide passe ; seules les limites par minute et par adresse protègent | Lire le journal « [Anti-robots] » : si les vrais visiteurs passent, repasser à `true` | Moyen (vrais visiteurs refusés si Turnstile casse) | Journal des erreurs, essais anti-robots |
 | P-B06 | Moyenne (sécurité) | `js/app.js:2768` + `scripts/apps-script-photos-drive.gs` | La clé du programme Google est publique (dans la page) : n'importe qui peut envoyer jusqu'à 20 photos de 15 Mo par appel dans le Drive de l'agence | Remplissage du Drive, dossiers indésirables | Faire vérifier au programme Google qu'une candidature ou inscription récente existe pour ce numéro (`media_drive_infos`) avant de ranger les fichiers ; ou passer par une fonction `api/` avec anti-robots | Moyen (l'inscription au cours de talons est enregistrée APRÈS ses photos) | Envoi sans numéro valide refusé |
 | P-B07 | Basse (sécurité) | Supabase Auth | Protection contre les mots de passe déjà piratés (HaveIBeenPwned) désactivée | Mots de passe faibles connus acceptés | L'activer dans Supabase (Authentication → Policies) | Très faible | Avertissement Supabase disparu |
@@ -77,5 +77,7 @@ mode souple, clé publique du programme Google).
 ## Priorités proposées
 
 1. P-B04 et P-B05 (protections), puis P-B06.
+
+Recoupements avec l'agent C : P-B04 = C-P1, P-B01 ≈ C-P2, P-B12 = C-P8, P-B14 ≈ C-P9 ; F-B05 ≈ C-F1/C-F2, F-B07 = C-F5, F-B08 ≈ C-F8.
 2. P-B01, P-B02, P-B03 (confort et vitesse sur téléphone).
 3. Le reste en nettoyage.
