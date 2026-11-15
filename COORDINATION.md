@@ -116,6 +116,12 @@ Confirmés par A : C-P1 = B-P4 (= A-05), B-P5 (= A-07), C-P5 (= A-09).
 
 On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
 
+### Réponses de la propriétaire
+
+- 15/11/2026, 23:11 (question de A, lié à A-03) : valider le paiement d'un cours de talons (et créer la recette en
+  comptabilité) est réservé à **la personne chargée des encaissements et à l'administrateur principal**. Jamais
+  l'« Administrateur du site ». Aujourd'hui, `cours_talons_valider` l'autorise à tort (`portail_peut('site')`).
+
 ## 6. Décisions (accord des 4 agents + propriétaire)
 
 Format : `ID problème | solution retenue | branche | testé par | validé par`
