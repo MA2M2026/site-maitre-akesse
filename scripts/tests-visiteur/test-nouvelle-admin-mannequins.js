@@ -94,6 +94,9 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await capture(p, 'fiche-mannequin' + suffixe);
     // (15/11/2026) « Sa carte de mannequin » dans sa fiche : 4 réglages qu'on touche, le choix visible (rouge plein ✓)
     await p.waitForSelector('#ce-carte', { timeout: 10000 }).catch(() => {});
+    // (15/11/2026) le programme de formation est aussi dans sa fiche, ses mois en colonnes (un niveau par colonne)
+    ok(/Programme de formation/.test(await p.textContent('.pf-programme')) && /Ce mois-ci : Thème 2/.test(await p.textContent('.pf-programme')) && await p.locator('.pf-programme .pf-colonnes > div').count() === 2,
+      n + 'fiche : programme de formation (ce mois-ci, mois en 2 colonnes)');
     const choisi = (reglage) => p.$eval('#ce-carte .ce-puce.choisi[data-reglage="' + reglage + '"]', (x) => x.textContent.trim()).catch(() => '');
     ok(/Pas encore activée/.test(await p.textContent('#ce-carte .ce-tete')) && /Pas activée/.test(await choisi('active')) && /Automatique/.test(await choisi('categorie')) &&
       /Automatique.*Niveau 1 · mois 2/.test(await choisi('formation')) && /5 ans/.test(await choisi('validite_ans')), n + 'carte : pas activée, catégorie et formation automatiques (Niveau 1 · mois 2), 5 ans — chaque choix visible');

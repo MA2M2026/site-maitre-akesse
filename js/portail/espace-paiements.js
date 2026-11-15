@@ -149,7 +149,7 @@
       (inscription ? '<p class="doux petit-texte">' + P.esc(MODES[inscription.mode]) + (inscription.montant ? ' · ' + P.fcfa(inscription.montant) : '') +
         (inscription.valide_le ? ' · validé le ' + P.dateHeure(inscription.valide_le) : '') + '</p>' : '') +
       (m.user_id ? '<p class="doux petit-texte">Ce mannequin a déjà son compte sur le site : aucun code à lui donner, on suit seulement ses mensualités.</p>' : '') +
-      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) + carteProgramme(programme) + lienCarte(carte) +
+      actions + '</div>' + carteCodeEspace(m, inscription, codes[0]) + lienCarte(carte, programme) +
       (principal && !m.user_id && !paiements.some((p) => p.statut === 'valide')
         ? '<div class="carte"><h2>Supprimer ce mannequin</h2><p class="doux">Pour un essai ou une erreur seulement. La fiche et ses paiements non validés disparaissent pour toujours. S’il a vraiment été mannequin de l’agence, proposez plutôt sa sortie.</p><button class="btn rouge" type="button" data-action="mannequin-supprimer" data-id="' + m.id + '">Supprimer définitivement</button></div>' : '') +
       '<form class="carte f" data-form="registre-modifier" data-id="' + m.id + '"><h2>Informations</h2>' + champs(m) +
@@ -172,29 +172,18 @@
   }
   // Programme de formation (14/11/2026, validé par la propriétaire) : le thème du mois, mois faits / total, et les 18 mois
   // dépliables (resumeProgrammeFormation et MA2M_NIVEAUX_FORMATION : js/app.js, comme l'application des mannequins)
-  function carteProgramme(programme) {
-    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
-    if (!r) return '';
-    const x = r.enCours || r.prochain;
-    const nomMois = (iso) => P.esc(libelleMois(iso));
-    // (14/11/2026) formation finie : la Révision (thème du mois de mars à novembre)
-    const y = r.termine ? r.revProchain : null;
-    return '<div class="carte pf-programme"><h2>Programme de formation</h2>' +
-      (r.termine ? '<p><b>Formation terminée ✓</b>' + (y ? ' <span class="doux">· Révision, ' + (r.revEnCours ? 'ce mois-ci' : 'prochain thème (' + nomMois(y.date) + ')') + ' : ' + P.esc(y.theme) + ' (mois ' + y.mois_niveau + ' sur 9)</span>' : '') + '</p>' :
-      '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
-      (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
-      '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
-      // (15/11/2026, demande de la propriétaire) les mois en colonnes : un niveau par colonne, plus court à lire
-      '<details><summary>Voir les ' + r.total + ' mois</summary><div class="pf-colonnes">' + [...new Set(r.mois.map((m) => m.niveau))].map((n) =>
-        '<div><h3>Niveau ' + n + ' · ' + P.esc(MA2M_NIVEAUX_FORMATION[n] || '') + '</h3><ol class="pf-mois">' + r.mois.filter((m) => m.niveau === n).map((m) => '<li class="' + P.esc(m.etat) + '"><b>' + m.mois_niveau + '</b><span>' + P.esc(m.theme) +
-          '<small>' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</small></span></li>').join('') + '</ol></div>').join('') + '</div></details></div>';
-  }
   // (15/11/2026, demande de la propriétaire) sa carte se gère dans « Mannequins » (fiche de la mannequin,
   // js/admin/carte-encart.js) : ici, seulement un lien
-  function lienCarte(c) {
-    if (!c) return '';
-    return '<a class="carte ce-lien" href="' + (c.id_fiche ? '#/site/b2-mannequins-publies/' + P.esc(c.id_fiche) : '#/site/b2-mannequins-publies') + '"><span><b>Sa carte de mannequin</b><small>' +
-      (c.active ? 'Activée' : 'Pas encore activée') + ' · se règle dans sa fiche de « Mannequins »</small></span><i aria-hidden="true">›</i></a>';
+  // (15/11/2026, demande de la propriétaire) le programme de formation aussi : raccourcis vers sa fiche de « Mannequins »
+  // (une mannequin qui n'a pas encore créé son espace n'y est pas encore : la ligne le dit)
+  function lienCarte(c, programme) {
+    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
+    const x = r && (r.enCours || r.prochain);
+    const ligne = (titre, texte) => (c && c.id_fiche
+      ? '<a class="carte ce-lien" href="#/site/b2-mannequins-publies/' + P.esc(c.id_fiche) + '"><span><b>' + titre + '</b><small>' + texte + ' · dans sa fiche de « Mannequins »</small></span><i aria-hidden="true">›</i></a>'
+      : '<div class="carte ce-lien"><span><b>' + titre + '</b><small>' + texte + ' · elle sera dans « Mannequins » quand elle aura créé son espace</small></span></div>');
+    return (r ? ligne('Programme de formation', r.termine ? 'Formation terminée ✓' : x ? 'Niveau ' + x.niveau + ', mois ' + x.mois_niveau + ' sur 9 · ' + P.esc(x.theme) : r.faits + ' mois faits sur ' + r.total) : '') +
+      (c ? ligne('Sa carte de mannequin', c.active ? 'Activée' : 'Pas encore activée') : '');
   }
   // 6 mois passés, le mois en cours et 3 mois d'avance
   function listeMois() {

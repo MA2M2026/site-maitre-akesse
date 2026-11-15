@@ -22,6 +22,25 @@
   const resume = () => (typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(etat.programme) : null);
   const formationAuto = () => window.CarteMannequin ? window.CarteMannequin.formation(resume(), Object.assign({}, etat.carte, { formation: null }), true, 'selon son programme') : '';
 
+  // Programme de formation (14/11/2026 ; rangé dans « Mannequins » le 15/11/2026, demande de la propriétaire) : le mois
+  // en cours, les mois faits, et les mois en colonnes (un niveau par colonne)
+  function blocProgramme(programme) {
+    const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(programme) : null;
+    if (!r) return '';
+    const x = r.enCours || r.prochain;
+    const nomMois = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? P.esc(P.MOIS[+m[2] - 1] + ' ' + m[1]) : ''; };
+    // (14/11/2026) formation finie : la Révision (thème du mois de mars à novembre)
+    const y = r.termine ? r.revProchain : null;
+    return '<div class="carte pf-programme"><h2>Programme de formation</h2>' +
+      (r.termine ? '<p><b>Formation terminée ✓</b>' + (y ? ' <span class="doux">· Révision, ' + (r.revEnCours ? 'ce mois-ci' : 'prochain thème (' + nomMois(y.date) + ')') + ' : ' + P.esc(y.theme) + ' (mois ' + y.mois_niveau + ' sur 9)</span>' : '') + '</p>' :
+      '<p><b>' + (r.enCours ? 'Ce mois-ci' : 'Prochain thème (' + nomMois(x.date) + ')') + ' : ' + P.esc(x.theme) + '</b>' +
+      (x ? ' <span class="doux">· niveau ' + x.niveau + ' (' + P.esc(MA2M_NIVEAUX_FORMATION[x.niveau]) + '), mois ' + x.mois_niveau + ' sur 9</span>' : '') + '</p>') +
+      '<p class="doux petit-texte">' + r.faits + ' mois faits sur ' + r.total + '.</p>' +
+      // (15/11/2026, demande de la propriétaire) les mois en colonnes : un niveau par colonne, plus court à lire
+      '<details><summary>Voir les ' + r.total + ' mois</summary><div class="pf-colonnes">' + [...new Set(r.mois.map((m) => m.niveau))].map((n) =>
+        '<div><h3>Niveau ' + n + ' · ' + P.esc(MA2M_NIVEAUX_FORMATION[n] || '') + '</h3><ol class="pf-mois">' + r.mois.filter((m) => m.niveau === n).map((m) => '<li class="' + P.esc(m.etat) + '"><b>' + m.mois_niveau + '</b><span>' + P.esc(m.theme) +
+          '<small>' + (m.etat === 'en_cours' ? 'ce mois-ci' : m.date ? nomMois(m.date) : 'fait avant la reprise') + (m.etat === 'fait' ? ' ✓' : '') + '</small></span></li>').join('') + '</ol></div>').join('') + '</div></details></div>';
+  }
   // ---- l'encart (HTML) ; null : rien à montrer (pas de compte au registre, fichier SQL pas collé)
   async function html(fiche) {
     etat = null;
@@ -29,7 +48,7 @@
     try { r = await P.rpc('carte_mannequin_par_fiche', { p_fiche: fiche }); } catch (e) { if (pas(e)) return ''; throw e; }
     if (!r || !r.carte) return '<section class="carte ce-carte"><h2>Sa carte de mannequin</h2><p class="doux">Elle n’est pas encore au registre de l’agence : sa carte sera possible dès qu’elle y sera.</p></section>';
     etat = { fiche, agence: r.agence_id, carte: r.carte, programme: r.programme };
-    return dessiner();
+    return blocProgramme(r.programme) + dessiner();
   }
   function dessiner() {
     const c = etat.carte, auto = !c.categorie_manuelle;
