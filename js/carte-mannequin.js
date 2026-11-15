@@ -58,10 +58,17 @@ window.CarteMannequin = (function () {
   }
   const SANS = (poids, taille) => poids + ' ' + (taille * u).toFixed(1) + 'px "Work Sans", sans-serif';
   const SERIF = (style, taille) => style + ' ' + (taille * u).toFixed(1) + 'px "Cormorant Garamond", Georgia, serif';
-  function champ(ctx, titre, valeur, x, y) {
+  // un champ : son titre, puis sa valeur, rapetissée si besoin pour tenir dans sa colonne (largeur max)
+  function champ(ctx, titre, valeur, x, y, largeurMax) {
     texte(ctx, titre, x, y, SANS(500, 6.5), ROSE, 0.22 * 6.5);
-    texte(ctx, valeur || '—', x, y + 12 * u, SANS(400, 10), '#FFFFFF', 0);
+    let t = 10; ctx.font = SANS(400, t);
+    while (t > 6.5 && ctx.measureText(valeur || '—').width > largeurMax) { t -= 0.5; ctx.font = SANS(400, t); }
+    texte(ctx, valeur || '—', x, y + 12 * u, SANS(400, t), '#FFFFFF', 0);
   }
+  // la catégorie au féminin sur la carte (« Professionnel » enregistré → « Professionnelle »)
+  const categorieCarte = (c) => (c === 'Professionnel' ? 'Professionnelle' : c || 'New Face');
+  const SITE = (typeof MA2M_SITE !== 'undefined' ? MA2M_SITE : 'https://www.maitreakessemodelmanagement.com');
+  const TELEPHONE = (typeof MA2M_TELEPHONES !== 'undefined' ? MA2M_TELEPHONES[MA2M_TELEPHONES.length - 1] : '+225 05 45 65 66 87');
   const dateCourte = (iso) => {
     const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     const m = /^(\d{4})-(\d{2})/.exec(String(iso || '')); return m ? MOIS[+m[2] - 1] + ' ' + m[1] : '';
@@ -92,10 +99,10 @@ window.CarteMannequin = (function () {
     texte(ctx, nom, ix, 66 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
     ctx.restore();
     ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(ix, 76 * u, 26 * u, 1 * u);
-    const col2 = ix + 112 * u;
-    champ(ctx, 'CATÉGORIE', d.categorie, ix, 94 * u); champ(ctx, 'TAILLE', d.taille, col2, 94 * u);
-    champ(ctx, 'FORMATION', d.formation, ix, 121 * u); champ(ctx, 'MENSURATIONS', d.mensurations, col2, 121 * u);
-    champ(ctx, 'MEMBRE DEPUIS', dateCourte(d.depuis), ix, 148 * u); champ(ctx, 'VALABLE JUSQU’AU', dateCourte(d.valable), col2, 148 * u);
+    const col2 = ix + 112 * u, l1 = 104 * u, l2 = W - 60 * u - col2;
+    champ(ctx, 'CATÉGORIE', categorieCarte(d.categorie), ix, 94 * u, l1); champ(ctx, 'TAILLE', d.taille, col2, 94 * u, l2);
+    champ(ctx, 'FORMATION', d.formation, ix, 121 * u, l1); champ(ctx, 'MENSURATIONS', d.mensurations, col2, 121 * u, l2);
+    champ(ctx, 'MEMBRE DEPUIS', dateCourte(d.depuis), ix, 148 * u, l1); champ(ctx, 'VALABLE JUSQU’AU', dateCourte(d.valable), col2, 148 * u, l2);
     // numéro
     texte(ctx, 'N° DE MANNEQUIN', 15 * u, H - 26 * u, SANS(500, 6.5), ROSE, 0.22 * 6.5);
     texte(ctx, d.matricule || '', 15 * u, H - 11 * u, SANS(500, 11), '#FFFFFF', 0.14 * 11);
@@ -120,21 +127,21 @@ window.CarteMannequin = (function () {
     // QR : son book officiel (vérification)
     const q = 92 * u, qx = 15 * u, qy = 42 * u;
     ctx.fillStyle = '#FFFFFF'; arrondi(ctx, qx, qy, q, q, 10 * u); ctx.fill();
-    if (typeof chargerQrLib === 'function') { await chargerQrLib().catch(() => null); if (typeof dessinerQrCanvas === 'function') dessinerQrCanvas(ctx, d.lienBook || 'https://www.maitreakessemodelmanagement.com', qx + 6 * u, qy + 6 * u, q - 12 * u, '#2A1416'); }
+    if (typeof chargerQrLib === 'function') { await chargerQrLib().catch(() => null); if (typeof dessinerQrCanvas === 'function') dessinerQrCanvas(ctx, d.lienBook || SITE, qx + 6 * u, qy + 6 * u, q - 12 * u, '#2A1416'); }
     const tx = qx + q + 15 * u;
     texte(ctx, 'VÉRIFIER', tx, 56 * u, SANS(500, 6.5), '#FFFFFF', 0.24 * 6.5);
-    texte(ctx, 'Scannez : son book officiel s’ouvre', tx, 70 * u, SANS(300, 10), ROSE_CLAIR, 0);
-    texte(ctx, 'sur le site de l’agence.', tx, 85 * u, SANS(300, 10), ROSE_CLAIR, 0);
+    texte(ctx, d.lienBook ? 'Scannez : son book officiel s’ouvre' : 'Scannez : le site officiel de l’agence', tx, 70 * u, SANS(300, 10), ROSE_CLAIR, 0);
+    texte(ctx, d.lienBook ? 'sur le site de l’agence.' : 's’ouvre.', tx, 85 * u, SANS(300, 10), ROSE_CLAIR, 0);
     texte(ctx, 'BOOKING', tx, 104 * u, SANS(500, 6.5), '#FFFFFF', 0.24 * 6.5);
     texte(ctx, 'Uniquement par l’agence', tx, 118 * u, SANS(300, 10), ROSE_CLAIR, 0);
-    texte(ctx, '+225 05 45 65 66 87', tx, 133 * u, SANS(300, 10), ROSE_CLAIR, 0);
+    texte(ctx, TELEPHONE, tx, 133 * u, SANS(300, 10), ROSE_CLAIR, 0);
     // ligne machine
     const cat = d.categorie === 'Professionnel' ? 'PR' : 'NF';
     const num = /(\d{4}) · (\d{4})$/.exec(d.matricule || '') || ['', '0000', '0000'];
     ctx.font = (8.5 * u).toFixed(1) + 'px "Courier New", monospace'; ctx.fillStyle = 'rgba(255,255,255,0.75)';
     texte(ctx, ligneMachine('MA2M<<' + (d.nom || ''), 30), 15 * u, H - 38 * u, (8.5 * u).toFixed(1) + 'px "Courier New", monospace', 'rgba(255,255,255,0.75)', 0.14 * 8.5);
     texte(ctx, ligneMachine(num[1] + '<' + num[2] + '<' + cat + '<<' + mmaa(d.depuis) + '<' + mmaa(d.valable), 30), 15 * u, H - 25 * u, (8.5 * u).toFixed(1) + 'px "Courier New", monospace', 'rgba(255,255,255,0.75)', 0.14 * 8.5);
-    texte(ctx, 'maitreakessemodelmanagement.com · propriété de l’agence', 15 * u, H - 10 * u, SANS(300, 7), ROSE, 0.06 * 7);
+    texte(ctx, SITE.replace(/^https?:\/\/(www\.)?/, '') + ' · propriété de l’agence', 15 * u, H - 10 * u, SANS(300, 7), ROSE, 0.06 * 7);
     texte(ctx, 'Maître Akesse', W - 15 * u, H - 10 * u, SERIF('italic 400', 13), '#FFFFFF', 0, 'right');
     ctx.restore();
   }
@@ -159,11 +166,12 @@ window.CarteMannequin = (function () {
   async function telechargerPdf(d) {
     await chargerJsPdf();
     const [r, v] = await Promise.all([dessiner('recto', d), dessiner('verso', d)]);
+    const surBlanc = (c) => { const b = canvasVide(), x = b.getContext('2d'); x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H); x.drawImage(c, 0, 0); return b.toDataURL('image/jpeg', 0.95); };
     const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
-    pdf.addImage(r.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 85.6, 54);
+    pdf.addImage(surBlanc(r), 'JPEG', 0, 0, 85.6, 54);
     pdf.addPage([85.6, 54], 'landscape');
-    pdf.addImage(v.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 85.6, 54);
+    pdf.addImage(surBlanc(v), 'JPEG', 0, 0, 85.6, 54);
     telechargerFichier(pdf.output('blob'), nomFichier(d, 'pdf'));
   }
-  return { dessiner, imageRectoVerso, telechargerImage, telechargerPdf, ligneMachine };
+  return { dessiner, imageRectoVerso, telechargerImage, telechargerPdf, ligneMachine, categorieCarte };
 })();

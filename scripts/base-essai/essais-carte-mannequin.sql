@@ -16,7 +16,7 @@ insert into model_projects (model_id, type_projet, titre, periode) values ('0000
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b01') = 'New Face', 'arrivée il y a 4 mois, sans expérience : New Face (même si elle avait coché « Professionnel »)');
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b02') = 'Professionnel', '2 ans à l''agence : Professionnelle');
 select essai(categorie_mannequin_calculee('00000000-0000-0000-0000-0000000c0b03') = 'Professionnel', 'arrivée le mois dernier, défilés depuis 2020 : Professionnelle tout de suite');
-select essai(categories_mannequins_mettre_a_jour() >= 3, 'les fiches sont rangées d''un coup');
+select essai(categories_mannequins_mettre_a_jour() >= 2, 'les fiches sont rangées d''un coup (celles qui ont changé)');
 select essai((select string_agg(niveau_mannequin, ',' order by full_name) from model_profiles where id::text like '00000000-0000-0000-0000-0000000c0b0%') = 'New Face,Professionnel,Professionnel', 'fiches : AYA New Face, FATOU et MARIAM Professionnelles');
 select essai(categories_mannequins_mettre_a_jour() = 0, 'relancé : rien à changer');
 -- carte : rien tant que l'agence ne l'active pas
@@ -53,3 +53,18 @@ select essai_refuse($$select mannequin_categorie_choisir((select id from agence_
 reset role;
 select set_config('request.jwt.claims', '', false);
 select essai(exists (select 1 from cron.job where jobname = 'categories-mannequins'), 'rangées tous les jours');
+-- une mannequin ne se donne pas la catégorie : niveau_manuel refusé, niveau_mannequin recalculé
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000c0b01","role":"authenticated"}', false);
+select essai_refuse($$update model_profiles set niveau_manuel = 'Professionnel' where id = '00000000-0000-0000-0000-0000000c0b01'$$, 'une mannequin ne choisit pas sa catégorie (niveau_manuel)');
+update model_profiles set niveau_mannequin = 'Professionnel' where id = '00000000-0000-0000-0000-0000000c0b01';
+reset role;
+select set_config('request.jwt.claims', '', false);
+select essai((select niveau_mannequin from model_profiles where id = '00000000-0000-0000-0000-0000000c0b01') = 'New Face', 'ce qu''elle écrit dans niveau_mannequin est remplacé par la règle');
+-- renouveler : le contrat repart d'aujourd'hui
+update agence_mannequins set carte_debut = current_date where user_id = '00000000-0000-0000-0000-0000000c0b01';
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai((carte_mannequin_de((select id from agence_mannequins where user_id = '00000000-0000-0000-0000-0000000c0b01'))->>'valable')::date = (current_date + interval '5 years')::date, 'renouvelée aujourd''hui : valable 5 ans à partir d''aujourd''hui');
+reset role;
+select set_config('request.jwt.claims', '', false);

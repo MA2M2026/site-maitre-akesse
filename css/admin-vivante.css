@@ -1564,3 +1564,4 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ca-carte .ca-ligne > span, .ca-carte .ca-ligne > label { flex: 1 1 220px; min-width: 0; }
 .ca-carte .ca-ligne small { display: block; color: #6E4F53; font-size: 12.5px; font-weight: 400; }
 .ca-carte .ca-numero { color: #7C2128; letter-spacing: .08em; }
+.ca-carte .ca-expiree { color: #7C2128; }

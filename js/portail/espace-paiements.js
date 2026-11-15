@@ -200,8 +200,10 @@
         choix('carte_active', true, c.active, 'Oui') + choix('carte_active', false, c.active, 'Non') + '</div>' +
       '<div class="ca-ligne"><span><b>Catégorie</b><small>' + (auto ? 'Calculée : ' + P.esc(c.categorie) + ' (2 ans à l’agence ou 2 ans d’expérience → Professionnelle)' : 'Choisie par vous') + '</small></span>' +
         choix('categorie', null, c.categorie_manuelle || null, 'Calcul') + choix('categorie', 'New Face', c.categorie_manuelle, 'New Face') + choix('categorie', 'Professionnel', c.categorie_manuelle, 'Professionnelle') + '</div>' +
-      '<div class="ca-ligne"><span><b>Validité</b><small>Durée du contrat, renouvelable' + (c.valable ? ' · jusqu’au ' + P.esc(libelleMois(c.valable)) : '') + '</small></span>' +
-        [3, 4, 5].map((n) => choix('carte_validite_ans', n, c.validite_ans, n + ' ans')).join('') + '</div>' +
+      '<div class="ca-ligne"><span><b>Validité</b><small>Durée du contrat, renouvelable · ' + (c.valable ? (c.valable < new Date().toISOString().slice(0, 10) ? '<b class="ca-expiree">expirée depuis ' : 'jusqu’au ') + P.esc(libelleMois(c.valable)) + (c.valable < new Date().toISOString().slice(0, 10) ? '</b>' : '') : '') +
+        (c.debut ? ' (contrat depuis ' + P.esc(libelleMois(c.debut)) + ')' : '') + '</small></span>' +
+        [3, 4, 5].map((n) => choix('carte_validite_ans', n, c.validite_ans, n + ' ans')).join('') +
+        '<button type="button" class="btn petit" data-action="carte-renouveler" data-id="' + id + '">↻ Renouveler à partir d’aujourd’hui</button></div>' +
       '<form class="ca-ligne f" data-form="carte-formation" data-id="' + id + '"><label class="fl" for="ca-formation-' + id + '"><b>Formation affichée</b><small>Vide : d’après son programme (ex. « Niveau 1 · mois 4 », « Recyclage », « Formation terminée »)</small>' +
         '<input id="ca-formation-' + id + '" name="formation" maxlength="40" value="' + P.esc(c.formation || '') + '" placeholder="Automatique"></label><button class="btn petit" type="submit">Enregistrer</button></form>' +
       '<div class="ca-ligne"><span><b>N° de mannequin</b><small>Donné une fois pour toutes</small></span><b class="ca-numero">' + P.esc(c.matricule || 'Donné à l’activation') + '</b></div></div>';
@@ -215,6 +217,13 @@
       if (!r || !r.length) { P.message('Rien n’a été changé : reconnectez-vous puis réessayez.'); return; }
     }
     P.message(champ === 'carte_active' ? (v === 'true' ? 'Carte activée : elle la voit dans son application.' : 'Carte désactivée.') : 'C’est noté : sa carte est à jour.');
+    return P.afficher();
+  };
+  P.actions['carte-renouveler'] = async (el) => {
+    if (!confirm('Renouveler sa carte : le contrat repart d’aujourd’hui pour la durée choisie ?')) return;
+    const r = await P.bd(sb.from('agence_mannequins').update({ carte_debut: new Date().toISOString().slice(0, 10) }).eq('id', el.getAttribute('data-id')).select('id'));
+    if (!r || !r.length) { P.message('Rien n’a été changé : reconnectez-vous puis réessayez.'); return; }
+    P.message('Carte renouvelée : valable à partir d’aujourd’hui.');
     return P.afficher();
   };
   P.formulaires['carte-formation'] = async (f, form) => {

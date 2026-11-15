@@ -20,6 +20,8 @@ alter table agence_mannequins add column if not exists carte_active boolean not 
 alter table agence_mannequins add column if not exists carte_validite_ans int not null default 5 check (carte_validite_ans between 1 and 10);
 alter table agence_mannequins add column if not exists carte_formation text check (carte_formation is null or length(carte_formation) <= 40);
 alter table agence_mannequins add column if not exists carte_numero int unique;
+-- début du contrat en cours (vide = la date d'entrée) : « Renouveler » le remet à aujourd'hui
+alter table agence_mannequins add column if not exists carte_debut date;
 create sequence if not exists agence_carte_numero_seq start 1;
 
 -- numéro donné à la première activation, jamais changé ensuite
@@ -28,24 +30,47 @@ begin
   if new.carte_active and new.carte_numero is null then new.carte_numero := nextval('agence_carte_numero_seq'); end if;
   if tg_op = 'UPDATE' and old.carte_numero is not null then new.carte_numero := old.carte_numero; end if;
   new.carte_formation := nullif(trim(new.carte_formation), '');
+  if new.carte_debut is not null and new.carte_debut > current_date + 31 then raise exception 'Date de début du contrat trop lointaine.'; end if;
   return new;
 end;
 $$;
 drop trigger if exists agence_carte_numero on agence_mannequins;
 create trigger agence_carte_numero before insert or update on agence_mannequins for each row execute function agence_carte_numero();
 
--- la catégorie d'une fiche (règle ci-dessus)
-create or replace function categorie_mannequin_calculee(p_model uuid) returns text
+-- la catégorie (règle ci-dessus), à partir des valeurs de la fiche : sert au calcul ET au déclencheur qui range la
+-- fiche à chaque enregistrement (la page de la mannequin ne décide plus seule de sa catégorie)
+create or replace function categorie_regle(p_model uuid, p_manuel text, p_annees int) returns text
 language sql stable security definer set search_path = public as $$
   select case
-    when mp.niveau_manuel is not null then mp.niveau_manuel
-    when exists (select 1 from agence_mannequins a where a.user_id = mp.id and a.date_entree <= (current_date - interval '2 years')::date) then 'Professionnel'
-    when coalesce(mp.years_experience, 0) >= 2 then 'Professionnel'
-    when (select min(substring(pr.periode from '(19[5-9][0-9]|20[0-9][0-9])')::int) from model_projects pr where pr.model_id = mp.id)
+    when p_manuel is not null then p_manuel
+    when exists (select 1 from agence_mannequins a where a.user_id = p_model and a.date_entree <= (current_date - interval '2 years')::date) then 'Professionnel'
+    when coalesce(p_annees, 0) >= 2 then 'Professionnel'
+    when (select min(substring(pr.periode from '(19[5-9][0-9]|20[0-9][0-9])')::int) from model_projects pr where pr.model_id = p_model)
          <= extract(year from current_date)::int - 2 then 'Professionnel'
     else 'New Face' end
-  from model_profiles mp where mp.id = p_model
 $$;
+revoke all on function categorie_regle(uuid, text, int) from public, anon, authenticated;
+create or replace function categorie_mannequin_calculee(p_model uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select categorie_regle(mp.id, mp.niveau_manuel, mp.years_experience) from model_profiles mp where mp.id = p_model
+$$;
+
+-- gardien : seule l'agence (ou la base) choisit niveau_manuel ; et niveau_mannequin suit TOUJOURS la règle (ce que la
+-- page de la mannequin y écrit est remplacé)
+create or replace function model_profiles_categorie() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.niveau_manuel is distinct from (case when tg_op = 'UPDATE' then old.niveau_manuel end)
+     and not (coalesce(auth.role(), '') = 'service_role' or exists (select 1 from admins where user_id = auth.uid())) then
+    raise exception 'Modification refusée : seule l''agence choisit la catégorie.';
+  end if;
+  new.niveau_mannequin := categorie_regle(new.id, new.niveau_manuel, new.years_experience);
+  return new;
+end;
+$$;
+revoke all on function model_profiles_categorie() from public, anon, authenticated;
+drop trigger if exists model_profiles_categorie on model_profiles;
+create trigger model_profiles_categorie before insert or update of niveau_manuel, niveau_mannequin, years_experience on model_profiles
+  for each row execute function model_profiles_categorie();
 revoke all on function categorie_mannequin_calculee(uuid) from public, anon;
 grant execute on function categorie_mannequin_calculee(uuid) to authenticated;
 
@@ -100,7 +125,8 @@ language sql stable security definer set search_path = public as $$
     'matricule', case when (a).carte_numero is not null then 'MA2M · ' || extract(year from (a).date_entree)::int || ' · ' || lpad((a).carte_numero::text, 4, '0') end,
     'depuis', (a).date_entree,
     'validite_ans', (a).carte_validite_ans,
-    'valable', ((a).date_entree + make_interval(years => (a).carte_validite_ans))::date,
+    'debut', coalesce((a).carte_debut, (a).date_entree),
+    'valable', (coalesce((a).carte_debut, (a).date_entree) + make_interval(years => (a).carte_validite_ans))::date,
     'categorie', case when mp.id is not null then categorie_mannequin_calculee(mp.id) else 'New Face' end,
     'categorie_manuelle', mp.niveau_manuel,
     'formation', (a).carte_formation,
@@ -139,8 +165,9 @@ select categories_mannequins_mettre_a_jour() as fiches_rangees;
 
 NOTIFY pgrst, 'reload schema';
 
--- Contrôle (à lire après « Run ») : 8 éléments attendus
+-- Contrôle (à lire après « Run ») : 9 éléments attendus
 select 'Carte de mannequin installée : ' || (
   (select count(*) from information_schema.columns where (table_name, column_name) in (('model_profiles', 'niveau_manuel'), ('agence_mannequins', 'carte_active'), ('agence_mannequins', 'carte_numero'))) +
+  (select count(*) from pg_trigger where tgname = 'model_profiles_categorie') +
   (select count(*) from pg_proc where proname in ('categorie_mannequin_calculee', 'categories_mannequins_mettre_a_jour', 'ma_carte_mannequin', 'carte_mannequin_de')) +
-  (select count(*) from cron.job where jobname = 'categories-mannequins')) || ' éléments sur 8' as controle;
+  (select count(*) from cron.job where jobname = 'categories-mannequins')) || ' éléments sur 9' as controle;
