@@ -310,6 +310,8 @@ async function formulairePublic(req, corps, res) {
     const m = String((e && e.message) || e);
     if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
     if (/duplicate key|23505/.test(m) && ligne.id) return res.status(200).json({ ok: true, id: ligne.id });  // (déjà enregistré : réponse perdue)
+    // (14/11/2026) cours privés : un créneau choisi vient d'être pris par une autre élève (supabase-creneaux-prives.sql)
+    if (table === 'cours_talons' && /CRENEAU_PRIS|CRENEAUX_INVALIDES/.test(m)) return res.status(409).json({ error: 'Un de vos créneaux n’est plus disponible.', creneauPris: true });
     if (/Aucun casting ouvert/.test(m)) return res.status(403).json({ error: 'Aucun casting n’est ouvert en ce moment.' });
     // (cours de talons : SQL de l'Extension 160 pas encore collé ; la page propose alors d'envoyer l'inscription par WhatsApp)
     if (table === 'cours_talons' && /Formulaire inconnu|PGRST202|Could not find the function|relation "(public\.)?cours_talons" does not exist/.test(m)) {

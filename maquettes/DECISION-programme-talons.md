@@ -42,3 +42,12 @@
   1. montrer ce programme en premium sur la page publique des cours de talons (inscription) ;
   2. un programme du même genre pour les mannequins de l'agence, et ce style premium dans l'Administration,
      l'application, l'inscription, « Postuler à un casting », « Intégrer l'agence », la candidature.
+
+## Étape 2 : messages WhatsApp tout prêts (14/11/2026) — **validée** (« Oui oui »)
+
+## Étape 3 : cours privés (14/11/2026)
+- Horaires donnés par la propriétaire : **du lundi au samedi, de 10 h à 20 h**.
+- Maquette `maquettes/creneaux-prives.html` **validée** (« Je valide »), avec : séance de **2 h**, début à **n'importe
+  quelle heure pile de 10 h à 18 h**, 1 h 30 de pause entre deux cours, créneaux gardés 48 h, ou « dates à convenir ».
+- Construite le 14/11/2026 (README-TECHNIQUE.md, « Créneaux des cours privés ») : `supabase-creneaux-prives.sql` à
+  coller par la propriétaire. Prochaine : étape 4, planning jour par jour et notification 24 h avant.

@@ -499,14 +499,20 @@
   // « Cette semaine ». Chacun ne voit que ce que son rôle permet : l'argent (Comptabilité), les mannequins actives
   // (Paiements), les élèves et les cours de talons, les castings et défilés (Site). Une lecture absente ne casse rien.
   const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  // séances de talons de la semaine ; « occupe » (calculé par la base, supabase-creneaux-prives.sql) : relu sans lui
+  // tant que ce fichier n'est pas collé
+  async function seancesSemaine(auj, dans7) {
+    const lire = (champs) => P.bd(sb.from('cours_talons_seances').select('debut, theme, inscription_id' + champs + ', cours_talons(nom, formule, civilite, age, statut, valide_le)')
+      .gte('debut', new Date(auj.getFullYear(), auj.getMonth(), auj.getDate()).toISOString()).lte('debut', dans7.toISOString()).order('debut').limit(200));
+    try { return await lire(', occupe'); } catch (e) { return lire(''); }
+  }
   async function donneesAgence() {
     const auj = new Date(), debutMois = iso(new Date(auj.getFullYear(), auj.getMonth(), 1)), dans7 = new Date(auj.getTime() + 7 * 86400000);
     const [recettes, actives, eleves, seances] = await Promise.all([
       P.moi.espaces.compta ? essai(P.bd(sb.from('compta_ecritures').select('montant').eq('sens', 'recette').eq('annule', false).gte('date_op', debutMois).lte('date_op', iso(auj)).limit(5000))) : null,
       P.moi.espaces.paiements ? essai(nombre(sb.from('agence_mannequins').select('id', { count: 'exact', head: true }).eq('statut', 'actif'))) : null,
       P.moi.espaces.site ? essai(nombre(sb.from('cours_talons').select('id', { count: 'exact', head: true }).eq('statut', 'inscrite'))) : null,
-      P.moi.espaces.site ? essai(P.bd(sb.from('cours_talons_seances').select('debut, theme, inscription_id, cours_talons(nom, formule, civilite, age)')
-        .gte('debut', new Date(auj.getFullYear(), auj.getMonth(), auj.getDate()).toISOString()).lte('debut', dans7.toISOString()).order('debut').limit(200))) : null
+      P.moi.espaces.site ? essai(seancesSemaine(auj, dans7)) : null
     ]);
     return { encaisse: Array.isArray(recettes) ? recettes.reduce((t, x) => t + (Number(x.montant) || 0), 0) : null, actives, eleves, seances: seances || [] };
   }
@@ -532,9 +538,12 @@
     const groupes = {};
     ((a && a.seances) || []).forEach((s) => {
       const c = s.cours_talons || {}, j = jours.find((x) => x.cle === iso(new Date(s.debut)));
-      if (!j) return;
+      // (14/11/2026) cours privés réservés à l'inscription : « occupe » est calculé par la base (supabase-creneaux-prives.sql :
+      // jamais une inscription annulée, une réservation pas payée seulement 48 h) ; pas encore payé → « à confirmer »
+      const aConfirmer = !c.valide_le && c.statut !== 'inscrite' && c.statut !== 'terminee';
+      if (!j || s.occupe === false || c.statut === 'annulee') return;
       if (c.formule === 'groupe') { const k = j.cle + heure(s.debut); if (!groupes[k]) { groupes[k] = ['👠', 'Cours de talons en groupe', '', '#/site/b2-cours-talons', 0, heure(s.debut)]; j.lignes.push(groupes[k]); } groupes[k][4]++; groupes[k][2] = groupes[k][5] + ' · ' + groupes[k][4] + (groupes[k][4] > 1 ? ' élèves' : ' élève'); }
-      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && c.age < 18)) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
+      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && c.age < 18)) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : '', aConfirmer ? 'à confirmer (paiement)' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
     });
     const html = jours.filter((j, k) => k === 0 || j.lignes.length).map((j, k) => '<div class="se-jour' + (k === 0 ? ' auj' : '') + '"><div class="se-date"><small>' + JOURS_COURTS[j.d.getDay()] + '</small><b>' + j.d.getDate() + '</b></div>' +
       (j.lignes.length ? '<ul>' + j.lignes.map((l) => '<li><a href="' + l[3] + '"><i aria-hidden="true">' + l[0] + '</i><span>' + P.esc(l[1]) + (l[2] ? ' <small>· ' + P.esc(l[2]) + '</small>' : '') + '</span></a></li>').join('') + '</ul>'

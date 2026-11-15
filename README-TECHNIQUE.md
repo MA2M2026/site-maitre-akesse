@@ -5013,6 +5013,28 @@ Décision et suite prévue : `maquettes/DECISION-programme-talons.md` (maquette 
   la prochaine séance » (`messageRappel` : « demain » si c'est demain, heures, lieu, thème, « À prévoir »
   = `TalonsCommun.A_PREVOIR`, partagé avec le calendrier de la page de l'élève, et son lien). La prochaine séance
   (`prochaineSeance`) : pas faite, pas passée et, en groupe, d'un mois déjà payé. Rien n'est envoyé tout seul.
+- **Créneaux des cours privés** (14/11/2026, maquette validée : `maquettes/creneaux-prives.html` ; base :
+  `supabase-creneaux-prives.sql`, À COLLER par la propriétaire, essais `scripts/base-essai/essais-creneaux-prives.sql`).
+  Règles de la propriétaire : du **lundi au samedi, 10 h – 20 h**, séance de **2 h** commençant à une heure pile (10 h à
+  18 h), **1 h 30 de pause** au moins entre deux cours, créneaux **gardés 48 h** le temps du paiement, ou « **dates à
+  convenir ensemble** ». Le formulaire (cours-talons.html FR/EN, js/cours-talons.js, styles `.ct-jour`, `.ct-heure`,
+  `.ct-choisis`… dans css/cours-talons.css) lit les heures libres (`cours_talons_creneaux_libres(p_du, p_jours)`,
+  ouverte aux visiteurs, ne rend QUE des heures : ni nom ni séance), 6 semaines affichées, 26 lues ; « Même jour, même
+  heure chaque semaine » remplit toutes les séances d'un coup (une semaine prise est sautée). La ligne envoyée porte
+  `creneaux` (timestamptz[]) et, pour l'agence, « Créneaux choisis : … » dans `disponibilites`. La base revérifie tout
+  (`cours_talons_creneaux_avant`, puis `cours_talons_creneaux_reserver` après l'enregistrement, sous un verrou) et crée
+  les séances (2 h, salle ou adresse, thème suivant de son programme). Un créneau pris entre-temps : rien n'est
+  enregistré (`CRENEAU_PRIS` → api/portail.js répond 409 `creneauPris`), la page la ramène au choix des créneaux (photos
+  et vidéo gardées) ; à la reprise d'un envoi coupé, l'inscription part sans créneau (« à convenir », ses souhaits
+  écrits). **Une seule règle « occupé »** : la fonction `occupe(cours_talons_seances)` (aussi colonne calculée lue par
+  l'Administration) — jamais une inscription annulée ; une séance **réservée par l'élève** (`reservee`) d'une
+  inscription « paiera plus tard » / « nouvelle » pas validée ne compte que 48 h ; « paiement envoyé » et les séances
+  ajoutées à la main comptent toujours. Les réservations expirées sont retirées à la réservation suivante (si l'élève
+  paie plus tard, l'agence refixe ses dates ; ses souhaits restent écrits). Les heures sont celles d'Abidjan (UTC),
+  dit sur la page. SQL pas encore collé : la page propose seulement « à convenir » (champ libre). À l'accueil de
+  l'Administration (« Cette semaine », js/admin/coque.js, `seancesSemaine`), une séance réservée non payée apparaît
+  « à confirmer (paiement) » tant que `occupe` est vrai. Tests : `test-cours-talons.js` (choix, 1 h 30, chaque semaine, retrait, limite,
+  à convenir, créneau pris entre-temps), `test-nouvelle-admin.js` (cette semaine).
 - **Tests** : `test-programme-talons.js` (page de l'élève, .ics lu et vérifié, téléphone et ordinateur, mauvais lien,
   paiement pas validé) et `test-admin-cours-talons.js` (programme, ajout, faite, retrait, fichier pas collé).
 - **Civilité et plusieurs mois** (14/11/2026, demandes de la propriétaire) : le formulaire (cours-talons.html FR/EN,

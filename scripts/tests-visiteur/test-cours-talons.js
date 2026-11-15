@@ -48,7 +48,17 @@ async function navigateur() {
     const p = await (await b.newContext({ viewport: ecran })).newPage(); const errs = [], journal = [], drive = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript(() => { try { localStorage.setItem('ma2m_cookies', 'non'); sessionStorage.setItem('ma2m_entree_vue', '1'); } catch (e) { /* */ } });
-    await brancher(p, { tables: {}, rpc: { moyens_paiement_publics: [{ code: 'wave', nom: 'Wave' }, { code: 'orange_money', nom: 'Orange Money', numero: '07 11 22 33 44' }] }, formulaire: pasPret === 'coupure' ? () => (++essais === 1 ? { statut: 500, error: 'Envoi impossible pour le moment, réessayez.' } : null)
+    // (14/11/2026) créneaux libres des cours privés : du lundi au samedi, 10 h à 18 h, sauf le 1er mardi de 10 h à 16 h
+    // (déjà pris) ; page « SQL pas encore collé » : la fonction n'existe pas → « dates à convenir »
+    let creneauRetire = null;   // (le créneau « pris entre-temps » n'est plus libre à la relecture)
+    const libresSimules = (c) => { const l = []; let mardis = 0; const d0 = Date.parse(c.p_du + 'T00:00:00Z');
+      for (let k = 0; k < c.p_jours; k++) { const d = new Date(d0 + k * 86400000); if (d.getUTCDay() === 0) continue; if (d.getUTCDay() === 2) mardis++;
+        for (let h = 10; h <= 18; h++) if (!(d.getUTCDay() === 2 && mardis === 1 && h <= 16) && d.getTime() + h * 3600000 !== creneauRetire) l.push(new Date(d.getTime() + h * 3600000).toISOString().replace('.000Z', '+00:00')); }
+      return l; };
+    let premierEnvoiCreneau = pasPret === false && ecran.width === 820;   // (tablette : le 1er envoi trouve un créneau pris entre-temps)
+    await brancher(p, { tables: {}, rpc: { moyens_paiement_publics: [{ code: 'wave', nom: 'Wave' }, { code: 'orange_money', nom: 'Orange Money', numero: '07 11 22 33 44' }],
+      cours_talons_creneaux_libres: pasPret === true ? { erreur: 'Could not find the function public.cours_talons_creneaux_libres' } : libresSimules },
+      formulaire: premierEnvoiCreneau ? (corps) => (premierEnvoiCreneau ? (premierEnvoiCreneau = false, creneauRetire = Date.parse(corps.ligne.creneaux[0]), { statut: 409, error: 'Un de vos créneaux n’est plus disponible.', creneauPris: true }) : null) : pasPret === 'coupure' ? () => (++essais === 1 ? { statut: 500, error: 'Envoi impossible pour le moment, réessayez.' } : null)
       : pasPret ? () => ({ statut: 503, error: 'Inscriptions en ligne bientôt ouvertes.', pasPret: true }) : null }, journal);
     // Google Drive simulé (photos, puis vidéo en morceaux)
     await p.route(/script\.google\.com/, (route) => {
@@ -102,6 +112,51 @@ async function navigateur() {
     ok(/Touchez|Tap/.test(await p.textContent('.ct-etape[data-etape="1"] .ct-consigne')) && await p.evaluate(() => getComputedStyle(document.querySelector('input[value="prive_salle"] + span'), '::after').content.includes('✓')), n + 'consigne « Touchez la formule », le bloc choisi porte une coche');
     await p.selectOption('#ct-nb', '10');
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
+    // (14/11/2026) cours privés : créneaux libres seulement, ou « dates à convenir ensemble »
+    if (pasPret === true) {
+      ok(await p.isHidden('#ct-bloc-creneaux') && await p.isChecked('#ct-convenir') && await p.isVisible('#ct-dispo'), n + 'créneaux pas encore installés : « dates à convenir », le champ des disponibilités');
+      await p.fill('#ct-dispo', 'samedi matin');
+    } else {
+      await p.waitForSelector('#ct-jours button', { timeout: 5000 }).catch(() => {});
+      ok(await p.isVisible('#ct-bloc-creneaux') && await p.isHidden('#ct-dispo') && await p.locator('#ct-jours button').count() === 36, n + 'créneaux : 6 semaines du lundi au samedi (36 jours), pas de champ libre');
+      ok(!(await p.$$eval('#ct-jours small', (l) => l.map((x) => x.textContent.toLowerCase()))).some((j) => /^(dim|sun)/.test(j)), n + 'jamais le dimanche (réservé au groupe)');
+      await p.click('#ct-suivant');
+      ok(/créneaux|time slots/.test(await p.textContent('#ct-msg')) && await p.isVisible('#ct-heures'), n + 'sans créneau choisi : on reste à l’étape 1 avec un message');
+      // le 1er mardi : 10 h à 16 h barrés, 17 h et 18 h libres
+      const mardi = await p.$eval('#ct-jours button', () => { const b = Array.from(document.querySelectorAll('#ct-jours button')).find((x) => /^(mar|tue)/i.test(x.querySelector('small').textContent)); return b.dataset.jour; });
+      await p.click('#ct-jours [data-jour="' + mardi + '"]');
+      const etats = await p.$$eval('#ct-heures button', (l) => l.map((b) => (b.disabled ? 'x' : 'o')).join(''));
+      ok(etats === 'xxxxxxxoo', n + 'heures déjà prises barrées et inactives (' + etats + ')');
+      // un jeudi à 14 h, « même jour, même heure chaque semaine » : les 10 séances d'un coup
+      const jeudi = await p.$eval('#ct-jours', () => Array.from(document.querySelectorAll('#ct-jours button')).find((x) => /^(jeu|thu)/i.test(x.querySelector('small').textContent)).dataset.jour);
+      await p.click('#ct-jours [data-jour="' + jeudi + '"]');
+      await p.click('#ct-heures [data-heure="' + jeudi + 'T14:00:00.000Z"]');
+      const lignes = await p.$$eval('#ct-choisis li', (l) => l.map((x) => x.textContent));
+      ok(lignes.length === 10 && lignes.every((x) => /(Jeudi|Thursday)/.test(x) && /14 h – 16 h|2 pm – 4 pm/.test(x)), n + '« chaque semaine » : 10 jeudis de 14 h à 16 h');
+      ok(/(Vos 10 séances|Your 10 sessions)$/.test((await p.textContent('#ct-choisis-titre')).trim()) && /48/.test(await p.textContent('.ct-garde')), n + '« Vos 10 séances », gardées 48 h');
+      await p.selectOption('#ct-nb', '12');
+      ok(await p.locator('#ct-choisis li').count() === 12 && (await p.textContent('#ct-total')).includes('300 000'), n + '12 séances au lieu de 10 : les 2 jeudis suivants sont ajoutés tout seuls');
+      await p.selectOption('#ct-nb', '10');
+      ok(await p.locator('#ct-choisis li').count() === 10, n + 'retour à 10 séances : les 2 dernières sont retirées');
+      if (process.env.CAPTURES) await p.locator('#ct-bloc-prive').screenshot({ path: process.env.CAPTURES + '/creneaux-' + ecran.width + (en ? '-en' : '') + '.png' });
+      // 1 h 30 de pause : le même jeudi, 11 h à 17 h deviennent impossibles, 10 h et 18 h restent
+      const etatsJeudi = await p.$$eval('#ct-heures button', (l) => l.map((b) => (b.classList.contains('on') ? 'v' : b.disabled ? 'x' : 'o')).join(''));
+      ok(etatsJeudi === 'oxxxvxxxo', n + 'autour de sa séance de 14 h : 1 h 30 de pause respectée (' + etatsJeudi + ')');
+      // retirer une séance, puis la remplacer à la main (sans « chaque semaine »)
+      await p.click('#ct-choisis li:last-child [data-retirer]');
+      ok(await p.locator('#ct-choisis li').count() === 9 && /1 (à choisir|still to choose)/.test(await p.textContent('#ct-choisis-titre')), n + 'une séance retirée : « encore 1 à choisir »');
+      await p.uncheck('#ct-repeter');
+      const samedi = await p.$eval('#ct-jours', () => Array.from(document.querySelectorAll('#ct-jours button')).find((x) => /^(sam|sat)/i.test(x.querySelector('small').textContent)).dataset.jour);
+      await p.click('#ct-jours [data-jour="' + samedi + '"]'); await p.click('#ct-heures [data-heure="' + samedi + 'T10:00:00.000Z"]');
+      ok(await p.locator('#ct-choisis li').count() === 10, n + 'une séance ajoutée à la main : 10 de nouveau');
+      await p.click('#ct-heures [data-heure="' + samedi + 'T18:00:00.000Z"]');
+      ok(/déjà choisi|already chosen/.test(await p.textContent('#ct-msg')) && await p.locator('#ct-choisis li').count() === 10, n + 'pas plus de créneaux que de séances');
+      // « dates à convenir » puis retour aux créneaux
+      await p.click('#ct-bloc-convenir');
+      ok(await p.isHidden('#ct-bloc-creneaux') && await p.isVisible('#ct-dispo'), n + '« dates à convenir ensemble » : les créneaux disparaissent, le champ des disponibilités apparaît');
+      await p.click('#ct-bloc-convenir');
+      ok(await p.locator('#ct-choisis li').count() === 10, n + 'retour aux créneaux : les choix sont gardés');
+    }
     await p.click('#ct-suivant');
     const debEtape2 = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     ok(debEtape2 <= 1, n + 'passage à l’étape 2 : la page ne devient pas plus large que l’écran (' + debEtape2 + ' px)');
@@ -148,6 +203,20 @@ async function navigateur() {
     ok(/case|tick/i.test(await p.textContent('#ct-msg')), n + 'sans la case de confidentialité : envoi refusé avec un message');
     await p.check('#ct-consentement');
     await p.click('#ct-envoyer');
+    if (ecran.width === 820 && !pasPret) {
+      // un créneau pris entre-temps par une autre élève : retour à l'étape 1, photos et vidéo gardées
+      await p.waitForFunction(() => /plus disponible|no longer available/.test(document.getElementById('ct-msg').textContent), null, { timeout: 30000 }).catch(() => {});
+      ok(/plus disponible/.test(await p.textContent('#ct-msg')) && await p.isVisible('#ct-heures') && await p.locator('#ct-choisis li').count() === 9 && /1 (à choisir|still to choose)/.test(await p.textContent('#ct-choisis-titre')),
+        n + 'créneau pris entre-temps : retour au choix des créneaux, il est retiré de sa liste (« encore 1 à choisir »)');
+      const pris = new Date(creneauRetire).toISOString(), jourPris = pris.slice(0, 10);
+      await p.click('#ct-jours [data-jour="' + jourPris + '"]');
+      ok(await p.isDisabled('#ct-heures [data-heure="' + pris + '"]'), n + 'le créneau pris est barré');
+      const vendredi = await p.$eval('#ct-jours', () => Array.from(document.querySelectorAll('#ct-jours button')).find((x) => /^(ven|fri)/i.test(x.querySelector('small').textContent)).dataset.jour);
+      await p.click('#ct-jours [data-jour="' + vendredi + '"]'); await p.click('#ct-heures [data-heure="' + vendredi + 'T10:00:00.000Z"]');
+      ok(await p.locator('#ct-choisis li').count() === 10, n + 'un autre créneau choisi : 10 de nouveau');
+      for (let k = 0; k < 3; k++) await p.click('#ct-suivant');
+      await p.click('#ct-envoyer');
+    }
     if (pasPret === 'coupure') {
       await p.waitForFunction(() => /erreur|error/i.test(document.getElementById('ct-msg').textContent), null, { timeout: 30000 }).catch(() => {});
       ok(/WhatsApp/.test(await p.textContent('#ct-msg')) && await p.isEnabled('#ct-envoyer'), n + '1er envoi refusé : message d’erreur, lien WhatsApp, on peut réessayer');
@@ -168,6 +237,8 @@ async function navigateur() {
       ok(envoi.length === 1 && journal.some((j) => j[0] === 'ANTI-ROBOT' && j[1] === 'cours_talons'), n + 'inscription envoyée une fois, par le serveur (anti-robots)');
       ok(l.parcours === 'debut' && l.modules === null, n + 'parcours « je débute » envoyé (sans thèmes)');
       ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
+      ok(Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
+      ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
       ok(Array.isArray(l.photos) && l.photos.length === 2 && l.video === 'https://drive.google.com/video-marche' && !('statut' in l) && !('montant' in l), n + 'liens Drive des 2 photos et de la vidéo ; ni statut ni montant envoyés (la base décide)');
