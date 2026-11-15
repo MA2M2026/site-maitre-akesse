@@ -24,7 +24,7 @@ Chaque agent remplit sa ligne en arrivant.
 
 | Agent | Branche de travail | Accès réels admin / espace mannequin ? | Statut |
 |-------|-------------------|----------------------------------------|--------|
-| Agent A (ouvreur de ce fichier) | `audit/agent-a` | Non | Inscrit, en attente des autres |
+| Agent A (ouvreur de ce fichier) | `audit/agent-a` | Non (ni interface, ni base). Lecture du code ; vérifications en ligne par l'outil Vercel | Inscrit. Rapport déposé le 15/11 |
 | Agent B | `audit/agent-b` | Non pour l'interface (aucun mot de passe de l'Administration ni de l'espace mannequin). Oui en lecture directe de la base Supabase (connecteur autorisé par la propriétaire) | Inscrit |
 | Agent C | `audit/agent-c` | Non pour l'interface : pas de compte pour se connecter à l'administration ni à l'espace mannequin (pas de mot de passe ni de double authentification). Oui en lecture seule pour la **vraie base de données** (connecteur Supabase) et pour les mises en ligne (connecteur Vercel) ; toute écriture dans la base demande la confirmation de la propriétaire | Inscrit |
 | Agent D | `audit/agent-d` | **Oui** : comptes d'essai de l'Administration (rôle « site ») et de l'espace mannequin, en lecture seule (aucun envoi, aucune modification, jamais « Soumettre »). Les secrets restent hors du dépôt et ne seront jamais transmis. Aussi lecture de la base Supabase (connecteur) | Inscrit. Le 15/11, déjà visité en ligne : 42 rubriques de l'Administration, l'espace mannequin, Intégrer l'agence, Postuler, Cours de talons (FR/EN, téléphone et ordinateur) |
@@ -36,10 +36,10 @@ Chaque agent remplit sa ligne en arrivant.
 
 | Phase | A | B | C | D |
 |-------|---|---|---|---|
-| Audit site public | | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) | |
-| Audit du code | | ✅ fait | ✅ fait | |
-| Audit sécurité | | ✅ fait (lecture seule) | ✅ fait (lecture seule) | |
-| Rapport individuel déposé | | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | |
+| Audit site public | ◐ partiel : en-têtes et documents publics vérifiés en ligne ; vitesse laissée à B et C | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) | |
+| Audit du code | ✅ fait (api/, middleware, SQL, publication) | ✅ fait | ✅ fait | |
+| Audit sécurité | ✅ fait (lecture seule) | ✅ fait (lecture seule) | ✅ fait (lecture seule) | |
+| Rapport individuel déposé | ✅ `audit/agent-a` : docs/audit/rapport-agent-a.md | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | |
 
 Les rapports individuels vont dans `docs/audit/rapport-agent-X.md`.
 
@@ -64,6 +64,14 @@ B-F5 | B | en-têtes HTTPS complets, CSP stricte de l'Administration | curl -I, 
 B-F6 | B | envoi des photos du Book signé (= C-F5) ; npm audit 0 (≈ C-F8) | api/r2-presigner.js:20-60 |
 B-F7 | B | photos des candidatures enregistrées par le serveur + surveillance 15 min + contrôle du matin (15/11) | supabase-medias-drive*.sql |
 (détail : docs/audit/rapport-agent-b.md, branche audit/agent-b)
+
+A-F2 | A | double authentification exigée par la base elle-même (table admins lisible seulement avec portail_mfa_ok) et par le serveur (aal2) | supabase-admins-aal2.sql:13-40, api/_commun.js:143-148 |
+A-F3 | A | un compte administrateur ne peut jamais être supprimé ; base injoignable = refus | api/supprimer-mannequin.js:52-60 |
+A-F5 | A | espace Paiements cloisonné par rôle (portail_peut('paiements')) | supabase-administration.sql:754-760 |
+A-F6 | A | tâche du matin protégée (CRON_SECRET), webhook notifications protégé (secret en temps constant) | api/portail.js:201-203, api/notifications-webhook.js:158 |
+A-F8 | A | node --check sans erreur partout, aucun JS/CSS orphelin, aucun console.log | essai local |
+Confirmés par A : C-F5 = B-F6, B-F5, C-F7.
+(détail : docs/audit/rapport-agent-a.md, branche audit/agent-a)
 
 ## 4. Problèmes proposés
 
@@ -94,6 +102,15 @@ B-P11 | B | basse | js/photos.js:150 | sonde volontaire vers une adresse inexist
 B-P12 | B | basse | js/app.js:2448, 2463, 3709 | 3 fonctions jamais appelées | git grep |
 B-P13 | B | info | maquettes/essai-medias-drive.sql:283 | fiabilité SonarQube C→E (mon fichier du 15/11) ; corrigé sur claude/photos-videos-drive-64xwv9, à mettre en ligne | SonarCloud |
 Confirmés par B : C-P1 (= B-P4), C-P2 (⊂ B-P1), C-P8 (même article), C-P9 (≈ app.js 230 Ko, 91 Ko inutilisés).
+
+A-01 | A | haute | .vercelignore (manque docs/, DECISIONS.md, GUIDE-DE-SECOURS.md, AGENTS.md, CONVENTIONS.md, README.md, tests/) | documents internes publiés : /docs/rls-matrix.md et /docs/falsification.md lisibles par tous. ⚠ Nos rapports et COORDINATION.md seraient publiés aussi : ne rien fusionner dans main avant cette correction | 200 en ligne le 15/11 23:00 (outil Vercel) |
+A-03 | A | haute (à confirmer par D) | supabase-appareil-confiance.sql:133, supabase-administration.sql:205 | le rôle « site » est ajouté à la table admins à chaque connexion complète → candidatures (contacts des parents), inscriptions (paiement), suppression de mannequins ; contraire à la décision écrite (supabase-administration.sql:540) ; cours_talons_valider ouvert au rôle « site » (question pour la propriétaire) | code. D : tester avec le compte « site » ; B/C : select s.role from admins a join staff_profiles s using (user_id) |
+A-04 | A | moyenne | js/surveillance.js:128 | location.search enregistré dans journal_erreurs → jetons des liens accord parental (?j=), reçu (?r=), convocation (?c=) en clair | code |
+A-06 | A | moyenne (à confirmer) | api/_commun.js:140, api/whatsapp-webhook.js:95 | verrous ouverts si portail_admin_ok absent (404) ou WHATSAPP_APP_SECRET absent | code. B/C : la fonction existe-t-elle ? la variable est-elle posée sur Vercel ? |
+A-08 | A | basse | formulaire_public_enregistrer (supabase-cours-talons.sql) | toute colonne existante envoyée est enregistrée (seul status contrôlé) | code. B/C : liste réelle des colonnes |
+A-02 | A | basse | assets/reseaux/*.mp4 | 230 Mo de vidéos jamais utilisées, publiées | recherche dans le dépôt |
+A-10 | A | basse | api/supprimer-mannequin.js:89, api/portail.js (fin), api/r2-presigner.js:80 | détail technique des erreurs renvoyé à l'écran | code |
+Confirmés par A : C-P1 = B-P4 (= A-05), B-P5 (= A-07), C-P5 (= A-09).
 
 ## 5. Désaccords à vérifier
 
