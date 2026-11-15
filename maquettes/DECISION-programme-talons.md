@@ -54,3 +54,6 @@
 - **15/11/2026, v2 validée** (« Je valide », `maquettes/creneaux-prives-v2.html`) : trois façons à l'inscription
   (maintenant / après mon paiement / à convenir), choix ou déplacement (jusqu'à 24 h avant) sur son lien une fois
   payée, « Mes indisponibilités » de l'agence. Construite le même jour (README-TECHNIQUE.md, « Créneaux v2 »).
+- **15/11/2026** : `supabase-creneaux-prives.sql` collé par la propriétaire (contrôle 10 sur 10). Essai sur la VRAIE base,
+  avec son accord, tout annulé à la fin (vérifié : rien ne reste) : réservation de 2 créneaux, heure voisine refusée
+  (CRENEAU_PRIS), indisponibilité respectée, choix après paiement sur son lien, déplacement, page — tout conforme.
