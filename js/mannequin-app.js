@@ -466,7 +466,8 @@
   // activée : dessinée par js/carte-mannequin.js (la même image à l'écran, en téléchargement et en PDF), recto ou verso
   let faceCarte = 'recto';
   function donneesCarte() {   // (js/carte-mannequin.js : la même que dans l'Administration)
-    return window.CarteMannequin.donnees({ carte: etat.carte, profil: etat.profil, photos: etat.photos, programme: etat.programme });
+    const p = etat.profil || {};
+    return window.CarteMannequin.donnees({ carte: etat.carte, profil: p, photos: etat.photos, programme: etat.programme, secours: niveauNormalise(p.niveau_mannequin, p.years_experience) || 'Mannequinat' });
   }
   function carteOfficielle() {
     return '<div class="ap-carte-officielle"><img class="ap-carte-img" alt="Ma carte de mannequin MA2M (' + faceCarte + ')" width="1012" height="638">' +

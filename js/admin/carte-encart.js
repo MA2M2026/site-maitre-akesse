@@ -54,7 +54,7 @@
         puce('categorie', null, c.categorie_manuelle || null, 'Automatique') + puce('categorie', 'New Face', c.categorie_manuelle || null, 'New Face') +
         puce('categorie', 'Professionnel', c.categorie_manuelle || null, 'Professionnelle') + '</div></div>' +
       '<div class="ce-reglage"><h3><em>3</em>Validité</h3><p class="doux">Durée du contrat, renouvelable. ' + (expiree ? '<b class="ce-expiree">Expirée depuis ' : 'Valable jusqu’en <b>') +
-        P.esc(mois(c.valable)) + '</b>.</p><div class="ce-puces">' + [3, 4, 5].map((n) => puce('validite_ans', String(n), String(c.validite_ans), n + ' ans')).join('') +
+        P.esc(mois(c.valable) || '—') + '</b>.</p><div class="ce-puces">' + [3, 4, 5].map((n) => puce('validite_ans', String(n), String(c.validite_ans), n + ' ans')).join('') +
         '<button type="button" class="ce-puce ce-renouveler" data-bouton-libre data-action="carte-regler" data-reglage="renouveler" data-valeur="1"><span>↻ Renouveler<small>à partir d’aujourd’hui</small></span></button></div></div>' +
       '<div class="ce-reglage"><h3><em>4</em>Formation écrite sur la carte</h3><p class="doux">Touchez ce qui doit paraître.</p><div class="ce-puces">' +
         puce('formation', null, c.formation || null, 'Automatique', formationAuto()) + puce('formation', 'Recyclage', c.formation || null, 'Recyclage') +
@@ -74,7 +74,7 @@
       }
       etat.apercu = window.CarteMannequin.donnees({ carte: etat.carte, profil: etat.profil, photos: etat.photos, programme: etat.programme });
       img.src = (await window.CarteMannequin.dessiner(face, etat.apercu)).toDataURL('image/png');
-    } catch (e) { console.warn(e); }
+    } catch (e) { console.warn(e); P.message('L’aperçu de la carte n’a pas pu être dessiné : rechargez la page.'); }
   }
   // l'encart redessiné sur place (sans recharger toute la fiche)
   function rafraichir() {
@@ -98,7 +98,7 @@
   };
   P.actions['carte-face'] = () => { face = face === 'recto' ? 'verso' : 'recto'; rafraichir(); };
   P.actions['carte-fichier'] = async (el) => {
-    if (!etat || !etat.apercu) return;
+    if (!etat || !etat.apercu) { P.message('L’aperçu de la carte n’est pas encore prêt : patientez un instant.'); return; }
     el.disabled = true;
     try { if (el.getAttribute('data-valeur') === 'pdf') await window.CarteMannequin.telechargerPdf(etat.apercu); else await window.CarteMannequin.telechargerImage(etat.apercu); }
     catch (e) { P.message('La carte n’a pas pu être préparée : réessayez.'); }

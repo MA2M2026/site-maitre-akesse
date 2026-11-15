@@ -190,7 +190,7 @@ window.CarteMannequin = (function () {
     const p = o.profil || {}, c = o.carte || {};
     const r = typeof resumeProgrammeFormation === 'function' ? resumeProgrammeFormation(o.programme) : null;
     const vues = window.Partage.photosAffichees(o.photos || []), ph = vues.profil || vues.couverture;
-    return { nom: c.nom || p.full_name, categorie: c.categorie, formation: formation(r, c, true), taille: window.Partage.enMetres(p.height_cm),
+    return { nom: c.nom || p.full_name, categorie: c.categorie, formation: formation(r, c, true, o.secours || categorieCarte(c.categorie)), taille: window.Partage.enMetres(p.height_cm),
       mensurations: [p.chest_cm, p.waist_cm, p.hips_cm].every(Boolean) ? [p.chest_cm, p.waist_cm, p.hips_cm].join(' · ') : '',
       depuis: c.depuis, valable: c.valable, matricule: c.matricule,
       photo: ph && typeof urlPhotoMemeOrigine === 'function' ? urlPhotoMemeOrigine(ph.url_petite || ph.url_miniature || ph.url) : '',
