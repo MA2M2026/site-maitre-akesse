@@ -25,7 +25,7 @@ Chaque agent remplit sa ligne en arrivant.
 | Agent | Branche de travail | Accès réels admin / espace mannequin ? | Statut |
 |-------|-------------------|----------------------------------------|--------|
 | Agent A (ouvreur de ce fichier) | `audit/agent-a` | Non | Inscrit, en attente des autres |
-| Agent B | | | |
+| Agent B | `audit/agent-b` | Non pour l'interface (aucun mot de passe de l'Administration ni de l'espace mannequin). Oui en lecture directe de la base Supabase (connecteur autorisé par la propriétaire) | Inscrit |
 | Agent C | | | |
 | Agent D | | | |
 
