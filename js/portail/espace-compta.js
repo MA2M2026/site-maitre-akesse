@@ -133,9 +133,9 @@
       '</p><a class="btn petit rouge" href="#/compta/identite">' + (legal ? 'Voir l’identité de l’agence' : 'Identité de l’agence →') + '</a></div>';
     // (15/11/2026, « premium partout ») le résultat du mois en carte façon carte bancaire (P.carteHero, js/admin/coque.js)
     const tresorerie = soldes.reduce((t, s) => t + (Number(s.solde) || 0), 0);
-    const sansUnite = (n) => P.fcfa(n).replace(/\s*FCFA$/, '');   // (les tuiles : la carte dit déjà « FCFA »)
+    const sansUnite = P.sansFcfa;   // (les tuiles : la carte dit déjà « FCFA »)
     return P.entete('Tableau de bord · ' + P.mois(m), choixMois()) + carteMode +
-      P.carteHero({ titre: 'RÉSULTAT DU MOIS', grand: P.fcfa(rec - dep).replace(/\s*FCFA$/, ''), unite: 'FCFA', legende: P.mois(m) + ' · recettes moins dépenses (en FCFA)',
+      P.carteHero({ titre: 'RÉSULTAT DU MOIS', grand: sansUnite(rec - dep), unite: 'FCFA', legende: P.mois(m) + ' · recettes moins dépenses (en FCFA)',
         tuiles: [[sansUnite(rec), 'recettes'], [sansUnite(dep), 'dépenses'], [sansUnite(tresorerie), 'trésorerie aujourd’hui']] }) +
       '<div class="grille chiffres">' + P.chiffre('Recettes du mois', P.fcfa(rec), 'vert') + P.chiffre('Dépenses du mois', P.fcfa(dep), 'rouge') +
       P.chiffre('Résultat du mois', P.fcfa(rec - dep), rec - dep < 0 ? 'rouge' : '') + P.chiffre('Dépenses sans justificatif', sansJustif, sansJustif ? 'orange' : '') +
@@ -203,7 +203,8 @@
       P.etat.comptaListe = liste;
       const actifs = cpts.filter((c) => c.actif);
       return P.entete((recette ? 'Recettes · ' : 'Dépenses · ') + P.mois(m), choixMois()) +
-        (recette ? carteTva(liste, reglage) : '<div class="grille chiffres">' + P.chiffre('Total des dépenses', P.fcfa(totaux(liste, sens)), 'rouge') + '</div>') +
+        (recette ? carteTva(liste, reglage) : P.carteHero({ titre: 'DÉPENSES DU MOIS', grand: P.sansFcfa(totaux(liste, sens)), unite: 'FCFA',
+          legende: P.mois(m) + ' · ' + P.pluriel(liste.length, 'dépense enregistrée', 'dépenses enregistrées') })) +
         (recette ? '<div class="note info">Les inscriptions et mensualités validées dans le Suivi des paiements arrivent ici toutes seules. Saisissez ici les autres recettes : castings, prestations, masterclass…</div>' : '') +
         '<form class="carte f" data-form="compta-ecrire" data-sens="' + sens + '"><h2>' + (recette ? 'Nouvelle recette' : 'Nouvelle dépense') + '</h2>' +
         '<label class="fl" for="cp-date">Date<input id="cp-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +
@@ -299,8 +300,9 @@
     const actifs = cpts.filter((c) => c.actif);
     const total = soldes.filter((s) => (cpts.find((c) => c.id === s.compte_id) || {}).actif).reduce((s, x) => s + Number(x.solde), 0);
     return P.entete('Trésorerie') +
-      '<div class="grille chiffres">' + P.chiffre('Total disponible', P.fcfa(total), total < 0 ? 'rouge' : 'vert') +
-      soldes.map((s) => P.chiffre(s.nom, P.fcfa(s.solde), s.solde < 0 ? 'rouge' : '')).join('') + '</div>' +
+      // (16/11/2026, « premium partout ») le total et chaque compte en carte façon carte bancaire (P.carteHero)
+      P.carteHero({ titre: 'TRÉSORERIE', grand: P.sansFcfa(total), unite: 'FCFA', legende: total < 0 ? 'attention : le total est négatif' : 'disponible sur tous les comptes',
+        tuiles: soldes.map((s) => [P.sansFcfa(s.solde), s.nom]) }) +
       '<form class="carte f" data-form="compta-virement"><h2>Virement entre deux comptes</h2>' +
       '<div class="note info">Ex. : retrait Wave vers la caisse, dépôt de la caisse à la banque. Ce n’est ni une recette ni une dépense.</div>' +
       '<label class="fl" for="vi-date">Date<input id="vi-date" name="date_op" type="date" required max="' + P.aujourdhui() + '" value="' + P.aujourdhui() + '"></label>' +

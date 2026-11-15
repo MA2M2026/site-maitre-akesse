@@ -5246,5 +5246,12 @@ jour(compte)` dès que change ce qui décide de la catégorie : `categorie_suivr
 parcours_arrivee, formation_mois_faits, formation_niveaux, date_entree, user_id) et `categorie_suivre_experiences`
 (model_projects : ajout, période, retrait). La fiche publique (« New Face » / « Main Board ») suit donc la carte sans
 attendre 4 h ; le rangement de la nuit reste pour le temps qui passe (2 ans).
+
+## Premium : Messages, Réglages et Comptabilité (16/11/2026)
+La carte façon carte bancaire (`P.carteHero`, js/admin/coque.js ; montants sans « FCFA » : `P.sansFcfa`) est aussi en
+tête des tuiles **Messages** (messages de contact des 7 derniers jours, informations envoyées ce mois) et **Réglages**
+(erreurs du site sur 7 jours, codes d'accès pas encore utilisés) : champ `hero` des TUILES (js/admin/site.js), un
+chiffre illisible est omis. Dans la Comptabilité, elle remplace les cases blanches de **Dépenses**, **Trésorerie** (total
+et un compte par tuile), **Ce qu'on nous doit / Ce qu'on doit** (reste et nombre en retard) et **Impôts et taxes**.
 Parcours et position : équipe des paiements ou principal (ils comptent pour les mensualités). Nom trop long sur la
 carte : sur deux lignes. Contrôle « 13 éléments sur 13 ».

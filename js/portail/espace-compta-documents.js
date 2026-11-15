@@ -225,9 +225,8 @@
     const aPayer = liste.filter((i) => !i.annule && !paye(i));
     const tva = fiscaux.filter((d) => !d.annule).reduce((s, d) => s + (d.type === 'facture' ? d.tva : d.type === 'avoir' ? -d.tva : 0), 0);
     return P.entete('Impôts et taxes', C.choixMois()) +
-      '<div class="grille chiffres">' + P.chiffre('Reste à payer', P.fcfa(aPayer.reduce((s, i) => s + i.montant, 0)), 'rouge') +
-      P.chiffre('En retard', liste.filter(retard).length, liste.some(retard) ? 'rouge' : '') +
-      P.chiffre('TVA collectée · ' + P.mois(m), r.mode_legal ? P.fcfa(tva) : 'Désactivée') + '</div>' +
+      P.carteHero({ titre: 'IMPÔTS ET TAXES', grand: P.sansFcfa(aPayer.reduce((s, i) => s + i.montant, 0)), unite: 'FCFA', legende: 'reste à payer',
+        tuiles: [[liste.filter(retard).length, 'en retard'], [r.mode_legal ? P.sansFcfa(tva) : 'Désactivée', 'TVA collectée · ' + P.mois(m)]] }) +
       (r.mode_legal ? '<div class="note info">TVA collectée = TVA des vraies factures du mois moins celle des avoirs. La TVA à reverser et le classement des opérations sont à valider par le comptable.</div>'
         : '<div class="note info">TVA désactivée tant que le mode légal n’est pas activé (agence pas encore immatriculée).</div>') +
       '<form class="carte f" data-form="compta-impot"><h2>Nouvelle échéance</h2>' +

@@ -521,6 +521,7 @@
   // (15/11/2026, « premium partout ») LA carte façon carte bancaire des tableaux de bord, écrite une fois : accueil
   // (« L'agence ce mois-ci »), Tableau du mois (Paiements), Tableau de bord (Comptabilité).
   // o : { titre, grand (texte), unite, legende, tuiles: [[nombre, texte]], suite (HTML déjà échappé) }
+  P.sansFcfa = (n) => P.fcfa(n).replace(/\s*FCFA$/, '');   // (montant dans la carte, qui dit déjà « FCFA »)
   P.carteHero = (o) => {
     const tuile = (t) => (t[0] === null || t[0] === undefined ? '' : '<div><b>' + P.esc(String(t[0])) + '</b><span>' + P.esc(t[1]) + '</span></div>');
     const tuiles = (o.tuiles || []).map(tuile).join('');
@@ -531,7 +532,7 @@
   function carteAgence(a) {
     if (!a || (a.encaisse === null && a.actives === null && a.eleves === null)) return '';
     const mois = P.MOIS[new Date().getMonth()];
-    return P.carteHero({ titre: 'L’AGENCE CE MOIS-CI', grand: a.encaisse !== null ? P.fcfa(a.encaisse).replace(/\s*FCFA$/, '') : null, unite: 'FCFA',
+    return P.carteHero({ titre: 'L’AGENCE CE MOIS-CI', grand: a.encaisse !== null ? P.sansFcfa(a.encaisse) : null, unite: 'FCFA',
       legende: a.encaisse !== null ? 'encaissés en ' + mois + ' · mensualités, cours de talons, cachets…' : '',
       tuiles: [[a.actives, 'mannequins actives'], [a.eleves, 'élèves des cours de talons']] });
   }
