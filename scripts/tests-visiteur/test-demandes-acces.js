@@ -49,6 +49,38 @@ async function serveur() {
   ok(r.statut === 500 && supprimes.length === 1, 'serveur : demande non notée : le compte créé est retiré (la personne peut réessayer)');
 }
 
+// (16/11/2026, audit L-6 = R-01) l'invitation de la propriétaire ne donne JAMAIS le rôle à un compte créé par
+// « Créer mon compte » (quelqu'un qui n'a pas prouvé posséder l'adresse) ; une invitation normale passe toujours.
+async function invitation() {
+  const profils = []; let aDemande = true;
+  const jwt = (o) => 'x.' + Buffer.from(JSON.stringify(o)).toString('base64url') + '.y';
+  const jeton = jwt({ amr: [{ method: 'totp', timestamp: Math.floor(Date.now() / 1000) - 30 }] });
+  global.fetch = async (url, o = {}) => {
+    const u = String(url);
+    const json = (x, s = 200) => ({ ok: s < 300, status: s, json: async () => x, text: async () => JSON.stringify(x) });
+    if (/rpc\/portail_moi/.test(u)) return json({ role: 'principal' });
+    if (/auth\/v1\/user$/.test(u)) return json({ id: 'u-principale' });
+    if (/rpc\/portail_utilisateur_par_email/.test(u)) return json('u-deja');
+    if (/staff_profiles\?select=user_id&user_id=eq\.u-deja/.test(u)) return json([]);
+    if (/staff_demandes\?select=id&user_id=eq\.u-deja/.test(u)) return json(aDemande ? [{ id: 'd1' }] : []);
+    if (/staff_profiles\?on_conflict=user_id/.test(u)) { profils.push(JSON.parse(o.body)); return json(null, 201); }
+    return json({});
+  };
+  const portail = require('../../api/portail.js');
+  const appeler = async () => {
+    let statut = 0, rep = null;
+    const res = { status(x) { statut = x; return this; }, json(c) { rep = c; return this; }, setHeader() {} };
+    await portail({ method: 'POST', headers: { authorization: 'Bearer ' + jeton, 'x-appareil': 'appareil-essai-0001' },
+      body: { action: 'inviter', email: 'collegue@test.ci', nom: 'Collègue', role: 'site' } }, res);
+    return { statut, rep };
+  };
+  let r = await appeler();
+  ok(r.statut === 400 && profils.length === 0 && /demande d’accès existe déjà/.test(r.rep.error),
+    'invitation : adresse déjà prise par « Créer mon compte » → aucun rôle donné en silence, la propriétaire doit vérifier la personne');
+  aDemande = false; r = await appeler();
+  ok(r.statut === 200 && profils.length === 1 && profils[0].user_id === 'u-deja' && profils[0].role === 'site', 'invitation d’un compte existant sans demande : rôle donné (inchangé)');
+}
+
 async function navigateur() {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
@@ -113,6 +145,7 @@ async function navigateur() {
 
 (async () => {
   await serveur();
+  await invitation();
   await navigateur();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);

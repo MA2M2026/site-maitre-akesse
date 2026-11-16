@@ -400,6 +400,14 @@ module.exports = async function handler(req, res) {
           const dejaLa = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=user_id&user_id=eq.' + encodeURIComponent(userId), { headers: enTetesService() });
           if (!dejaLa.ok) throw new Error('Vérification impossible pour le moment.');
           if ((await dejaLa.json()).length) return res.status(400).json({ error: 'Cette personne a déjà un compte du portail : changez son rôle dans la liste.' });
+          // (16/11/2026, audit L-6 = R-01) adresse déjà prise par « Créer mon compte » : ce compte a été créé par
+          // quelqu'un qui n'a jamais prouvé posséder l'adresse. L'invitation ne lui donne JAMAIS le rôle en silence :
+          // la demande se traite dans Sécurité › Comptes et rôles, après avoir vérifié la personne (appel).
+          const demande = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes?select=id&user_id=eq.' + encodeURIComponent(userId), { headers: enTetesService() });
+          if (!demande.ok) throw new Error('Vérification impossible pour le moment.');
+          if ((await demande.json()).length) {
+            return res.status(400).json({ error: 'Une demande d’accès existe déjà pour cette adresse (« Créer mon compte ») : ouvrez-la dans Sécurité › Comptes et rôles, et appelez la personne pour vérifier que c’est bien elle avant de l’accepter.' });
+          }
         }
         if (!userId) {
           const invite = await adminAuth('invite?redirect_to=' + encodeURIComponent(RETOUR_ADMINISTRATION), 'POST', { email, data: { portail_invite: true, nom } });

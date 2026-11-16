@@ -5311,3 +5311,11 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   `desactive` (+ date, auteur) et `exclue_vitrine`, et calcule la minorité sur l'ancienne ET la nouvelle date de
   naissance. Avant : écrire soi-même `premiere_publication_faite = true` puis `published = true` publiait au Book
   sans validation, même une mineure (constaté dans la vraie base par l'agent D). « Agence » = présente dans `admins`.
+- **L-6 (= R-01), « Créer mon compte » de l'équipe, partie sans risque** : `api/portail.js`, action `inviter` : si
+  l'adresse invitée appartient déjà à un compte créé par « Créer mon compte » (ligne dans `staff_demandes`), le rôle
+  n'est plus donné en silence à ce compte (créé par quelqu'un qui n'a jamais prouvé posséder l'adresse) : la
+  propriétaire traite la demande dans Sécurité › Comptes et rôles, après avoir appelé la personne. Test :
+  `test-demandes-acces.js` (fonction `invitation`). **Reste à décider** (propriétaire) : preuve de l'adresse par
+  e-mail (risque : les e-mails de l'invitation ne partaient pas, d'où « Créer mon compte » le 01/11) ou vérification
+  par téléphone avant d'accepter. Toute modification de la création de compte s'essaie aussi pour de vrai, avec
+  l'accord de la propriétaire (règle de CLAUDE.md).
