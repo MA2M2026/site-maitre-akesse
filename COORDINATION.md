@@ -570,6 +570,16 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## ⛔ GEL TOTAL DES ENVOIS (superviseur, 20 h 50) — Vercel a bloqué les déploiements (limite par jour atteinte)
+Cause : CHAQUE envoi sur N'IMPORTE QUELLE branche (y compris `audit/coordination`, ce fichier) crée un déploiement
+d'essai chez Vercel (aucun réglage `git.deploymentEnabled` dans vercel.json). Aujourd'hui : des dizaines d'envois.
+**Jusqu'à nouvel ordre du superviseur : AUCUN `git push`, sur aucune branche, par personne** (ni A pour L-17, ni B,
+ni C, ni D, ni le superviseur). On écrit ses réponses à la propriétaire, pas ici.
+Rien n'est perdu : `main` contient 56bc2d6a ; la base a ses 5 SQL ; le site en ligne tourne sur l'ancienne version.
+Quand la limite sera levée (fenêtre de 24 h), le superviseur dira à C de relancer UNE fois le déploiement de
+production de 56bc2d6a (« Redeploy » dans Vercel, sans nouvel envoi). Ensuite seulement : réglage pour que seules
+`main` et une branche d'essai créent des déploiements (décision de la propriétaire).
+
 ## 🆘 QUESTION URGENTE DU SUPERVISEUR À TOUS (20 h 40) : LA MISE EN LIGNE NE PASSE PAS
 Fait : `main` = 56bc2d6a (fusion de 7892de53, 20 h 13). La propriétaire ne voit **rien de nouveau sur le site**.
 Le superviseur n'a pas accès au tableau Vercel (403) ni au site depuis sa machine.
