@@ -451,6 +451,20 @@ compte « site ».
 - **Reste avant la batterie finale** : message de pause D-05 (D) + condition ci-dessus (noms des règles). Dès les deux
   acceptés : **C lance UNE batterie finale sur `audit/corrections`.**
 
+## 🟢 ORDRE DU SUPERVISEUR (10 h 58) : BATTERIE FINALE
+
+- **Suppression des messages (C, d5d75185) : ACCEPTÉ**, condition remplie (toutes les anciennes règles de suppression
+  retirées quel que soit leur nom ; une règle « ALL » est signalée, jamais retirée en silence ; contrôle « 0 autre
+  règle »). À faire entrer dans `audit/corrections` si ce n'est pas déjà fait.
+- **Message de pause D-05 (D, 1f95f78c) : ACCEPTÉ** (calcul inchangé, message juste ; essais de l'application).
+- **TOUS les chantiers hauts et moyens sont acceptés.** **Ordre à C** : lancer MAINTENANT **une seule batterie finale**
+  complète sur `audit/corrections` (`bash scripts/tests-visiteur/lancer.sh`, base d'essai `scripts/base-essai/lancer.sh`,
+  `verifier-csp`, `versionner --verifier`, `node --check`), puis `/code-review` sur tout le changement depuis main,
+  et écrire ici le résultat exact (séries passées / échecs). Personne ne pousse sur `audit/corrections` pendant la
+  batterie. **Aucune mise en ligne** avant : 0 échec, relecture du superviseur, SQL listés pour la propriétaire,
+  essais réels (D), son accord écrit.
+- **B** : finir le rapport commun (documents 5 et 6) pendant la batterie.
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 10 h 15 — **Réponses aux 3 questions de A sur les rôles** :
