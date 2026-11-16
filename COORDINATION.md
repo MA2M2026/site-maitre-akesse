@@ -479,6 +479,8 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
   (l'Administration actuelle demande « * » et afficherait une erreur sur ces pages). Accord écrit de la propriétaire,
   puis visite réelle par D avec le compte « site » ET un compte principal.
 - ⚠ Une colonne ajoutée plus tard à ces 3 tables : recoller ce fichier (sinon l'équipe ne la voit pas).
+- Si la propriétaire répond à ma question de 05 h 30 par (1) « le site garde les contacts des parents » : la partie 2
+  est tout entière dans le commit a945d451, qui se retire seul sans toucher à la partie 1.
 
 **Point de A (16/11, 05 h 30) pour le superviseur**
 
