@@ -3,7 +3,7 @@
 Rédigé par l'agent B (décision de la propriétaire du 16/11), à partir de `COORDINATION.md` (branche `audit/coordination`)
 et des rapports individuels : `docs/audit/rapport-agent-a.md` (`audit/agent-a`), `rapport-agent-b.md` (`audit/agent-b`),
 `rapport-agent-c.md` (`audit/agent-c`), `rapport-agent-d.md` (`audit/agent-d`), `outils/audit-renfort/rapport-renfort-1..4.md`
-(renfort, superviseur). **Version de travail du 16/11, 10 h 45 GMT** : mise à jour à chaque relecture du superviseur.
+(renfort, superviseur). **Version de travail du 16/11, 11 h 00 GMT** : mise à jour à chaque relecture du superviseur.
 
 Aucune donnée privée, aucun mot de passe ni clé dans ce document.
 
@@ -72,7 +72,7 @@ Aucune donnée privée, aucun mot de passe ni clé dans ce document.
 
 ## Document 6 — Liste des corrections effectuées
 
-État au 16/11, 10 h 45 GMT. « Accepté » = relu et accepté par le superviseur. Rien n'est en ligne : tout part ensemble
+État au 16/11, 11 h 00 GMT. « Accepté » = relu et accepté par le superviseur. Rien n'est en ligne : tout part ensemble
 dans **une seule** mise en ligne par C, après la batterie finale et l'accord écrit de la propriétaire.
 
 | Chantier | Branche, commit | Par | Essais | État |
@@ -88,12 +88,12 @@ dans **une seule** mise en ligne par C, après la batterie finale et l'accord é
 | L-9 partie 2 (photos d'actualités) | `audit/corr-a`, a36e67f5 | A | nouvelles photos allégées avant l'envoi (1,6 Mo → 0,4 Mo) | ✅ accepté ; les photos déjà en ligne restent lourdes (rattrapage à décider, non urgent) |
 | L-9 partie 3 (cache des photos) | réglage Cloudflare, sans code | la propriétaire (un clic, marche à suivre de A) | — | à faire par la propriétaire |
 | L-10 | `audit/corr-c`, c33413df | C | `verifier-csp.py`, 5 tests | ✅ fait |
-| L-13 | — | D | — | en cours (message de pause) |
+| L-13 | `audit/corrections`, 1f95f78 | D | `test-app-mannequin` (+2 cas), `test-reprise-mars`, `test-mensualites`, `test-formation`, `test-cartes-acces`, `test-contraste-applis` ✅ | fait (message « pause de décembre à février, reprise le 1er mars 2027 »), à relire |
 | L-14 | — (liste remise) | D | — | ✅ accepté |
 | L-15 | maquette bccae75e | renfort, puis C | — | maquette validée ; construction en cours |
 | L-16 (parts B et C) | `audit/corr-d`, fb155395, 330ed46b | D | essais ajoutés | ✅ acceptés |
 | Fond `.se-date` (Administration) | c0bd9690 | D | doit faire passer `test-contraste-applis.js` | fait, ajouté à `audit/corrections` |
-| Suppression des vieux messages d'essai (demande de la propriétaire) | `audit/corr-c`, 3ac7a81e | C | `test-suppression-messages.js` 10/10, base d'essai 2/2 | fait, à relire ; SQL à coller avec accord |
+| Suppression des vieux messages d'essai (demande de la propriétaire) | `audit/corr-c`, 3ac7a81e | C | `test-suppression-messages.js` 10/10, base d'essai 2/2 | ✅ accepté sous condition (noms réels des règles de la base), condition vérifiée par D : noms identiques ; SQL à coller avec accord |
 
 **Rassemblement** : `audit/corrections` (C, 7a60e64d) = renfort-corrections + corr-c + corr-d + corr-a (sans a945d451 ni
 ea364a01, doublon de corr-b) + corr-b + fond `.se-date`. Reste à ajouter : suppression des messages d'essai (après relecture).
