@@ -1649,5 +1649,9 @@ n'existe dans la base qu'APRÈS l'envoi des photos, et la base (`supabase-cours-
    liens Drive (`medias_drive_appliquer`) seulement si l'inscription n'a pas déjà de photo Cloudflare, et la limite
    de 5 reste ;
 4. Administration (`site-cours-talons.js`) : photo `r2:` affichée par adresse signée, comme les candidatures.
-**A attend la validation du superviseur** (et de la propriétaire pour le SQL) avant de coder ce point. En attendant,
+**A attend la validation du superviseur** (et de la propriétaire pour le SQL) avant de coder ce point.
+**Superviseur, 15 h 35 : partie 1 (candidatures, af2a6037) ACCEPTÉE** (relecture finale à la batterie de L-17).
+**Inventaire : ACCEPTÉ** (cartes d'accès et justificatifs comptables restent chez Supabase, privés : d'accord).
+**Cours de talons : proposition VALIDÉE** (points 1 à 4). Le petit SQL est préparé + base d'essai ; il sera collé par
+la propriétaire avec la mise en ligne de L-17 (pas avec celle en cours), après son accord écrit. **A peut coder.** En attendant,
 rien d'autre à changer : tous les autres envois de photos passent déjà par Cloudflare (ou restent privés chez Supabase).
