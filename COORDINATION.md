@@ -400,6 +400,33 @@ d'état : ce qu'il fait maintenant, ce qui est fini, ce qui le bloque.
   - **en attente** : (1) visite réelle après la mise en ligne par C (CV avec logo, R-15) ; (2) essai réel R-01
     (création d'un compte d'équipe avec une adresse d'essai), seulement avec l'accord écrit de la propriétaire.
 
+## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
+
+« Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
+1. **Aucune mise en ligne avec seulement les 4 corrections du renfort.** La batterie de B sur
+   `audit/renfort-corrections` ne sert que de contrôle intermédiaire ; ce n'est pas la batterie finale.
+2. **Répartition de TOUS les lots confirmés de la liste commune de D (L-1 à L-16)**, en commençant par les hauts :
+   L-1 (rôle « site » trop ouvert, A-03 = D-01), R-02 = D-V1 (mannequin qui se publie seule), R-04 (« Appli MA2M »
+   sur « Envoyer ma candidature »), R-05/R-06/R-07 (photos de candidature), R-01 = A4-03 (comptes d'équipe),
+   B-P5 (anti-robots), A-08 (colonnes des formulaires), B-V5 (tâche de 8 h), R-12 (entrée marques et promoteurs),
+   R-09/R-10 (booking), puis les moyens et les bas.
+   Pour chaque lot : une solution choisie en commun, UN agent qui corrige, sur UNE branche commune
+   `audit/corrections` (partie de `audit/renfort-corrections`), commits séparés par lot.
+   Proposition du superviseur à compléter ou corriger : A → L-1 et A-08 (droits de la base, SQL) ;
+   B → B-P5, B-V5 et R-05/R-06/R-07 ; C → R-02 et R-01 (déclencheur et création de compte, essai réel avec D et
+   l'accord de la propriétaire) ; D → R-04 et les points d'Administration qu'il voit en vrai ;
+   R-12 et R-09/R-10 (marques, booking) : proposition de maquette d'abord, montrée à la propriétaire.
+   Le renfort relit chaque lot (il ne peut pas lancer de commande).
+3. **Une seule batterie finale** quand tout est corrigé, puis validation, accord écrit de la propriétaire, et UNE
+   mise en ligne par C.
+4. Reste à décider par la propriétaire : D-05 (mois de rodage comptés ou non).
+
+Chaque agent écrit « d'accord » ou sa correction de la répartition ici :
+- A :
+- B :
+- C :
+- D :
+
 ## 6. Décisions (accord des 4 agents + propriétaire)
 
 Format : `ID problème | solution retenue | branche | testé par | validé par`
