@@ -1519,3 +1519,31 @@ Réponses :
 - Photos des candidates NON publiques : ne pas les servir par `photos.` en accès libre ; soit un dossier lu seulement
   par adresse signée (comme le stockage Supabase des anciennes candidatures), soit des noms imprévisibles + aucune liste.
 - Outil partagé à réutiliser côté page : `envoyerPhotosAvecJauges` (js/app.js) — y brancher R2 d'abord, Drive ensuite.
+
+### A, 15 h 10 : L-17 reçu — PROPOSITION TECHNIQUE (à valider avant de coder), merci B pour le conseil
+1. **Ordre des envois (page)** : la candidature est enregistrée comme aujourd'hui (son id est connu) ; puis chaque photo
+   (déjà allégée) part **d'abord vers Cloudflare R2**, avec sa jauge ; **ensuite**, sans rien changer, la copie Drive
+   (`envoyerPhotosAvecJauges`, programme Google, #453). Un échec R2 n'empêche jamais la copie Drive (comme aujourd'hui).
+2. **Serveur, action à part pour les candidates (sans compte)** dans `api/r2-presigner.js`, réutilisant `api/_r2.js`
+   (`repondreR2`, `verifierContenuR2`) : signe l'envoi d'UNE image (jpeg/png/webp, ≤ 15 Mo) vers
+   `candidatures/<id candidature>/<uuid aléatoire>.jpg` — clé fabriquée par le serveur, jamais par la page.
+   Conditions vérifiées en base : candidature existante, « nouvelle », de moins de 2 h, moins de 12 photos
+   (`candidature_prete_pour_photo` + compte) ; limite par adresse (`limiteDebit`).
+3. **Après l'envoi** : la page demande « vérifier » ; le serveur relit les premiers octets (vraie image, sinon effacée)
+   et **c'est le serveur qui écrit** la ligne `casting_photos` (`application_id`, `chemin = 'r2:candidatures/…'`).
+4. **Affichage dans l'Administration** (`photosDe`, `js/admin/site-dossiers.js`) : les `chemin` « r2: » reçoivent une
+   **adresse signée d'1 heure** (nouvelle action serveur, réservée à l'équipe connectée avec double authentification) ;
+   s'il existe au moins une photo R2 pour un dossier, ses copies Drive sont masquées (pas de doublon) ; sinon (anciennes
+   candidatures, ou R2 en panne) l'affichage Drive actuel reste.
+5. **Confidentialité** : dossier `candidatures/` séparé du Book, jamais listé, noms imprévisibles ; jamais servies par la
+   page publique. Pour fermer tout à fait : **clic de la propriétaire** dans Cloudflare (règle qui bloque
+   `photos.maitreakessemodelmanagement.com/candidatures/*`), l'Administration passant par l'adresse signée.
+6. **Hors champ** : la vidéo reste sur Drive ; « Intégrer l'agence » et « Postuler à un casting » utilisent le même code
+   (`js/formulaire-candidature.js`) ; cours de talons inchangés ; aucune photo réelle supprimée ; aucun SQL à coller
+   (tout passe par le serveur avec la clé secrète).
+7. **Essais** : serveur (refus : candidature inconnue, ancienne, 12 photos, mauvais type, faux contenu ; clé jamais
+   choisie par la page) ; navigateur candidature FR/EN avec photos (R2 d'abord, Drive ensuite, R2 en panne → Drive
+   seul) ; Administration (photo R2 signée, Drive masqué, ancienne candidature inchangée) ; téléphone et ordinateur.
+8. Branche `audit/photos-cloudflare` partie de `audit/corrections`, sans toucher à la mise en ligne en cours.
+**A attend la validation du superviseur pour commencer.**
+
