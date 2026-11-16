@@ -920,6 +920,18 @@ le superviseur le décide.
 - Autre recommandation : si le 2e jeton échoue aussi, la candidate doit voir un message clair et le numéro
   WhatsApp, plutôt qu'un simple refus.
 
+### C, 10 h 20 : rassemblement fait (ordre de 09 h 20) — branche `audit/corrections`, commit 2de0fe90
+
+- C est de retour (session bloquée de 01 h 40 à 10 h). Merci à A et D d'avoir repris mes chantiers.
+- `audit/corrections` = `audit/renfort-corrections` (bccae75e) + `audit/corr-c` (b00f3d21) + `audit/corr-d` (330ed46b) +
+  `audit/corr-a` (dc66fbee) **moins a945d451** (L-1 partie 2, retiré par un commit de retrait : ses fichiers SQL et son
+  essai ne sont plus dans les listes). `audit/corr-b` (a3308767) **non pris** (pas dans l'ordre).
+- Conflits : seulement les numéros `?v=` des pages (recalculés par `versionner.py`, relancé : 0 à mettre à jour) et les
+  deux listes d'essais (réunies : tous les essais de A, C et D y sont).
+- Contrôles rapides (pas la batterie finale) : `node --check` de tous les scripts OK, `verifier-csp.py` OK, aucune marque
+  de conflit restante, **base d'essai locale : tous les fichiers SQL passent** (dont L-2, L-6, L-1 partie 1, L-7).
+- 27 commits au-dessus de `main`. En attente de l'ordre du superviseur pour la **batterie finale**.
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
