@@ -319,6 +319,9 @@ const COLONNES_FORMULAIRES = {
 function garderColonnesAutorisees(table, ligne) {
   const propre = {};
   for (const c of COLONNES_FORMULAIRES[table] || []) if (Object.prototype.hasOwnProperty.call(ligne, c)) propre[c] = ligne[c];
+  // (16/11/2026, B-V4) : « direct » est réservé aux dossiers créés par l'agence elle-même (casting à l'agence, sans
+  // photo) ; un visiteur n'envoie que « agence » (intégrer l'agence) ou « projet » (un casting).
+  if (table === 'casting_applications' && 'type_candidature' in propre && !['agence', 'projet', null].includes(propre.type_candidature)) return null;
   return propre;
 }
 async function formulairePublic(req, corps, res) {
@@ -327,7 +330,7 @@ async function formulairePublic(req, corps, res) {
     return res.status(400).json({ error: 'Formulaire invalide.' });
   }
   const ligne = garderColonnesAutorisees(table, recu);
-  if (!Object.keys(ligne).length) return res.status(400).json({ error: 'Formulaire invalide.' });
+  if (!ligne || !Object.keys(ligne).length) return res.status(400).json({ error: 'Formulaire invalide.' });
   const ip = extraireIp(req) || '';
   const verif = await jetonAntiRobotValide(corps.jeton, ip, corps.raisonJeton);
   if (!verif.ok) {
@@ -539,3 +542,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: e.message || 'Erreur serveur.' });
   }
 };
+// (pour les essais : comparer les champs vraiment envoyés par les pages à la liste blanche)
+module.exports.COLONNES_FORMULAIRES = COLONNES_FORMULAIRES;

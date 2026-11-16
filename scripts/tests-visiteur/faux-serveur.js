@@ -1,5 +1,7 @@
 // Faux serveur Supabase / EmailJS pour tester le site comme un visiteur, SANS toucher à la vraie base.
 const SUPA = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
+// liste blanche des formulaires publics du serveur (api/portail.js), pour repérer un champ qui serait perdu
+const { COLONNES_FORMULAIRES } = require('../../api/portail.js');
 // Portail d'administration (donnees.portail = { aal, facteurs }) : double authentification imitée.
 // Le code « 000000 » est refusé ; tout autre code à 6 chiffres est accepté.
 function brancher(page, donnees, journal) {
@@ -150,6 +152,18 @@ function brancher(page, donnees, journal) {
           journal.push(['ANTI-ROBOT', corps.table, corps.jeton || '']);
           const refus = typeof donnees.formulaire === 'function' ? donnees.formulaire(corps) : null;
           if (refus) return route.fulfill({ status: refus.statut || 403, contentType: 'application/json', body: JSON.stringify(refus) });
+          // (16/11/2026, audit L-7) : un champ envoyé par la page mais absent de la liste blanche du serveur serait
+          // PERDU en silence : l'envoi échoue ici, donc l'essai du formulaire échoue (« enregistré » faux).
+          const perdus = Object.keys(corps.ligne || {}).filter((c) => !(COLONNES_FORMULAIRES[corps.table] || []).includes(c));
+          if (process.env.FORMULAIRES_COUVERTS) {   // (test-liste-blanche-formulaires.js : quelles pages ont envoyé quoi)
+            const pageEnvoi = String((route.request().headers() || {}).referer || '').replace(/^https?:\/\/[^/]+\//, '').split(/[?#]/)[0];
+            require('fs').appendFileSync(process.env.FORMULAIRES_COUVERTS, JSON.stringify({ table: corps.table, page: pageEnvoi, champs: Object.keys(corps.ligne || {}), perdus }) + '\n');
+          }
+          if (perdus.length) {
+            console.log('❌ ÉCHEC champ(s) perdu(s) par la liste blanche du serveur (' + corps.table + ') : ' + perdus.join(', '));
+            journal.push(['CHAMP-PERDU', corps.table, perdus.join(',')]);
+            return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'champ perdu : ' + perdus.join(', ') }) });
+          }
           journal.push(['POST', corps.table, '', JSON.stringify(corps.ligne)]);
           if (donnees.memoriser) (donnees.tables[corps.table] = donnees.tables[corps.table] || []).push(Object.assign({}, corps.ligne));
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: (corps.ligne && corps.ligne.id) || 'nouveau-' + journal.length }) });

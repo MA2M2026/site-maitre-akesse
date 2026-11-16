@@ -58,6 +58,11 @@ async function serveur() {
   r = await appeler({ table: 'cours_talons', ligne: { id: 't1', nom: 'Awa', montant: 1, statut: 'payee', paye_le: '2026-01-01' }, jeton: 'bon-jeton' });
   const talons = rpcs[2] && rpcs[2].p_ligne;
   ok(r.statut === 200 && talons && talons.nom === 'Awa' && !('montant' in talons) && !('statut' in talons) && !('paye_le' in talons), 'serveur : cours de talons fabriqué : montant et statut de paiement retirés');
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'ca2', full_name: 'Robot', email: 'r@t.ci', type_candidature: 'direct' }, jeton: 'bon-jeton' });
+  ok(r.statut === 400 && rpcs.length === 3, 'serveur : candidature « direct » (réservée à l’agence) envoyée par un visiteur : refusée (B-V4)');
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'ca3', full_name: 'Awa', email: 'a@t.ci', type_candidature: 'projet', projet_nom: 'Défilé' }, jeton: 'bon-jeton' });
+  ok(r.statut === 200 && rpcs.length === 4 && rpcs[3].p_ligne.type_candidature === 'projet', 'serveur : candidature « projet » (un casting) : acceptée');
+  rpcs.length = 3;
   r = await appeler({ table: 'messages_contact', ligne: { status: 'traitee', inconnu: 1 }, jeton: 'bon-jeton' });
   ok(r.statut === 400 && rpcs.length === 3, 'serveur : envoi sans aucune colonne autorisée : refusé');
   rpcs.length = 1;
