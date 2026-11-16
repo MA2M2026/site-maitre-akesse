@@ -86,11 +86,13 @@
 .lx-galerie-photo:hover img { transform: scale(1.06); }
 /* (13/11/2026) la bande du milieu défile toute seule, comme un tapis roulant (js/diaporama-luxe.js) ; s'arrête sous le doigt ou la souris */
 .lx-galerie-grille.en-tapis { display: block; overflow: hidden; padding-bottom: 1rem; scroll-snap-type: none; }
-.lx-tapis { display: flex; gap: 1rem; width: max-content; animation: lx-tapis var(--duree, 45s) linear infinite; }
+.lx-tapis { display: flex; gap: 1rem; width: max-content; }
+/* (16/11/2026) la bande ne roule qu'une fois sa copie ajoutée par le script (classe « roule ») : sans elle, elle sauterait dans le vide */
+.lx-tapis.roule { animation: lx-tapis var(--duree, 45s) linear infinite; }
 .lx-galerie-grille .lx-tapis .lx-galerie-photo { flex: 0 0 auto; width: clamp(240px, 28vw, 380px); transform: none; }
 .lx-galerie-grille.en-tapis:hover .lx-tapis, .lx-galerie-grille.en-tapis:active .lx-tapis { animation-play-state: paused; }
 /* (16/11/2026) bande déjà dans la page : qui demande moins d'animations la fait glisser du doigt */
-@media (prefers-reduced-motion: reduce) { .lx-tapis { animation: none; } .lx-galerie-grille.en-tapis { overflow-x: auto; } }
+@media (prefers-reduced-motion: reduce) { .lx-tapis.roule { animation: none; } .lx-galerie-grille.en-tapis { overflow-x: auto; } }
 @keyframes lx-tapis { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 0.5rem)); } }
 @media (min-width: 860px) {
   .lx-galerie-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6rem; overflow: visible; padding-bottom: 3rem; }
