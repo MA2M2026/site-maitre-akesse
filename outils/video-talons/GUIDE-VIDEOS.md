@@ -157,3 +157,30 @@ Les autres éléments de la grande vidéo :
 | `voix-alicia.json`, `voix-teaser.json` | textes calés des deux voix |
 | `alicia/` | photos, détourages, compcard, musiques |
 | `sons/a-*.mp3` | effets sonores ElevenLabs |
+
+## 5. Film à partir de vraies vidéos : « Répétitions du défilé » (16/11/2026)
+
+Brief de la propriétaire : film de mode en coulisses, 3 min 18 s, à partir des vidéos WhatsApp des répétitions
+(18 rushes verticaux filmés dans la salle blanche). Dossier `repetitions/` :
+
+| Fichier | Rôle |
+| --- | --- |
+| `plans.py` | le découpage : rush, instant, durée, vitesse (ralenti ou accélération), mouvement de caméra, lumière, transition |
+| `monter.py` | le montage : `preparer` (ralentis fluides, ffmpeg minterpolate), `planche` (images de contrôle), `images t…`, `film` |
+| `musique.py` | musique ORIGINALE composée par le programme (Ré mineur, 120 bpm, calée sur les actes) + effets de `../sons` |
+| `polices/` | Cormorant Garamond et Work Sans converties en .ttf pour les cartes titres |
+
+- **Les rushes, le cache et les rendus ne vont jamais sur GitHub** (`repetitions/.gitignore`) : le dépôt est public et
+  des mineurs sont à l'image.
+- **Décision de la propriétaire (16/11/2026)** : pour ce film des répétitions, les mineurs **peuvent** apparaître
+  (exception à la règle « jamais de mineur à l'image », qui reste valable pour les autres vidéos).
+- Aucun mouvement de corps inventé : seulement des vraies images, recadrées (caméra simulée), ralenties (images
+  intermédiaires) ou accélérées.
+- Étalonnage : courbe sombre (murs blancs ramenés à un gris chaud), hautes lumières dorées, ombres froides, vignettage
+  fort, plafond éteint, halo, grain. Transitions : flash (avec impact) aux débuts d'actes, balayage de caméra (avec
+  « whoosh »), fondus, fondus au noir au début.
+- Si ElevenLabs n'est pas disponible, la musique est composée par `musique.py` (libre de droits) ; vérifier sa forme
+  avec `showwavespic`. Attention : la bande jaune vers 1 200 Hz de `showspectrumpic` (échelle log) est un défaut
+  d'affichage, pas un son.
+- Commandes : `python3 monter.py preparer && python3 monter.py film && python3 musique.py`, puis assembler
+  `sortie/film-muet.mp4` et `sortie/musique.wav` avec ffmpeg (H.264 crf 18, AAC 256 k).
