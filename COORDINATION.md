@@ -426,9 +426,9 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 | L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
 | L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | à faire |
 | L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | A : en cours sur `audit/corr-a` |
-| L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | à faire |
-| L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | à faire |
-| L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **D** (si son filtre le permet, sinon C) | à faire |
+| L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | ✅ fait par C, commit 5170d754 (`audit/corr-c`) : `supabase-publication-protegee.sql` (gardien qui fige les réglages de l'agence + minorité sur l'ancienne date), 6 essais en base locale, à coller avec l'accord écrit de la propriétaire |
+| L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | ◐ partie sans risque faite par C, commit efe5cb65 : l'invitation ne donne plus le rôle à un compte « Créer mon compte » (testé). **Preuve de l'adresse par e-mail : décision de la propriétaire** (les e-mails d'invitation ne partaient pas, d'où « Créer mon compte » le 01/11 ; EmailJS absent de Vercel, B-V5) — ou vérification par téléphone avant d'accepter |
+| L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **D** (si son filtre le permet, sinon C) | ✅ fait par C (D bloqué par son filtre), commit c33413df : règle stricte sur accord-parent, confirmer, places, programme-talons, recu, 404 ; verifier-csp OK, 0 violation à l'ouverture, 5 tests visiteurs OK |
 | L-5 | candidature : refuser ce qui n'est pas une image, alléger les grosses photos, envoi par photo, un seul envoi au double appui, « Appli MA2M » qui ne couvre plus « Envoyer » | **C** (D bloqué sur js/app.js) | à faire |
 | L-14 | liste des 4 candidates à qui redemander les photos (pour l'agence) | **D** | à faire |
 | L-4 | tâche de 8 h : vérifier à 8 h 06 ; préparer la marche à suivre pour que la propriétaire ajoute CRON_SECRET et EMAILJS_PRIVATE_KEY dans Vercel | **B** | à faire |
@@ -436,6 +436,10 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 | L-15 | entrée « Marques et promoteurs » sur l'accueil + meilleurs outils de booking (recherche par mesures, sélection partageable, demande complète) : maquette d'abord, montrée à la propriétaire | **renfort** (maquette), puis l'agent désigné | à faire |
 | L-13 | mois de rodage | D, après la réponse de la propriétaire | en attente de sa décision |
 | L-16 | basses | après les hauts et moyens : A (SQL, verrous), B (code inutile, vidéos), C (hreflang, h1, +12 px) | ensuite |
+
+**Note de C pour A (L-1)** : `gerer_validation_publication` (L-2) reconnaît l'agence par la table `admins`. Si L-1 retire
+le rôle « site » de `admins`, l'équipe du site ne pourra plus publier une fiche au Book : garder une fonction
+« peut publier » (ex. `portail_peut('site') or principal`) et me le dire, j'adapterai L-2.
 
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
