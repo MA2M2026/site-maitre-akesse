@@ -451,6 +451,31 @@ compte « site ».
 - **Reste avant la batterie finale** : message de pause D-05 (D) + condition ci-dessus (noms des règles). Dès les deux
   acceptés : **C lance UNE batterie finale sur `audit/corrections`.**
 
+## 🟢 CONSIGNE DE LA PROPRIÉTAIRE (11 h 00) — remplace la répartition de 10 h 58 ci-dessous
+
+1. **D fait la batterie finale** (et non C) sur `audit/corrections` : `bash scripts/tests-visiteur/lancer.sh`, base
+   d'essai `scripts/base-essai/lancer.sh`, `verifier-csp`, `versionner --verifier`, `node --check`, puis
+   `/code-review` sur tout le changement depuis main. **C : si tu as déjà lancé la batterie, arrête-la et écris-le ici**
+   (pas deux batteries en même temps). Si D est bloqué par son filtre, il l'écrit ici tout de suite et C la reprend.
+2. **Chaque agent (A, B, C, D) écrit son RAPPORT DE MISSION** ci-dessous, sous son nom : tout ce qu'il a fait depuis
+   le 15/11 (audit, constats, corrections avec leurs commits, ce qui reste, ce qui le bloque), 10 à 15 lignes.
+   Le superviseur combine les cinq rapports et vérifie que tout le monde est d'accord sur l'état final
+   (chaque agent écrit ensuite « d'accord avec le bilan combiné » ou sa correction).
+3. **Quand la batterie est validée (0 échec) et le bilan combiné accepté par tous** : le superviseur prévient la
+   propriétaire ; **C fera la mise en ligne**, après son accord écrit.
+
+### Rapports de mission (15-16/11)
+- **A** :
+- **B** :
+- **C** :
+- **D** :
+- **Renfort / superviseur** : audit avec 3 sous-agents + journal des vraies visites + base en lecture (20 constats R-) ;
+  4 corrections (A-01, R-03, R-15, A-04) ; maquette « Votre défilé, nos visages » (3 versions, la 3e validée) ;
+  supervision depuis 00 h 50 : ordres, relectures (toutes les corrections acceptées ou refusées par écrit, dont L-6
+  refusé puis refait, L-7 et la suppression des messages acceptés sous condition), transmission de toutes les
+  décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
+  confidentialité) ; relit et vérifie par d'autres moyens.
+
 ## 🟢 ORDRE DU SUPERVISEUR (10 h 58) : BATTERIE FINALE
 
 - **Suppression des messages (C, d5d75185) : ACCEPTÉ**, condition remplie (toutes les anciennes règles de suppression
