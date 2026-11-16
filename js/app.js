@@ -2436,45 +2436,8 @@ function creerEditeurRiche(idConteneur, placeholder) {
   return quill;
 }
 
-// Éditeur riche « différé » (26/10/2026) : Quill (≈ 200 Ko) n'est plus téléchargé par les
-// visiteurs des pages Actualités, Événements et Partenaires. La page reçoit tout de suite une
-// poignée ; Quill se charge seulement quand un formulaire de l'Administration en a besoin (poignee.preparer(), à attendre avant de lire ou remplir l'éditeur).
-const EDITEURS_DIFFERES = [];
-let quillEnChargement = null;
-function chargerFichierPage(balise, attributs) {
-  return new Promise((ok, ko) => {
-    const el = Object.assign(document.createElement(balise), attributs);
-    el.onload = ok; el.onerror = ko;
-    document.head.appendChild(el);
-  });
-}
-function chargerQuill() {
-  // les deux fichiers jusqu'au bout, même si l'un échoue ; en cas d'échec, l'éditeur simple
-  // prend le relais (creerEditeurRiche) et le prochain éditeur réessaiera de charger Quill
-  if (!quillEnChargement) quillEnChargement = Promise.allSettled([
-    chargerFichierPage('link', { rel: 'stylesheet', href: '/js/vendor/quill-2.0.3.snow.css' }),
-    chargerFichierPage('script', { src: '/js/vendor/quill-2.0.3.js' })
-  ]).then((r) => { if (r.some((x) => x.status === 'rejected')) quillEnChargement = null; });
-  return quillEnChargement;
-}
-function editeurRicheDiffere(idConteneur, placeholder) {
-  const poignee = { editeur: null, ecouteurs: [], pret: null };
-  poignee.preparer = () => poignee.pret || (poignee.pret = chargerQuill().then(() => {
-    poignee.editeur = creerEditeurRiche(idConteneur, placeholder);
-    if (poignee.editeur && typeof poignee.editeur.on === 'function') poignee.ecouteurs.forEach(([evt, fn]) => poignee.editeur.on(evt, fn));
-    return poignee.editeur;
-  }));
-  poignee.on = (evt, fn) => {
-    poignee.ecouteurs.push([evt, fn]);
-    if (poignee.editeur && typeof poignee.editeur.on === 'function') poignee.editeur.on(evt, fn);
-  };
-  poignee.setText = (t) => { if (poignee.editeur) poignee.editeur.setText(t); };
-  EDITEURS_DIFFERES.push(poignee);
-  return poignee;
-}
-function preparerEditeursDifferes() {
-  EDITEURS_DIFFERES.forEach((p) => { void p.preparer(); });
-}
+// (16/11/2026, audit B-P12) l'éditeur riche « différé » (editeurRicheDiffere, preparerEditeursDifferes, chargerQuill) n'était
+// plus appelé nulle part depuis la nouvelle Administration : retiré.
 // La poignée d'un éditeur différé, ou l'éditeur lui-même. Lire ou remplir une poignée pas
 // encore prête serait une erreur silencieuse (texte vide enregistré) : on la signale.
 function editeurReel(quill) {
@@ -3736,27 +3699,6 @@ function villeAvecCommune(valeurVille, idSelectCommune, idAutreCommune) {
     return (autre && autre.value.trim()) || 'Abidjan';
   }
   return selectCommune.value || 'Abidjan';
-}
-
-// Repositionne les champs ville/commune à partir d'une valeur déjà enregistrée en
-// base (ex. "Cocody" doit rouvrir le select ville sur "Abidjan" ET le select
-// commune sur "Cocody" — sinon la commune enregistrée serait invisible à la
-// réouverture du formulaire). Pour toute autre ville, délègue à
-// definirSelectOuAutre() (déjà présente sur chaque page consommatrice), qui gère
-// la bascule vers "Autre" pour une ville hors liste.
-function definirVilleAvecCommune(valeurEnregistree, idSelectVille, idAutreVille, idSelectCommune, idAutreCommune) {
-  const selectVille = document.getElementById(idSelectVille);
-  const selectCommune = document.getElementById(idSelectCommune);
-  if (!selectVille) return;
-  const valeur = valeurEnregistree || '';
-  const estCommuneAbidjan = COMMUNES_ABIDJAN.includes(valeur);
-  if (valeur === 'Abidjan' || estCommuneAbidjan) {
-    selectVille.value = 'Abidjan';
-    selectVille.dispatchEvent(new Event('change'));
-    if (selectCommune) selectCommune.value = estCommuneAbidjan ? valeur : 'Abidjan';
-    return;
-  }
-  definirSelectOuAutre(idSelectVille, idAutreVille, valeur);
 }
 
 // ================== Indicatifs téléphoniques des pays ==================

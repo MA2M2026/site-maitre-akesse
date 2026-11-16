@@ -27,3 +27,6 @@ CONVENTIONS.md
 README.md
 COORDINATION.md
 tests/
+# Films des réseaux sociaux (audit du 16/11/2026, A-02 : ≈ 230 Mo publiés, aucune page ne s'en sert) : gardés dans le
+# dépôt, jamais envoyés sur le site. Les photos ma2m-book-*.jpg du même dossier restent publiées (diaporama).
+assets/reseaux/*.mp4

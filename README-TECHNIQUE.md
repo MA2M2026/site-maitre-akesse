@@ -3700,8 +3700,10 @@ Demande de la propriétaire : « chaque élément du site a son bel aperçu, con
 ## Niveau supérieur après le contrôle extérieur du 26/10/2026
 Contrôle : Mozilla Observatory A+ (110), SSL Labs A+, W3C sans erreur sur les 29 pages en ligne,
 axe (accessibilité) sur les 28 pages publiques, SonarCloud. Chantiers menés :
-- **Éditeur de texte à la demande** : Quill (≈ 200 Ko) n'est plus chargé par les pages Actualités,
-  Événements et Partenaires. `editeurRicheDiffere()` (js/app.js) rend une poignée ; Quill se charge
+- **Éditeur de texte à la demande** (⚠ 16/11/2026, audit B-P12 : `editeurRicheDiffere`, `preparerEditeursDifferes` et
+  `chargerQuill` ont été retirés de js/app.js, plus appelés depuis la nouvelle Administration ; le paragraphe qui suit
+  décrit l'ancien fonctionnement) : Quill (≈ 200 Ko) n'est plus chargé par les pages Actualités,
+  Événements et Partenaires. `editeurRicheDiffere()` (js/app.js) rendait une poignée ; Quill se charge
   quand l'agence est reconnue (`verifierAdmin` → `preparerEditeursDifferes`) ou à l'ouverture d'un
   formulaire. Toujours `await poignee.preparer()` avant `lireContenuEditeur` /
   `chargerContenuDansEditeur` (sinon erreur volontaire : un texte vide serait enregistré). Essais :
