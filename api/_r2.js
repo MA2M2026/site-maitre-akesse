@@ -46,9 +46,10 @@ function famillesPermises(typeFichier) {
   if (typeFichier === 'application/pdf') return ['pdf'];
   return ['image'];
 }
-// Après l'envoi : lit les 32 premiers octets du fichier déposé ; si ce n'est pas le format annoncé, le fichier
-// est SUPPRIMÉ du stockage et l'envoi refusé (422). Appelé par le navigateur juste après l'envoi.
-async function verifierContenuR2(res, chemin, typeFichier) {
+// Après l'envoi : lit les 32 premiers octets du fichier déposé. Renvoie 'ok' (le format annoncé), 'illisible'
+// (relecture impossible : jamais bloquant, noté au journal) ou 'faux' (le fichier a été SUPPRIMÉ du stockage).
+// (16/11/2026, L-17 : partagé par verifierContenuR2 et les photos des candidatures, api/r2-presigner.js)
+async function contenuR2(chemin, typeFichier) {
   const { GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
   const client = creerClientR2();
   const bucket = process.env.R2_BUCKET_NAME;
@@ -61,11 +62,21 @@ async function verifierContenuR2(res, chemin, typeFichier) {
     // lecture du stockage, réseau…) : l'envoi n'est JAMAIS bloqué pour ça ; seul un fichier lu et faux est refusé
     console.error('verifierContenuR2 :', e);
     await noterAuJournal('[Vérification des fichiers] relecture impossible : ' + ((e && (e.name || e.message)) || e), 'r2', '/api/r2-presigner').catch(() => {});
-    res.status(200).json({ ok: true, verifie: false }); return;
+    return 'illisible';
   }
-  if (famillesPermises(typeFichier).includes(familleDuContenu(octets))) { res.status(200).json({ ok: true }); return; }
+  if (famillesPermises(typeFichier).includes(familleDuContenu(octets))) return 'ok';
   await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: chemin })).catch(() => {});
-  res.status(422).json({ error: 'Ce fichier n’est pas une vraie ' + (typeFichier === 'application/pdf' ? 'document PDF' : /^video/i.test(typeFichier) ? 'vidéo' : 'photo') + ' : il a été refusé.', refuse: true });
+  return 'faux';
+}
+function messageFichierFaux(typeFichier) {
+  return 'Ce fichier n’est pas une vraie ' + (typeFichier === 'application/pdf' ? 'document PDF' : /^video/i.test(typeFichier) ? 'vidéo' : 'photo') + ' : il a été refusé.';
+}
+// Appelé par le navigateur juste après l'envoi : 422 si le fichier n'est pas du format annoncé.
+async function verifierContenuR2(res, chemin, typeFichier) {
+  const etat = await contenuR2(chemin, typeFichier);
+  if (etat === 'illisible') { res.status(200).json({ ok: true, verifie: false }); return; }
+  if (etat === 'ok') { res.status(200).json({ ok: true }); return; }
+  res.status(422).json({ error: messageFichierFaux(typeFichier), refuse: true });
 }
 
 // Une fois l'autorisation vérifiée : supprime le fichier (action « suppression ») ou renvoie
@@ -146,4 +157,4 @@ async function traiterNoteIntegration(res, corps) {
   await repondreR2(res, undefined, chemin, 'application/pdf', taille, 15 * 1024 * 1024);
 }
 
-module.exports = { debutR2, repondreR2, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
+module.exports = { debutR2, repondreR2, contenuR2, messageFichierFaux, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };

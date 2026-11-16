@@ -1929,6 +1929,38 @@ async function supprimerDeR2(modelId, chemin) {
     });
   } catch (e) { console.warn('Suppression R2 non confirmée :', e); }
 }
+// (16/11/2026, chantier L-17, demande de la propriétaire) PHOTOS D'UNE CANDIDATURE vers Cloudflare R2, AVANT la copie
+// Google Drive : l'Administration les affiche depuis R2 (Drive ne les servait pas de façon fiable). Visiteur sans compte :
+// le serveur (api/r2-presigner.js, actions « candidature_… ») choisit le nom du fichier, relit le contenu et note
+// lui-même la photo dans la base. Chaque photo a sa jauge ; 2 essais par photo. Renvoie les rangs des photos arrivées.
+// Partagé par « Postuler à un casting » et « Intégrer l'agence » (js/formulaire-candidature.js).
+async function envoyerPhotosCandidatureR2(idCandidature, fichiers, ids, nomPhoto) {
+  const appel = (corps) => fetch('/api/r2-presigner', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) })
+    .then(async (r) => ({ statut: r.status, ok: r.ok, corps: await r.json().catch(() => ({})) }));
+  const arrivees = [];
+  for (let i = 0; i < fichiers.length; i++) {
+    const f = fichiers[i], type = f && f.type;
+    if (!f || !/^image\/(jpeg|png|webp)$/.test(type)) continue;  // (autre format : seulement la copie Drive, comme avant)
+    let fini = false;
+    for (let essai = 1; essai <= 2 && !fini; essai++) {
+      try {
+        majJauge(ids[i], 5, nomPhoto(i) + T(' : envoi…', ': sending…'));
+        const signe = await appel({ action: 'candidature_signer', candidature: idCandidature, contentType: type, taille: f.size });
+        if (!signe.ok) { if (signe.statut === 400 || signe.statut === 403) return arrivees; throw new Error(signe.corps.error || 'signature'); }  // (refus : inutile de continuer)
+        const envoi = await envoyerAvecProgression(signe.corps.uploadUrl, f, (part) => majJauge(ids[i], 5 + part * 85), type, true);
+        if (!envoi.ok) throw new Error('envoi ' + envoi.status);
+        const verif = await appel({ action: 'candidature_verifier', candidature: idCandidature, chemin: signe.corps.chemin });
+        if (verif.statut === 422) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : refusée (pas une vraie photo)', ': refused (not a real photo)')); fini = true; break; }
+        if (!verif.ok) throw new Error(verif.corps.error || 'vérification');
+        majJauge(ids[i], 100, nomPhoto(i) + T(' : arrivée', ': received'));
+        arrivees.push(i); fini = true;
+      } catch (e) {
+        if (essai < 2) await new Promise((r) => setTimeout(r, 900));
+      }
+    }
+  }
+  return arrivees;
+}
 // Photo redessinée dans un cadre de « coteMax » pixels, sur fond blanc (transparence PNG → blanc).
 function redessinerPhoto(fichier, coteMax, rendu) {
   return new Promise(resolve => {

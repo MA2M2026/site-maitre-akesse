@@ -1600,6 +1600,27 @@ Sans cette variable, le bouton "🗑 Supprimer" du tableau de bord et l'envoi
 de nouvelles photos échouent proprement (message d'erreur explicite), sans
 jamais bloquer le reste du site.
 
+## 📸 Photos des candidatures d'abord chez Cloudflare R2 (16/11/2026, chantier L-17)
+
+Demande de la propriétaire : les photos de « Postuler à un casting » et « Intégrer l'agence » s'affichaient mal
+depuis Google Drive dans l'Administration. Désormais :
+1. **Cloudflare R2 d'abord** (`envoyerPhotosCandidatureR2` dans `js/app.js`, appelée par `envoyerMedias` de
+   `js/formulaire-candidature.js`) : pour chaque photo, `api/r2-presigner.js` action `candidature_signer`
+   (le SERVEUR choisit le nom `candidatures/<id>/<32 caractères au hasard>.jpg|png|webp`, rien n'est public ni listé),
+   envoi direct, puis `candidature_verifier` : le serveur relit le début du fichier (`contenuR2` de `api/_r2.js`,
+   faux fichier effacé) et note lui-même la photo dans `casting_photos` avec `chemin = 'r2:candidatures/…'`.
+   Refusé si la candidature n'existe pas, n'est plus « nouvelle », a plus de 2 h, ou a déjà 12 photos R2 ;
+   60 demandes par adresse IP au plus (`limiteDebit`).
+2. **Copie Google Drive ensuite** (archive, circuit #453 inchangé). Si Cloudflare est en panne, les photos partent
+   dans Drive comme avant ; une photo n'est « manquante » que si elle n'est arrivée NI chez Cloudflare NI dans Drive.
+3. **Administration** (`photosDe` de `js/admin/site-dossiers.js`) : photo `r2:` → adresse signée d'1 heure
+   (action `candidature_lire`, équipe seulement, double vérification) ; un dossier qui a des photos R2 masque ses
+   copies Drive. Anciennes candidatures (Drive seul) : affichage inchangé. Suppression d'une photo ou d'un dossier :
+   action `candidature_supprimer` (équipe seulement).
+Pas de nouvelle fonction Vercel (limite de 12) : tout passe par `api/r2-presigner.js`.
+Test : `scripts/tests-visiteur/test-photos-candidature-r2.js` (serveur, candidature FR/EN téléphone/ordinateur,
+Cloudflare en panne, Administration).
+
 ## Photos du Book sur Cloudflare R2 (plus sur Supabase Storage)
 
 Le plan gratuit Supabase limite la bande passante ("Cached Egress") à

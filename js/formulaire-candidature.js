@@ -439,8 +439,17 @@ async function envoyerMedias(etat) {
     const nomPhoto = (i) => 'Photo ' + (i + 1);
     idsPhotos.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     majJauge('ca-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
+    // (16/11/2026, L-17) d'abord Cloudflare R2 (affichage fiable dans l'Administration) ; ensuite la copie Drive
+    // (archive), comme avant. Les jauges des photos arrivées chez Cloudflare restent vertes : la copie Drive de ces
+    // photos se fait sans jauge ; une photo qui n'est pas arrivée chez Cloudflare garde sa jauge pour Drive.
+    let arriveesR2 = etat.arriveesR2 || [];
+    if (!etat.r2Fait) {
+      try { arriveesR2 = await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto); } catch (e) { arriveesR2 = []; }
+      Object.assign(etat, { r2Fait: true, arriveesR2 }); await EnvoiFiable.garder('candidature', etat);
+    }
+    const idsDrive = idsPhotos.map((id, i) => (arriveesR2.includes(i) ? 'ca-copie-drive-' + i : id));  // (jauge absente : rien ne bouge)
     try {
-      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsPhotos, nomPhoto, {
+      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsDrive, nomPhoto, {
         nom: candidature.full_name,
         email: candidature.email,
         phone: candidature.phone,
@@ -449,7 +458,8 @@ async function envoyerMedias(etat) {
         source: 'candidature',
         ref: candidature.id
       });
-      nbPhotosEchouees = manquantes;
+      // (une photo manque seulement si elle n'est arrivée NI chez Cloudflare NI dans Drive)
+      nbPhotosEchouees = Math.min(manquantes, fichiersPhotos.length - arriveesR2.length);
       dossierDrive = dossier || null;
       // (ancien programme Google, sans enregistrement de son côté : la page enregistre elle-même, comme avant ;
       // une photo déjà enregistrée par Google est refusée en double par la base, code 23505, sans souci)
@@ -469,8 +479,8 @@ async function envoyerMedias(etat) {
     } catch (e) {
       // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà
       // enregistré côté Supabase) — on signale juste que les photos n'ont pas pu partir.
-      nbPhotosEchouees = fichiersPhotos.length;
-      idsPhotos.forEach((id, i) => jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent')));
+      nbPhotosEchouees = fichiersPhotos.length - arriveesR2.length;
+      idsPhotos.forEach((id, i) => { if (!arriveesR2.includes(i)) jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent')); });
     }
     Promise.resolve(journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees)).catch(() => {});
     // (au moins une photo arrivée : l'étape est franchie ; aucune, à cause du réseau : la reprise réessaiera)
