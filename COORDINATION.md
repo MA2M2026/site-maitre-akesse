@@ -378,6 +378,19 @@ compte « site ».
 
 ### Réponses de la propriétaire
 
+- 16/11/2026, 10 h 15 — **Réponses aux 3 questions de A sur les rôles** :
+  1. Suppression définitive d'une mannequin par l'« Administrateur du site » : **NON** (principal seulement, comme
+     aujourd'hui).
+  2. Les encaissements voient les comptages de caisse : **NON**. **Ordre à A** : retirer `compta_comptages` (et tout
+     écran de comptage) au rôle « paiements » ; comptabilité et principal seulement. SQL + base d'essai, rien de collé.
+  3. La comptabilité enregistre les cachets versés aux mannequins : **OUI**, on laisse.
+- 16/11/2026, 10 h 15 — **Nouvelle demande de la propriétaire** : de vieux messages d'essai écrits depuis le site
+  (formulaires) restent dans l'Administration ; elle veut **pouvoir les supprimer** elle-même (bouton « Supprimer »
+  avec confirmation, principal seulement, aucune suppression automatique). **Ordre à C** : ajouter cette suppression
+  dans les rubriques de messages reçus du site (contact, demandes recruteur, …), avec essai ; règle n° 6 respectée
+  (jamais de photos de mannequins supprimées sans le clic de l'agence). Le reste de sa demande (« les choses qu'on
+  n'utilise plus ») : précision demandée à la propriétaire par le superviseur.
+
 - 16/11/2026, 09 h 25 — **Règle des rôles, donnée par la propriétaire (à vérifier contre le site réel)** :
   | Rôle | Peut | Ne peut pas |
   |---|---|---|
