@@ -12,7 +12,8 @@
 --      exclue_vitrine ;
 --   2. la minorité est calculée sur l'ANCIENNE date de naissance si elle existait, et sur la nouvelle : une
 --      mineure ne devient pas majeure en changeant sa date ;
---   3. le reste ne change pas : l'agence publie directement ; une mannequin déjà validée une fois et majeure
+--   3. le reste ne change pas : l'agence (table admins, ou droits « site » de la nouvelle Administration) publie
+--      directement ; une mannequin déjà validée une fois et majeure
 --      republie seule ; sinon sa demande part en validation.
 -- À coller une fois dans Supabase (SQL Editor). Contrôle en bas : « 1 élément sur 1 ».
 
@@ -31,7 +32,9 @@ begin
     return NEW;
   end if;
 
-  select exists(select 1 from admins where user_id = auth.uid()) into est_admin;
+  -- l'agence : la table admins (ancien tableau de bord) OU l'équipe du site / le principal de la nouvelle
+  -- Administration (portail_peut) : reste juste si L-1 retire le rôle « site » de admins (accord C / A / B, 16/11)
+  est_admin := exists(select 1 from admins where user_id = auth.uid()) or coalesce(portail_peut('site'), false);
 
   if not est_admin then
     -- (L-2) réglages de l'agence : la mannequin ne peut pas les changer elle-même

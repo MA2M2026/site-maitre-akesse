@@ -5310,7 +5310,8 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   garde, hors agence, les valeurs de `premiere_publication_faite`, `raison_refus`, `en_attente_validation`,
   `desactive` (+ date, auteur) et `exclue_vitrine`, et calcule la minorité sur l'ancienne ET la nouvelle date de
   naissance. Avant : écrire soi-même `premiere_publication_faite = true` puis `published = true` publiait au Book
-  sans validation, même une mineure (constaté dans la vraie base par l'agent D). « Agence » = présente dans `admins`.
+  sans validation, même une mineure (constaté dans la vraie base par l'agent D). « Agence » = présente dans `admins`
+  OU `portail_peut('site')` (équipe du site, principal) : reste juste si L-1 retire le rôle « site » de `admins`.
 - **L-6 (= R-01), « Créer mon compte » de l'équipe, partie sans risque** : `api/portail.js`, action `inviter` : si
   l'adresse invitée appartient déjà à un compte créé par « Créer mon compte » (ligne dans `staff_demandes`), le rôle
   n'est plus donné en silence à ce compte (créé par quelqu'un qui n'a jamais prouvé posséder l'adresse) : la
