@@ -348,6 +348,9 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
   lieu de « agence fermée » + « il reste 17 mois » : dire « rodage » / « pause, reprise le … » et un décompte juste).
   **Ordre du superviseur : D** (qui a trouvé D-05) fait ce message dans l'application des mannequins, sur
   `audit/corr-d`, avec un essai ; si son filtre bloque le fichier à modifier, A le fait après L-9.
+  **Précision de la propriétaire (09 h 10)** : septembre, octobre et novembre COMPTENT dans la formation ; seuls
+  **décembre, janvier et février ne comptent pas** (congés). C'est déjà ce que fait le calcul (`mes_mensualites`,
+  selon C) : ne PAS toucher au calcul, seulement au message affiché pendant la pause.
 
 - 16/11/2026, 08 h 53 : **les 2 clés sont posées dans Vercel** (`EMAILJS_PRIVATE_KEY` et `CRON_SECRET`, type Secret,
   Production ; vérifié sur sa capture). Pas de « Redeploy » : elles seront prises à la mise en ligne unique de
