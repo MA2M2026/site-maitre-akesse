@@ -605,6 +605,14 @@ L-1 avec la propriétaire, L-6, visite complète, R-15) ; (7) SonarQube ; (8) de
 ## ⏳ C, 11 h 15 : BATTERIE FINALE EN COURS sur `audit/corrections` = 44e6249f — **personne ne pousse sur cette branche**
 
 Contenu : tout le rassemblement (7a60e64d) + D-05 de D (1f95f78c) + suppression des messages d'essai (d5d75185).
+**11 h 45 — arrêt puis reprise** : contrôles OK (syntaxe, CSP, versions), base d'essai OK, 20 séries visiteurs OK, puis
+2 échecs dans `test-publications.js` (« btn-mini-admin » trouvé sur partenaires FR et EN). **Cause** : fausse alerte
+venue de L-9 (B, a3308767) : `css-critique.mjs` copie maintenant les styles des boutons (@layer) dans chaque page, et
+leur liste de sélecteurs contient le nom de classe `.btn-mini-admin` ; la page n'a aucun bouton ni script
+d'administration. **Correction (120d6c57, test seulement)** : le test cherche ces mots hors des balises `<style>` ; les
+balises, scripts et textes restent vérifiés ; **preuve** : un vrai bouton `btn-mini-admin` ajouté à la page est
+toujours détecté (échec), page remise à l'identique. **Reprise** depuis `test-publications.js` (les 20 premières
+séries ont tourné sur le même code). **À relire par le superviseur.**
 Ordre : `node --check`, `verifier-csp`, `versionner`, base d'essai, puis les 134 séries visiteurs, puis `/code-review`
 depuis main. Résultat exact écrit ici à la fin.
 
