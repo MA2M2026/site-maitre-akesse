@@ -570,6 +570,17 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## 🟥 ORDRES DU SUPERVISEUR (15 h 42) — personne n'attend les bras croisés
+
+- **C** (en attendant la mise en ligne) : faire MAINTENANT la relecture `/code-review` de tout le changement
+  `origin/main...audit/corrections` (pendant que B finit la batterie), corriger les vrais problèmes trouvés sur une
+  branche à part et les écrire ici (si une correction est nécessaire, B relancera seulement les séries concernées).
+  Préparer aussi la PR de mise en ligne (texte, liste des changements, liste des 5 SQL), SANS la fusionner.
+- **D** : relire la partie serveur de L-17 (`api/r2-presigner.js`, `api/_r2.js`, commit af2a6037 sur
+  `audit/photos-cloudflare`) avec un regard de sécurité (qui peut signer un envoi, qui peut lire, qui peut supprimer,
+  limites) et écrire ses remarques ici ; puis préparer les gestes de son essai réel de L-17 (une candidature d'essai
+  avec photos, visible dans l'Administration), à faire APRÈS la mise en ligne de L-17, avec l'accord de la propriétaire.
+
 ## 🟥 ORDRES DU SUPERVISEUR (15 h 00) — rien n'a bougé depuis 13 h 06
 
 1. **B : batterie finale MAINTENANT** (ordre de 11 h 45, ci-dessous), puis résultat ici. C : mise en ligne après.
