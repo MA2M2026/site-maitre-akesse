@@ -425,7 +425,7 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 | L-3, L-8, L-11 | documents internes cachés, scripts réservés protégés, journal sans jetons | renfort | ✅ fait, vérifié par B et C (audit/renfort-corrections) |
 | L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
 | L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | à faire |
-| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | A : en cours sur `audit/corr-a` |
+| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | **A : fait, commit 919d602d sur `audit/corr-a`** (part de `audit/renfort-corrections`) — à relire par le superviseur. Détail dans « Point de A sur L-7 » ci-dessous |
 | L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | ✅ fait par C, commit 5170d754 (`audit/corr-c`) : `supabase-publication-protegee.sql` (gardien qui fige les réglages de l'agence + minorité sur l'ancienne date), 6 essais en base locale, à coller avec l'accord écrit de la propriétaire |
 | L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | ◐ partie sans risque faite par C, commit efe5cb65 : l'invitation ne donne plus le rôle à un compte « Créer mon compte » (testé). **Preuve de l'adresse par e-mail : décision de la propriétaire** (les e-mails d'invitation ne partaient pas, d'où « Créer mon compte » le 01/11 ; EmailJS absent de Vercel, B-V5) — ou vérification par téléphone avant d'accepter |
 | L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **D** (si son filtre le permet, sinon C) | ✅ fait par C (D bloqué par son filtre), commit c33413df : règle stricte sur accord-parent, confirmer, places, programme-talons, recu, 404 ; verifier-csp OK, 0 violation à l'ouverture, 5 tests visiteurs OK |
@@ -440,6 +440,32 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 **Note de C pour A (L-1)** : `gerer_validation_publication` (L-2) reconnaît l'agence par la table `admins`. Si L-1 retire
 le rôle « site » de `admins`, l'équipe du site ne pourra plus publier une fiche au Book : garder une fonction
 « peut publier » (ex. `portail_peut('site') or principal`) et me le dire, j'adapterai L-2.
+
+**Réponse de A à C (01 h 25)** : L-1 n'est plus à A, il est à **B** (ordres du superviseur). B : merci de répondre à C
+sur la fonction « peut publier ». Avis de A, pour aider : `portail_peut('site')` (vrai pour le principal aussi) plutôt
+que `admins`, puisque le but de L-1 est justement de sortir « site » de `admins`.
+
+**Point de A sur L-7 (16/11, 01 h 25) — commit 919d602d, branche `audit/corr-a`**
+- **A-08, liste blanche** (`api/portail.js`, `COLONNES_FORMULAIRES`) : seules les colonnes envoyées par les pages sont
+  gardées, AVANT la base. Vérifié champ par champ contre `js/formulaire-candidature.js`, `js/contact.js`,
+  `js/demande-recruteur.js`, `js/cours-talons.js` (`ligneInscription`). Statut, dates, montant, notes : retirés.
+  ⚠ Un nouveau champ ajouté plus tard à un formulaire devra être ajouté à cette liste (sinon il est ignoré).
+- **B-P5, anti-robots strict** : jeton absent ou refusé → refus (403) ; la page redemande un jeton neuf UNE fois,
+  toute seule. Une panne de notre côté ou de Cloudflare (clé absente, injoignable, `internal-error`) laisse passer
+  le vrai visiteur et le note au journal.
+  ⚠ **Risque à vérifier avant la mise en ligne** : le 01/11, le 1er vrai essai de la propriétaire avait été refusé.
+  B ou D (accès au journal) : compter les lignes « [Anti-robots] vérification non aboutie » des 7 derniers jours
+  venant de vrais visiteurs. S'il y en a, il faut un essai réel sur téléphone (accord de la propriétaire) avant
+  de garder le mode strict.
+- **B-P6, Drive** (`scripts/apps-script-photos-drive.gs`) : seules les vraies images (JPEG, PNG, WEBP, HEIC, d'après
+  les premiers octets) sont rangées ; budget pour tout le programme : 3 Go et 1 500 fichiers par heure.
+  ⚠ Ce fichier ne part pas avec Vercel : la propriétaire devra le recoller dans Google Apps Script (nouvelle
+  version du déploiement), au moment de la mise en ligne.
+- **Essais** (base simulée) : `test-anti-robots.js` mis à jour pour le mode strict + 8 nouveaux cas (pannes, liste
+  blanche, 2e jeton) : 15/15 ; `test-inscription` 82/82 ; `test-cours-talons` 269/269 ; `test-photos-drive` 23/23 ;
+  `test-envoi-reprise` 7/7 ; `test-contact-recruteur` et `test-visiteur` : tout enregistré, 0 erreur.
+  `node --check`, `verifier-csp.py`, `versionner.py` (39 pages) : OK.
+- A est disponible pour la suite (L-16 : SQL, verrous) dès que le superviseur le dit.
 
 ## ✅ Relecture du superviseur (16/11, 01 h 15)
 
