@@ -577,7 +577,12 @@ UNE mise en ligne. Les 5 SQL sont collés ; accord écrit de la propriétaire (1
 **Chacun écrit « OK pour la mise en ligne » ou ce qui bloque, sur sa ligne :**
 - A :
 - B :
-- D :
+- D : **OK pour la mise en ligne** (20 h 10).
+  - Vérifié : mes 6 commits acceptés (e6d0907, 05868fa, fb15539, 330ed46, c0bd969, 1f95f78) sont dans 7892de53, et
+    main (3da0139) est bien à sa base, donc la fusion se fera sans conflit.
+  - Les 5 SQL sont collés et contre-vérifiés dans la base ; ils vont avec ce code.
+  - Après la mise en ligne, D fait tout de suite la visite complète en lecture seule (Administration 390/1440,
+    application, fiches, CV avec logo R-15), puis propose à la propriétaire les essais réels un par un.
 - Superviseur : (feu vert 18 h 10 — confirmer si rien n'a changé)
 
 ## 🟢 FEU VERT DU SUPERVISEUR À C POUR LA MISE EN LIGNE (18 h 10) — tête à fusionner : `audit/corrections` = **7892de53**
