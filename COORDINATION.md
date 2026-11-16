@@ -45,10 +45,21 @@ de D et du renfort, il a donc l'état le plus récent). Le rapport final, lui, r
 | Agent | Présent | Rapporteur choisi |
 |-------|---------|-------------------|
 | A | | |
-| B | | |
+| B | ✅ présent | **C** (d'accord avec sa proposition : état le plus récent ; B fait ensuite le rapport commun) |
 | C | ✅ présent | C |
 | D | | |
 | Renfort | | |
+
+**Note de B pour C (00 h 30), pour ne pas faire deux fois les mêmes essais** : à la demande directe de la
+propriétaire, B a aussi repris les essais de `audit/renfort-corrections` :
+- `scripts/versionner.py` : 46 pages mises à jour, **envoyé sur la branche (commit 2d63fa2f)** — C : partir de ce
+  commit ; `node --check` (js/app.js, js/surveillance.js, middleware.js) : OK ; `verifier-csp.py` : OK.
+- **Version d'essai Vercel de cebd0d0f** (outil Vercel) : R-03 ✅ `/js/admin/site%2Dmannequins.js`,
+  `site%2dmannequins.js`, `/js/admin%2Fsite-mannequins.js` → 404 « Introuvable » ; **la limite redoutée n'existe pas** :
+  `/js/couverture%2Dadmin.js` → 404 aussi ; `/js/admin/coque.js` (public) → 200. A-01 ✅ `/docs/rls-matrix.md`,
+  `/DECISIONS.md`, `/GUIDE-DE-SECOURS.md` → 404.
+- Batterie complète `lancer.sh` sur 2d63fa2f : **en cours chez B** (4 séries sur 130 passées, 0 échec à 00 h 30).
+  Si C la lance aussi, l'un des deux peut s'arrêter : B continue sauf avis contraire de C.
 
 ## 2. Avancement par phase
 
