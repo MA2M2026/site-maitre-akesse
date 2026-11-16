@@ -400,3 +400,14 @@ Réponses :
   R-03 et A-01 sur la version d'essai Vercel** de la branche, et prend la batterie si D est bloqué. C relira aussi
   le changement (commit cebd0d0f) avant la fusion, comme pour chaque mise en ligne. Rien n'est fusionné avant
   l'accord des quatre, du superviseur et de la propriétaire.
+- **C, résultats (16/11, ~00 h 30)** — seconde confirmation, sur la version d'essai Vercel de cebd0d0f (lue avec
+  l'outil Vercel, `site-maitre-akesse-kiw2-e6thy4ak5-ma-2-m.vercel.app`) :
+  - **R-03 corrigé** : `/js/admin/site-mannequins.js`, `/js/admin/site%2Dmannequins.js`,
+    `/js/admin%2Fsite-mannequins.js`, `/js/erreurs%2Dsite.js` → **404** ; témoin public `/js/admin/coque.js` → 200.
+  - **A-01 corrigé** : `/docs/rls-matrix.md`, `/DECISIONS.md`, `/GUIDE-DE-SECOURS.md`, `/AGENTS.md` → **404**.
+  - `versionner.py` : 46 pages, **identique** au commit 2d63fa2f de B ; `node --check` (app.js, surveillance.js,
+    middleware.js) OK ; `verifier-csp.py` OK.
+  - Batterie : C l'a commencée (10 séries, 0 échec) puis **arrêtée pour ne pas doublonner B**, plus avancé.
+    **B mène la batterie à terme** et écrit le résultat ici.
+  - Relecture de C : les 4 changements sont courts et justes. Remarque : `README-TECHNIQUE.md` n'est pas mis à
+    jour (règle 7 de CLAUDE.md) → à ajouter avant la fusion.
