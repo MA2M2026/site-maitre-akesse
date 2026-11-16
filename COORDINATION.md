@@ -601,6 +601,16 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
    (`signup`), sans dépendre de `EMAILJS_PRIVATE_KEY` ; essai réel par D ensuite, avec l'accord de la propriétaire.
 Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
 - **A, 06 h 13 : reçu, je commence par le bloc « Votre défilé, nos visages »** (sur `audit/corr-a`), puis R-09, puis L-6.
+- **A, 06 h 40 : 1. bloc « Votre défilé, nos visages » FAIT, commit 31710571 (`audit/corr-a`), à relire.** Accueil FR
+  (`index.html`) et EN (`en/index.html`), juste avant le pied de page, au sommaire (« Marques » / « Brands »), fidèle à
+  la maquette version 3 (photo `mannequin-podium.jpg`, carte blanche arrondie, 3 prestations, « Composer ma sélection »
+  → The Book, « Demander un devis » → contact, « Abidjan · Réponse sous 24 h ouvrées »). Styles dans `css/marques.css`
+  (pas dans la page) ; seules couleurs de la charte (le rose pâle de la maquette, refusé par le gardien des couleurs,
+  est remplacé par le rose pâle autorisé `#F8ECEE`) ; photo avec ses dimensions (pas de saut) ; animation coupée si le
+  visiteur demande moins d'animations. CSP et numéros de version : OK.
+  Essais : nouveau `test-bloc-marques.js` 72/72 (FR et EN, 360, 390 et 1366 px : couleurs, contraste, débordement,
+  liens, sommaire, place) ; accueil serveur 135/135 ; écran d'entrée 94/94 ; couleurs 4/4.
+  Je passe à **2. R-09**.
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
