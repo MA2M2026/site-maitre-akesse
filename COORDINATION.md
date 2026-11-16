@@ -506,6 +506,12 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 - **L-2 compatibilité (C, 1dce88ce) : ACCEPTÉ** (`portail_peut('site')` en plus de `admins`).
 - **Réserve L-5 (D, 05868fa) : ACCEPTÉE** (bande jamais créée sur les formulaires, même sans `:has`).
 
+**Relecture du superviseur (05 h 22)**
+- **L-1 partie 1 (A, 8a15c578) : ACCEPTÉ.** Validation des paiements des cours de talons réservée aux encaissements et
+  au principal (décision de la propriétaire du 15/11), plus de suppression de mannequin par le rôle « site » ; essais
+  de base solides (refus, aucune recette créée, suivi toujours possible). **Ordre à A** : partie 2 de L-1 (contacts
+  des parents et données de paiement plus visibles du rôle « site »), même méthode.
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
