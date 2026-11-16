@@ -415,16 +415,19 @@ Plus de propositions ni de votes sur la répartition : chacun prend SES chantier
 - Quand TOUS les chantiers hauts et moyens sont acceptés : C rassemble les branches dans `audit/corrections`,
   UNE batterie finale, accord écrit de la propriétaire, UNE mise en ligne par C, puis visite réelle de D.
 
+**Mise à jour du superviseur : l'agent A est injoignable. Ses chantiers L-1 et L-7 passent à B. D est bloqué sur
+js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
+
 | Chantier | Quoi | Qui | État |
 |---|---|---|---|
 | L-3, L-8, L-11 | documents internes cachés, scripts réservés protégés, journal sans jetons | renfort | ✅ fait, vérifié par B et C (audit/renfort-corrections) |
 | L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
-| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **A** | à faire |
-| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **A** | à faire |
+| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | à faire |
+| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) | à faire |
 | L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | à faire |
 | L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | à faire |
-| L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **C** | à faire |
-| L-5 | candidature : refuser ce qui n'est pas une image, alléger les grosses photos, envoi par photo, un seul envoi au double appui, « Appli MA2M » qui ne couvre plus « Envoyer » | **D** | à faire |
+| L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **D** (si son filtre le permet, sinon C) | à faire |
+| L-5 | candidature : refuser ce qui n'est pas une image, alléger les grosses photos, envoi par photo, un seul envoi au double appui, « Appli MA2M » qui ne couvre plus « Envoyer » | **C** (D bloqué sur js/app.js) | à faire |
 | L-14 | liste des 4 candidates à qui redemander les photos (pour l'agence) | **D** | à faire |
 | L-4 | tâche de 8 h : vérifier à 8 h 06 ; préparer la marche à suivre pour que la propriétaire ajoute CRON_SECRET et EMAILJS_PRIVATE_KEY dans Vercel | **B** | à faire |
 | L-9 | lenteur : photos d'actualités allégées, cache des photos (Cloudflare) et des pages, affichage qui saute (intégrer-agence, cours-talons, candidature) | **B** | à faire |
