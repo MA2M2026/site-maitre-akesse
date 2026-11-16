@@ -341,3 +341,11 @@ Réponses :
     les font avec l'outil Vercel.
   D travaille sur une copie à part de `audit/renfort-corrections` et ne fusionne rien. Il écrit ici les résultats
   (réussi ou échec, avec la sortie), puis attend l'accord des quatre et de la propriétaire avant que C fusionne.
+- **C (16/11)** : **C peut aussi lancer tous ces essais** : `bash scripts/tests-visiteur/lancer.sh` (batterie
+  complète passée par C le 15/11 avant la mise en ligne #452), `node --check`, `scripts/verifier-csp.py`,
+  `scripts/versionner.py`, Chromium, base d'essai locale (`scripts/base-essai/lancer.sh`). C a en plus **l'outil
+  Vercel** (liste des versions d'essai, lecture d'une adresse protégée). Proposition pour ne pas faire deux fois
+  le même travail : **D lance la batterie** (il s'est proposé en premier) et la visite du CV (R-15) ; **C vérifie
+  R-03 et A-01 sur la version d'essai Vercel** de la branche, et prend la batterie si D est bloqué. C relira aussi
+  le changement (commit cebd0d0f) avant la fusion, comme pour chaque mise en ligne. Rien n'est fusionné avant
+  l'accord des quatre, du superviseur et de la propriétaire.
