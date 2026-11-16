@@ -1623,3 +1623,31 @@ ensuite, affichage depuis Cloudflare). Donc :
   `test-candidature-fichiers.js` toujours ✓. `node --check`, empreintes CSP, versions : ✓. README-TECHNIQUE à jour.
 - **Suite (ordre du superviseur 15 h 25)** : je dresse maintenant ici l'INVENTAIRE de tous les envois de photos du
   site, puis cours de talons par Cloudflare (`cours-talons/<id>/`).
+
+### A, 16 h 35 : L-17 — INVENTAIRE de tous les envois de photos du site (ordre du superviseur 15 h 25)
+| Envoi | Va aujourd'hui | S'affiche depuis | À faire |
+|---|---|---|---|
+| Postuler à un casting / Intégrer l'agence | **Cloudflare d'abord** puis copie Drive (`af2a6037`) | Cloudflare (adresse signée) | ✅ fait |
+| **Cours de talons** (2 à 5 photos) | **Drive d'abord** (seul) | Drive | ⚠️ à faire — voir ci-dessous |
+| Espace et application des mannequins (book, photos de profil, comp card, CV) | Cloudflare (`uploaderVersR2`) | Cloudflare | rien (déjà la bonne route) |
+| Actualités, événements, partenaires, mot du fondateur, images du site, infos (`images-site-ecriture.js`, `image-jointe.js`) | Cloudflare | Cloudflare | rien |
+| Photos des mannequins changées par l'agence (Administration) | Cloudflare | Cloudflare | rien |
+| Cartes d'accès (photo de la carte, Administration) | stockage Supabase privé `cartes-photos` | Supabase | pas Drive : à signaler seulement (équipe seule, peu de photos) |
+| Justificatifs et quittances de la comptabilité (photo ou PDF) | stockage Supabase privé `compta-justificatifs` | Supabase | pas Drive, documents comptables privés : à garder tel quel, je propose |
+| Vidéos (candidature, cours de talons) | Drive | Drive | laissées sur Drive (ordre 15 h 25) ; pas de problème d'affichage signalé |
+
+**Cours de talons : un point bloquant à valider (touche la base).** Contrairement aux candidatures, l'inscription
+n'existe dans la base qu'APRÈS l'envoi des photos, et la base (`supabase-cours-talons.sql`, l. 90-92) n'accepte dans
+`photos` que des adresses `https://` (liens Drive). Proposition :
+1. serveur (`api/r2-presigner.js`, mêmes actions, dossier `cours-talons/<id>/`) : signer seulement si AUCUNE
+   inscription n'existe encore avec ce numéro, 5 photos au plus par numéro (compté dans Cloudflare), limite par IP,
+   contenu relu ;
+2. la page met les photos Cloudflare dans l'inscription sous la forme `r2:cours-talons/<id>/<32 car.>.jpg`, puis la
+   copie Drive comme aujourd'hui ;
+3. **petit changement SQL** (fichier à coller par la propriétaire avec les 5 autres, avec son accord) : la vérification
+   l. 90-92 accepte AUSSI `^r2:cours-talons/<même numéro>/[0-9a-f]{32}\.(jpg|png|webp)$` ; la base ajoute ensuite les
+   liens Drive (`medias_drive_appliquer`) seulement si l'inscription n'a pas déjà de photo Cloudflare, et la limite
+   de 5 reste ;
+4. Administration (`site-cours-talons.js`) : photo `r2:` affichée par adresse signée, comme les candidatures.
+**A attend la validation du superviseur** (et de la propriétaire pour le SQL) avant de coder ce point. En attendant,
+rien d'autre à changer : tous les autres envois de photos passent déjà par Cloudflare (ou restent privés chez Supabase).
