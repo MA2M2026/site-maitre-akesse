@@ -591,6 +591,16 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
   pour reprendre un chantier de C** (R-09 demande de booking sans la liste, bloc « Votre défilé, nos visages », ou L-6)
   si le superviseur le décide ; sinon L-4 à 8 h 06.
 
+**🟥 Ordre du superviseur (06 h 12) : C absent depuis 01 h 35 → ses chantiers passent à A, dans cet ordre :**
+1. **Bloc « Votre défilé, nos visages »** sur l'accueil FR et EN (maquette validée par la propriétaire :
+   `maquettes/marques-booking-16-11.html`, branche `audit/renfort-corrections`, commit bccae75e). Styles dans une feuille
+   du site, règle de sécurité CSP et numéros de version respectés, test visuel téléphone et ordinateur, lisibilité.
+2. **R-09** : une demande de booking ne doit jamais arriver sans la liste des mannequins choisis (et le message au
+   client doit dire la vérité si l'envoi échoue). Essai visiteur à ajouter.
+3. **L-6 refait** (si C n'est toujours pas revenu) : confirmation de l'adresse par l'e-mail de Supabase lui-même
+   (`signup`), sans dépendre de `EMAILJS_PRIVATE_KEY` ; essai réel par D ensuite, avec l'accord de la propriétaire.
+Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
