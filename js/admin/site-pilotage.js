@@ -158,14 +158,29 @@
 
   // ---------- Messages de contact ----------
   async function pageContacts() {
-    const msgs = await P.bd(sb.from('messages_contact').select('nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(30));
+    const msgs = await P.bd(sb.from('messages_contact').select('id, nom, type_contact, telephone, created_at').order('created_at', { ascending: false }).limit(30));
+    // (16/11/2026, demande de la propriétaire) « Supprimer » (vieux messages d'essai) : principal seulement, avec confirmation
+    const principal = !!(P.moi && P.moi.role === 'principal');
     return P.entete('Messages de contact', '<span class="doux">les ' + msgs.length + ' derniers</span>') +
       (msgs.length ? '<div class="taches">' + msgs.map((m) => {
         const n = numeroWhatsApp(m.telephone);
         return '<div class="tache"><span class="point"></span><span class="t">' + P.esc(m.nom || 'Sans nom') + '<small>' + P.esc([m.type_contact, P.dateHeure(m.created_at)].filter(Boolean).join(' · ')) + '</small></span>' +
-          (n ? '<a class="btn petit" href="https://wa.me/' + n + '" target="_blank" rel="noopener">WhatsApp ↗</a>' : '<span class="doux petit-texte">' + P.esc(m.telephone || '') + '</span>') + '</div>';
+          (n ? '<a class="btn petit" href="https://wa.me/' + n + '" target="_blank" rel="noopener">WhatsApp ↗</a>' : '<span class="doux petit-texte">' + P.esc(m.telephone || '') + '</span>') +
+          (principal ? '<button type="button" class="btn petit" data-action="contact-supprimer" data-id="' + P.esc(m.id) + '" data-nom="' + P.esc(m.nom || 'Sans nom') + '" aria-label="Supprimer le message de ' + P.esc(m.nom || 'Sans nom') + '">🗑</button>' : '') + '</div>';
       }).join('') + '</div>' : '<div class="carte vide">Aucun message pour le moment.</div>');
   }
+
+  P.actions['contact-supprimer'] = async (el) => {
+    if (!(P.moi && P.moi.role === 'principal')) return;
+    if (!confirm('Supprimer définitivement le message de « ' + el.dataset.nom + ' » ? Cette action est irréversible.')) return;
+    el.disabled = true;
+    try {
+      const r = await P.bd(sb.from('messages_contact').delete().eq('id', el.dataset.id).select('id'));
+      if (!r || !r.length) throw new Error('rien n’a été supprimé : reconnectez-vous puis réessayez');
+    } catch (e) { el.disabled = false; P.message('Erreur : ' + P.erreurTexte(e)); return; }
+    P.message('Message supprimé.');
+    await P.afficher();
+  };
 
   Object.assign(P.espaces.site.pages, { 'v2-ensemble': pageEnsemble, 'b1-a-traiter': pageATraiter, 'v2-top3': pageTop, 'b1-repartition': pageRepartition, 'b1-evolution': pageEvolution, 'b2-contacts': pageContacts });
   ['v2-ensemble', 'b1-a-traiter'].forEach((k) => { P.espaces.site.apres[k] = () => P.animerChiffres(document.getElementById('contenu')); });
