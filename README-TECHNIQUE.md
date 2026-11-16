@@ -5298,3 +5298,10 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   tourne (cron.job_run_details) ; sinon alerte « 🩺 Circuit des photos en panne » (medias_drive_alertes, source
   `controle`) + journal des erreurs. Historique : `medias_drive_controles` (60 jours).
 - Hors de ce circuit : les photos du Book des mannequins (application, Cloudflare R2, js/espace-mannequin.js).
+
+## Audit du 16/11/2026 — corrections de l'agent C
+- **L-10, règle de sécurité stricte partout** : `accord-parent.html`, `confirmer.html`, `places.html`,
+  `programme-talons.html`, `recu.html` et `404.html` (pages ouvertes avec un jeton personnel) ont maintenant la même
+  balise `Content-Security-Policy` que les autres pages : aucun script ni style en ligne permis (ils n'en ont pas).
+  Vérifié : `scripts/verifier-csp.py`, aucune violation à l'ouverture des 6 pages, tests `test-accord-parent.js`,
+  `test-places.js`, `test-programme-talons.js`, `test-recu.js`, `test-convocations.js`.
