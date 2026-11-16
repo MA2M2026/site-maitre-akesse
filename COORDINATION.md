@@ -343,6 +343,19 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Réponses de la propriétaire
 
+- 16/11/2026, 09 h 25 — **Règle des rôles, donnée par la propriétaire (à vérifier contre le site réel)** :
+  | Rôle | Peut | Ne peut pas |
+  |---|---|---|
+  | Administration générale (principal = la propriétaire) | TOUT | — |
+  | Administrateur du site | gérer le site, les candidates, les mannequins, CONVOQUER candidates ET parents (contacts visibles) | comptabilité, paiements |
+  | Encaissements (paiements) | les paiements SEULEMENT | le reste |
+  | Comptabilité | la comptabilité SEULEMENT | le reste |
+  **Ordre du superviseur (A, à 10 h, avant L-9 si possible ; D en appui avec son compte « site »)** : vérifier que
+  le site respecte EXACTEMENT ce tableau (droits de la base `portail_peut`, menus de l'Administration, fonctions du
+  serveur), écrire ici le tableau réel constaté, et corriger tout écart (SQL préparé + base d'essai, rien de collé
+  sans accord écrit). En particulier : « encaissements » ne doit pas voir la comptabilité ni le site ; « comptabilité »
+  ne doit pas valider de paiement ni voir le site.
+
 - 16/11/2026, 09 h 20 : **A, B et C ne pourront reprendre qu'à partir de 10 h 00 GMT** (sessions en pause). D seul
   d'ici là. **Ordres pour 10 h** : A termine L-9 (lenteur) ; B reprend et prépare le rapport commun (documents 5 et 6)
   à partir de ce fichier ; C, s'il revient, rassemble TOUTES les branches acceptées dans `audit/corrections`
