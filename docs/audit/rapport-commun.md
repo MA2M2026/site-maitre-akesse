@@ -3,7 +3,7 @@
 Rédigé par l'agent B (décision de la propriétaire du 16/11), à partir de `COORDINATION.md` (branche `audit/coordination`)
 et des rapports individuels : `docs/audit/rapport-agent-a.md` (`audit/agent-a`), `rapport-agent-b.md` (`audit/agent-b`),
 `rapport-agent-c.md` (`audit/agent-c`), `rapport-agent-d.md` (`audit/agent-d`), `outils/audit-renfort/rapport-renfort-1..4.md`
-(renfort, superviseur). **Version de travail du 16/11, 10 h 30 GMT** : mise à jour à chaque relecture du superviseur.
+(renfort, superviseur). **Version de travail du 16/11, 10 h 45 GMT** : mise à jour à chaque relecture du superviseur.
 
 Aucune donnée privée, aucun mot de passe ni clé dans ce document.
 
@@ -52,7 +52,7 @@ Aucune donnée privée, aucun mot de passe ni clé dans ce document.
 | L-6 | Compte d'équipe créé sans preuve de l'adresse e-mail | haute | renfort (R-01) | code | Compte créé non confirmé, lien de confirmation par e-mail, demande acceptable seulement adresse confirmée (décision de la propriétaire) |
 | L-7 | Formulaires publics : colonnes libres, anti-robots non strict, dépôt Drive ouvert | moyenne | A (A-08), B (B-P5, B-P6) | B (B-V4) | Liste blanche des colonnes par formulaire ; anti-robots strict avec second jeton automatique ; seules les vraies images rangées dans Drive, avec un budget horaire |
 | L-8 | Scripts réservés de l'Administration lisibles par une adresse codée | moyenne | renfort (R-03) | B et C en ligne (3 variantes → 200) | Adresse décodée avant comparaison (`middleware.js`) ; vérifié sur la version d'essai par B et C |
-| L-9 | Lenteur et pages qui « sautent » au chargement ; photos lourdes ; pages jamais en cache | moyenne | B, C, D, renfort | mesures (CLS, Lighthouse, journal des vraies visites) | Partie 1 (pages qui sautent) faite ; photos d'actualités allégées et cache : en cours (A) |
+| L-9 | Lenteur et pages qui « sautent » au chargement ; photos lourdes ; pages jamais en cache | moyenne | B, C, D, renfort | mesures (CLS, Lighthouse, journal des vraies visites) | Pages qui sautent corrigées (B) ; nouvelles photos d'actualités allégées avant l'envoi (A) ; cache des photos : un réglage Cloudflare par la propriétaire |
 | L-10 | 6 pages sans règle de sécurité stricte | moyenne | C (C-P1) | B (B-P4), A | Règle stricte par empreintes sur les 6 pages |
 | L-11 | Jetons personnels (accord parental, reçu, convocation) écrits dans le journal des erreurs | moyenne | A (A-04) | C | Seul le nom des paramètres est gardé |
 | L-12 | CV dans l'Administration sans logo | moyenne | D (D-03) | renfort (R-15), C | Chemin absolu du logo |
@@ -72,29 +72,31 @@ Aucune donnée privée, aucun mot de passe ni clé dans ce document.
 
 ## Document 6 — Liste des corrections effectuées
 
-État au 16/11, 10 h 30 GMT. « Accepté » = relu et accepté par le superviseur. Rien n'est en ligne : tout part ensemble
+État au 16/11, 10 h 45 GMT. « Accepté » = relu et accepté par le superviseur. Rien n'est en ligne : tout part ensemble
 dans **une seule** mise en ligne par C, après la batterie finale et l'accord écrit de la propriétaire.
 
 | Chantier | Branche, commit | Par | Essais | État |
 |---|---|---|---|---|
 | L-3, L-8, L-11, L-12 | `audit/renfort-corrections`, cebd0d0f (+ 2d63fa2f, numéros de version, B) | renfort | `node --check`, `verifier-csp.py` OK ; L-3 et L-8 vérifiés sur la version d'essai Vercel par B et C ; batterie 128/130 (2 échecs sans lien, voir ci-dessous) | ✅ accepté (L-12 : visite réelle de D après la mise en ligne) |
-| L-1 partie 1 | `audit/corr-a`, 8a15c578 (+ 5d3b9dc0) | A | base d'essai locale verte | ✅ accepté ; partie 2 (a945d451) **retirée** (décision de la propriétaire : contacts gardés) |
+| L-1 partie 1 et vérification des rôles | `audit/corr-a`, 8a15c578, 5d3b9dc0 (le rôle « site » ne marque plus une inscription « payée »), b22d62fe (comptages de caisse réservés à la comptabilité et au principal) | A | base d'essai locale verte ; essais des rôles | ✅ acceptés ; partie 2 (a945d451) **retirée** (décision de la propriétaire : contacts gardés) |
 | L-2 | `audit/corr-c`, 5170d754 (+ compatibilité avec L-1) | C | base d'essai 6/6 | ✅ fait ; SQL à coller avec l'accord écrit de la propriétaire ; essai réel par D |
 | L-4 | Vercel (clés posées le 16/11) | B, avec la propriétaire | contrôle le lendemain de la mise en ligne à 8 h 06 | ✅ accepté |
 | L-5 | `audit/corr-d`, e6d0907e (+ 05868fa) | D | `test-candidature-fichiers.js` 7 ✓ + 7 séries d'essais ; contre-vérification de C | ✅ accepté |
 | L-6 | `audit/corr-c`, efe5cb65 + 83220054 | C | base d'essai 5/5, `test-demandes-acces.js` | ✅ fait ; SQL à coller avec accord ; essai réel par D ; dépend de L-4 (clé EmailJS) |
 | L-7 | `audit/corr-a`, 919d602d + ace7dcff | A | `test-anti-robots.js` 15/15, `test-inscription` 82/82, `test-cours-talons` 269/269… | ✅ accepté ; programme Google à recoller |
-| L-9 partie 1 | `audit/corr-b`, a3308767 | B | CLS : Atelier talons 0,37 → 0, Postuler 0,19 → 0, Postuler EN 0,29 → 0,03 ; apparence identique sur 6 pages | fait, **à relire** ; **pas encore dans `audit/corrections`** |
-| L-9 suite | — | A | — | en cours |
+| L-9 partie 1 (pages qui sautent) | `audit/corr-b`, a3308767 | B | CLS : Atelier talons 0,37 → 0, Postuler 0,19 → 0, Postuler EN 0,29 → 0,03 ; apparence identique sur 6 pages | fait, ajouté à `audit/corrections` (7a60e64d) |
+| L-9 partie 2 (photos d'actualités) | `audit/corr-a`, a36e67f5 | A | nouvelles photos allégées avant l'envoi (1,6 Mo → 0,4 Mo) | ✅ accepté ; les photos déjà en ligne restent lourdes (rattrapage à décider, non urgent) |
+| L-9 partie 3 (cache des photos) | réglage Cloudflare, sans code | la propriétaire (un clic, marche à suivre de A) | — | à faire par la propriétaire |
 | L-10 | `audit/corr-c`, c33413df | C | `verifier-csp.py`, 5 tests | ✅ fait |
 | L-13 | — | D | — | en cours (message de pause) |
 | L-14 | — (liste remise) | D | — | ✅ accepté |
 | L-15 | maquette bccae75e | renfort, puis C | — | maquette validée ; construction en cours |
 | L-16 (parts B et C) | `audit/corr-d`, fb155395, 330ed46b | D | essais ajoutés | ✅ acceptés |
-| Fond `.se-date` (Administration) | — | D | doit faire passer `test-contraste-applis.js` | en cours (ordre de 10 h 08) |
+| Fond `.se-date` (Administration) | c0bd9690 | D | doit faire passer `test-contraste-applis.js` | fait, ajouté à `audit/corrections` |
+| Suppression des vieux messages d'essai (demande de la propriétaire) | `audit/corr-c`, 3ac7a81e | C | `test-suppression-messages.js` 10/10, base d'essai 2/2 | fait, à relire ; SQL à coller avec accord |
 
-**Rassemblement** : `audit/corrections` (C, 2de0fe90) = renfort-corrections + corr-c + corr-d + corr-a (sans a945d451) —
-✅ accepté. **À ajouter** : `audit/corr-b` (L-9 partie 1) et la suite de L-9.
+**Rassemblement** : `audit/corrections` (C, 7a60e64d) = renfort-corrections + corr-c + corr-d + corr-a (sans a945d451 ni
+ea364a01, doublon de corr-b) + corr-b + fond `.se-date`. Reste à ajouter : suppression des messages d'essai (après relecture).
 
 **Batterie finale** : pas encore lancée (attend L-9, vérification des rôles, message de pause, fond `.se-date`).
 Règle : **0 échec** avant la mise en ligne.
