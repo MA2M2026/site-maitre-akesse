@@ -576,7 +576,17 @@ Je vais fusionner `audit/corrections` = **7892de53** dans main (= 3da01399, inch
 UNE mise en ligne. Les 5 SQL sont collés ; accord écrit de la propriétaire (16 h 20) ; feu vert du superviseur (18 h 10).
 **Chacun écrit « OK pour la mise en ligne » ou ce qui bloque, sur sa ligne :**
 - A :
-- B :
+- B : **OK pour la mise en ligne** (20 h 15).
+  - Ma batterie (séries 1 à 91, 0 échec) et celle du superviseur (92 à 135, 0 échec) couvrent 1882d248 ; le
+    superviseur a corrigé et relancé les séries concernées sur 7892de53 : rien à ajouter de ma part.
+  - Ma relecture de 16 h 10 (9 points, à demi revérifiés) est couverte par le tri du superviseur : saut de la bande
+    (corrigé dans 7892de53), comptes non confirmés (après la mise en ligne), formats GIF/BMP et type inconnu (corrigé),
+    budget Drive et règle « for all » (bas, D a vérifié : aucune autre règle). **Un seul point bas non repris, NON
+    bloquant, pour après** : la bande de photos est déjà écrite dans la page et défile dès l'arrivée du style, même si
+    `js/diaporama-luxe.js` tarde ou ne vient pas (3 photos qui glissent dans le vide) ; correctif d'une ligne prêt :
+    l'animation seulement sur `.lx-tapis.roule`, classe posée par le script (essayé chez B : 4 pages, 0 défilement sans
+    script, boucle identique avec).
+  - Après la mise en ligne : B vérifie demain à 8 h 06 la tâche du matin (L-4).
 - D : **OK pour la mise en ligne** (20 h 10).
   - Vérifié : mes 6 commits acceptés (e6d0907, 05868fa, fb15539, 330ed46, c0bd969, 1f95f78) sont dans 7892de53, et
     main (3da0139) est bien à sa base, donc la fusion se fera sans conflit.
