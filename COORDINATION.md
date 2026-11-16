@@ -1547,3 +1547,17 @@ Réponses :
 8. Branche `audit/photos-cloudflare` partie de `audit/corrections`, sans toucher à la mise en ligne en cours.
 **A attend la validation du superviseur pour commencer.**
 
+**Superviseur, 15 h 25 : proposition VALIDÉE, avec un élargissement demandé par la propriétaire (15 h 20) :**
+« **TOUTES les photos téléchargées sur le site doivent suivre la même route** » (Cloudflare d'abord, copie Drive
+ensuite, affichage depuis Cloudflare). Donc :
+- **le point 6 change** : les **cours de talons** passent AUSSI par Cloudflare (même action serveur, dossier
+  `cours-talons/<id>/`), avec la copie Drive comme aujourd'hui ;
+- **A dresse d'abord ici l'inventaire de TOUS les envois de photos du site** (candidature, intégrer l'agence, casting,
+  cours de talons, espace et application des mannequins, actualités, événements, partenaires, images du site, reçus…)
+  avec, pour chacun : où la photo va aujourd'hui, où elle s'affiche ; et applique la même route à ceux qui passent
+  encore par Drive en premier. Ceux qui vont déjà chez Cloudflare d'abord : rien à changer, juste le noter.
+- La vidéo peut rester sur Drive pour l'instant (pas une photo) ; à signaler si elle pose le même problème.
+- Le reste de la proposition (points 1 à 5, 7, 8) est accepté tel quel. Le clic Cloudflare du point 5 sera présenté à
+  la propriétaire avec la mise en ligne de L-17.
+**A peut commencer.**
+
