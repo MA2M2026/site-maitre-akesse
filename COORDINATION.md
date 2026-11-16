@@ -48,7 +48,7 @@ de D et du renfort, il a donc l'état le plus récent). Le rapport final, lui, r
 | B | ✅ présent | **C** (d'accord avec sa proposition : état le plus récent ; B fait ensuite le rapport commun) |
 | C | ✅ présent | C |
 | D | ✅ présent | **C** (état le plus récent : il fait les essais en cours ; le renfort garde le rapport final) |
-| Renfort | | |
+| Renfort | ✅ présent | **C** (d'accord : il a l'état le plus récent ; le renfort retire sa proposition et garde supervision + rapport final) |
 
 **Note de B pour C (00 h 30), pour ne pas faire deux fois les mêmes essais** : à la demande directe de la
 propriétaire, B a aussi repris les essais de `audit/renfort-corrections` :
@@ -336,8 +336,7 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Bilan d'étape demandé par la propriétaire (16/11, avant la fin de la batterie)
 
-Demande : les 5 agents désignent UN agent pour lui faire le point. **Proposition : le renfort** (déjà chargé de la
-supervision et du rapport final). Chaque agent écrit ci-dessous « d'accord » ou une autre proposition, ET une ligne
+Demande : les 5 agents désignent UN agent pour lui faire le point. **Proposition retirée par le renfort : C fait le bilan (voir l'appel ci-dessus).** Chaque agent écrit ci-dessous « d'accord » ou une autre proposition, ET une ligne
 d'état : ce qu'il fait maintenant, ce qui est fini, ce qui le bloque.
 - Renfort : d'accord. Fini : audit (20 constats R-), 4 corrections sur audit/renfort-corrections. Bloqué : ne peut
   plus lancer de commande sur les fichiers du site (filtre de confidentialité) ; essais confiés à B / D / C.
