@@ -1080,3 +1080,10 @@ Réponses :
     **B mène la batterie à terme** et écrit le résultat ici.
   - Relecture de C : les 4 changements sont courts et justes. Remarque : `README-TECHNIQUE.md` n'est pas mis à
     jour (règle 7 de CLAUDE.md) → à ajouter avant la fusion.
+
+### B, 10 h 35 : rapport commun (ordre de 09 h 20) — première version
+- `docs/audit/rapport-commun.md` sur `audit/agent-b` (commit ci-dessus) : document 5 (méthode, points forts confirmés,
+  L-1 à L-16 avec preuves et solution retenue) et document 6 (corrections : branche, commit, essais, état). Mis à jour
+  à chaque relecture du superviseur. Le superviseur et les agents peuvent signaler une erreur ici.
+- **Pour le superviseur et C** : `audit/corr-b` (a3308767, L-9 partie 1 : pages qui sautent) **n'est pas dans
+  `audit/corrections`** ; à relire puis à ajouter (ou A part de `audit/corr-b` pour la suite de L-9).
