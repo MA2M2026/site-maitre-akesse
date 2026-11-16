@@ -38,6 +38,10 @@ const vue = (p, zone) => p.evaluate((z) => { const i = [...document.querySelecto
       ok(x1 !== null && x2 < x1 - 20, n + 'la bande de photos défile toute seule (' + Math.round(x1) + ' → ' + Math.round(x2) + ' px)');
       const nbTapis = await p.$$eval('.lx-tapis .lx-galerie-photo img', (l) => l.length);
       ok(nbTapis >= 20, n + 'la bande contient toutes les photos, deux fois de suite pour une boucle sans à-coup (' + nbTapis + ')');
+      // (16/11/2026, relecture du superviseur) les deux moitiés dans le MÊME ordre, sinon la bande saute à chaque tour
+      const ordre = await p.$$eval('.lx-tapis .lx-galerie-photo img', (l) => l.map((x) => (x.getAttribute('src') || '').replace(/\?.*$/, '')));
+      const moitie = ordre.length / 2;
+      ok(Number.isInteger(moitie) && ordre.slice(0, moitie).join() === ordre.slice(moitie).join(), n + 'les deux moitiés de la bande sont dans le même ordre (boucle sans saut)');
       // jamais la même photo en même temps en haut et dans la photo du défilé
       const doubles = await p.evaluate(async () => { let pire = 0; for (let i = 0; i < 30; i++) { const vus = [...document.querySelectorAll('.lx-hero-photo, .lx-defile-photo')].filter((x) => +getComputedStyle(x).opacity > 0.98).map((x) => x.getAttribute('src').replace(/\?.*$/, '')); pire = Math.max(pire, vus.length - new Set(vus).size); await new Promise((r) => setTimeout(r, 200)); } return pire; });
       ok(doubles === 0, n + 'jamais la même photo en haut et au défilé (' + doubles + ')');

@@ -41,6 +41,12 @@ module.exports = async function handler(req, res) {
     const resultatAuth = await repAuth.json().catch(() => ({}));
 
     if (!repAuth.ok) {
+      // (16/11/2026, audit L-6) adresse pas encore confirmée (« Créer mon compte ») : le dire, sans compter un
+      // mauvais mot de passe
+      if (resultatAuth.error_code === 'email_not_confirmed' || /email not confirmed/i.test(resultatAuth.msg || resultatAuth.error_description || '')) {
+        res.status(403).json({ error: 'Adresse e-mail pas encore confirmée : ouvrez l’e-mail reçu au moment de créer votre compte et cliquez le lien.' });
+        return;
+      }
       await tentatives.echec(res);
       return;
     }

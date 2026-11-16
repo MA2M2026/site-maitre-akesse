@@ -125,7 +125,9 @@
         body: JSON.stringify({
           message: texte,
           // (08/11/2026) avec la rubrique de l'Administration (#/site/…) ; les identifiants retirés : rien de personnel
-          page: (location.pathname + location.search + rubrique()).slice(0, 200),
+          // (16/11/2026, audit A-04) seulement le NOM des paramètres de l'adresse : leurs valeurs peuvent être des
+          // jetons personnels (?j= accord parental, ?r= reçu, ?c= convocation), à ne jamais garder au journal
+          page: (location.pathname + location.search.replace(/=[^&]*/g, '=…') + rubrique()).slice(0, 200),
           pile: pile,
           user_agent: (navigator.userAgent || '').slice(0, 300)
         })

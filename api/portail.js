@@ -277,39 +277,133 @@ async function envoisConvocations(req, res) {
 // le serveur vérifie le jeton (clé secrète TURNSTILE_SECRET_KEY, jamais dans le navigateur), puis enregistre par
 // formulaire_public_enregistrer (mêmes limites qu'avant : par minute, par adresse, casting ouvert).
 const TABLES_FORMULAIRES = ['casting_applications', 'messages_contact', 'recruiter_requests', 'cours_talons'];
-// Renvoie { ok, raison } (raison : codes d'erreur de Cloudflare, ou ce que le navigateur a signalé)
+// Renvoie { ok, raison, panne } (raison : codes d'erreur de Cloudflare, ou ce que le navigateur a signalé).
+// panne = true quand le défaut vient de NOTRE côté ou de Cloudflare (clé absente du serveur, Cloudflare injoignable
+// ou en erreur) : ce n'est pas la faute du visiteur, l'envoi passe quand même (et c'est noté au journal).
 async function jetonAntiRobotValide(jeton, ip, raisonNavigateur) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return { ok: false, raison: 'clé secrète TURNSTILE_SECRET_KEY absente du serveur' };
+  if (!secret) return { ok: false, panne: true, raison: 'clé secrète TURNSTILE_SECRET_KEY absente du serveur' };
   if (typeof jeton !== 'string' || !jeton || jeton.length > 2048) return { ok: false, raison: 'pas de jeton (navigateur : ' + String(raisonNavigateur || 'inconnu').slice(0, 80) + ')' };
   const corps = new URLSearchParams({ secret: secret.trim(), response: jeton });
   if (ip) corps.set('remoteip', ip);
-  const rep = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: corps });
+  let rep;
+  try { rep = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: corps }); }
+  catch (e) { return { ok: false, panne: true, raison: 'Cloudflare injoignable (' + ((e && e.message) || e) + ')' }; }
+  if (!rep.ok) return { ok: false, panne: true, raison: 'Cloudflare : réponse ' + rep.status };
   const r = await rep.json().catch(() => ({}));
-  return r.success === true ? { ok: true } : { ok: false, raison: 'Cloudflare : ' + ((r['error-codes'] || []).join(', ') || 'réponse ' + rep.status) + (r.hostname ? ' (site ' + r.hostname + ')' : '') };
+  if (r.success === true) return { ok: true };
+  const codes = r['error-codes'] || [];
+  // (« internal-error » : panne de Cloudflare ; « invalid-input-secret » : notre clé, pas le visiteur)
+  const panne = codes.some((c) => c === 'internal-error' || c === 'invalid-input-secret' || c === 'missing-input-secret');
+  return { ok: false, panne, raison: 'Cloudflare : ' + (codes.join(', ') || 'réponse ' + rep.status) + (r.hostname ? ' (site ' + r.hostname + ')' : '') };
 }
-// (01/11/2026, 22 h : le premier vrai essai de la propriétaire a été refusé ; tant que la cause n'est pas connue,
-// une vérification qui n'aboutit pas n'empêche PAS l'envoi : la raison exacte est notée au journal ; les limites
-// d'envois par minute et par adresse de la base restent la protection. Repasser à true une fois la cause corrigée.)
-const ANTI_ROBOTS_STRICT = false;
+// (01/11/2026, 22 h : le premier vrai essai de la propriétaire avait été refusé ; on avait alors tout laissé passer.)
+// (16/11/2026, audit L-7 = B-P5 / A-07) : mode strict. Un envoi sans jeton, ou avec un jeton refusé par Cloudflare, est
+// refusé ; la page redemande alors un jeton une fois, toute seule (js/app.js, envoyerFormulairePublic). Une panne de
+// notre côté ou de Cloudflare (voir « panne » ci-dessus) ne bloque jamais un candidat. Remettre false si le journal
+// montre de vrais visiteurs refusés (« [Anti-robots] … (refusé) »).
+const ANTI_ROBOTS_STRICT = true;
+// (16/11/2026, audit L-7 = A-08) : liste blanche des colonnes que chaque formulaire public peut remplir. Tout le reste
+// (statut, dates, notes de l'agence, montant…) est retiré AVANT la base : un envoi fabriqué ne peut plus remplir une
+// colonne interne, même ajoutée plus tard. À compléter quand une page envoie un nouveau champ (sinon il est ignoré).
+const COLONNES_FORMULAIRES = {
+  casting_applications: ['id', 'full_name', 'email', 'phone', 'city', 'quartier', 'date_naissance', 'genre', 'civilite',
+    'height_cm', 'shoe_size', 'weight_kg', 'chest_cm', 'waist_cm', 'hips_cm', 'message', 'parent_nom', 'parent_telephone',
+    'parent_email', 'type_candidature', 'projet_nom', 'experience_mannequin', 'situation_scolaire', 'niveau_etudes', 'clothing_size'],
+  messages_contact: ['id', 'nom', 'telephone', 'email', 'type_contact', 'structure', 'ville', 'message'],
+  recruiter_requests: ['id', 'company', 'contact_name', 'email', 'phone', 'whatsapp', 'city', 'project_type', 'event_date', 'message'],
+  cours_talons: ['id', 'formule', 'nb_seances', 'nb_mois', 'paiement', 'civilite', 'parcours', 'modules', 'nom', 'telephone', 'age',
+    'quartier', 'objectif', 'concours', 'concours_date', 'niveau', 'creneaux', 'choix_creneaux', 'disponibilites', 'adresse',
+    'parent_nom', 'parent_telephone', 'photos', 'video', 'decision', 'reference_wave', 'moyen']
+};
+function garderColonnesAutorisees(table, ligne) {
+  const propre = {};
+  for (const c of COLONNES_FORMULAIRES[table] || []) if (Object.prototype.hasOwnProperty.call(ligne, c)) propre[c] = ligne[c];
+  // (16/11/2026, B-V4) : « direct » est réservé aux dossiers créés par l'agence elle-même (casting à l'agence, sans
+  // photo) ; un visiteur n'envoie que « agence » (intégrer l'agence) ou « projet » (un casting).
+  if (table === 'casting_applications' && 'type_candidature' in propre && !['agence', 'projet', null].includes(propre.type_candidature)) return null;
+  return propre;
+}
+// (16/11/2026, audit R-09) : une demande de booking n'arrive JAMAIS sans sa liste de mannequins. La page envoie la liste
+// avec la demande (ligne._modeles) ; le serveur enregistre la demande PUIS la liste ; si la liste ne passe pas, la
+// demande est retirée et le recruteur voit une erreur (au lieu d'un « Merci » trompeur).
+const UUID_MANNEQUIN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function modelesDeLaDemande(recu) {
+  const l = recu && recu._modeles;
+  if (!Array.isArray(l) || !l.length || l.length > 60) return null;
+  const propres = [];
+  for (const m of l) {
+    if (!m || typeof m !== 'object' || !UUID_MANNEQUIN.test(String(m.model_id || ''))) return null;
+    const h = Number(m.model_height_snapshot);
+    propres.push({ model_id: String(m.model_id).toLowerCase(),model_name_snapshot: String(m.model_name_snapshot || '').slice(0, 120) || null,
+      model_height_snapshot: Number.isInteger(h) && h > 0 && h < 260 ? h : null });
+  }
+  return propres;
+}
+async function enregistrerModelesDemande(idDemande, modeles) {
+  const base = SUPABASE_URL + '/rest/v1/recruiter_request_models';
+  const rep = await fetch(base, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(modeles.map((m) => Object.assign({ request_id: idDemande }, m))) });
+  return rep.ok;
+}
+// Ensemble des identifiants (déjà vérifiés : UUID_MANNEQUIN) qui existent encore dans model_profiles ; null si la base ne répond pas.
+async function mannequinsExistants(ids) {
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/model_profiles?select=id&id=in.(' + ids.join(',') + ')', { headers: enTetesService() });
+  if (!rep.ok) return null;
+  return new Set((await rep.json()).map((x) => x.id));
+}
+async function retirerDemande(idDemande) {
+  await fetch(SUPABASE_URL + '/rest/v1/recruiter_requests?id=eq.' + encodeURIComponent(idDemande), { method: 'DELETE', headers: { ...enTetesService(), Prefer: 'return=minimal' } }).catch(() => {});
+}
+// La liste des mannequins d'une demande enregistrée ; échec → la demande est retirée (sauf si elle existait déjà avant
+// cet envoi : on ne retire jamais une demande complète reçue plus tôt), et le recruteur est prévenu.
+async function finirDemande(res, idDemande, modeles, dejaLa) {
+  if (dejaLa) {   // (envoi recommencé : si la liste est déjà là, on n'y touche pas)
+    const deja = await fetch(SUPABASE_URL + '/rest/v1/recruiter_request_models?select=request_id&limit=1&request_id=eq.' + encodeURIComponent(idDemande), { headers: enTetesService() })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (Array.isArray(deja) && deja.length) return res.status(200).json({ ok: true, id: idDemande });
+  }
+  if (await enregistrerModelesDemande(idDemande, modeles).catch(() => false)) return res.status(200).json({ ok: true, id: idDemande });
+  if (!dejaLa) await retirerDemande(idDemande);
+  // (16/11/2026, relecture du superviseur) la sélection vient du téléphone du recruteur : une mannequin supprimée depuis
+  // y reste et fait refuser toute la liste (clé étrangère), à chaque essai. Le serveur dit alors LESQUELLES n'existent
+  // plus ; la page les retire de la sélection et le recruteur renvoie une demande juste (e-mail compris).
+  const encore = await mannequinsExistants(modeles.map((m) => m.model_id)).catch(() => null);
+  const retires = encore ? modeles.filter((m) => !encore.has(m.model_id)).map((m) => m.model_id) : [];
+  if (retires.length) {
+    await noterAuJournal('[Demande recruteur] demande ' + idDemande + ' : ' + retires.length + ' mannequin(s) de la sélection n’existent plus (' + retires.join(', ') + ')' + (dejaLa ? '' : ' : demande retirée, le recruteur les retire et renvoie'), 'portail', '/api/portail').catch(() => {});
+    return res.status(409).json({ error: 'Certains mannequins de votre sélection ne sont plus disponibles.', selection: true, retires });
+  }
+  await noterAuJournal('[Demande recruteur] liste des ' + modeles.length + ' mannequin(s) non enregistrée' + (dejaLa ? '' : ' : demande retirée, le recruteur a vu une erreur'), 'portail', '/api/portail').catch(() => {});
+  return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.', selection: true });
+}
 async function formulairePublic(req, corps, res) {
-  const table = String(corps.table || ''), ligne = corps.ligne;
-  if (!TABLES_FORMULAIRES.includes(table) || !ligne || typeof ligne !== 'object' || Array.isArray(ligne) || JSON.stringify(ligne).length > 30000) {
+  const table = String(corps.table || ''), recu = corps.ligne;
+  if (!TABLES_FORMULAIRES.includes(table) || !recu || typeof recu !== 'object' || Array.isArray(recu) || JSON.stringify(recu).length > 30000) {
     return res.status(400).json({ error: 'Formulaire invalide.' });
   }
+  const ligne = garderColonnesAutorisees(table, recu);
+  if (!ligne || !Object.keys(ligne).length) return res.status(400).json({ error: 'Formulaire invalide.' });
+  const modeles = table === 'recruiter_requests' ? modelesDeLaDemande(recu) : null;
+  if (table === 'recruiter_requests' && (!modeles || !ligne.id)) return res.status(400).json({ error: 'Votre sélection est vide ou invalide : rechargez la page.', selection: true });
   const ip = extraireIp(req) || '';
   const verif = await jetonAntiRobotValide(corps.jeton, ip, corps.raisonJeton);
   if (!verif.ok) {
-    await noterAuJournal('[Anti-robots] vérification non aboutie : ' + verif.raison + ' — ' + table + (ANTI_ROBOTS_STRICT ? ' (refusé)' : ' (accepté quand même)'), 'portail', '/api/portail').catch(() => {});
-    if (ANTI_ROBOTS_STRICT) return res.status(403).json({ error: 'La vérification anti-robot n’a pas abouti : rechargez la page puis réessayez.', robot: true });
+    const refuse = ANTI_ROBOTS_STRICT && !verif.panne;
+    await noterAuJournal('[Anti-robots] vérification non aboutie : ' + verif.raison + ' — ' + table + (refuse ? ' (refusé)' : ' (accepté quand même)'), 'portail', '/api/portail').catch(() => {});
+    if (refuse) return res.status(403).json({ error: 'La vérification anti-robot n’a pas abouti : rechargez la page puis réessayez.', robot: true });
   }
   try {
     const id = await rpcService('formulaire_public_enregistrer', { p_table: table, p_ligne: ligne, p_ip: ip });
+    if (modeles) return await finirDemande(res, ligne.id, modeles, false);
     return res.status(200).json({ ok: true, id });
   } catch (e) {
     const m = String((e && e.message) || e);
     if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
-    if (/duplicate key|23505/.test(m) && ligne.id) return res.status(200).json({ ok: true, id: ligne.id });  // (déjà enregistré : réponse perdue)
+    if (/duplicate key|23505/.test(m) && ligne.id) {  // (déjà enregistré : réponse perdue)
+      if (modeles) return await finirDemande(res, ligne.id, modeles, true);
+      return res.status(200).json({ ok: true, id: ligne.id });
+    }
     // (14/11/2026) cours privés : un créneau choisi vient d'être pris par une autre élève (supabase-creneaux-prives.sql)
     if (table === 'cours_talons' && /CRENEAU_PRIS|CRENEAUX_INVALIDES/.test(m)) return res.status(409).json({ error: 'Un de vos créneaux n’est plus disponible.', creneauPris: true });
     if (/Aucun casting ouvert/.test(m)) return res.status(403).json({ error: 'Aucun casting n’est ouvert en ce moment.' });
@@ -323,7 +417,10 @@ async function formulairePublic(req, corps, res) {
     if (/Could not find the function|PGRST202|does not exist/.test(m)) {
       const propre = Object.assign({}, ligne); delete propre.status;
       const rep = await fetch(SUPABASE_URL + '/rest/v1/' + table, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(propre) });
-      if (rep.ok || (rep.status === 409 && ligne.id)) return res.status(200).json({ ok: true, id: ligne.id || null });
+      if (rep.ok || (rep.status === 409 && ligne.id)) {
+        if (modeles) return await finirDemande(res, ligne.id, modeles, rep.status === 409);
+        return res.status(200).json({ ok: true, id: ligne.id || null });
+      }
       await noterAuJournal('[Formulaire ' + table + '] envoi de secours refusé (' + rep.status + ')', 'portail', '/api/portail').catch(() => {});
       return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.' });
     }
@@ -345,22 +442,75 @@ async function demandeAcces(corps, res) {
   if (await rpcService('portail_utilisateur_par_email', { p_email: email })) {
     return res.status(409).json({ error: 'Un compte existe déjà avec cette adresse : connectez-vous, ou contactez l’agence.' });
   }
-  const compte = await adminAuth('admin/users', 'POST', { email, password: motdepasse, email_confirm: true, user_metadata: { nom, portail_demande: true, portail_mdp_choisi: true } });
+  // (16/11/2026, audit L-6 = R-01, décision de la propriétaire) le compte est créé NON CONFIRMÉ et la personne reçoit
+  // un lien par e-mail : tant qu'elle ne l'a pas cliqué, elle ne peut pas se connecter, la demande n'apparaît pas
+  // et ne peut pas être acceptée (supabase-demandes-confirmees.sql). Avant : compte déjà confirmé pour n'importe
+  // quelle adresse, sans preuve de la posséder.
+  // (16/11/2026, refait par A sur ordre du superviseur) l'e-mail de confirmation est celui de SUPABASE lui-même
+  // (inscription standard « signup ») : il ne dépend plus de EMAILJS_PRIVATE_KEY, absente de Vercel (B-V5), qui aurait
+  // bloqué « Créer mon compte » pour tout le monde (comme l'incident du 04 au 11/10/2026).
+  // (Supabase n'écrit, avec ses réglages par défaut, qu'aux membres de l'équipe du projet : s'il refuse l'adresse,
+  // on passe par l'e-mail du serveur du site, EmailJS, si sa clé est posée ; sinon rien n'est gardé et on le dit.)
+  const repInscription = await fetch(SUPABASE_URL + '/auth/v1/signup?redirect_to=' + encodeURIComponent(RETOUR_ADMINISTRATION), {
+    method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: motdepasse, data: { nom, portail_demande: true, portail_mdp_choisi: true } })
+  }).catch(() => null);
+  let inscription = repInscription ? await repInscription.json().catch(() => ({})) : {};
+  if (!repInscription || !repInscription.ok) {
+    const raison = String(inscription.error_code || inscription.code || inscription.msg || inscription.error_description || (repInscription && repInscription.status) || 'injoignable');
+    await noterAuJournal('[Demande d’accès] e-mail de Supabase refusé pour ' + email + ' (' + raison + ')', 'demandes');
+    if ((repInscription && repInscription.status === 429) || /rate_limit|rate limit/i.test(raison)) {
+      return res.status(429).json({ error: 'Trop d’e-mails envoyés en ce moment : réessayez dans une heure, ou contactez l’agence.' });
+    }
+    // un compte resté à moitié créé (e-mail non parti) est retiré avant le second essai
+    const reste = await rpcService('portail_utilisateur_par_email', { p_email: email }).catch(() => null);
+    if (reste) await adminAuth('admin/users/' + reste, 'DELETE').catch(() => {});
+    const cleSecours = process.env.EMAILJS_PRIVATE_KEY;
+    if (!cleSecours) {
+      await noterAuJournal('[Demande d’accès] aucune façon d’envoyer le lien de confirmation : régler l’e-mail (SMTP) de Supabase, ou poser EMAILJS_PRIVATE_KEY sur Vercel', 'demandes');
+      return res.status(503).json({ error: 'La confirmation par e-mail n’est pas encore disponible : contactez l’agence.' });
+    }
+    const lien = await adminAuth('admin/generate_link', 'POST', { type: 'signup', email, password: motdepasse,
+      data: { nom, portail_demande: true, portail_mdp_choisi: true }, redirect_to: RETOUR_ADMINISTRATION }).catch(() => null);
+    const idSecours = lien && (lien.id || (lien.user && lien.user.id));
+    const adresseLien = lien && (lien.action_link || (lien.properties && lien.properties.action_link));
+    const envoiLien = idSecours && adresseLien ? await envoyerEmailServeur(cleSecours, email, nom,
+      'Bonjour ' + nom + ',\n\nVous avez demandé un accès à l’Administration de Maître Akesse Model Management. Pour confirmer que cette adresse e-mail est bien la vôtre, ouvrez ce lien :\n\n' +
+      adresseLien + '\n\nEnsuite, l’agence acceptera (ou non) votre demande. Si vous n’avez rien demandé, ignorez ce message : aucun compte ne sera actif.') : { ok: false };
+    if (!envoiLien.ok) {
+      if (idSecours) await adminAuth('admin/users/' + idSecours, 'DELETE').catch(() => {});
+      return res.status(503).json({ error: 'L’e-mail de confirmation n’a pas pu partir : réessayez dans un instant, ou contactez l’agence.' });
+    }
+    inscription = { id: idSecours, email_confirmed_at: null };
+  }
+  const utilisateur = inscription.user || inscription;
+  const compte = { id: utilisateur && utilisateur.id };
+  const retirer = () => (compte.id ? adminAuth('admin/users/' + compte.id, 'DELETE').catch(() => {}) : Promise.resolve());
+  if (!compte.id) return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' });
+  // Supabase réglé sans confirmation des adresses (« Confirm email » désactivé) : le compte serait confirmé sans
+  // preuve. On ne garde rien et on le dit (la propriétaire doit activer « Confirm email » dans Supabase).
+  if (utilisateur.email_confirmed_at || utilisateur.confirmed_at || inscription.access_token) {
+    await retirer();
+    await noterAuJournal('[Demande d’accès] Supabase confirme les adresses sans e-mail (« Confirm email » désactivé) : demande de ' + email + ' refusée', 'demandes');
+    return res.status(503).json({ error: 'La confirmation par e-mail n’est pas encore activée : contactez l’agence.' });
+  }
   const note = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes', {
     method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify({ user_id: compte.id, nom, email, telephone: telephone || null })
   });
   if (!note.ok) {
-    // (demande non notée : le compte créé est retiré, la personne peut réessayer)
-    await adminAuth('admin/users/' + compte.id, 'DELETE').catch(() => {});
+    // (demande non notée : le compte créé est retiré, la personne peut réessayer ; son lien ne mène plus à rien)
+    await retirer();
     return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' });
   }
-  // l'administratrice principale est prévenue (e-mail du serveur, comme les autres alertes)
+  // l'administratrice principale est prévenue (e-mail du serveur, comme les autres alertes) ; sans la clé EmailJS,
+  // l'alerte est notée au journal et la demande apparaît quand même dans Sécurité › Comptes et rôles
+  const cle = process.env.EMAILJS_PRIVATE_KEY;
   const principale = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=email,nom&role=eq.principal', { headers: enTetesService() }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
-  const cle = process.env.EMAILJS_PRIVATE_KEY, destinataire = (principale[0] && principale[0].email) || EMAIL_AGENCE;
+  const destinataire = (principale[0] && principale[0].email) || EMAIL_AGENCE;
   const envoi = cle ? await envoyerEmailServeur(cle, destinataire, (principale[0] && principale[0].nom) || 'Maître Akesse Model Management',
     '🔑 Nouvelle demande d’accès à l’Administration\n\nNom : ' + nom + '\nE-mail : ' + email + (telephone ? '\nTéléphone : ' + telephone : '') +
-    '\n\nCette personne n’a encore AUCUN accès. Pour l’accepter (et choisir son rôle) ou la refuser : Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles.') : { ok: false };
+    '\n\nCette personne n’a encore AUCUN accès. Elle doit d’abord confirmer son adresse (lien envoyé par e-mail) : la demande apparaîtra ensuite dans Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles, pour l’accepter (et choisir son rôle) ou la refuser.') : { ok: false };
   if (!envoi.ok) await noterAuJournal('[Demande d’accès] alerte non partie pour ' + email + (cle ? '' : ' (clé EmailJS absente)'), 'demandes');
   return res.status(200).json({ ok: true });
 }
@@ -400,6 +550,14 @@ module.exports = async function handler(req, res) {
           const dejaLa = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=user_id&user_id=eq.' + encodeURIComponent(userId), { headers: enTetesService() });
           if (!dejaLa.ok) throw new Error('Vérification impossible pour le moment.');
           if ((await dejaLa.json()).length) return res.status(400).json({ error: 'Cette personne a déjà un compte du portail : changez son rôle dans la liste.' });
+          // (16/11/2026, audit L-6 = R-01) adresse déjà prise par « Créer mon compte » : ce compte a été créé par
+          // quelqu'un qui n'a jamais prouvé posséder l'adresse. L'invitation ne lui donne JAMAIS le rôle en silence :
+          // la demande se traite dans Sécurité › Comptes et rôles, après avoir vérifié la personne (appel).
+          const demande = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes?select=id&user_id=eq.' + encodeURIComponent(userId), { headers: enTetesService() });
+          if (!demande.ok) throw new Error('Vérification impossible pour le moment.');
+          if ((await demande.json()).length) {
+            return res.status(400).json({ error: 'Une demande d’accès existe déjà pour cette adresse (« Créer mon compte ») : ouvrez-la dans Sécurité › Comptes et rôles, et appelez la personne pour vérifier que c’est bien elle avant de l’accepter.' });
+          }
         }
         if (!userId) {
           const invite = await adminAuth('invite?redirect_to=' + encodeURIComponent(RETOUR_ADMINISTRATION), 'POST', { email, data: { portail_invite: true, nom } });
@@ -507,3 +665,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: e.message || 'Erreur serveur.' });
   }
 };
+// (pour les essais : comparer les champs vraiment envoyés par les pages à la liste blanche)
+module.exports.COLONNES_FORMULAIRES = COLONNES_FORMULAIRES;

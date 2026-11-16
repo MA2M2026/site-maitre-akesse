@@ -253,7 +253,7 @@ function construireHtmlCv(d) {
   return (
     '<div class="private-note">Document privé, visible uniquement par ' + echapperHtml((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M</div>' +
     '<div class="mcv-wrap"><aside class="mcv-side">' +
-      '<div class="mcv-photo">' + heroPhoto + mcvIcon('user', 48) + '<div class="mcv-photo-logo"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div></div>' +
+      '<div class="mcv-photo">' + heroPhoto + mcvIcon('user', 48) + '<div class="mcv-photo-logo"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"></div></div>' +
       '<div class="mcv-tagline">Former · Révéler · Valoriser</div>' +
       '<div class="mcv-name"><span class="mcv-nom">' + echapperHtml(d.nomComplet || '') + '</span></div>' +
       '<div class="mcv-divider"></div>' +
@@ -266,7 +266,7 @@ function construireHtmlCv(d) {
       '</ul>' +
       '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '') + '</span></div>' +
       (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
-      '<div class="mcv-agency"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
+      '<div class="mcv-agency"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
     '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
       '<section class="mcv-sec mcv-sec-subtile"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('body') + ' Informations physiques</h4><div class="mcv-two-col">' +
@@ -904,7 +904,7 @@ function bilanFormation(d) {
   return { payes: (Number(d && d.faits_avant) || 0) + cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
 }
 // Où en est la mannequin (Reprise de mars, supabase-reprise-mars.sql, mes_mensualites) : « Niveau 1 · mois 3 sur 9 ·
-// il reste 15 mois », la prochaine mensualité, ou « agence fermée jusqu'au 1er mars » (rodage, congés) — en
+// il reste 15 mois de formation », la prochaine mensualité, ou rodage / pause de décembre à février — en
 // phrases simples, sans balises (chaque écran les échappe). null tant que la base n'a pas ces informations.
 // Partagé par Mes paiements (js/mes-paiements.js) et l'application (js/mannequin-app.js).
 // Lien Wave marchand de l'agence (le montant se met à la fin) et montant écrit « 30 000 FCFA » : partagés le
@@ -936,15 +936,23 @@ function situationFormation(d) {
   const fcfa = enFcfa;
   if (d.termine) return { titre: 'Formation terminée', lignes: ['Vous restez à l’agence, sans mensualité à payer.'], ferme: false, termine: true };
   const reste = Number(d.reste) || 0;
-  const lignes = [(Number(d.mois_niveau) > 0 ? 'Mois ' + d.mois_niveau + ' sur 9' : 'La formation commence bientôt') + ' · il reste ' + reste + ' mois'];
-  let ferme = false;
+  const lignes = [(Number(d.mois_niveau) > 0 ? 'Mois ' + d.mois_niveau + ' sur 9' : 'La formation commence bientôt') + ' · il reste ' + reste + ' mois de formation'];
+  let ferme = false, pause = false;
   if (d.fermee_jusqu_au) {
+    // (16/11/2026, audit D-05 / L-13, décision de la propriétaire) les mois de rodage COMPTENT dans la formation ; seuls
+    // décembre, janvier et février (congés) ne comptent pas. Le calcul ne change pas : seulement le message (avant :
+    // « Agence fermée… », qui faisait croire que la formation était arrêtée). (situationFormation.maintenant : essais)
     ferme = true;
     const j = String(d.fermee_jusqu_au);
-    lignes.unshift('Agence fermée jusqu’au ' + (j.slice(8, 10) === '01' ? '1er' : String(Number(j.slice(8, 10)))) + ' ' + moisEnToutes(j) + ' : aucune mensualité à payer.');
+    const reprise = (j.slice(8, 10) === '01' ? '1er' : String(Number(j.slice(8, 10)))) + ' ' + moisEnToutes(j);
+    const mois = ((situationFormation.maintenant && situationFormation.maintenant()) || new Date()).getUTCMonth() + 1;  // (Abidjan : UTC)
+    pause = mois === 12 || mois <= 2;
+    lignes.unshift(pause
+      ? 'Pause de la formation (congés de décembre à février) : reprise le ' + reprise + ', aucune mensualité à payer d’ici là.'
+      : 'Aucune mensualité à payer jusqu’au ' + reprise + ' : vos mois de cours comptent quand même dans la formation (pause en décembre, janvier et février).');
   }
   if (d.prochaine) lignes.push('Prochaine mensualité : ' + moisEnToutes(d.prochaine) + ' · ' + fcfa(d.mensualite));
-  return { titre: 'Niveau ' + d.niveau + (Number(d.niveaux) === 1 ? ' (formation en 1 niveau)' : ' sur 2'), lignes, ferme, termine: false };
+  return { titre: 'Niveau ' + d.niveau + (Number(d.niveaux) === 1 ? ' (formation en 1 niveau)' : ' sur 2'), lignes, ferme, pause, termine: false };
 }
 
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
@@ -1388,7 +1396,7 @@ async function construireCanvasCv(d) {
   const photosAuto = photosCvCompletees(d);
   const [photoHero, logo, ...photosPortfolio] = await Promise.all([
     photosAuto.hero ? chargerImageHauteRes(photosAuto.hero, COTE_PETITE_CASE) : Promise.resolve(null),
-    chargerImageLocale('assets/logo-header.png'),
+    chargerImageLocale('/assets/logo-header.png'),
     ...[0, 1, 2, 3, 4].map(function (i) { const u = photosAuto.compcard[i]; return u ? chargerImageHauteRes(u, COTE_PETITE_CASE) : Promise.resolve(null); }),
     chargerQrLib().catch(function () { return null; })
   ]);
@@ -2170,9 +2178,21 @@ function rendreContenuRiche(texte) {
   const conteneur = document.createElement('div');
   conteneur.appendChild(propre);
   normaliserListesQuill(conteneur);
+  abaisserTitresPrincipaux(conteneur);
   retirerParagraphesVides(conteneur);
   rendreLiensCliquables(conteneur);
   return conteneur.innerHTML;
+}
+
+// (16/11/2026, audit C-P8) un « Titre 1 » tapé dans l'éditeur devient un titre de niveau 2 à l'affichage : la page a
+// déjà son grand titre, et deux titres principaux gênent Google et les lecteurs d'écran (article « Alpha Blondy… »).
+function abaisserTitresPrincipaux(racine) {
+  racine.querySelectorAll('h1').forEach((h1) => {
+    const h2 = document.createElement('h2');
+    for (const a of h1.attributes) h2.setAttribute(a.name, a.value);
+    while (h1.firstChild) h2.appendChild(h1.firstChild);
+    h1.replaceWith(h2);
+  });
 }
 
 // Lignes vides tapées dans l'éditeur (« Entrée » deux fois) : retirées, l'écart entre deux
@@ -2424,45 +2444,8 @@ function creerEditeurRiche(idConteneur, placeholder) {
   return quill;
 }
 
-// Éditeur riche « différé » (26/10/2026) : Quill (≈ 200 Ko) n'est plus téléchargé par les
-// visiteurs des pages Actualités, Événements et Partenaires. La page reçoit tout de suite une
-// poignée ; Quill se charge seulement quand un formulaire de l'Administration en a besoin (poignee.preparer(), à attendre avant de lire ou remplir l'éditeur).
-const EDITEURS_DIFFERES = [];
-let quillEnChargement = null;
-function chargerFichierPage(balise, attributs) {
-  return new Promise((ok, ko) => {
-    const el = Object.assign(document.createElement(balise), attributs);
-    el.onload = ok; el.onerror = ko;
-    document.head.appendChild(el);
-  });
-}
-function chargerQuill() {
-  // les deux fichiers jusqu'au bout, même si l'un échoue ; en cas d'échec, l'éditeur simple
-  // prend le relais (creerEditeurRiche) et le prochain éditeur réessaiera de charger Quill
-  if (!quillEnChargement) quillEnChargement = Promise.allSettled([
-    chargerFichierPage('link', { rel: 'stylesheet', href: '/js/vendor/quill-2.0.3.snow.css' }),
-    chargerFichierPage('script', { src: '/js/vendor/quill-2.0.3.js' })
-  ]).then((r) => { if (r.some((x) => x.status === 'rejected')) quillEnChargement = null; });
-  return quillEnChargement;
-}
-function editeurRicheDiffere(idConteneur, placeholder) {
-  const poignee = { editeur: null, ecouteurs: [], pret: null };
-  poignee.preparer = () => poignee.pret || (poignee.pret = chargerQuill().then(() => {
-    poignee.editeur = creerEditeurRiche(idConteneur, placeholder);
-    if (poignee.editeur && typeof poignee.editeur.on === 'function') poignee.ecouteurs.forEach(([evt, fn]) => poignee.editeur.on(evt, fn));
-    return poignee.editeur;
-  }));
-  poignee.on = (evt, fn) => {
-    poignee.ecouteurs.push([evt, fn]);
-    if (poignee.editeur && typeof poignee.editeur.on === 'function') poignee.editeur.on(evt, fn);
-  };
-  poignee.setText = (t) => { if (poignee.editeur) poignee.editeur.setText(t); };
-  EDITEURS_DIFFERES.push(poignee);
-  return poignee;
-}
-function preparerEditeursDifferes() {
-  EDITEURS_DIFFERES.forEach((p) => { void p.preparer(); });
-}
+// (16/11/2026, audit B-P12) l'éditeur riche « différé » (editeurRicheDiffere, preparerEditeursDifferes, chargerQuill) n'était
+// plus appelé nulle part depuis la nouvelle Administration : retiré.
 // La poignée d'un éditeur différé, ou l'éditeur lui-même. Lire ou remplir une poignée pas
 // encore prête serait une erreur silencieuse (texte vide enregistré) : on la signale.
 function editeurReel(quill) {
@@ -2826,15 +2809,18 @@ async function jetonAntiRobot() {
     });
   } catch (e) { raisonJetonAntiRobot = 'script Cloudflare non chargé (' + ((e && e.message) || e) + ')'; return null; }
 }
-async function envoyerFormulairePublic(table, ligne) {
+async function envoyerFormulairePublic(table, ligne, dejaRedemande) {
   const jeton = await jetonAntiRobot();
   const rep = await fetch('/api/portail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'formulaire', table, ligne, jeton, raisonJeton: raisonJetonAntiRobot }) })
     .catch(() => null);
   if (!rep) return { error: { message: 'Connexion interrompue.' } };
   const r = await rep.json().catch(() => ({}));
   if (rep.ok) return { error: null };
+  // (16/11/2026, anti-robots strict) : un jeton refusé ou perdu est redemandé UNE fois, sans rien demander au visiteur
+  // (Cloudflare n'affiche une case à cocher que s'il a un doute).
+  if (rep.status === 403 && r.robot && !dejaRedemande) return envoyerFormulairePublic(table, ligne, true);
   // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
-  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris } };
+  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris, retires: Array.isArray(r.retires) ? r.retires : null } };
 }
 async function insererAvecPatience(table, ligne, surAttente) {
   const attentes = [15, 25, 35];
@@ -2989,10 +2975,12 @@ async function reduireEnJpeg(fichier, coteMax, qualite) {
 // Photo d'une page du site (ex. photo du fondateur) : JPEG / PNG / WebP de plus de 1,5 Mo
 // réduite (2400 px, JPEG) ; sinon gardée telle quelle. Partagé le 22/10/2026 (ancien tableau
 // de bord et nouvelle Administration).
-async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
+// seuil (facultatif) : taille en dessous de laquelle la photo est gardée telle quelle (16/11/2026, audit L-9 :
+// photos des actualités et événements, 1600 px dès 400 Ko, au lieu de photos d'origine de plusieurs Mo).
+async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88, seuil = 1.5 * 1024 * 1024) {
   const propre = await sansDonneesCachees(fichier, coteMax, qualite);  // (lieu GPS et téléphone retirés, W6)
   if (propre !== fichier) return propre;  // (déjà redessinée : pas une seconde fois)
-  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) return fichier;
+  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < seuil) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
 }
 
@@ -3001,22 +2989,51 @@ async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
 // laissent plus lire une photo de la galerie (Google Photos, nuage) quelques minutes après le choix). Convertie (HEIC),
 // réduite (1600 px) et COPIÉE EN MÉMOIRE tout de suite : à l'envoi, plus rien à relire sur le téléphone, et c'est
 // plus léger. Lève une erreur si la photo est déjà illisible (la personne la choisit à nouveau).
+// (16/11/2026, audit R-05 / R-06) seul un fichier d'image est accepté (un PDF ou un document n'est plus compté comme
+// photo), et la photo prête doit réellement s'afficher (un HEIC que le téléphone ne sait pas convertir est signalé au
+// lieu de partir illisible). Les captures d'écran PNG / WebP lourdes sont aussi réduites en JPEG 1600 px (une capture
+// de 13 Mo partait telle quelle) : la transparence ne sert à rien sur une photo de candidature.
+const PHOTO_LOURDE_OCTETS = 1.5 * 1024 * 1024;
+// (type inconnu : certains Android donnent une photo de la galerie sans type ni extension, « 1000012345 » : elle n'est
+// pas refusée ici, c'est la vérification de l'affichage qui tranche)
+// (16/11/2026, relecture du superviseur) une photo au type « application/octet-stream » (HEIC d'iPhone, JPG… depuis
+// Windows ou certains Android) est acceptée si son extension est celle d'une photo ; elle reçoit ensuite le bon type
+// (typeImageDuNom), sinon le Drive de l'agence l'écarterait. Un type qui dit clairement autre chose (PDF, vidéo) reste refusé.
+const EXTENSIONS_PHOTO = Object.assign(Object.create(null), { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif' });
+const typeImageDuNom = (nom) => EXTENSIONS_PHOTO[String((String(nom || '').match(/\.([a-z0-9]+)$/i) || [])[1] || '').toLowerCase()] || null;
+const estFichierImage = (f) => !f.type || /^image\//.test(f.type) || (f.type === 'application/octet-stream' && !!typeImageDuNom(f.name));
+function verifierImageLisible(fichier) {
+  return new Promise((ok, ko) => {
+    const adresse = URL.createObjectURL(fichier), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(adresse); if (img.naturalWidth) ok(); else ko(new Error('image vide')); };
+    img.onerror = () => { URL.revokeObjectURL(adresse); ko(new Error('image illisible')); };
+    img.src = adresse;
+  });
+}
 async function preparerPhotoEnvoi(fichier) {
-  const prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  if (!estFichierImage(fichier)) { const e = new Error('pas une photo'); e.pasPhoto = true; throw e; }
+  if (fichier.type === 'application/octet-stream') fichier = new File([fichier], fichier.name, { type: typeImageDuNom(fichier.name) });
+  let prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  if (prete.type !== 'image/jpeg' && prete.size > PHOTO_LOURDE_OCTETS) prete = await reduireEnJpeg(prete, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  await verifierImageLisible(prete);
   if (prete !== fichier) return prete;
   return new File([await fichier.arrayBuffer()], fichier.name || 'photo.jpg', { type: fichier.type || 'image/jpeg' });
 }
-// Prépare une liste de photos choisies : { pretes: [File], illisibles: [noms] } (les illisibles sont laissées de côté)
+// Prépare une liste de photos choisies : { pretes: [File], illisibles: [noms], pasPhotos: [noms] } (les illisibles et
+// les fichiers qui ne sont pas des photos sont laissés de côté)
 async function preparerPhotosEnvoi(fichiers) {
-  const pretes = [], illisibles = [];
+  const pretes = [], illisibles = [], pasPhotos = [];
   for (const f of fichiers) {
-    try { pretes.push(await preparerPhotoEnvoi(f)); } catch (e) { illisibles.push(f.name || 'photo'); }
+    try { pretes.push(await preparerPhotoEnvoi(f)); } catch (e) { (e && e.pasPhoto ? pasPhotos : illisibles).push(f.name || 'photo'); }
   }
-  return { pretes, illisibles };
+  return { pretes, illisibles, pasPhotos };
 }
-const textePhotosIllisibles = (illisibles) => illisibles.length ? T(
+const textePhotosIllisibles = (illisibles, pasPhotos = []) => [illisibles.length ? T(
   `${illisibles.length > 1 ? illisibles.length + ' photos n’ont' : '1 photo n’a'} pas pu être ${illisibles.length > 1 ? 'lues' : 'lue'} par le téléphone : choisissez-${illisibles.length > 1 ? 'les' : 'la'} à nouveau (depuis la galerie, de préférence).`,
-  `${illisibles.length > 1 ? illisibles.length + ' photos' : '1 photo'} could not be read by your phone: please choose ${illisibles.length > 1 ? 'them' : 'it'} again (from your gallery, preferably).`) : '';
+  `${illisibles.length > 1 ? illisibles.length + ' photos' : '1 photo'} could not be read by your phone: please choose ${illisibles.length > 1 ? 'them' : 'it'} again (from your gallery, preferably).`) : '',
+  pasPhotos.length ? T(
+    `${pasPhotos.length > 1 ? pasPhotos.length + ' fichiers ne sont pas des photos' : '« ' + pasPhotos[0] + ' » n’est pas une photo'} (document, PDF…) : choisissez des photos (JPEG, PNG).`,
+    `${pasPhotos.length > 1 ? pasPhotos.length + ' files are not photos' : '“' + pasPhotos[0] + '” is not a photo'} (document, PDF…): please choose photos (JPEG, PNG).`) : ''].filter(Boolean).join(' ');
 
 // ---------- Envois fiables (12/11/2026, demande de la propriétaire : « même si la personne quitte la page, que ça
 // s'envoie quand même, et qu'une notification dise candidature envoyée ») ----------
@@ -3406,6 +3423,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // bande compacte à droite, à côté de la bulle WhatsApp (elle cachait le nom de la mannequin sur sa fiche et des
     // champs des formulaires) ; elle s'efface le temps d'écrire dans un champ, puis revient
     const surLeSite = !pageAdministration() && !pageApplicationMannequin();
+    // (16/11/2026, audit R-04, réserve de C) pages de formulaire : la bande n'est jamais créée (elle cachait « Envoyer ») ;
+    // la règle CSS de css/installation.css fait de même, mais :has n'existe pas avant Chrome 105 / Safari 15.4
+    if (surLeSite && document.querySelector('#form-casting, #form-talons, #form-contact')) return;
     const b = document.createElement('div');
     b.id = 'ma2m-installer'; b.className = 'ma2m-installer';
     if (surLeSite) b.classList.add('ma2m-installer--site');
@@ -3698,27 +3718,6 @@ function villeAvecCommune(valeurVille, idSelectCommune, idAutreCommune) {
     return (autre && autre.value.trim()) || 'Abidjan';
   }
   return selectCommune.value || 'Abidjan';
-}
-
-// Repositionne les champs ville/commune à partir d'une valeur déjà enregistrée en
-// base (ex. "Cocody" doit rouvrir le select ville sur "Abidjan" ET le select
-// commune sur "Cocody" — sinon la commune enregistrée serait invisible à la
-// réouverture du formulaire). Pour toute autre ville, délègue à
-// definirSelectOuAutre() (déjà présente sur chaque page consommatrice), qui gère
-// la bascule vers "Autre" pour une ville hors liste.
-function definirVilleAvecCommune(valeurEnregistree, idSelectVille, idAutreVille, idSelectCommune, idAutreCommune) {
-  const selectVille = document.getElementById(idSelectVille);
-  const selectCommune = document.getElementById(idSelectCommune);
-  if (!selectVille) return;
-  const valeur = valeurEnregistree || '';
-  const estCommuneAbidjan = COMMUNES_ABIDJAN.includes(valeur);
-  if (valeur === 'Abidjan' || estCommuneAbidjan) {
-    selectVille.value = 'Abidjan';
-    selectVille.dispatchEvent(new Event('change'));
-    if (selectCommune) selectCommune.value = estCommuneAbidjan ? valeur : 'Abidjan';
-    return;
-  }
-  definirSelectOuAutre(idSelectVille, idAutreVille, valeur);
 }
 
 // ================== Indicatifs téléphoniques des pays ==================

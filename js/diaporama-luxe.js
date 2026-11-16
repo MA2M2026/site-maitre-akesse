@@ -91,11 +91,23 @@
       if (cache) f.setAttribute('aria-hidden', 'true');
       return f;
     };
-    const piste = document.createElement('div'); piste.className = 'lx-tapis';
-    NOMS.forEach((n) => piste.appendChild(figure(n, false)));
-    NOMS.forEach((n) => piste.appendChild(figure(n, true)));
-    piste.style.setProperty('--duree', (NOMS.length * 4.5) + 's');
-    grille.textContent = ''; grille.appendChild(piste); grille.classList.add('en-tapis');
+    // (16/11/2026, audit L-9) la bande (« lx-tapis ») est déjà dans la page, avec ses premières photos : on n'ajoute que
+    // les suivantes au bout. Avant, la galerie était vidée puis reconstruite ici, ce que le navigateur comptait comme un
+    // grand saut de la page (CLS 0,37 sur l'Atelier talons, téléphone).
+    let piste = grille.querySelector('.lx-tapis');
+    if (!piste) { piste = document.createElement('div'); piste.className = 'lx-tapis'; grille.replaceChildren(piste); grille.classList.add('en-tapis'); }
+    const deja = Array.from(piste.querySelectorAll('img')).map((i) => nomDe(i.getAttribute('src')));
+    piste.querySelectorAll('.lx-galerie-photo').forEach((f) => { f.classList.remove('reveal', 'reveal-delay-1', 'reveal-delay-2'); f.classList.add('visible'); });
+    NOMS.filter((n) => !deja.includes(n)).forEach((n) => piste.appendChild(figure(n, false)));
+    // (16/11/2026, relecture du superviseur) la seconde moitié est une COPIE exacte de la première (même ordre, mêmes
+    // photos) : sinon la bande saute à chaque tour, quand l'animation revient au début.
+    const premiere = Array.from(piste.querySelectorAll('.lx-galerie-photo'));
+    premiere.forEach((f) => {
+      const c = f.cloneNode(true); c.setAttribute('aria-hidden', 'true');
+      const img = c.querySelector('img'); if (img) { img.alt = ''; img.loading = 'lazy'; }
+      piste.appendChild(c);
+    });
+    piste.style.setProperty('--duree', (premiere.length * 4.5) + 's');
     // seulement à l'écran et dans un onglet visible (sinon la bande s'arrête)
     const jouer = (oui) => { piste.style.animationPlayState = oui && !document.hidden ? 'running' : 'paused'; };
     let visible = true;

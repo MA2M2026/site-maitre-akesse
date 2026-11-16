@@ -3213,7 +3213,9 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
 .fiche-mens-tout > summary::-webkit-details-marker { display: none; }
 .fiche-mens-tout > summary::after { content: " ›"; }
 .fiche-mens-tout[open] > summary::after { content: " ⌄"; }
-.fiche-v2 .fiche-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 0; }
+/* (16/11/2026, audit D-08) minmax(0, 1fr) : à 320 px, « Sélectionner ce mannequin » élargissait sa colonne et la rangée
+   collait au bord droit de l'écran (journal : « fiche-telecharger dépasse de 12 px ») */
+.fiche-v2 .fiche-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 0; }
 .fiche-v2 .fiche-actions .btn, .fiche-v2 .fiche-actions .btn--principal { width: 100%; justify-content: center; min-height: 50px; border-radius: 12px;
   background: #FFFFFF; color: #7C2128; border: 1.5px solid #FFFFFF; font-weight: 700; letter-spacing: 0.02em; text-transform: none; font-size: 0.9rem; }
 .fiche-v2 .fiche-actions #btn-select-fiche { background: #FFFFFF; color: #7C2128; border-color: #FFFFFF; }

@@ -83,6 +83,13 @@ const tables = {
       ok(cotes, n + 'la photo à gauche, le panneau rouge à droite');
     }
     ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), n + 'rien ne dépasse de l’écran');
+    // (16/11/2026, audit D-08) très petit téléphone (320 px) : « Sélectionner ce mannequin » + « Compcard » gardent la
+    // même marge à droite qu'à gauche (avant : la rangée collait au bord droit)
+    if (vp.width < 700) {
+      await p.setViewportSize({ width: 320, height: 700 }); await p.waitForTimeout(400);
+      const marges = await p.evaluate(() => { const r = document.querySelector('.fiche-v2 .fiche-actions').getBoundingClientRect(); return { gauche: Math.round(r.left), droite: Math.round(innerWidth - r.right) }; });
+      ok(marges.droite >= 8 && Math.abs(marges.droite - marges.gauche) <= 2, n + '320 px : boutons Sélectionner / Compcard avec la même marge des deux côtés (' + marges.gauche + ' / ' + marges.droite + ' px)');
+    }
     const interdits = await p.evaluate(fondsInterdits);
     ok(!interdits.length, n + 'seulement des fonds rouges ou blancs' + (interdits.length ? ' — ' + interdits.slice(0, 4).map((x) => x.element + ' ' + x.couleur).join(' | ') : ''));
     if (process.env.CAPTURES) await p.screenshot({ path: path.join(process.env.CAPTURES, 'fiche-premium-' + vp.width + (en ? '-en' : '') + '.png'), fullPage: true });

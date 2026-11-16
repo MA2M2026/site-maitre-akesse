@@ -30,17 +30,45 @@ async function serveur() {
   let r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
   ok(r.statut === 200 && verifs.pop()?.secret === 'secret-essai' && rpcs.length === 1 && rpcs[0].p_table === 'messages_contact' && rpcs[0].p_ip === '41.2.3.4' && rpcs[0].p_ligne.nom === 'Awa',
     'serveur : jeton vérifié chez Cloudflare avec la clé secrète, puis enregistré (adresse du visiteur transmise)');
-  // (mode souple du 01/11/2026 au soir, ANTI_ROBOTS_STRICT = false : l'envoi passe, la raison exacte est notée au journal)
+  // (16/11/2026, audit L-7 : mode strict, ANTI_ROBOTS_STRICT = true) : un robot est refusé, la raison est notée au
+  // journal ; une panne de NOTRE côté ou de Cloudflare ne bloque jamais un vrai visiteur.
   const journal = []; const fetchAvant = global.fetch;
   global.fetch = async (url, o = {}) => { if (/journal_erreurs/.test(String(url))) { journal.push(JSON.parse(o.body)); return { ok: true, status: 201, json: async () => ({}), text: async () => '' }; } return fetchAvant(url, o); };
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'jeton-de-robot' });
-  ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('[Anti-robots] vérification non aboutie : Cloudflare'), 'serveur : jeton refusé par Cloudflare : envoi accepté (mode souple), raison notée au journal');
+  ok(r.statut === 403 && r.rep.robot && rpcs.length === 1 && JSON.stringify(journal).includes('(refusé)'), 'serveur : jeton refusé par Cloudflare : envoi REFUSÉ (mode strict), rien d’enregistré, raison notée au journal');
   r = await appeler({ table: 'messages_contact', ligne, raisonJeton: 'erreur Turnstile 110200' });
-  ok(r.statut === 200 && JSON.stringify(journal).includes('erreur Turnstile 110200'), 'serveur : pas de jeton : la raison donnée par le navigateur est notée au journal');
+  ok(r.statut === 403 && rpcs.length === 1 && JSON.stringify(journal).includes('erreur Turnstile 110200'), 'serveur : pas de jeton : refusé, la raison donnée par le navigateur est notée au journal');
+  const fetchStrict = global.fetch;
+  global.fetch = async (url, o = {}) => { if (String(url).includes('siteverify')) throw new Error('réseau coupé'); return fetchStrict(url, o); };
+  r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
+  ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('Cloudflare injoignable') && JSON.stringify(journal).includes('(accepté quand même)'), 'serveur : Cloudflare injoignable : le vrai visiteur passe quand même (noté au journal)');
+  global.fetch = async (url, o = {}) => { if (String(url).includes('siteverify')) return { ok: true, status: 200, json: async () => ({ success: false, 'error-codes': ['internal-error'] }) }; return fetchStrict(url, o); };
+  r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
+  ok(r.statut === 200 && rpcs.length === 3, 'serveur : panne interne de Cloudflare (internal-error) : le vrai visiteur passe quand même');
+  global.fetch = fetchStrict; delete process.env.TURNSTILE_SECRET_KEY;
+  r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
+  ok(r.statut === 200 && rpcs.length === 4, 'serveur : clé secrète absente du serveur : le vrai visiteur passe quand même');
+  process.env.TURNSTILE_SECRET_KEY = 'secret-essai';
   global.fetch = fetchAvant; rpcs.length = 1;
+  // (16/11/2026, audit L-7 = A-08) : liste blanche des colonnes ; un envoi fabriqué ne remplit aucune colonne interne
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'ca1', full_name: 'Awa', email: 'a@t.ci', status: 'retenue', created_at: '2020-01-01', statut_change_at: '2020-01-01', notes_agence: 'x' }, jeton: 'bon-jeton' });
+  const recue = rpcs[1] && rpcs[1].p_ligne;
+  ok(r.statut === 200 && recue && recue.full_name === 'Awa' && recue.id === 'ca1' && !('status' in recue) && !('created_at' in recue) && !('statut_change_at' in recue) && !('notes_agence' in recue),
+    'serveur : candidature fabriquée : statut, dates et notes internes retirés avant la base');
+  r = await appeler({ table: 'cours_talons', ligne: { id: 't1', nom: 'Awa', montant: 1, statut: 'payee', paye_le: '2026-01-01' }, jeton: 'bon-jeton' });
+  const talons = rpcs[2] && rpcs[2].p_ligne;
+  ok(r.statut === 200 && talons && talons.nom === 'Awa' && !('montant' in talons) && !('statut' in talons) && !('paye_le' in talons), 'serveur : cours de talons fabriqué : montant et statut de paiement retirés');
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'ca2', full_name: 'Robot', email: 'r@t.ci', type_candidature: 'direct' }, jeton: 'bon-jeton' });
+  ok(r.statut === 400 && rpcs.length === 3, 'serveur : candidature « direct » (réservée à l’agence) envoyée par un visiteur : refusée (B-V4)');
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'ca3', full_name: 'Awa', email: 'a@t.ci', type_candidature: 'projet', projet_nom: 'Défilé' }, jeton: 'bon-jeton' });
+  ok(r.statut === 200 && rpcs.length === 4 && rpcs[3].p_ligne.type_candidature === 'projet', 'serveur : candidature « projet » (un casting) : acceptée');
+  rpcs.length = 3;
+  r = await appeler({ table: 'messages_contact', ligne: { status: 'traitee', inconnu: 1 }, jeton: 'bon-jeton' });
+  ok(r.statut === 400 && rpcs.length === 3, 'serveur : envoi sans aucune colonne autorisée : refusé');
+  rpcs.length = 1;
   r = await appeler({ table: 'model_profiles', ligne, jeton: 'bon-jeton' });
   ok(r.statut === 400 && rpcs.length === 1, 'serveur : une autre table que les 3 formulaires : refusée');
-  limite = true; r = await appeler({ table: 'recruiter_requests', ligne: { id: 'r1', contact_name: 'x', email: 'x@x.ci' }, jeton: 'bon-jeton' }); limite = false;
+  limite = true; r = await appeler({ table: 'recruiter_requests', ligne: { id: 'r1', contact_name: 'x', email: 'x@x.ci', _modeles: [{ model_id: '11111111-1111-4111-8111-111111111111' }] }, jeton: 'bon-jeton' }); limite = false;
   ok(r.statut === 429 && r.rep.limite, 'serveur : trop d’envois de la même adresse : « beaucoup d’envois » (le navigateur patiente et réessaie)');
   // code en ligne avant que le SQL soit collé : l'envoi passe comme avant (jamais de candidats bloqués)
   const directs = []; const ancien = global.fetch;
@@ -72,7 +100,7 @@ async function navigateur() {
     const anti = journal.filter((j) => j[0] === 'ANTI-ROBOT');
     if (!robot) ok(anti.length === 1 && anti[0][2] === 'jeton-essai' && journal.some((j) => j[0] === 'POST' && j[1] === 'messages_contact') && !directs.length && !errs.length,
       n + 'message envoyé par le serveur avec le jeton anti-robot, jamais directement dans la base ' + errs.join(' | '));
-    else ok(!journal.some((j) => j[0] === 'POST' && j[1] === 'messages_contact') && /erreur|error|réessayez|try again/i.test(await p.textContent('body')), n + 'refus anti-robot : rien d’enregistré, un message s’affiche');
+    else ok(!journal.some((j) => j[0] === 'POST' && j[1] === 'messages_contact') && anti.length === 2 && /erreur|error|réessayez|try again/i.test(await p.textContent('body')), n + 'refus anti-robot : un 2e jeton est redemandé tout seul (une seule fois), puis rien d’enregistré et un message s’affiche (' + anti.length + ' essai(s))');
     await p.context().close();
   }
   await b.close();

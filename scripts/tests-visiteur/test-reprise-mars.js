@@ -7,7 +7,7 @@
 //  - Archives – période de rodage : lecture seule, copie Excel (feuilles relues) et PDF (texte relu) ;
 //  - Comptabilité › Clôture guidée : un paiement en attente bloque ; comptage, écart avec raison, mois verrouillé,
 //    bilan du mois ; le comptable ne voit aucun nom de mannequin ;
-//  - application des mannequins : « Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois », « agence fermée jusqu'au 1er mars ».
+//  - application des mannequins : « Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois », rodage ou pause jusqu'au 1er mars (16/11/2026).
 const { chromium } = require('playwright'); const { spawn, execFileSync } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admin');
 const { lirePageEntiere } = require('./lisibilite');
@@ -197,7 +197,9 @@ async function application(b) {
     await p.goto(BASE + '/app/mes-paiements.html'); await p.waitForSelector('.mp-calendrier', { timeout: 8000 }).catch(() => {});
     const t = await p.evaluate(() => document.getElementById('mp-zone').innerText);
     ok(/Ma formation · Niveau 1 sur 2/i.test(t) && /Mois 7 sur 9 · il reste 11 mois/.test(t), n + '« Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois »');
-    ok(/Agence fermée jusqu’au 1er mars 2027 : aucune mensualité à payer/.test(t) && /Prochaine mensualité : mars 2027 · 10 000 FCFA/.test(t), n + '« Agence fermée jusqu’au 1er mars 2027 », prochaine mensualité : mars 2027');
+    // (16/11/2026, audit D-05 / L-13) plus d'« Agence fermée » : rodage (les mois comptent) ou pause de décembre à février
+    ok(/(Aucune mensualité à payer jusqu’au 1er mars 2027 : vos mois de cours comptent|Pause de la formation \(congés de décembre à février\) : reprise le 1er mars 2027)/.test(t) &&
+      !/Agence fermée/.test(t) && /Prochaine mensualité : mars 2027 · 10 000 FCFA/.test(t), n + 'rodage ou pause jusqu’au 1er mars 2027 (plus « Agence fermée »), prochaine mensualité : mars 2027');
     ok(!/À payer avant le 5|n’est pas encore fait/.test(t) && !(await p.$('.mp-carte:not(#avance) [data-payer], .mp-carte:not(#avance) .mp-wave')), n + 'rien à payer pendant la fermeture (seul le paiement à l’avance reste possible)');
     const nums = await p.$$eval('.mp-calendrier .mp-mois-num', (l) => l.map((x) => x.textContent));
     ok(nums[0] === '8', n + 'le premier mois de cours de la reprise porte le numéro 8 (après les 7 déjà faits) ' + nums.join(','));

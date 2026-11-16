@@ -33,7 +33,11 @@ const INTERDITS_JS = ['verifierAdmin', 'api/r2-site-images', 'sbAdmin.from', 'sb
   };
   for (const page of ['actualites', 'evenements', 'partenaires', 'en/actualites', 'en/evenements', 'en/partenaires']) {
     const html = fs.readFileSync(path.join(RACINE, page + '.html'), 'utf8');
-    const restes = INTERDITS_HTML.filter((m) => html.includes(m));
+    // (16/11/2026, batterie finale) hors des styles intégrés à la page (styles des boutons copiés par
+    // scripts/css-critique.mjs, audit L-9) : un nom de classe dans une liste de sélecteurs n'est ni un bouton, ni un
+    // panneau, ni un script. Les balises, les scripts et le texte de la page restent tous vérifiés.
+    const sansStyles = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    const restes = INTERDITS_HTML.filter((m) => sansStyles.includes(m));
     ok(!restes.length, page + ' : aucun bouton, panneau ni script d’administration dans la page' + (restes.length ? ' (' + restes.join(', ') + ')' : ''));
     // scripts propres à la page (pas les outils communs de tout le site) : aucun code d'écriture
     const scripts = [...html.matchAll(/<script[^>]*src="([^"?]+)/g)].map((m) => path.normalize(path.join(path.dirname(page), m[1])))

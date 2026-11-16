@@ -127,8 +127,8 @@
       blocPhotos() + (await Promise.all([P.rpc('mensurations_historique_lire', { p_model: id }).catch(() => null).then(blocMensurations), blocVitrine(id), blocCompte(id),
         // (15/11/2026, demande de la propriétaire) sa carte « MANNEQUIN MA2M » : ici plutôt que dans les Paiements
         P.carteEncart ? P.carteEncart.html(id).catch(() => '') : ''])).join('') +
-      '<section class="carte zone-danger"><h2>Supprimer définitivement</h2><p class="doux petit-texte">Supprime le profil, le compte de connexion et toutes les photos. Irréversible. Pour la retirer seulement du site, préférez la sourdine.</p>' +
-      '<button type="button" class="btn" data-action="mannequin-supprimer">🗑 Supprimer</button></section>';
+      (P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer définitivement</h2><p class="doux petit-texte">Supprime le profil, le compte de connexion et toutes les photos. Irréversible. Pour la retirer seulement du site, préférez la sourdine.</p>' +
+      '<button type="button" class="btn" data-action="mannequin-supprimer">🗑 Supprimer</button></section>' : '');
   }
   // ---------- Compte de connexion (10/11/2026, demande de la propriétaire) ----------
   // Mannequin qui a perdu l'accès à son e-mail, ou oublié son mot de passe : l'administratrice PRINCIPALE seule voit

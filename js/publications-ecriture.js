@@ -30,7 +30,10 @@ async function envoyerPhotosPublication(t, id, fichiers) {
   const urls = [];
   if (fichiers.length && typeof envoyerImageSite !== 'function') throw new Error('Outil d’envoi des photos absent (js/images-site-ecriture.js) : rechargez la page.');
   for (const fichierOriginal of fichiers) {
-    const fichier = await convertirSiHeic(fichierOriginal);
+    let fichier = await convertirSiHeic(fichierOriginal);
+    // (16/11/2026, audit L-9) photo allégée avant l'envoi : 1600 px, JPEG 0,85, dès 400 Ko (avant : photo d'origine,
+    // plusieurs Mo, 8 à 9 s d'attente en 4G lente sur les pages Actualités et Événements)
+    if (typeof allegerPhotoSite === 'function') fichier = await allegerPhotoSite(fichier, 1600, 0.85, 400 * 1024).catch(() => fichier);
     const chemin = `site/${dossier}/${id}/${Date.now()}-${nomFichierSur(fichier.name)}`;
     try {
       const url = await envoyerImageSite(dossier, chemin, fichier);

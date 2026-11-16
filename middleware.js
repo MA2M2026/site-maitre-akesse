@@ -82,6 +82,10 @@ const SCRIPTS_ADMIN = /^\/js\/(publications-ecriture|partenaires-communs|images-
 // Nouvelle Administration : les pièces du bloc 1 (js/admin/site-*.js) sont réservées de la même
 // façon ; js/admin/coque.js et js/admin/site.js (décoration, menu) restent publics.
 const SCRIPTS_NOUVELLE_ADMIN = /^\/js\/admin\/site-[\w-]+\.js$/;
+// adresse décodée (%2D → « - », %2F → « / »…) ; illisible : gardée telle quelle
+function cheminLisible(chemin) {
+  try { return decodeURIComponent(chemin); } catch (e) { return chemin; }
+}
 function base64url(octets) {
   let b = '';
   new Uint8Array(octets).forEach(o => { b += String.fromCodePoint(o); });
@@ -1208,7 +1212,10 @@ export default async function middleware(requete) {
       // (base lente ou en panne : la page part quand même complète, sans les mannequins)
       try { return (await accueilRempli(requete, url)) || await pageNue(url, 'x-ma2m-accueil'); } catch (e) { return; }
     }
-    if (SCRIPTS_ADMIN.test(url.pathname) || SCRIPTS_NOUVELLE_ADMIN.test(url.pathname)) return await tableauProtege(requete);
+    // (16/11/2026, audit R-03) l'adresse est comparée DÉCODÉE : /js/admin/site%2Dmannequins.js donnait le
+    // script sans clé, le serveur de fichiers décodant %2D en « - » alors que la comparaison ne le faisait pas
+    const cheminDecode = cheminLisible(url.pathname);
+    if (SCRIPTS_ADMIN.test(cheminDecode) || SCRIPTS_NOUVELLE_ADMIN.test(cheminDecode)) return await tableauProtege(requete);
     if (requete.headers.get('x-ma2m-remplie')) return;  // (page demandée par pageRemplie elle-même)
     if (url.pathname === '/sitemap.xml') return await planDuSite(url);
     const agent = requete.headers.get('user-agent') || '';

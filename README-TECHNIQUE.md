@@ -168,6 +168,19 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🔐 Rôle « Administrateur du site » sans argent (audit L-1, 16/11/2026, décision de la propriétaire du 15/11)
+
+- **Paiements des cours de talons** : `cours_talons_valider` et `cours_talons_mois_payer` exigent
+  `portail_peut('paiements')` (encaissements, principal ou délégation) — `supabase-l1-role-site.sql`, qui change
+  seulement la ligne du contrôle dans la version de la base (`pg_get_functiondef`). Le déclencheur
+  `trg_cours_talons_garder_paiement` empêche aussi une écriture directe des colonnes d'argent (validation, recette,
+  mois payés, montant après paiement). L'équipe du site garde le suivi (notes, date, terminé, annulé, rouvert).
+  Écran : `js/admin/site-cours-talons.js` ne montre les boutons d'encaissement qu'avec `P.moi.espaces.paiements`.
+- **Suppression définitive d'une mannequin** (`api/supprimer-mannequin.js`) : administrateur principal seulement (un
+  ancien compte admin sans fiche d'équipe garde l'accès) ; bouton caché aux autres (`js/admin/site-mannequins.js`).
+- Essais : `scripts/base-essai/essais-l1-role-site.sql`, `test-admin-cours-talons.js` (rôle « site »),
+  `test-admin-code-serveur.js`. Reste à décider (partie 2) : les contacts privés des candidatures pour ce rôle.
+
 ## 🖥️ Phase 2 : tout le site public écrit par le serveur (02/11/2026, demande de la propriétaire)
 
 Chaque page publique part COMPLÈTE de `middleware.js` (texte, images, listes, en-tête og:/JSON-LD), la même pour
@@ -3700,8 +3713,10 @@ Demande de la propriétaire : « chaque élément du site a son bel aperçu, con
 ## Niveau supérieur après le contrôle extérieur du 26/10/2026
 Contrôle : Mozilla Observatory A+ (110), SSL Labs A+, W3C sans erreur sur les 29 pages en ligne,
 axe (accessibilité) sur les 28 pages publiques, SonarCloud. Chantiers menés :
-- **Éditeur de texte à la demande** : Quill (≈ 200 Ko) n'est plus chargé par les pages Actualités,
-  Événements et Partenaires. `editeurRicheDiffere()` (js/app.js) rend une poignée ; Quill se charge
+- **Éditeur de texte à la demande** (⚠ 16/11/2026, audit B-P12 : `editeurRicheDiffere`, `preparerEditeursDifferes` et
+  `chargerQuill` ont été retirés de js/app.js, plus appelés depuis la nouvelle Administration ; le paragraphe qui suit
+  décrit l'ancien fonctionnement) : Quill (≈ 200 Ko) n'est plus chargé par les pages Actualités,
+  Événements et Partenaires. `editeurRicheDiffere()` (js/app.js) rendait une poignée ; Quill se charge
   quand l'agence est reconnue (`verifierAdmin` → `preparerEditeursDifferes`) ou à l'ouverture d'un
   formulaire. Toujours `await poignee.preparer()` avant `lireContenuEditeur` /
   `chargerContenuDansEditeur` (sinon erreur volontaire : un texte vide serait enregistré). Essais :
@@ -5298,3 +5313,56 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   tourne (cron.job_run_details) ; sinon alerte « 🩺 Circuit des photos en panne » (medias_drive_alertes, source
   `controle`) + journal des erreurs. Historique : `medias_drive_controles` (60 jours).
 - Hors de ce circuit : les photos du Book des mannequins (application, Cloudflare R2, js/espace-mannequin.js).
+
+## Audit du 16/11/2026 — corrections de l'agent C
+- **L-10, règle de sécurité stricte partout** : `accord-parent.html`, `confirmer.html`, `places.html`,
+  `programme-talons.html`, `recu.html` et `404.html` (pages ouvertes avec un jeton personnel) ont maintenant la même
+  balise `Content-Security-Policy` que les autres pages : aucun script ni style en ligne permis (ils n'en ont pas).
+  Vérifié : `scripts/verifier-csp.py`, aucune violation à l'ouverture des 6 pages, tests `test-accord-parent.js`,
+  `test-places.js`, `test-programme-talons.js`, `test-recu.js`, `test-convocations.js`.
+- **L-2, une mannequin ne se publie plus seule** : `supabase-publication-protegee.sql` (À COLLER, contrôle « 1 élément
+  sur 1 » ; essais `scripts/base-essai/essais-publication-protegee.sql`). Le gardien `gerer_validation_publication`
+  garde, hors agence, les valeurs de `premiere_publication_faite`, `raison_refus`, `en_attente_validation`,
+  `desactive` (+ date, auteur) et `exclue_vitrine`, et calcule la minorité sur l'ancienne ET la nouvelle date de
+  naissance. Avant : écrire soi-même `premiere_publication_faite = true` puis `published = true` publiait au Book
+  sans validation, même une mineure (constaté dans la vraie base par l'agent D). « Agence » = présente dans `admins`
+  OU `portail_peut('site')` (équipe du site, principal) : reste juste si L-1 retire le rôle « site » de `admins`.
+- **L-6 (= R-01), « Créer mon compte » de l'équipe, partie sans risque** : `api/portail.js`, action `inviter` : si
+  l'adresse invitée appartient déjà à un compte créé par « Créer mon compte » (ligne dans `staff_demandes`), le rôle
+  n'est plus donné en silence à ce compte (créé par quelqu'un qui n'a jamais prouvé posséder l'adresse) : la
+  propriétaire traite la demande dans Sécurité › Comptes et rôles, après avoir appelé la personne. Test :
+  `test-demandes-acces.js` (fonction `invitation`). **Reste à décider** (propriétaire) : preuve de l'adresse par
+  e-mail (risque : les e-mails de l'invitation ne partaient pas, d'où « Créer mon compte » le 01/11) ou vérification
+  par téléphone avant d'accepter. Toute modification de la création de compte s'essaie aussi pour de vrai, avec
+  l'accord de la propriétaire (règle de CLAUDE.md).
+- **L-6, suite (décision de la propriétaire du 16/11 : on confirme l'adresse ; refait par A le 16/11)** :
+  `demande_acces` (api/portail.js) crée le compte NON confirmé par l'inscription standard de Supabase
+  (`/auth/v1/signup`), qui envoie elle-même le lien de confirmation : plus besoin de `EMAILJS_PRIVATE_KEY` (absente de
+  Vercel, B-V5). Si Supabase refuse l'adresse (réglages par défaut : il n'écrit qu'aux membres de l'équipe du projet,
+  d'où les invitations « qui ne partaient pas »), le lien part par l'e-mail du serveur (EmailJS, `admin/generate_link`)
+  si sa clé est posée ; sinon rien n'est gardé, le message le dit et le journal indique quoi régler (SMTP de Supabase
+  ou clé EmailJS). Trop d'e-mails Supabase : « réessayez dans une heure ». Supabase réglé sans « Confirm email » :
+  compte retiré (jamais confirmé sans preuve). `supabase-demandes-confirmees.sql` (À COLLER, contrôle « 2 éléments sur
+  2 » ; essais `essais-demandes-confirmees.sql`) : la demande n'apparaît et ne s'accepte qu'adresse confirmée.
+  Connexion avant confirmation : « Adresse e-mail pas encore confirmée » (api/connexion-protegee.js). **À essayer pour
+  de vrai** avant la mise en ligne (règle 3 de CLAUDE.md), avec une adresse de test et l'accord de la propriétaire.
+- **Supprimer les vieux messages d'essai (demande de la propriétaire, 16/11/2026)** : administratrice principale
+  seulement, avec confirmation, aucune suppression automatique. « 🗑 » sur chaque message de contact
+  (js/admin/site-pilotage.js, `contact-supprimer`) ; « Supprimer ce dossier » des candidatures et demandes recruteurs
+  réservé au principal (js/admin/site-dossiers.js). La base l'impose : `supabase-suppression-messages.sql` (À COLLER,
+  contrôle « 3 éléments sur 3, 0 autre règle de suppression » : toutes les anciennes règles de suppression de ces 3
+  tables sont retirées quel que soit leur nom ; essais `essais-suppression-messages.sql`). Test : `test-suppression-messages.js`.
+- **Relecture du superviseur avant la mise en ligne (16/11/2026)**, trois corrections :
+  - *Booking, mannequin supprimée depuis* : la sélection vient du téléphone du recruteur (`ma2m_selection`) et n'est pas
+    revérifiée. Si la liste refuse une mannequin qui n'existe plus (clé étrangère vers `model_profiles`), `finirDemande`
+    (api/portail.js) retire la demande, cherche lesquelles n'existent plus (`mannequinsExistants`) et répond 409
+    `{ retires: [...] }` ; la page (js/demande-recruteur.js) les retire de la sélection et demande de renvoyer. Les
+    identifiants sont mis en minuscules (`modelesDeLaDemande`). Test : `test-booking-liste.js`.
+  - *Photos au type « application/octet-stream »* (HEIC d'iPhone, JPG depuis Windows / certains Android) : acceptées si
+    leur extension est celle d'une photo (`estFichierImage`, `typeImageDuNom`, js/app.js), puis reçoivent le bon type
+    (sinon le script Drive les écarte). Un fichier dont le type dit autre chose (PDF, vidéo) reste « pas une photo ».
+    Test : `test-candidature-fichiers.js`.
+  - *Bande de photos qui défile* (js/diaporama-luxe.js, `tapis`) : la seconde moitié est une copie exacte de la
+    première, sinon la boucle sautait à chaque tour. Test : `test-diaporama-luxe.js`.
+  - Reporté avec L-17 (décision de la propriétaire) : la caisse ne peut ni lire ni valider les cours de talons (la base
+    ne lui donne pas `cours_talons` et la page n'est que dans l'espace « site ») ; en attendant, seul le principal valide.

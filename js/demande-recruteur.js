@@ -71,28 +71,34 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
     city: valeurSelectOuAutre('re-ville', 're-ville-autre'),
     project_type: document.getElementById('re-type').value.trim(),
     event_date: document.getElementById('re-date').value || null,
-    message: document.getElementById('re-message').value.trim()
+    message: document.getElementById('re-message').value.trim(),
+    // (16/11/2026, audit R-09) : la liste des mannequins part AVEC la demande ; le serveur enregistre les deux ou
+    // rien (api/portail.js) : plus jamais de demande sans sa liste, ni de « Merci » si la liste n'est pas arrivée.
+    _modeles: liste.map(m => ({ model_id: m.id, model_name_snapshot: m.full_name, model_height_snapshot: m.height_cm || null }))
   };
 
   const { error } = await insererAvecPatience('recruiter_requests', demande, (reste) => { msg.className = 'form-msg ok'; msg.textContent = texteAttenteEnvoi(reste); });
 
-  if (error) {
+  // (16/11/2026, relecture du superviseur) des mannequins supprimées depuis étaient restées dans la sélection : elles
+  // en sont retirées, et le recruteur renvoie sa demande (sinon chaque essai échouait de la même façon)
+  if (error && error.retires && error.retires.length) {
+    const absentes = liste.filter(m => error.retires.includes(String(m.id).toLowerCase()));
+    absentes.forEach(m => retirerSelection(m.id));
+    afficher();
     msg.className = 'form-msg err';
-    msg.textContent = T("Erreur lors de l'envoi. Réessayez ou contactez-nous directement.", 'Error sending your request. Please try again or contact us directly.');
+    msg.style.display = 'block';
+    msg.textContent = absentes.length > 1
+      ? T(`${absentes.length} mannequins de votre sélection ne sont plus disponibles et en ont été retirés. Vérifiez votre sélection, puis envoyez à nouveau.`, `${absentes.length} models in your selection are no longer available and have been removed. Please check your selection, then send again.`)
+      : T('Un mannequin de votre sélection n’est plus disponible et en a été retiré. Vérifiez votre sélection, puis envoyez à nouveau.', 'One model in your selection is no longer available and has been removed. Please check your selection, then send again.');
     btn.disabled = false;
     return;
   }
-
-  const lignes = liste.map(m => ({
-    request_id: idDemande,
-    model_id: m.id,
-    model_name_snapshot: m.full_name,
-    model_height_snapshot: m.height_cm || null
-  }));
-  // La demande elle-même est enregistrée ; si la liste des mannequins ne l'est pas, on le
-  // signale au Journal MA2M (audit du 05/10/2026 : l'échec passait inaperçu).
-  const { error: erreurLignes } = await sb.from('recruiter_request_models').insert(lignes);
-  if (erreurLignes && window.signalerErreur) window.signalerErreur('Demande recruteur : liste des mannequins non enregistrée', erreurLignes.message || String(erreurLignes), 'demande ' + idDemande);
+  if (error) {
+    msg.className = 'form-msg err';
+    msg.textContent = T("Votre demande n'a pas été envoyée. Votre sélection est gardée : réessayez dans un instant, ou contactez-nous directement.", 'Your request was not sent. Your selection is kept: please try again in a moment, or contact us directly.');
+    btn.disabled = false;
+    return;
+  }
 
   const nomsMannequins = liste.map(m => m.full_name).join(', ');
   envoyerNotificationEmail({

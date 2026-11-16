@@ -184,11 +184,16 @@ function montrerApercuVideo(adresseImage, texte) {
   bloc.querySelector('.video-apercu-texte').textContent = texte || '';
   bloc.classList.toggle('u-hidden', !adresseImage && !texte);
 }
-function videoPrete(fichier, duree, origine) {
+// (16/11/2026, audit R-07) vidéo que l'appareil n'a pas pu lire du tout (ni durée, ni image, ni allègement) : elle
+// reste acceptée (certains Android ne savent pas lire une vraie vidéo d'iPhone), mais on ne dit plus « Vidéo prête »
+// sans réserve : la personne est invitée à vérifier que c'est bien la bonne.
+function videoPrete(fichier, duree, origine, lue = true) {
   videoChoisie = fichier;
   const info = document.getElementById('ca-video-info');
-  info.style.color = 'var(--gris)';
-  info.textContent = `✓ ${T('Vidéo prête', 'Video ready')} (${duree ? Math.round(duree) + ' s, ' : ''}${enMo(fichier.size)}${origine && origine.size > fichier.size ? T(', allégée depuis ', ', reduced from ') + enMo(origine.size) : ''}).`;
+  info.style.color = lue ? 'var(--gris)' : 'var(--rouge)';
+  const details = `(${duree ? Math.round(duree) + ' s, ' : ''}${enMo(fichier.size)}${origine && origine.size > fichier.size ? T(', allégée depuis ', ', reduced from ') + enMo(origine.size) : ''})`;
+  info.textContent = lue ? `✓ ${T('Vidéo prête', 'Video ready')} ${details}.`
+    : `${T('Vidéo choisie', 'Video selected')} ${details}. ${T('Ce téléphone n’arrive pas à la lire : vérifiez que c’est bien votre vidéo de présentation.', 'This phone cannot play it: please check it is really your introduction video.')}`;
 }
 document.getElementById('ca-video').addEventListener('change', async (e) => {
   const info = document.getElementById('ca-video-info');
@@ -236,7 +241,7 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
     }
     if (numero !== numeroVideo) return;
     if (allegee && allegee.size <= VIDEO_MAX_OCTETS) { majJauge('ca-video-jauge', 100, T('Vidéo préparée', 'Video ready')); videoPrete(allegee, duree, fichier); }
-    else if (fichier.size <= VIDEO_MAX_OCTETS) { cacherJauge('ca-video-jauge'); videoPrete(fichier, duree, null); }
+    else if (fichier.size <= VIDEO_MAX_OCTETS) { cacherJauge('ca-video-jauge'); videoPrete(fichier, duree, null, !!(duree || examen.apercu)); }
     else { cacherJauge('ca-video-jauge'); montrerApercuVideo(null, ''); refuserTropLourde(); }
     videoEnPreparation = null;
   })();
@@ -312,10 +317,10 @@ let photosEnPreparation = Promise.resolve();
 function preparerPuis(fichiers, ranger) {
   const compteur = document.getElementById('ca-photos-compteur');
   compteur.textContent = T('Préparation des photos…', 'Preparing the photos…');
-  const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(fichiers)).then(({ pretes, illisibles }) => {
+  const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(fichiers)).then(({ pretes, illisibles, pasPhotos }) => {
     ranger(pretes);
     rafraichirApercuPhotos();
-    if (illisibles.length) { compteur.textContent += ' ' + textePhotosIllisibles(illisibles); compteur.style.color = 'var(--rouge)'; }
+    if (illisibles.length || pasPhotos.length) { compteur.textContent += ' ' + textePhotosIllisibles(illisibles, pasPhotos); compteur.style.color = 'var(--rouge)'; }
   });
   photosEnPreparation = travail.catch(() => {});
 }
@@ -538,12 +543,18 @@ async function envoyerMedias(etat) {
   return complet;
 }
 
+// Évite les envois multiples : un visiteur qui tape plusieurs fois sur "Envoyer" ne déclenche l'envoi qu'une seule
+// fois (journal du site, 01-02/10/2026 : 4 clics en 2 s). (16/11/2026, audit R-07) le verrou est posé DÈS L'APPUI :
+// avant, le bouton n'était grisé qu'après l'attente des photos en préparation, et deux appuis rapides passaient tous
+// les deux (deux candidatures, deux envois de photos).
+let envoiCandidatureEnCours = false;
 document.getElementById('form-casting').addEventListener('submit', async (e) => {
   e.preventDefault();
-  // Évite les envois multiples : un visiteur qui tape plusieurs fois sur
-  // "Envoyer" (le temps que la validation s'exécute) ne déclenche l'envoi
-  // qu'une seule fois (journal du site, 01-02/10/2026 : 4 clics en 2 s).
-  if (document.getElementById('btn-envoyer').disabled) return;
+  if (envoiCandidatureEnCours || document.getElementById('btn-envoyer').disabled) return;
+  envoiCandidatureEnCours = true;
+  try { await soumettreCandidature(); } finally { envoiCandidatureEnCours = false; }
+});
+async function soumettreCandidature() {
   EnvoiFiable.demanderNotifications();  // (12/11/2026 : « Candidature envoyée ✓ » si elle passe sur une autre application)
   const msg = document.getElementById('ca-msg');
 
@@ -658,7 +669,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   document.getElementById('ca-consentement').disabled = false;
   majConsentement();
   btn.disabled = false;
-});
+}
 
 // Reprise d'un envoi coupé (12/11/2026) : à l'ouverture de la page, s'il reste des photos ou une vidéo à envoyer
 window.MA2M_REPRISE_ICI = 'candidature';

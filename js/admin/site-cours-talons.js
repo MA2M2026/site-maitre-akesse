@@ -250,8 +250,9 @@
         '<label class="fl" for="ct-montant-' + id + '">Montant (FCFA)<input id="ct-montant-' + id + '" name="montant" type="number" min="0" step="500" value="' + P.esc(d.montant || '') + '"' + (payee ? ' readonly title="Déjà payé : le montant est en Comptabilité"' : '') + '></label>' +
         '<label class="fl large" for="ct-notes-' + id + '">Notes<textarea id="ct-notes-' + id + '" name="notes" maxlength="2000">' + P.esc(d.notes || '') + '</textarea></label>' +
         '<div class="ligne large"><button class="btn" type="submit">Enregistrer</button>' +
-          (!payee ? '<button class="btn rouge" type="button" data-action="talons-valider" data-id="' + id + '">✓ Paiement reçu (' + P.esc(nomMoyen(d.moyen)) + ')</button><button class="btn" type="button" data-action="talons-valider" data-id="' + id + '" data-valeur="especes">✓ Payé en espèces</button>' : '') +
+          (!payee && encaisse() ? '<button class="btn rouge" type="button" data-action="talons-valider" data-id="' + id + '">✓ Paiement reçu (' + P.esc(nomMoyen(d.moyen)) + ')</button><button class="btn" type="button" data-action="talons-valider" data-id="' + id + '" data-valeur="especes">✓ Payé en espèces</button>' : '') +
           (payee ? '<button class="btn" type="button" data-action="talons-statut" data-id="' + id + '" data-valeur="terminee">Cours terminés</button>' : '') +
+          (!payee && !encaisse() ? '<span class="doux petit-texte">Paiement : validé par les encaissements ou l’administrateur principal.</span>' : '') +
           '<button class="btn" type="button" data-action="talons-statut" data-id="' + id + '" data-valeur="annulee">Annuler l’inscription</button>' +
         '</div></form>'
         : (d.notes ? '<p class="doux">' + P.esc(d.notes) + '</p>' : '') + '<div class="ligne"><button class="btn petit" type="button" data-action="talons-statut" data-id="' + id + '" data-valeur="' + (d.valide_le ? 'inscrite' : d.decision === 'maintenant' ? 'paiement_envoye' : 'plus_tard') + '">Rouvrir</button></div>') +
@@ -276,7 +277,7 @@
     // (14/11/2026) son programme part sur WhatsApp depuis « Messages prêts à envoyer » (à elle et, mineure, à son parent)
     const envoi = d.jeton ? '<a class="btn petit" target="_blank" rel="noopener" href="' + P.esc(LIEN_PROGRAMME + d.jeton) + '">Voir sa page ↗</a>' : '';
     // groupe : le mois suivant payé (ou un mois de plus quand tout est payé) → cours_talons_mois_payer
-    const moisSuivant = groupe && d.statut === 'inscrite' ? '<div class="ct-mois">' + ((d.mois_payes || 0) < nbMois(d)
+    const moisSuivant = groupe && d.statut === 'inscrite' && encaisse() ? '<div class="ct-mois">' + ((d.mois_payes || 0) < nbMois(d)
       ? '<p><b>Mois payés : ' + (d.mois_payes || 0) + ' / ' + nbMois(d) + '</b> · prochain mois à régler : ' + P.fcfa(T.PRIX_MOIS) + '</p>' +
         (wa ? lienWhatsApp(wa, '💳 Lien du mois ' + ((d.mois_payes || 0) + 1) + ' (WhatsApp)', messageMois(d), ' ') : '') +
         (waParent ? lienWhatsApp(waParent, '💳 Au parent', messageMois(d, true), ' ') : '') +
@@ -436,6 +437,9 @@
     if (typeof ouvrirGalerieLightbox === 'function') ouvrirGalerieLightbox(l, Number(el.dataset.index));
     else window.open(l[Number(el.dataset.index)] || l[0], '_blank', 'noopener');
   };
+  // (16/11/2026, audit L-1) : seuls les encaissements et l'administrateur principal valident un paiement (la base le
+  // refuse aux autres : supabase-l1-role-site.sql) ; les boutons d'argent ne sont donc montrés qu'à eux.
+  function encaisse() { return !!(P.moi && P.moi.espaces && P.moi.espaces.paiements); }
   P.actions['talons-filtre'] = (el) => { filtre = el.dataset.valeur; return P.afficher(); };
   P.formulaires['talons-suivi'] = async (f, form) => {
     const id = (form && form.dataset.id) || f.get('id');

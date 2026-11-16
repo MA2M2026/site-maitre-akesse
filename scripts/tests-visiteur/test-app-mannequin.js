@@ -322,8 +322,20 @@ for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-
       niveaux: 2, niveau: 1, mois_niveau: 7, reste: 11, faits_avant: 7, termine: false, fermee_jusqu_au: '2027-03-01', prochaine: '2027-03-01' });
     await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });
     const reprise = await p.textContent('#ap-ecran');
-    ok(/Niveau 1 sur 2/.test(reprise) && /Mois 7 sur 9 · il reste 11 mois/.test(reprise) && /Agence fermée jusqu’au 1er mars 2027/.test(reprise) && /Prochaine mensualité : mars 2027/.test(reprise) && /Agence fermée/.test(await p.textContent('.ap-pastille')),
-      n + 'Mes paiements, reprise : « Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois », « Agence fermée jusqu’au 1er mars 2027 »');
+    // (16/11/2026, audit D-05 / L-13, décision de la propriétaire) les mois de rodage comptent dans la formation : plus
+    // d'« Agence fermée » ; le message dépend du mois (rodage, ou pause de décembre à février)
+    const attendu = await p.evaluate(() => situationFormation({ niveau: 1, niveaux: 2, mois_niveau: 7, reste: 11, fermee_jusqu_au: '2027-03-01', prochaine: '2027-03-01', mensualite: 10000 }));
+    ok(/Niveau 1 sur 2/.test(reprise) && /Mois 7 sur 9 · il reste 11 mois de formation/.test(reprise) && reprise.includes(attendu.lignes[0]) && /Prochaine mensualité : mars 2027/.test(reprise) &&
+      !/Agence fermée/.test(reprise) && (await p.textContent('.ap-pastille')) === (attendu.pause ? 'Pause (congés)' : 'Sans mensualité'),
+      n + 'Mes paiements, reprise : « Niveau 1 sur 2 · mois 7 sur 9 · il reste 11 mois de formation », message clair, plus « Agence fermée »');
+    const parMois = await p.evaluate(() => ['2026-11-16', '2026-12-10', '2027-02-20'].map((jour) => {
+      situationFormation.maintenant = () => new Date(jour + 'T12:00:00Z');
+      const s = situationFormation({ niveau: 1, niveaux: 2, mois_niveau: 1, reste: 17, fermee_jusqu_au: '2027-03-01', mensualite: 10000 });
+      delete situationFormation.maintenant;
+      return s.pause + ' ' + s.lignes[0];
+    }));
+    ok(/^false .*comptent quand même dans la formation/.test(parMois[0]) && /^true Pause de la formation .*reprise le 1er mars 2027/.test(parMois[1]) && /^true Pause/.test(parMois[2]),
+      n + 'novembre (rodage) : « vos mois de cours comptent » ; décembre et février : « Pause de la formation… reprise le 1er mars 2027 »');
     ['niveaux', 'niveau', 'mois_niveau', 'reste', 'faits_avant', 'termine', 'fermee_jusqu_au', 'prochaine'].forEach((k) => delete d.rpc.mes_mensualites[k]);
     d.rpc.mes_mensualites.mois = avantMois;
     await p.reload(); await p.waitForSelector('.ap-chiffre', { timeout: 15000 });

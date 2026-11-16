@@ -280,7 +280,7 @@ select cron.unschedule('medias-drive-surveillance') where exists (select 1 from 
 select cron.schedule('medias-drive-surveillance', '*/15 * * * *', 'select medias_drive_surveiller();');
 
 -- ---------- l'essai (mot secret d'essai, valable seulement pendant cet essai annulé)
-update medias_drive_reglage set empreinte = encode(extensions.digest('essai-annule', 'sha256'), 'hex');
+update medias_drive_reglage set empreinte = encode(extensions.digest('essai-annule', 'sha256'), 'hex') where id = 1;
 create temp table _r as select (select id from casting_applications where full_name ilike 'CED%' order by created_at desc limit 1) id, ''::text res;
 update _r set res = res || ' r1=' || media_drive_recu('essai-annule', 'candidature', id, '1AbCdEfGhIjKlMnOpQr', array['https://drive.google.com/thumbnail?id=essai1&sz=w2000','https://drive.google.com/thumbnail?id=essai2&sz=w2000','https://pirate.example/x'])::text;
 update _r set res = res || ' r2=' || media_drive_recu('essai-annule', 'candidature', id, null, array['https://drive.google.com/thumbnail?id=essai1&sz=w2000'])::text;
