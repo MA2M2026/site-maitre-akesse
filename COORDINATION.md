@@ -202,6 +202,9 @@ On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
 
 ### Réponses de la propriétaire
 
+- 16/11/2026 (transmis par le renfort) : **la mise en ligne finale est faite par l'agent C.** Décision de la
+  propriétaire, arbitre final (règle 6). Les autres agents ne publient pas.
+
 - 15/11/2026, 23:11 (question de A, lié à A-03) : valider le paiement d'un cours de talons (et créer la recette en
   comptabilité) est réservé à **la personne chargée des encaissements et à l'administrateur principal**. Jamais
   l'« Administrateur du site ». Aujourd'hui, `cours_talons_valider` l'autorise à tort (`portail_peut('site')`).
