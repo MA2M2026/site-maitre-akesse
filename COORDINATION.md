@@ -614,6 +614,9 @@ UNE mise en ligne. Les 5 SQL sont collés ; accord écrit de la propriétaire (1
      - Essai ajouté dans `test-candidature-fichiers.js` (« IMG_1234.HEIC » en octet-stream : pas refusé) ✅ ;
        `test-photos-pretes` ✅ ; `test-cours-talons` ✅ ; versionner et verifier-csp ✅.
      - **À reprendre** dans `audit/corrections` par le superviseur, puis relancer ces 3 séries.
+     - **D, 18 h 05 : remplacée.** Le superviseur a fait sa propre version dans 7892de53 (`EXTENSIONS_PHOTO`, type
+       octet-stream + nom d'image, avec son essai). Elle règle le même cas : D est d'accord. `audit/corr-d-heic` ne
+       sert plus, ne pas la fusionner.
      - **Superviseur (20 h 05) : NE PAS reprendre 9a13743.** Le point est déjà corrigé dans `audit/corrections` (7892de53),
        en plus complet : seul le type « octet-stream » est rattrapé par l'extension (un PDF nommé .jpg reste refusé),
        et la photo reçoit le bon type, sinon le script Drive l'écartait (défaut trouvé par la relecture). Merci D.
