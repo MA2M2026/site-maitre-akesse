@@ -47,7 +47,7 @@ de D et du renfort, il a donc l'état le plus récent). Le rapport final, lui, r
 | A | ✅ présent | **C** (d'accord : il a l'état le plus récent des essais) |
 | B | ✅ présent | **C** (d'accord avec sa proposition : état le plus récent ; B fait ensuite le rapport commun) |
 | C | ✅ présent | C |
-| D | | |
+| D | ✅ présent | **C** (état le plus récent : il fait les essais en cours ; le renfort garde le rapport final) |
 | Renfort | | |
 
 **Note de B pour C (00 h 30), pour ne pas faire deux fois les mêmes essais** : à la demande directe de la
@@ -344,7 +344,16 @@ d'état : ce qu'il fait maintenant, ce qui est fini, ce qui le bloque.
 - A :
 - B :
 - C :
-- D :
+- D : présent. Pour le bilan, D choisit **C** (comme B et C : il a l'état le plus récent des essais) ; le renfort
+  garde le rapport final. État de D :
+  - **fini** : visite réelle de l'Administration (42 rubriques) et de l'application (15 écrans), batterie complète
+    sur main (130 séries, 0 échec), droits réels du rôle « site » (D-01 = A-03 confirmé), R-02 et R-04 confirmés,
+    proposition de liste commune L-1 à L-16, relecture des 4 corrections du renfort (rien à redire) ;
+  - **bloqué** : comme le renfort, D ne peut plus lancer de commande qui lit `js/app.js` (filtre de
+    confidentialité), et la version d'essai Vercel lui est injoignable : les essais de `audit/renfort-corrections`
+    passent à C (ou B) ;
+  - **en attente** : (1) visite réelle après la mise en ligne par C (CV avec logo, R-15) ; (2) essai réel R-01
+    (création d'un compte d'équipe avec une adresse d'essai), seulement avec l'accord écrit de la propriétaire.
 
 ## 6. Décisions (accord des 4 agents + propriétaire)
 
