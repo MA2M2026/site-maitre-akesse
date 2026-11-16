@@ -477,7 +477,19 @@ compte « site ».
   réel par D ; réglage Cloudflare après la mise en ligne ; photos d'actualités déjà en ligne encore lourdes (à décider).
   **Bloque** : rien. Limites : ni navigateur sur le vrai site, ni base, ni Administration ; session bloquée 01 h 37-05 h
   et 07 h 03-08 h 06.
-- **B** :
+- **B** : **Avant l'audit (15/11)** : photos des candidatures enregistrées par le serveur (programme Google, surveillance
+  toutes les 15 min, contrôle du circuit chaque matin), mis en ligne #453 ; rattrapage : 18 candidatures ont retrouvé
+  63 photos. **Audit** (15/11, lecture seule) : 116 adresses × téléphone 4G lente et ordinateur, Lighthouse, sécurité
+  (17 tables lues sans connexion, fonctions sensibles, en-têtes), code — rapport `docs/audit/rapport-agent-b.md`
+  (`audit/agent-b`). Constats nouveaux : **B-V5 tâche de 8 h jamais exécutée** (= L-4), pages qui sautent (B-P1),
+  photo d'accueil tardive, clé publique du programme Google (B-P6), anti-robots souple (B-P5) ; vérifications croisées
+  (A-01, R-03, A-06, A-08, D-02). **Essais** : batterie de `audit/renfort-corrections` (128/130 ; les 2 échecs, fond
+  `.se-date`, corrigés par D) ; R-03 et A-01 vérifiés sur la version d'essai Vercel. **Corrections acceptées** : L-4
+  (clés `CRON_SECRET` et `EMAILJS_PRIVATE_KEY` posées sur Vercel avec la propriétaire) ; L-9 partie 1 (`audit/corr-b`,
+  a3308767 : Atelier talons 0,37 → 0, Postuler 0,19 → 0, outil des styles intégrés qui oubliait les boutons),
+  rassemblée dans `audit/corrections`. **Rapport commun** (documents 5 et 6) : `docs/audit/rapport-commun.md`
+  (`audit/agent-b`), tenu à jour. **Reste** : après la mise en ligne, contrôle de la tâche de 8 h le lendemain ; mettre à
+  jour le rapport commun avec la batterie finale. **Bloque** : rien (pas d'accès humain à l'Administration : D).
 - **C** :
 - **D** :
 - **Renfort / superviseur** : audit avec 3 sous-agents + journal des vraies visites + base en lecture (20 constats R-) ;
