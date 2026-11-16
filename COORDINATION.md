@@ -523,7 +523,27 @@ Chaque agent écrit « validé » ou ses corrections :
 - A :
 - B :
 - C :
-- D :
+- D : **validé avec une correction importante**.
+  1. **Recherche par fourchettes : attention à une décision déjà prise par la propriétaire.** Le 12/11/2026, elle
+     avait demandé UNE barre de recherche « au lieu d'appuyer sur des filtres qui prennent trop de place »
+     (`js/mannequins.js:21-28`). Cette barre comprend déjà « plus de 1m80 », « moins de 1m70 », « 86-62-90 »,
+     « poitrine 88 », « tour de taille 62 », « pointure 40 », la taille de vêtement, le niveau, le genre, les yeux,
+     les cheveux et le teint. **Proposition** : ne pas ajouter de curseurs ou de champs « de… à… », mais étendre la
+     même barre aux fourchettes (« de 1m70 à 1m80 », « poitrine 84 à 90 », « taille 60-65 ») et montrer sous la
+     barre 3 exemples à toucher. `test-recherche-book.js` reste valable (on ajoute des cas, on n'en retire aucun). Si
+     la propriétaire préfère vraiment des champs visibles, c'est à elle de revenir sur sa décision du 12/11.
+  2. **Lien partagé** : `?s=` avec les **slugs** (ex. `?s=prenom-nom,…`) plutôt que les identifiants. Il ne faut
+     rien écrire dans la base : seules des fiches publiées sont affichées, et un slug non publié est ignoré
+     silencieusement. Limite à 20 mannequins.
+  3. **R-09, où se perd la sélection** : `js/demande-recruteur.js:77-95`. La demande est enregistrée d'abord, puis
+     la liste des mannequins dans un **second** envoi. Si ce second envoi échoue, l'erreur ne va qu'au journal et le
+     recruteur voit quand même « Merci ». (L'e-mail à l'agence contient les noms, sauf si EmailJS échoue aussi.)
+     **Correction proposée** : une seule fonction en base qui enregistre la demande ET la liste ensemble (tout ou
+     rien), ou un nouvel essai de la liste avant « Merci » avec un message d'échec clair. À noter : **0 demande de
+     booking a été enregistrée à ce jour** (`recruiter_requests` vide), d'où l'intérêt de L-15.
+  4. **Accueil « Marques · Promoteurs · Créateurs »** : d'accord. Il faut éviter que l'entrée « Organiser un
+     défilé → devis » mène à un formulaire qui n'existe pas encore : soit un lien WhatsApp avec un message prérempli,
+     soit le formulaire de contact avec le sujet déjà choisi.
 - Propriétaire : maquette envoyée, avis attendu.
 
 ### Contre-vérification de L-5 (D, e6d0907e) par C (16/11, 01 h 30)
@@ -536,6 +556,23 @@ la bande couvrirait encore « Envoyer ». **Proposition** : ajouter dans `affich
 `if (surLeSite && document.querySelector('form [type="submit"]')) return;` (la bande n'est alors jamais créée sur
 ces pages, quel que soit le navigateur), en gardant la règle CSS. Une ligne ; je peux la faire sur `audit/corr-d` si
 le superviseur le décide.
+
+**Réponse de D (16/11, 01 h 45)** : réserve juste, corrigée par D sur `audit/corr-d`, **commit 05868fa**.
+- `afficher()` ne crée plus la bande sur `#form-casting, #form-talons, #form-contact`, mêmes pages que la règle CSS
+  (sélecteur précis plutôt que `form [type=submit]`, pour garder la bande sur les autres pages qui ont un petit
+  formulaire).
+- Essai ajouté dans `test-candidature-fichiers.js`, avec un vrai Chrome d'Android simulé (Pixel 7, cookies
+  refusés) : la bande est créée sur l'accueil et **jamais** sur Intégrer l'agence. 8 ✓.
+- `test-installation.js` ✅ ; `versionner` et `verifier-csp` ✅.
+
+**Anti-robots (demande de A, B-P5) : comptage par D dans le journal, 7 derniers jours : 1 seul cas.**
+- Le 12/11 à 14 h 59, une **candidature** est arrivée sans jeton (« délai de 60 s dépassé », navigateur).
+- Elle a été acceptée car le mode n'était pas strict. En mode strict, elle aurait été refusée, puis réessayée une
+  fois avec un jeton neuf.
+- Avis de D : ce cas est rare mais réel. Je recommande l'essai réel sur téléphone avant de garder le mode strict,
+  comme A le propose, avec l'accord de la propriétaire.
+- Autre recommandation : si le 2e jeton échoue aussi, la candidate doit voir un message clair et le numéro
+  WhatsApp, plutôt qu'un simple refus.
 
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
