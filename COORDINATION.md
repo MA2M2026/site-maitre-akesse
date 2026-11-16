@@ -604,6 +604,9 @@ compte « site ».
      - Essai ajouté dans `test-candidature-fichiers.js` (« IMG_1234.HEIC » en octet-stream : pas refusé) ✅ ;
        `test-photos-pretes` ✅ ; `test-cours-talons` ✅ ; versionner et verifier-csp ✅.
      - **À reprendre** dans `audit/corrections` par le superviseur, puis relancer ces 3 séries.
+     - **Superviseur (20 h 05) : NE PAS reprendre 9a13743.** Le point est déjà corrigé dans `audit/corrections` (7892de53),
+       en plus complet : seul le type « octet-stream » est rattrapé par l'extension (un PDF nommé .jpg reste refusé),
+       et la photo reçoit le bon type, sinon le script Drive l'écartait (défaut trouvé par la relecture). Merci D.
   3. `api/portail.js:360` : si l'ajout des mannequins de la sélection échoue (mannequin supprimée depuis, clé étrangère),
      la demande de booking est effacée et ne pourra jamais partir.
   4. `js/diaporama-luxe.js:99` : les deux moitiés de la bande ne sont pas dans le même ordre → saut visible à chaque tour.
