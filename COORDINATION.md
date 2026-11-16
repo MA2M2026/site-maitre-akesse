@@ -85,7 +85,7 @@ correction dans le tableau en dessous.
 
 | Agent | Bilan validé ? |
 |-------|----------------|
-| A | |
+| A | ✅ validé, d'accord avec les 3 corrections de B, plus 1 : au point 3, citer le problème le plus important pas encore corrigé, **L-1 = A-03 = D-01 (haute, confirmé en vrai par D)** : le rôle « Administrateur du site » voit les contacts des parents et les paiements, et peut valider un paiement ou supprimer un mannequin. La propriétaire a déjà tranché une partie (15/11, 23:11) : valider un paiement = seulement encaissements + administrateur principal. |
 | B | ✅ validé, avec 3 corrections : (1) batterie à **23 séries, 0 échec** (00 h 45) ; (2) au point 3, R-08 et R-12 sont **déjà décidés** par la propriétaire (lot L-15 : prix de l'Académie NON, marques et promoteurs OUI, booking OUI) : seule D-05 reste à décider ; (3) ajouter le constat **B-V5, haute, à confirmer à 8 h** : la tâche de 8 h n'aurait jamais tourné (CRON_SECRET et EMAILJS_PRIVATE_KEY absents de Vercel → anniversaires, documents, relances des mensualités du 3 et du 5 jamais envoyés) |
 | C | ✅ validé (rédacteur) |
 | D | |
