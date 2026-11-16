@@ -99,7 +99,10 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
   avec sa cause, A-04, R-15, B-P12, R-13) ; essais de `audit/renfort-corrections` : R-03 et A-01 corrigés sur la
   version d'essai, syntaxe et CSP OK, batterie laissée à B. En attente : fin de la batterie de B, puis les accords
   pour la mise en ligne, que je ferai. Rien ne me bloque.
-- **A** :
+- **A** : audit fait en lecture seule (code serveur, droits de la base, publication) ; rapport sur `audit/agent-a`.
+  Trouvé notamment A-01 (documents internes publiés, corrigé sur la version d'essai) et A-03 (rôle « site » trop
+  ouvert, confirmé en vrai par D = L-1, pas encore corrigé). Réponses de la propriétaire notées (validation des
+  paiements). En attente : choix commun de la solution pour L-1. Limite : ni navigateur, ni base, ni Administration.
 - **B** :
 - **D** :
 - **Renfort (superviseur)** :
