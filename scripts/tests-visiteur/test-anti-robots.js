@@ -68,7 +68,7 @@ async function serveur() {
   rpcs.length = 1;
   r = await appeler({ table: 'model_profiles', ligne, jeton: 'bon-jeton' });
   ok(r.statut === 400 && rpcs.length === 1, 'serveur : une autre table que les 3 formulaires : refusée');
-  limite = true; r = await appeler({ table: 'recruiter_requests', ligne: { id: 'r1', contact_name: 'x', email: 'x@x.ci' }, jeton: 'bon-jeton' }); limite = false;
+  limite = true; r = await appeler({ table: 'recruiter_requests', ligne: { id: 'r1', contact_name: 'x', email: 'x@x.ci', _modeles: [{ model_id: '11111111-1111-4111-8111-111111111111' }] }, jeton: 'bon-jeton' }); limite = false;
   ok(r.statut === 429 && r.rep.limite, 'serveur : trop d’envois de la même adresse : « beaucoup d’envois » (le navigateur patiente et réessaie)');
   // code en ligne avant que le SQL soit collé : l'envoi passe comme avant (jamais de candidats bloqués)
   const directs = []; const ancien = global.fetch;

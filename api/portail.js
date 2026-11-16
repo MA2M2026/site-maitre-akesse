@@ -324,6 +324,44 @@ function garderColonnesAutorisees(table, ligne) {
   if (table === 'casting_applications' && 'type_candidature' in propre && !['agence', 'projet', null].includes(propre.type_candidature)) return null;
   return propre;
 }
+// (16/11/2026, audit R-09) : une demande de booking n'arrive JAMAIS sans sa liste de mannequins. La page envoie la liste
+// avec la demande (ligne._modeles) ; le serveur enregistre la demande PUIS la liste ; si la liste ne passe pas, la
+// demande est retirée et le recruteur voit une erreur (au lieu d'un « Merci » trompeur).
+const UUID_MANNEQUIN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function modelesDeLaDemande(recu) {
+  const l = recu && recu._modeles;
+  if (!Array.isArray(l) || !l.length || l.length > 60) return null;
+  const propres = [];
+  for (const m of l) {
+    if (!m || typeof m !== 'object' || !UUID_MANNEQUIN.test(String(m.model_id || ''))) return null;
+    const h = Number(m.model_height_snapshot);
+    propres.push({ model_id: String(m.model_id), model_name_snapshot: String(m.model_name_snapshot || '').slice(0, 120) || null,
+      model_height_snapshot: Number.isInteger(h) && h > 0 && h < 260 ? h : null });
+  }
+  return propres;
+}
+async function enregistrerModelesDemande(idDemande, modeles) {
+  const base = SUPABASE_URL + '/rest/v1/recruiter_request_models';
+  const rep = await fetch(base, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(modeles.map((m) => Object.assign({ request_id: idDemande }, m))) });
+  return rep.ok;
+}
+async function retirerDemande(idDemande) {
+  await fetch(SUPABASE_URL + '/rest/v1/recruiter_requests?id=eq.' + encodeURIComponent(idDemande), { method: 'DELETE', headers: { ...enTetesService(), Prefer: 'return=minimal' } }).catch(() => {});
+}
+// La liste des mannequins d'une demande enregistrée ; échec → la demande est retirée (sauf si elle existait déjà avant
+// cet envoi : on ne retire jamais une demande complète reçue plus tôt), et le recruteur est prévenu.
+async function finirDemande(res, idDemande, modeles, dejaLa) {
+  if (dejaLa) {   // (envoi recommencé : si la liste est déjà là, on n'y touche pas)
+    const deja = await fetch(SUPABASE_URL + '/rest/v1/recruiter_request_models?select=request_id&limit=1&request_id=eq.' + encodeURIComponent(idDemande), { headers: enTetesService() })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (Array.isArray(deja) && deja.length) return res.status(200).json({ ok: true, id: idDemande });
+  }
+  if (await enregistrerModelesDemande(idDemande, modeles).catch(() => false)) return res.status(200).json({ ok: true, id: idDemande });
+  if (!dejaLa) await retirerDemande(idDemande);
+  await noterAuJournal('[Demande recruteur] liste des ' + modeles.length + ' mannequin(s) non enregistrée' + (dejaLa ? '' : ' : demande retirée, le recruteur a vu une erreur'), 'portail', '/api/portail').catch(() => {});
+  return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.', selection: true });
+}
 async function formulairePublic(req, corps, res) {
   const table = String(corps.table || ''), recu = corps.ligne;
   if (!TABLES_FORMULAIRES.includes(table) || !recu || typeof recu !== 'object' || Array.isArray(recu) || JSON.stringify(recu).length > 30000) {
@@ -331,6 +369,8 @@ async function formulairePublic(req, corps, res) {
   }
   const ligne = garderColonnesAutorisees(table, recu);
   if (!ligne || !Object.keys(ligne).length) return res.status(400).json({ error: 'Formulaire invalide.' });
+  const modeles = table === 'recruiter_requests' ? modelesDeLaDemande(recu) : null;
+  if (table === 'recruiter_requests' && (!modeles || !ligne.id)) return res.status(400).json({ error: 'Votre sélection est vide ou invalide : rechargez la page.', selection: true });
   const ip = extraireIp(req) || '';
   const verif = await jetonAntiRobotValide(corps.jeton, ip, corps.raisonJeton);
   if (!verif.ok) {
@@ -340,11 +380,15 @@ async function formulairePublic(req, corps, res) {
   }
   try {
     const id = await rpcService('formulaire_public_enregistrer', { p_table: table, p_ligne: ligne, p_ip: ip });
+    if (modeles) return await finirDemande(res, ligne.id, modeles, false);
     return res.status(200).json({ ok: true, id });
   } catch (e) {
     const m = String((e && e.message) || e);
     if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
-    if (/duplicate key|23505/.test(m) && ligne.id) return res.status(200).json({ ok: true, id: ligne.id });  // (déjà enregistré : réponse perdue)
+    if (/duplicate key|23505/.test(m) && ligne.id) {  // (déjà enregistré : réponse perdue)
+      if (modeles) return await finirDemande(res, ligne.id, modeles, true);
+      return res.status(200).json({ ok: true, id: ligne.id });
+    }
     // (14/11/2026) cours privés : un créneau choisi vient d'être pris par une autre élève (supabase-creneaux-prives.sql)
     if (table === 'cours_talons' && /CRENEAU_PRIS|CRENEAUX_INVALIDES/.test(m)) return res.status(409).json({ error: 'Un de vos créneaux n’est plus disponible.', creneauPris: true });
     if (/Aucun casting ouvert/.test(m)) return res.status(403).json({ error: 'Aucun casting n’est ouvert en ce moment.' });
@@ -358,7 +402,10 @@ async function formulairePublic(req, corps, res) {
     if (/Could not find the function|PGRST202|does not exist/.test(m)) {
       const propre = Object.assign({}, ligne); delete propre.status;
       const rep = await fetch(SUPABASE_URL + '/rest/v1/' + table, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(propre) });
-      if (rep.ok || (rep.status === 409 && ligne.id)) return res.status(200).json({ ok: true, id: ligne.id || null });
+      if (rep.ok || (rep.status === 409 && ligne.id)) {
+        if (modeles) return await finirDemande(res, ligne.id, modeles, rep.status === 409);
+        return res.status(200).json({ ok: true, id: ligne.id || null });
+      }
       await noterAuJournal('[Formulaire ' + table + '] envoi de secours refusé (' + rep.status + ')', 'portail', '/api/portail').catch(() => {});
       return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.' });
     }

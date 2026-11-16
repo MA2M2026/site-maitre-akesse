@@ -154,7 +154,7 @@ function brancher(page, donnees, journal) {
           if (refus) return route.fulfill({ status: refus.statut || 403, contentType: 'application/json', body: JSON.stringify(refus) });
           // (16/11/2026, audit L-7) : un champ envoyé par la page mais absent de la liste blanche du serveur serait
           // PERDU en silence : l'envoi échoue ici, donc l'essai du formulaire échoue (« enregistré » faux).
-          const perdus = Object.keys(corps.ligne || {}).filter((c) => !(COLONNES_FORMULAIRES[corps.table] || []).includes(c));
+          const perdus = Object.keys(corps.ligne || {}).filter((c) => c[0] !== '_' && !(COLONNES_FORMULAIRES[corps.table] || []).includes(c));   // (« _… » : lu à part par le serveur, ex. _modeles)
           if (process.env.FORMULAIRES_COUVERTS) {   // (test-liste-blanche-formulaires.js : quelles pages ont envoyé quoi)
             const pageEnvoi = String((route.request().headers() || {}).referer || '').replace(/^https?:\/\/[^/]+\//, '').split(/[?#]/)[0];
             require('fs').appendFileSync(process.env.FORMULAIRES_COUVERTS, JSON.stringify({ table: corps.table, page: pageEnvoi, champs: Object.keys(corps.ligne || {}), perdus }) + '\n');
@@ -164,7 +164,11 @@ function brancher(page, donnees, journal) {
             journal.push(['CHAMP-PERDU', corps.table, perdus.join(',')]);
             return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'champ perdu : ' + perdus.join(', ') }) });
           }
+          // (audit R-09) : comme le vrai serveur, la liste des mannequins d'une demande est enregistrée avec elle
+          const modeles = corps.ligne && corps.ligne._modeles;
+          if (corps.ligne) delete corps.ligne._modeles;
           journal.push(['POST', corps.table, '', JSON.stringify(corps.ligne)]);
+          if (Array.isArray(modeles)) journal.push(['POST', 'recruiter_request_models', '', JSON.stringify(modeles.map((m) => Object.assign({ request_id: corps.ligne.id }, m)))]);
           if (donnees.memoriser) (donnees.tables[corps.table] = donnees.tables[corps.table] || []).push(Object.assign({}, corps.ligne));
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: (corps.ligne && corps.ligne.id) || 'nouveau-' + journal.length }) });
         }
