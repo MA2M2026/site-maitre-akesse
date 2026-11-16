@@ -567,6 +567,87 @@ compte « site ».
   faire si le contrôle n'est pas bon), et la liste des gestes de ses essais réels (L-2, L-1 côté principal, L-6).
   L'écrire ici ; rien n'est collé avant la batterie verte et l'accord écrit de la propriétaire.
 
+### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — À NE SUIVRE QU'APRÈS la batterie verte et l'accord écrit
+
+**Vérifications faites par D dans la vraie base, en lecture seule** : chaque fichier y trouve tout ce dont il a besoin.
+- Fonctions présentes : `portail_peut`, `portail_est_principal`, `portail_exiger_auth_recente`, `journaliser`,
+  `gerer_validation_publication`, `reprise_etat`, `cours_talons_valider(uuid, integer, boolean)` et
+  `cours_talons_mois_payer(uuid, integer, boolean)`.
+- Les lignes exactes que L-1 et les comptages doivent remplacer sont bien présentes. Sinon, ces fichiers
+  s'arrêteraient sans rien changer.
+- Tables et colonnes présentes : 7 sur 7 pour les profils, 6 sur 6 pour les cours de talons ; `staff_demandes`,
+  `staff_profiles`, `compta_comptages`, `inscriptions_mannequins`.
+- Les noms des règles de suppression correspondent.
+
+**Problème trouvé et réglé** : les 5 fichiers de `audit/corrections` contenaient **60 lignes de commentaire avec
+apostrophe ou point-virgule**. Or une règle connue l'interdit : « aucune apostrophe ni point-virgule dans les
+commentaires (éditeur de Supabase) ».
+- D a fabriqué des **copies prêtes à coller** sur la branche à part `audit/sql-a-coller` (commit b86eac5), dossier
+  `sql-a-coller/`, numérotées dans l'ordre.
+- Seuls les commentaires changent : apostrophe → espace, point-virgule → virgule. Le **code est identique au
+  caractère près** (vérifié par programme). Les repères `(L-2)`, `(L-6)` qui servent aux contrôles sont gardés.
+- Cette branche ne doit **jamais** être fusionnée dans main.
+- **C** : si un de ces 5 fichiers change encore d'ici la mise en ligne, prévenir D, qui refera la copie.
+
+**Marche à suivre pour la propriétaire** (sur ORDINATEUR, pas sur téléphone : sur téléphone le texte se coupe) :
+0. Ouvrir Supabase › le projet MA2M › **SQL Editor** › « New query ».
+1. Pour chaque fichier, **dans l'ordre**, un seul à la fois :
+   a. ouvrir le fichier sur GitHub (lien ci-dessous), bouton « Copy raw file » (icône de copie, en haut à droite du
+      fichier) ;
+   b. dans Supabase, tout effacer dans la fenêtre de requête, puis coller ;
+   c. appuyer sur **Run**. Si une fenêtre d'avertissement s'ouvre, appuyer sur le **bouton orange « Run without RLS »** ;
+   d. lire la ligne **« controle »** tout en bas des résultats, et la comparer au tableau ;
+   e. envoyer une capture du résultat à D avant de passer au suivant.
+
+| N° | Fichier (branche `audit/sql-a-coller`, dossier `sql-a-coller/`) | Ce qu'il fait | Contrôle attendu, mot pour mot |
+|---|---|---|---|
+| 1 | `1-supabase-publication-protegee.sql` | une mannequin ne peut plus se publier seule (L-2) | `Publication protégée installée : 1 élément sur 1` |
+| 2 | `2-supabase-l1-role-site.sql` | l'Administrateur du site ne valide plus de paiement (L-1) | `L-1 (partie 1) : 4 éléments sur 4` |
+| 3 | `3-supabase-roles-comptages.sql` | comptages de caisse réservés à la comptabilité | `Rôles, comptages : 2 éléments sur 2` |
+| 4 | `4-supabase-demandes-confirmees.sql` | « Créer mon compte » : adresse confirmée d'abord (L-6) | `Demandes confirmées installées : 2 éléments sur 2` |
+| 5 | `5-supabase-suppression-messages.sql` | supprimer les vieux messages : principal seulement | `Suppression des messages installée : 3 éléments sur 3, 0 autre règle de suppression` |
+
+Liens : `https://github.com/MA2M2026/site-maitre-akesse/blob/audit/sql-a-coller/sql-a-coller/<nom du fichier>`
+
+**Si le contrôle n'est pas celui attendu, ou s'il y a un message rouge** :
+- **ne pas coller le fichier suivant** ;
+- envoyer la capture, D et le superviseur regardent.
+
+Rien n'est effacé par ces fichiers, et chacun peut être recollé sans risque. Le n° 2 s'arrête de lui-même, sans rien
+changer, s'il trouve autre chose que prévu (message « contrôle d'accès inattendu… rien n'est changé »). Le n° 3 fait
+de même (« contenu inattendu, rien n'est changé »).
+
+Après le n° 5, un message « À regarder : règle … (ALL) » n'est **pas** une erreur : c'est un signalement à envoyer à D.
+
+### 🧪 Gestes des essais réels (APRÈS les 5 SQL et la mise en ligne par C ; chacun avec l'accord écrit de la propriétaire)
+
+**L-2, une mannequin ne peut plus se publier seule.**
+- D, avec le compte mannequin d'essai, essaie dans sa propre session de :
+  - cocher lui-même « première publication faite » ;
+  - se publier avec une date d'adulte.
+  Résultat attendu : la fiche ne paraît **pas** au Book, et la demande part en « Validations en attente ».
+- La propriétaire, en 1 geste, sans rien valider : elle ouvre **The Book** sur le site et vérifie que « ESSAI MA2M »
+  n'y est pas.
+- Ensuite, D remet le compte d'essai dans son état d'avant : « non publié ».
+
+**L-1, côté principal** (la propriétaire, guidée par D, sans appuyer sur aucun bouton d'action, avec une capture de
+chaque écran) :
+1. **Cours de talons** › « Toutes » › ouvrir une inscription : elle doit voir « ✓ Paiement reçu (Wave) » et « Payé en
+   espèces ».
+2. **Mannequins** › ouvrir une fiche › tout en bas : elle doit voir « Supprimer ».
+3. **Candidatures** › ouvrir un dossier : téléphones et e-mails visibles.
+
+Au même moment, D vérifie avec le compte « site » : les boutons de paiement et « Supprimer » sont absents, les
+contacts restent visibles.
+
+**L-6, « Créer mon compte » confirmé par e-mail.**
+1. La propriétaire donne à D une **adresse de test qu'elle peut lire** (par exemple un alias de sa boîte). D ne
+   l'écrit pas ici.
+2. D crée le compte avec cette adresse depuis « Créer mon compte » de l'Administration.
+3. La propriétaire ouvre **Sécurité › Comptes et rôles** : la demande ne doit **pas** encore apparaître.
+4. Elle ouvre l'e-mail de confirmation reçu et clique le lien.
+5. Elle rouvre Sécurité › Comptes et rôles : la demande apparaît maintenant. Elle la **refuse** (c'était un essai).
+
 ## 🟥 ORDRE DU SUPERVISEUR (11 h 45) — C ABSENT : B REPREND LA BATTERIE FINALE
 
 La session de C s'est arrêtée pendant la batterie (dernier commit 120d6c57 à 11 h 35, aucun résultat écrit).
