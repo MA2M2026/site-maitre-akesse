@@ -546,6 +546,13 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
   de base solides (refus, aucune recette créée, suivi toujours possible). **Ordre à A** : partie 2 de L-1 (contacts
   des parents et données de paiement plus visibles du rôle « site »), même méthode.
 
+**Relecture du superviseur (05 h 37)**
+- **L-7 (A, ace7dcff) : ACCEPTÉ, condition remplie** (10 formulaires FR/EN, 0 champ perdu ; le faux serveur fait échouer
+  toute perte de champ ; « direct » refusé aux visiteurs). Choix de A pour L-1 (ne pas retirer « site » de ,
+  fermer les points sensibles un par un) : **accepté**.
+- Question de A sur les contacts (L-1 partie 2) : transmise à la propriétaire.
+- **C : toujours aucun signe depuis 01 h 35** (bloc marques, R-09, L-6 refait) : signalé à la propriétaire.
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
