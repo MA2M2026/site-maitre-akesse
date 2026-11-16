@@ -18,7 +18,7 @@
 
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, adminVerifie, creerClientR2, debutRequete, limiteDebit } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, verifierUtilisateur, lignesAdmin, adminVerifie, ficheStaff, creerClientR2, debutRequete, limiteDebit } = require('./_commun.js');
 
 module.exports = async function handler(req, res) {
   const debut = debutRequete(req, res, true); // POST + clé serveur + jeton (api/_commun.js)
@@ -43,6 +43,15 @@ module.exports = async function handler(req, res) {
     // côté base de données.)
     if (!(await adminVerifie(jeton, utilisateur, req.headers['x-appareil']))) {
       res.status(403).json({ error: "Ce compte n'est pas administrateur." });
+      return;
+    }
+    // 2 ter. (16/11/2026, audit L-1) : la suppression définitive est réservée à l'administrateur principal. Un compte
+    // d'équipe (rôle « site », « caisse », « compta ») est refusé ; un ancien compte administrateur sans fiche
+    // d'équipe (tableau de bord d'avant le portail) garde l'accès, comme avant. Base injoignable : refus.
+    let fiche;
+    try { fiche = await ficheStaff(utilisateur.id); } catch (e) { fiche = undefined; }
+    if (fiche === undefined || (fiche && !(fiche.actif && fiche.role === 'principal'))) {
+      res.status(403).json({ error: fiche === undefined ? 'Vérification impossible pour le moment : réessayez dans un instant.' : 'Seul l’administrateur principal peut supprimer définitivement une mannequin.' });
       return;
     }
     if (await limiteDebit(res, 'supprimer-mannequin', utilisateur.id, 20)) {  // (W6 : 20 suppressions par minute au plus)

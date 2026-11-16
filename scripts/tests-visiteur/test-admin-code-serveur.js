@@ -45,6 +45,20 @@ function appel(fichier, aal, corps) {
   const creeCode = await appel('_creer-admin.js', 'aal2', { email: 'x@test.ci', password: 'Essai-1234567' });
   ok(creeCode.code === 403 && /administrateur principal/.test((creeCode.corps || {}).error || '') && appels.some((u) => /staff_profiles/.test(u)),
     'créer un compte admin avec le code mais rôle « site » : refusé proprement (' + creeCode.code + ' ' + ((creeCode.corps || {}).error || '').slice(0, 50) + ')');
+  // (16/11/2026, audit L-1) : supprimer définitivement une mannequin = administrateur principal seulement
+  const supSite = await appel('supprimer-mannequin.js', 'aal2', { modelId: id });
+  ok(supSite.code === 403 && /administrateur principal/.test((supSite.corps || {}).error || ''), 'supprimer une mannequin avec le code mais rôle « site » : refusé (' + supSite.code + ')');
+  const fetchSite = global.fetch;
+  global.fetch = async (url, o) => /\/rest\/v1\/staff_profiles/.test(url) ? { ok: false, status: 503, json: async () => ({}) } : fetchSite(url, o);
+  const supPanne = await appel('supprimer-mannequin.js', 'aal2', { modelId: id });
+  ok(supPanne.code === 403 && /réessayez/.test((supPanne.corps || {}).error || ''), 'supprimer une mannequin quand la fiche d’équipe est illisible : refusé (' + supPanne.code + ')');
+  global.fetch = async (url, o) => /\/rest\/v1\/staff_profiles/.test(url) ? { ok: true, json: async () => [{ role: 'principal', actif: true }] } : fetchSite(url, o);
+  const supPrincipal = await appel('supprimer-mannequin.js', 'aal2', { modelId: id });
+  ok(supPrincipal.code !== 403, 'supprimer une mannequin, administrateur principal avec le code : le contrôle laisse passer (' + supPrincipal.code + ')');
+  global.fetch = async (url, o) => /\/rest\/v1\/staff_profiles/.test(url) ? { ok: true, json: async () => [] } : fetchSite(url, o);
+  const supAncien = await appel('supprimer-mannequin.js', 'aal2', { modelId: id });
+  ok(supAncien.code !== 403, 'supprimer une mannequin, ancien compte admin sans fiche d’équipe : comme avant (' + supAncien.code + ')');
+  global.fetch = fetchSite;
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);
 })();
