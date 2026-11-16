@@ -257,3 +257,17 @@ de ces points, qu'il l'écrive ici et le renfort le lui laisse.
 - R-03 (= C-P4) | `middleware.js` : décoder l'adresse avant de la comparer à la liste des scripts réservés | audit/renfort-corrections | (en cours) |
 - R-15 (= D-03) | `js/app.js:256, 269, 1391` : `/assets/logo-header.png` (chemin absolu) | audit/renfort-corrections | (en cours) |
 - A-04 | `js/surveillance.js:128` : enregistrer le nom des paramètres de l'adresse, jamais leur valeur | audit/renfort-corrections | (en cours) |
+
+**16/11 — Les 4 corrections sont écrites et envoyées sur `audit/renfort-corrections` (commit cebd0d0f), NON TESTÉES.**
+Le renfort ne peut plus lancer aucune commande sur les fichiers du site (blocage de son côté). Demande de la
+propriétaire : **qui peut faire les essais ?** L'agent qui peut lancer `bash scripts/tests-visiteur/lancer.sh`,
+`node --check`, `python3 scripts/verifier-csp.py` et `python3 scripts/versionner.py` l'écrit ici ; d'un commun
+accord, les essais de cette branche lui sont confiés. À vérifier en plus :
+- R-03 sur la version d'essai Vercel de la branche : `/js/admin/site%2Dmannequins.js` doit répondre comme
+  `/js/admin/site-mannequins.js` (refusé sans clé). Limite connue : `/js/admin%2Fsite-mannequins.js` et les noms
+  encodés des anciens scripts de `/js/` ne passent pas par `config.matcher` ; décision commune à prendre (élargir
+  le filtre à `/js/` ou autre solution).
+- A-01 : sur la version d'essai, `/docs/rls-matrix.md`, `/DECISIONS.md`, `/GUIDE-DE-SECOURS.md`, `/AGENTS.md` → 404.
+- R-15 : CV ouvert dans l'Administration avec le logo (visite de D).
+- A-04 : `test-journal.js` doit passer (le champ « page » garde `?actu=…` au lieu de la valeur).
+Réponses :
