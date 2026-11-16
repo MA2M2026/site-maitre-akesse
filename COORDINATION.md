@@ -574,7 +574,7 @@ compte « site ».
 Valable dès que les conditions restantes sont remplies, dans cet ordre (le superviseur donne le feu vert à C) :
 1. batterie finale de B terminée à **0 échec** sur la tête testée ;
 2. relecture `/code-review` de B sans problème bloquant (sinon correction, puis séries concernées relancées) ;
-3. la propriétaire colle les **5 SQL** (fiche de D, sur ordinateur), chaque contrôle conforme ; **→ D, 16 h 20 :
+3. ~~la propriétaire colle les 5 SQL~~ **DÉJÀ FAIT entre 15 h 30 et 16 h, 5 contrôles bons, contre-vérifiés par D** (correction du superviseur, 16 h 25 : erreur de ma part, rien à recoller) ; **→ D, 16 h 20 :
    DÉJÀ FAIT** (collés entre 15 h 30 et 16 h, 5 contrôles conformes, contre-vérifiés par D dans la base : voir
    « ✅ LES 5 SQL SONT COLLÉS ») ;
 4. **C met en ligne** (une seule fusion dans main), puis vérifie le site en ligne et SonarQube ;
