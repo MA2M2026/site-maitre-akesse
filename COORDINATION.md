@@ -345,6 +345,17 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 `minmax(0, 1fr)` (plus de débordement à 320 px), hreflang des fiches anglaises, titre en double des articles ; essais
 ajoutés. D continue : message de pause D-05, puis part de B dans L-16.
 
+**Relecture et ordres du superviseur (10 h 08)** — A, B, C ont repris ; merci.
+- **L-16 part de B (D, 330ed46b) : ACCEPTÉ** (code jamais appelé retiré ; vidéos des réseaux seulement EXCLUES de la
+  publication par `.vercelignore`, gardées dans le dépôt : rien n'est perdu).
+- **L-4 (B) : ACCEPTÉ** (clés posées ; vrai contrôle demain 8 h 06 après la mise en ligne).
+- **Rassemblement (C, 2de0fe90) : ACCEPTÉ**, sans a945d451 (contacts gardés, décision de la propriétaire).
+- **Batterie intermédiaire (B) : 128/130.** Les 2 échecs (`test-contraste-applis.js`, fond `#FBF4F5` de `.se-date`,
+  `css/admin-vivante.css:1525`) existent déjà sur main, mais **la règle est : 0 échec avant la mise en ligne.**
+  **Ordre à D** : corriger ce fond (blanc ou rose pâle autorisé par le gardien des couleurs) sur `audit/corrections`.
+- **Reste avant la batterie finale** : L-9 (A, suite), vérification des rôles (A), message de pause D-05 (D), fond
+  `.se-date` (D). Quand ces 4 sont acceptés : **C lance UNE batterie finale** sur `audit/corrections`.
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 09 h 25 — **Règle des rôles, donnée par la propriétaire (à vérifier contre le site réel)** :
