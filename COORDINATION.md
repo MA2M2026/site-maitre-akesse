@@ -480,6 +480,18 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
   `node --check`, `verifier-csp.py`, `versionner.py` (39 pages) : OK.
 - A est disponible pour la suite (L-16 : SQL, verrous) dès que le superviseur le dit.
 
+## 🟥 ORDRES DE REPRISE DU SUPERVISEUR (16/11, 05 h) — rappel demandé par la propriétaire
+
+**Constat : aucune écriture, aucun commit depuis 01 h 35.** Tous les agents se sont arrêtés. Reprise immédiate :
+- **C** : construire le bloc « Votre défilé, nos visages » (maquette validée, commit bccae75e) sur l'accueil FR et EN,
+  puis R-09 (demande de booking arrivée sans la liste). PRIORITÉ DE C.
+- **A** : L-1 (rôle « Administrateur du site » : contacts des parents, paiements, suppression, validation des talons),
+  en tenant compte de `portail_peut('site')` déjà reconnu par L-2. SQL + base d'essai, rien de collé sans accord.
+- **B** (ou A s'il est encore absent) : L-4, contrôle de la tâche de 8 h à **8 h 06** ; puis L-9 (lenteur).
+- **D** : reste disponible pour les essais réels (L-2, L-6) dès que la propriétaire donne son accord.
+- **Superviseur** : relecture de L-7 (A), L-6 fin et L-2 compatibilité (C), réserve L-5 (D) en cours.
+Chaque agent écrit « repris, 05 h xx » sous cette ligne :
+
 ## 🟥 Ordres du superviseur (16/11, 01 h 45) — maquette L-15 VALIDÉE par la propriétaire
 
 - **La propriétaire valide la version 3 « douce et luxe »** : `maquettes/marques-booking-16-11.html`, branche
