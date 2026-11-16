@@ -523,7 +523,8 @@
       const pastille = enRetard ? '<span class="ap-pastille rose">Retard</span>' : courant && courant.etat === 'attente' ? '<span class="ap-pastille orange">En vérification</span>'
         : courant && courant.etat === 'a_payer' ? '<span class="ap-pastille orange">À payer avant le 5</span>'
         : courant && courant.etat === 'conge' ? '<span class="ap-pastille gris">Congés</span>'
-        : situation && situation.ferme ? '<span class="ap-pastille gris">Agence fermée</span>'
+        // (16/11/2026, audit D-05 / L-13) les mois de rodage comptent : « Sans mensualité » ; décembre à février : « Pause »
+        : situation && situation.ferme ? '<span class="ap-pastille gris">' + (situation.pause ? 'Pause (congés)' : 'Sans mensualité') + '</span>'
         : situation && situation.termine ? '<span class="ap-pastille gris">Terminée</span>' : '<span class="ap-pastille vert">✓ À jour</span>';
       // le prochain paiement : le mois à payer (« Payer avec Wave »), sinon « Rien à payer » (et « Payer à l'avance »)
       const nomDe = (x) => MOIS[Number(String(x.mois).slice(5, 7)) - 1] + ' ' + String(x.mois).slice(0, 4);

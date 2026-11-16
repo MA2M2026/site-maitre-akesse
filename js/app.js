@@ -904,7 +904,7 @@ function bilanFormation(d) {
   return { payes: (Number(d && d.faits_avant) || 0) + cours.filter((m) => m.etat === 'paye').length, total: (d && d.total) || Math.max(18, cours.length) };
 }
 // Où en est la mannequin (Reprise de mars, supabase-reprise-mars.sql, mes_mensualites) : « Niveau 1 · mois 3 sur 9 ·
-// il reste 15 mois », la prochaine mensualité, ou « agence fermée jusqu'au 1er mars » (rodage, congés) — en
+// il reste 15 mois de formation », la prochaine mensualité, ou rodage / pause de décembre à février — en
 // phrases simples, sans balises (chaque écran les échappe). null tant que la base n'a pas ces informations.
 // Partagé par Mes paiements (js/mes-paiements.js) et l'application (js/mannequin-app.js).
 // Lien Wave marchand de l'agence (le montant se met à la fin) et montant écrit « 30 000 FCFA » : partagés le
@@ -936,15 +936,23 @@ function situationFormation(d) {
   const fcfa = enFcfa;
   if (d.termine) return { titre: 'Formation terminée', lignes: ['Vous restez à l’agence, sans mensualité à payer.'], ferme: false, termine: true };
   const reste = Number(d.reste) || 0;
-  const lignes = [(Number(d.mois_niveau) > 0 ? 'Mois ' + d.mois_niveau + ' sur 9' : 'La formation commence bientôt') + ' · il reste ' + reste + ' mois'];
-  let ferme = false;
+  const lignes = [(Number(d.mois_niveau) > 0 ? 'Mois ' + d.mois_niveau + ' sur 9' : 'La formation commence bientôt') + ' · il reste ' + reste + ' mois de formation'];
+  let ferme = false, pause = false;
   if (d.fermee_jusqu_au) {
+    // (16/11/2026, audit D-05 / L-13, décision de la propriétaire) les mois de rodage COMPTENT dans la formation ; seuls
+    // décembre, janvier et février (congés) ne comptent pas. Le calcul ne change pas : seulement le message (avant :
+    // « Agence fermée… », qui faisait croire que la formation était arrêtée). (situationFormation.maintenant : essais)
     ferme = true;
     const j = String(d.fermee_jusqu_au);
-    lignes.unshift('Agence fermée jusqu’au ' + (j.slice(8, 10) === '01' ? '1er' : String(Number(j.slice(8, 10)))) + ' ' + moisEnToutes(j) + ' : aucune mensualité à payer.');
+    const reprise = (j.slice(8, 10) === '01' ? '1er' : String(Number(j.slice(8, 10)))) + ' ' + moisEnToutes(j);
+    const mois = ((situationFormation.maintenant && situationFormation.maintenant()) || new Date()).getUTCMonth() + 1;  // (Abidjan : UTC)
+    pause = mois === 12 || mois <= 2;
+    lignes.unshift(pause
+      ? 'Pause de la formation (congés de décembre à février) : reprise le ' + reprise + ', aucune mensualité à payer d’ici là.'
+      : 'Aucune mensualité à payer jusqu’au ' + reprise + ' : vos mois de cours comptent quand même dans la formation (pause en décembre, janvier et février).');
   }
   if (d.prochaine) lignes.push('Prochaine mensualité : ' + moisEnToutes(d.prochaine) + ' · ' + fcfa(d.mensualite));
-  return { titre: 'Niveau ' + d.niveau + (Number(d.niveaux) === 1 ? ' (formation en 1 niveau)' : ' sur 2'), lignes, ferme, termine: false };
+  return { titre: 'Niveau ' + d.niveau + (Number(d.niveaux) === 1 ? ' (formation en 1 niveau)' : ' sur 2'), lignes, ferme, pause, termine: false };
 }
 
 // Coordonnées officielles de l'agence pour les documents générés (PDF), à un seul endroit.
