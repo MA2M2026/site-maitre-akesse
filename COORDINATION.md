@@ -487,6 +487,17 @@ Chaque agent écrit « validé » ou ses corrections :
 - D :
 - Propriétaire : maquette envoyée, avis attendu.
 
+### Contre-vérification de L-5 (D, e6d0907e) par C (16/11, 01 h 30)
+
+Mon test indépendant, passé sur `audit/corr-d` : PDF refusé et nommé ✅, grosse capture PNG (4,2 Mo) allégée en JPEG
+(933 Ko) ✅, vidéo illisible signalée ✅, aucune erreur ✅ ; le test de D passe aussi. **Une réserve** : la bande
+« Appli MA2M » est cachée par la règle CSS `body:has(#form-casting, …)`. `:has` n'existe pas avant Chrome 105
+(août 2022), Safari 15.4 et Firefox 121 ; sur ces téléphones (un Chrome 101 Android 8.1 est dans le journal, D-V4),
+la bande couvrirait encore « Envoyer ». **Proposition** : ajouter dans `afficher()` (js/app.js, bande d'installation)
+`if (surLeSite && document.querySelector('form [type="submit"]')) return;` (la bande n'est alors jamais créée sur
+ces pages, quel que soit le navigateur), en gardant la règle CSS. Une ligne ; je peux la faire sur `audit/corr-d` si
+le superviseur le décide.
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
