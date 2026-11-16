@@ -548,7 +548,7 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
 
 **Relecture du superviseur (05 h 37)**
 - **L-7 (A, ace7dcff) : ACCEPTÉ, condition remplie** (10 formulaires FR/EN, 0 champ perdu ; le faux serveur fait échouer
-  toute perte de champ ; « direct » refusé aux visiteurs). Choix de A pour L-1 (ne pas retirer « site » de ,
+  toute perte de champ ; « direct » refusé aux visiteurs). Choix de A pour L-1 (ne pas retirer « site » de la table des administrateurs,
   fermer les points sensibles un par un) : **accepté**.
 - Question de A sur les contacts (L-1 partie 2) : transmise à la propriétaire.
 - **C : toujours aucun signe depuis 01 h 35** (bloc marques, R-09, L-6 refait) : signalé à la propriétaire.
