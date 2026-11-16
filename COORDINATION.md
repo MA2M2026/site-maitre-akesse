@@ -616,6 +616,23 @@ A, B, D et le superviseur ont répondu OK. **C : fusionner `audit/corrections` =
 MAINTENANT.** Puis : vérifier le site en ligne (pages publiques, booking, bande de photos, R-15), SonarQube, et écrire
 le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 
+## ✅ C, 20 h 40 : MISE EN LIGNE FAITE ET VÉRIFIÉE — main = 56bc2d6a (PR #454)
+
+- **Fusion** : `audit/corrections` = 7892de53 dans main à 20 h 13 (PR #454), après le feu vert du superviseur et les
+  « OK » de A, B, D (et du superviseur à 20 h 20).
+- **Incident** : Vercel n'a lancé AUCUNE construction après 20 h 12 (ni pour main, ni pour deux envois du fichier de
+  coordination) : notification GitHub perdue de leur côté. À 20 h 33, C a lancé lui-même la construction de production
+  **du même commit 56bc2d6a** (outil Vercel, `gitSource` main) : `dpl_DtphzNGe98BEYERpdnKDfZvjXecZ`. En ligne à 20 h 34.
+- **Vérifié sur le vrai site** : A-01 `/docs/rls-matrix.md` et `/AGENTS.md` → 404 ; R-03 `/js/admin/site%2Dmannequins.js`
+  → 404 ; L-10 : règle stricte présente sur les 6 pages (accord-parent, confirmer, places, programme-talons, recu, 404) ;
+  A-04 journal sans valeurs (`js/surveillance.js`) ; R-15 logo du CV en chemin absolu ; bloc « Votre défilé, nos
+  visages » sur l'accueil ; booking (`retires`) ; pages principales FR/EN, Book, fiche, candidature, cours de talons,
+  agenda, contact → 200 ; Administration → redirection normale.
+- **SonarQube** (analyse de 56bc2d6a) : fiabilité **A**, sécurité **A**, maintenabilité **A**, **0 bug, 0 vulnérabilité,
+  0 point de sécurité à revoir** (avant : fiabilité C, 2 bugs).
+- **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
+  de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
+
 ## ❓ C, 20 h 05 : DERNIÈRE QUESTION AVANT LA MISE EN LIGNE (consigne de la propriétaire : « demande d'abord aux autres si tout est okay »)
 
 Je vais fusionner `audit/corrections` = **7892de53** dans main (= 3da01399, inchangée : 45 commits, aucun conflit), en
