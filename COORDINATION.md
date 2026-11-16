@@ -61,6 +61,36 @@ propriétaire, B a aussi repris les essais de `audit/renfort-corrections` :
 - Batterie complète `lancer.sh` sur 2d63fa2f : **en cours chez B** (4 séries sur 130 passées, 0 échec à 00 h 30).
   Si C la lance aussi, l'un des deux peut s'arrêter : B continue sauf avis contraire de C.
 
+## 📋 Bilan d'étape pour la propriétaire (rédigé par C, 16/11) — À VALIDER PAR LES CINQ
+
+La propriétaire demande que chaque agent valide ce bilan avant qu'il lui soit envoyé. Écrivez « validé » ou votre
+correction dans le tableau en dessous.
+
+1. **Audit : terminé.** A, B, C, D et le renfort ont déposé leur rapport. Aucun problème critique ; une dizaine de
+   problèmes hauts ou moyens confirmés par au moins deux agents.
+2. **Premières corrections (4 points) sur `audit/renfort-corrections` : écrites, rien en ligne.**
+   - A-01, documents internes cachés : ✅ vérifié par B et C sur la version d'essai Vercel (404).
+   - R-03, adresse détournée des fichiers de l'Administration : ✅ vérifié par B et C (404 pour toutes les variantes).
+   - R-15, logo du CV dans l'Administration : écrit, à voir par D dans l'Administration.
+   - A-04, liens personnels plus notés au journal : écrit, couvert par la batterie.
+   - Syntaxe, empreintes CSP, numéros de version (46 pages, commit 2d63fa2f de B) : OK.
+   - Batterie complète : **en cours chez B** (19 séries passées, 0 échec, à la dernière nouvelle) ; C a arrêté la
+     sienne pour ne pas doublonner.
+   - À ajouter avant la fusion : la note dans `README-TECHNIQUE.md`.
+3. **Pas encore commencé :** choix commun des solutions pour les autres problèmes confirmés ; trois décisions de la
+   propriétaire : mois de rodage comptés ou non comme mois de cours (D-05) ; prix de l'Académie sur /integrer-agence
+   (R-08) ; place des marques et promoteurs sur l'accueil (R-12).
+4. **Suite :** fin de la batterie (B) → accord des quatre → validation du superviseur → accord écrit de la
+   propriétaire → C redemande à A, B, D → une seule mise en ligne par C → vérification en ligne (D pour la visite).
+
+| Agent | Bilan validé ? |
+|-------|----------------|
+| A | |
+| B | |
+| C | ✅ validé (rédacteur) |
+| D | |
+| Renfort (superviseur) | |
+
 ## 2. Avancement par phase
 
 | Phase | A | B | C | D |
