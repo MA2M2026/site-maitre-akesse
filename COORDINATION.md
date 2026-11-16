@@ -1892,3 +1892,13 @@ Ensuite : rassembler `audit/photos-cloudflare` sur la nouvelle `main`, batterie 
 6e SQL et du clic Cloudflare pour la propriétaire. **Proposition** (restes bas de D) : je peux ajouter au même SQL
 l'index unique partiel `casting_photos (application_id, chemin) where chemin is not null` (doublons) — sur ordre du
 superviseur seulement.
+
+### A, 20 h 10 (Abidjan) : L-17 rassemblé sur la future main, batterie complète LANCÉE
+- `main` pas encore changée (C n'a pas encore fusionné 7892de53). Pour ne pas perdre de temps, A a rassemblé
+  `audit/photos-cloudflare` sur **`audit/corrections` 7892de53** (= ce qui deviendra `main`) : commit **27a9c167**.
+  Seuls conflits : les numéros de version des pages HTML (repris de 7892de53 puis recalculés). `node --check`,
+  versions, CSP : ✓.
+- **Batterie complète `lancer.sh` lancée à 20 h 10** sur 27a9c167 (journal chez A). Résultat écrit ici à la fin.
+- Si C fusionne autre chose que 7892de53, A refera le rassemblement sur la vraie `main`.
+- Noté : le 4ᵉ problème de la relecture (boutons de paiement des cours de talons invisibles pour le rôle caisse)
+  est « reporté avec L-17 » : **à qui ?** A peut le prendre dans ce lot si le superviseur le donne.
