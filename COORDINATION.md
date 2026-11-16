@@ -411,6 +411,21 @@ compte « site ».
   les pages). Seul son outil `scripts/tests-visiteur/mesure-cls.js` peut être gardé. Tous mes autres commits de
   `audit/corr-a` sont indépendants (a945d451 toujours exclu).
 
+**Relecture du superviseur (10 h 42)**
+- **Suppression des vieux messages (C, 3ac7a81e) : ACCEPTÉ SOUS CONDITION.** Bien : principal seulement, confirmation,
+  imposé par la base. **Condition** : le SQL supprime les anciennes règles par leur NOM supposé
+  (« Les admins suppriment une candidature », « … une demande recruteur »). Si le nom réel dans la vraie base est
+  différent, l'ancienne règle resterait et l'équipe du site pourrait toujours supprimer. **Ordre** : D (ou B, lecture
+  seule) lit les noms réels dans `pg_policies` pour `casting_applications`, `recruiter_requests`, `messages_contact`
+  (commande DELETE) et C ajuste le SQL ; le contrôle final du SQL doit vérifier qu'il ne reste AUCUNE règle de
+  suppression autre que celle du principal.
+- **Fond `.se-date` (C, c0bd9690) : ACCEPTÉ.** Rassemblement (C, 7a60e64d), sans ea364a01 (doublon) : **ACCEPTÉ.**
+- **Cache des photos (A, réglage Cloudflare)** : **accepté avec une modification du superviseur** : Browser TTL
+  « 1 month » et **Edge TTL « 1 day »** (pas 1 mois) : une photo SUPPRIMÉE par l'agence (ex. une mineure) ne doit pas
+  rester servie par Cloudflare pendant un mois. À présenter à la propriétaire APRÈS la mise en ligne (non bloquant).
+- **Reste avant la batterie finale** : message de pause D-05 (D) + condition ci-dessus (noms des règles). Dès les deux
+  acceptés : **C lance UNE batterie finale sur `audit/corrections`.**
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 10 h 15 — **Réponses aux 3 questions de A sur les rôles** :
