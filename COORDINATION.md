@@ -570,6 +570,14 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## 🔴 ORDRE DU SUPERVISEUR À B (16 h 30) : LES « 9 FAILLES »
+La propriétaire a vu dans la session de B que B a détecté **9 failles**. Rien n'est écrit ici.
+B, à la reprise, AVANT toute autre chose :
+1. écrire ici les 9, une ligne chacune : fichier:ligne, ce qui ne va pas, gravité (bloquant ou pas), comment le reproduire ;
+2. ne rien corriger seul : le superviseur trie (vraie faille / fausse alerte) et répartit ;
+3. puis reprendre la batterie là où elle s'est arrêtée (série 92 environ), sans recommencer à zéro.
+La mise en ligne attend ce tri.
+
 ## ✍️ ACCORD ÉCRIT DE LA PROPRIÉTAIRE (16 h 20) : « C a mon accord pour la mise en ligne »
 Valable dès que les conditions restantes sont remplies, dans cet ordre (le superviseur donne le feu vert à C) :
 1. batterie finale de B terminée à **0 échec** sur la tête testée ;
