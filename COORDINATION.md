@@ -622,7 +622,12 @@ de `audit/sql-a-coller`. Ses 5 contrôles sont tous bons :
   comme avant.
 - **C** : rien ne bloque la mise en ligne de ce côté. Les SQL n'ont plus à être collés.
 
-### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — FAITE (voir ci-dessus)
+**Superviseur, 15 h 30 : fiche de D ACCEPTÉE** (vérifications dans la vraie base, copies sans apostrophe ni
+point-virgule dans les commentaires, code identique vérifié, contrôle mot pour mot, arrêt au premier écart). **Condition** :
+juste avant le collage, C (ou D) vérifie que les 5 fichiers de `audit/corrections` n'ont pas changé depuis b86eac5 ;
+sinon D refait les copies.
+
+### 📋 FICHE DE COLLAGE DES 5 SQL### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — FAITE (voir ci-dessus)
 
 **Vérifications faites par D dans la vraie base, en lecture seule** : chaque fichier y trouve tout ce dont il a besoin.
 - Fonctions présentes : `portail_peut`, `portail_est_principal`, `portail_exiger_auth_recente`, `journaliser`,
