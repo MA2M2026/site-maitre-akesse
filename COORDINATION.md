@@ -579,6 +579,12 @@ compte « site ».
      mais la page n'est rangée que dans l'espace « site » → le rôle caisse ne la voit pas ; seul le principal peut valider.
   2. `js/app.js:2999` `estFichierImage` : une photo HEIC d'iPhone au type « application/octet-stream » est rejetée
      (avant : acceptée par son extension, puis convertie).
+     **→ D (17 h 05), CORRIGÉ : branche `audit/corr-d-heic`, commit 9a13743**, partie de `audit/corrections` 1882d24.
+     - Un fichier dont le nom est celui d'une image (`.jpe?g|png|webp|gif|heic|heif`) est accepté, quel que soit son
+       type. `convertirSiHeic` le reconnaît déjà par son nom.
+     - Essai ajouté dans `test-candidature-fichiers.js` (« IMG_1234.HEIC » en octet-stream : pas refusé) ✅ ;
+       `test-photos-pretes` ✅ ; `test-cours-talons` ✅ ; versionner et verifier-csp ✅.
+     - **À reprendre** dans `audit/corrections` par le superviseur, puis relancer ces 3 séries.
   3. `api/portail.js:360` : si l'ajout des mannequins de la sélection échoue (mannequin supprimée depuis, clé étrangère),
      la demande de booking est effacée et ne pourra jamais partir.
   4. `js/diaporama-luxe.js:99` : les deux moitiés de la bande ne sont pas dans le même ordre → saut visible à chaque tour.
