@@ -1,7 +1,7 @@
 // Envoi / suppression de fichiers sur le stockage R2, partagé par r2-presigner.js (photos du
 // Book) et r2-site-images.js (images du site). Fichier à part (et non dans _commun.js) pour
 // que les fonctions de connexion n'embarquent pas les modules du stockage.
-const { jetonDe, corpsDe, creerClientR2, noterAuJournal } = require('./_commun.js');
+const { jetonDe, corpsDe, creerClientR2, noterAuJournal, SUPABASE_URL, enTetesService } = require('./_commun.js');
 
 // Types de fichiers acceptés (audit du 28 septembre 2026). Les photos sont servies
 // depuis le domaine du site lui-même (relais /book-photos) : un fichier HTML ou SVG
@@ -47,7 +47,8 @@ function famillesPermises(typeFichier) {
   return ['image'];
 }
 // Après l'envoi : lit les 32 premiers octets du fichier déposé. Renvoie 'ok' (le format annoncé), 'illisible'
-// (relecture impossible : jamais bloquant, noté au journal) ou 'faux' (le fichier a été SUPPRIMÉ du stockage).
+// (relecture impossible : jamais bloquant, noté au journal), 'absent' (aucun fichier à cette adresse) ou 'faux' (le
+// fichier a été SUPPRIMÉ du stockage).
 // (16/11/2026, L-17 : partagé par verifierContenuR2 et les photos des candidatures, api/r2-presigner.js)
 async function contenuR2(chemin, typeFichier) {
   const { GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
@@ -58,6 +59,8 @@ async function contenuR2(chemin, typeFichier) {
     const objet = await client.send(new GetObjectCommand({ Bucket: bucket, Key: chemin, Range: 'bytes=0-31' }));
     octets = Array.from(await objet.Body.transformToByteArray());
   } catch (e) {
+    // (16/11/2026, relecture de sécurité de D sur L-17) fichier jamais déposé : 'absent' (pas une panne)
+    if (e && (e.name === 'NoSuchKey' || (e.$metadata && e.$metadata.httpStatusCode === 404))) return 'absent';
     // (01/11/2026, panne : les mannequins ne pouvaient plus ajouter de photos) relecture impossible (droit de
     // lecture du stockage, réseau…) : l'envoi n'est JAMAIS bloqué pour ça ; seul un fichier lu et faux est refusé
     console.error('verifierContenuR2 :', e);
@@ -74,7 +77,7 @@ function messageFichierFaux(typeFichier) {
 // Appelé par le navigateur juste après l'envoi : 422 si le fichier n'est pas du format annoncé.
 async function verifierContenuR2(res, chemin, typeFichier) {
   const etat = await contenuR2(chemin, typeFichier);
-  if (etat === 'illisible') { res.status(200).json({ ok: true, verifie: false }); return; }
+  if (etat === 'illisible' || etat === 'absent') { res.status(200).json({ ok: true, verifie: false }); return; }  // (inchangé pour le Book)
   if (etat === 'ok') { res.status(200).json({ ok: true }); return; }
   res.status(422).json({ error: messageFichierFaux(typeFichier), refuse: true });
 }
@@ -138,6 +141,51 @@ async function nettoyerNotesIntegration(garder) {
   }
   return true;
 }
+// (16/11/2026, L-17, relecture de sécurité de D) PHOTOS DES CANDIDATURES ET DES COURS DE TALONS chez Cloudflare.
+// Nombre de fichiers déjà déposés sous un dossier (compté AVANT de signer un nouvel envoi) ; null si illisible.
+async function nbFichiersR2(prefixe) {
+  const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
+  const r = await creerClientR2().send(new ListObjectsV2Command({ Bucket: process.env.R2_BUCKET_NAME, Prefix: prefixe, MaxKeys: 50 })).catch(() => null);
+  return r ? (r.Contents || []).length : null;
+}
+// Nettoyage quotidien (tâche du matin, api/portail.js) : efface les fichiers de candidatures/ et cours-talons/ que
+// PLUS AUCUNE fiche ne cite (envois jamais vérifiés, inscriptions abandonnées). Règle n° 6 : jamais une photo de
+// mannequin (seuls ces deux dossiers, noms au format exact) ; jamais un fichier cité ; base illisible = rien effacé.
+// Délai : 2 h pour une candidature (sa fiche existe AVANT ses photos) ; 7 jours pour un cours de talons (l'inscription
+// n'est enregistrée qu'après la vidéo, et un envoi coupé reprend quand la personne revient sur la page).
+const NETTOYAGE = [
+  { prefixe: 'candidatures/', delai: 2 * 3600e3, cites: (ids) => 'casting_photos?select=chemin&application_id=in.(' + ids.join(',') + ')', chemins: (l) => l.map((x) => x.chemin) },
+  { prefixe: 'cours-talons/', delai: 7 * 24 * 3600e3, cites: (ids) => 'cours_talons?select=photos&id=in.(' + ids.join(',') + ')', chemins: (l) => l.flatMap((x) => (Array.isArray(x.photos) ? x.photos : [])) }
+];
+async function nettoyerPhotosNonCitees(maintenant = Date.now()) {
+  const { ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+  const client = creerClientR2(), bucket = process.env.R2_BUCKET_NAME;
+  let effaces = 0;
+  for (const n of NETTOYAGE) {
+    const motif = new RegExp('^' + n.prefixe + '([0-9a-f-]{36})/[0-9a-f]{32}\\.(jpg|png|webp)$');
+    const vieux = [];
+    let suite;
+    for (let page = 0; page < 20; page++) {   // (1 000 fichiers par page, 20 pages au plus par matin)
+      const r = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: n.prefixe, ContinuationToken: suite }));
+      (r.Contents || []).forEach((o) => { if (motif.test(o.Key) && maintenant - new Date(o.LastModified).getTime() > n.delai) vieux.push(o.Key); });
+      if (!r.IsTruncated) break;
+      suite = r.NextContinuationToken;
+    }
+    const ids = [...new Set(vieux.map((k) => motif.exec(k)[1]))];
+    const cites = new Set();
+    for (let i = 0; i < ids.length; i += 50) {
+      const rep = await fetch(SUPABASE_URL + '/rest/v1/' + n.cites(ids.slice(i, i + 50)), { headers: enTetesService() });
+      if (!rep.ok) throw new Error('lecture de la base impossible (' + rep.status + ') : rien n’est effacé dans ' + n.prefixe);
+      n.chemins(await rep.json()).forEach((c) => cites.add(c));
+    }
+    for (const k of vieux) {
+      if (cites.has('r2:' + k)) continue;
+      await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: k }));
+      effaces++;
+    }
+  }
+  return effaces;
+}
 // Catégorie 'note-integration' de api/r2-site-images.js, traitée à part pour ne rien
 // assouplir des contrôles des images : admin déjà vérifié par l'appelant. Actions :
 // 'lire' (document en place), 'nettoyer' (retirer les plus anciens), envoi d'un PDF.
@@ -157,4 +205,4 @@ async function traiterNoteIntegration(res, corps) {
   await repondreR2(res, undefined, chemin, 'application/pdf', taille, 15 * 1024 * 1024);
 }
 
-module.exports = { debutR2, repondreR2, contenuR2, messageFichierFaux, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
+module.exports = { debutR2, repondreR2, contenuR2, messageFichierFaux, nbFichiersR2, nettoyerPhotosNonCitees, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };

@@ -1625,7 +1625,11 @@ depuis Google Drive dans l'Administration. Désormais :
    Drive. Base pas encore prête (fichier non collé) : l'inscription repart avec les liens Drive, comme avant.
    Administration (`js/admin/site-cours-talons.js`) : adresses signées, copies Drive masquées. Outils partagés de
    l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est jamais effacée par l'API.
-   Limite connue : des photos envoyées pour une inscription jamais terminée restent chez Cloudflare (non listées).
+5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
+   dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
+   rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de
+   `api/_r2.js`) : efface les fichiers de `candidatures/` (après 2 h) et `cours-talons/` (après 7 jours, reprise
+   possible) que plus aucune fiche ne cite ; jamais ailleurs, jamais un fichier cité, rien si la base est illisible.
 Pas de nouvelle fonction Vercel (limite de 12) : tout passe par `api/r2-presigner.js`.
 Test : `scripts/tests-visiteur/test-photos-candidature-r2.js` (serveur, candidature FR/EN téléphone/ordinateur,
 Cloudflare en panne, Administration).

@@ -15,7 +15,7 @@ const r2 = { mis: [], effaces: [], liste: [], octets: [0xFF, 0xD8, 0xFF, 0xE0, 0
 const chargerAvant = Module._load;
 Module._load = function (demande, parent, estPrincipal) {
   if (demande === '@aws-sdk/client-s3') {
-    class S3Client { async send(c) { if (c.type === 'Get') return { Body: { transformToByteArray: async () => Uint8Array.from(r2.octets) } }; if (c.type === 'Delete') r2.effaces.push(c.input.Key); if (c.type === 'List') return { Contents: r2.liste.map((Key) => ({ Key })) }; return {}; } }
+    class S3Client { async send(c) { if (c.type === 'Get') { if (r2.absent) { const e = new Error('absent'); e.name = 'NoSuchKey'; throw e; } return { Body: { transformToByteArray: async () => Uint8Array.from(r2.octets) } }; } if (c.type === 'Delete') r2.effaces.push(c.input.Key); if (c.type === 'List') return { Contents: r2.liste.map((o) => (typeof o === 'string' ? { Key: c.input.Prefix + o, LastModified: new Date() } : o)).filter((o) => o.Key.startsWith(c.input.Prefix)) }; return {}; } }
     const C = (type) => class { constructor(i) { this.input = i; this.type = type; } };
     return { S3Client, PutObjectCommand: C('Put'), GetObjectCommand: C('Get'), DeleteObjectCommand: C('Delete'), DeleteObjectsCommand: C('Deletes'), ListObjectsV2Command: C('List') };
   }
@@ -30,9 +30,12 @@ async function serveur() {
     const u = decodeURIComponent(String(url)), m = o.method || 'GET';
     const json = (x, s = 200) => ({ ok: s < 300, status: s, json: async () => x, text: async () => JSON.stringify(x) });
     if (u.includes('limiter_soumissions_publiques_ip')) return json(true);
-    if (u.includes('/rest/v1/cours_talons?')) return json(base.talonsInscrite ? [{ id: ID }] : []);
     if (u.includes('/rest/v1/casting_applications?')) return json(base.dossier && u.includes(base.dossier.id) ? [base.dossier] : []);
+    if (base.nettoyagePanne && /application_id=in|cours_talons\?select=photos/.test(u)) return json({}, 500);
+    if (u.includes('casting_photos?select=chemin&application_id=in')) return json((base.citesNettoyage || {}).candidatures || []);
+    if (u.includes('cours_talons?select=photos&id=in')) return json((base.citesNettoyage || {}).talons || []);
     if (u.includes('/rest/v1/casting_photos?select=chemin')) return json(base.cites || []);
+    if (u.includes('/rest/v1/cours_talons?')) return json(base.talonsInscrite ? [{ id: ID }] : []);
     if (u.includes('/rest/v1/casting_photos?select=id')) return json(base.photos);
     if (u.includes('/rest/v1/casting_photos') && m === 'POST') { base.notes.push(JSON.parse(o.body)); return json(null, 201); }
     if (u.includes('portail_admin_ok')) return json(base.admin === true);
@@ -62,8 +65,8 @@ async function serveur() {
   ok(r.statut === 403, 'serveur : candidature de plus de 2 h refusée'); base.dossier.created_at = new Date().toISOString();
   base.dossier.status = 'vue'; r = await appeler({ action: 'candidature_signer', candidature: ID, contentType: 'image/jpeg', taille: 1 }); base.dossier.status = 'nouvelle';
   ok(r.statut === 403, 'serveur : candidature déjà traitée par l’agence refusée');
-  base.photos = Array.from({ length: 12 }, (_, i) => ({ id: i })); r = await appeler({ action: 'candidature_signer', candidature: ID, contentType: 'image/jpeg', taille: 1 }); base.photos = [];
-  ok(r.statut === 403 && /12/.test(r.rep.error), 'serveur : 12 photos déjà reçues : refusé');
+  r2.liste = Array.from({ length: 12 }, (_, i) => 'f' + i + '.jpg'); r = await appeler({ action: 'candidature_signer', candidature: ID, contentType: 'image/jpeg', taille: 1 }); r2.liste = [];
+  ok(r.statut === 403 && /12/.test(r.rep.error), 'serveur : 12 fichiers DÉJÀ DÉPOSÉS (vérifiés ou non) : refusé (relecture de D)');
   r = await appeler({ action: 'candidature_signer', candidature: ID, contentType: 'image/svg+xml', taille: 100 });
   ok(r.statut === 400, 'serveur : format non image (SVG) refusé');
   r = await appeler({ action: 'candidature_signer', candidature: ID, contentType: 'image/jpeg', taille: 16 * 1024 * 1024 });
@@ -72,6 +75,8 @@ async function serveur() {
   ok(r.statut === 200 && base.notes.length === 1 && base.notes[0].application_id === ID && base.notes[0].chemin === 'r2:' + cle, 'serveur : vraie photo relue, puis notée dans la base PAR LE SERVEUR (r2:…)');
   r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: 'candidatures/' + ID + '/../autre.jpg' });
   ok(r.statut === 400 && base.notes.length === 1, 'serveur : vérifier un chemin fabriqué : refusé, rien de noté');
+  r2.absent = true; r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: 'candidatures/' + ID + '/' + 'd'.repeat(32) + '.jpg' }); r2.absent = false;
+  ok(r.statut === 404 && base.notes.length === 1, 'serveur : fichier jamais déposé : refusé (404), rien de noté (relecture de D)');
   r2.octets = Array.from(Buffer.from('<html><script>alert(1)</script>'));
   r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: cle });
   ok(r.statut === 422 && r2.effaces.includes(cle) && base.notes.length === 1, 'serveur : faux fichier (page web déguisée) : effacé du stockage, rien de noté');
@@ -108,6 +113,27 @@ async function serveur() {
   ok(r.statut === 400 && !r2.effaces.includes(cleT), 'serveur : photo d’un cours de talons : jamais effacée par cette action');
   r = await appeler({ action: 'candidature_supprimer', chemin: cle }, JETON_EQUIPE);
   ok(r.statut === 200 && r2.effaces.includes(cle), 'serveur : équipe : fiche déjà supprimée : le fichier est effacé');
+  // ---- nettoyage du matin (api/_r2.js) : seulement candidatures/ et cours-talons/, jamais un fichier cité
+  const { nettoyerPhotosNonCitees } = require('../../api/_r2.js');
+  const ilYa = (h) => new Date(Date.now() - h * 3600e3), A2 = 'aaaaaaaa-1111-4a11-8a11-123456789abc', T2 = 'bbbbbbbb-1111-4a11-8a11-123456789abc';
+  const k = (d, id, c) => d + '/' + id + '/' + c.repeat(32) + '.jpg';
+  r2.liste = [
+    { Key: k('candidatures', A2, '1'), LastModified: ilYa(3) },    // vieux, non cité → effacé
+    { Key: k('candidatures', A2, '2'), LastModified: ilYa(3) },    // vieux, cité → gardé
+    { Key: k('candidatures', A2, '3'), LastModified: ilYa(1) },    // récent → gardé
+    { Key: k('cours-talons', T2, '4'), LastModified: ilYa(24 * 8) }, // talons de plus de 7 jours, non cité → effacé
+    { Key: k('cours-talons', T2, '5'), LastModified: ilYa(24 * 8) }, // cité par l'inscription → gardé
+    { Key: k('cours-talons', T2, '6'), LastModified: ilYa(24 * 3) }, // 3 jours (reprise possible) → gardé
+    { Key: 'candidatures/' + A2 + '/photo-mannequin.jpg', LastModified: ilYa(30) }];  // nom hors format → jamais touché
+  base.citesNettoyage = { candidatures: [{ chemin: 'r2:' + k('candidatures', A2, '2') }], talons: [{ photos: ['r2:' + k('cours-talons', T2, '5'), 'https://drive.test/x'] }] };
+  r2.effaces.length = 0;
+  const nbEffaces = await nettoyerPhotosNonCitees();
+  ok(nbEffaces === 2 && r2.effaces.length === 2 && r2.effaces.includes(k('candidatures', A2, '1')) && r2.effaces.includes(k('cours-talons', T2, '4')),
+    'nettoyage du matin : seuls les fichiers non cités et anciens sont effacés (candidature > 2 h, talons > 7 jours) (' + r2.effaces.join(', ') + ')');
+  base.nettoyagePanne = true; r2.effaces.length = 0;
+  const panne = await nettoyerPhotosNonCitees().then(() => 'effectué', () => 'refusé');
+  ok(panne === 'refusé' && !r2.effaces.length, 'nettoyage du matin : base illisible → rien n’est effacé');
+  base.nettoyagePanne = false; r2.liste = [];
 }
 
 async function navigateur() {

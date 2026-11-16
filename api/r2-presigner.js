@@ -12,7 +12,7 @@
 
 
 const { SUPABASE_URL, enTetesService, extraireIp, creerClientR2, verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal, limiteDebit } = require('./_commun.js');
-const { debutR2, repondreR2, contenuR2, messageFichierFaux, TYPES_IMAGES } = require('./_r2.js');
+const { debutR2, repondreR2, contenuR2, messageFichierFaux, nbFichiersR2, TYPES_IMAGES } = require('./_r2.js');
 const crypto = require('crypto');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
@@ -64,29 +64,27 @@ const cheminCandidature = (id, chemin, dossier = 'candidatures') => typeof chemi
 async function talonsOuverte(id) {
   const [inscrites, objets] = await Promise.all([
     fetch(SUPABASE_URL + '/rest/v1/cours_talons?select=id&id=eq.' + id, { headers: enTetesService() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    (async () => {
-      const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
-      const r = await creerClientR2().send(new ListObjectsV2Command({ Bucket: process.env.R2_BUCKET_NAME, Prefix: 'cours-talons/' + id + '/', MaxKeys: 20 }));
-      return (r && r.Contents) || [];
-    })().catch(() => null)
+    nbFichiersR2('cours-talons/' + id + '/')
   ]);
-  if (!Array.isArray(inscrites) || !Array.isArray(objets)) return 'Vérification impossible pour le moment : réessayez dans un instant.';
+  if (!Array.isArray(inscrites) || objets === null) return 'Vérification impossible pour le moment : réessayez dans un instant.';
   if (inscrites.length) return 'Cette inscription ne reçoit plus de photos.';
-  if (objets.length >= PHOTOS_MAX_TALONS) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_TALONS + ').';
+  if (objets >= PHOTOS_MAX_TALONS) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_TALONS + ').';
   return null;
 }
 
 // La candidature peut-elle encore recevoir des photos ? Renvoie un message d'erreur, ou null.
 async function candidatureOuverte(id) {
   const lire = (url) => fetch(SUPABASE_URL + '/rest/v1/' + url, { headers: enTetesService() }).then((r) => (r.ok ? r.json() : null));
-  const [dossiers, photos] = await Promise.all([
+  // (relecture de D) on compte les fichiers DÉJÀ DÉPOSÉS sous candidatures/<id>/, vérifiés ou non : un envoi sans
+  // vérification ne permet donc pas de remplir le stockage (le nettoyage du matin efface ensuite les non cités)
+  const [dossiers, deposes] = await Promise.all([
     lire('casting_applications?select=id,status,created_at&id=eq.' + id),
-    lire('casting_photos?select=id&application_id=eq.' + id + '&chemin=like.r2%3A*')
+    nbFichiersR2('candidatures/' + id + '/')
   ]);
-  if (!Array.isArray(dossiers) || !Array.isArray(photos)) return 'Vérification impossible pour le moment : réessayez dans un instant.';
+  if (!Array.isArray(dossiers) || deposes === null) return 'Vérification impossible pour le moment : réessayez dans un instant.';
   const d = dossiers[0];
   if (!d || d.status !== 'nouvelle' || Date.now() - new Date(d.created_at).getTime() > 2 * 3600 * 1000) return 'Cette candidature ne reçoit plus de photos.';
-  if (photos.length >= PHOTOS_MAX_CANDIDATURE) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_CANDIDATURE + ').';
+  if (deposes >= PHOTOS_MAX_CANDIDATURE) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_CANDIDATURE + ').';
   return null;
 }
 
@@ -141,6 +139,7 @@ async function photoCandidature(req, res, debut) {
       const type = Object.keys(TYPES_CANDIDATURE).find((t) => chemin.endsWith('.' + TYPES_CANDIDATURE[t]));
       const etat = await contenuR2(chemin, type);
       if (etat === 'faux') { res.status(422).json({ error: messageFichierFaux(type), refuse: true }); return; }
+      if (etat === 'absent') { res.status(404).json({ error: 'Photo introuvable : renvoyez-la.' }); return; }  // (relecture de D : rien de noté)
       // cours de talons : la page met la photo dans l'inscription (« r2:cours-talons/… », contrôlé par la base)
       if (dossier === 'cours-talons') { res.status(200).json({ ok: true, verifie: etat === 'ok' }); return; }
       const note = await fetch(SUPABASE_URL + '/rest/v1/casting_photos', {
