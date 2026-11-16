@@ -52,6 +52,38 @@ var DEBUT_SESSION = 'https://www.googleapis.com/upload/drive/v3/files?';
 var SUPABASE_URL = 'https://dfhghgmwmxiguhtxtsle.supabase.co';
 var SUPABASE_CLE_PUBLIQUE = 'sb_publishable_-k2vIvxdu1Ya-WzZWgj2Fg_8eyTmOmu';  // (clé publique courte : la longue s'abîmait au copier-coller, 15/11/2026)
 var NB_PHOTOS_RETROUVEES_MAX = 12;
+// (16/11/2026, audit L-7 = B-P6) : la clé CLE_ATTENDUE est visible dans le code public du site ; n'importe qui pourrait
+// donc remplir le Drive de l'agence. Deux freins : (1) un budget par heure pour TOUT le programme (assez large pour un
+// jour de casting : ~150 candidates × 6 photos de 2 Mo + vidéos) ; (2) seules les vraies images (JPEG, PNG, WEBP,
+// HEIC) sont rangées, d'après les premiers octets du fichier et non d'après ce que l'envoi prétend.
+var BUDGET_OCTETS_PAR_HEURE = 3 * 1024 * 1024 * 1024;   // 3 Go
+var BUDGET_FICHIERS_PAR_HEURE = 1500;
+
+// Réserve octets / fichiers dans le budget de l'heure en cours ; false si le budget est dépassé (rien n'est rangé).
+function reserverBudget(octets, fichiers) {
+  var cache = CacheService.getScriptCache();
+  var heure = 'budget_' + Math.floor(Date.now() / 3600000);
+  var verrou = LockService.getScriptLock();
+  if (!verrou.tryLock(5000)) return true;  // (verrou indisponible : on ne bloque pas une vraie candidate pour ça)
+  try {
+    var etat = JSON.parse(cache.get(heure) || '{"o":0,"f":0}');
+    if (etat.o + octets > BUDGET_OCTETS_PAR_HEURE || etat.f + fichiers > BUDGET_FICHIERS_PAR_HEURE) return false;
+    etat.o += octets; etat.f += fichiers;
+    cache.put(heure, JSON.stringify(etat), 3700);
+    return true;
+  } finally { verrou.releaseLock(); }
+}
+// Vraie image d'après ses premiers octets (JPEG, PNG, WEBP, HEIC/HEIF/AVIF), pas d'après l'étiquette « data:image/… ».
+function estVraieImage(octets) {
+  if (!octets || octets.length < 12) return false;
+  var b = function (i) { return octets[i] & 255; };
+  var texte = function (i, n) { var t = ''; for (var k = 0; k < n; k++) t += String.fromCharCode(b(i + k)); return t; };
+  if (b(0) === 0xFF && b(1) === 0xD8 && b(2) === 0xFF) return true;                 // JPEG
+  if (b(0) === 0x89 && texte(1, 3) === 'PNG') return true;                          // PNG
+  if (texte(0, 4) === 'RIFF' && texte(8, 4) === 'WEBP') return true;               // WEBP
+  if (texte(4, 4) === 'ftyp' && /^(heic|heix|hevc|mif1|msf1|avif)$/.test(texte(8, 4))) return true;  // HEIC (iPhone)
+  return false;
+}
 
 function reponse(objet) {
   return ContentService.createTextOutput(JSON.stringify(objet))
@@ -86,6 +118,7 @@ function doPost(e) {
       if (tailleVideo === 0 || tailleVideo > TAILLE_MAX_VIDEO_OCTETS) {
         return reponse({ ok: false, erreur: 'video_trop_lourde' });
       }
+      if (!reserverBudget(tailleVideo, 1)) return reponse({ ok: false, erreur: 'occupe' });
       var dossierVideo = dossierDeLaPersonne(dossierRacine, data);
       var extension = (typeVideo.split('/')[1] || 'mp4').replace('quicktime', 'mov');
       var blobVideo = Utilities.newBlob(Utilities.base64Decode(partieVideo), typeVideo, 'video-presentation.' + extension);
@@ -102,9 +135,11 @@ function doPost(e) {
 
     // ---------- 1) Envoi des photos (inchangé) ----------
     var photos = data.photos || [];
-    if (photos.length > NB_PHOTOS_MAX) {
+    if (!Array.isArray(photos) || photos.length > NB_PHOTOS_MAX) {
       return reponse({ ok: false, erreur: 'trop_de_photos' });
     }
+    var octetsAnnonces = photos.reduce(function (t, p) { return t + (typeof p === 'string' ? Math.floor(p.length * 0.75) : 0); }, 0);
+    if (!reserverBudget(octetsAnnonces, photos.length)) return reponse({ ok: false, erreur: 'occupe' });
 
     // Dossier de la personne : celui de ce même envoi s'il existe déjà (envoi recommencé après une réponse perdue),
     // sinon un nouveau, dans le sous-dossier de catégorie ("Inscription à l'agence", le nom du casting, "Cours de
@@ -132,8 +167,13 @@ function doPost(e) {
 
         var nomFichier = 'photo-' + (index + 1) + '.jpg';
         var dejaLa = dossierCandidat.getFilesByName(nomFichier);  // (envoi recommencé : déjà arrivée)
-        var fichier = dejaLa.hasNext() ? dejaLa.next()
-          : dossierCandidat.createFile(Utilities.newBlob(Utilities.base64Decode(partieBase64), 'image/jpeg', nomFichier));
+        var fichier;
+        if (dejaLa.hasNext()) fichier = dejaLa.next();
+        else {
+          var octetsPhoto = Utilities.base64Decode(partieBase64);
+          if (!estVraieImage(octetsPhoto)) return;  // (16/11/2026 : pas une vraie image → pas rangée dans le Drive)
+          fichier = dossierCandidat.createFile(Utilities.newBlob(octetsPhoto, 'image/jpeg', nomFichier));
+        }
         fichier.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
         liensPhotos.push(lienPhoto(fichier));
       } catch (erreurPhoto) {
@@ -191,6 +231,7 @@ function videoMorceau(dossierRacine, data) {
   if (!octets.length || octets.length > TAILLE_MAX_MORCEAU || !(total > 0 && total <= TAILLE_MAX_VIDEO_OCTETS) || !(debut >= 0) || debut + octets.length > total) {
     return reponse({ ok: false, erreur: 'morceau_invalide' });
   }
+  if (!reserverBudget(octets.length, debut === 0 ? 1 : 0)) return reponse({ ok: false, erreur: 'occupe' });
   var rep = UrlFetchApp.fetch(session, {
     method: 'put',
     contentType: 'application/octet-stream',
