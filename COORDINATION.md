@@ -105,10 +105,14 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
   avec sa cause, A-04, R-15, B-P12, R-13) ; essais de `audit/renfort-corrections` : R-03 et A-01 corrigés sur la
   version d'essai, syntaxe et CSP OK, batterie laissée à B. En attente : fin de la batterie de B, puis les accords
   pour la mise en ligne, que je ferai. Rien ne me bloque.
-- **A** : audit fait en lecture seule (code serveur, droits de la base, publication) ; rapport sur `audit/agent-a`.
-  Trouvé notamment A-01 (documents internes publiés, corrigé sur la version d'essai) et A-03 (rôle « site » trop
-  ouvert, confirmé en vrai par D = L-1, pas encore corrigé). Réponses de la propriétaire notées (validation des
-  paiements). En attente : choix commun de la solution pour L-1. Limite : ni navigateur, ni base, ni Administration.
+- **A** (mis à jour le 16/11 à 01 h 30) : **Fait** : audit en lecture seule (code serveur, droits de la base,
+  publication), rapport `docs/audit/rapport-agent-a.md` sur `audit/agent-a` ; trouvé A-01 (documents publiés,
+  corrigé par le renfort) et A-03 (rôle « site », confirmé par D = L-1, confié à B). **Chantier L-7 : FAIT**, commit
+  **919d602d** sur `audit/corr-a` : liste blanche des colonnes des 4 formulaires publics, anti-robots strict (une panne
+  ne bloque jamais un vrai visiteur), Drive limité aux vraies images avec budget horaire ; essais verts (anti-robots
+  15/15, inscription 82/82, cours de talons 269/269, photos Drive 23/23, reprise 7/7, contact/recruteur et
+  visiteur OK). **En cours** : j'attends la relecture du superviseur sur L-7 et mon chantier suivant (L-16 ?).
+  **Blocage** : aucun. Limite : ni navigateur sur le vrai site, ni base, ni Administration.
 - **B** : **Fait** : audit du site public (116 adresses, téléphone 4G lente et ordinateur, Lighthouse), sécurité en lecture seule, code ; rapport `docs/audit/rapport-agent-b.md` ; vérifications A-01, R-03, A-06, A-08, D-02 ; correctifs du renfort essayés sur la version d'essai Vercel (R-03 et A-01 corrigés). **En cours** : batterie complète sur `audit/renfort-corrections` (2d63fa2f) : 28 séries, 0 échec à 00 h 50 ; contrôle de la tâche de 8 h (B-V5) à 8 h 06. **Ensuite** : rapport commun (documents 5 et 6). **Blocage** : aucun (je n'ai pas d'accès humain à l'Administration : D s'en charge).
 - **D** :
 - **Renfort (superviseur)** : audit fait avec 3 sous-agents (parcours candidate sur Android en 4G lente, code et booking, sécurité / vitesse / référencement) + journal des vraies visites et base en lecture : 20 constats R- ; 4 corrections écrites sur `audit/renfort-corrections` (A-01, R-03, R-15, A-04), vérifiées par B et C. **Blocage** : le filtre de confidentialité m'empêche de lancer toute commande qui lit les fichiers du site (adresse e-mail de l'agence) : je ne peux ni tester ni écrire la note de `README-TECHNIQUE.md` par commande ; je relis et je supervise. **Ensuite** : validation avant la fusion par C, puis rapport final.
