@@ -359,6 +359,9 @@ ajoutés. D continue : message de pause D-05, puis part de B dans L-16.
   serveur), écrire ici le tableau réel constaté, et corriger tout écart (SQL préparé + base d'essai, rien de collé
   sans accord écrit). En particulier : « encaissements » ne doit pas voir la comptabilité ni le site ; « comptabilité »
   ne doit pas valider de paiement ni voir le site.
+- **A, 10 h 08 : repris.** Pris en compte : a945d451 (contacts cachés) n'entre pas dans `audit/corrections`.
+  L-9 : 1re correction faite (ea364a01, cours de talons sur téléphone : CLS 0,37 → 0). **Je commence la vérification
+  des rôles** (ordre de 09 h 25), puis je finis L-9.
 
 - 16/11/2026, 09 h 20 : **A, B et C ne pourront reprendre qu'à partir de 10 h 00 GMT** (sessions en pause). D seul
   d'ici là. **Ordres pour 10 h** : A termine L-9 (lenteur) ; B reprend et prépare le rapport commun (documents 5 et 6)
