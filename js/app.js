@@ -2967,10 +2967,12 @@ async function reduireEnJpeg(fichier, coteMax, qualite) {
 // Photo d'une page du site (ex. photo du fondateur) : JPEG / PNG / WebP de plus de 1,5 Mo
 // réduite (2400 px, JPEG) ; sinon gardée telle quelle. Partagé le 22/10/2026 (ancien tableau
 // de bord et nouvelle Administration).
-async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
+// seuil (facultatif) : taille en dessous de laquelle la photo est gardée telle quelle (16/11/2026, audit L-9 :
+// photos des actualités et événements, 1600 px dès 400 Ko, au lieu de photos d'origine de plusieurs Mo).
+async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88, seuil = 1.5 * 1024 * 1024) {
   const propre = await sansDonneesCachees(fichier, coteMax, qualite);  // (lieu GPS et téléphone retirés, W6)
   if (propre !== fichier) return propre;  // (déjà redessinée : pas une seconde fois)
-  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < 1.5 * 1024 * 1024) return fichier;
+  if (!/^image\/(jpeg|png|webp)$/.test(fichier.type) || fichier.size < seuil) return fichier;
   return reduireEnJpeg(fichier, coteMax, qualite);
 }
 

@@ -59,4 +59,19 @@ select set_config('request.jwt.claims', '', false);
 update cours_talons set notes = 'serveur' where id = '00000000-0000-0000-0000-0000000c1102';
 reset role;
 select essai((select notes = 'serveur' from cours_talons where id = '00000000-0000-0000-0000-0000000c1102'), 'serveur (clé secrète) : écritures non bloquées');
+-- (vérification des rôles, 16/11) anciennes inscriptions : « payée » réservé aux encaissements et au principal
+reset role;
+insert into admins (user_id) values ('00000000-0000-0000-0000-0000000000a2') on conflict do nothing;  -- (comme la vraie base)
+insert into inscriptions_mannequins (id, full_name, statut) values ('00000000-0000-0000-0000-0000000e1101', 'Inscrite L1', 'en attente de paiement');
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a2');
+select essai_refuse($$update inscriptions_mannequins set statut = 'payée' where id = '00000000-0000-0000-0000-0000000e1101'$$, 'site : marquer une inscription « payée » refusé');
+select essai_refuse($$update inscriptions_mannequins set reference_paiement = 'X' where id = '00000000-0000-0000-0000-0000000e1101'$$, 'site : écrire une référence de paiement refusé');
+update inscriptions_mannequins set statut = 'dossier en vérification' where id = '00000000-0000-0000-0000-0000000e1101';
+select essai((select statut = 'dossier en vérification' from inscriptions_mannequins where id = '00000000-0000-0000-0000-0000000e1101'), 'site : suivre le dossier (hors paiement) reste possible');
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+update inscriptions_mannequins set statut = 'payée' where id = '00000000-0000-0000-0000-0000000e1101';
+select essai((select statut = 'payée' from inscriptions_mannequins where id = '00000000-0000-0000-0000-0000000e1101'), 'principal : valider le paiement d''une inscription');
+reset role;
+delete from admins where user_id = '00000000-0000-0000-0000-0000000000a2';
 select '✅ L-1 partie 1 : tous les essais passent';
