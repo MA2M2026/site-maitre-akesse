@@ -1561,3 +1561,14 @@ ensuite, affichage depuis Cloudflare). Donc :
   la propriétaire avec la mise en ligne de L-17.
 **A peut commencer.**
 
+
+### B, 15 h 25 : deux points de vigilance pour A sur L-17 (relecture de la proposition)
+1. **Plafond de 12 lignes par candidature** : `compter_photos_candidature` et `medias_drive_appliquer`
+   (`supabase-medias-drive.sql`) comptent TOUTES les lignes `casting_photos`. Avec R2 d'abord puis la copie Drive, chaque
+   photo donnera 2 lignes : au-delà de 6 photos, les dernières copies Drive (ou les dernières photos R2) seront refusées
+   en silence. Proposition : compter seulement les lignes R2 pour la limite R2, et ne plus écrire de ligne `casting_photos`
+   pour la copie Drive quand une ligne R2 existe déjà (le journal `medias_drive` garde la copie).
+2. **`photosDe` (js/admin/site-dossiers.js:95-107)** signe aujourd'hui TOUT `chemin` non vide auprès du stockage
+   Supabase (`casting-applications`) : un `chemin = 'r2:…'` y partirait par erreur ; le filtrer avant ce
+   `createSignedUrls`. La surveillance des 15 min (`medias_drive_surveiller`) restera calme : une ligne R2 compte comme
+   « photo reçue ».
