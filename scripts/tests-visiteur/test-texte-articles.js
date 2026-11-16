@@ -6,7 +6,8 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const { tables, rpc } = require('./pages-publiques');
 const PORT = String(9000 + Math.floor(Math.random() * 90));
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
-const TEXTE = '<p>Casting SILA à Abidjan.</p><p><br></p><p><br></p><p><br></p><p>Inscription sur https://wa.me/qr/ABC123 ou au 07 11 25 03 20.</p><p><br></p><p>Merci !</p>';
+// (16/11/2026, audit C-P8) un « Titre 1 » tapé dans l'article devient un titre de niveau 2 : un seul h1 par page.
+const TEXTE = '<h1>Grand titre tapé dans l’article</h1><p>Casting SILA à Abidjan.</p><p><br></p><p><br></p><p><br></p><p>Inscription sur https://wa.me/qr/ABC123 ou au 07 11 25 03 20.</p><p><br></p><p>Merci !</p>';
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 800));
@@ -24,10 +25,12 @@ const TEXTE = '<p>Casting SILA à Abidjan.</p><p><br></p><p><br></p><p><br></p><
     const r = await p.evaluate(() => {
       const t = document.getElementById('news-modal-texte');
       return { paragraphes: t.querySelectorAll('p').length, vides: [...t.querySelectorAll('p')].filter((x) => !x.textContent.trim()).length,
-        liens: [...t.querySelectorAll('a')].map((a) => a.getAttribute('href')), police: getComputedStyle(t).fontFamily };
+        liens: [...t.querySelectorAll('a')].map((a) => a.getAttribute('href')), police: getComputedStyle(t).fontFamily,
+        h1: document.querySelectorAll('h1').length, h2texte: [...t.querySelectorAll('h2')].map((h) => h.textContent).join() };
     });
     ok(r.paragraphes === 3 && r.vides === 0, page + ' : plus de lignes vides entre les paragraphes (' + r.paragraphes + ' paragraphes)');
     ok(r.liens.includes('https://wa.me/qr/ABC123') && r.liens.includes('tel:0711250320'), page + ' : lien et numéro cliquables ' + JSON.stringify(r.liens));
+    ok(r.h1 === 1 && /Grand titre/.test(r.h2texte), page + ' : un seul titre principal, le « Titre 1 » de l’article devient un titre de niveau 2 (' + r.h1 + ' h1)');
     ok(/Work Sans/.test(r.police), page + ' : police de lecture (' + r.police.slice(0, 40) + ')');
     ok(!errs.length, page + ' : aucune erreur ' + errs.join(' | '));
     await p.close();
