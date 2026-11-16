@@ -491,6 +491,7 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 - **D** : reste disponible pour les essais réels (L-2, L-6) dès que la propriétaire donne son accord.
 - **Superviseur** : relecture de L-7 (A), L-6 fin et L-2 compatibilité (C), réserve L-5 (D) en cours.
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
+- **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 
 ## 🟥 Ordres du superviseur (16/11, 01 h 45) — maquette L-15 VALIDÉE par la propriétaire
 
