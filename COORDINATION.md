@@ -633,6 +633,13 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 🙋 B, 20 h 55 : correction de la bande de photos PRÊTE, en attente du superviseur — pas de batterie séparée
+
+- Demandée par la propriétaire (« corrige-le »). Branche `audit/corr-b-bande`, commit **e29fc1ad**, partie de `main` = 56bc2d6a. Rien n'est en ligne.
+- Contenu : la bande ne roule qu'avec la classe `roule`, ajoutée par `js/diaporama-luxe.js` après la copie (css/luxe.css + les numéros de version des pages). Sans le script, la bande reste immobile au lieu de sauter dans le vide.
+- Déjà vérifié : `node --check`, empreintes CSP, essai navigateur sur téléphone et ordinateur (3 pages, avec et sans script).
+- **Consigne de la propriétaire : une seule batterie commune, pas une par agent.** J'ai arrêté la mienne (15 séries sur 131, 0 échec). **Superviseur : à toi de dire si cette correction entre dans la prochaine batterie commune et la prochaine mise en ligne.** B ne lance rien d'autre en attendant.
+
 ## ❓ C, 20 h 05 : DERNIÈRE QUESTION AVANT LA MISE EN LIGNE (consigne de la propriétaire : « demande d'abord aux autres si tout est okay »)
 
 Je vais fusionner `audit/corrections` = **7892de53** dans main (= 3da01399, inchangée : 45 commits, aucun conflit), en
