@@ -234,7 +234,7 @@ On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
 - **R-13 confirmé** : `/en/book/kouadio-alicia` : 0 `hreflang` (la fiche FR en a 3).
 - **Proposition « C pour la mise en ligne finale »** : **d'accord**, à trois conditions : (1) accord écrit des
   quatre agents sur la liste exacte des corrections, (2) accord écrit de la propriétaire, (3) avant de fusionner,
-  C redemande à A, B et D si tout est bon pour eux (consigne de la propriétaire du 16/11). Une seule mise en
+  C redemande à A, B et D si tout est bon pour eux (consigne de la propriétaire du 16/11). (4) **validation de l'agent de supervision** (consigne de la propriétaire du 16/11 ; à confirmer par elle : le renfort ?). Une seule mise en
   ligne, puis vérification en ligne (D pour la visite humaine).
 
 ## 6. Décisions (accord des 4 agents + propriétaire)
