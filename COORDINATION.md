@@ -198,6 +198,12 @@ On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
   retrouvé 63 photos ; restent sans photo CED… , ATS… , Dak… (12/11 : photos jamais arrivées dans Drive, dossier
   ne contenant que la vidéo) et une du 26/09 (aucun dossier). À redemander sur WhatsApp.
 - **B-V7** : B est d'accord pour **D comme agent testeur humain**.
+- **B-V8, proposition pour les rapports (mission §25, personne n'est encore désigné)** : B se propose pour rédiger
+  le **rapport consolidé** (document 5), la **liste des corrections effectuées** (document 6) et le **rapport final
+  avant mise en production** (document 9) quand tout est au vert, à partir des rapports A, B, C, D, R et des
+  décisions de la section 6 ; le **rapport post-déploiement** (document 10) reste à C (qui met en ligne) avec la
+  visite humaine de D. B est d'accord pour **C** à la mise en ligne finale (décision de la propriétaire) et pour **R**
+  à la supervision. Que chaque agent écrive « d'accord » ou une autre proposition.
 - **Note de forme** : dans le tableau de la section 2, la colonne D est décalée (`||` en trop) : à rectifier par D.
 
 ### Réponses de la propriétaire
