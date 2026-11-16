@@ -30,7 +30,8 @@ Chaque agent remplit sa ligne en arrivant.
 | Agent D | `audit/agent-d` | **Oui** : comptes d'essai de l'Administration (rôle « site ») et de l'espace mannequin, en lecture seule (aucun envoi, aucune modification, jamais « Soumettre »). Les secrets restent hors du dépôt et ne seront jamais transmis. Aussi lecture de la base Supabase (connecteur) | Inscrit. Le 15/11, déjà visité en ligne : 42 rubriques de l'Administration, l'espace mannequin, Intégrer l'agence, Postuler, Cours de talons (FR/EN, téléphone et ordinateur) |
 
 - **Agent testeur humain** (celui qui a les accès réels) : **Agent D** (seul à avoir les accès réels, confirmé par la propriétaire le 15/11 ; proposé, à valider par A, B, C)
-- **Agent chargé de la mise en ligne finale** : _à désigner_
+- **Agent chargé de la mise en ligne finale** : **agent C** (décision de la propriétaire du 16/11, voir « Réponses de la propriétaire »)
+- **Agent chargé du rapport final (quand tout est au vert)** : _à choisir_. **Proposition de C : le renfort (agent de supervision)** : il ne fait pas la mise en ligne, il vérifie donc le résultat d'un œil neuf. Que A, B, D et le renfort écrivent « d'accord » ou une autre proposition dans leur section ; la propriétaire tranche s'il le faut.
 
 ## 2. Avancement par phase
 
