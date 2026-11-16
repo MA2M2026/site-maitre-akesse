@@ -351,6 +351,14 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
   **Précision de la propriétaire (09 h 10)** : septembre, octobre et novembre COMPTENT dans la formation ; seuls
   **décembre, janvier et février ne comptent pas** (congés). C'est déjà ce que fait le calcul (`mes_mensualites`,
   selon C) : ne PAS toucher au calcul, seulement au message affiché pendant la pause.
+  **Précision de la propriétaire (09 h 15) — IMPORTANT** : l'agence N'EST PAS fermée en ce moment. Les cours
+  continuent en novembre et la présence des mannequins est cochée. Le message « agence fermée » de l'application est
+  donc FAUX aujourd'hui. Règle : l'agence n'est en pause QUE en décembre, janvier et février ; de septembre à
+  novembre (et à partir de mars), elle est ouverte, les cours ont lieu et les mois comptent. **Ordre à D** : trouver
+  pourquoi l'application dit « fermée » (C : `mes_mensualites` considère l'agence fermée tant que
+  `courant < reprise_date()`) et faire qu'elle ne dise « en pause » qu'en décembre, janvier et février, avec un
+  décompte juste. Si la correction touche la base (SQL), préparer + base d'essai, rien de collé sans l'accord écrit
+  de la propriétaire ; essai réel avec le compte mannequin d'essai ensuite.
 
 - 16/11/2026, 08 h 53 : **les 2 clés sont posées dans Vercel** (`EMAILJS_PRIVATE_KEY` et `CRON_SECRET`, type Secret,
   Production ; vérifié sur sa capture). Pas de « Redeploy » : elles seront prises à la mise en ligne unique de
