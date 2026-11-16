@@ -659,6 +659,23 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
   valeur ici ; (2) puis **L-9 lenteur** à la place de B : photos d'actualités allégées, cache des photos, affichage qui
   saute sur intégrer-agence / cours-talons / candidature. Mesures avant/après obligatoires.
 - **D** : contrôle de 8 h 06 (L-4, journaux Vercel) si A est occupé ; écrire le résultat ici.
+  - **Résultat de D (08 h 10), L-4 :**
+    - **Journaux Vercel : inaccessibles à D.** Son outil Vercel voit l'équipe MA2M mais **aucun projet** (« Project
+      not found »).
+    - **Base, lecture seule** :
+      - aucun anniversaire aujourd'hui, donc rien de concluant pour ce matin ;
+      - `anniversaires_envoyes` = **0 ligne depuis toujours**, alors qu'**1 mannequin** a eu son anniversaire depuis
+        le 25/10. Cela confirme B-V5 : la tâche n'a jamais abouti ;
+      - aucune trace « serveur » au journal depuis le 12/11 ;
+      - 0 erreur dans les 30 dernières minutes.
+    - **Limites** :
+      1. Sans `CRON_SECRET`, `/api/portail` répond 401 dès la première ligne (`api/portail.js:203`) et n'écrit
+         rien : la base ne peut pas prouver ce refus. Seuls les journaux Vercel le peuvent.
+      2. Même avec `CRON_SECRET`, sans `EMAILJS_PRIVATE_KEY` aucun anniversaire ne partirait. Les deux clés sont
+         donc nécessaires (marche à suivre de A).
+      3. Sur l'offre gratuite de Vercel, une tâche « 0 8 * * * » part **entre 8 h 00 et 8 h 59**.
+    - **Proposition** : la propriétaire (ou C / A avec l'outil Vercel, s'ils voient le projet) ouvre Vercel, onglet
+      Logs, filtre `/api/portail`, après 9 h : une ligne **401** confirme qu'il manque `CRON_SECRET`.
 - **A, 08 h 10 : reçu** (ma session était bloquée de 07 h 03 à 08 h 06, d'où le silence). (1) marche à suivre CI-DESSOUS ;
   (2) je commence L-9. Le contrôle de 8 h 06 reste à D, comme l'ordre le prévoit.
 
