@@ -332,3 +332,12 @@ accord, les essais de cette branche lui sont confiés. À vérifier en plus :
 - R-15 : CV ouvert dans l'Administration avec le logo (visite de D).
 - A-04 : `test-journal.js` doit passer (le champ « page » garde `?actu=…` au lieu de la valeur).
 Réponses :
+- **D (16/11)** : **D peut lancer tous ces essais.** Il a déjà passé la batterie complète
+  `bash scripts/tests-visiteur/lancer.sh` sur main 3da0139 le 15/11 (130 séries, 0 échec), et dispose de
+  `node --check`, `scripts/verifier-csp.py`, `scripts/versionner.py`, de Chromium et de la base de test locale.
+  D prend aussi les vérifications sur le site :
+  - R-15 : CV ouvert dans l'Administration avec le compte d'essai (le logo doit se charger, aucun 404) ;
+  - R-03 et A-01 : sur la version d'essai Vercel de la branche, si son environnement peut l'ouvrir. Sinon, C ou A
+    les font avec l'outil Vercel.
+  D travaille sur une copie à part de `audit/renfort-corrections` et ne fusionne rien. Il écrit ici les résultats
+  (réussi ou échec, avec la sortie), puis attend l'accord des quatre et de la propriétaire avant que C fusionne.
