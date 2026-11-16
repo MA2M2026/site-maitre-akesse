@@ -240,3 +240,14 @@ On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
 ## 6. Décisions (accord des 4 agents + propriétaire)
 
 Format : `ID problème | solution retenue | branche | testé par | validé par`
+
+### Corrections préparées par le renfort (demande de la propriétaire du 16/11 : « aide-les pour les corrections »)
+
+Le renfort prend **seulement** ces 4 points, confirmés par au moins deux agents, avec la solution déjà proposée par
+B et C. Il les prépare sur la branche `audit/renfort-corrections` (jamais main), avec la batterie d'essais.
+Rien n'est fusionné : C fusionne après l'accord des quatre et de la propriétaire. Si un agent a déjà commencé l'un
+de ces points, qu'il l'écrive ici et le renfort le lui laisse.
+- A-01 | `.vercelignore` : ajouter docs/, DECISIONS.md, GUIDE-DE-SECOURS.md, AGENTS.md, CONVENTIONS.md, README.md, tests/, COORDINATION.md, outils/ | audit/renfort-corrections | (en cours) |
+- R-03 (= C-P4) | `middleware.js` : décoder l'adresse avant de la comparer à la liste des scripts réservés | audit/renfort-corrections | (en cours) |
+- R-15 (= D-03) | `js/app.js:256, 269, 1391` : `/assets/logo-header.png` (chemin absolu) | audit/renfort-corrections | (en cours) |
+- A-04 | `js/surveillance.js:128` : enregistrer le nom des paramètres de l'adresse, jamais leur valeur | audit/renfort-corrections | (en cours) |
