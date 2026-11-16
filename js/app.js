@@ -2995,8 +2995,10 @@ async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88, seuil =
 // de 13 Mo partait telle quelle) : la transparence ne sert à rien sur une photo de candidature.
 const PHOTO_LOURDE_OCTETS = 1.5 * 1024 * 1024;
 // (type inconnu : certains Android donnent une photo de la galerie sans type ni extension, « 1000012345 » : elle n'est
-// pas refusée ici, c'est la vérification de l'affichage qui tranche)
-const estFichierImage = (f) => !f.type || /^image\//.test(f.type);
+// pas refusée ici, c'est la vérification de l'affichage qui tranche). (16/11/2026, relecture du superviseur) une photo
+// dont le NOM est celui d'une image est acceptée quel que soit son type : certains iPhone envoient une HEIC en
+// « application/octet-stream » ; convertirSiHeic (js/conversion-heic.js) la reconnaît par son nom et la convertit.
+const estFichierImage = (f) => !f.type || /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name || '');
 function verifierImageLisible(fichier) {
   return new Promise((ok, ko) => {
     const adresse = URL.createObjectURL(fichier), img = new Image();

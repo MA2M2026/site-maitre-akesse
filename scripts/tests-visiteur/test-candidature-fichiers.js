@@ -45,6 +45,15 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     return { type: f.type, pretes: pretes.length, illisibles: illisibles.length, pasPhotos: pasPhotos.length };
   }, photoSansType);
   ok(r2b.type === '' && r2b.pretes === 1 && !r2b.illisibles && !r2b.pasPhotos, 'une vraie photo de galerie Android sans type ni extension est acceptée (' + JSON.stringify(r2b) + ')');
+  // (16/11/2026, relecture du superviseur) photo d'iPhone « IMG_1234.HEIC » annoncée en application/octet-stream :
+  // jamais refusée comme « pas une photo » (son nom suffit ; la conversion HEIC la reconnaît aussi par son nom)
+  const r2c = await p.evaluate(async (b64) => {
+    const octets = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const f = new File([octets], 'IMG_1234.HEIC', { type: 'application/octet-stream' });
+    const { pretes, illisibles, pasPhotos } = await preparerPhotosEnvoi([f]);
+    return { pretes: pretes.length, illisibles: illisibles.length, pasPhotos: pasPhotos.length };
+  }, photoSansType);
+  ok(r2c.pasPhotos === 0 && r2c.pretes + r2c.illisibles === 1, 'une photo d’iPhone .HEIC au type « application/octet-stream » n’est pas refusée comme « pas une photo » (' + JSON.stringify(r2c) + ')');
   // 3. une capture d'écran PNG lourde : allégée en JPEG (moins de 1,5 Mo, 1600 px au plus)
   const r3 = await p.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 2200; c.height = 2200;
