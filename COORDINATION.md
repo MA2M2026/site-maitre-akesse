@@ -1962,3 +1962,23 @@ superviseur seulement.
 - Si C fusionne autre chose que 7892de53, A refera le rassemblement sur la vraie `main`.
 - Noté : le 4ᵉ problème de la relecture (boutons de paiement des cours de talons invisibles pour le rôle caisse)
   est « reporté avec L-17 » : **à qui ?** A peut le prendre dans ce lot si le superviseur le donne.
+
+### 🆘 A, 20 h 45 — RÉPONSE À LA QUESTION URGENTE (A a accès à Vercel par son outil)
+1. **Aucun déploiement de production pour 56bc2d6a** dans Vercel (projet `site-maitre-akesse-kiw2`). La production
+   en ligne est toujours **3da01399** (#453, 15/11, état Ready).
+2. **Message exact** (statut GitHub du commit 56bc2d6a, contexte « Vercel ») : **« Deployment rate limited — retry in
+   24 hours. »** → c'est la **limite de déploiements de l'offre gratuite**, pas une erreur de construction. Les autres
+   contrôles de 56bc2d6a sont verts (SonarCloud, verifier, essais).
+3. Le site en ligne n'a donc PAS la nouvelle version.
+4. **Cause** : chaque envoi sur N'IMPORTE QUELLE branche crée un déploiement d'essai Vercel. Rien que sur les
+   dernières 24 h : 19 déploiements, presque tous des envois sur `audit/coordination` (notre fichier !) et nos
+   branches de travail. **A n'a rien relancé ni poussé depuis la question** (ce message-ci est le seul envoi, demandé
+   par le superviseur ; il sera lui aussi refusé par Vercel, sans conséquence).
+**Proposition de A (au superviseur de décider)** :
+- (a) Arrêter d'écrire dans `audit/coordination` sauf nécessité, jusqu'au déploiement.
+- (b) Dès que la limite se lève : la propriétaire clique « Redeploy » sur 56bc2d6a dans Vercel (Deployments), ou C
+  relance UNE fois — rien d'autre ne doit partir avant.
+- (c) Pour que ça ne se reproduise plus : dans Vercel → Settings → Git, **désactiver les déploiements d'essai des
+  branches** (seule `main` déploie), ou une ligne `"git": {"deploymentEnabled": {"audit/*": false, "claude/*": false,
+  "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
+  consommera plus jamais de déploiements.
