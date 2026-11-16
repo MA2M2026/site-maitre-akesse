@@ -8,7 +8,7 @@ sur la branche `audit/coordination`.
 > `audit/corr-a` (liste blanche des colonnes, anti-robots strict sans bloquer en cas de panne, Drive limité). Essais :
 > tous verts. Détail : section « Point de A sur L-7 » (sous le tableau des ordres). **À relire et accepter.**
 > A relit ce fichier toutes les 15 minutes (reprise de secours à 5 h GMT) et attend le chantier suivant (L-16 ?).
-> **05 h 05 : A a repris (session bloquée de 01 h 37 à 05 h). L-1 est maintenant à A (ordre de 01 h 32) : en cours.**
+> **05 h 30 : L-7 condition remplie (ace7dcff) ; L-1 partie 1 faite (8a15c578) ; L-1 partie 2 : question pour la propriétaire. Détail : « Point de A (16/11, 05 h 30) ».**
 
 ## Règles de base
 
@@ -105,14 +105,11 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
   avec sa cause, A-04, R-15, B-P12, R-13) ; essais de `audit/renfort-corrections` : R-03 et A-01 corrigés sur la
   version d'essai, syntaxe et CSP OK, batterie laissée à B. En attente : fin de la batterie de B, puis les accords
   pour la mise en ligne, que je ferai. Rien ne me bloque.
-- **A** (mis à jour le 16/11 à 01 h 30) : **Fait** : audit en lecture seule (code serveur, droits de la base,
-  publication), rapport `docs/audit/rapport-agent-a.md` sur `audit/agent-a` ; trouvé A-01 (documents publiés,
-  corrigé par le renfort) et A-03 (rôle « site », confirmé par D = L-1, confié à B). **Chantier L-7 : FAIT**, commit
-  **919d602d** sur `audit/corr-a` : liste blanche des colonnes des 4 formulaires publics, anti-robots strict (une panne
-  ne bloque jamais un vrai visiteur), Drive limité aux vraies images avec budget horaire ; essais verts (anti-robots
-  15/15, inscription 82/82, cours de talons 269/269, photos Drive 23/23, reprise 7/7, contact/recruteur et
-  visiteur OK). **En cours** : j'attends la relecture du superviseur sur L-7 et mon chantier suivant (L-16 ?).
-  **Blocage** : aucun. Limite : ni navigateur sur le vrai site, ni base, ni Administration.
+- **A** (mis à jour le 16/11 à 05 h 30) : **Fait** : audit + rapport ; L-7 (919d602d) + condition du superviseur
+  (ace7dcff : 10 formulaires FR/EN, 0 champ perdu, « direct » refusé) ; **L-1 partie 1** (8a15c578 : l'« Administrateur
+  du site » ne valide plus aucun paiement et ne supprime plus de mannequin). **En attente** : réponse de la propriétaire
+  sur les contacts (L-1 partie 2) ; relecture du superviseur. **Ensuite** : L-4 à 8 h 06 si B n'est pas revenu.
+  **Blocage** : aucun.
 - **B** : **Fait** : audit du site public (116 adresses, téléphone 4G lente et ordinateur, Lighthouse), sécurité en lecture seule, code ; rapport `docs/audit/rapport-agent-b.md` ; vérifications A-01, R-03, A-06, A-08, D-02 ; correctifs du renfort essayés sur la version d'essai Vercel (R-03 et A-01 corrigés). **En cours** : batterie complète sur `audit/renfort-corrections` (2d63fa2f) : 28 séries, 0 échec à 00 h 50 ; contrôle de la tâche de 8 h (B-V5) à 8 h 06. **Ensuite** : rapport commun (documents 5 et 6). **Blocage** : aucun (je n'ai pas d'accès humain à l'Administration : D s'en charge).
 - **D** :
 - **Renfort (superviseur)** : audit fait avec 3 sous-agents (parcours candidate sur Android en 4G lente, code et booking, sécurité / vitesse / référencement) + journal des vraies visites et base en lecture : 20 constats R- ; 4 corrections écrites sur `audit/renfort-corrections` (A-01, R-03, R-15, A-04), vérifiées par B et C. **Blocage** : le filtre de confidentialité m'empêche de lancer toute commande qui lit les fichiers du site (adresse e-mail de l'agence) : je ne peux ni tester ni écrire la note de `README-TECHNIQUE.md` par commande ; je relis et je supervise. **Ensuite** : validation avant la fusion par C, puis rapport final.
@@ -434,8 +431,8 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 |---|---|---|---|
 | L-3, L-8, L-11 | documents internes cachés, scripts réservés protégés, journal sans jetons | renfort | ✅ fait, vérifié par B et C (audit/renfort-corrections) |
 | L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
-| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | à faire |
-| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | **A : fait, commit 919d602d sur `audit/corr-a`** (part de `audit/renfort-corrections`) — à relire par le superviseur. Détail dans « Point de A sur L-7 » ci-dessous |
+| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | **A : partie 1 FAITE, commit 8a15c578** (argent + suppression) ; **partie 2 (contacts) : question à la propriétaire**, voir « Point de A sur L-1 » |
+| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | **A : fait (919d602d) + condition du superviseur remplie (ace7dcff)** |
 | L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | ✅ fait par C, commit 5170d754 (`audit/corr-c`) : `supabase-publication-protegee.sql` (gardien qui fige les réglages de l'agence + minorité sur l'ancienne date), 6 essais en base locale, à coller avec l'accord écrit de la propriétaire |
 | L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | ✅ fait par C : efe5cb65 (invitation) + **83220054 (décision de la propriétaire)** : compte créé NON confirmé, lien de confirmation envoyé par l'e-mail du serveur (EmailJS) ; demande visible et acceptable seulement adresse confirmée (`supabase-demandes-confirmees.sql`, à coller) ; connexion avant confirmation : message clair. Essais : base locale 5/5, `test-demandes-acces.js` OK, 5 tests de connexion OK. **Dépend de L-4** (clé EmailJS sur Vercel). **Essai réel par D avant la mise en ligne**, avec une adresse de test et l'accord de la propriétaire |
 | L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **D** (si son filtre le permet, sinon C) | ✅ fait par C (D bloqué par son filtre), commit c33413df : règle stricte sur accord-parent, confirmer, places, programme-talons, recu, 404 ; verifier-csp OK, 0 violation à l'ouverture, 5 tests visiteurs OK |
@@ -457,6 +454,43 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 **C (01 h 35), suite pour B (L-1)** : fait, sans attendre : le gardien de L-2 reconnaît maintenant l'agence par
 `admins` **ou** `portail_peut('site')` (commit 7 de `audit/corr-c`, essais 6/6). L-1 peut donc retirer le rôle
 « site » de `admins` sans casser la publication au Book ; B n'a rien à me renvoyer.
+
+**Point de A (16/11, 05 h 30) pour le superviseur**
+
+*L-7, condition remplie (commit ace7dcff, `audit/corr-a`)* :
+- Nouvel essai `test-liste-blanche-formulaires.js` : il remplit pour de vrai les formulaires dans le navigateur (base
+  simulée) et compare chaque champ envoyé à la liste du serveur : intégrer l'agence, casting, contact, recruteur,
+  cours de talons, **FR et EN = 10 envois, 0 champ perdu** (25, 25, 25, 25, 7, 7, 10, 10, 26, 27 champs).
+- En plus, le faux serveur des essais fait **échouer** tout envoi qui perdrait un champ : toute la batterie le
+  surveille désormais, pas seulement cet essai. Ajouté à `lancer.sh`.
+- `type_candidature = 'direct'` venant d'un visiteur : **refusé** (400), seuls « agence » et « projet » passent (B-V4).
+
+*L-1, partie 1 FAITE (commit 8a15c578, `audit/corr-a`)* — ce qui est sûr et décidé par la propriétaire :
+- `supabase-l1-role-site.sql` : `cours_talons_valider` et `cours_talons_mois_payer` passent de `portail_peut('site')` à
+  `portail_peut('paiements')` (encaissements + principal). Le SQL reprend le corps **tel qu'il est dans la vraie base**
+  (`pg_get_functiondef`) et ne change que la ligne du contrôle ; s'il trouve autre chose que prévu, il s'arrête sans
+  rien changer. Plus un garde-fou : l'équipe du site ne peut pas non plus écrire à la main un paiement (validation,
+  recette, mois payés, montant déjà payé). Elle garde le suivi : notes, date, terminé, annulé, rouvert.
+- Écran : les boutons « Paiement reçu », « Payé en espèces », « Mois payé » ne sont montrés qu'aux encaissements et au
+  principal ; à la place, une phrase dit qui valide.
+- `api/supprimer-mannequin.js` : suppression définitive = **administrateur principal seulement** ; bouton caché aux
+  autres. (Un ancien compte admin sans fiche d'équipe garde l'accès, comme avant ; base illisible : refus.)
+- Essais : base d'essai locale 15/15 (refus pour « site », oui pour encaissements et principal, suivi possible, serveur
+  non gêné) + toute la base d'essai verte ; `test-admin-cours-talons` 134/134 (dont 10 nouveaux, rôle « site »,
+  téléphone et ordinateur) ; `test-admin-code-serveur` (4 nouveaux) ; `test-nouvelle-admin-mannequins` 119/119.
+- **Choix technique à valider** : je ne retire PAS « site » de la table `admins`. Les pages du site (actualités, Book,
+  partenaires, textes…) s'écrivent encore par `admins` : le retirer casserait le travail normal de l'équipe du site.
+  Je ferme donc les points sensibles un par un. Collage du SQL : accord écrit de la propriétaire, puis essai réel par D.
+
+*L-1, partie 2 (contacts privés) : QUESTION POUR LA PROPRIÉTAIRE* (à lui transmettre, je ne lui écris pas) :
+> Aujourd'hui, l'« Administrateur du site » voit, dans les candidatures, le téléphone et l'e-mail des candidates et de
+> leurs parents, et c'est lui qui peut leur écrire sur WhatsApp depuis l'Administration (castings, convocations).
+> Si on cache ces contacts, il ne pourra plus les contacter : ce serait à vous ou aux encaissements de le faire.
+> **Que voulez-vous ?** (1) il garde les contacts des candidates et des parents, pour pouvoir les convoquer ;
+> (2) il ne voit plus aucun contact : vous seule (ou la personne que vous désignez) contactez les candidates.
+Sans réponse, je ne touche pas à cette partie. Si (2) : contacts retirés des tables pour tout le monde côté
+écran, lus seulement par une fonction réservée (`contacts_prives`, qui existe déjà dans `portail_moi`), écrans des
+candidatures, convocations et cours de talons adaptés, essais réels par D.
 
 **Point de A sur L-7 (16/11, 01 h 25) — commit 919d602d, branche `audit/corr-a`**
 - **A-08, liste blanche** (`api/portail.js`, `COLONNES_FORMULAIRES`) : seules les colonnes envoyées par les pages sont
