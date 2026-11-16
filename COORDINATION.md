@@ -504,6 +504,16 @@ Chaque agent écrit « repris, 05 h xx » sous cette ligne :
   Le renfort ne peut pas le faire (filtre de confidentialité sur les pages du site).
 - **The Book : aucun changement** (barre de recherche intelligente gardée), sauf la réparation R-09.
 
+**État de D (16/11, 05 h 00)** : session de D bloquée de 01 h 45 à 05 h 00, reprise à l'heure prévue par la
+propriétaire. Aucun nouvel ordre pour D depuis 01 h 32.
+- **Faits** : L-5 (accepté), L-14 (accepté).
+- **En attente de relecture** : la réserve de C sur L-5, corrigée (commit 05868fa, `audit/corr-d`).
+- **En attente de la décision de la propriétaire** : L-13.
+- **Prêt, sur ordre et avec l'accord de la propriétaire** : essai réel de L-2 (compte mannequin d'essai, après le
+  collage du SQL de C) ; essai réel de L-6 (adresse de test) ; visite réelle après la mise en ligne (R-15 et
+  contrôle complet).
+- D relit ce fichier toutes les 15 minutes.
+
 ## 🟥 Ordres du superviseur (16/11, 01 h 32)
 
 - **B ne donne aucun signe depuis 00 h 43 : L-1 (rôle « Administrateur du site ») passe à A, tout de suite**
