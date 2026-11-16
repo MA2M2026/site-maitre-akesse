@@ -559,6 +559,37 @@ compte « site ».
   décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
   confidentialité) ; relit et vérifie par d'autres moyens.
 
+## 🧾 BILAN COMBINÉ DU SUPERVISEUR (11 h 30) — chaque agent écrit « d'accord » ou sa correction
+
+Les 5 rapports de mission concordent ; aucun désaccord sur l'état final.
+**Réparé, accepté et rassemblé dans `audit/corrections` (44e6249f)** :
+- Sécurité : documents internes non publiés (A-01) ; scripts réservés protégés même par adresse encodée (R-03) ;
+  journal sans jetons personnels (A-04) ; 6 pages à règle stricte (L-10) ; formulaires publics : liste blanche des
+  colonnes, anti-robots strict sans bloquer en panne, « direct » refusé, 0 champ perdu (L-7) ; « Créer mon compte » de
+  l'équipe confirmé par e-mail (L-6) ; mannequin qui ne peut plus se publier seule (L-2).
+- Rôles (règle de la propriétaire) : « site » ne valide plus de paiement, ne supprime plus de mannequin, ne marque plus
+  une inscription « payée », garde les contacts ; encaissements sans comptages de caisse ; comptabilité garde « Payer
+  les mannequins » ; suppression des vieux messages d'essai : principal seulement.
+- Candidature : faux fichiers refusés, photos lourdes allégées, un seul envoi, bande « Appli MA2M » absente des
+  formulaires, vidéo illisible signalée (L-5).
+- Booking et marques : bloc « Votre défilé, nos visages » (maquette validée) ; demande jamais sans sa liste (R-09).
+- Vitesse : pages qui ne sautent plus (Atelier talons, Postuler), photos d'actualités allégées (L-9).
+- Divers : logo du CV (R-15), boutons de fiche à 320 px, hreflang, titre d'article, code et vidéos inutiles, fond
+  `.se-date`, message de pause juste (sept.-nov. comptent, déc.-févr. non).
+- Réglages faits par la propriétaire : `EMAILJS_PRIVATE_KEY` et `CRON_SECRET` sur Vercel (L-4).
+**Écarté par décision** : a945d451 (contacts gardés) ; ea364a01 (doublon).
+**Reste, dans l'ordre** : (1) batterie finale de C = 0 échec + `/code-review` ; (2) relecture du superviseur ;
+(3) la propriétaire colle les 5 SQL dans Supabase, un par un, avec leur contrôle :
+`supabase-publication-protegee.sql`, `supabase-l1-role-site.sql`, `supabase-roles-comptages.sql`,
+`supabase-demandes-confirmees.sql`, `supabase-suppression-messages.sql` (C prépare l'ordre exact et le contrôle
+attendu de chacun) ; (4) accord écrit de la propriétaire ; (5) UNE mise en ligne par C ; (6) essais réels par D (L-2,
+L-1 avec la propriétaire, L-6, visite complète, R-15) ; (7) SonarQube ; (8) demain 8 h 06 : tâche du matin ;
+(9) après : réglage Cloudflare (Edge 1 jour), photos d'actualités déjà en ligne (à décider), rapport final (renfort).
+- A : 
+- B : 
+- C : 
+- D : 
+
 ## ⏳ C, 11 h 15 : BATTERIE FINALE EN COURS sur `audit/corrections` = 44e6249f — **personne ne pousse sur cette branche**
 
 Contenu : tout le rassemblement (7a60e64d) + D-05 de D (1f95f78c) + suppression des messages d'essai (d5d75185).
