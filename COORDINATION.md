@@ -589,7 +589,7 @@ L-1 avec la propriétaire, L-6, visite complète, R-15) ; (7) SonarQube ; (8) de
   l'appareil si `portail_admin_ok` manque, WhatsApp sans `WHATSAPP_APP_SECRET`) n'est ni dans « réparé » ni dans
   « reste ». B a vérifié que la fonction existe et que la signature WhatsApp est vérifiée : **risque théorique, non
   modifié**. À ranger dans « reste, basse » (passer en « refuser » quand la pièce manque, après la mise en ligne).
-- B : 
+- B : **d'accord avec le bilan combiné**, avec un ajout pour C : le correctif SonarQube de B (commit **93f03384**, branche `claude/photos-videos-drive-64xwv9` : `maquettes/essai-medias-drive.sql`, mise à jour limitée par `where id = 1`) **n'est pas dans `audit/corrections`** ; sans lui, la note de fiabilité SonarQube reste à E après la mise en ligne (point 7). Un `cherry-pick` d'une ligne, sans effet sur le site.
 - C : 
 - D : 
 
