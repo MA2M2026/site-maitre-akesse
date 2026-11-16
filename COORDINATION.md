@@ -583,6 +583,60 @@ compte « site ».
   limites) et écrire ses remarques ici ; puis préparer les gestes de son essai réel de L-17 (une candidature d'essai
   avec photos, visible dans l'Administration), à faire APRÈS la mise en ligne de L-17, avec l'accord de la propriétaire.
 
+### D, relecture de sécurité de L-17 (16 h 05) — `api/r2-presigner.js` et `api/_r2.js`, commit af2a603
+
+**Bon** :
+- **Nom du fichier** : choisi par le serveur (`crypto.randomBytes(16)`). Le chemin vérifié est strictement
+  `candidatures/<id>/<32 hex>.(jpg|png|webp)`.
+- **Signature** : le type et la **taille** de la photo sont signés (`ContentLength`, 15 Mo au plus), pour 5 minutes.
+- **Candidature** : identifiant au format UUID, dossier « nouvelle », créé il y a moins de 2 h.
+- **Enregistrement** : c'est le **serveur** qui écrit dans `casting_photos`, pas la page.
+- **Lecture** : adresses signées d'une heure, réservées à l'équipe, avec double authentification et appareil reconnu
+  (`adminVerifie`).
+- **Suppression** : seulement pour un fichier que plus aucune fiche ne cite. Toutes les valeurs passées aux requêtes
+  sont vérifiées par des motifs stricts, donc rien d'injectable.
+
+**À corriger avant la mise en ligne de L-17** (A ; aucun des deux n'expose de photo) :
+1. **Stockage remplissable sans fin (moyenne).** La limite de 12 photos ne compte que les photos **déjà notées**
+   (`candidature_verifier`).
+   - Une personne qui demande des signatures et dépose ses fichiers **sans** appeler la vérification n'est limitée
+     que par `limiteDebit` : 60 par minute et par adresse IP.
+   - Soit, pendant les 2 h d'ouverture d'une candidature, environ 7 200 fichiers de 15 Mo (≈ 100 Go) par adresse IP.
+     Ces fichiers ne sont jamais cités, donc jamais nettoyés.
+   - **Proposition** :
+     - avant de signer, compter les fichiers **déjà présents** sous `candidatures/<id>/` (`ListObjectsV2`, quelques
+       dizaines au plus) et refuser au-delà de 12, ou noter chaque signature en base et compter ;
+     - **et** effacer chaque jour les fichiers de `candidatures/` non cités dans `casting_photos` depuis plus de 2 h,
+       par la tâche du matin.
+2. **Fiche notée pour un fichier absent (basse).**
+   - Si la relecture est « illisible », `candidature_verifier` note quand même la photo, y compris pour un chemin
+     jamais déposé : l'objet n'existe pas, ce qui donne une erreur NoSuchKey, comptée comme panne.
+   - Résultat : des fiches avec une photo cassée, et le compteur de 12 qui se remplit pour rien.
+   - **Proposition** : traiter « l'objet n'existe pas » comme un refus (404), et ne garder le cas « illisible » que
+     pour une vraie panne du stockage.
+   - Et bloquer les doublons : il n'y a pas d'index unique sur `(application_id, chemin)`. Aujourd'hui, seul
+     `(application_id, url)` est unique, et `url` est vide pour les photos stockées chez Cloudflare. Il faudrait un
+     index unique partiel `where chemin is not null` (SQL à coller).
+
+**À savoir (pas un défaut)** :
+- Les photos des candidates sont dans le **même** stockage que le Book. Si le domaine public `photos.` sert tout le
+  stockage, une photo de candidate reste lisible par quiconque connaît son adresse complète.
+- Cette adresse est imprévisible (128 bits) et n'est jamais affichée ailleurs que par une adresse signée. Ce choix est
+  acceptable, comme l'a conseillé B.
+- Cloudflare n'affiche pas la liste des fichiers. Si l'agence veut aller plus loin, on peut fermer `candidatures/`
+  au domaine public par une règle Cloudflare.
+
+**Gestes de l'essai réel de L-17** (APRÈS sa mise en ligne, avec l'accord écrit de la propriétaire, car il crée une
+vraie candidature, envoie un e-mail à l'agence et une copie dans Drive) :
+1. D dépose une candidature d'essai « ESSAI D L-17 » sur « Intégrer l'agence », depuis un téléphone simulé, avec
+   4 photos d'essai (des images fabriquées, aucune personne réelle) et une petite vidéo.
+2. D, avec le compte « site » : Administration › Candidatures › le dossier. Les 4 photos doivent s'afficher **et
+   rester affichées** quand on recharge la page (adresse signée, pas Drive), sur téléphone et sur ordinateur.
+3. D vérifie dans la base, en lecture : 4 lignes `r2:candidatures/…`, et la copie Drive arrivée (dossier rempli).
+4. La propriétaire (principal) supprime le dossier d'essai depuis l'Administration (bouton « Supprimer » ; essai de la
+   suppression réservée au principal du 16/11).
+5. D vérifie que les 4 fichiers Cloudflare sont effacés (`candidature_supprimer` : plus aucune fiche ne les cite).
+
 ## 🟥 ORDRES DU SUPERVISEUR (15 h 00) — rien n'a bougé depuis 13 h 06
 
 1. **B : batterie finale MAINTENANT** (ordre de 11 h 45, ci-dessous), puis résultat ici. C : mise en ligne après.
