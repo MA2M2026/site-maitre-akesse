@@ -12,19 +12,27 @@ const PORT = String(9660 + Math.floor(Math.random() * 30)), URL_ADMIN = 'http://
 
 async function serveur() {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-essai'; process.env.EMAILJS_PRIVATE_KEY = 'cle-privee-essai';
-  const crees = [], demandes = [], envois = [], supprimes = [];
-  let existant = false, recentes = 0, noteKo = false, emailKo = false;
+  const crees = [], demandes = [], envois = [], supprimes = [], journal = [];
+  let existant = false, recentes = 0, noteKo = false, inscriptionKo = 0, sansConfirmation = false;
   global.fetch = async (url, o = {}) => {
     const u = String(url);
     const json = (x, s = 200) => ({ ok: s < 300, status: s, json: async () => x, text: async () => JSON.stringify(x) });
     if (/staff_demandes\?select=id&cree_le=gte/.test(u)) return json(Array.from({ length: recentes }, (_, i) => ({ id: i })));
     if (/rpc\/portail_utilisateur_par_email/.test(u)) return json(existant ? 'u-deja' : null);
     if (/auth\/v1\/admin\/users\/[^/]+$/.test(u) && o.method === 'DELETE') { supprimes.push(u); return json({}); }
-    if (/auth\/v1\/admin\/generate_link$/.test(u)) { const c = JSON.parse(o.body); crees.push(c); return json({ id: 'u-neuf', email: c.email, action_link: 'https://lien.test/confirmer?jeton=abc' }); }
+    if (/auth\/v1\/admin\/generate_link/.test(u)) { const c = JSON.parse(o.body); crees.push({ secours: true, email: c.email }); return json({ id: 'u-secours', email: c.email, action_link: 'https://lien.test/confirmer?jeton=abc' }); }
+    // (refait par A, 16/11) inscription standard de Supabase : c'est Supabase qui envoie l'e-mail de confirmation
+    if (/auth\/v1\/signup\?redirect_to=/.test(u)) {
+      const c = JSON.parse(o.body); crees.push(Object.assign({ url: u }, c));
+      if (inscriptionKo === 429) return json({ error_code: 'over_email_send_rate_limit', msg: 'email rate limit exceeded' }, 429);
+      if (inscriptionKo) return json({ msg: 'erreur' }, inscriptionKo);
+      return sansConfirmation ? json({ access_token: 't', user: { id: 'u-neuf', email: c.email, email_confirmed_at: '2026-11-16T06:00:00Z' } })
+        : json({ id: 'u-neuf', email: c.email, confirmation_sent_at: '2026-11-16T06:00:00Z', email_confirmed_at: null });
+    }
     if (/rest\/v1\/staff_demandes$/.test(u) && o.method === 'POST') { if (noteKo) return json({}, 500); demandes.push(JSON.parse(o.body)); return json(null, 201); }
     if (/staff_profiles\?select=email,nom&role=eq.principal/.test(u)) return json([{ email: 'proprietaire@test.ci', nom: 'Maître Akesse' }]);
-    if (/api\.emailjs\.com/.test(u)) { if (emailKo) return json({}, 500); envois.push(JSON.parse(o.body)); return json({}); }
-    if (/rest\/v1\/journal_erreurs/.test(u)) return json(null, 201);
+    if (/api\.emailjs\.com/.test(u)) { envois.push(JSON.parse(o.body)); return json({}); }
+    if (/rest\/v1\/journal_erreurs/.test(u)) { journal.push(JSON.parse(o.body)); return json(null, 201); }
     return json({});
   };
   const portail = require('../../api/portail.js');
@@ -36,19 +44,30 @@ async function serveur() {
   };
   const bon = { nom: 'Nouvelle Recrue', email: 'Recrue@Test.ci', telephone: '+225 07 07 07 07 07', motdepasse: 'un-mot-de-passe-solide' };
   let r = await appeler(bon);
-  // (16/11/2026, audit L-6) compte créé NON confirmé, avec un lien de confirmation envoyé à la personne
-  ok(r.statut === 200 && crees.length === 1 && crees[0].type === 'signup' && crees[0].email === 'recrue@test.ci' && crees[0].password === bon.motdepasse && !('email_confirm' in crees[0]),
-    'serveur : compte créé NON confirmé (lien de confirmation), plus jamais confirmé d’office');
+  // (16/11/2026, audit L-6) compte créé NON confirmé ; le lien de confirmation part par l'e-mail de Supabase lui-même
+  ok(r.statut === 200 && crees.length === 1 && /\/auth\/v1\/signup\?redirect_to=/.test(crees[0].url) && crees[0].email === 'recrue@test.ci' && crees[0].password === bon.motdepasse && !('email_confirm' in crees[0]) && !crees.some((c) => c.secours),
+    'serveur : compte créé NON confirmé par l’inscription standard de Supabase (qui envoie elle-même le lien)');
+  ok(decodeURIComponent(crees[0].url).includes('maitreakessemodelmanagement.com/admin/'), 'serveur : le lien ramène à l’Administration');
   ok(demandes.length === 1 && demandes[0].user_id === 'u-neuf' && demandes[0].nom === 'Nouvelle Recrue' && demandes[0].telephone === '+225 07 07 07 07 07', 'serveur : la demande est notée (en attente)');
-  ok(envois.length === 2 && envois[0].template_params.to_email === 'recrue@test.ci' && envois[0].template_params.message.includes('https://lien.test/confirmer?jeton=abc'),
-    'serveur : la personne reçoit le lien de confirmation par e-mail');
-  ok(envois[1] && envois[1].template_params.to_email === 'proprietaire@test.ci' && /Nouvelle demande d’accès/.test(envois[1].template_params.message) && /confirmer son adresse/.test(envois[1].template_params.message),
+  ok(!envois.some((e) => e.template_params.to_email === 'recrue@test.ci'), 'serveur : le lien ne passe plus par EmailJS');
+  ok(envois.length === 1 && envois[0].template_params.to_email === 'proprietaire@test.ci' && /confirmer son adresse/.test(envois[0].template_params.message),
     'serveur : la propriétaire est prévenue (la demande apparaîtra après la confirmation)');
-  emailKo = true; r = await appeler(bon); emailKo = false;
-  ok(r.statut === 503 && supprimes.length === 1 && /confirmation/.test(r.rep.error), 'serveur : e-mail de confirmation non parti : compte retiré, message clair (personne bloquée à moitié : non)');
-  const cle = process.env.EMAILJS_PRIVATE_KEY; delete process.env.EMAILJS_PRIVATE_KEY; const avant = crees.length;
+  // la clé EmailJS absente de Vercel (B-V5) ne bloque plus « Créer mon compte »
+  const cle = process.env.EMAILJS_PRIVATE_KEY; delete process.env.EMAILJS_PRIVATE_KEY; const avant = crees.length, envoisAvant = envois.length;
   r = await appeler(bon); process.env.EMAILJS_PRIVATE_KEY = cle;
-  ok(r.statut === 503 && crees.length === avant, 'serveur : clé EmailJS absente : aucun compte créé, message « pas encore disponible »');
+  ok(r.statut === 200 && crees.length === avant + 1 && envois.length === envoisAvant && journal.some((j) => /alerte non partie.*clé EmailJS absente/.test(j.message || JSON.stringify(j))),
+    'serveur : clé EmailJS absente : la demande passe quand même (alerte notée au journal), plus de blocage');
+  inscriptionKo = 429; r = await appeler(bon); inscriptionKo = 0;
+  ok(r.statut === 429 && /réessayez dans une heure/.test(r.rep.error), 'serveur : trop d’e-mails Supabase en ce moment : message clair, rien de gardé');
+  // Supabase refuse d'écrire à cette adresse (réglages par défaut : seulement l'équipe du projet) → secours EmailJS
+  inscriptionKo = 400; let e0 = envois.length, d0 = demandes.length; r = await appeler(bon); inscriptionKo = 0;
+  ok(r.statut === 200 && crees.some((c) => c.secours) && envois.slice(e0).some((e) => e.template_params.to_email === 'recrue@test.ci' && e.template_params.message.includes('https://lien.test/confirmer?jeton=abc')) && demandes.length === d0 + 1 && demandes[d0].user_id === 'u-secours',
+    'serveur : e-mail de Supabase refusé → lien envoyé par l’e-mail du serveur (EmailJS), demande notée');
+  delete process.env.EMAILJS_PRIVATE_KEY; inscriptionKo = 400; d0 = demandes.length; r = await appeler(bon); inscriptionKo = 0; process.env.EMAILJS_PRIVATE_KEY = cle;
+  ok(r.statut === 503 && demandes.length === d0 && /pas encore disponible/.test(r.rep.error) && journal.some((j) => /régler l’e-mail \(SMTP\) de Supabase/.test(j.message)),
+    'serveur : ni e-mail de Supabase ni clé EmailJS : rien de gardé, message clair, la marche à suivre notée au journal');
+  sansConfirmation = true; const s0 = supprimes.length; r = await appeler(bon); sansConfirmation = false;
+  ok(r.statut === 503 && supprimes.length === s0 + 1 && /pas encore activée/.test(r.rep.error), 'serveur : Supabase réglé sans « Confirm email » : compte retiré, jamais confirmé sans preuve');
   const n0 = crees.length;  // (aucun compte de plus dans les refus ci-dessous)
   r = await appeler(Object.assign({}, bon, { motdepasse: 'court' }));
   ok(r.statut === 400 && crees.length === n0, 'serveur : mot de passe de moins de 12 caractères : refusé');
@@ -56,8 +75,8 @@ async function serveur() {
   ok(r.statut === 409 && crees.length === n0 && /existe déjà/.test(r.rep.error), 'serveur : adresse déjà connue : refusée (aucun compte en double)');
   recentes = 10; r = await appeler(bon); recentes = 0;
   ok(r.statut === 429 && crees.length === n0, 'serveur : plus de 10 demandes dans l’heure : refusé (robots)');
-  noteKo = true; r = await appeler(bon); noteKo = false;
-  ok(r.statut === 500 && supprimes.length === 2, 'serveur : demande non notée : le compte créé est retiré (la personne peut réessayer)');
+  noteKo = true; const s1 = supprimes.length; r = await appeler(bon); noteKo = false;
+  ok(r.statut === 500 && supprimes.length === s1 + 1, 'serveur : demande non notée : le compte créé est retiré (la personne peut réessayer)');
 }
 
 // (16/11/2026, audit L-6 = R-01) l'invitation de la propriétaire ne donne JAMAIS le rôle à un compte créé par

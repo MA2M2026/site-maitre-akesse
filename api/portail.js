@@ -348,40 +348,73 @@ async function demandeAcces(corps, res) {
   // (16/11/2026, audit L-6 = R-01, décision de la propriétaire) le compte est créé NON CONFIRMÉ et la personne reçoit
   // un lien par e-mail : tant qu'elle ne l'a pas cliqué, elle ne peut pas se connecter, la demande n'apparaît pas
   // et ne peut pas être acceptée (supabase-demandes-confirmees.sql). Avant : compte déjà confirmé pour n'importe
-  // quelle adresse, sans preuve de la posséder. L'e-mail part par le serveur du site (EmailJS) : sans la clé, ou si
-  // l'envoi échoue, rien n'est gardé (la personne n'est pas bloquée à moitié) et le message le dit.
-  const cle = process.env.EMAILJS_PRIVATE_KEY;
-  if (!cle) return res.status(503).json({ error: 'La confirmation par e-mail n’est pas encore disponible : contactez l’agence.' });
-  const lien = await adminAuth('admin/generate_link', 'POST', { type: 'signup', email, password: motdepasse,
-    data: { nom, portail_demande: true, portail_mdp_choisi: true }, redirect_to: RETOUR_ADMINISTRATION });
-  const compte = { id: lien.id || (lien.user && lien.user.id) };
-  const adresseLien = lien.action_link || (lien.properties && lien.properties.action_link);
+  // quelle adresse, sans preuve de la posséder.
+  // (16/11/2026, refait par A sur ordre du superviseur) l'e-mail de confirmation est celui de SUPABASE lui-même
+  // (inscription standard « signup ») : il ne dépend plus de EMAILJS_PRIVATE_KEY, absente de Vercel (B-V5), qui aurait
+  // bloqué « Créer mon compte » pour tout le monde (comme l'incident du 04 au 11/10/2026).
+  // (Supabase n'écrit, avec ses réglages par défaut, qu'aux membres de l'équipe du projet : s'il refuse l'adresse,
+  // on passe par l'e-mail du serveur du site, EmailJS, si sa clé est posée ; sinon rien n'est gardé et on le dit.)
+  const repInscription = await fetch(SUPABASE_URL + '/auth/v1/signup?redirect_to=' + encodeURIComponent(RETOUR_ADMINISTRATION), {
+    method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: motdepasse, data: { nom, portail_demande: true, portail_mdp_choisi: true } })
+  }).catch(() => null);
+  let inscription = repInscription ? await repInscription.json().catch(() => ({})) : {};
+  if (!repInscription || !repInscription.ok) {
+    const raison = String(inscription.error_code || inscription.code || inscription.msg || inscription.error_description || (repInscription && repInscription.status) || 'injoignable');
+    await noterAuJournal('[Demande d’accès] e-mail de Supabase refusé pour ' + email + ' (' + raison + ')', 'demandes');
+    if ((repInscription && repInscription.status === 429) || /rate_limit|rate limit/i.test(raison)) {
+      return res.status(429).json({ error: 'Trop d’e-mails envoyés en ce moment : réessayez dans une heure, ou contactez l’agence.' });
+    }
+    // un compte resté à moitié créé (e-mail non parti) est retiré avant le second essai
+    const reste = await rpcService('portail_utilisateur_par_email', { p_email: email }).catch(() => null);
+    if (reste) await adminAuth('admin/users/' + reste, 'DELETE').catch(() => {});
+    const cleSecours = process.env.EMAILJS_PRIVATE_KEY;
+    if (!cleSecours) {
+      await noterAuJournal('[Demande d’accès] aucune façon d’envoyer le lien de confirmation : régler l’e-mail (SMTP) de Supabase, ou poser EMAILJS_PRIVATE_KEY sur Vercel', 'demandes');
+      return res.status(503).json({ error: 'La confirmation par e-mail n’est pas encore disponible : contactez l’agence.' });
+    }
+    const lien = await adminAuth('admin/generate_link', 'POST', { type: 'signup', email, password: motdepasse,
+      data: { nom, portail_demande: true, portail_mdp_choisi: true }, redirect_to: RETOUR_ADMINISTRATION }).catch(() => null);
+    const idSecours = lien && (lien.id || (lien.user && lien.user.id));
+    const adresseLien = lien && (lien.action_link || (lien.properties && lien.properties.action_link));
+    const envoiLien = idSecours && adresseLien ? await envoyerEmailServeur(cleSecours, email, nom,
+      'Bonjour ' + nom + ',\n\nVous avez demandé un accès à l’Administration de Maître Akesse Model Management. Pour confirmer que cette adresse e-mail est bien la vôtre, ouvrez ce lien :\n\n' +
+      adresseLien + '\n\nEnsuite, l’agence acceptera (ou non) votre demande. Si vous n’avez rien demandé, ignorez ce message : aucun compte ne sera actif.') : { ok: false };
+    if (!envoiLien.ok) {
+      if (idSecours) await adminAuth('admin/users/' + idSecours, 'DELETE').catch(() => {});
+      return res.status(503).json({ error: 'L’e-mail de confirmation n’a pas pu partir : réessayez dans un instant, ou contactez l’agence.' });
+    }
+    inscription = { id: idSecours, email_confirmed_at: null };
+  }
+  const utilisateur = inscription.user || inscription;
+  const compte = { id: utilisateur && utilisateur.id };
   const retirer = () => (compte.id ? adminAuth('admin/users/' + compte.id, 'DELETE').catch(() => {}) : Promise.resolve());
-  if (!compte.id || !adresseLien) { await retirer(); return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' }); }
+  if (!compte.id) return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' });
+  // Supabase réglé sans confirmation des adresses (« Confirm email » désactivé) : le compte serait confirmé sans
+  // preuve. On ne garde rien et on le dit (la propriétaire doit activer « Confirm email » dans Supabase).
+  if (utilisateur.email_confirmed_at || utilisateur.confirmed_at || inscription.access_token) {
+    await retirer();
+    await noterAuJournal('[Demande d’accès] Supabase confirme les adresses sans e-mail (« Confirm email » désactivé) : demande de ' + email + ' refusée', 'demandes');
+    return res.status(503).json({ error: 'La confirmation par e-mail n’est pas encore activée : contactez l’agence.' });
+  }
   const note = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes', {
     method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify({ user_id: compte.id, nom, email, telephone: telephone || null })
   });
   if (!note.ok) {
-    // (demande non notée : le compte créé est retiré, la personne peut réessayer)
+    // (demande non notée : le compte créé est retiré, la personne peut réessayer ; son lien ne mène plus à rien)
     await retirer();
     return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' });
   }
-  const confirmation = await envoyerEmailServeur(cle, email, nom,
-    'Bonjour ' + nom + ',\n\nVous avez demandé un accès à l’Administration de Maître Akesse Model Management. Pour confirmer que cette adresse e-mail est bien la vôtre, ouvrez ce lien :\n\n' +
-    adresseLien + '\n\nEnsuite, l’agence acceptera (ou non) votre demande. Si vous n’avez rien demandé, ignorez ce message : aucun compte ne sera actif.');
-  if (!confirmation.ok) {
-    await retirer();   // (la demande part avec le compte : staff_demandes … on delete cascade)
-    await noterAuJournal('[Demande d’accès] e-mail de confirmation non parti pour ' + email + ' (' + confirmation.statut + ')', 'demandes');
-    return res.status(503).json({ error: 'L’e-mail de confirmation n’a pas pu partir : réessayez dans un instant, ou contactez l’agence.' });
-  }
-  // l'administratrice principale est prévenue (e-mail du serveur, comme les autres alertes)
+  // l'administratrice principale est prévenue (e-mail du serveur, comme les autres alertes) ; sans la clé EmailJS,
+  // l'alerte est notée au journal et la demande apparaît quand même dans Sécurité › Comptes et rôles
+  const cle = process.env.EMAILJS_PRIVATE_KEY;
   const principale = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=email,nom&role=eq.principal', { headers: enTetesService() }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
   const destinataire = (principale[0] && principale[0].email) || EMAIL_AGENCE;
-  const envoi = await envoyerEmailServeur(cle, destinataire, (principale[0] && principale[0].nom) || 'Maître Akesse Model Management',
+  const envoi = cle ? await envoyerEmailServeur(cle, destinataire, (principale[0] && principale[0].nom) || 'Maître Akesse Model Management',
     '🔑 Nouvelle demande d’accès à l’Administration\n\nNom : ' + nom + '\nE-mail : ' + email + (telephone ? '\nTéléphone : ' + telephone : '') +
-    '\n\nCette personne n’a encore AUCUN accès. Elle doit d’abord confirmer son adresse (lien envoyé par e-mail) : la demande apparaîtra ensuite dans Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles, pour l’accepter (et choisir son rôle) ou la refuser.');
-  if (!envoi.ok) await noterAuJournal('[Demande d’accès] alerte non partie pour ' + email, 'demandes');
+    '\n\nCette personne n’a encore AUCUN accès. Elle doit d’abord confirmer son adresse (lien envoyé par e-mail) : la demande apparaîtra ensuite dans Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles, pour l’accepter (et choisir son rôle) ou la refuser.') : { ok: false };
+  if (!envoi.ok) await noterAuJournal('[Demande d’accès] alerte non partie pour ' + email + (cle ? '' : ' (clé EmailJS absente)'), 'demandes');
   return res.status(200).json({ ok: true });
 }
 

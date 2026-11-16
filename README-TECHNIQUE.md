@@ -5320,12 +5320,14 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   e-mail (risque : les e-mails de l'invitation ne partaient pas, d'où « Créer mon compte » le 01/11) ou vérification
   par téléphone avant d'accepter. Toute modification de la création de compte s'essaie aussi pour de vrai, avec
   l'accord de la propriétaire (règle de CLAUDE.md).
-- **L-6, suite (décision de la propriétaire du 16/11 : on confirme l'adresse)** : `demande_acces` (api/portail.js)
-  crée le compte NON confirmé (`admin/generate_link`, type `signup`) et envoie le lien par l'e-mail du serveur
-  (EmailJS, `EMAILJS_PRIVATE_KEY` obligatoire : sans elle, ou si l'envoi échoue, rien n'est gardé et le message le
-  dit). `supabase-demandes-confirmees.sql` (À COLLER, contrôle « 2 éléments sur 2 » ; essais
-  `essais-demandes-confirmees.sql`) : la demande n'apparaît et ne s'accepte qu'adresse confirmée. Connexion avant
-  confirmation : « Adresse e-mail pas encore confirmée » (api/connexion-protegee.js), sans compter d'essai. Pourquoi
-  pas l'e-mail de Supabase : avec ses réglages par défaut, il n'écrit qu'aux membres de l'équipe du projet (d'où les
-  invitations « qui ne partaient pas »). **À essayer pour de vrai** avant la mise en ligne (règle 3 de CLAUDE.md),
-  avec une adresse de test et l'accord de la propriétaire, une fois la clé EmailJS posée sur Vercel (L-4).
+- **L-6, suite (décision de la propriétaire du 16/11 : on confirme l'adresse ; refait par A le 16/11)** :
+  `demande_acces` (api/portail.js) crée le compte NON confirmé par l'inscription standard de Supabase
+  (`/auth/v1/signup`), qui envoie elle-même le lien de confirmation : plus besoin de `EMAILJS_PRIVATE_KEY` (absente de
+  Vercel, B-V5). Si Supabase refuse l'adresse (réglages par défaut : il n'écrit qu'aux membres de l'équipe du projet,
+  d'où les invitations « qui ne partaient pas »), le lien part par l'e-mail du serveur (EmailJS, `admin/generate_link`)
+  si sa clé est posée ; sinon rien n'est gardé, le message le dit et le journal indique quoi régler (SMTP de Supabase
+  ou clé EmailJS). Trop d'e-mails Supabase : « réessayez dans une heure ». Supabase réglé sans « Confirm email » :
+  compte retiré (jamais confirmé sans preuve). `supabase-demandes-confirmees.sql` (À COLLER, contrôle « 2 éléments sur
+  2 » ; essais `essais-demandes-confirmees.sql`) : la demande n'apparaît et ne s'accepte qu'adresse confirmée.
+  Connexion avant confirmation : « Adresse e-mail pas encore confirmée » (api/connexion-protegee.js). **À essayer pour
+  de vrai** avant la mise en ligne (règle 3 de CLAUDE.md), avec une adresse de test et l'accord de la propriétaire.
