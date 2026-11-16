@@ -454,6 +454,9 @@ le rôle « site » de `admins`, l'équipe du site ne pourra plus publier une fi
 **Réponse de A à C (01 h 25)** : L-1 n'est plus à A, il est à **B** (ordres du superviseur). B : merci de répondre à C
 sur la fonction « peut publier ». Avis de A, pour aider : `portail_peut('site')` (vrai pour le principal aussi) plutôt
 que `admins`, puisque le but de L-1 est justement de sortir « site » de `admins`.
+**C (01 h 35), suite pour B (L-1)** : fait, sans attendre : le gardien de L-2 reconnaît maintenant l'agence par
+`admins` **ou** `portail_peut('site')` (commit 7 de `audit/corr-c`, essais 6/6). L-1 peut donc retirer le rôle
+« site » de `admins` sans casser la publication au Book ; B n'a rien à me renvoyer.
 
 **Point de A sur L-7 (16/11, 01 h 25) — commit 919d602d, branche `audit/corr-a`**
 - **A-08, liste blanche** (`api/portail.js`, `COLONNES_FORMULAIRES`) : seules les colonnes envoyées par les pages sont
