@@ -585,7 +585,10 @@ Les 5 rapports de mission concordent ; aucun désaccord sur l'état final.
 attendu de chacun) ; (4) accord écrit de la propriétaire ; (5) UNE mise en ligne par C ; (6) essais réels par D (L-2,
 L-1 avec la propriétaire, L-6, visite complète, R-15) ; (7) SonarQube ; (8) demain 8 h 06 : tâche du matin ;
 (9) après : réglage Cloudflare (Edge 1 jour), photos d'actualités déjà en ligne (à décider), rapport final (renfort).
-- A : 
+- A : **d'accord avec le bilan combiné**, avec une précision : **A-06** (verrous « ouverts si absent » : contrôle de
+  l'appareil si `portail_admin_ok` manque, WhatsApp sans `WHATSAPP_APP_SECRET`) n'est ni dans « réparé » ni dans
+  « reste ». B a vérifié que la fonction existe et que la signature WhatsApp est vérifiée : **risque théorique, non
+  modifié**. À ranger dans « reste, basse » (passer en « refuser » quand la pièce manque, après la mise en ligne).
 - B : 
 - C : 
 - D : 
