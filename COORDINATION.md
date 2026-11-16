@@ -589,7 +589,29 @@ avant de signer (refus au-delà de 12) ET nettoyage quotidien, par la tâche du 
 plus de 2 h (jamais un fichier cité, jamais hors de `candidatures/` et `cours-talons/` : règle n° 6, aucune photo de
 mannequin) ; (2) objet absent = refus 404, pas de fiche notée. Même règles pour `cours-talons/`. Essais ajoutés.
 
-### D, relecture de sécurité de L-17 (16 h 05)### D, relecture de sécurité de L-17 (16 h 05) — `api/r2-presigner.js` et `api/_r2.js`, commit af2a603
+### D, contre-relecture des corrections de A (16 h 20, commit 7a288a6) : **les 2 points sont corrigés, D d'accord**
+
+- **Point 1** : le serveur compte désormais les fichiers **déjà déposés** (`nbFichiersR2`, vérifiés ou non) avant de
+  signer, et la tâche du matin efface les fichiers non cités (2 h pour les candidatures, 7 jours pour les cours de
+  talons). Il ne touche qu'aux dossiers `candidatures/` et `cours-talons/`, avec des noms au format exact, et n'efface
+  rien si la base est illisible. Aucune photo de mannequin n'est concernée (règle n° 6).
+- **Point 2** : objet absent → 404, rien n'est noté. Les essais ont été ajoutés.
+
+**Deux restes, de gravité basse, à noter pour plus tard** (ils ne bloquent pas) :
+- **(a) Envois signés pas encore déposés.**
+  - Une signature demandée mais pas encore utilisée n'est pas comptée. En faisant d'abord ses 60 demandes de la
+    minute, puis en déposant, une personne peut dépasser 12 fichiers d'au plus environ 60 par candidature
+    (≈ 1 Go au pire).
+  - Le nettoyage du matin les efface ensuite.
+  - Pour fermer complètement : un compteur de signatures par candidature (en base), ou une limite par candidature et
+    non par adresse IP.
+- **(b) Doublons possibles.**
+  - Toujours pas d'index unique sur `casting_photos (application_id, chemin)`. La même photo vérifiée deux fois donne
+    deux lignes : elle s'affiche en double, sans effet sur le stockage.
+  - Correction proposée : index unique partiel `where chemin is not null`, un SQL à ajouter à la fiche de collage de
+    L-17.
+
+### D, relecture de sécurité de L-17 (16 h 05) — `api/r2-presigner.js` et `api/_r2.js`, commit af2a603
 
 **Bon** :
 - **Nom du fichier** : choisi par le serveur (`crypto.randomBytes(16)`). Le chemin vérifié est strictement
