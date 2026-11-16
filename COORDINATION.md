@@ -8,7 +8,7 @@ sur la branche `audit/coordination`.
 > `audit/corr-a` (liste blanche des colonnes, anti-robots strict sans bloquer en cas de panne, Drive limité). Essais :
 > tous verts. Détail : section « Point de A sur L-7 » (sous le tableau des ordres). **À relire et accepter.**
 > A relit ce fichier toutes les 15 minutes (reprise de secours à 5 h GMT) et attend le chantier suivant (L-16 ?).
-> **05 h 30 : L-7 condition remplie (ace7dcff) ; L-1 partie 1 faite (8a15c578) ; L-1 partie 2 : question pour la propriétaire. Détail : « Point de A (16/11, 05 h 30) ».**
+> **05 h 40 : L-7 condition remplie (ace7dcff) ; L-1 partie 1 acceptée (8a15c578) ; L-1 partie 2 faite (a945d451), à relire. Détail : « Point de A (05 h 40) ».**
 
 ## Règles de base
 
@@ -105,10 +105,10 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
   avec sa cause, A-04, R-15, B-P12, R-13) ; essais de `audit/renfort-corrections` : R-03 et A-01 corrigés sur la
   version d'essai, syntaxe et CSP OK, batterie laissée à B. En attente : fin de la batterie de B, puis les accords
   pour la mise en ligne, que je ferai. Rien ne me bloque.
-- **A** (mis à jour le 16/11 à 05 h 30) : **Fait** : audit + rapport ; L-7 (919d602d) + condition du superviseur
-  (ace7dcff : 10 formulaires FR/EN, 0 champ perdu, « direct » refusé) ; **L-1 partie 1** (8a15c578 : l'« Administrateur
-  du site » ne valide plus aucun paiement et ne supprime plus de mannequin). **En attente** : réponse de la propriétaire
-  sur les contacts (L-1 partie 2) ; relecture du superviseur. **Ensuite** : L-4 à 8 h 06 si B n'est pas revenu.
+- **A** (mis à jour le 16/11 à 05 h 40) : **Fait** : audit + rapport ; L-7 (919d602d + condition ace7dcff) ;
+  L-1 partie 1 (8a15c578, acceptée) ; **L-1 partie 2 (a945d451)** : contacts des parents et références de paiement
+  cachés au rôle « site », mineures jamais contactées à la place du parent. **En attente** : relecture du superviseur
+  (L-7 condition, L-1 partie 2). **Ensuite** : L-4 à 8 h 06 si B n'est pas revenu ; disponible pour L-16.
   **Blocage** : aucun.
 - **B** : **Fait** : audit du site public (116 adresses, téléphone 4G lente et ordinateur, Lighthouse), sécurité en lecture seule, code ; rapport `docs/audit/rapport-agent-b.md` ; vérifications A-01, R-03, A-06, A-08, D-02 ; correctifs du renfort essayés sur la version d'essai Vercel (R-03 et A-01 corrigés). **En cours** : batterie complète sur `audit/renfort-corrections` (2d63fa2f) : 28 séries, 0 échec à 00 h 50 ; contrôle de la tâche de 8 h (B-V5) à 8 h 06. **Ensuite** : rapport commun (documents 5 et 6). **Blocage** : aucun (je n'ai pas d'accès humain à l'Administration : D s'en charge).
 - **D** :
@@ -431,7 +431,7 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 |---|---|---|---|
 | L-3, L-8, L-11 | documents internes cachés, scripts réservés protégés, journal sans jetons | renfort | ✅ fait, vérifié par B et C (audit/renfort-corrections) |
 | L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
-| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | **A : partie 1 FAITE, commit 8a15c578** (argent + suppression) ; **partie 2 (contacts) : question à la propriétaire**, voir « Point de A sur L-1 » |
+| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | **A : partie 1 ACCEPTÉE (8a15c578) ; partie 2 FAITE (a945d451)** — à relire, voir « Point de A (05 h 40) » |
 | L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | **A : fait (919d602d) + condition du superviseur remplie (ace7dcff)** |
 | L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | ✅ fait par C, commit 5170d754 (`audit/corr-c`) : `supabase-publication-protegee.sql` (gardien qui fige les réglages de l'agence + minorité sur l'ancienne date), 6 essais en base locale, à coller avec l'accord écrit de la propriétaire |
 | L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | ✅ fait par C : efe5cb65 (invitation) + **83220054 (décision de la propriétaire)** : compte créé NON confirmé, lien de confirmation envoyé par l'e-mail du serveur (EmailJS) ; demande visible et acceptable seulement adresse confirmée (`supabase-demandes-confirmees.sql`, à coller) ; connexion avant confirmation : message clair. Essais : base locale 5/5, `test-demandes-acces.js` OK, 5 tests de connexion OK. **Dépend de L-4** (clé EmailJS sur Vercel). **Essai réel par D avant la mise en ligne**, avec une adresse de test et l'accord de la propriétaire |
@@ -454,6 +454,31 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 **C (01 h 35), suite pour B (L-1)** : fait, sans attendre : le gardien de L-2 reconnaît maintenant l'agence par
 `admins` **ou** `portail_peut('site')` (commit 7 de `audit/corr-c`, essais 6/6). L-1 peut donc retirer le rôle
 « site » de `admins` sans casser la publication au Book ; B n'a rien à me renvoyer.
+
+**Point de A (16/11, 05 h 40) — L-1 partie 2 FAITE, commit a945d451 (`audit/corr-a`), à relire**
+- Ordre exécuté : « contacts des parents et données de paiement plus visibles du rôle site ». Ma question de 05 h 30
+  à la propriétaire est donc tranchée par cet ordre (les contacts des candidates elles-mêmes restent visibles : c'est
+  ce qui permet de les convoquer).
+- `supabase-l1-contacts-prives.sql` : droits PAR COLONNE pour l'équipe (comme `model_profiles`). Fermés :
+  candidatures → `parent_telephone`, `parent_email` ; inscriptions → mêmes + `reference_paiement` ; cours de talons →
+  `parent_telephone`, `reference_wave`. Rien n'est déplacé ni effacé : les fonctions de la base (convocations, codes
+  individuels, anniversaires, messages aux parents) lisent tout comme avant.
+  `colonnes_lisibles(table)` : la liste à demander au lieu de « * » ; `dossiers_prives(table, ids)` : les colonnes
+  privées, seulement pour le principal, les encaissements, ou l'accès « contacts_prives » donné par le principal.
+- Écrans : candidatures (liste, fiche, étude), cours de talons, Messages groupés et nettoyage du stockage demandent la
+  liste des colonnes ; les contacts privés sont ajoutés pour les personnes autorisées. Tant que le SQL n'est pas collé,
+  tout marche comme avant (« * »).
+- **Sécurité des mineurs** : quand le contact du parent est caché, la mineure n'est JAMAIS contactée à sa place (ni
+  lien WhatsApp vers son numéro, ni message groupé) ; une phrase dit que le parent est contacté par le principal ou
+  les encaissements.
+- Essais : base d'essai 20/20 (refus pour « site », lecture par la fonction pour principal et encaissements, visiteur
+  refusé, traitement du dossier possible) + toute la base d'essai verte ; nouveau `test-l1-contacts-prives.js` 20/20
+  (« site » et principal, téléphone et ordinateur, jamais « * ») ; castings 129/129, messages 35/35,
+  convocations 159/159, cours de talons (Administration) 135/135, administration 269/269.
+- ⚠ **Ordre de mise en ligne** : coller `supabase-l1-contacts-prives.sql` EN MÊME TEMPS que la mise en ligne du site
+  (l'Administration actuelle demande « * » et afficherait une erreur sur ces pages). Accord écrit de la propriétaire,
+  puis visite réelle par D avec le compte « site » ET un compte principal.
+- ⚠ Une colonne ajoutée plus tard à ces 3 tables : recoller ce fichier (sinon l'équipe ne la voit pas).
 
 **Point de A (16/11, 05 h 30) pour le superviseur**
 
