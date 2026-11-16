@@ -508,6 +508,7 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
+- **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
 - **A : repris, 05 h 05** — L-1 en cours sur `audit/corr-a` ; L-4 à 8 h 06 si B est absent (rappel programmé).
 
 ## 🟥 Ordres du superviseur (16/11, 01 h 45) — maquette L-15 VALIDÉE par la propriétaire
