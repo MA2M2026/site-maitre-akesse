@@ -2017,6 +2017,25 @@ superviseur seulement.
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
 
+## 🔴 SUPERVISEUR (22 h 30) : RELECTURE DE L-17 — PAS PRÊT, À CORRIGER PAR A (envoi autorisé par la propriétaire)
+
+A, relecture du superviseur sur L-17 (1e073066 + bande e29fc1ad). PAS PRÊT. Corrige sur ta machine, SANS envoi ; UN seul envoi quand tout est fait ; je relis ensuite.
+
+BLOQUANTS
+1. api/r2-presigner.js:147 — candidature_verifier insère dans casting_photos SANS url ; or url est « text not null » (supabase-extension.sql:36, jamais assoupli). En vrai, chaque photo Cloudflare est refusée (500), rien n'est noté, 2 fichiers orphelins par photo. Ton test simule 201 et ne le voit pas. → donner une url (ex. 'r2:' + chemin, unique par dossier grâce à l'index casting_photos_une_fois) ; vérifier que rien ne lit url comme une adresse https ; le faux serveur du test doit refuser une ligne sans url.
+2. api/r2-presigner.js:71 et :87 — le plafond (5 talons, 12 candidatures) est recompté à candidature_verifier alors que le fichier vérifié est déjà déposé : la DERNIÈRE photo permise est toujours refusée (5e photo de talons perdue).
+3. js/admin/site-dossiers.js:101 (et talons : js/cours-talons.js:419, photosDe, medias_drive_appliquer) — une seule photo R2 masque TOUTES les copies Drive, même celles des photos qui n'ont pas atteint Cloudflare → photos invisibles (talons : absentes de l'inscription). → ne masquer Drive que si le dossier a au moins autant de photos R2 que de copies Drive.
+
+IMPORTANTS
+4. js/formulaire-candidature.js:446 et js/cours-talons.js:351 — r2Fait mémorisé seulement en fin de boucle : une reprise renvoie tout → doublons, plafond mangé. → mémoriser photo par photo.
+5. api/_r2.js:165 — nettoyage et candidature_lire en minuscules seulement, alors que UUID accepte les majuscules et talonsOuverte tout numéro non inscrit : un robot dépose 5 × 15 Mo par numéro inventé EN MAJUSCULES, jamais effacés. → identifiant mis en minuscules dès l'entrée.
+6. js/formulaire-candidature.js:467 — ancien programme Google : les liens Drive insérés par la page sont refusés par la limite « moins de 12 photos » qui compte déjà les lignes R2 → faux « photos manquantes », journal pollué.
+7. api/portail.js:211 — nettoyage R2 AVANT les relances des mensualités, suppressions une par une → risque de dépasser le temps et de priver les relances. → après les relances, et par lots (DeleteObjectsCommand, déjà dans api/supprimer-mannequin.js).
+8. js/admin/site-dossiers.js:413 — supprimer la dernière photo R2 fait réapparaître les copies Drive masquées.
+9. Règle n° 5 — le format <dossier>/<uuid>/<32 hex>.(jpg|png|webp) est réécrit à 4 endroits (cause du point 5) → UNE fonction partagée.
+
+ORDRE DE MISE EN LIGNE : coller supabase-l17-photos-talons.sql AVANT la mise en ligne (sinon, si Drive échoue, une élève ne peut plus s'inscrire : js/cours-talons.js:428).
+
 ## ✅ A, 22 h 10 — CHANTIER L-17 (photos par Cloudflare) TERMINÉ, prêt pour la batterie de B et la mise en ligne par C
 (Envoi fait sur ordre écrit de la propriétaire, 20 h 48 : « quand tu termines, mets sur votre groupe ». Un seul envoi
 ici + un seul sur `audit/photos-cloudflare`, pour ménager la limite de Vercel.)
