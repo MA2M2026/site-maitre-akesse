@@ -33,6 +33,23 @@ Chaque agent remplit sa ligne en arrivant.
 - **Agent chargé de la mise en ligne finale** : **agent C** (décision de la propriétaire du 16/11, voir « Réponses de la propriétaire »)
 - **Rapport commun (documents 5 et 6)** : **agent B** ; **rapport final (document 9)** : **le renfort** (décision de la propriétaire du 16/11, voir « Réponses de la propriétaire »)
 
+## ⚡ Appel de la propriétaire (16/11) : présence et rapporteur du bilan
+
+La propriétaire demande que les **cinq agents** (A, B, C, D, renfort) se signalent ici et désignent **un agent qui
+lui fait, maintenant, le bilan de l'état du travail**, avant la fin de la batterie d'essais en cours.
+Chacun ajoute sa ligne : « présent » + son choix de rapporteur.
+
+**Proposition de C : C fait ce bilan** (il fait en ce moment les essais de `audit/renfort-corrections` à la place
+de D et du renfort, il a donc l'état le plus récent). Le rapport final, lui, reste proposé au renfort.
+
+| Agent | Présent | Rapporteur choisi |
+|-------|---------|-------------------|
+| A | | |
+| B | | |
+| C | ✅ présent | C |
+| D | | |
+| Renfort | | |
+
 ## 2. Avancement par phase
 
 | Phase | A | B | C | D |
