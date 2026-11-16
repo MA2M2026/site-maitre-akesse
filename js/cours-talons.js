@@ -339,16 +339,28 @@
     const boite = $('ct-jauges-photos'); boite.textContent = '';
     const ids = liste.map((f, i) => { boite.appendChild(creerJauge('ct-jauge-photo-' + (i + 1))); return 'ct-jauge-photo-' + (i + 1); });
     const nomPhoto = (i) => T('Photo ', 'Photo ') + (i + 1);
-    const photosArrivees = () => jaugesPhotosArrivees(ids, d.rangs, d.liens.length, nomPhoto);  // (js/app.js)
+    // (16/11/2026, L-17) d'abord Cloudflare R2 (affichage fiable dans l'Administration), puis la copie Drive (archive)
+    // comme avant. Les jauges des photos arrivées chez Cloudflare restent vertes ; la copie Drive de ces photos se
+    // fait sans jauge (identifiant absent : rien ne bouge).
+    const r2Rangs = () => d.r2Rangs || [];
+    const idsDrive = () => ids.map((id, i) => (r2Rangs().includes(i) ? 'ct-copie-drive-' + i : id));
+    const r2Vertes = () => r2Rangs().forEach((i) => majJauge(ids[i], 100, nomPhoto(i) + T(' : envoyée ✓', ': sent ✓')));
+    const photosArrivees = () => { jaugesPhotosArrivees(idsDrive(), d.rangs, d.liens.length, nomPhoto); r2Vertes(); };  // (js/app.js)
     if (d.liens.length) photosArrivees();
-    else ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
+    else { ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…'))); r2Vertes(); }
+    if (!d.r2Fait) {
+      const r = await envoyerPhotosCandidatureR2(etat.ligne.id, liste, ids, nomPhoto, 'cours-talons').catch(() => ({ rangs: [], chemins: [] }));
+      Object.assign(d, { r2Fait: true, r2: r.chemins, r2Rangs: r.rangs });
+      await EnvoiFiable.garder('cours-talons', etat);
+    }
     if (!d.video) majJauge('ct-jauge-video', 0, T('Vidéo : en attente…', 'Video: waiting…'));
     const infosDrive = { nom: etat.ligne.nom, email: '', phone: etat.ligne.telephone, type: 'projet', projet: 'Cours de talons', source: 'cours_talons', ref: etat.ligne.id };
     if (!d.liens.length) {
       // (envoyerPhotosAvecJauges, js/app.js : le même outil que les candidatures ; le programme Google enregistre lui-même
       // les liens dans la base, l'inscription les reprend à son arrivée même si la réponse s'est perdue)
-      const r = await envoyerPhotosAvecJauges(liste, ids, nomPhoto, infosDrive);
+      const r = await envoyerPhotosAvecJauges(liste, idsDrive(), nomPhoto, infosDrive);
       d.liens = r.liens || []; d.rangs = r.rangs; d.dossier = r.dossier || null;
+      r2Vertes();
       if (d.liens.length) await EnvoiFiable.garder('cours-talons', etat);
     }
     if (!d.video) {
@@ -402,11 +414,21 @@
     afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… Vous pouvez passer sur une autre application : l’envoi continue, et s’il est coupé, il reprendra quand vous reviendrez sur cette page.', 'Sending your photos and video… You can switch to another app: sending continues, and if it is interrupted it will resume when you come back to this page.'), 'ok');
     await envoyerMedias(etat);
     afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
-    const envoi = { liens: etat.d.liens.slice() }, lienVideo = etat.d.video;
+    // (L-17) les photos Cloudflare si elles sont arrivées (la copie Drive reste dans le journal de la base), sinon Drive
+    const r2 = (etat.d.r2 || []).slice(0, 5);
+    const envoi = { liens: r2.length ? r2 : etat.d.liens.slice() }, lienVideo = etat.d.video;
     // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
     const ligne = Object.assign({}, etat.ligne, { photos: envoi.liens, video: lienVideo || null });
     inscriptionTentee = true;
     let { error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
+    // (résumé WhatsApp et e-mail : les liens Drive, lisibles par l'agence ; « r2:… » n'est qu'un nom de rangement)
+    const pourAgence = (l) => Object.assign({}, l, { photos: etat.d.liens.length ? etat.d.liens.slice() : (l.photos.length ? ['(' + l.photos.length + ' reçues, à voir dans l’Administration)'] : []) });
+    // base pas encore prête pour les photos Cloudflare (supabase-l17-photos-talons.sql pas encore collé) : l'inscription
+    // repart avec les liens Drive, comme avant (la base refuse avant de compter l'essai : rien n'est enregistré deux fois)
+    if (error && !error.creneauPris && !error.pasPret && r2.length && etat.d.liens.length) {
+      Object.assign(ligne, { photos: etat.d.liens.slice() });
+      ({ error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok')));
+    }
     // (14/11/2026) un créneau pris entre-temps par une autre élève : rien n'est enregistré. Sur la page, elle en
     // choisit un autre (photos et vidéo déjà envoyées gardées) ; à la reprise d'un envoi coupé (formulaire vide),
     // l'inscription part sans créneau, ses souhaits écrits pour l'agence, qui l'appelle.
@@ -423,13 +445,13 @@
       Object.assign(ligne, { creneaux: null, choix_creneaux: 'convenir', disponibilites: ('À convenir (créneaux souhaités, un n’était plus libre) : ' + TCr.pourAgence(etat.ligne.creneaux || [])).slice(0, 600) });
       ({ error } = await insererAvecPatience('cours_talons', ligne, (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok')));
     }
-    const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(ligne, etat.montant));
+    const lienWhatsApp = 'https://wa.me/' + WHATSAPP_AGENCE + '?text=' + encodeURIComponent(resume(pourAgence(ligne), etat.montant));
     if (error && !error.pasPret) {
       afficherMsg(msg, T('Une erreur est survenue. Réessayez, ou envoyez votre inscription sur WhatsApp.', 'An error occurred. Please try again, or send your sign-up on WhatsApp.'), 'err');
       const a = document.createElement('a'); a.href = lienWhatsApp; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' ' + T('Envoyer sur WhatsApp', 'Send on WhatsApp'); msg.appendChild(a);
       return;
     }
-    if (!error) envoyerNotificationEmail({ name: ligne.nom + ' (cours de talons)', telephone: ligne.telephone, email: '', message: resume(ligne, etat.montant) });
+    if (!error) envoyerNotificationEmail({ name: ligne.nom + ' (cours de talons)', telephone: ligne.telephone, email: '', message: resume(pourAgence(ligne), etat.montant) });
     await EnvoiFiable.oublier('cours-talons');
     void EnvoiFiable.prevenir(T('Inscription envoyée ✓', 'Sign-up sent ✓'), T('Merci ! Votre inscription aux cours de talons est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your heels class sign-up has reached Maître Akesse Model Management.'), etat.page);
     if (window.jouerSon) window.jouerSon('envoi');

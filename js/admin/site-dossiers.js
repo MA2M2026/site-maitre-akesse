@@ -90,23 +90,7 @@
     if (error) throw error;
     return count || 0;
   }
-  // (L-17) photo de candidature rangée chez Cloudflare R2, et appels au serveur pour la lire ou la supprimer
-  const estPhotoR2 = (p) => !!(p && typeof p.chemin === 'string' && p.chemin.startsWith('r2:candidatures/'));
-  async function appelPhotosR2(corps) {
-    const jeton = await jetonSessionCourante();
-    const rep = await fetch('/api/r2-presigner', { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify(corps) });
-    const r = await rep.json().catch(() => ({}));
-    if (!rep.ok) throw new Error(r.error || 'Photos indisponibles pour le moment.');
-    return r;
-  }
-  async function adressesPhotosR2(chemins) {
-    const adresses = {};
-    for (let i = 0; i < chemins.length; i += 200) {
-      try { Object.assign(adresses, (await appelPhotosR2({ action: 'candidature_lire', chemins: chemins.slice(i, i + 200) })).adresses || {}); }
-      catch (e) { /* (serveur injoignable : ces photos ne s'affichent pas cette fois ; rien n'est perdu) */ }
-    }
-    return adresses;
-  }
+  const estPhotoR2 = (p) => !!(p && P.photosR2.est(p.chemin));  // (L-17, js/admin/coque.js)
   // Photos d'un ou plusieurs dossiers : { idDossier: [{ id, chemin, url, affiche }] }
   async function photosDe(conf, ids) {
     if (!conf.photos || !ids.length) return {};
@@ -115,7 +99,7 @@
     // demandées au serveur ; un dossier qui a des photos R2 n'affiche plus ses copies Drive (archive, sinon en double).
     const avecR2 = new Set(lignes.filter((p) => estPhotoR2(p)).map((p) => p[conf.photos.colonne]));
     lignes = lignes.filter((p) => estPhotoR2(p) || !(p.url && !p.chemin && avecR2.has(p[conf.photos.colonne])));
-    const signeesR2 = await adressesPhotosR2(lignes.filter(estPhotoR2).map((p) => p.chemin.slice(3)));
+    const signeesR2 = await P.photosR2.adresses(lignes.filter(estPhotoR2).map((p) => p.chemin));
     const chemins = lignes.map((p) => p.chemin).filter((c) => c && !c.startsWith('r2:'));
     const signees = {};
     if (chemins.length) {
@@ -124,7 +108,7 @@
     }
     const parDossier = {};
     lignes.forEach((p) => {
-      const affiche = estPhotoR2(p) ? signeesR2[p.chemin.slice(3)] : p.chemin ? signees[p.chemin] : p.url;
+      const affiche = estPhotoR2(p) ? signeesR2[p.chemin] : p.chemin ? signees[p.chemin] : p.url;
       if (!affiche) return;
       (parDossier[p[conf.photos.colonne]] = parDossier[p[conf.photos.colonne]] || []).push(Object.assign({ affiche }, p));
     });
@@ -596,7 +580,7 @@
     // la base d'abord, le fichier ensuite (une ligne sans fichier ne se voit pas ; l'inverse si)
     const r = await P.bd(sb.from(conf.photos.table).delete().eq('id', photo.id).select('id'));
     if (!r || !r.length) { el.disabled = false; P.message('Rien n’a été supprimé : reconnectez-vous puis réessayez.'); return; }
-    if (estPhotoR2(photo)) await appelPhotosR2({ action: 'candidature_supprimer', chemin: photo.chemin.slice(3) }).catch(() => { /* fichier orphelin : sans effet visible */ });
+    if (estPhotoR2(photo)) await P.photosR2.supprimer([photo.chemin]).catch(() => { /* fichier orphelin : sans effet visible */ });
     else if (photo.chemin) await sb.storage.from(conf.photos.bucket).remove([photo.chemin]);
     await rechargerPhotos('Photo supprimée.');
   };
@@ -613,13 +597,13 @@
     el.disabled = true;
     // la base d'abord, les fichiers ensuite : si la base refuse, les photos restent intactes
     const chemins = conf.photos ? fiche.photos.map((p) => p.chemin).filter((c) => c && !c.startsWith('r2:')) : [];
-    const cheminsR2 = conf.photos ? fiche.photos.filter(estPhotoR2).map((p) => p.chemin.slice(3)) : [];
+    const cheminsR2 = conf.photos ? fiche.photos.filter(estPhotoR2).map((p) => p.chemin) : [];
     try {
       const r = await P.bd(sb.from(conf.table).delete().eq('id', fiche.d.id).select('id'));
       if (!r || !r.length) throw new Error('rien n’a été supprimé : reconnectez-vous puis réessayez');
     } catch (e) { el.disabled = false; P.message('Erreur : ' + P.erreurTexte(e)); return; }
     if (chemins.length) await sb.storage.from(conf.photos.bucket).remove(chemins).catch(() => { /* fichiers orphelins : sans effet visible */ });
-    if (cheminsR2.length) await appelPhotosR2({ action: 'candidature_supprimer', chemins: cheminsR2 }).catch(() => { /* idem */ });
+    if (cheminsR2.length) await P.photosR2.supprimer(cheminsR2).catch(() => { /* idem */ });
     P.message('Dossier supprimé.');
     location.hash = '#/site/' + conf.page;
   };

@@ -45,14 +45,36 @@ const TAILLE_MAX = 15 * 1024 * 1024;
 //    moins de 2 h, moins de 12 photos, et un nombre de demandes limité par adresse.
 //  - « candidature_verifier » (visiteur) : relit le fichier (vraie image, sinon effacé) et c'est LE SERVEUR qui note
 //    la photo dans casting_photos (chemin « r2:candidatures/… »).
+//  - (16/11 15 h 25) avec « dossier: 'cours-talons' » : mêmes actions pour les COURS DE TALONS (cours-talons/<id>/,
+//    numéro pas encore inscrit, 5 photos au plus, la page met la photo dans l'inscription ; la base la contrôle).
 //  - « candidature_lire » / « candidature_supprimer » (équipe connectée, double authentification) : adresses de
 //    lecture signées d'1 heure (les photos des candidates ne sont jamais servies en accès libre), suppression au clic.
 // =====================================================================================================
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TYPES_CANDIDATURE = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const PHOTOS_MAX_CANDIDATURE = 12;
-const cheminCandidature = (id, chemin) => typeof chemin === 'string'
-  && new RegExp('^candidatures/' + id + '/[0-9a-f]{32}\\.(jpg|png|webp)$').test(chemin);
+// (L-17, élargi le 16/11 15 h 25) les COURS DE TALONS suivent la même route, dossier « cours-talons/<id>/ »
+const DOSSIERS_PHOTOS = { candidatures: 'candidatures', 'cours-talons': 'cours-talons' };
+const PHOTOS_MAX_TALONS = 5;
+const cheminCandidature = (id, chemin, dossier = 'candidatures') => typeof chemin === 'string'
+  && new RegExp('^' + dossier + '/' + id + '/[0-9a-f]{32}\\.(jpg|png|webp)$').test(chemin);
+
+// Inscription au cours de talons : elle n'est enregistrée dans la base qu'APRÈS ses photos. Des photos seulement
+// pour un numéro pas encore inscrit, 5 au plus (comptées chez Cloudflare). Renvoie un message d'erreur, ou null.
+async function talonsOuverte(id) {
+  const [inscrites, objets] = await Promise.all([
+    fetch(SUPABASE_URL + '/rest/v1/cours_talons?select=id&id=eq.' + id, { headers: enTetesService() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    (async () => {
+      const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
+      const r = await creerClientR2().send(new ListObjectsV2Command({ Bucket: process.env.R2_BUCKET_NAME, Prefix: 'cours-talons/' + id + '/', MaxKeys: 20 }));
+      return (r && r.Contents) || [];
+    })().catch(() => null)
+  ]);
+  if (!Array.isArray(inscrites) || !Array.isArray(objets)) return 'Vérification impossible pour le moment : réessayez dans un instant.';
+  if (inscrites.length) return 'Cette inscription ne reçoit plus de photos.';
+  if (objets.length >= PHOTOS_MAX_TALONS) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_TALONS + ').';
+  return null;
+}
 
 // La candidature peut-elle encore recevoir des photos ? Renvoie un message d'erreur, ou null.
 async function candidatureOuverte(id) {
@@ -76,7 +98,8 @@ async function photoCandidature(req, res, debut) {
       if (!utilisateur || !(await adminVerifie(debut.jeton, utilisateur, req.headers['x-appareil']))) {
         res.status(403).json({ error: 'Réservé à l’équipe de l’agence.' }); return;
       }
-      const liste = (Array.isArray(chemins) ? chemins : [chemin]).filter((c) => typeof c === 'string' && /^candidatures\/[0-9a-f-]{36}\/[0-9a-f]{32}\.(jpg|png|webp)$/.test(c));
+      const liste = (Array.isArray(chemins) ? chemins : [chemin]).filter((c) => typeof c === 'string' && /^(candidatures|cours-talons)\/[0-9a-f-]{36}\/[0-9a-f]{32}\.(jpg|png|webp)$/.test(c)
+        && (action === 'candidature_lire' || c.startsWith('candidatures/')));  // (cours de talons : lecture seulement)
       if (!liste.length || liste.length > 200) { res.status(400).json({ error: 'Photos invalides.' }); return; }
       const { GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
       const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
@@ -97,24 +120,29 @@ async function photoCandidature(req, res, debut) {
     }
     // ---- visiteur sans compte ----
     if (typeof candidature !== 'string' || !UUID.test(candidature)) { res.status(400).json({ error: 'Candidature inconnue.' }); return; }
+    const nomDossier = debut.corps.dossier || 'candidatures';
+    const dossier = typeof nomDossier === 'string' && Object.prototype.hasOwnProperty.call(DOSSIERS_PHOTOS, nomDossier) ? DOSSIERS_PHOTOS[nomDossier] : null;
+    if (!dossier) { res.status(400).json({ error: 'Dossier inconnu.' }); return; }
     if (await limiteDebit(res, 'r2-candidature', extraireIp(req) || 'inconnue', 60)) return;
-    const fermee = await candidatureOuverte(candidature);
+    const fermee = dossier === 'cours-talons' ? await talonsOuverte(candidature) : await candidatureOuverte(candidature);
     if (fermee) { res.status(fermee.startsWith('Vérification') ? 503 : 403).json({ error: fermee }); return; }
     if (action === 'candidature_signer') {
       const extension = TYPES_CANDIDATURE[contentType];
       if (!extension) { res.status(400).json({ error: 'Format de photo non accepté (JPEG, PNG ou WebP).' }); return; }
       if (!Number.isInteger(taille) || taille <= 0 || taille > TAILLE_MAX) { res.status(400).json({ error: 'Photo trop lourde ou taille inconnue.' }); return; }
-      const cle = 'candidatures/' + candidature + '/' + crypto.randomBytes(16).toString('hex') + '.' + extension;
+      const cle = dossier + '/' + candidature + '/' + crypto.randomBytes(16).toString('hex') + '.' + extension;
       const { PutObjectCommand } = require('@aws-sdk/client-s3');
       const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
       const uploadUrl = await getSignedUrl(creerClientR2(), new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: cle, ContentType: contentType, ContentLength: taille }), { expiresIn: 300 });
       res.status(200).json({ uploadUrl, chemin: cle }); return;
     }
     if (action === 'candidature_verifier') {
-      if (!cheminCandidature(candidature, chemin)) { res.status(400).json({ error: 'Photo invalide.' }); return; }
+      if (!cheminCandidature(candidature, chemin, dossier)) { res.status(400).json({ error: 'Photo invalide.' }); return; }
       const type = Object.keys(TYPES_CANDIDATURE).find((t) => chemin.endsWith('.' + TYPES_CANDIDATURE[t]));
       const etat = await contenuR2(chemin, type);
       if (etat === 'faux') { res.status(422).json({ error: messageFichierFaux(type), refuse: true }); return; }
+      // cours de talons : la page met la photo dans l'inscription (« r2:cours-talons/… », contrôlé par la base)
+      if (dossier === 'cours-talons') { res.status(200).json({ ok: true, verifie: etat === 'ok' }); return; }
       const note = await fetch(SUPABASE_URL + '/rest/v1/casting_photos', {
         method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify({ application_id: candidature, chemin: 'r2:' + chemin })

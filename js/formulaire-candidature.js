@@ -444,7 +444,7 @@ async function envoyerMedias(etat) {
     // photos se fait sans jauge ; une photo qui n'est pas arrivée chez Cloudflare garde sa jauge pour Drive.
     let arriveesR2 = etat.arriveesR2 || [];
     if (!etat.r2Fait) {
-      try { arriveesR2 = await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto); } catch (e) { arriveesR2 = []; }
+      try { arriveesR2 = (await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto)).rangs; } catch (e) { arriveesR2 = []; }
       Object.assign(etat, { r2Fait: true, arriveesR2 }); await EnvoiFiable.garder('candidature', etat);
     }
     const idsDrive = idsPhotos.map((id, i) => (arriveesR2.includes(i) ? 'ca-copie-drive-' + i : id));  // (jauge absente : rien ne bouge)

@@ -1617,6 +1617,15 @@ depuis Google Drive dans l'Administration. Désormais :
    (action `candidature_lire`, équipe seulement, double vérification) ; un dossier qui a des photos R2 masque ses
    copies Drive. Anciennes candidatures (Drive seul) : affichage inchangé. Suppression d'une photo ou d'un dossier :
    action `candidature_supprimer` (équipe seulement).
+4. **Cours de talons** (même route, demande de la propriétaire du 16/11 15 h 20 : « toutes les photos suivent la même
+   route ») : mêmes actions avec `dossier: 'cours-talons'` → `cours-talons/<numéro>/…`. L'inscription n'existe dans la
+   base qu'APRÈS ses photos : le serveur signe seulement pour un numéro pas encore inscrit, 5 photos au plus (comptées
+   chez Cloudflare) ; la page (`js/cours-talons.js`) met `r2:cours-talons/…` dans `photos` de l'inscription, la base
+   (`supabase-l17-photos-talons.sql`) n'accepte que les photos Cloudflare de CE numéro, et n'y ajoute plus la copie
+   Drive. Base pas encore prête (fichier non collé) : l'inscription repart avec les liens Drive, comme avant.
+   Administration (`js/admin/site-cours-talons.js`) : adresses signées, copies Drive masquées. Outils partagés de
+   l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est jamais effacée par l'API.
+   Limite connue : des photos envoyées pour une inscription jamais terminée restent chez Cloudflare (non listées).
 Pas de nouvelle fonction Vercel (limite de 12) : tout passe par `api/r2-presigner.js`.
 Test : `scripts/tests-visiteur/test-photos-candidature-r2.js` (serveur, candidature FR/EN téléphone/ordinateur,
 Cloudflare en panne, Administration).
