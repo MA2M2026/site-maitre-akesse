@@ -50,7 +50,13 @@ function parentAPrevenir(d) {
   return !!(d && d.parent_telephone) && (!d.date_naissance || estMineurDossier(d));
 }
 // À qui écrire : au parent pour un mineur dont on a les contacts, sinon à la personne.
+// (16/11/2026, audit L-1) : contacts du parent cachés à ce compte (équipe du site : la colonne n'est même pas lue) ;
+// un mineur n'est alors JAMAIS joint directement : personne à qui écrire, l'agence principale s'en charge.
+function contactsParentCaches(d) {
+  return !!d && !('parent_telephone' in d) && !('parent_email' in d);
+}
 function contactsEnvoi(d) {
+  if (estMineurDossier(d) && contactsParentCaches(d)) return { parent: true, cache: true, email: '', phone: '', nom: d.parent_nom || '' };
   if (estMineurDossier(d) && (d.parent_telephone || d.parent_email)) {
     return { parent: true, email: d.parent_email || '', phone: d.parent_telephone || '', nom: d.parent_nom || '' };
   }

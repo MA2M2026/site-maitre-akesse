@@ -105,7 +105,7 @@
     // la notification de la veille ouvre …/b2-cours-talons/planning : le planning, une fois (l'adresse redevient normale)
     if (args && args[0] === 'planning') { filtre = 'planning'; history.replaceState(null, '', '#/site/b2-cours-talons'); }
     try {
-      lignes = await P.bd(sb.from('cours_talons').select('*').order('cree_le', { ascending: false }).limit(500));
+      lignes = await ajouterColonnesPrivees('cours_talons', await P.bd(sb.from('cours_talons').select(await colonnesLisibles('cours_talons')).order('cree_le', { ascending: false }).limit(500)));  // (audit L-1 : contacts des parents et référence Wave pour le principal et les encaissements seulement)
       // (15/11/2026) inscriptions sans photo : leur dossier Drive, s'il est connu (P.drive, js/admin/coque.js)
       dossiersDrive = await P.drive.dossiers(lignes.filter((d) => !photosDe(d).length).map((d) => d.id)).catch(() => ({}));
     } catch (e) {

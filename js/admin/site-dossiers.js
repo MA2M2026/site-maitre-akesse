@@ -166,12 +166,12 @@
     const [total, ...parStatut] = await Promise.all([compter(conf)].concat(conf.statuts.map((s) => compter(conf, s))));
     const nb = {};
     conf.statuts.forEach((s, i) => { nb[s] = parStatut[i]; });
-    let q = sb.from(conf.table).select('*', { count: 'exact' }).order('created_at', { ascending: false });
+    let q = sb.from(conf.table).select(await colonnesLisibles(conf.table), { count: 'exact' }).order('created_at', { ascending: false });  // (audit L-1 : sans les contacts des parents)
     if (e.filtre !== 'toutes') q = q.eq(conf.champStatut, e.filtre);
     else if (conf.aPart.length) q = q.not(conf.champStatut, 'in', '(' + conf.aPart.map((x) => '"' + x + '"').join(',') + ')');
     const { data, count, error } = await q.range(0, e.pages * PAR_PAGE - 1);
     if (error) throw error;
-    const dossiers = data || [];
+    const dossiers = await ajouterColonnesPrivees(conf.table, data || []);  // (principal et encaissements seulement)
     const [photos, suivi] = await Promise.all([photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({})), source === 'casting' ? suiviMessages(dossiers.map((d) => d.id)) : {}]);
     const pastille = (s) => {
       const compte = s === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[s] || 0);
@@ -232,15 +232,17 @@
   function blocChamps(source, d) {
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const parentJoignable = mineur && d.parent_telephone;
+    const parentCache = mineur && contactsParentCaches(d);  // (audit L-1 : jamais le numéro du mineur à la place)
     return '<dl class="champs">' + CHAMPS[source].map(([cle, libelle, unite]) => {
       const v = d[cle];
       if (!v) return '';
-      const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
+      const wa = parentCache ? null : (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
       const video = cle === 'video_url' && /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view$/.test(String(v));
       const valeur = wa ? '<a href="' + P.esc(wa) + '" target="_blank" rel="noopener">' + P.esc(v) + ' ↗ WhatsApp</a>' :
         video ? '<a href="' + P.esc(v) + '" target="_blank" rel="noopener">▶ Voir la vidéo</a>' :
         P.esc((TEXTES_SPECIAUX[cle] && TEXTES_SPECIAUX[cle][v]) || (cle === 'date_naissance' ? P.date(v) + (age !== null ? ' (' + age + ' ans)' : '') : v)) + (unite ? ' ' + unite : '') +
-        (parentJoignable && cle === 'phone' ? ' <small class="doux">(mineur : écrire au parent)</small>' : '');
+        (parentJoignable && cle === 'phone' ? ' <small class="doux">(mineur : écrire au parent)</small>' : '') +
+        (parentCache && cle === 'phone' ? ' <small class="doux">(mineur : le parent est contacté par l’administrateur principal ou les encaissements)</small>' : '');
       return '<div><dt>' + P.esc(libelle) + '</dt><dd>' + valeur + '</dd></div>';
     }).join('') + '</dl>';
   }
@@ -315,7 +317,7 @@
   }
   async function pageFiche(source, id) {
     const conf = SOURCES[source];
-    const d = await P.bd(sb.from(conf.table).select('*').eq('id', id).maybeSingle());
+    const d = await ajouterColonnesPrivees(conf.table, await P.bd(sb.from(conf.table).select(await colonnesLisibles(conf.table)).eq('id', id).maybeSingle()));
     if (!d) return P.entete(conf.titre) + '<div class="carte"><h2>Dossier introuvable</h2><p class="doux">Il a peut-être été supprimé.</p><a class="btn" href="#/site/' + conf.page + '">← Retour à la liste</a></div>';
     fiche = { source, d, photos: [] };
     if (conf.photos) fiche.photos = (await photosDe(conf, [d.id]).catch(() => ({})))[d.id] || [];
@@ -506,7 +508,7 @@
       const vus = e.ids.length - (e.sautes || 0);  // (dossiers supprimés entre-temps : pas comptés)
       return P.etude.fin(page, vus ? (vus > 1 ? 'Vous avez étudié ' + groupeEtude(source, e.filtre, vus) : E.etudie) : E.aucun, 'Bravo, la file est à jour.', E.retour);
     }
-    const d = await P.bd(sb.from(conf.table).select('*').eq('id', e.ids[e.i]).maybeSingle());
+    const d = await ajouterColonnesPrivees(conf.table, await P.bd(sb.from(conf.table).select(await colonnesLisibles(conf.table)).eq('id', e.ids[e.i]).maybeSingle()));
     if (!d) { e.i += 1; e.sautes = (e.sautes || 0) + 1; return pageEtude(source); }
     fiche = { source, d, photos: [] };
     const h = await (source === 'casting' ? hautCandidature(d) : hautRecruteur(d));
