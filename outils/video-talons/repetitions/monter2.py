@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np, cv2
 from PIL import Image, ImageDraw, ImageFont
 from plans2 import P, TEXTES, DUREE, FIN
+import suivi
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 RACINE = os.path.abspath(os.path.join(ICI, '..', '..', '..'))
@@ -90,15 +91,22 @@ def etalonner(img, nb, i):
     f = img.astype(np.float32) / 255
     gris = f @ np.array([0.299, 0.587, 0.114], np.float32)
     if nb: f = np.repeat(gris[..., None], 3, 2) * np.array([1.0, 0.99, 0.97], np.float32)
-    else: f = gris[..., None] + 1.12 * (f - gris[..., None])
-    f = f * VIG[nb] + GRAIN[i % 10] * (0.03 if nb else 0.014)
+    else:
+        f = gris[..., None] + 1.12 * (f - gris[..., None])
+        hi = np.clip((gris - 0.45) / 0.5, 0, 1)[..., None]; lo = np.clip((0.35 - gris) / 0.35, 0, 1)[..., None]
+        f = f + hi * np.array([0.025, 0.008, -0.03], np.float32) + lo * np.array([-0.02, 0.0, 0.025], np.float32)
+        petit = cv2.resize(f, (W // 6, H // 6), interpolation=cv2.INTER_AREA)
+        halo = cv2.GaussianBlur(np.clip(petit - 0.72, 0, None), (0, 0), 6)
+        f = f + cv2.resize(halo, (W, H)) * np.array([1.0, 0.85, 0.7], np.float32) * 0.9
+    f = f * VIG[nb] + GRAIN[i % 10] * (0.03 if nb else 0.011)
     return f
 
 # ------------------------------------------------------------------ caméra
-def camera(s, src, w, h, tau, d, punch=0.0):
+def camera(s, src, w, h, tau, d, punch=0.0, cx_suivi=None):
     (z0, x0, y0), (z1, x1, y1) = s['cam']
     k = doux(tau / d)
     z, cx, cy = z0 + (z1 - z0) * k, x0 + (x1 - x0) * k, y0 + (y1 - y0) * k
+    if cx_suivi is not None: cx = cx_suivi
     z *= 1 + punch
     sc = W / w * z
     cxp, cyp = cx * w, cy * h
@@ -108,10 +116,26 @@ def camera(s, src, w, h, tau, d, punch=0.0):
     img = cv2.warpAffine(src, M, (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
     return cv2.addWeighted(img, 1.4, cv2.GaussianBlur(img, (0, 0), 1.6), -0.4, 0)
 
+def index_source(s, lu, tau):
+    k = int(round((temps_source(s, tau) - lu['debut']) * lu['ips']))
+    return min(max(k, 0), len(lu['images']) - 1)
+
 def image_source(s, lu, tau):
-    t = temps_source(s, tau)
-    k = int(round((t - lu['debut']) * lu['ips']))
-    return lu['images'][min(max(k, 0), len(lu['images']) - 1)]
+    return lu['images'][index_source(s, lu, tau)]
+
+def suivi_de(s, lu, tau):
+    if not s.get('suivi', not s.get('nb', False)) or 'suivi_x' not in lu: return None
+    return float(lu['suivi_x'][index_source(s, lu, tau)])
+
+# objectif de cinéma : le centre (le mannequin) reste net, les bords et le plafond s'adoucissent
+_e = np.sqrt(((xx - W / 2) / (W * 0.36)) ** 2 + ((yy - H * 0.50) / (H * 0.50)) ** 2)
+NET = np.clip(1.6 - _e, 0, 1)[..., None].astype(np.float32)
+NET = NET * NET * (3 - 2 * NET)
+def objectif(img, force=1.0):
+    petit = cv2.resize(img, (W // 4, H // 4), interpolation=cv2.INTER_AREA)
+    flou = cv2.resize(cv2.GaussianBlur(petit, (0, 0), 2.6), (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32)
+    m = 1 - (1 - NET) * force
+    return (img.astype(np.float32) * m + flou * (1 - m)).astype(np.uint8)
 
 # ------------------------------------------------------------------ textes
 _POL = {}
@@ -211,6 +235,47 @@ def masque_fenetre(txt):
     sc = (W - 90) / m.shape[1]
     return cv2.resize(m, (int(m.shape[1] * sc), int(m.shape[0] * sc)), interpolation=cv2.INTER_AREA)
 FEN = {}
+def fabriquer_medaillon(d=250):
+    m = np.zeros((d, d, 4), np.float32); c = (d - 1) / 2
+    yy_, xx_ = np.mgrid[0:d, 0:d]; r = np.sqrt((xx_ - c) ** 2 + (yy_ - c) ** 2)
+    disque = np.clip(c - 3 - r, 0, 1)
+    anneau = np.clip(1.4 - np.abs(r - (c - 9)), 0, 1)
+    m[..., :3] = 0.0; m[..., 3] = disque * 0.58
+    m[..., :3] += anneau[..., None] * 1.0; m[..., 3] = np.maximum(m[..., 3], anneau * 0.9)
+    lw = int(d * 0.78); lh = int(LOGO.shape[0] * lw / LOGO.shape[1])
+    lg = cv2.resize(LOGO, (lw, lh), interpolation=cv2.INTER_AREA)
+    y0, x0 = int(c - lh / 2), int(c - lw / 2)
+    a = lg[..., 3:]
+    m[y0:y0 + lh, x0:x0 + lw, :3] = m[y0:y0 + lh, x0:x0 + lw, :3] * (1 - a) + lg[..., :3] * a
+    m[y0:y0 + lh, x0:x0 + lw, 3:] = np.maximum(m[y0:y0 + lh, x0:x0 + lw, 3:], a)
+    return m
+MEDAILLON = None
+def fabriquer_signature(largeur=300):
+    """Logo transparent façon signature d'agence (choix de la propriétaire : en haut à gauche, sans fond)."""
+    w = largeur; h = int(LOGO.shape[0] * w / LOGO.shape[1])
+    lg = cv2.resize(LOGO, (w, h), interpolation=cv2.INTER_AREA)
+    m = np.zeros((h + 24, w + 24, 4), np.float32)
+    ombre = cv2.GaussianBlur(np.pad(lg[..., 3], 12), (0, 0), 5) * 0.45   # ombre douce : lisible sur les murs clairs
+    m[..., 3] = ombre
+    m[12:12 + h, 12:12 + w, :3] = lg[..., :3]
+    m[12:12 + h, 12:12 + w, 3] = np.maximum(m[12:12 + h, 12:12 + w, 3], lg[..., 3])
+    m[..., :3] *= (m[..., 3:] > 0)
+    return m
+
+def medaillon(f, alpha):
+    global MEDAILLON
+    if MEDAILLON is None: MEDAILLON = fabriquer_signature()
+    h, w = MEDAILLON.shape[:2]; x0, y0 = 52, 150
+    a = MEDAILLON[..., 3:] * alpha * 0.82
+    f[y0:y0 + h, x0:x0 + w] = f[y0:y0 + h, x0:x0 + w] * (1 - a) + MEDAILLON[..., :3] * a
+    return f
+
+def trainee(f, force):
+    """Traînée de lumière horizontale (objectif anamorphique) au moment des éclairs."""
+    if force <= 0.01: return f
+    prof = np.exp(-((yy[:, :1] - H * 0.47) / 7) ** 2) + 0.35 * np.exp(-((yy[:, :1] - H * 0.47) / 60) ** 2)
+    larg = np.exp(-((xx[:1] - W / 2) / (W * 0.7)) ** 2)
+    return f + (prof * larg)[..., None] * np.array([0.75, 0.85, 1.0], np.float32) * force
 APPUI = {}
 def appui(m):
     ys, xs = np.nonzero(m[:, : m.shape[1] // 6] > 0.99)
@@ -223,7 +288,12 @@ class Monteur:
         self.plans = sorted(P, key=lambda p: p['a']); self.lus = {}
     def lu(self, s):
         cle = (s['r'], tuple(s['k']))
-        if cle not in self.lus: self.lus[cle] = lire(s)
+        if cle not in self.lus:
+            lu = lire(s)
+            if s.get('suivi', not s.get('nb', False)):
+                a, d, ips = besoin(s)
+                lu['suivi_x'] = suivi.suivre(f"{s['r']}_{a:.2f}_{d:.2f}_{ips}", lu['images'], os.path.join(ICI, 'cache'), ips)
+            self.lus[cle] = lu
         return self.lus[cle]
     def oublier(self, T):
         garder = set()
@@ -235,8 +305,12 @@ class Monteur:
 
     def plan_simple(self, p, tau, i):
         lu = self.lu(p)
-        punch = 0.07 * math.exp(-tau / 0.14) if p.get('coup') else 0.0
-        img = camera(p, image_source(p, lu, tau), lu['w'], lu['h'], tau, p['d'], punch)
+        punch = 0.09 * math.exp(-tau / 0.12) if p.get('coup') else 0.0
+        img = camera(p, image_source(p, lu, tau), lu['w'], lu['h'], tau, p['d'], punch, suivi_de(p, lu, tau))
+        if not p.get('nb'): img = objectif(img, 1.0 if p.get('suivi', True) else 0.6)
+        if p.get('coup') and tau < 3 / FPS:                             # coupe nerveuse : 3 images filées
+            k = int((3 - tau * FPS) * 22)
+            if k > 2: img = cv2.blur(img, (k, 1))
         f = etalonner(img, p.get('nb', False), i)
         if p.get('rembobine'):                                         # pendant le rembobinage : lignes de bande
             v = (temps_source(p, tau + 0.02) - temps_source(p, tau - 0.02)) / 0.04
@@ -259,7 +333,7 @@ class Monteur:
                 for j, s in enumerate(p['panneaux']):
                     lu = self.lu(s)
                     decal = int((1 - sortie_rapide((tau - 0.12 * j) / 0.35)) * H) * (1 if j % 2 else -1)
-                    img = etalonner(camera(s, image_source(s, lu, tau), lu['w'], lu['h'], tau, p['d']), False, i)
+                    img = etalonner(objectif(camera(s, image_source(s, lu, tau), lu['w'], lu['h'], tau, p['d'], 0.0, suivi_de(s, lu, tau)), 0.5), False, i)
                     bande = img[:, W // 2 - lw // 2: W // 2 - lw // 2 + lw]
                     if decal:
                         b2 = np.zeros_like(bande)
@@ -288,7 +362,9 @@ class Monteur:
             if fl == 'rouge' and tau < 3 / FPS: f = f * 0 + ROUGE
             elif fl == 'rouge' and tau < 0.3: f = f + ROUGE * 0.6 * (1 - tau / 0.3)
             elif fl == 'blanc': f = f + (1 - f) * 0.85 * math.exp(-tau / 0.06)
-        return textes(f, T)
+            if fl == 'rouge' or (fl == 'blanc' and p['a'] < 60): f = trainee(f, 1.3 * math.exp(-tau / 0.18))
+        f = textes(f, T)
+        return medaillon(f, min(1.0, T / 0.6) * (1 - lisse((T - (FIN - 0.4)) / 0.4)))
 
 def en_octets(f): return (np.clip(f, 0, 1) * 255 + 0.5).astype(np.uint8)
 
