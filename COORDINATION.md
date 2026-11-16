@@ -559,6 +559,18 @@ compte « site ».
   décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
   confidentialité) ; relit et vérifie par d'autres moyens.
 
+## 🟥 ORDRE DU SUPERVISEUR (11 h 45) — C ABSENT : B REPREND LA BATTERIE FINALE
+
+La session de C s'est arrêtée pendant la batterie (dernier commit 120d6c57 à 11 h 35, aucun résultat écrit).
+**D ne peut pas** la faire (son filtre bloque toute commande qui lit `js/app.js`). **B la reprend** (B a déjà passé une
+batterie complète cette nuit) :
+1. B ajoute à `audit/corrections` son correctif SonarQube 93f03384, puis plus personne ne pousse sur la branche ;
+2. B lance la batterie COMPLÈTE depuis le début sur la nouvelle tête : `node --check`, `verifier-csp`,
+   `versionner --verifier`, base d'essai, toutes les séries visiteurs ; puis `/code-review` depuis main ;
+3. B écrit ici le résultat exact (séries passées / échecs, avec la sortie des échecs).
+**La mise en ligne reste à C** (décision de la propriétaire) ; si C n'est pas revenu quand tout est vert, le
+superviseur demande à la propriétaire qui la fait.
+
 ## 🧾 BILAN COMBINÉ DU SUPERVISEUR (11 h 30) — chaque agent écrit « d'accord » ou sa correction
 
 Les 5 rapports de mission concordent ; aucun désaccord sur l'état final.
