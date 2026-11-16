@@ -74,6 +74,21 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   });
   ok(r4.pendant === 1 && r4.apres === 2, 'deux appuis rapides : un seul envoi (' + r4.pendant + ') ; un nouvel appui après la fin repart normalement (' + r4.apres + ')');
 
+  // 4 bis. la bande n'est même pas créée sur un formulaire (vieux navigateurs sans :has) : afficher() est appelé comme
+  // lorsque Chrome propose l'installation ; aucune bande ne doit apparaître
+  // (vrai Chrome d'Android simulé : la bande s'affiche après le choix des cookies)
+  const android = await b.newContext(Object.assign({}, require('playwright').devices['Pixel 7'], { serviceWorkers: 'block' }));
+  const bandeCreee = async (page) => {
+    const pa = await android.newPage(); await brancher(pa, { tables: {}, rpc: { casting_ouvert: true } }, []);
+    await pa.goto('http://127.0.0.1:' + PORT + '/' + page); await pa.waitForTimeout(1500);
+    const refus = pa.locator('#bandeau-cookies button', { hasText: 'Refuser' }); if (await refus.count()) await refus.first().click();
+    await pa.waitForTimeout(800);
+    const r = !!(await pa.$('#ma2m-installer')); await pa.close(); return r;
+  };
+  const surAccueilAndroid = await bandeCreee('index.html'), surIntegrerAndroid = await bandeCreee('integrer-agence.html');
+  await android.close();
+  ok(surAccueilAndroid && !surIntegrerAndroid, 'Android : la bande « Appli MA2M » est créée sur l’accueil (' + surAccueilAndroid + ') mais jamais sur Intégrer l’agence (' + surIntegrerAndroid + '), même sans :has');
+
   // 5. la bande « Appli MA2M » : cachée sur les formulaires, visible sur l'accueil
   const bande = () => p.evaluate(() => {
     const d = document.createElement('div'); d.id = 'ma2m-installer'; d.className = 'ma2m-installer ma2m-installer--site'; d.textContent = 'Appli MA2M';

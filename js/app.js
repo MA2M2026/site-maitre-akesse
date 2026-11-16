@@ -3429,6 +3429,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // bande compacte à droite, à côté de la bulle WhatsApp (elle cachait le nom de la mannequin sur sa fiche et des
     // champs des formulaires) ; elle s'efface le temps d'écrire dans un champ, puis revient
     const surLeSite = !pageAdministration() && !pageApplicationMannequin();
+    // (16/11/2026, audit R-04, réserve de C) pages de formulaire : la bande n'est jamais créée (elle cachait « Envoyer ») ;
+    // la règle CSS de css/installation.css fait de même, mais :has n'existe pas avant Chrome 105 / Safari 15.4
+    if (surLeSite && document.querySelector('#form-casting, #form-talons, #form-contact')) return;
     const b = document.createElement('div');
     b.id = 'ma2m-installer'; b.className = 'ma2m-installer';
     if (surLeSite) b.classList.add('ma2m-installer--site');
