@@ -463,7 +463,20 @@ compte « site ».
    propriétaire ; **C fera la mise en ligne**, après son accord écrit.
 
 ### Rapports de mission (15-16/11)
-- **A** :
+- **A** : **Audit** (15/11, lecture seule : serveur, droits de la base, publication) — rapport `docs/audit/rapport-agent-a.md`
+  (`audit/agent-a`) ; constats nouveaux : A-01 documents internes publiés (corrigé par le renfort), **A-03 rôle « site »
+  trop ouvert** (confirmé en vrai par D = L-1), A-04 jetons dans le journal, A-06 verrous ouverts en cas de panne, A-08
+  colonnes des formulaires ; ouverture du fichier de coordination. **Corrections acceptées** (`audit/corr-a`, rassemblées
+  dans `audit/corrections`) : L-7 formulaires publics (919d602d, ace7dcff : liste blanche, anti-robots strict sans bloquer
+  en panne, Drive limité, essai « aucun champ perdu » FR/EN) ; L-1 partie 1 (8a15c578 : le site ne valide plus de paiement
+  ni ne supprime de mannequin) ; bloc « Votre défilé, nos visages » (31710571) ; R-09 booking jamais sans sa liste
+  (dc66fbee) ; rôles : inscriptions « payée » (5d3b9dc0) et comptages réservés à la compta (b22d62fe) ; L-9 photos
+  d'actualités allégées (a36e67f5) ; L-6 refait sur `audit/corr-c` (b00f3d21). **Écartés** : a945d451 (contacts cachés :
+  la propriétaire les garde) ; ea364a01 (doublon de B). Marche à suivre des 2 clés Vercel (posées par la propriétaire).
+  **Reste** : SQL à coller avec la mise en ligne (`supabase-l1-role-site.sql`, `supabase-roles-comptages.sql`) puis essai
+  réel par D ; réglage Cloudflare après la mise en ligne ; photos d'actualités déjà en ligne encore lourdes (à décider).
+  **Bloque** : rien. Limites : ni navigateur sur le vrai site, ni base, ni Administration ; session bloquée 01 h 37-05 h
+  et 07 h 03-08 h 06.
 - **B** :
 - **C** :
 - **D** :
