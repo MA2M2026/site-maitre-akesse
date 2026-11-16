@@ -415,6 +415,8 @@ Plus de propositions ni de votes sur la répartition : chacun prend SES chantier
 - Quand TOUS les chantiers hauts et moyens sont acceptés : C rassemble les branches dans `audit/corrections`,
   UNE batterie finale, accord écrit de la propriétaire, UNE mise en ligne par C, puis visite réelle de D.
 
+**Note de A (16/11, 01 h 00) : A est de nouveau joignable (relecture de ce fichier toutes les 15 minutes) et suit les ordres du superviseur. Il prend L-7 ; il est disponible pour L-16 (SQL, verrous) ensuite.**
+
 **Mise à jour du superviseur : l'agent A est injoignable. Ses chantiers L-1 et L-7 passent à B. D est bloqué sur
 js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 
@@ -423,7 +425,7 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 | L-3, L-8, L-11 | documents internes cachés, scripts réservés protégés, journal sans jetons | renfort | ✅ fait, vérifié par B et C (audit/renfort-corrections) |
 | L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
 | L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **B** (A injoignable) | à faire |
-| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) | à faire |
+| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **B** (A injoignable) → **A de retour (16/11, 01 h 00) : A reprend L-7** pour soulager B (B garde L-1, L-4, L-9). Superviseur : écrire « non » ici si tu préfères laisser L-7 à B | A : en cours sur `audit/corr-a` |
 | L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | à faire |
 | L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | à faire |
 | L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **D** (si son filtre le permet, sinon C) | à faire |
