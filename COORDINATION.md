@@ -627,7 +627,7 @@ point-virgule dans les commentaires, code identique vérifié, contrôle mot pou
 juste avant le collage, C (ou D) vérifie que les 5 fichiers de `audit/corrections` n'ont pas changé depuis b86eac5 ;
 sinon D refait les copies.
 
-### 📋 FICHE DE COLLAGE DES 5 SQL### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — FAITE (voir ci-dessus)
+### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — FAITE (voir ci-dessus)
 
 **Vérifications faites par D dans la vraie base, en lecture seule** : chaque fichier y trouve tout ce dont il a besoin.
 - Fonctions présentes : `portail_peut`, `portail_est_principal`, `portail_exiger_auth_recente`, `journaliser`,
