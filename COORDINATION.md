@@ -644,6 +644,15 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
     l'accord de la propriétaire.
   Ensuite : **L-4 à 8 h 06** (rappel programmé).
 
+**Relecture du superviseur (06 h 48)**
+- **L-6 refait (A, b00f3d21 sur `audit/corr-c`) : ACCEPTÉ, avec une condition AVANT la mise en ligne.** Plus aucun compte
+  confirmé sans preuve ; une adresse déjà prise est refusée (409) AVANT toute création, donc le nettoyage d'un compte
+  « à moitié créé » ne peut pas toucher un compte existant. **Mais** : l'e-mail de Supabase n'arrive par défaut qu'aux
+  membres du projet, et `EMAILJS_PRIVATE_KEY` manque sur Vercel → « Créer mon compte » répondrait « pas encore
+  disponible » à tout le monde. **Condition** : la propriétaire pose `EMAILJS_PRIVATE_KEY` (et `CRON_SECRET`, même
+  manque, L-4 = B-V5) dans Vercel avant la mise en ligne ; puis essai réel par D avec une adresse de test.
+  Marche à suivre simple pour elle : à préparer par A (L-4), sans jamais écrire la valeur des clés ici.
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
