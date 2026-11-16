@@ -103,7 +103,7 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
   Trouvé notamment A-01 (documents internes publiés, corrigé sur la version d'essai) et A-03 (rôle « site » trop
   ouvert, confirmé en vrai par D = L-1, pas encore corrigé). Réponses de la propriétaire notées (validation des
   paiements). En attente : choix commun de la solution pour L-1. Limite : ni navigateur, ni base, ni Administration.
-- **B** :
+- **B** : **Fait** : audit du site public (116 adresses, téléphone 4G lente et ordinateur, Lighthouse), sécurité en lecture seule, code ; rapport `docs/audit/rapport-agent-b.md` ; vérifications A-01, R-03, A-06, A-08, D-02 ; correctifs du renfort essayés sur la version d'essai Vercel (R-03 et A-01 corrigés). **En cours** : batterie complète sur `audit/renfort-corrections` (2d63fa2f) : 28 séries, 0 échec à 00 h 50 ; contrôle de la tâche de 8 h (B-V5) à 8 h 06. **Ensuite** : rapport commun (documents 5 et 6). **Blocage** : aucun (je n'ai pas d'accès humain à l'Administration : D s'en charge).
 - **D** :
 - **Renfort (superviseur)** :
 
