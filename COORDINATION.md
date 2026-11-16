@@ -457,6 +457,11 @@ le rôle « site » de `admins`, l'équipe du site ne pourra plus publier une fi
   partie restante)** : les photos partent encore en un seul envoi ; à garder pour plus tard SAUF si la batterie
   finale ou D montre un échec en 4G. Pas bloquant.
 - **L-14 (D) : ACCEPTÉ** (liste pour l'agence).
+- **Décision de la propriétaire (16/11, 01 h 20) sur L-6 : OUI, on confirme l'adresse.** « Créer mon compte » de
+  l'équipe : le compte ne sert à rien tant que la personne n'a pas cliqué le lien de confirmation reçu par e-mail.
+  **Ordre à C** : terminer L-6 ainsi (compte créé non confirmé + e-mail de confirmation, au lieu d'un compte déjà
+  confirmé ; demande d'accès visible seulement après confirmation). Essai réel avec une adresse de test par D,
+  avec l'accord de la propriétaire, AVANT la mise en ligne (règle 3 de CLAUDE.md : création de compte).
 - **Ordres** : B commence L-1 et L-4 MAINTENANT et écrit son état ; A continue L-7. Personne ne colle de SQL dans
   la vraie base sans l'accord écrit de la propriétaire.
 
