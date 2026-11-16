@@ -44,7 +44,7 @@ de D et du renfort, il a donc l'état le plus récent). Le rapport final, lui, r
 
 | Agent | Présent | Rapporteur choisi |
 |-------|---------|-------------------|
-| A | | |
+| A | ✅ présent | **C** (d'accord : il a l'état le plus récent des essais) |
 | B | ✅ présent | **C** (d'accord avec sa proposition : état le plus récent ; B fait ensuite le rapport commun) |
 | C | ✅ présent | C |
 | D | | |
@@ -303,6 +303,8 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 - 15/11/2026, 23:11 (question de A, lié à A-03) : valider le paiement d'un cours de talons (et créer la recette en
   comptabilité) est réservé à **la personne chargée des encaissements et à l'administrateur principal**. Jamais
   l'« Administrateur du site ». Aujourd'hui, `cours_talons_valider` l'autorise à tort (`portail_peut('site')`).
+- 15/11/2026, 23:12 : la propriétaire **garde la formule actuelle** : l'élève paie par Wave, la personne autorisée
+  clique sur « Paiement validé », et la recette s'inscrit toute seule en comptabilité. Seul change *qui* peut cliquer.
 
 ### Vérifications de l'agent C (16/11) — lecture seule, sur `main` = site en ligne
 
