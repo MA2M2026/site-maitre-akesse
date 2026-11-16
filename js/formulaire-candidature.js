@@ -188,6 +188,14 @@ function videoPrete(fichier, duree, origine) {
   videoChoisie = fichier;
   const info = document.getElementById('ca-video-info');
   info.style.color = 'var(--gris)';
+  // (16/11/2026, audit L-5 = R-07) vidéo que ce téléphone n'a pas pu lire (ni durée ni image) : acceptée (certaines
+  // vraies vidéos ne se lisent pas sur tous les téléphones), mais sans dire « prête » : la personne vérifie
+  if (!duree && !document.querySelector('#ca-video-apercu img[src]:not(.u-hidden)')) {
+    info.style.color = 'var(--rouge)';
+    info.textContent = T(`Vidéo choisie (${enMo(fichier.size)}), mais ce téléphone n'arrive pas à la lire : vérifiez que c'est bien votre vidéo de présentation.`,
+      `Video selected (${enMo(fichier.size)}), but this phone cannot play it: please check it is really your introduction video.`);
+    return;
+  }
   info.textContent = `✓ ${T('Vidéo prête', 'Video ready')} (${duree ? Math.round(duree) + ' s, ' : ''}${enMo(fichier.size)}${origine && origine.size > fichier.size ? T(', allégée depuis ', ', reduced from ') + enMo(origine.size) : ''}).`;
 }
 document.getElementById('ca-video').addEventListener('change', async (e) => {
@@ -538,8 +546,16 @@ async function envoyerMedias(etat) {
   return complet;
 }
 
+// (16/11/2026, audit L-5 = R-07) verrou posé DÈS le premier appui : le bouton n'était désactivé qu'après plusieurs
+// attentes (photos, vidéo), et un second appui très rapide (iPhone) lançait un deuxième envoi
+let envoiCommence = false;
 document.getElementById('form-casting').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (envoiCommence) return;
+  envoiCommence = true;
+  try { await envoyerCandidature(e); } finally { envoiCommence = false; }
+});
+async function envoyerCandidature(e) {
   // Évite les envois multiples : un visiteur qui tape plusieurs fois sur
   // "Envoyer" (le temps que la validation s'exécute) ne déclenche l'envoi
   // qu'une seule fois (journal du site, 01-02/10/2026 : 4 clics en 2 s).
@@ -658,7 +674,7 @@ document.getElementById('form-casting').addEventListener('submit', async (e) => 
   document.getElementById('ca-consentement').disabled = false;
   majConsentement();
   btn.disabled = false;
-});
+}
 
 // Reprise d'un envoi coupé (12/11/2026) : à l'ouverture de la page, s'il reste des photos ou une vidéo à envoyer
 window.MA2M_REPRISE_ICI = 'candidature';
