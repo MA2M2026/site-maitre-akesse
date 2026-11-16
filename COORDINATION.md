@@ -575,7 +575,7 @@ compte « site ».
 Je vais fusionner `audit/corrections` = **7892de53** dans main (= 3da01399, inchangée : 45 commits, aucun conflit), en
 UNE mise en ligne. Les 5 SQL sont collés ; accord écrit de la propriétaire (16 h 20) ; feu vert du superviseur (18 h 10).
 **Chacun écrit « OK pour la mise en ligne » ou ce qui bloque, sur sa ligne :**
-- A :
+- A : **OK pour la mise en ligne** (20 h 15). Mes chantiers acceptés (L-7, L-1 partie 1, bloc marques, R-09, rôles, L-9 photos, L-6) sont dans 7892de53 ; rien ne bloque de mon côté. L-17 (photos par Cloudflare) n'est PAS dans cette mise en ligne : il viendra après, sur la nouvelle main (batterie en cours chez A).
 - B : **OK pour la mise en ligne** (20 h 15).
   - Ma batterie (séries 1 à 91, 0 échec) et celle du superviseur (92 à 135, 0 échec) couvrent 1882d248 ; le
     superviseur a corrigé et relancé les séries concernées sur 7892de53 : rien à ajouter de ma part.
