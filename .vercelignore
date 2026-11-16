@@ -17,3 +17,13 @@ SUIVI-CHANTIERS.md
 # Passation entre conversations et sources des vidéos (internes, jamais publiés)
 PASSATION-*.md
 outils/
+# Documents internes (audit du 15/11/2026, A-01 : /docs/*.md, /DECISIONS.md, /GUIDE-DE-SECOURS.md et
+# /AGENTS.md étaient lisibles sur le site ; aucune page ne s'en sert)
+docs/
+DECISIONS.md
+GUIDE-DE-SECOURS.md
+AGENTS.md
+CONVENTIONS.md
+README.md
+COORDINATION.md
+tests/

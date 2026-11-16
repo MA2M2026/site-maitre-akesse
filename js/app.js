@@ -253,7 +253,7 @@ function construireHtmlCv(d) {
   return (
     '<div class="private-note">Document privé, visible uniquement par ' + echapperHtml((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M</div>' +
     '<div class="mcv-wrap"><aside class="mcv-side">' +
-      '<div class="mcv-photo">' + heroPhoto + mcvIcon('user', 48) + '<div class="mcv-photo-logo"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div></div>' +
+      '<div class="mcv-photo">' + heroPhoto + mcvIcon('user', 48) + '<div class="mcv-photo-logo"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"></div></div>' +
       '<div class="mcv-tagline">Former · Révéler · Valoriser</div>' +
       '<div class="mcv-name"><span class="mcv-nom">' + echapperHtml(d.nomComplet || '') + '</span></div>' +
       '<div class="mcv-divider"></div>' +
@@ -266,7 +266,7 @@ function construireHtmlCv(d) {
       '</ul>' +
       '<div class="mcv-cat"><span class="lbl">Catégorie</span><span class="val">' + echapperHtml(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '') + '</span></div>' +
       (d.citation ? '<blockquote class="mcv-quote">« ' + echapperHtml(d.citation) + ' »</blockquote>' : '') +
-      '<div class="mcv-agency"><img src="assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
+      '<div class="mcv-agency"><img src="/assets/logo-header.png" alt="Maître Akesse Model Management"></div>' +
     '</aside><div class="mcv-right"><div class="mcv-main"><div class="mcv-topline">Model CV</div>' +
       '<section class="mcv-sec mcv-sec-subtile"><h4>' + mcvIcon('user') + ' Profil</h4><p class="mcv-profile-text">' + echapperHtml(d.bio || 'Profil à compléter.') + '</p></section>' +
       '<section class="mcv-sec"><h4>' + mcvIcon('body') + ' Informations physiques</h4><div class="mcv-two-col">' +
@@ -1388,7 +1388,7 @@ async function construireCanvasCv(d) {
   const photosAuto = photosCvCompletees(d);
   const [photoHero, logo, ...photosPortfolio] = await Promise.all([
     photosAuto.hero ? chargerImageHauteRes(photosAuto.hero, COTE_PETITE_CASE) : Promise.resolve(null),
-    chargerImageLocale('assets/logo-header.png'),
+    chargerImageLocale('/assets/logo-header.png'),
     ...[0, 1, 2, 3, 4].map(function (i) { const u = photosAuto.compcard[i]; return u ? chargerImageHauteRes(u, COTE_PETITE_CASE) : Promise.resolve(null); }),
     chargerQrLib().catch(function () { return null; })
   ]);
