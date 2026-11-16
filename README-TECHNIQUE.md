@@ -5305,3 +5305,9 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   balise `Content-Security-Policy` que les autres pages : aucun script ni style en ligne permis (ils n'en ont pas).
   Vérifié : `scripts/verifier-csp.py`, aucune violation à l'ouverture des 6 pages, tests `test-accord-parent.js`,
   `test-places.js`, `test-programme-talons.js`, `test-recu.js`, `test-convocations.js`.
+- **L-2, une mannequin ne se publie plus seule** : `supabase-publication-protegee.sql` (À COLLER, contrôle « 1 élément
+  sur 1 » ; essais `scripts/base-essai/essais-publication-protegee.sql`). Le gardien `gerer_validation_publication`
+  garde, hors agence, les valeurs de `premiere_publication_faite`, `raison_refus`, `en_attente_validation`,
+  `desactive` (+ date, auteur) et `exclue_vitrine`, et calcule la minorité sur l'ancienne ET la nouvelle date de
+  naissance. Avant : écrire soi-même `premiere_publication_faite = true` puis `published = true` publiait au Book
+  sans validation, même une mineure (constaté dans la vraie base par l'agent D). « Agence » = présente dans `admins`.
