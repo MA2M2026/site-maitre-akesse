@@ -179,15 +179,7 @@ propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/
 - **Suppression définitive d'une mannequin** (`api/supprimer-mannequin.js`) : administrateur principal seulement (un
   ancien compte admin sans fiche d'équipe garde l'accès) ; bouton caché aux autres (`js/admin/site-mannequins.js`).
 - Essais : `scripts/base-essai/essais-l1-role-site.sql`, `test-admin-cours-talons.js` (rôle « site »),
-  `test-admin-code-serveur.js`.
-- **Partie 2, contacts des parents et références de paiement** (`supabase-l1-contacts-prives.sql`) : droits par
-  colonne sur `casting_applications`, `inscriptions_mannequins`, `cours_talons` (colonnes privées dans
-  `l1_colonnes_privees`). L'Administration demande la liste `colonnes_lisibles(table)` au lieu de « * » et ajoute les
-  colonnes privées par `dossiers_prives(table, ids)` (principal, encaissements, accès « contacts_prives ») :
-  `colonnesLisibles` / `ajouterColonnesPrivees` dans `js/app.js`. Mineur dont le parent est caché : jamais de message
-  à la mineure elle-même (`contactsParentCaches`, `js/messages-candidats.js`). ⚠ Une colonne ajoutée plus tard à ces
-  tables : recoller le fichier ; ne jamais coller « grant select on <table> to authenticated ».
-  Essais : `essais-l1-contacts-prives.sql`, `test-l1-contacts-prives.js`.
+  `test-admin-code-serveur.js`. Reste à décider (partie 2) : les contacts privés des candidatures pour ce rôle.
 
 ## 🖥️ Phase 2 : tout le site public écrit par le serveur (02/11/2026, demande de la propriétaire)
 

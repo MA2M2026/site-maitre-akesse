@@ -968,33 +968,6 @@ async function lireToutesLignes(fabrique) {
   }
 }
 
-// (16/11/2026, audit L-1, supabase-l1-contacts-prives.sql) : les contacts des parents et les références de paiement des
-// candidatures, inscriptions et cours de talons ne se lisent plus en direct (« toutes les colonnes » est refusé).
-// colonnesLisibles(table) donne la liste à demander (« * » tant que le fichier SQL n'est pas collé) ;
-// ajouterColonnesPrivees(table, lignes) les ajoute aux lignes pour le principal et les encaissements (rien pour les autres).
-const TABLES_COLONNES_PRIVEES = ['casting_applications', 'inscriptions_mannequins', 'cours_talons'];
-const colonnesLisiblesCache = {};
-async function colonnesLisibles(table) {
-  if (!TABLES_COLONNES_PRIVEES.includes(table)) return '*';
-  if (!colonnesLisiblesCache[table]) {
-    colonnesLisiblesCache[table] = sb.rpc('colonnes_lisibles', { p_table: table }).then(({ data, error }) => {
-      if (error || !Array.isArray(data) || !data.length) { delete colonnesLisiblesCache[table]; return '*'; }  // (pas encore collé)
-      return data.join(', ');
-    });
-  }
-  return colonnesLisiblesCache[table];
-}
-async function ajouterColonnesPrivees(table, lignes) {
-  const liste = (Array.isArray(lignes) ? lignes : [lignes]).filter((l) => l && l.id);
-  if (!TABLES_COLONNES_PRIVEES.includes(table) || !liste.length || (await colonnesLisibles(table)) === '*') return lignes;
-  for (let i = 0; i < liste.length; i += 500) {
-    const { data, error } = await sb.rpc('dossiers_prives', { p_table: table, p_ids: liste.slice(i, i + 500).map((l) => l.id) });
-    if (error || !data) continue;  // (pas autorisé ou panne : les lignes restent sans contacts privés)
-    liste.slice(i, i + 500).forEach((l) => { if (data[l.id]) Object.assign(l, data[l.id]); });
-  }
-  return lignes;
-}
-
 // Agenda MA2M (Extension 124) : libellés des types de projet [français, anglais] et
 // date lisible (« jeu. 15 oct. 2026 », ou « 15 – 17 oct. 2026 » sur plusieurs jours),
 // partagés par le tableau de bord et la page Agenda.

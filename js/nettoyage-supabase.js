@@ -38,8 +38,7 @@
 
   // Une table entière (par pages de 1000 : Supabase n'en renvoie pas plus d'un coup).
   async function lireTable(table) {
-    const colonnes = await colonnesLisibles(table);  // (audit L-1 : sans les contacts privés, qui ne citent aucun fichier)
-    const { data, error } = await lireToutesLignes(() => sb.from(table).select(colonnes).order('id'));
+    const { data, error } = await lireToutesLignes(() => sb.from(table).select('*').order('id'));
     if (error) throw new Error('lecture impossible des fiches « ' + table + ' » (' + error.message + '), rien n’a été supprimé');
     return data;
   }

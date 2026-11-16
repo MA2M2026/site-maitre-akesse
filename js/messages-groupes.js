@@ -31,10 +31,8 @@ window.demarrerMessagesGroupes = function () {
 
   const CHAMPS = {
     // date de naissance et contacts du parent : un mineur est joint par son parent.
-    // (16/11/2026, audit L-1) : téléphone et e-mail du parent ajoutés ensuite, pour le principal et les encaissements
-    // seulement (ajouterColonnesPrivees) ; l'équipe du site ne les voit plus.
-    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, genre, civilite, parent_nom',
-    inscription: 'id, full_name, email, phone, statut, created_at, date_naissance, genre, civilite, parent_nom'
+    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, genre, civilite, parent_nom, parent_telephone, parent_email',
+    inscription: 'id, full_name, email, phone, statut, created_at, date_naissance, genre, civilite, parent_nom, parent_telephone, parent_email'
   };
   let destinataires = [];
   // « Qui ? » : agence et casting précis sont deux sortes de candidatures (même table).
@@ -174,7 +172,6 @@ window.demarrerMessagesGroupes = function () {
       return q.order('created_at', { ascending: true }).order('id');
     });
     if (error) { $('mg-resume').textContent = 'Erreur : ' + error.message; return; }
-    await ajouterColonnesPrivees(c.table, lignes);  // (contacts des parents : principal et encaissements seulement)
     destinataires = lignes.map(d => Object.assign(d, { choisi: true }));
     afficherListe();
   }
