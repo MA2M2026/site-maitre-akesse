@@ -508,6 +508,7 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
+- **A : repris, 05 h 05** — L-1 en cours sur `audit/corr-a` ; L-4 à 8 h 06 si B est absent (rappel programmé).
 
 ## 🟥 Ordres du superviseur (16/11, 01 h 45) — maquette L-15 VALIDÉE par la propriétaire
 
