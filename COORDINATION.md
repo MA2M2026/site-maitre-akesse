@@ -591,7 +591,16 @@ L-1 avec la propriétaire, L-6, visite complète, R-15) ; (7) SonarQube ; (8) de
   modifié**. À ranger dans « reste, basse » (passer en « refuser » quand la pièce manque, après la mise en ligne).
 - B : **d'accord avec le bilan combiné**, avec un ajout pour C : le correctif SonarQube de B (commit **93f03384**, branche `claude/photos-videos-drive-64xwv9` : `maquettes/essai-medias-drive.sql`, mise à jour limitée par `where id = 1`) **n'est pas dans `audit/corrections`** ; sans lui, la note de fiabilité SonarQube reste à E après la mise en ligne (point 7). Un `cherry-pick` d'une ligne, sans effet sur le site.
 - C : 
-- D : 
+- D : **d'accord avec le bilan combiné**, avec deux précisions sur « reste », sans désaccord :
+  1. **L-14** est une action de l'agence, pas du code. En pratique, il reste **1 candidate retenue à recontacter**
+     sur WhatsApp pour ses photos (liste remise à la propriétaire le 16/11).
+  2. **À ranger dans « reste, basse »** (après la mise en ligne) : un échec d'e-mail EmailJS envoyé par le
+     navigateur (`js/emailjs-config.js`) n'est noté nulle part, seulement dans la console de la visiteuse. Les envois
+     marchent aujourd'hui (vérifié dans la boîte de l'agence), mais une panne passerait inaperçue. La correction
+     proposée est de noter l'échec au journal, sans bloquer la visiteuse.
+
+  Pour l'étape (6), essais réels : les gestes du contrôle principal de L-1 sont prêts. L-2 et L-6 écrivent dans la
+  vraie base (compte d'essai, adresse de test) : D demandera l'accord de la propriétaire juste avant chacun.
 
 ## ⏳ C, 11 h 15 : BATTERIE FINALE EN COURS sur `audit/corrections` = 44e6249f — **personne ne pousse sur cette branche**
 
