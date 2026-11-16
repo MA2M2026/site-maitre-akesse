@@ -356,6 +356,26 @@ ajoutés. D continue : message de pause D-05, puis part de B dans L-16.
 - **Reste avant la batterie finale** : L-9 (A, suite), vérification des rôles (A), message de pause D-05 (D), fond
   `.se-date` (D). Quand ces 4 sont acceptés : **C lance UNE batterie finale** sur `audit/corrections`.
 
+**Point de A (10 h 25) — vérification des rôles (ordre de 09 h 25), à relire.** Lu dans le code (droits de la base
+`portail_peut`, règles des tables, menus `js/admin/coque.js`, fonctions du serveur) ; D peut confirmer en vrai avec son
+compte « site ».
+
+| Rôle | Règle de la propriétaire | Constaté | Écart |
+|---|---|---|---|
+| Principal | tout | `portail_peut` vrai pour tout ; tous les menus | aucun |
+| Administrateur du site | site, candidates, mannequins, convoquer (contacts visibles) ; ni compta ni paiements | menu « site » seulement ; table `admins` (contenu du site, candidatures, contacts) ; aucune règle de la compta ni des paiements ne s'ouvre à lui. **2 écarts** : validait les paiements des cours de talons (corrigé, L-1 partie 1, acceptée) ; pouvait encore, par la base, marquer une ancienne inscription « payée » | **corrigé : 5d3b9dc0** (`audit/corr-a`) |
+| Encaissements | paiements seulement | menu « Paiements » seulement ; règles `portail_peut('paiements')`. Lit aussi les comptages de caisse (`compta_comptages`) et les réglages de reprise ; la validation d'un paiement écrit toute seule la recette en compta (formule voulue par la propriétaire) | **question** ci-dessous |
+| Comptabilité | compta seulement | menu « Comptabilité » seulement ; ne valide AUCUN encaissement (toutes les fonctions de paiement exigent `paiements`). Sa page « Payer les mannequins » (cachets : argent VERSÉ aux mannequins) est de la compta | **question** ci-dessous |
+
+- **5d3b9dc0** : déclencheur `trg_inscriptions_garder_paiement` ajouté à `supabase-l1-role-site.sql` (contrôle devenu
+  « 4 éléments sur 4 ») ; base d'essai : 4 nouveaux cas, toute la base verte. Rien n'est collé.
+- **3 questions pour la propriétaire** (rien changé en attendant) :
+  1. Suppression définitive d'une mannequin : aujourd'hui réservée au principal (L-1 partie 1). « Gérer les
+     mannequins » inclut-il la suppression pour l'« Administrateur du site » ?
+  2. Les encaissements voient les comptages de caisse (`compta_comptages`) : on laisse (c'est leur caisse) ?
+  3. La comptabilité enregistre les cachets versés aux mannequins (« Payer les mannequins ») : on laisse ?
+- Ensuite : je reprends **L-9** (photos d'actualités, cache, candidature).
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 09 h 25 — **Règle des rôles, donnée par la propriétaire (à vérifier contre le site réel)** :
