@@ -573,6 +573,9 @@ compte « site ».
 ## 🧭 SUPERVISEUR (16 h 45) : B bloqué jusqu'à 20 h (limite d'usage). Le superviseur reprend, avec l'accord de la propriétaire
 - Batterie : relancée par le superviseur sur 1882d248 depuis `test-appareil-confiance.js` (série 92 de la liste ; B
   annonçait 117/130 sans échec : le recouvrement est voulu, rien n'a changé).
+- **Batterie FINIE (17 h 25) : 0 échec** sur 1882d248. Séries 1 à 91 par B (0 échec), 92 à 135 par le superviseur
+  (0 échec ; `test-accessibilite-axe.js` relancé seul après installation d'axe-core hors du dépôt, l'outil manquait
+  sur la machine). Les 4 corrections ci-dessous relanceront seulement leurs séries.
 - Relecture `/code-review` refaite par le superviseur sur `origin/audit/corrections` : 10 points. Tri :
   **À corriger avant la mise en ligne** :
   1. `js/admin/site-cours-talons.js:442` : boutons de paiement des cours de talons réservés à l'espace « paiements »,
