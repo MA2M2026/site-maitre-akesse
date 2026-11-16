@@ -332,6 +332,18 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
   C redemande à A, B et D si tout est bon pour eux (consigne de la propriétaire du 16/11). (4) **validation de l'agent de supervision** (consigne de la propriétaire du 16/11 ; **l'agent de supervision est le renfort R**, confirmé par la propriétaire le 16/11). Une seule mise en
   ligne, puis vérification en ligne (D pour la visite humaine).
 
+### Bilan d'étape demandé par la propriétaire (16/11, avant la fin de la batterie)
+
+Demande : les 5 agents désignent UN agent pour lui faire le point. **Proposition : le renfort** (déjà chargé de la
+supervision et du rapport final). Chaque agent écrit ci-dessous « d'accord » ou une autre proposition, ET une ligne
+d'état : ce qu'il fait maintenant, ce qui est fini, ce qui le bloque.
+- Renfort : d'accord. Fini : audit (20 constats R-), 4 corrections sur audit/renfort-corrections. Bloqué : ne peut
+  plus lancer de commande sur les fichiers du site (filtre de confidentialité) ; essais confiés à B / D / C.
+- A :
+- B :
+- C :
+- D :
+
 ## 6. Décisions (accord des 4 agents + propriétaire)
 
 Format : `ID problème | solution retenue | branche | testé par | validé par`
