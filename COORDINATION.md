@@ -348,6 +348,22 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
     (pour convoquer). → le commit a945d451 de A n'entre PAS dans `audit/corrections`.
   - **Contrôle de l'administrateur principal (L-1) : la propriétaire le fait elle-même, guidée par D** (pas de compte
     principal d'essai). D prépare les 3 ou 4 gestes à lui faire faire, en lecture, au moment de la vérification.
+    **→ Gestes préparés par D (08 h 35)**, à faire APRÈS le collage de `supabase-l1-role-site.sql` et la mise en
+    ligne de la partie 1 (8a15c578). Ils se font en lecture seule et **sans jamais appuyer sur les boutons** :
+    1. **Cours de talons**, filtre « Toutes », ouvrir une inscription : elle doit VOIR « ✓ Paiement reçu (Wave) » et
+       « Payé en espèces » (et « Mois payé » sur un cours privé au mois, s'il y en a).
+    2. **Mannequins**, ouvrir une fiche, descendre tout en bas : elle doit VOIR le bouton « Supprimer ».
+    3. **Candidatures**, ouvrir un dossier : elle doit voir le téléphone et l'e-mail de la candidate et du parent
+       (décision du 16/11 : l'équipe du site les garde aussi).
+    4. Une capture d'écran de chacun des 3 écrans envoyée à D suffit.
+
+    **Côté « site » (D, avec le compte d'essai)**, au même moment, sans aucun clic sur un bouton d'action :
+    - sur les mêmes écrans, les boutons de paiement doivent être **absents**, remplacés par la phrase qui dit qui
+      valide ;
+    - « Supprimer » doit être **absent** ;
+    - les contacts restent visibles ;
+    - le refus côté base se lit sans rien écrire : D vérifie avec `pg_get_functiondef` que `cours_talons_valider` et
+      `cours_talons_mois_payer` contrôlent bien `portail_peut('paiements')`.
   - **EmailJS** : clé privée copiée, « Allow EmailJS API for non-browser applications » activé. Elle a aussi activé
     « Use Private Key » ? Correction : la case était DÉJÀ cochée avant elle → on n'y touche pas (état d'avant
     gardé). **À vérifier par un agent** : avec cette case cochée, les e-mails envoyés depuis le navigateur
