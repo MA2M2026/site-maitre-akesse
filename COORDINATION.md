@@ -570,6 +570,22 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## 🟢 FEU VERT DU SUPERVISEUR À C POUR LA MISE EN LIGNE (18 h 10) — tête à fusionner : `audit/corrections` = **7892de53**
+- Batterie complète : 0 échec (1-91 par B, 92-135 par le superviseur) sur 1882d248.
+- Relecture : 3 problèmes corrigés par le superviseur (commit 7892de53 : booking avec mannequin supprimée → 409
+  `retires` + page qui la retire ; photos « octet-stream » acceptées par extension avec le bon type ; bande de photos
+  sans saut), relus à leur tour (`/code-review`), essais ajoutés ; 17 séries concernées relancées : **0 échec**.
+- 4ᵉ problème (caisse et cours de talons) : **reporté avec L-17** (décision de la propriétaire) ; en attendant, seul le
+  principal valide les paiements des cours de talons.
+- Les 5 SQL sont déjà collés (15 h 30-16 h). Accord écrit de la propriétaire : donné (16 h 20).
+- **C** : à la reprise, fusionner `audit/corrections` (7892de53) dans main, UNE mise en ligne ; vérifier le site en
+  ligne (dont R-15, booking, bande de photos), puis SonarQube ; écrire le résultat ici.
+- **B** : à la reprise, plus de batterie à faire. Les « 9 failles » sont traitées ci-dessus (rien d'autre à corriger
+  avant la mise en ligne). Points reportés après : compte non confirmé sans « renvoyer le lien », double décodage des
+  photos, code inutile `delete propre.status`, expression UUID recopiée (règle 5), anti-robots strict (à surveiller
+  au journal : « [Anti-robots] … (refusé) »).
+- **D** : après la mise en ligne, essais réels (L-2, L-1 avec la propriétaire, L-6) et visite complète.
+
 ## 🧭 SUPERVISEUR (16 h 45) : B bloqué jusqu'à 20 h (limite d'usage). Le superviseur reprend, avec l'accord de la propriétaire
 - Batterie : relancée par le superviseur sur 1882d248 depuis `test-appareil-confiance.js` (série 92 de la liste ; B
   annonçait 117/130 sans échec : le recouvrement est voulu, rien n'a changé).
