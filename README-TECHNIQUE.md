@@ -5386,3 +5386,17 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   réservé au principal (js/admin/site-dossiers.js). La base l'impose : `supabase-suppression-messages.sql` (À COLLER,
   contrôle « 3 éléments sur 3, 0 autre règle de suppression » : toutes les anciennes règles de suppression de ces 3
   tables sont retirées quel que soit leur nom ; essais `essais-suppression-messages.sql`). Test : `test-suppression-messages.js`.
+- **Relecture du superviseur avant la mise en ligne (16/11/2026)**, trois corrections :
+  - *Booking, mannequin supprimée depuis* : la sélection vient du téléphone du recruteur (`ma2m_selection`) et n'est pas
+    revérifiée. Si la liste refuse une mannequin qui n'existe plus (clé étrangère vers `model_profiles`), `finirDemande`
+    (api/portail.js) retire la demande, cherche lesquelles n'existent plus (`mannequinsExistants`) et répond 409
+    `{ retires: [...] }` ; la page (js/demande-recruteur.js) les retire de la sélection et demande de renvoyer. Les
+    identifiants sont mis en minuscules (`modelesDeLaDemande`). Test : `test-booking-liste.js`.
+  - *Photos au type « application/octet-stream »* (HEIC d'iPhone, JPG depuis Windows / certains Android) : acceptées si
+    leur extension est celle d'une photo (`estFichierImage`, `typeImageDuNom`, js/app.js), puis reçoivent le bon type
+    (sinon le script Drive les écarte). Un fichier dont le type dit autre chose (PDF, vidéo) reste « pas une photo ».
+    Test : `test-candidature-fichiers.js`.
+  - *Bande de photos qui défile* (js/diaporama-luxe.js, `tapis`) : la seconde moitié est une copie exacte de la
+    première, sinon la boucle sautait à chaque tour. Test : `test-diaporama-luxe.js`.
+  - Reporté avec L-17 (décision de la propriétaire) : la caisse ne peut ni lire ni valider les cours de talons (la base
+    ne lui donne pas `cours_talons` et la page n'est que dans l'espace « site ») ; en attendant, seul le principal valide.

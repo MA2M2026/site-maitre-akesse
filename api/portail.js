@@ -337,7 +337,7 @@ function modelesDeLaDemande(recu) {
   for (const m of l) {
     if (!m || typeof m !== 'object' || !UUID_MANNEQUIN.test(String(m.model_id || ''))) return null;
     const h = Number(m.model_height_snapshot);
-    propres.push({ model_id: String(m.model_id), model_name_snapshot: String(m.model_name_snapshot || '').slice(0, 120) || null,
+    propres.push({ model_id: String(m.model_id).toLowerCase(),model_name_snapshot: String(m.model_name_snapshot || '').slice(0, 120) || null,
       model_height_snapshot: Number.isInteger(h) && h > 0 && h < 260 ? h : null });
   }
   return propres;
@@ -347,6 +347,12 @@ async function enregistrerModelesDemande(idDemande, modeles) {
   const rep = await fetch(base, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify(modeles.map((m) => Object.assign({ request_id: idDemande }, m))) });
   return rep.ok;
+}
+// Ensemble des identifiants (déjà vérifiés : UUID_MANNEQUIN) qui existent encore dans model_profiles ; null si la base ne répond pas.
+async function mannequinsExistants(ids) {
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/model_profiles?select=id&id=in.(' + ids.join(',') + ')', { headers: enTetesService() });
+  if (!rep.ok) return null;
+  return new Set((await rep.json()).map((x) => x.id));
 }
 async function retirerDemande(idDemande) {
   await fetch(SUPABASE_URL + '/rest/v1/recruiter_requests?id=eq.' + encodeURIComponent(idDemande), { method: 'DELETE', headers: { ...enTetesService(), Prefer: 'return=minimal' } }).catch(() => {});
@@ -361,6 +367,15 @@ async function finirDemande(res, idDemande, modeles, dejaLa) {
   }
   if (await enregistrerModelesDemande(idDemande, modeles).catch(() => false)) return res.status(200).json({ ok: true, id: idDemande });
   if (!dejaLa) await retirerDemande(idDemande);
+  // (16/11/2026, relecture du superviseur) la sélection vient du téléphone du recruteur : une mannequin supprimée depuis
+  // y reste et fait refuser toute la liste (clé étrangère), à chaque essai. Le serveur dit alors LESQUELLES n'existent
+  // plus ; la page les retire de la sélection et le recruteur renvoie une demande juste (e-mail compris).
+  const encore = await mannequinsExistants(modeles.map((m) => m.model_id)).catch(() => null);
+  const retires = encore ? modeles.filter((m) => !encore.has(m.model_id)).map((m) => m.model_id) : [];
+  if (retires.length) {
+    await noterAuJournal('[Demande recruteur] demande ' + idDemande + ' : ' + retires.length + ' mannequin(s) de la sélection n’existent plus (' + retires.join(', ') + ')' + (dejaLa ? '' : ' : demande retirée, le recruteur les retire et renvoie'), 'portail', '/api/portail').catch(() => {});
+    return res.status(409).json({ error: 'Certains mannequins de votre sélection ne sont plus disponibles.', selection: true, retires });
+  }
   await noterAuJournal('[Demande recruteur] liste des ' + modeles.length + ' mannequin(s) non enregistrée' + (dejaLa ? '' : ' : demande retirée, le recruteur a vu une erreur'), 'portail', '/api/portail').catch(() => {});
   return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.', selection: true });
 }
