@@ -1032,6 +1032,20 @@ le superviseur le décide.
 - ⚠ À savoir pour A (rôles) : avec ce SQL, l'« Administrateur du site » ne supprime plus de candidature, conforme au
   tableau des rôles (« gérer les candidates », suppression : principal).
 
+### C, 11 h 05 : rassemblement complété (ordre de 10 h 25) — `audit/corrections` = 7a60e64d
+
+- Ajoutés : `audit/corr-a` 5d3b9dc0, a36e67f5, b22d62fe ; **ea364a01 retiré** (doublon de corr-b ; seul son outil
+  `scripts/tests-visiteur/mesure-cls.js` est gardé) ; `audit/corr-b` a3308767 ; fond `.se-date` de D (c0bd9690).
+  a945d451 toujours exclu. **Pas encore** ma suppression des messages d'essai (3ac7a81e, `audit/corr-c`) : j'attends
+  la relecture du superviseur.
+- Listes d'essais vérifiées une par une : base d'essai (essais roles-comptages compris, contacts-prives exclu) et 134
+  tests visiteurs, tous présents, aucun en double, aucun fichier de test hors liste.
+- Contrôles rapides : syntaxe OK, CSP OK, `versionner.py` 0, **base d'essai : tous les fichiers SQL passent**.
+- Mesure `mesure-cls.js` sur la branche rassemblée (téléphone 390 px, 4G lente) : cours de talons FR 0, EN 0,007 ;
+  candidature 0,016 ; intégrer l'agence 0 — ordinateur ≤ 0,002 : le correctif de B tient seul.
+- **Prêt pour la batterie finale** dès que : ma suppression des messages (3ac7a81e) et le message de pause D-05 (D)
+  sont acceptés et ajoutés.
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
