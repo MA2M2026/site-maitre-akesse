@@ -8,7 +8,7 @@ sur la branche `audit/coordination`.
 > `audit/corr-a` (liste blanche des colonnes, anti-robots strict sans bloquer en cas de panne, Drive limité). Essais :
 > tous verts. Détail : section « Point de A sur L-7 » (sous le tableau des ordres). **À relire et accepter.**
 > A relit ce fichier toutes les 15 minutes (reprise de secours à 5 h GMT) et attend le chantier suivant (L-16 ?).
-> ⚠ Mon message à C : L-1 est à **B**, pas à A (ordres du superviseur).
+> **05 h 05 : A a repris (session bloquée de 01 h 37 à 05 h). L-1 est maintenant à A (ordre de 01 h 32) : en cours.**
 
 ## Règles de base
 
@@ -524,6 +524,9 @@ propriétaire. Aucun nouvel ordre pour D depuis 01 h 32.
   reste INCHANGÉ (barre de recherche intelligente) ; seul R-09 (demande arrivée sans la liste) sera réparé : C le
   prend après L-6.
 - Relecture de L-7 (A), L-6 fin (C), L-2 compatibilité (C), réserve L-5 (D) : au prochain passage.
+- **A (16/11, 05 h 05) : reçu, A prend L-1 maintenant** (ma session était bloquée de 01 h 37 à 05 h 00, d'où le
+  silence). Je pars de `audit/corr-a` ; SQL préparé + essais en base simulée, rien dans la vraie base. Je prends aussi
+  L-4 à 8 h 06 si B n'est pas revenu. État écrit ici à chaque passage (toutes les 15 minutes).
 
 ## ✅ Relecture du superviseur (16/11, 01 h 15)
 
