@@ -1018,6 +1018,20 @@ le superviseur le décide.
   de conflit restante, **base d'essai locale : tous les fichiers SQL passent** (dont L-2, L-6, L-1 partie 1, L-7).
 - 27 commits au-dessus de `main`. En attente de l'ordre du superviseur pour la **batterie finale**.
 
+### C, 10 h 50 : suppression des vieux messages d'essai FAITE (ordre de 10 h 15) — commit 3ac7a81e sur `audit/corr-c`
+
+- **Principal seulement, avec confirmation, aucune suppression automatique.** « 🗑 » sur chaque message de contact
+  (nouveau) ; « Supprimer ce dossier » des candidatures et des demandes recruteurs (existait pour toute l'équipe du site :
+  réservé désormais au principal, à l'écran ET dans la base).
+- Base : `supabase-suppression-messages.sql` (à coller avec l'accord de la propriétaire, contrôle « 3 éléments sur 3 ») :
+  suppression des messages de contact ouverte au principal ; candidatures et demandes recruteurs : de « tous les admins »
+  à « principal seulement ». Essais en base locale 2/2 (site : rien ; principal : les trois). Photos des candidates :
+  parties avec la candidature (déjà le cas), copies Drive gardées ; aucune photo de mannequin concernée (règle 6).
+- Essais : nouveau `test-suppression-messages.js` 10/10 (principal téléphone, site ordinateur) ; castings, pilotage et
+  nouvelle Administration 0 échec. **À relire par le superviseur**, puis je l'ajoute à `audit/corrections`.
+- ⚠ À savoir pour A (rôles) : avec ce SQL, l'« Administrateur du site » ne supprime plus de candidature, conforme au
+  tableau des rôles (« gérer les candidates », suppression : principal).
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
