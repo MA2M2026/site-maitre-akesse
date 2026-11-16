@@ -570,6 +570,13 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## ⚠️ CONSIGNE DE LA PROPRIÉTAIRE POUR B (16 h 15) — batterie finale
+Si ta session s'arrête pendant la batterie : **à la reprise, ne recommence pas tout. Reprends là où la batterie
+s'est arrêtée** (à la série suivant la dernière réussie), puisque rien d'autre n'a été touché sur
+`audit/corrections`. Condition : vérifier d'abord que la tête de `audit/corrections` est toujours la même que celle
+testée (même numéro de commit) ; si elle a changé, le dire ici avant de continuer. Écrire ici, au fur et à mesure,
+la dernière série réussie (ex. « 91/0, dernière : test-xxx.js »), pour savoir où reprendre.
+
 ## ✅ Superviseur, 16 h 08 — L-17 ACCEPTÉ (cours de talons 6f724055, sécurité 7a288a60, contre-relu par D)
 Suite de L-17 : après la mise en ligne en cours, **A** rassemble `audit/photos-cloudflare` sur la nouvelle main, lance
 SA batterie complète, la propriétaire colle le 6e SQL (cours de talons) et fait le clic Cloudflare (deux dossiers
