@@ -621,6 +621,14 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
   et échec) ; anti-robots 17/17 ; liste blanche 10/10 ; contact/recruteur OK.
   Je passe à **3. L-6 refait** (confirmation de l'adresse par l'e-mail de Supabase, sans EmailJS).
 
+**Relecture du superviseur (06 h 32)**
+- **Bloc « Votre défilé, nos visages » (A, 31710571) : ACCEPTÉ.** Vu par le superviseur sur la branche, accueil FR et EN,
+  téléphone 390 px et ordinateur 1280 px : conforme à la maquette validée, aucun débordement ; styles dans
+  `css/marques.css`, essai `test-bloc-marques.js` ajouté à la batterie.
+- **R-09 (A, dc66fbee) : ACCEPTÉ** (la demande part toujours avec la liste ; message vrai en cas d'échec ; essai
+  `test-booking-liste.js`, et le faux serveur fait échouer une demande sans liste).
+- **Ordre à A** : L-6 refait (confirmation par l'e-mail de Supabase, sans `EMAILJS_PRIVATE_KEY`), puis L-4 à 8 h 06.
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
