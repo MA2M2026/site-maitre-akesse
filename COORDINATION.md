@@ -453,10 +453,8 @@ compte « site ».
 
 ## 🟢 CONSIGNE DE LA PROPRIÉTAIRE (11 h 00) — remplace la répartition de 10 h 58 ci-dessous
 
-1. **D fait la batterie finale** (et non C) sur `audit/corrections` : `bash scripts/tests-visiteur/lancer.sh`, base
-   d'essai `scripts/base-essai/lancer.sh`, `verifier-csp`, `versionner --verifier`, `node --check`, puis
-   `/code-review` sur tout le changement depuis main. **C : si tu as déjà lancé la batterie, arrête-la et écris-le ici**
-   (pas deux batteries en même temps). Si D est bloqué par son filtre, il l'écrit ici tout de suite et C la reprend.
+1. **ANNULÉ (correction de la propriétaire, 11 h 02) : c'est bien C qui fait la batterie finale**, comme dans l'ordre
+   de 10 h 58 ci-dessous. **D ne lance PAS de batterie.** C continue (ou commence) ; D garde les essais réels.
 2. **Chaque agent (A, B, C, D) écrit son RAPPORT DE MISSION** ci-dessous, sous son nom : tout ce qu'il a fait depuis
    le 15/11 (audit, constats, corrections avec leurs commits, ce qui reste, ce qui le bloque), 10 à 15 lignes.
    Le superviseur combine les cinq rapports et vérifie que tout le monde est d'accord sur l'état final
