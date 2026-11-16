@@ -490,7 +490,29 @@ compte « site ».
   rassemblée dans `audit/corrections`. **Rapport commun** (documents 5 et 6) : `docs/audit/rapport-commun.md`
   (`audit/agent-b`), tenu à jour. **Reste** : après la mise en ligne, contrôle de la tâche de 8 h le lendemain ; mettre à
   jour le rapport commun avec la batterie finale. **Bloque** : rien (pas d'accès humain à l'Administration : D).
-- **C** :
+- **C** (rédigé à 11 h 30, pendant la batterie finale) :
+  - **15/11** : chantiers 2-3-4 de la propriétaire (talons, premium, SonarQube) terminés et mis en ligne (PR #452) ;
+    catégorie de la fiche publique rangée tout de suite (`supabase-categorie-immediate.sql`, collé, « 3 sur 3 ») ;
+    correctifs de relecture (parcours, position, nom long, menu au clavier, agenda accessible).
+  - **Audit (agent C)** : 116 pages × téléphone et ordinateur (232 visites), 209 liens, 4G lente, sécurité en lecture
+    seule (règles de la base, colonnes privées, fonctions ouvertes, secrets, bibliothèques), code ; rapport
+    `docs/audit/rapport-agent-c.md` (10 problèmes, aucun critique). Vérification croisée : R-03, A-01, D-05 (cause
+    trouvée), A-04, R-15, B-P12, R-13 ; correction de mon C-P4 (R-03 avait raison).
+  - **Essais** de `audit/renfort-corrections` sur la version d'essai Vercel (R-03, A-01) ; bilan d'étape validé par les
+    cinq.
+  - **Corrections (`audit/corr-c`)** : L-10 (règle stricte sur 6 pages) ✅ ; L-2 (mannequin qui se publie seule,
+    compatible L-1 via `portail_peut('site')`) ✅ ; L-6 (invitation, puis confirmation de l'adresse ; terminé par A
+    pendant mon absence) ✅ ; suppression des vieux messages d'essai (principal seulement, toutes les anciennes règles
+    retirées quel que soit leur nom) ✅. L-5 fait en double par erreur : ma version retirée, celle de D contre-vérifiée
+    (réserve `:has` corrigée par D).
+  - **Rassemblement** de toutes les branches acceptées dans `audit/corrections` (sans a945d451 ni ea364a01), listes
+    d'essais vérifiées une à une. **Batterie finale lancée à 11 h 15** sur 44e6249f (syntaxe OK, base d'essai OK, visiteurs
+    en cours), puis `/code-review`.
+  - **Erreurs de ma part** : messages envoyés en anglais à la propriétaire (corrigés) ; L-5 refait sans avoir relu la
+    note ; ligne L-5 de D écrasée (rétablie) ; deux fois la liste de la base d'essai abîmée par mon outil de fusion
+    (réparée et vérifiée avant chaque envoi). Absent de 01 h 40 à 10 h (session bloquée) : merci à A et D.
+  - **Reste à C** : résultat de la batterie et `/code-review` ; liste des SQL à coller pour la propriétaire ; mise en
+    ligne unique après son accord écrit ; vérification en ligne et SonarQube.
 - **D** (agent testeur humain, seul à avoir les accès réels, en lecture seule) :
   - **Audit (15/11)**, rapport `docs/audit/rapport-agent-d.md` (`audit/agent-d`) :
     - visite réelle des 42 rubriques de l'Administration (rôle « site ») et de 15 écrans de l'application, sur
