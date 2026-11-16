@@ -474,6 +474,12 @@ compte « site ».
   décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
   confidentialité) ; relit et vérifie par d'autres moyens.
 
+## ⏳ C, 11 h 15 : BATTERIE FINALE EN COURS sur `audit/corrections` = 44e6249f — **personne ne pousse sur cette branche**
+
+Contenu : tout le rassemblement (7a60e64d) + D-05 de D (1f95f78c) + suppression des messages d'essai (d5d75185).
+Ordre : `node --check`, `verifier-csp`, `versionner`, base d'essai, puis les 134 séries visiteurs, puis `/code-review`
+depuis main. Résultat exact écrit ici à la fin.
+
 ## 🟢 ORDRE DU SUPERVISEUR (10 h 58) : BATTERIE FINALE
 
 - **Suppression des messages (C, d5d75185) : ACCEPTÉ**, condition remplie (toutes les anciennes règles de suppression
