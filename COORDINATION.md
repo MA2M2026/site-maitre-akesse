@@ -400,6 +400,38 @@ d'état : ce qu'il fait maintenant, ce qui est fini, ce qui le bloque.
   - **en attente** : (1) visite réelle après la mise en ligne par C (CV avec logo, R-15) ; (2) essai réel R-01
     (création d'un compte d'équipe avec une adresse d'essai), seulement avec l'accord écrit de la propriétaire.
 
+## 🟥 ORDRES DU SUPERVISEUR (décision de la propriétaire, 16/11) — À EXÉCUTER MAINTENANT
+
+**Décision de la propriétaire : désormais, tout le monde travaille sous les ordres du superviseur (le renfort).**
+Plus de propositions ni de votes sur la répartition : chacun prend SES chantiers ci-dessous et les corrige tout de suite.
+
+**Méthode imposée**
+- Chaque agent part de `audit/renfort-corrections` et travaille sur SA branche `audit/corr-<lettre>` (jamais main),
+  un commit par chantier, avec ses essais (node --check, verifier-csp, essais visiteur du parcours touché).
+- Changement de droits de la base, de connexion ou de création de compte (L-1, L-2, L-6) : SQL préparé + base
+  d'essai locale ; le collage dans la vraie base et l'essai réel se font seulement avec l'accord écrit de la propriétaire.
+- Quand un chantier est fini : l'écrire dans le tableau (« fait, commit xxx »). Le superviseur relit et écrit
+  « accepté » ou « refusé : pourquoi ».
+- Quand TOUS les chantiers hauts et moyens sont acceptés : C rassemble les branches dans `audit/corrections`,
+  UNE batterie finale, accord écrit de la propriétaire, UNE mise en ligne par C, puis visite réelle de D.
+
+| Chantier | Quoi | Qui | État |
+|---|---|---|---|
+| L-3, L-8, L-11 | documents internes cachés, scripts réservés protégés, journal sans jetons | renfort | ✅ fait, vérifié par B et C (audit/renfort-corrections) |
+| L-12 | logo du CV dans l'Administration | renfort | ✅ écrit ; D le regarde en vrai après la mise en ligne |
+| L-1 | rôle « Administrateur du site » : plus de contacts des parents, paiements, suppression, validation des talons (`cours_talons_valider` : encaissements + admin principal seulement) | **A** | à faire |
+| L-7 | formulaires publics : liste blanche des colonnes par formulaire, anti-robots strict, dépôt Drive limité | **A** | à faire |
+| L-2 | mannequin qui se publie seule : retirer ces colonnes de ses droits / les figer par le déclencheur, minorité calculée sur l'ancienne date | **C** | à faire |
+| L-6 | « Créer mon compte » de l'équipe : preuve de l'adresse (lien de confirmation) avant tout rôle | **C** | à faire |
+| L-10 | règle de sécurité stricte sur les 6 pages qui ne l'ont pas | **C** | à faire |
+| L-5 | candidature : refuser ce qui n'est pas une image, alléger les grosses photos, envoi par photo, un seul envoi au double appui, « Appli MA2M » qui ne couvre plus « Envoyer » | **D** | à faire |
+| L-14 | liste des 4 candidates à qui redemander les photos (pour l'agence) | **D** | à faire |
+| L-4 | tâche de 8 h : vérifier à 8 h 06 ; préparer la marche à suivre pour que la propriétaire ajoute CRON_SECRET et EMAILJS_PRIVATE_KEY dans Vercel | **B** | à faire |
+| L-9 | lenteur : photos d'actualités allégées, cache des photos (Cloudflare) et des pages, affichage qui saute (intégrer-agence, cours-talons, candidature) | **B** | à faire |
+| L-15 | entrée « Marques et promoteurs » sur l'accueil + meilleurs outils de booking (recherche par mesures, sélection partageable, demande complète) : maquette d'abord, montrée à la propriétaire | **renfort** (maquette), puis l'agent désigné | à faire |
+| L-13 | mois de rodage | D, après la réponse de la propriétaire | en attente de sa décision |
+| L-16 | basses | après les hauts et moyens : A (SQL, verrous), B (code inutile, vidéos), C (hreflang, h1, +12 px) | ensuite |
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
