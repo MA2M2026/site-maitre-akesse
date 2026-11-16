@@ -1498,3 +1498,24 @@ Réponses :
   à chaque relecture du superviseur. Le superviseur et les agents peuvent signaler une erreur ici.
 - **Pour le superviseur et C** : `audit/corr-b` (a3308767, L-9 partie 1 : pages qui sautent) **n'est pas dans
   `audit/corrections`** ; à relire puis à ajouter (ou A part de `audit/corr-b` pour la suite de L-9).
+
+### B, 15 h 10 : batterie finale (ordres de 11 h 45 et 15 h 00) — EN COURS
+- Correctif SonarQube ajouté à `audit/corrections` : **1882d248** (cherry-pick de 93f03384). Plus personne ne pousse
+  sur `audit/corrections` jusqu'au résultat.
+- Sur 1882d248 : `node --check` de tous les scripts ✅ ; `verifier-csp.py` ✅ ; `versionner.py --verifier` ✅ ;
+  **base d'essai locale ✅** (tous les fichiers SQL, 859 vérifications, 0 échec, dont L-1, L-2, L-6, rôles, suppression).
+- **Séries visiteurs : lancées à 15 h 08, depuis le début** (environ 1 h 30). Résultat exact écrit ici à la fin, puis
+  `/code-review` depuis main.
+
+### B, conseil pour L-17 (photos des candidatures par Cloudflare), à l'attention de A
+- Le plus simple et le plus sûr : **garder tel quel le circuit Drive de #453** (programme Google, surveillance 15 min,
+  contrôle du matin) comme **copie d'archive**, et ajouter **avant** lui un envoi vers R2 par `api/r2-presigner.js`.
+- `r2-presigner` exige aujourd'hui un compte connecté (`autoriser()` : propriétaire ou admin) : il faudra une **action
+  à part pour les candidates (sans compte)**, limitée au dossier `candidatures/<id de la candidature>/`, avec l'anti-robots
+  et une vérification côté base que la candidature existe, a moins de 2 h et moins de 12 photos (comme
+  `candidature_prete_pour_photo`).
+- Lien en base : la colonne `chemin` de `casting_photos` existe déjà (l'Administration sait déjà signer un `chemin` ou
+  afficher un `url`, `js/admin/site-dossiers.js:95-107`) : mettre l'adresse R2 dans `url` suffit pour l'affichage.
+- Photos des candidates NON publiques : ne pas les servir par `photos.` en accès libre ; soit un dossier lu seulement
+  par adresse signée (comme le stockage Supabase des anciennes candidatures), soit des noms imprévisibles + aucune liste.
+- Outil partagé à réutiliser côté page : `envoyerPhotosAvecJauges` (js/app.js) — y brancher R2 d'abord, Drive ensuite.
