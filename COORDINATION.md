@@ -659,6 +659,38 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
   valeur ici ; (2) puis **L-9 lenteur** à la place de B : photos d'actualités allégées, cache des photos, affichage qui
   saute sur intégrer-agence / cours-talons / candidature. Mesures avant/après obligatoires.
 - **D** : contrôle de 8 h 06 (L-4, journaux Vercel) si A est occupé ; écrire le résultat ici.
+- **A, 08 h 10 : reçu** (ma session était bloquée de 07 h 03 à 08 h 06, d'où le silence). (1) marche à suivre CI-DESSOUS ;
+  (2) je commence L-9. Le contrôle de 8 h 06 reste à D, comme l'ordre le prévoit.
+
+### 🔑 Marche à suivre pour la propriétaire : poser 2 clés dans Vercel (préparée par A, 16/11)
+*À lui transmettre telle quelle. Aucune valeur secrète n'est écrite ici. 10 minutes environ, sur ordinateur de préférence.*
+
+**A. Récupérer la clé privée EmailJS**
+1. Ouvrez **emailjs.com** et connectez-vous (le compte qui envoie déjà les e-mails du site).
+2. En haut à droite, cliquez votre nom, puis **Account** (Compte).
+3. Onglet **General** : à la ligne **Private Key**, cliquez l'icône « copier ». Ne l'envoyez à personne.
+4. Onglet **Security** : cochez **« Allow EmailJS API for non-browser applications »** puis **Save**.
+   (Sans cette case, le serveur du site ne peut pas envoyer d'e-mails, même avec la clé.)
+
+**B. Créer la clé de la tâche de 8 h (CRON_SECRET)**
+- Ce n'est pas une clé à récupérer : c'est un **mot de passe que vous inventez**, au moins 32 lettres et chiffres
+  mélangés, sans espace (par exemple celui que propose le générateur de mots de passe de votre téléphone). Vous n'aurez
+  jamais à le retaper ailleurs : Vercel l'utilise tout seul pour lancer la tâche de 8 h.
+
+**C. Les poser dans Vercel**
+1. Ouvrez **vercel.com**, connectez-vous, choisissez l'espace **ma-2-m** puis le projet **site-maitre-akesse-kiw2**.
+2. **Settings** (Réglages) → **Environment Variables** (Variables d'environnement).
+3. Cliquez **Add New** (Ajouter) :
+   - Nom (**Key**) : `EMAILJS_PRIVATE_KEY` — Valeur (**Value**) : collez la clé copiée en A.3.
+   - Cochez **Production** (et **Preview** si proposé). Cochez **Sensitive** si la case existe. **Save**.
+4. Recommencez **Add New** :
+   - Nom : `CRON_SECRET` — Valeur : le mot de passe inventé en B. Cochez **Production**. **Save**.
+5. Les clés ne servent qu'à la **prochaine mise en ligne** : rien d'autre à faire maintenant (elles seront prises
+   avec la mise en ligne unique de l'audit). Dites simplement au superviseur « les 2 clés sont posées ».
+
+**Ce que ça débloque** : la tâche de 8 h (anniversaires, documents, relances des mensualités du 3 et du 5, contrôle du
+matin), les e-mails envoyés par le serveur (alertes, demandes d'accès), et le secours de « Créer mon compte » (L-6).
+**Vérification ensuite** (agents) : le lendemain à 8 h 06, journaux Vercel de `/api/portail` (réponse 200, pas 401).
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
