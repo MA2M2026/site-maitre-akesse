@@ -121,6 +121,9 @@ function reconstruire(gardees) {
     }
     if (r instanceof CSSMediaRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@media ' + r.conditionText + '{' + d + '}' : ''; }
     if (r instanceof CSSSupportsRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@supports ' + r.conditionText + '{' + d + '}' : ''; }
+    // (16/11/2026, audit L-9) règles rangées dans une « couche » (@layer : le bouton commun, css/bouton-ma2m.css) : avant,
+    // elles étaient oubliées, et les boutons changeaient de taille à l'arrivée des feuilles complètes (page qui saute)
+    if (typeof CSSLayerBlockRule !== 'undefined' && r instanceof CSSLayerBlockRule) { const d = parcourir([...r.cssRules]).join(''); return d ? '@layer ' + r.name + '{' + d + '}' : ''; }
     return '';
   });
   const images = [];

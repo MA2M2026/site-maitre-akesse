@@ -25,6 +25,9 @@
 .lx-hero h1 .oeil { display: none; }
 .lx-chapeau { max-width: 56ch; margin-top: 1.2rem; font-size: 1.08rem; line-height: 1.7; color: #fff; }
 .lx-hero-boutons { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; }
+/* (16/11/2026, audit L-9) téléphone : le lien passe sous le bouton dès le départ (il y allait de toute façon une fois la
+   police chargée ; avant, la page sautait à ce moment-là) */
+@media (max-width: 480px) { .lx-hero-boutons .lien-marche { flex-basis: 100%; } }
 @media (min-width: 900px) {
   .lx-hero { align-items: center; min-height: 88vh; padding: 7rem 0 4rem; }
   .lx-hero-photo { left: auto; right: 0; width: 52%; height: 100%; object-position: 30% 20%; }
@@ -86,6 +89,8 @@
 .lx-tapis { display: flex; gap: 1rem; width: max-content; animation: lx-tapis var(--duree, 45s) linear infinite; }
 .lx-galerie-grille .lx-tapis .lx-galerie-photo { flex: 0 0 auto; width: clamp(240px, 28vw, 380px); transform: none; }
 .lx-galerie-grille.en-tapis:hover .lx-tapis, .lx-galerie-grille.en-tapis:active .lx-tapis { animation-play-state: paused; }
+/* (16/11/2026) bande déjà dans la page : qui demande moins d'animations la fait glisser du doigt */
+@media (prefers-reduced-motion: reduce) { .lx-tapis { animation: none; } .lx-galerie-grille.en-tapis { overflow-x: auto; } }
 @keyframes lx-tapis { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 0.5rem)); } }
 @media (min-width: 860px) {
   .lx-galerie-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6rem; overflow: visible; padding-bottom: 3rem; }
@@ -133,13 +138,15 @@
 
 /* ---------- couverture avec le mur de visages des mannequins (posé par le serveur depuis la base : js/gabarit.js
    poserMur ; sinon par js/app.js murDeTitre) au lieu d'une photo : « Postuler à un casting » */
-.lx-hero--mur { padding: 9rem 0 4rem; min-height: 78vh; }
+/* (16/11/2026, audit L-9) « .avec-mur-titre » (charte, même force) se disputait la marge du haut avec cette règle selon
+   l'ordre d'arrivée des feuilles : la page « Postuler » sautait de 72 px au chargement. Cette règle-ci gagne toujours. */
+.lx-hero--mur, .lx-hero--mur.avec-mur-titre { padding: 9rem 0 4rem; min-height: 78vh; }
 .lx-hero--mur > .container > * { max-width: 620px; }
 .lx-hero--mur .mur-titre img { opacity: 1; }  /* (11/11/2026 : photos pleines, plus de voile) */
 .lx-hero--mur .mur-titre::after { background: linear-gradient(180deg, rgba(90, 20, 27, 0.35) 0%, rgba(90, 20, 27, 0.7) 45%, rgba(90, 20, 27, 0.98) 85%); }
 .lx-hero--mur .lien-marche { color: #fff; }
 @media (min-width: 900px) {
-  .lx-hero--mur { padding: 8rem 0 5rem; }
+  .lx-hero--mur, .lx-hero--mur.avec-mur-titre { padding: 8rem 0 5rem; }
   .lx-hero--mur .mur-titre::after { background: linear-gradient(90deg, rgba(90, 20, 27, 0.98) 0%, rgba(90, 20, 27, 0.85) 45%, rgba(90, 20, 27, 0.35) 100%); }
 }
 
