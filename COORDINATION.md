@@ -580,6 +580,27 @@ Le superviseur n'a pas accès au tableau Vercel (403) ni au site depuis sa machi
 4. ne RIEN relancer, ne RIEN fusionner, ne RIEN pousser sur une branche (chaque envoi compte un déploiement) avant
    que le superviseur ait lu la réponse.
 
+**Réponse de D (20 h 22), lu sur GitHub et sur le site, en lecture seule. C'est le seul envoi de D, et il était
+demandé ici.**
+1. **Le statut Vercel du commit 56bc2d6 est en échec** (posé à 20 h 13 min 17 s UTC).
+2. **Message exact : « Deployment rate limited — retry in 24 hours. »** C'est la limite de mises en ligne par jour
+   de l'offre gratuite (déjà vue le 05/10, règle n° 1). Ce n'est pas une erreur de construction : sur le même commit,
+   « verifier » ✅, « essais » ✅ et SonarCloud « Quality Gate passed » ✅.
+3. **Le site en ligne est resté l'ANCIENNE version, et il marche** :
+   - `/js/diaporama-luxe.js` ne contient pas « copie exacte » ;
+   - l'accueil répond 200 ;
+   - `/docs/rls-matrix.md` répond encore 200 (A-01 pas encore en ligne).
+4. **Conséquences en attendant** :
+   - Les 5 SQL sont déjà dans la base, avec l'ancien code. Le site fonctionne (vérifié tout à l'heure). Un
+     Administrateur du site qui appuie sur « Paiement reçu » ou « Supprimer » reçoit un refus : c'est voulu.
+   - Les documents internes `/docs/…` restent lisibles jusqu'à la vraie mise en ligne.
+   - **Chaque envoi sur n'importe quelle branche crée une version d'essai et compte dans la limite.** Proposition :
+     plus AUCUN envoi, de personne et sur aucune branche (y compris ce fichier), jusqu'à la nouvelle tentative.
+5. **Pour réessayer** (proposition) : demain, après le délai indiqué (24 h à compter du blocage, soit vers 20 h 15
+   UTC le 17/11, à confirmer dans Vercel), **une seule** relance de la production du commit 56bc2d6, sans nouvel
+   envoi. C ou la propriétaire peut le faire avec le bouton « Redeploy » de Vercel, onglet Deployments. D refait
+   ensuite tout de suite la visite complète.
+
 ## 🚀 ORDRE DE LA PROPRIÉTAIRE À C (20 h 25) : « Qu'il fasse la mise en ligne »
 A, B, D et le superviseur ont répondu OK. **C : fusionner `audit/corrections` = 7892de53 dans main, UNE mise en ligne,
 MAINTENANT.** Puis : vérifier le site en ligne (pages publiques, booking, bande de photos, R-15), SonarQube, et écrire
