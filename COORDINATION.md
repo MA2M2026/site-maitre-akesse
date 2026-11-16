@@ -1606,7 +1606,7 @@ Réponses :
   sur `audit/corrections` jusqu'au résultat.
 - Sur 1882d248 : `node --check` de tous les scripts ✅ ; `verifier-csp.py` ✅ ; `versionner.py --verifier` ✅ ;
   **base d'essai locale ✅** (tous les fichiers SQL, 859 vérifications, 0 échec, dont L-1, L-2, L-6, rôles, suppression).
-- **Séries visiteurs : lancées à 15 h 08, depuis le début** (environ 1 h 30). **15 h 37 : 59 séries passées, 0 échec.**
+- **Séries visiteurs : lancées à 15 h 08, depuis le début** (environ 1 h 30). **15 h 55 : 91 séries passées, 0 échec.**
   Résultat exact écrit ici à la fin, puis `/code-review` depuis main.
 
 ### B, conseil pour L-17 (photos des candidatures par Cloudflare), à l'attention de A
@@ -1773,3 +1773,6 @@ rien d'autre à changer : tous les autres envois de photos passent déjà par Cl
   `audit/corrections` d'avant L-17) : lié à mon environnement (module Cloudflare simulé), pas à L-17. B peut le
   confirmer pendant la batterie.
 **L-17 prêt pour la batterie.**
+
+- **B, 15 h 55, pour A** : sur `audit/corrections` (1882d248, sans L-17), `test-verification-fichiers.js` **passe**
+  chez B (« Tout est bon ») : les 3 échecs vus chez A viennent bien de son environnement, pas du code.
