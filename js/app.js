@@ -3002,15 +3002,7 @@ async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
 // réduite (1600 px) et COPIÉE EN MÉMOIRE tout de suite : à l'envoi, plus rien à relire sur le téléphone, et c'est
 // plus léger. Lève une erreur si la photo est déjà illisible (la personne la choisit à nouveau).
 async function preparerPhotoEnvoi(fichier) {
-  const convertie = await convertirSiHeic(fichier);
-  // (16/11/2026, audit L-5 = R-05) un fichier que le téléphone ne sait pas afficher comme une image (PDF, document,
-  // HEIC illisible…) n'est PAS une photo : refusé tout de suite (la personne en choisit une autre), au lieu de
-  // compter dans le minimum de photos
-  if (!(await redessinerPhoto(convertie, 8, (canvas, fin) => fin(true)))) throw new Error('Ce fichier n’est pas une photo lisible.');
-  let prete = await redimensionnerImage(convertie, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
-  // (L-5 = R-06) une grosse capture PNG / WebP / GIF (13 Mo vus) est aussi allégée en JPEG (fond blanc :
-  // redessinerPhoto) ; avant, seuls les JPEG l'étaient et toute la candidature partait trop lourde
-  if (prete === convertie && prete.type !== 'image/jpeg' && prete.size > 900 * 1024) prete = await reduireEnJpeg(prete, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  const prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
   if (prete !== fichier) return prete;
   return new File([await fichier.arrayBuffer()], fichier.name || 'photo.jpg', { type: fichier.type || 'image/jpeg' });
 }
@@ -3414,9 +3406,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // bande compacte à droite, à côté de la bulle WhatsApp (elle cachait le nom de la mannequin sur sa fiche et des
     // champs des formulaires) ; elle s'efface le temps d'écrire dans un champ, puis revient
     const surLeSite = !pageAdministration() && !pageApplicationMannequin();
-    // (16/11/2026, audit L-5 = R-04) pas de bande sur une page avec un formulaire à envoyer (candidature, intégrer
-    // l'agence, cours de talons, contact…) : elle revenait au moment d'appuyer sur « Envoyer » et en couvrait la moitié
-    if (surLeSite && document.querySelector('form [type="submit"]')) return;
     const b = document.createElement('div');
     b.id = 'ma2m-installer'; b.className = 'ma2m-installer';
     if (surLeSite) b.classList.add('ma2m-installer--site');

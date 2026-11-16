@@ -5319,11 +5319,3 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   e-mail (risque : les e-mails de l'invitation ne partaient pas, d'où « Créer mon compte » le 01/11) ou vérification
   par téléphone avant d'accepter. Toute modification de la création de compte s'essaie aussi pour de vrai, avec
   l'accord de la propriétaire (règle de CLAUDE.md).
-- **L-5, formulaire de candidature** : `preparerPhotoEnvoi` (js/app.js) refuse un fichier que le téléphone ne sait
-  pas afficher comme image (PDF, HEIC illisible : il ne compte plus dans le minimum de photos) et allège aussi en
-  JPEG les grosses captures PNG / WebP / GIF (plus de 900 Ko ; fond blanc) ; la bande « Appli MA2M » ne s'affiche
-  plus sur une page avec un formulaire à envoyer (elle couvrait « Envoyer ma candidature ») ; un verrou posé dès le
-  premier appui empêche un double envoi (`envoiCommence`, js/formulaire-candidature.js) ; une vidéo illisible par le
-  téléphone n'est plus annoncée « Vidéo prête ». Envoi des photos une par une : non fait (il faudrait changer et
-  republier le programme Google, un seul dossier Drive par candidature) ; les photos allégées réduisent l'envoi à
-  quelques Mo. Test : `test-candidature-fichiers.js`.
