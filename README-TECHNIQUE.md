@@ -5350,4 +5350,5 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   seulement, avec confirmation, aucune suppression automatique. « 🗑 » sur chaque message de contact
   (js/admin/site-pilotage.js, `contact-supprimer`) ; « Supprimer ce dossier » des candidatures et demandes recruteurs
   réservé au principal (js/admin/site-dossiers.js). La base l'impose : `supabase-suppression-messages.sql` (À COLLER,
-  contrôle « 3 éléments sur 3 » ; essais `essais-suppression-messages.sql`). Test : `test-suppression-messages.js`.
+  contrôle « 3 éléments sur 3, 0 autre règle de suppression » : toutes les anciennes règles de suppression de ces 3
+  tables sont retirées quel que soit leur nom ; essais `essais-suppression-messages.sql`). Test : `test-suppression-messages.js`.

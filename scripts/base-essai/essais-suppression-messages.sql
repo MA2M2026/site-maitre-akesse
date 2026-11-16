@@ -31,3 +31,6 @@ select essai((select count(*) from messages_contact where id = '00000000-0000-00
   and (select count(*) from recruiter_requests where id = '00000000-0000-0000-0000-0000000c7b01') = 0
   and (select count(*) from casting_applications where id = '00000000-0000-0000-0000-0000000c7c01') = 0,
   'administratrice principale : supprime le message de contact, la demande recruteur et la candidature d''essai');
+-- (relecture du superviseur) plus AUCUNE autre règle de suppression sur ces 3 tables, quel que soit son nom
+select essai((select count(*) from pg_policies where schemaname = 'public' and tablename in ('messages_contact', 'casting_applications', 'recruiter_requests')
+  and cmd in ('DELETE', 'ALL') and policyname not like 'Le principal supprime%') = 0, 'aucune autre règle de suppression ne reste (noms réels ou non)');
