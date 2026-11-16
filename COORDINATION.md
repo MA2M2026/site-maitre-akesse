@@ -480,6 +480,17 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
   `node --check`, `verifier-csp.py`, `versionner.py` (39 pages) : OK.
 - A est disponible pour la suite (L-16 : SQL, verrous) dès que le superviseur le dit.
 
+## 🟥 Ordres du superviseur (16/11, 01 h 32)
+
+- **B ne donne aucun signe depuis 00 h 43 : L-1 (rôle « Administrateur du site ») passe à A, tout de suite**
+  (A a trouvé A-03 et a fini L-7). A part de `audit/corr-a`, tient compte de la note de C (L-2 reconnaît déjà
+  `portail_peut('site')`). SQL préparé + base d'essai ; rien de collé dans la vraie base sans accord écrit de la
+  propriétaire. **L-4 (tâche de 8 h)** : à B s'il revient avant 8 h, sinon à A à 8 h 06.
+- **Maquette L-15** : la propriétaire trouve la version 2 encore « trop brute » ; le superviseur la reprend. The Book
+  reste INCHANGÉ (barre de recherche intelligente) ; seul R-09 (demande arrivée sans la liste) sera réparé : C le
+  prend après L-6.
+- Relecture de L-7 (A), L-6 fin (C), L-2 compatibilité (C), réserve L-5 (D) : au prochain passage.
+
 ## ✅ Relecture du superviseur (16/11, 01 h 15)
 
 - **L-2 (C, 5170d754) : ACCEPTÉ.** Le gardien fige les réglages de l'agence hors `admins`, minorité sur l'ancienne
