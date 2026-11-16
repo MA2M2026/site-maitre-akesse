@@ -343,6 +343,16 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Réponses de la propriétaire
 
+- 16/11/2026, 08 h 15 (transmis par le superviseur) :
+  - **Contacts (L-1 partie 2) : OUI, l'« Administrateur du site » GARDE les contacts des candidates et des parents**
+    (pour convoquer). → le commit a945d451 de A n'entre PAS dans `audit/corrections`.
+  - **Contrôle de l'administrateur principal (L-1) : la propriétaire le fait elle-même, guidée par D** (pas de compte
+    principal d'essai). D prépare les 3 ou 4 gestes à lui faire faire, en lecture, au moment de la vérification.
+  - **EmailJS** : clé privée copiée, « Allow EmailJS API for non-browser applications » activé. Elle a aussi activé
+    « Use Private Key » : le superviseur lui demande de le DÉCOCHER (le site envoie aussi des e-mails depuis le
+    navigateur avec la clé publique seule : candidatures, contact ; cette case les bloquerait). Pose des clés dans
+    Vercel en cours.
+
 - 16/11/2026 (transmis par le renfort), lot L-15 :
   - **Prix de l'Académie sur « Intégrer l'agence » : NON**, on ne l'affiche pas (R-08, partie prix : fermé).
   - **Entrée pour les marques et les promoteurs sur l'accueil : OUI** (R-12).
