@@ -89,6 +89,13 @@ const donneesDe = (html) => JSON.parse((html.match(/<script type="application\/j
     ok(/<h1>Awa Koné<\/h1>/.test(h) && /<dd>178 cm[< ]/.test(h) && h.includes('<link rel="canonical" href="https://www.maitreakessemodelmanagement.com' + (chemin.startsWith('en/') ? '/en' : '') + '/mannequin?id=' + ID + '">'),
       chemin.split('?')[0] + '?id=… (carte du Book) : nom et taille écrits dans le HTML avant tout programme');
   }
+  // (16/11/2026, audit R-13) la fiche anglaise annonce aussi ses deux langues à Google (avant : aucune balise hreflang)
+  for (const chemin of ['book/awa-kone', 'en/book/awa-kone']) {
+    const r = await demander(chemin); const h = r ? await r.text() : '';
+    ok(h.includes('<link rel="alternate" hreflang="fr" href="https://www.maitreakessemodelmanagement.com/book/awa-kone">') &&
+      h.includes('<link rel="alternate" hreflang="en" href="https://www.maitreakessemodelmanagement.com/en/book/awa-kone">'),
+      chemin + ' : liens vers la fiche française et anglaise (hreflang)');
+  }
   ok(await demander('mannequin?id=pas-un-id') === undefined && await demander('mannequin?id=' + ID, { headers: { 'user-agent': 'WhatsApp/2.23' } }) !== null, '/mannequin?id= non valable : la page habituelle ; robots : l’aperçu habituel');
   ok(reecrite(await demander('book/awa-kone', { method: 'HEAD' })), 'seulement les visites (GET) : sinon comme avant');
   baseLente = 1500; let t = Date.now();

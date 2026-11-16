@@ -2170,9 +2170,21 @@ function rendreContenuRiche(texte) {
   const conteneur = document.createElement('div');
   conteneur.appendChild(propre);
   normaliserListesQuill(conteneur);
+  abaisserTitresPrincipaux(conteneur);
   retirerParagraphesVides(conteneur);
   rendreLiensCliquables(conteneur);
   return conteneur.innerHTML;
+}
+
+// (16/11/2026, audit C-P8) un « Titre 1 » tapé dans l'éditeur devient un titre de niveau 2 à l'affichage : la page a
+// déjà son grand titre, et deux titres principaux gênent Google et les lecteurs d'écran (article « Alpha Blondy… »).
+function abaisserTitresPrincipaux(racine) {
+  racine.querySelectorAll('h1').forEach((h1) => {
+    const h2 = document.createElement('h2');
+    for (const a of h1.attributes) h2.setAttribute(a.name, a.value);
+    while (h1.firstChild) h2.appendChild(h1.firstChild);
+    h1.replaceWith(h2);
+  });
 }
 
 // Lignes vides tapées dans l'éditeur (« Entrée » deux fois) : retirées, l'écart entre deux
