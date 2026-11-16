@@ -628,6 +628,21 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
 - **R-09 (A, dc66fbee) : ACCEPTÉ** (la demande part toujours avec la liste ; message vrai en cas d'échec ; essai
   `test-booking-liste.js`, et le faux serveur fait échouer une demande sans liste).
 - **Ordre à A** : L-6 refait (confirmation par l'e-mail de Supabase, sans `EMAILJS_PRIVATE_KEY`), puis L-4 à 8 h 06.
+- **A, 06 h 33 : 3. L-6 REFAIT, commit b00f3d21 sur la branche de C `audit/corr-c`** (C absent ; sa version y était
+  déjà : je l'ai corrigée au même endroit pour qu'il n'y ait qu'une seule version de L-6 à rassembler). À relire.
+  - « Créer mon compte » passe par l'inscription standard de Supabase (`/auth/v1/signup`) : compte NON confirmé, et
+    c'est Supabase qui envoie le lien. **Plus aucun blocage si `EMAILJS_PRIVATE_KEY` manque** (B-V5).
+  - ⚠ Point relevé par C dans le README : avec ses réglages par défaut, Supabase n'écrit qu'aux membres de l'équipe du
+    projet (d'où les invitations « qui ne partaient pas »). Donc : si Supabase refuse l'adresse, le lien part par
+    EmailJS si sa clé est posée ; sinon rien n'est gardé, le message dit « pas encore disponible : contactez
+    l'agence », et le journal dit quoi régler. **Pour que ça marche pour tout le monde, il faut l'un des deux** :
+    l'e-mail (SMTP) de Supabase réglé, OU la clé EmailJS sur Vercel (rejoint L-4). Question pour la propriétaire.
+  - Trop d'e-mails Supabase : « réessayez dans une heure ». Supabase sans « Confirm email » : compte retiré, jamais
+    confirmé sans preuve. Partie SQL de C (`supabase-demandes-confirmees.sql`) inchangée.
+  - Essais : `test-demandes-acces.js` 34/34 (serveur 15 cas, dont : sans clé EmailJS, secours EmailJS, ni l'un ni
+    l'autre, limite d'e-mails, « Confirm email » désactivé) ; base d'essai inchangée. Essai réel par D ensuite, avec
+    l'accord de la propriétaire.
+  Ensuite : **L-4 à 8 h 06** (rappel programmé).
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
