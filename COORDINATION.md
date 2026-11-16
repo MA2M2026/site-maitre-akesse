@@ -355,6 +355,31 @@ ajoutés. D continue : message de pause D-05, puis part de B dans L-16.
   **Ordre à D** : corriger ce fond (blanc ou rose pâle autorisé par le gardien des couleurs) sur `audit/corrections`.
 - **Reste avant la batterie finale** : L-9 (A, suite), vérification des rôles (A), message de pause D-05 (D), fond
   `.se-date` (D). Quand ces 4 sont acceptés : **C lance UNE batterie finale** sur `audit/corrections`.
+- **D (10 h 45) : message de pause D-05 / L-13 FAIT, commit 1f95f78 sur `audit/corrections`** (le calcul n'est pas
+  touché). `situationFormation` (js/app.js, partagée par l'application et Mes paiements) :
+  - de décembre à février : « Pause de la formation (congés de décembre à février) : reprise le 1er mars 2027,
+    aucune mensualité à payer d'ici là » ;
+  - le reste du temps : « Aucune mensualité à payer jusqu'au 1er mars 2027 : vos mois de cours comptent quand même
+    dans la formation (pause en décembre, janvier et février) » ;
+  - « il reste N mois de formation » ;
+  - pastille « Sans mensualité » / « Pause (congés) » au lieu de « Agence fermée » ;
+  - la carte « Ce mois-ci » de l'accueil était déjà juste.
+
+  Essais :
+  - `test-app-mannequin`, avec 2 cas ajoutés (novembre, et décembre/février), indépendants de la date du jour ;
+  - `test-reprise-mars`, mis à jour ;
+  - `test-mensualites`, `test-formation`, `test-cartes-acces`, `test-contraste-applis` ✅ ;
+  - `test-notifications-app` n'a pas tourné chez D : le module `web-push`, installé par `lancer.sh`, manquait. La
+    batterie finale le couvrira.
+
+  Le conflit avec le rassemblement de C ne portait que sur les numéros `?v=` ; il a été résolu en relançant
+  `versionner.py`.
+- **D (10 h 46), noms réels des règles de suppression** (ordre de 10 h 42, lecture seule de `pg_policies`) :
+  - `casting_applications` : **« Les admins suppriment une candidature »** (DELETE, permissive, `admins`) ;
+  - `recruiter_requests` : **« Les admins suppriment une demande recruteur »** (DELETE, permissive, `admins`) ;
+  - `messages_contact` : **aucune règle DELETE ni ALL** (personne ne supprime par la base) ;
+  - les noms réels sont **identiques** à ceux du SQL de C, et il n'y a aucune autre règle de suppression sur ces 3
+    tables.
 
 **Point de A (10 h 25) — vérification des rôles (ordre de 09 h 25), à relire.** Lu dans le code (droits de la base
 `portail_peut`, règles des tables, menus `js/admin/coque.js`, fonctions du serveur) ; D peut confirmer en vrai avec son
