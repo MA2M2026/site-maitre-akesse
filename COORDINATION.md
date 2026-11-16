@@ -376,6 +376,20 @@ compte « site ».
   3. La comptabilité enregistre les cachets versés aux mannequins (« Payer les mannequins ») : on laisse ?
 - Ensuite : je reprends **L-9** (photos d'actualités, cache, candidature).
 
+**Point de A (10 h 45) — L-9 lenteur : TERMINÉ côté code, à relire** (`audit/corr-a`) :
+- **Page qui saute** (mesure : `scripts/tests-visiteur/mesure-cls.js`, téléphone 390 px, 4G lente simulée, processeur
+  ralenti ×4) : cours de talons FR **0,371 → 0**, EN **0,378 → 0,007** (ea364a01) ; candidature FR 0,017, EN 0,064 ;
+  intégrer l'agence 0 à 0,002 — tous sous 0,1 (« bon » pour Google) ; ordinateur : 0,001 partout.
+- **Photos des actualités et événements** (a36e67f5) : allégées AVANT l'envoi (1600 px, JPEG 0,85, dès 400 Ko). Mesure :
+  photo 4000×3000 de 1 628 Ko → 1600×1200 de 406 Ko (÷ 4) ; portrait 2400×3000 de 986 Ko → 398 Ko. Essai
+  `test-photos-publications-legeres.js` ; publications 40/40. ⚠ Les photos DÉJÀ en ligne restent lourdes (les réduire
+  demande soit de les renvoyer, soit un rattrapage à faire plus tard) : à décider.
+- **Cache des photos (C-P6)** : non modifié dans le code, volontairement. Les noms de photos ne changent jamais ; la
+  durée de 4 h vient du réglage de Cloudflare. Mettre la durée en signant l'envoi (`CacheControl` dans l'URL signée) peut
+  casser les envois sans essai réel possible ici. **Proposition (geste de la propriétaire, 2 minutes)** : Cloudflare ›
+  domaine maitreakessemodelmanagement.com › Caching › Cache Rules › « Créer » : si le nom d'hôte est
+  `photos.maitreakessemodelmanagement.com` → Browser TTL « 1 an » et Edge TTL « 1 mois ». À valider par le superviseur.
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 10 h 15 — **Réponses aux 3 questions de A sur les rôles** :
@@ -384,6 +398,13 @@ compte « site ».
   2. Les encaissements voient les comptages de caisse : **NON**. **Ordre à A** : retirer `compta_comptages` (et tout
      écran de comptage) au rôle « paiements » ; comptabilité et principal seulement. SQL + base d'essai, rien de collé.
   3. La comptabilité enregistre les cachets versés aux mannequins : **OUI**, on laisse.
+  - **A, 10 h 45 : ordre exécuté, commit b22d62fe (`audit/corr-a`), à relire.** `supabase-roles-comptages.sql` : la
+    lecture des comptages de caisse (`compta_comptages`) est réservée à la comptabilité (et au principal) ;
+    `reprise_etat()` (page « Dossiers de formation » des encaissements) ne rend plus le bilan d'ouverture compté qu'à la
+    comptabilité (corps repris tel qu'il est dans la base, seule cette ligne change ; contrôle « 2 éléments sur 2 »).
+    L'écran de comptage (Comptabilité › Clôture guidée) était déjà invisible aux encaissements. Base d'essai : 8 cas
+    (encaissements : rien ; leur page marche toujours ; comptabilité et principal : lisent ; site : rien) + toute la base
+    verte. Rien n'est collé. Questions 1 et 3 : rien à changer (déjà comme la propriétaire le veut).
 - 16/11/2026, 10 h 15 — **Nouvelle demande de la propriétaire** : de vieux messages d'essai écrits depuis le site
   (formulaires) restent dans l'Administration ; elle veut **pouvoir les supprimer** elle-même (bouton « Supprimer »
   avec confirmation, principal seulement, aucune suppression automatique). **Ordre à C** : ajouter cette suppression
