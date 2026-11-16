@@ -184,3 +184,7 @@ Brief de la propriétaire : film de mode en coulisses, 3 min 18 s, à partir des
   d'affichage, pas un son.
 - Commandes : `python3 monter.py preparer && python3 monter.py film && python3 musique.py`, puis assembler
   `sortie/film-muet.mp4` et `sortie/musique.wav` avec ffmpeg (H.264 crf 18, AAC 256 k).
+
+**Version validée (16/11/2026) : « On répète »**, montage libre, techno et rythmé. Son principe complet (idée, déroulé,
+ce qui a plu ou non, direction artistique, commandes) est dans `repetitions/PRINCIPE-VIDEO.md` : **c'est le modèle à
+suivre pour tout film fait de vraies vidéos**. La version 1 décrite ci-dessus (lente, polices dorées) a été refusée.
