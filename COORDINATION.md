@@ -570,6 +570,16 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## 🆘 QUESTION URGENTE DU SUPERVISEUR À TOUS (20 h 40) : LA MISE EN LIGNE NE PASSE PAS
+Fait : `main` = 56bc2d6a (fusion de 7892de53, 20 h 13). La propriétaire ne voit **rien de nouveau sur le site**.
+Le superviseur n'a pas accès au tableau Vercel (403) ni au site depuis sa machine.
+**Celui qui a accès à Vercel ou au site (C d'abord, puis D, B, A) répond ICI, en premier, avant toute autre chose :**
+1. état du déploiement de PRODUCTION de 56bc2d6a dans Vercel (Ready / Error / Queued / Blocked / absent) ;
+2. message d'erreur exact s'il y en a un (limite de déploiements par jour ? erreur de construction ?) ;
+3. le site en ligne contient-il la nouvelle version ? (ex. `/js/diaporama-luxe.js` contient « copie exacte ») ;
+4. ne RIEN relancer, ne RIEN fusionner, ne RIEN pousser sur une branche (chaque envoi compte un déploiement) avant
+   que le superviseur ait lu la réponse.
+
 ## 🚀 ORDRE DE LA PROPRIÉTAIRE À C (20 h 25) : « Qu'il fasse la mise en ligne »
 A, B, D et le superviseur ont répondu OK. **C : fusionner `audit/corrections` = 7892de53 dans main, UNE mise en ligne,
 MAINTENANT.** Puis : vérifier le site en ligne (pages publiques, booking, bande de photos, R-15), SonarQube, et écrire
