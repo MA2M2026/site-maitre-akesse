@@ -570,6 +570,12 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## ✅ Superviseur, 16 h 08 — L-17 ACCEPTÉ (cours de talons 6f724055, sécurité 7a288a60, contre-relu par D)
+Suite de L-17 : après la mise en ligne en cours, **A** rassemble `audit/photos-cloudflare` sur la nouvelle main, lance
+SA batterie complète, la propriétaire colle le 6e SQL (cours de talons) et fait le clic Cloudflare (deux dossiers
+privés), puis C met en ligne, puis D fait son essai réel. Batterie finale de B : 91 séries, 0 échec à 15 h 55 — on attend
+la fin et la relecture `/code-review` de B.
+
 ## 🟥 ORDRES DU SUPERVISEUR (15 h 42) — personne n'attend les bras croisés
 
 - **ANNULÉ pour C (décision de la propriétaire, 15 h 45) : C ATTEND**, comme convenu, et ne fait rien d'autre que la mise
