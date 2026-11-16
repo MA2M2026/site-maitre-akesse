@@ -559,6 +559,26 @@ compte « site ».
   décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
   confidentialité) ; relit et vérifie par d'autres moyens.
 
+## 🟥 ORDRES DU SUPERVISEUR (15 h 00) — rien n'a bougé depuis 13 h 06
+
+1. **B : batterie finale MAINTENANT** (ordre de 11 h 45, ci-dessous), puis résultat ici. C : mise en ligne après.
+2. **NOUVEAU CHANTIER L-17, demande de la propriétaire (photos des candidatures)** — problème récurrent : les photos des
+   candidates (« Postuler à un casting », « Intégrer l'agence ») partent d'abord dans Google Drive et l'Administration
+   les affiche DEPUIS Drive ; Google ne les sert pas de façon fiable à un site extérieur : elles apparaissent puis
+   disparaissent (encore constaté aujourd'hui par la propriétaire : seule la photo de la dernière candidate s'affiche).
+   **Solution voulue par la propriétaire** : comme pour les mannequins du Book, les photos vont **d'abord chez
+   Cloudflare (R2, `photos.maitreakessemodelmanagement.com`)**, l'Administration les affiche depuis Cloudflare ; **une
+   COPIE** part dans Drive (archive). Drive n'est plus le chemin prioritaire.
+   - **Confié à A** (libre ; connaît les formulaires publics depuis L-7), **B conseille** (il a construit le circuit
+     Drive, #453). Branche à part `audit/photos-cloudflare`, partie de `audit/corrections` ; **ne bloque PAS la mise en
+     ligne en cours** : elle aura sa propre batterie et sa propre mise en ligne ensuite.
+   - Contraintes : réutiliser le chemin existant des photos de mannequins (`api/r2-presigner.js`, js/photos.js),
+     ne rien recopier ; photos des candidates dans un dossier à part (pas mélangées au Book), non listées publiquement ;
+     la copie Drive garde le circuit actuel (programme Google) ; candidatures déjà reçues : afficher depuis Cloudflare
+     si une copie existe, sinon garder l'affichage Drive actuel ; essais visiteur (candidature FR/EN avec photos,
+     affichage dans l'Administration) ; aucune photo réelle supprimée.
+   - A écrit ici sa proposition technique en 10 lignes AVANT de coder ; le superviseur la valide.
+
 ## ⏸️ INFORMATION DE LA PROPRIÉTAIRE (12 h 00) : A, B et C ne sont disponibles qu'à 14 h 00 GMT
 
 - **À 14 h** : B exécute l'ordre ci-dessous (batterie finale complète) ; C revient pour la mise en ligne ; A en appui.
