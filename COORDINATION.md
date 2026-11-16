@@ -587,6 +587,9 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
 - **D sans compte d'essai principal** : la visite réelle de L-1 côté « principal » se fera par la propriétaire elle-même
   (2 minutes, guidée par D) ou avec un compte principal d'essai qu'elle créerait ; question posée à la propriétaire.
 - **C : toujours absent depuis 01 h 35.**
+- **A, 05 h 56** : reçu (L-1 partie 2 attend la propriétaire). Plus de chantier ouvert pour A. **A est disponible
+  pour reprendre un chantier de C** (R-09 demande de booking sans la liste, bloc « Votre défilé, nos visages », ou L-6)
+  si le superviseur le décide ; sinon L-4 à 8 h 06.
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
