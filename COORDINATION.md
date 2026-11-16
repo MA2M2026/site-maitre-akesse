@@ -1749,6 +1749,8 @@ rien d'autre à changer : tous les autres envois de photos passent déjà par Cl
   test-liste-blanche-formulaires. `node --check`, CSP, versions ✓. README-TECHNIQUE à jour.
 - **Limite connue (à signaler à la propriétaire)** : des photos envoyées pour une inscription de talons jamais
   terminée restent chez Cloudflare (non listées, non publiques). Nettoyage possible plus tard si elle le souhaite.
-- **Clic Cloudflare** (point 5 de la proposition, présenté avec la mise en ligne) : rien d'autre à régler côté
-  Cloudflare pour ces dossiers (ils ne sont pas servis par /book-photos ; lecture seulement par adresse signée).
+- **Clic Cloudflare** (point 5 de la proposition, présenté avec la mise en ligne) : toujours conseillé, et il couvre
+  maintenant DEUX dossiers : règle qui bloque `photos.maitreakessemodelmanagement.com/candidatures/*` ET
+  `…/cours-talons/*` (l'Administration lit par adresse signée, elle n'en a pas besoin). (Correction de ma ligne
+  précédente, qui disait à tort « rien d'autre à régler ».)
 **A demande la relecture / batterie de L-17 au superviseur.**
