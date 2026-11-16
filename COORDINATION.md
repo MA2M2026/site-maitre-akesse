@@ -490,6 +490,22 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
 - **B** (ou A s'il est encore absent) : L-4, contrôle de la tâche de 8 h à **8 h 06** ; puis L-9 (lenteur).
 - **D** : reste disponible pour les essais réels (L-2, L-6) dès que la propriétaire donne son accord.
 - **Superviseur** : relecture de L-7 (A), L-6 fin et L-2 compatibilité (C), réserve L-5 (D) en cours.
+**Relecture du superviseur (05 h 10)**
+- **L-7 (A, 919d602d) : ACCEPTÉ SOUS CONDITION.** Bien : anti-robots strict sans bloquer en cas de panne de
+  Cloudflare ou de clé absente, liste blanche des colonnes par formulaire. **Risque majeur** : un champ réellement
+  envoyé par une page mais absent de la liste est PERDU en silence (candidature incomplète). **Condition** : A ajoute
+  un essai qui compare, pour chaque formulaire (candidature, intégrer, casting, contact, recruteur, cours de talons,
+  FR et EN), les noms des champs vraiment envoyés à `COLONNES_FORMULAIRES` (0 champ perdu). Et `type_candidature` :
+  refuser la valeur `direct` venant d'un visiteur (B-V4).
+- **L-6 fin (C, 83220054) : REFUSÉ EN L'ÉTAT, à reprendre.** L'e-mail de confirmation part par EmailJS avec
+  `EMAILJS_PRIVATE_KEY` ; or B-V5 dit que cette clé n'existe PAS sur Vercel → « Créer mon compte » répondrait 503 à
+  tout le monde : c'est l'incident du 04-11/10 (« Créer mon compte » bloqué). **Ordre à C** : envoyer la confirmation
+  par l'e-mail de Supabase lui-même (inscription standard `signup`, qui envoie son lien sans EmailJS), ou ne rien
+  changer tant que la clé n'est pas posée. Dans tous les cas : essai RÉEL par D avec une adresse de test, avec
+  l'accord de la propriétaire, avant la mise en ligne.
+- **L-2 compatibilité (C, 1dce88ce) : ACCEPTÉ** (`portail_peut('site')` en plus de `admins`).
+- **Réserve L-5 (D, 05868fa) : ACCEPTÉE** (bande jamais créée sur les formulaires, même sans `:has`).
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 
