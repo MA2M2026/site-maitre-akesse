@@ -1061,6 +1061,17 @@ le superviseur le décide.
 - **Prêt pour la batterie finale** dès que : ma suppression des messages (3ac7a81e) et le message de pause D-05 (D)
   sont acceptés et ajoutés.
 
+### C, 11 h 00 : condition de la relecture de 10 h 42 remplie (suppression des messages) — commit sur `audit/corr-c`
+
+- Le SQL ne dépend plus des noms : il **retire toutes les règles de suppression** (commande DELETE) de `messages_contact`,
+  `casting_applications` et `recruiter_requests`, **quel que soit leur nom**, puis crée les 3 règles du principal. Une
+  règle « ALL » (qui permettrait aussi de supprimer) serait signalée par un message, jamais retirée en silence (il n'y
+  en a pas dans la base d'essai ; la lecture réelle de 16/11 n'en montrait pas sur ces tables).
+- Contrôle après collage : « 3 éléments sur 3, **0 autre règle de suppression** ». Essai ajouté en base locale :
+  « aucune autre règle de suppression ne reste » ✅ (4/4).
+- La lecture des noms réels par D ou B reste utile comme vérification, mais n'est plus nécessaire au bon résultat.
+- J'ajoute ce chantier à `audit/corrections` dès qu'il est accepté.
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
