@@ -332,8 +332,10 @@
       '<div class="fiche-col"><section class="carte"><h2>Informations</h2>' + blocChamps(source, d) +
       (d.message ? '<blockquote class="message-dossier">' + P.esc(d.message) + '</blockquote>' : '') + '</section>' +
       (source === 'recruteur' ? await blocMannequinsChoisis() : '') +
-      '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier' + (conf.photos ? ' et ses photos enregistrées sur le site (les copies Google Drive restent)' : '') + '.</p>' +
-      '<button type="button" class="btn" data-action="dossier-supprimer">🗑 Supprimer ce dossier</button></section></div></div>';
+      // (16/11/2026, demande de la propriétaire) supprimer (vieux messages d'essai…) : administratrice principale
+      // seulement, avec confirmation ; la base l'impose aussi (supabase-suppression-messages.sql)
+      (P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier' + (conf.photos ? ' et ses photos enregistrées sur le site (les copies Google Drive restent)' : '') + '.</p>' +
+      '<button type="button" class="btn" data-action="dossier-supprimer">🗑 Supprimer ce dossier</button></section>' : '') + '</div></div>';
   }
   function apresFiche() {
     if (!fiche) return;
@@ -582,6 +584,7 @@
     el.closest('.choisi').remove();
   };
   P.actions['dossier-supprimer'] = async (el) => {
+    if (!(P.moi && P.moi.role === 'principal')) return;
     const conf = SOURCES[fiche.source];
     if (!confirm('Supprimer définitivement ce dossier' + (conf.photos ? ' et toutes ses photos' : '') + ' ? Cette action est irréversible.')) return;
     el.disabled = true;

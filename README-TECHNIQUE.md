@@ -5346,3 +5346,9 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   2 » ; essais `essais-demandes-confirmees.sql`) : la demande n'apparaît et ne s'accepte qu'adresse confirmée.
   Connexion avant confirmation : « Adresse e-mail pas encore confirmée » (api/connexion-protegee.js). **À essayer pour
   de vrai** avant la mise en ligne (règle 3 de CLAUDE.md), avec une adresse de test et l'accord de la propriétaire.
+- **Supprimer les vieux messages d'essai (demande de la propriétaire, 16/11/2026)** : administratrice principale
+  seulement, avec confirmation, aucune suppression automatique. « 🗑 » sur chaque message de contact
+  (js/admin/site-pilotage.js, `contact-supprimer`) ; « Supprimer ce dossier » des candidatures et demandes recruteurs
+  réservé au principal (js/admin/site-dossiers.js). La base l'impose : `supabase-suppression-messages.sql` (À COLLER,
+  contrôle « 3 éléments sur 3, 0 autre règle de suppression » : toutes les anciennes règles de suppression de ces 3
+  tables sont retirées quel que soit leur nom ; essais `essais-suppression-messages.sql`). Test : `test-suppression-messages.js`.
