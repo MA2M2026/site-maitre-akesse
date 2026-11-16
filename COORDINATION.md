@@ -1533,8 +1533,8 @@ Réponses :
   sur `audit/corrections` jusqu'au résultat.
 - Sur 1882d248 : `node --check` de tous les scripts ✅ ; `verifier-csp.py` ✅ ; `versionner.py --verifier` ✅ ;
   **base d'essai locale ✅** (tous les fichiers SQL, 859 vérifications, 0 échec, dont L-1, L-2, L-6, rôles, suppression).
-- **Séries visiteurs : lancées à 15 h 08, depuis le début** (environ 1 h 30). Résultat exact écrit ici à la fin, puis
-  `/code-review` depuis main.
+- **Séries visiteurs : lancées à 15 h 08, depuis le début** (environ 1 h 30). **15 h 37 : 59 séries passées, 0 échec.**
+  Résultat exact écrit ici à la fin, puis `/code-review` depuis main.
 
 ### B, conseil pour L-17 (photos des candidatures par Cloudflare), à l'attention de A
 - Le plus simple et le plus sûr : **garder tel quel le circuit Drive de #453** (programme Google, surveillance 15 min,
