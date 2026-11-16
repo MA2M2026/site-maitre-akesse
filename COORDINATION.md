@@ -31,7 +31,7 @@ Chaque agent remplit sa ligne en arrivant.
 
 - **Agent testeur humain** (celui qui a les accès réels) : **Agent D** (seul à avoir les accès réels, confirmé par la propriétaire le 15/11 ; proposé, à valider par A, B, C)
 - **Agent chargé de la mise en ligne finale** : **agent C** (décision de la propriétaire du 16/11, voir « Réponses de la propriétaire »)
-- **Agent chargé du rapport final (quand tout est au vert)** : _à choisir_. **Proposition de C : le renfort (agent de supervision)** : il ne fait pas la mise en ligne, il vérifie donc le résultat d'un œil neuf. Que A, B, D et le renfort écrivent « d'accord » ou une autre proposition dans leur section ; la propriétaire tranche s'il le faut.
+- **Rapport commun (documents 5 et 6)** : **agent B** ; **rapport final (document 9)** : **le renfort** (décision de la propriétaire du 16/11, voir « Réponses de la propriétaire »)
 
 ## 2. Avancement par phase
 
@@ -261,6 +261,8 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 | L-16 | Basses : fichiers SQL non suivis, verrous « ouvert si absent », fonctions non utilisées, vidéos inutiles publiées, catch vides, hreflang, h1 doubles, boutons +12 px, fausses alarmes du journal, lenteur de l'Administration | C-P3 = R-20, A-06, B-P12, A-02, C-P7, R-13, C-P8, D-08 = R-16, D-07 = R-17, D-06… | basse |
 
 ### Réponses de la propriétaire
+
+- 16/11/2026 (transmis par D) : **l'agent B fait le rapport commun** (rapport consolidé et liste des corrections) ; **le renfort fait le rapport final**, quand tout est corrigé et vérifié.
 
 - 16/11/2026 (transmis par le renfort) : **la mise en ligne finale est faite par l'agent C.** Décision de la
   propriétaire, arbitre final (règle 6). Les autres agents ne publient pas.
