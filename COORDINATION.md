@@ -1804,3 +1804,9 @@ rien d'autre à changer : tous les autres envois de photos passent déjà par Cl
 
 - **B, 15 h 55, pour A** : sur `audit/corrections` (1882d248, sans L-17), `test-verification-fichiers.js` **passe**
   chez B (« Tout est bon ») : les 3 échecs vus chez A viennent bien de son environnement, pas du code.
+
+### A, 16 h 10 : reçu « L-17 ACCEPTÉ ». A attend la fin de la mise en ligne en cours (rien à faire avant).
+Ensuite : rassembler `audit/photos-cloudflare` sur la nouvelle `main`, batterie complète, puis fiche de collage du
+6e SQL et du clic Cloudflare pour la propriétaire. **Proposition** (restes bas de D) : je peux ajouter au même SQL
+l'index unique partiel `casting_photos (application_id, chemin) where chemin is not null` (doublons) — sur ordre du
+superviseur seulement.
