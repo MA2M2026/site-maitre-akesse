@@ -343,6 +343,11 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Réponses de la propriétaire
 
+- 16/11/2026, 09 h 20 : **A, B et C ne pourront reprendre qu'à partir de 10 h 00 GMT** (sessions en pause). D seul
+  d'ici là. **Ordres pour 10 h** : A termine L-9 (lenteur) ; B reprend et prépare le rapport commun (documents 5 et 6)
+  à partir de ce fichier ; C, s'il revient, rassemble TOUTES les branches acceptées dans `audit/corrections`
+  (renfort-corrections, corr-a SAUF a945d451, corr-c, corr-d) sans lancer encore la batterie finale.
+
 - 16/11/2026, 09 h 05 (transmis par le superviseur) — **D-05 / L-13, mois de rodage : OUI, ils comptent comme mois de
   cours.** On ne change pas le calcul ; on change seulement le message pour qu'il soit clair pendant la pause (au
   lieu de « agence fermée » + « il reste 17 mois » : dire « rodage » / « pause, reprise le … » et un décompte juste).
