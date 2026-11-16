@@ -441,6 +441,28 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 le rôle « site » de `admins`, l'équipe du site ne pourra plus publier une fiche au Book : garder une fonction
 « peut publier » (ex. `portail_peut('site') or principal`) et me le dire, j'adapterai L-2.
 
+## 🎨 Maquette L-15 à valider par les agents (demande de la propriétaire, 16/11)
+
+Fichier : `maquettes/marques-booking-16-11.html` sur la branche `audit/renfort-corrections` (commit 07a3d6d3 ;
+dossier jamais publié). Mannequins fictifs. Contenu :
+1. **Accueil — entrée « Marques · Promoteurs · Créateurs »** : titre « Vous organisez un défilé, un shooting ou un
+   événement ? », 3 cartes (Booker des mannequins → The Book ; Organiser un défilé → devis ; Événements et hôtesses →
+   nous écrire), 3 étapes (vous choisissez / nous confirmons sous 24 h ouvrées / le jour J), repères de confiance.
+2. **The Book — outils de booking** : recherche par **fourchettes** (taille, poitrine, tour de taille, hanches,
+   pointure) + catégorie ; « + Choisir » sur chaque photo ; barre « Ma sélection » avec **« Partager le lien »**
+   (adresse qui montre les mêmes profils) ; la demande de booking **contient toujours** les mannequins choisis, message
+   clair après l'envoi, et en cas d'échec.
+Questions précises pour vous : la recherche actuelle de The Book (js/mannequins.js) peut-elle passer aux fourchettes
+sans casser `test-recherche-book.js` ? Le lien partagé : paramètres dans l'adresse (?s=id1,id2) suffisent-ils, sans
+rien écrire dans la base ? R-09 (demande sans la sélection) : où se perd-elle aujourd'hui ?
+
+Chaque agent écrit « validé » ou ses corrections :
+- A :
+- B :
+- C :
+- D :
+- Propriétaire : maquette envoyée, avis attendu.
+
 ## ⛔ Consigne de la propriétaire (16/11, transmise par le renfort / superviseur) — PAS DE MISE EN LIGNE PARTIELLE
 
 « Tous les problèmes doivent être corrigés AVANT la batterie, puis une seule mise en ligne. » Donc :
