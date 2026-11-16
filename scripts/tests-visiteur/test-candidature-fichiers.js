@@ -45,6 +45,16 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     return { type: f.type, pretes: pretes.length, illisibles: illisibles.length, pasPhotos: pasPhotos.length };
   }, photoSansType);
   ok(r2b.type === '' && r2b.pretes === 1 && !r2b.illisibles && !r2b.pasPhotos, 'une vraie photo de galerie Android sans type ni extension est acceptée (' + JSON.stringify(r2b) + ')');
+  // 2 ter. (16/11/2026, relecture du superviseur) une photo au type faux « application/octet-stream » (Windows, certains
+  // Android) mais à l'extension de photo : jamais classée « pas une photo » ; un .HEIC ainsi est gardé pour la conversion
+  const r2t = await p.evaluate(async (b64) => {
+    const octets = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const jpg = await preparerPhotosEnvoi([new File([octets], 'IMG_1234.JPG', { type: 'application/octet-stream' })]);
+    const heic = await preparerPhotosEnvoi([new File([octets], 'IMG_1235.HEIC', { type: 'application/octet-stream' })]);
+    const pdf = await preparerPhotosEnvoi([new File([octets], 'scan.jpg', { type: 'application/pdf' })]);
+    return { jpg: jpg.pretes.length, type: jpg.pretes[0] && jpg.pretes[0].type, heicPasPhoto: heic.pasPhotos.length, pdfPasPhoto: pdf.pasPhotos.length };
+  }, photoSansType);
+  ok(r2t.jpg === 1 && r2t.type === 'image/jpeg' && r2t.heicPasPhoto === 0 && r2t.pdfPasPhoto === 1, 'photo au type « octet-stream » mais à l’extension de photo (JPG, HEIC) : acceptée, avec le type image/jpeg pour le Drive ; un PDF nommé .jpg reste « pas une photo » (' + JSON.stringify(r2t) + ')');
   // 3. une capture d'écran PNG lourde : allégée en JPEG (moins de 1,5 Mo, 1600 px au plus)
   const r3 = await p.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 2200; c.height = 2200;

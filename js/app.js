@@ -2820,7 +2820,7 @@ async function envoyerFormulairePublic(table, ligne, dejaRedemande) {
   // (Cloudflare n'affiche une case à cocher que s'il a un doute).
   if (rep.status === 403 && r.robot && !dejaRedemande) return envoyerFormulairePublic(table, ligne, true);
   // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
-  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris } };
+  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris, retires: Array.isArray(r.retires) ? r.retires : null } };
 }
 async function insererAvecPatience(table, ligne, surAttente) {
   const attentes = [15, 25, 35];
@@ -2996,7 +2996,12 @@ async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88, seuil =
 const PHOTO_LOURDE_OCTETS = 1.5 * 1024 * 1024;
 // (type inconnu : certains Android donnent une photo de la galerie sans type ni extension, « 1000012345 » : elle n'est
 // pas refusée ici, c'est la vérification de l'affichage qui tranche)
-const estFichierImage = (f) => !f.type || /^image\//.test(f.type);
+// (16/11/2026, relecture du superviseur) une photo au type « application/octet-stream » (HEIC d'iPhone, JPG… depuis
+// Windows ou certains Android) est acceptée si son extension est celle d'une photo ; elle reçoit ensuite le bon type
+// (typeImageDuNom), sinon le Drive de l'agence l'écarterait. Un type qui dit clairement autre chose (PDF, vidéo) reste refusé.
+const EXTENSIONS_PHOTO = Object.assign(Object.create(null), { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif' });
+const typeImageDuNom = (nom) => EXTENSIONS_PHOTO[String((String(nom || '').match(/\.([a-z0-9]+)$/i) || [])[1] || '').toLowerCase()] || null;
+const estFichierImage = (f) => !f.type || /^image\//.test(f.type) || (f.type === 'application/octet-stream' && !!typeImageDuNom(f.name));
 function verifierImageLisible(fichier) {
   return new Promise((ok, ko) => {
     const adresse = URL.createObjectURL(fichier), img = new Image();
@@ -3007,6 +3012,7 @@ function verifierImageLisible(fichier) {
 }
 async function preparerPhotoEnvoi(fichier) {
   if (!estFichierImage(fichier)) { const e = new Error('pas une photo'); e.pasPhoto = true; throw e; }
+  if (fichier.type === 'application/octet-stream') fichier = new File([fichier], fichier.name, { type: typeImageDuNom(fichier.name) });
   let prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
   if (prete.type !== 'image/jpeg' && prete.size > PHOTO_LOURDE_OCTETS) prete = await reduireEnJpeg(prete, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
   await verifierImageLisible(prete);

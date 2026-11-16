@@ -11,7 +11,7 @@ const M1 = '11111111-1111-4111-8111-111111111111', M2 = '22222222-2222-4222-8222
 
 async function serveur() {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-essai'; process.env.TURNSTILE_SECRET_KEY = 'secret-essai';
-  const appels = []; let listeRefusee = false, doublon = false, listeDejaLa = false;
+  const appels = []; let listeRefusee = false, doublon = false, listeDejaLa = false, m2Supprimee = false;
   global.fetch = async (url, o = {}) => {
     const u = String(url), m = o.method || 'GET';
     const json = (x, s = 200) => ({ ok: s < 300, status: s, json: async () => x, text: async () => JSON.stringify(x) });
@@ -19,7 +19,8 @@ async function serveur() {
     if (u.includes('siteverify')) return json({ success: true });
     if (u.includes('/rpc/formulaire_public_enregistrer')) return doublon ? json({ message: 'duplicate key value violates unique constraint' }, 409) : json('d1');
     if (u.includes('/rest/v1/recruiter_request_models') && m === 'GET') return json(listeDejaLa ? [{ request_id: 'x' }] : []);
-    if (u.includes('/rest/v1/recruiter_request_models') && m === 'POST') return listeRefusee ? json({ message: 'refus' }, 500) : json({}, 201);
+    if (u.includes('/rest/v1/recruiter_request_models') && m === 'POST') return listeRefusee || (m2Supprimee && o.body.includes(M2)) ? json({ message: 'refus' }, 500) : json({}, 201);
+    if (u.includes('/rest/v1/model_profiles?select=id')) return json(m2Supprimee ? [{ id: M1 }] : [{ id: M1 }, { id: M2 }]);
     if (u.includes('/rest/v1/recruiter_requests') && m === 'DELETE') return json({}, 204);
     return json({}, 201);
   };
@@ -39,6 +40,13 @@ async function serveur() {
   ok(rpc && !('_modeles' in rpc[2].p_ligne), 'serveur : la liste n’est pas glissée dans la demande elle-même');
   listeRefusee = true; r = await appeler(demande(liste)); listeRefusee = false;
   ok(r.statut === 500 && appels.some((a) => a[0] === 'DELETE' && a[1].includes('/rest/v1/recruiter_requests?id=eq.aaaaaaaa')), 'serveur : liste refusée → demande retirée, erreur au recruteur (pas de « Merci »)');
+  // (relecture du superviseur, 16/11) une mannequin supprimée depuis, restée dans la sélection du téléphone : la
+  // demande est retirée et le serveur dit laquelle, pour que la page la retire et que le recruteur renvoie
+  m2Supprimee = true; r = await appeler(demande(liste));
+  ok(r.statut === 409 && JSON.stringify(r.rep.retires) === JSON.stringify([M2]) && appels.some((a) => a[0] === 'DELETE' && a[1].includes('/rest/v1/recruiter_requests?id=eq.')), 'serveur : mannequin supprimée depuis dans la sélection → demande retirée, le serveur dit laquelle (' + JSON.stringify(r.rep) + ')');
+  r = await appeler(demande(liste.map((m) => Object.assign({}, m, { model_id: m.model_id.toUpperCase() }))));
+  ok(r.statut === 409 && JSON.stringify(r.rep.retires) === JSON.stringify([M2]), 'serveur : identifiants en majuscules → seule la mannequin supprimée est signalée');
+  m2Supprimee = false;
   r = await appeler(demande([]));
   ok(r.statut === 400 && !appels.some((a) => a[1].includes('formulaire_public_enregistrer')), 'serveur : sélection vide → refusée, rien d’enregistré');
   r = await appeler(Object.assign(demande(liste), { _modeles: undefined }));
@@ -60,12 +68,12 @@ async function navigateur() {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
   const b = await chromium.launch();
-  for (const [page, ecran, echec] of [['selection.html', { width: 390, height: 844 }, false], ['en/selection.html', { width: 1280, height: 900 }, false], ['selection.html', { width: 390, height: 844 }, true], ['en/selection.html', { width: 1280, height: 900 }, true]]) {
-    const n = page + ' ' + ecran.width + 'px' + (echec ? ' (envoi refusé)' : '') + ' : ';
+  for (const [page, ecran, echec] of [['selection.html', { width: 390, height: 844 }, false], ['en/selection.html', { width: 1280, height: 900 }, false], ['selection.html', { width: 390, height: 844 }, true], ['en/selection.html', { width: 1280, height: 900 }, true], ['selection.html', { width: 390, height: 844 }, 'supprimee'], ['en/selection.html', { width: 1280, height: 900 }, 'supprimee']]) {
+    const n = page + ' ' + ecran.width + 'px' + (echec === 'supprimee' ? ' (mannequin supprimée depuis)' : echec ? ' (envoi refusé)' : '') + ' : ';
     const ctx = await b.newContext({ viewport: ecran }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript(([a, c]) => { try { localStorage.setItem('ma2m_cookies', 'non'); localStorage.setItem('ma2m_selection', JSON.stringify([{ id: a, full_name: 'Awa Koné', height_cm: 178, photoUrl: '' }, { id: c, full_name: 'Fatou Bamba', height_cm: 180, photoUrl: '' }])); } catch (e) { /* */ } }, [M1, M2]);
-    await brancher(p, { tables: {}, rpc: {}, formulaire: echec ? () => ({ statut: 500, error: 'Envoi impossible pour le moment, réessayez.', selection: true }) : null }, journal);
+    await brancher(p, { tables: {}, rpc: {}, formulaire: echec === 'supprimee' ? () => ({ statut: 409, error: 'Certains mannequins de votre sélection ne sont plus disponibles.', selection: true, retires: [M2] }) : echec ? () => ({ statut: 500, error: 'Envoi impossible pour le moment, réessayez.', selection: true }) : null }, journal);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     await p.selectOption('#re-civilite', page.startsWith('en') ? 'Monsieur' : 'Madame'); await p.fill('#re-nom', 'Awa Diallo'); await p.fill('#re-email', 'awa@marque.ci');
     if (await p.$('#re-consentement')) await p.check('#re-consentement');
@@ -77,6 +85,11 @@ async function navigateur() {
     if (!echec) {
       ok(demandes.length === 1 && listes.length === 1 && listes[0].length === 2 && listes[0].every((l) => l.request_id === demandes[0].id), n + 'la liste des 2 mannequins part avec la demande');
       ok(/Merci|Thank You/.test(texte), n + '« Merci » affiché seulement après l’envoi complet');
+    } else if (echec === 'supprimee') {
+      ok(!/Merci !|Thank You!/.test(texte) && /n’est plus disponible|no longer available/.test(texte), n + 'le recruteur est prévenu qu’une mannequin n’est plus disponible');
+      const reste = await p.evaluate(() => JSON.parse(localStorage.getItem('ma2m_selection') || '[]').map((m) => m.full_name));
+      ok(reste.length === 1 && reste[0] === 'Awa Koné' && (await p.$$('.selection-item')).length === 1, n + 'la mannequin supprimée est retirée de la sélection, l’autre reste (' + reste.join(', ') + ')');
+      ok(await p.isEnabled('#btn-envoyer-recruteur'), n + 'le bouton permet de renvoyer');
     } else {
       ok(!/Merci !|Thank You!/.test(texte) && /n'a pas été envoyée|was not sent/.test(texte), n + 'message vrai : la demande n’a pas été envoyée');
       ok(await p.evaluate(() => (JSON.parse(localStorage.getItem('ma2m_selection') || '[]')).length === 2), n + 'la sélection est gardée pour réessayer');

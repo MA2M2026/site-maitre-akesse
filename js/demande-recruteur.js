@@ -79,6 +79,20 @@ document.getElementById('form-recruteur').addEventListener('submit', async (e) =
 
   const { error } = await insererAvecPatience('recruiter_requests', demande, (reste) => { msg.className = 'form-msg ok'; msg.textContent = texteAttenteEnvoi(reste); });
 
+  // (16/11/2026, relecture du superviseur) des mannequins supprimées depuis étaient restées dans la sélection : elles
+  // en sont retirées, et le recruteur renvoie sa demande (sinon chaque essai échouait de la même façon)
+  if (error && error.retires && error.retires.length) {
+    const absentes = liste.filter(m => error.retires.includes(String(m.id).toLowerCase()));
+    absentes.forEach(m => retirerSelection(m.id));
+    afficher();
+    msg.className = 'form-msg err';
+    msg.style.display = 'block';
+    msg.textContent = absentes.length > 1
+      ? T(`${absentes.length} mannequins de votre sélection ne sont plus disponibles et en ont été retirés. Vérifiez votre sélection, puis envoyez à nouveau.`, `${absentes.length} models in your selection are no longer available and have been removed. Please check your selection, then send again.`)
+      : T('Un mannequin de votre sélection n’est plus disponible et en a été retiré. Vérifiez votre sélection, puis envoyez à nouveau.', 'One model in your selection is no longer available and has been removed. Please check your selection, then send again.');
+    btn.disabled = false;
+    return;
+  }
   if (error) {
     msg.className = 'form-msg err';
     msg.textContent = T("Votre demande n'a pas été envoyée. Votre sélection est gardée : réessayez dans un instant, ou contactez-nous directement.", 'Your request was not sent. Your selection is kept: please try again in a moment, or contact us directly.');
