@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<!-- (16/11/2026, audit L-10) règle stricte comme les autres pages : aucun script ni style en ligne permis -->
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://js-de.sentry-cdn.com https://browser.sentry-cdn.com https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com;">
 <!-- « Accord du parent » (08/11/2026, site vivant, décision de la propriétaire) : ouverte depuis le lien personnel envoyé
      au parent d'une mannequin mineure (?j=…), sans compte. Le parent accepte (avec son nom) que la photo de sa fille
      paraisse sur l'accueil du site, ou retire son accord. js/accord-parent.js, supabase-site-vivant.sql -->

@@ -188,7 +188,8 @@
         '<button class="retour" type="button" data-action="deconnexion">J’ai déjà un compte : me connecter</button></form>';
     } else if (etape === 'demande-envoyee') {
       droite = '<div class="grille" style="gap:14px"><div><div class="etape">Équipe de l’agence</div><h2 style="font-size:22px">Demande envoyée ✓</h2></div>' +
-        '<p>Votre compte est créé. L’agence a été prévenue : dès qu’elle l’aura accepté, connectez-vous avec votre e-mail et votre mot de passe.</p>' +
+        // (16/11/2026, audit L-6) l'adresse se confirme d'abord par le lien reçu par e-mail
+        '<p><b>Dernière étape : ouvrez l’e-mail que nous venons de vous envoyer et cliquez le lien</b> pour confirmer votre adresse. Ensuite, l’agence acceptera votre demande : vous pourrez alors vous connecter avec votre e-mail et votre mot de passe.</p>' +
         '<button class="btn" data-action="deconnexion">Retour à la connexion</button></div>';
     } else if (etape === 'code') {
       droite = '<form data-form="code" class="grille" style="gap:14px"><div><div class="etape">Étape 2 sur 2</div><h2 style="font-size:22px">Double authentification</h2></div>' +
