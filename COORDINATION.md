@@ -37,10 +37,10 @@ Chaque agent remplit sa ligne en arrivant.
 
 | Phase | A | B | C | D |
 |-------|---|---|---|---|
-| Audit site public | ◐ partiel : en-têtes et documents publics vérifiés en ligne ; vitesse laissée à B et C | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) || ✅ parcours FR/EN en clic + poids des pages + journal des vrais visiteurs (7 j) ; batterie complète 130 séries, 0 échec |
-| Audit du code | ✅ fait (api/, middleware, SQL, publication) | ✅ fait | ✅ fait || ◐ ciblé (causes de D-03, D-05, D-07) |
-| Audit sécurité | ✅ fait (lecture seule) | ✅ fait (lecture seule) | ✅ fait (lecture seule) || ✅ en vrai : droits du rôle « site » (A-03), 72 tables en anonyme, en-têtes |
-| Rapport individuel déposé | ✅ `audit/agent-a` : docs/audit/rapport-agent-a.md | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md || ✅ `audit/agent-d` : docs/audit/rapport-agent-d.md |
+| Audit site public | ◐ partiel : en-têtes et documents publics vérifiés en ligne ; vitesse laissée à B et C | ✅ fait (116 adresses × téléphone 4G lente et ordinateur, Lighthouse) | ✅ fait (232 visites, liens, lenteur) | ✅ parcours FR/EN en clic + poids des pages + journal des vrais visiteurs (7 j) ; batterie complète 130 séries, 0 échec |
+| Audit du code | ✅ fait (api/, middleware, SQL, publication) | ✅ fait | ✅ fait | ◐ ciblé (causes de D-03, D-05, D-07) |
+| Audit sécurité | ✅ fait (lecture seule) | ✅ fait (lecture seule) | ✅ fait (lecture seule) | ✅ en vrai : droits du rôle « site » (A-03), 72 tables en anonyme, en-têtes |
+| Rapport individuel déposé | ✅ `audit/agent-a` : docs/audit/rapport-agent-a.md | ✅ `audit/agent-b` : docs/audit/rapport-agent-b.md | ✅ `audit/agent-c` : docs/audit/rapport-agent-c.md | ✅ `audit/agent-d` : docs/audit/rapport-agent-d.md |
 
 Les rapports individuels vont dans `docs/audit/rapport-agent-X.md`.
 
@@ -206,6 +206,59 @@ On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
   visite humaine de D. B est d'accord pour **C** à la mise en ligne finale (décision de la propriétaire) et pour **R**
   à la supervision. Que chaque agent écrive « d'accord » ou une autre proposition.
 - **Note de forme** : dans le tableau de la section 2, la colonne D est décalée (`||` en trop) : à rectifier par D.
+
+### Vérifications de l'agent D (16/11) — en vrai ou dans la base réelle, lecture seule
+
+- **D-V1, R-02 confirmé (haute)** : lu dans la base réelle (droits de colonnes + `gerer_validation_publication`).
+  Le rôle `authenticated` peut modifier `premiere_publication_faite`, `published`, `date_naissance`, `desactive`,
+  `exclue_vitrine`, `raison_refus`, `slug`… sur **son** profil. Le déclencheur ne bloque `published = true` que si
+  `OLD.premiere_publication_faite` est faux ou si la **nouvelle** date de naissance donne un âge < 18 ans. Deux
+  enregistrements suffisent (1. `premiere_publication_faite = true` ; 2. `published = true`, avec une date de
+  naissance d'adulte) pour paraître au Book **sans validation**, y compris pour une mineure. Rien n'a été écrit pour
+  le vérifier. Essai réel possible avec le compte mannequin d'essai, **seulement avec l'accord de la propriétaire**.
+  Proposition : retirer ces colonnes des droits de mise à jour de la mannequin (ou les figer par le déclencheur hors
+  admin), et calculer la minorité depuis `OLD.date_naissance` dès qu'elle existe.
+- **D-V2, R-04 confirmé dans le code et à l'écran, gravité moyenne à haute** : le bandeau `#ma2m-installer`
+  (« Appli MA2M », `js/app.js:3398-3430`) est fixé en bas à droite (222 px de large ; à 412 px, de x = 178 à 400).
+  Il s'efface pendant la saisie et **revient dès qu'on quitte un champ**, donc au moment d'appuyer sur « Envoyer ».
+  Il recouvre tout ce qui passe sous lui. Le bouton d'envoi n'apparaît qu'à la dernière étape (je n'ai rien rempli
+  en ligne). Proposition : ne pas afficher le bandeau sur les pages de formulaire (candidature, intégrer l'agence,
+  cours de talons, inscription), ou le cacher quand un bouton d'envoi est à l'écran.
+- **D-V3, R-01** : vérification réelle possible (création d'un compte avec une adresse de test). C'est une
+  **écriture** : D demandera l'accord de la propriétaire avant.
+- **D-V4, désaccord R-17 / D-07** : même appareil des deux côtés : « Pixel C, Android 8.1, Chrome 101 », écran
+  1280×724, 2 fois le 14/11 (23 h 10, 23 h 51). Cette tablette n'est plus vendue depuis 2017 avec une version de
+  Chrome figée : c'est une signature typique d'outil d'analyse automatique. `app.js` n'est chargé qu'**une fois**
+  dans `integrer-agence.html` et en/, et seul `app.js` déclare `enMo` (`js/app.js:2966`). L'erreur n'est pas
+  reproduite. Proposition : gravité **basse** ; la traiter avec D-07 (ne plus classer « À corriger » les erreurs
+  d'appareils non reconnus) plutôt que chercher une double exécution.
+- **D-V5, B-V6 pris en compte** : D-02 est réduit à **4 candidatures** (3 du 12/11 et 1 du 26/09) à redemander sur
+  WhatsApp.
+- **D-V6** : D est d'accord pour l'**agent C** en mise en ligne finale (proposition du renfort). D reste testeur
+  humain : visite réelle avant et après chaque mise en ligne.
+
+### Proposition de liste commune (D, à compléter ou corriger par A, B, C)
+
+Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, la propriétaire tranche.
+
+| L | Problème | Regroupe | Gravité |
+|---|----------|----------|---------|
+| L-1 | Droits du rôle « Administrateur du site » (contacts des parents, paiements, suppression, validation talons) | A-03 = D-01 | haute |
+| L-2 | Mannequin qui se publie seule au Book, y compris mineure | R-02 = D-V1 | haute |
+| L-3 | Documents internes publiés (/docs/…) : **à corriger avant toute fusion de nos rapports** | A-01 (B-V1) | haute |
+| L-4 | Tâche de 8 h jamais exécutée (CRON_SECRET, EmailJS) : relances, anniversaires | B-V5 | haute (à confirmer à 8 h) |
+| L-5 | Formulaire de candidature : faux fichiers comptés comme photos, envoi trop lourd, double envoi, bouton couvert par le bandeau | R-05, R-06, R-07, R-04 = D-V2 | haute |
+| L-6 | Création de compte d'équipe sans preuve de l'adresse | R-01 | haute (essai réel par D avec accord) |
+| L-7 | Formulaires publics : colonnes libres, anti-robots non strict, dépôt Drive ouvert | A-08 = B-V4, B-P5 = A-07, B-P6 | moyenne |
+| L-8 | Scripts réservés de l'Administration lisibles par adresse encodée | R-03 = B-V2, C-P4 | moyenne |
+| L-9 | Lenteur et affichage qui saute (intégrer-agence, cours-talons, Book, accueil, photos lourdes, pages jamais en cache) | D-04 = R-18, C-P9, B-P1 = C-P2, B-P2, B-P3 = R-19, R-11 | moyenne |
+| L-10 | Règle de sécurité des scripts trop large sur 6 pages | C-P1 = B-P4 = A-05 | moyenne |
+| L-11 | Jetons privés enregistrés dans le journal des erreurs | A-04 | moyenne |
+| L-12 | CV de l'Administration sans logo | D-03 = R-15 | moyenne (correction d'une ligne) |
+| L-13 | Formation affichée pendant la fermeture ; 17 contre 18 mois | D-05 | moyenne (règle à trancher par la propriétaire) |
+| L-14 | Photos de 4 candidates à redemander | D-02 (B-V6) | action de l'agence |
+| L-15 | Sujets « décision de la propriétaire » : prix de l'Académie sur intégrer-agence, offre marques et promoteurs, outils de booking | R-08, R-12, R-10, R-09 | décision |
+| L-16 | Basses : fichiers SQL non suivis, verrous « ouvert si absent », fonctions non utilisées, vidéos inutiles publiées, catch vides, hreflang, h1 doubles, boutons +12 px, fausses alarmes du journal, lenteur de l'Administration | C-P3 = R-20, A-06, B-P12, A-02, C-P7, R-13, C-P8, D-08 = R-16, D-07 = R-17, D-06… | basse |
 
 ### Réponses de la propriétaire
 
