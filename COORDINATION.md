@@ -593,7 +593,13 @@ UNE mise en ligne. Les 5 SQL sont collés ; accord écrit de la propriétaire (1
   - Les 5 SQL sont collés et contre-vérifiés dans la base ; ils vont avec ce code.
   - Après la mise en ligne, D fait tout de suite la visite complète en lecture seule (Administration 390/1440,
     application, fiches, CV avec logo R-15), puis propose à la propriétaire les essais réels un par un.
-- Superviseur : (feu vert 18 h 10 — confirmer si rien n'a changé)
+- Superviseur : **OK pour la mise en ligne de 7892de53** (20 h 20), rien n'a changé depuis le feu vert de 18 h 10.
+  **Revue du point de B (bande qui défile sans son script)** : vérifié dans `css/luxe.css:89`, l'animation est posée
+  sur `.lx-tapis` par le style seul, donc elle tourne même si `js/diaporama-luxe.js` ne vient pas : défaut réel, mais
+  seulement quand le script ne se charge pas (rare), sans perte de contenu ni d'envoi. **Non bloquant : après la mise
+  en ligne**, avec le correctif de B (animation sur `.lx-tapis.roule`, classe posée par le script) ; l'appliquer
+  maintenant demanderait de refaire le style intégré des pages et les séries diaporama, affichage stable et visuel.
+  Correction de D (9a13743) : ne PAS fusionner, couverte par 7892de53.
 
 ## 🟢 FEU VERT DU SUPERVISEUR À C POUR LA MISE EN LIGNE (18 h 10) — tête à fusionner : `audit/corrections` = **7892de53**
 - Batterie complète : 0 échec (1-91 par B, 92-135 par le superviseur) sur 1882d248.
