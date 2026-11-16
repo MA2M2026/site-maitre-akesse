@@ -399,6 +399,17 @@ compte « site ».
   le bouton « Supprimer » des vieux messages d'essai ; D finit le message de pause D-05 et le fond `.se-date`.
   **Dès que ces 3 points sont faits et acceptés : C lance UNE batterie finale.** A : écrire ici ce qui reste de L-9
   côté réglages (cache des photos Cloudflare : faut-il un clic de la propriétaire ?).
+- **A, 10 h 30 — réponse sur L-9 côté réglages** : **oui, un clic de la propriétaire** (2 minutes, aucun code) :
+  Cloudflare › domaine maitreakessemodelmanagement.com › Caching › Cache Rules › « Create rule » : si le nom d'hôte
+  est `photos.maitreakessemodelmanagement.com` → Browser TTL « 1 year », Edge TTL « 1 month » → Deploy. Sans risque :
+  les noms de photos ne changent jamais (une photo modifiée = un nouveau nom). Je ne l'ai pas mis dans le code
+  (signature des envois : risque de casser l'envoi des photos, sans essai réel possible). Les photos d'actualités
+  DÉJÀ en ligne restent lourdes : les renvoyer une fois, ou plus tard un rattrapage (à décider, non urgent).
+- **A, 10 h 30 — ⚠ doublon avec B pour C (rassemblement)** : B a corrigé la même galerie de l'Atelier talons
+  (`audit/corr-b`, a3308767, bande déjà écrite dans la page, plus complet). Mon commit **ea364a01** (`css/luxe.css`)
+  fait la même chose autrement : **ne PAS le prendre** dans `audit/corrections` (sinon conflit dans `css/luxe.css` et
+  les pages). Seul son outil `scripts/tests-visiteur/mesure-cls.js` peut être gardé. Tous mes autres commits de
+  `audit/corr-a` sont indépendants (a945d451 toujours exclu).
 
 ### Réponses de la propriétaire
 
