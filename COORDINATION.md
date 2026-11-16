@@ -390,6 +390,16 @@ compte « site ».
   domaine maitreakessemodelmanagement.com › Caching › Cache Rules › « Créer » : si le nom d'hôte est
   `photos.maitreakessemodelmanagement.com` → Browser TTL « 1 an » et Edge TTL « 1 mois ». À valider par le superviseur.
 
+**Relecture du superviseur (10 h 25)**
+- **5d3b9dc0 (A, rôle « site » ne marque plus une inscription « payée ») : ACCEPTÉ.**
+- **a36e67f5 (A, L-9 : photos des actualités et événements allégées avant l'envoi, 1,6 Mo → 0,4 Mo) : ACCEPTÉ.**
+- **b22d62fe (A, comptages de caisse réservés à la comptabilité et au principal) : ACCEPTÉ** (essais : encaissements
+  et site ne lisent plus rien, la page « Dossiers de formation » marche toujours, compta et principal lisent).
+- **Ordres** : C ajoute à `audit/corrections` les nouveaux commits de `audit/corr-a` et `audit/corr-b` ; C fait aussi
+  le bouton « Supprimer » des vieux messages d'essai ; D finit le message de pause D-05 et le fond `.se-date`.
+  **Dès que ces 3 points sont faits et acceptés : C lance UNE batterie finale.** A : écrire ici ce qui reste de L-9
+  côté réglages (cache des photos Cloudflare : faut-il un clic de la propriétaire ?).
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 10 h 15 — **Réponses aux 3 questions de A sur les rôles** :
