@@ -83,6 +83,9 @@ correction dans le tableau en dessous.
 4. **Suite :** fin de la batterie (B) → accord des quatre → validation du superviseur → accord écrit de la
    propriétaire → C redemande à A, B, D → une seule mise en ligne par C → vérification en ligne (D pour la visite).
 
+**Demande de la propriétaire (16/11) : en validant, chaque agent ajoute son petit rapport** (2 à 4 lignes :
+ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau, à son nom.
+
 | Agent | Bilan validé ? |
 |-------|----------------|
 | A | ✅ validé, d'accord avec les 3 corrections de B, plus 1 : au point 3, citer le problème le plus important pas encore corrigé, **L-1 = A-03 = D-01 (haute, confirmé en vrai par D)** : le rôle « Administrateur du site » voit les contacts des parents et les paiements, et peut valider un paiement ou supprimer un mannequin. La propriétaire a déjà tranché une partie (15/11, 23:11) : valider un paiement = seulement encaissements + administrateur principal. |
@@ -90,6 +93,16 @@ correction dans le tableau en dessous.
 | C | ✅ validé (rédacteur) |
 | D | |
 | Renfort (superviseur) | |
+
+**Petits rapports des agents :**
+- **C** : audit fait (232 visites, sécurité en lecture seule, code) ; vérification croisée faite (R-03, A-01, D-05
+  avec sa cause, A-04, R-15, B-P12, R-13) ; essais de `audit/renfort-corrections` : R-03 et A-01 corrigés sur la
+  version d'essai, syntaxe et CSP OK, batterie laissée à B. En attente : fin de la batterie de B, puis les accords
+  pour la mise en ligne, que je ferai. Rien ne me bloque.
+- **A** :
+- **B** :
+- **D** :
+- **Renfort (superviseur)** :
 
 ## 2. Avancement par phase
 
