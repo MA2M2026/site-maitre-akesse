@@ -611,6 +611,15 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
   Essais : nouveau `test-bloc-marques.js` 72/72 (FR et EN, 360, 390 et 1366 px : couleurs, contraste, débordement,
   liens, sommaire, place) ; accueil serveur 135/135 ; écran d'entrée 94/94 ; couleurs 4/4.
   Je passe à **2. R-09**.
+- **A, 06 h 27 : 2. R-09 FAIT, commit dc66fbee (`audit/corr-a`), à relire.** La page Sélection envoie la liste des
+  mannequins AVEC la demande ; le serveur (`api/portail.js`) enregistre la demande puis la liste ; si la liste ne passe
+  pas, la demande est retirée et le recruteur lit « Votre demande n'a pas été envoyée. Votre sélection est gardée :
+  réessayez » (FR et EN) — plus de « Merci » trompeur. Sélection vide, identifiant fabriqué ou plus de 60 mannequins :
+  refusés. Envoi recommencé après une réponse perdue : jamais de liste en double, et une demande déjà complète n'est
+  jamais retirée. La page n'écrit plus la liste directement dans la base. Aucun SQL à coller.
+  Essais : nouveau `test-booking-liste.js` 24/24 (serveur 10 cas ; navigateur FR téléphone et EN ordinateur, réussite
+  et échec) ; anti-robots 17/17 ; liste blanche 10/10 ; contact/recruteur OK.
+  Je passe à **3. L-6 refait** (confirmation de l'adresse par l'e-mail de Supabase, sans EmailJS).
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
