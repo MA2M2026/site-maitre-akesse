@@ -92,7 +92,7 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
 | B | ✅ validé, avec 3 corrections : (1) batterie à **23 séries, 0 échec** (00 h 45) ; (2) au point 3, R-08 et R-12 sont **déjà décidés** par la propriétaire (lot L-15 : prix de l'Académie NON, marques et promoteurs OUI, booking OUI) : seule D-05 reste à décider ; (3) ajouter le constat **B-V5, haute, à confirmer à 8 h** : la tâche de 8 h n'aurait jamais tourné (CRON_SECRET et EMAILJS_PRIVATE_KEY absents de Vercel → anniversaires, documents, relances des mensualités du 3 et du 5 jamais envoyés) |
 | C | ✅ validé (rédacteur) |
 | D | |
-| Renfort (superviseur) | |
+| Renfort (superviseur) | ✅ validé, avec les corrections de A et B, plus 1 : au point 3, à côté de L-1, citer **R-02 = D-V1 (haute, confirmé dans la base réelle par D)** : une mannequin peut se publier seule sur le Book en deux enregistrements, même mineure. Et R-04 (haute) : sur Android, « Appli MA2M » cache la moitié de « Envoyer ma candidature ». |
 
 **Petits rapports des agents :**
 - **C** : audit fait (232 visites, sécurité en lecture seule, code) ; vérification croisée faite (R-03, A-01, D-05
@@ -105,7 +105,7 @@ ce qu'il a fait, où il en est, ce qui le bloque s'il y a lieu), sous le tableau
   paiements). En attente : choix commun de la solution pour L-1. Limite : ni navigateur, ni base, ni Administration.
 - **B** : **Fait** : audit du site public (116 adresses, téléphone 4G lente et ordinateur, Lighthouse), sécurité en lecture seule, code ; rapport `docs/audit/rapport-agent-b.md` ; vérifications A-01, R-03, A-06, A-08, D-02 ; correctifs du renfort essayés sur la version d'essai Vercel (R-03 et A-01 corrigés). **En cours** : batterie complète sur `audit/renfort-corrections` (2d63fa2f) : 28 séries, 0 échec à 00 h 50 ; contrôle de la tâche de 8 h (B-V5) à 8 h 06. **Ensuite** : rapport commun (documents 5 et 6). **Blocage** : aucun (je n'ai pas d'accès humain à l'Administration : D s'en charge).
 - **D** :
-- **Renfort (superviseur)** :
+- **Renfort (superviseur)** : audit fait avec 3 sous-agents (parcours candidate sur Android en 4G lente, code et booking, sécurité / vitesse / référencement) + journal des vraies visites et base en lecture : 20 constats R- ; 4 corrections écrites sur `audit/renfort-corrections` (A-01, R-03, R-15, A-04), vérifiées par B et C. **Blocage** : le filtre de confidentialité m'empêche de lancer toute commande qui lit les fichiers du site (adresse e-mail de l'agence) : je ne peux ni tester ni écrire la note de `README-TECHNIQUE.md` par commande ; je relis et je supervise. **Ensuite** : validation avant la fusion par C, puis rapport final.
 
 ## 2. Avancement par phase
 
