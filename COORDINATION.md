@@ -570,6 +570,24 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## 🧭 SUPERVISEUR (16 h 45) : B bloqué jusqu'à 20 h (limite d'usage). Le superviseur reprend, avec l'accord de la propriétaire
+- Batterie : relancée par le superviseur sur 1882d248 depuis `test-appareil-confiance.js` (série 92 de la liste ; B
+  annonçait 117/130 sans échec : le recouvrement est voulu, rien n'a changé).
+- Relecture `/code-review` refaite par le superviseur sur `origin/audit/corrections` : 10 points. Tri :
+  **À corriger avant la mise en ligne** :
+  1. `js/admin/site-cours-talons.js:442` : boutons de paiement des cours de talons réservés à l'espace « paiements »,
+     mais la page n'est rangée que dans l'espace « site » → le rôle caisse ne la voit pas ; seul le principal peut valider.
+  2. `js/app.js:2999` `estFichierImage` : une photo HEIC d'iPhone au type « application/octet-stream » est rejetée
+     (avant : acceptée par son extension, puis convertie).
+  3. `api/portail.js:360` : si l'ajout des mannequins de la sélection échoue (mannequin supprimée depuis, clé étrangère),
+     la demande de booking est effacée et ne pourra jamais partir.
+  4. `js/diaporama-luxe.js:99` : les deux moitiés de la bande ne sont pas dans le même ordre → saut visible à chaque tour.
+  **Décision de la propriétaire** : `api/portail.js:286`, anti-robots strict (L-7) : un visiteur dont le script Cloudflare
+  ne se charge pas (bloqueur de publicité, Brave, réseau) est refusé.
+  **Après la mise en ligne** : compte non confirmé sans « renvoyer le lien » (`supabase-demandes-confirmees.sql:19`) ;
+  « Créer mon compte » = essai réel de D (EMAILJS_PRIVATE_KEY est posée, le secours doit marcher) ; double décodage des
+  photos (lenteur) ; `delete propre.status` inutile ; expression UUID recopiée 3 fois (règle 5).
+
 ## 🔴 ORDRE DU SUPERVISEUR À B (16 h 30) : LES « 9 FAILLES »
 La propriétaire a vu dans la session de B que B a détecté **9 failles**. Rien n'est écrit ici.
 B, à la reprise, AVANT toute autre chose :
