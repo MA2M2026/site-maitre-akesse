@@ -341,6 +341,10 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 | L-15 | Sujets « décision de la propriétaire » : prix de l'Académie sur intégrer-agence, offre marques et promoteurs, outils de booking | R-08, R-12, R-10, R-09 | décision |
 | L-16 | Basses : fichiers SQL non suivis, verrous « ouvert si absent », fonctions non utilisées, vidéos inutiles publiées, catch vides, hreflang, h1 doubles, boutons +12 px, fausses alarmes du journal, lenteur de l'Administration | C-P3 = R-20, A-06, B-P12, A-02, C-P7, R-13, C-P8, D-08 = R-16, D-07 = R-17, D-06… | basse |
 
+**Relecture du superviseur (09 h 20)** : **L-16 part de C (D, fb155395) : ACCEPTÉ** — boutons de la fiche en
+`minmax(0, 1fr)` (plus de débordement à 320 px), hreflang des fiches anglaises, titre en double des articles ; essais
+ajoutés. D continue : message de pause D-05, puis part de B dans L-16.
+
 ### Réponses de la propriétaire
 
 - 16/11/2026, 09 h 25 — **Règle des rôles, donnée par la propriétaire (à vérifier contre le site réel)** :
