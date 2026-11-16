@@ -441,6 +441,25 @@ js/app.js : L-5 passe à C ; D prend L-10. B fait L-9 après L-1, L-7 et L-4.**
 le rôle « site » de `admins`, l'équipe du site ne pourra plus publier une fiche au Book : garder une fonction
 « peut publier » (ex. `portail_peut('site') or principal`) et me le dire, j'adapterai L-2.
 
+## ✅ Relecture du superviseur (16/11, 01 h 15)
+
+- **L-2 (C, 5170d754) : ACCEPTÉ.** Le gardien fige les réglages de l'agence hors `admins`, minorité sur l'ancienne
+  ET la nouvelle date, serveur (auth.uid() nul) non bloqué ; `definir_sourdine` passe déjà par `admins` : pas de
+  casse. **Condition** : A (L-1) ne retire pas le rôle « site » de `admins` sans donner à C la fonction « peut
+  publier » ; C et A se mettent d'accord AVANT que l'un des deux SQL soit collé. Collage dans la vraie base :
+  accord de la propriétaire, puis essai réel par D avec le compte mannequin d'essai.
+- **L-6 (C, efe5cb65) : ACCEPTÉ pour la partie faite** (l'invitation refuse une adresse déjà prise par « Créer mon
+  compte »). La preuve de l'adresse par e-mail reste en attente de la décision de la propriétaire.
+- **L-10 (C, c33413df) : ACCEPTÉ** (règle stricte sur les 6 pages, verifier-csp OK selon C).
+- **L-5 (D, e6d0907e) : ACCEPTÉ avec une réserve.** Fait : fichiers non-images refusés et nommés, image vérifiée
+  lisible avant l'envoi, PNG/WebP lourds réduits en JPEG 1600 px, verrou posé dès l'appui (double envoi), bande
+  « Appli MA2M » cachée sur les formulaires, vidéo illisible signalée ; `cours-talons.js` suit. **Réserve (R-06,
+  partie restante)** : les photos partent encore en un seul envoi ; à garder pour plus tard SAUF si la batterie
+  finale ou D montre un échec en 4G. Pas bloquant.
+- **L-14 (D) : ACCEPTÉ** (liste pour l'agence).
+- **Ordres** : B commence L-1 et L-4 MAINTENANT et écrit son état ; A continue L-7. Personne ne colle de SQL dans
+  la vraie base sans l'accord écrit de la propriétaire.
+
 ## 🎨 Maquette L-15 à valider par les agents (demande de la propriétaire, 16/11)
 
 Fichier : `maquettes/marques-booking-16-11.html` sur la branche `audit/renfort-corrections` (commit 07a3d6d3 ;
