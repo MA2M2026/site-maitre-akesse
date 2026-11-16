@@ -345,23 +345,43 @@ async function demandeAcces(corps, res) {
   if (await rpcService('portail_utilisateur_par_email', { p_email: email })) {
     return res.status(409).json({ error: 'Un compte existe déjà avec cette adresse : connectez-vous, ou contactez l’agence.' });
   }
-  const compte = await adminAuth('admin/users', 'POST', { email, password: motdepasse, email_confirm: true, user_metadata: { nom, portail_demande: true, portail_mdp_choisi: true } });
+  // (16/11/2026, audit L-6 = R-01, décision de la propriétaire) le compte est créé NON CONFIRMÉ et la personne reçoit
+  // un lien par e-mail : tant qu'elle ne l'a pas cliqué, elle ne peut pas se connecter, la demande n'apparaît pas
+  // et ne peut pas être acceptée (supabase-demandes-confirmees.sql). Avant : compte déjà confirmé pour n'importe
+  // quelle adresse, sans preuve de la posséder. L'e-mail part par le serveur du site (EmailJS) : sans la clé, ou si
+  // l'envoi échoue, rien n'est gardé (la personne n'est pas bloquée à moitié) et le message le dit.
+  const cle = process.env.EMAILJS_PRIVATE_KEY;
+  if (!cle) return res.status(503).json({ error: 'La confirmation par e-mail n’est pas encore disponible : contactez l’agence.' });
+  const lien = await adminAuth('admin/generate_link', 'POST', { type: 'signup', email, password: motdepasse,
+    data: { nom, portail_demande: true, portail_mdp_choisi: true }, redirect_to: RETOUR_ADMINISTRATION });
+  const compte = { id: lien.id || (lien.user && lien.user.id) };
+  const adresseLien = lien.action_link || (lien.properties && lien.properties.action_link);
+  const retirer = () => (compte.id ? adminAuth('admin/users/' + compte.id, 'DELETE').catch(() => {}) : Promise.resolve());
+  if (!compte.id || !adresseLien) { await retirer(); return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' }); }
   const note = await fetch(SUPABASE_URL + '/rest/v1/staff_demandes', {
     method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
     body: JSON.stringify({ user_id: compte.id, nom, email, telephone: telephone || null })
   });
   if (!note.ok) {
     // (demande non notée : le compte créé est retiré, la personne peut réessayer)
-    await adminAuth('admin/users/' + compte.id, 'DELETE').catch(() => {});
+    await retirer();
     return res.status(500).json({ error: 'Demande non enregistrée : réessayez dans un instant.' });
+  }
+  const confirmation = await envoyerEmailServeur(cle, email, nom,
+    'Bonjour ' + nom + ',\n\nVous avez demandé un accès à l’Administration de Maître Akesse Model Management. Pour confirmer que cette adresse e-mail est bien la vôtre, ouvrez ce lien :\n\n' +
+    adresseLien + '\n\nEnsuite, l’agence acceptera (ou non) votre demande. Si vous n’avez rien demandé, ignorez ce message : aucun compte ne sera actif.');
+  if (!confirmation.ok) {
+    await retirer();   // (la demande part avec le compte : staff_demandes … on delete cascade)
+    await noterAuJournal('[Demande d’accès] e-mail de confirmation non parti pour ' + email + ' (' + confirmation.statut + ')', 'demandes');
+    return res.status(503).json({ error: 'L’e-mail de confirmation n’a pas pu partir : réessayez dans un instant, ou contactez l’agence.' });
   }
   // l'administratrice principale est prévenue (e-mail du serveur, comme les autres alertes)
   const principale = await fetch(SUPABASE_URL + '/rest/v1/staff_profiles?select=email,nom&role=eq.principal', { headers: enTetesService() }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
-  const cle = process.env.EMAILJS_PRIVATE_KEY, destinataire = (principale[0] && principale[0].email) || EMAIL_AGENCE;
-  const envoi = cle ? await envoyerEmailServeur(cle, destinataire, (principale[0] && principale[0].nom) || 'Maître Akesse Model Management',
+  const destinataire = (principale[0] && principale[0].email) || EMAIL_AGENCE;
+  const envoi = await envoyerEmailServeur(cle, destinataire, (principale[0] && principale[0].nom) || 'Maître Akesse Model Management',
     '🔑 Nouvelle demande d’accès à l’Administration\n\nNom : ' + nom + '\nE-mail : ' + email + (telephone ? '\nTéléphone : ' + telephone : '') +
-    '\n\nCette personne n’a encore AUCUN accès. Pour l’accepter (et choisir son rôle) ou la refuser : Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles.') : { ok: false };
-  if (!envoi.ok) await noterAuJournal('[Demande d’accès] alerte non partie pour ' + email + (cle ? '' : ' (clé EmailJS absente)'), 'demandes');
+    '\n\nCette personne n’a encore AUCUN accès. Elle doit d’abord confirmer son adresse (lien envoyé par e-mail) : la demande apparaîtra ensuite dans Administration (https://admin.maitreakessemodelmanagement.com/admin/), Sécurité › Comptes et rôles, pour l’accepter (et choisir son rôle) ou la refuser.');
+  if (!envoi.ok) await noterAuJournal('[Demande d’accès] alerte non partie pour ' + email, 'demandes');
   return res.status(200).json({ ok: true });
 }
 
