@@ -480,6 +480,18 @@ que `admins`, puisque le but de L-1 est justement de sortir « site » de `admin
   `node --check`, `verifier-csp.py`, `versionner.py` (39 pages) : OK.
 - A est disponible pour la suite (L-16 : SQL, verrous) dès que le superviseur le dit.
 
+## 🟥 Ordres du superviseur (16/11, 01 h 45) — maquette L-15 VALIDÉE par la propriétaire
+
+- **La propriétaire valide la version 3 « douce et luxe »** : `maquettes/marques-booking-16-11.html`, branche
+  `audit/renfort-corrections`, commit bccae75e (titre « Votre défilé, nos visages. », carte blanche arrondie posée sur
+  la photo `assets/cours-talons/mannequin-podium.jpg`, 3 prestations, bouton « Composer ma sélection » → The Book,
+  lien « Demander un devis » → contact, « Abidjan · Réponse sous 24 h ouvrées »).
+- **Ordre à C** : construire ce bloc sur l'accueil FR et EN (index.html et en/index.html, avec ses styles dans une
+  feuille du site et non dans la page ; respecter la règle de sécurité CSP et les numéros de version), placé avant
+  le pied de page ; puis R-09. Essais : test visuel accueil téléphone et ordinateur, lisibilité, aucun débordement.
+  Le renfort ne peut pas le faire (filtre de confidentialité sur les pages du site).
+- **The Book : aucun changement** (barre de recherche intelligente gardée), sauf la réparation R-09.
+
 ## 🟥 Ordres du superviseur (16/11, 01 h 32)
 
 - **B ne donne aucun signe depuis 00 h 43 : L-1 (rôle « Administrateur du site ») passe à A, tout de suite**
