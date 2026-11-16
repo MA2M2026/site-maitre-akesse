@@ -206,6 +206,34 @@ On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
   comptabilité) est réservé à **la personne chargée des encaissements et à l'administrateur principal**. Jamais
   l'« Administrateur du site ». Aujourd'hui, `cours_talons_valider` l'autorise à tort (`portail_peut('site')`).
 
+### Vérifications de l'agent C (16/11) — lecture seule, sur `main` = site en ligne
+
+- **C corrige C-P4 (merci R et B)** : R-03 confirmé par C (`/js/admin/site%2Dmannequins.js` et
+  `/js/admin%2Fsite-mannequins.js` → 200, 45 413 octets ; `/js/admin/site-mannequins.js` → 404). Mon point fort
+  **C-F15 est retiré** (la protection des pièces se contourne) et C-P4 passe de basse à **moyenne**, fondu dans R-03.
+  Solution proposée (comme B-V2) : décoder l'adresse avant la comparaison dans `middleware.js`, et y ajouter
+  `js/portail/*.js` et `js/admin/carte-encart.js` si l'ordre de chargement le permet.
+- **A-01 confirmé** : `/docs/rls-matrix.md`, `/DECISIONS.md`, `/GUIDE-DE-SECOURS.md` **et `/AGENTS.md`** → 200
+  (README-TECHNIQUE.md, CLAUDE.md, COORDINATION.md, fichiers .sql → 404). D'accord : `.vercelignore` d'abord.
+- **D-05 confirmé, cause trouvée** : `mes_mensualites` (supabase-reprise-mars.sql) compte comme « mois faits » les
+  mois entre le début de la formation et le mois courant **avant la reprise** (seuls décembre à février sont
+  exclus, pas le rodage de septembre à novembre), alors que la même fonction dit l'agence fermée tant que
+  `courant < reprise_date()` → « mois 1 sur 9, il reste 17 mois » pendant la fermeture. **Décision propriétaire
+  nécessaire** : les mois de rodage comptent-ils comme mois de cours ? Selon la réponse : ne compter que les mois
+  ≥ `reprise_date()` (plus `formation_mois_faits`), ou dire « rodage » au lieu de « fermée ».
+- **A-04 confirmé** : `js/surveillance.js:128` envoie `location.pathname + location.search` → les jetons `?j=`,
+  `?r=`, `?c=` peuvent arriver dans `journal_erreurs` (lisible par l'Administration). Solution : ne garder que les
+  noms des paramètres, pas leurs valeurs.
+- **R-15 / D-03 confirmés** : `js/app.js:256` et `:269` (et `:1391`) écrivent `assets/logo-header.png` sans `/`.
+  Solution : `/assets/logo-header.png`.
+- **B-P12 confirmé** : `editeurRicheDiffere`, `preparerEditeursDifferes`, `definirVilleAvecCommune` : une seule
+  mention chacune (leur définition) dans tout le dépôt.
+- **R-13 confirmé** : `/en/book/kouadio-alicia` : 0 `hreflang` (la fiche FR en a 3).
+- **Proposition « C pour la mise en ligne finale »** : **d'accord**, à trois conditions : (1) accord écrit des
+  quatre agents sur la liste exacte des corrections, (2) accord écrit de la propriétaire, (3) avant de fusionner,
+  C redemande à A, B et D si tout est bon pour eux (consigne de la propriétaire du 16/11). Une seule mise en
+  ligne, puis vérification en ligne (D pour la visite humaine).
+
 ## 6. Décisions (accord des 4 agents + propriétaire)
 
 Format : `ID problème | solution retenue | branche | testé par | validé par`
