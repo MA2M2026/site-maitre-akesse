@@ -168,6 +168,19 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🔐 Rôle « Administrateur du site » sans argent (audit L-1, 16/11/2026, décision de la propriétaire du 15/11)
+
+- **Paiements des cours de talons** : `cours_talons_valider` et `cours_talons_mois_payer` exigent
+  `portail_peut('paiements')` (encaissements, principal ou délégation) — `supabase-l1-role-site.sql`, qui change
+  seulement la ligne du contrôle dans la version de la base (`pg_get_functiondef`). Le déclencheur
+  `trg_cours_talons_garder_paiement` empêche aussi une écriture directe des colonnes d'argent (validation, recette,
+  mois payés, montant après paiement). L'équipe du site garde le suivi (notes, date, terminé, annulé, rouvert).
+  Écran : `js/admin/site-cours-talons.js` ne montre les boutons d'encaissement qu'avec `P.moi.espaces.paiements`.
+- **Suppression définitive d'une mannequin** (`api/supprimer-mannequin.js`) : administrateur principal seulement (un
+  ancien compte admin sans fiche d'équipe garde l'accès) ; bouton caché aux autres (`js/admin/site-mannequins.js`).
+- Essais : `scripts/base-essai/essais-l1-role-site.sql`, `test-admin-cours-talons.js` (rôle « site »),
+  `test-admin-code-serveur.js`. Reste à décider (partie 2) : les contacts privés des candidatures pour ce rôle.
+
 ## 🖥️ Phase 2 : tout le site public écrit par le serveur (02/11/2026, demande de la propriétaire)
 
 Chaque page publique part COMPLÈTE de `middleware.js` (texte, images, listes, en-tête og:/JSON-LD), la même pour

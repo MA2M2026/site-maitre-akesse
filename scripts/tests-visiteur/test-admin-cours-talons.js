@@ -204,6 +204,30 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();
   }
+  // (16/11/2026, audit L-1) : l'« Administrateur du site » suit les élèves mais ne voit aucun bouton d'encaissement
+  for (const ecran of [{ width: 390, height: 844 }, { width: 1366, height: 900 }]) {
+    const tel = ecran.width < 700, n = 'rôle « site » ' + (tel ? 'téléphone' : 'ordinateur') + ' : ';
+    const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
+    const p = await ctx.newPage(); const errs = [], journal = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    const d = donnees('site');
+    d.tables.cours_talons = [
+      { id: 's1', cree_le: '2026-11-08T10:00:00Z', formule: 'prive_salle', nb_seances: 2, nom: 'ÉLÈVE À PAYER', telephone: '+2250701020311', age: 22, photos: [], decision: 'maintenant', statut: 'paiement_envoye', montant: 50000 },
+      { id: 's2', cree_le: '2026-11-07T10:00:00Z', formule: 'groupe', nb_seances: 4, nb_mois: 3, paiement: 'mensuel', mois_payes: 1, nom: 'ÉLÈVE DU GROUPE', telephone: '+2250700000312', age: 24, photos: [],
+        decision: 'maintenant', statut: 'inscrite', montant: 30000, valide_le: '2026-11-07T12:00:00Z', jeton: 'g'.repeat(36) }];
+    d.tables.cours_talons_seances = []; d.tables.cours_talons_indispo = [];
+    await brancher(p, d, journal); await photosLocales(p);
+    await seConnecter(p, URL_ADMIN); await p.waitForSelector('.coque:not(.sans-menu)');
+    await p.goto(URL_ADMIN + '#/site/b2-cours-talons'); await p.waitForFunction(() => /Cours de talons/.test((document.querySelector('#contenu h1') || {}).textContent || ''), null, { timeout: 15000 }); await p.waitForTimeout(800);
+    await p.click('[data-action="talons-filtre"][data-valeur="toutes"]').catch(() => {}); await p.waitForTimeout(500);
+    const t = await p.textContent('#contenu');
+    ok(t.includes('ÉLÈVE À PAYER') && t.includes('ÉLÈVE DU GROUPE'), n + 'les élèves restent visibles (suivi)');
+    ok(!(await p.$('[data-action="talons-valider"]')) && !(await p.$('[data-action="talons-mois"]')), n + 'aucun bouton « Paiement reçu », « Payé en espèces » ni « Mois payé »');
+    ok(/validé par les encaissements ou l’administrateur principal/.test(t), n + 'une phrase dit qui valide le paiement');
+    ok(await p.$('.ct-fiche[data-id="s1"] [data-action="talons-statut"][data-valeur="annulee"]') !== null, n + '« Annuler l’inscription » reste possible');
+    ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
+    await ctx.close();
+  }
   await b.close();
   console.log(ko ? '❌ ' + ko + ' échec(s)' : '✅ cours de talons (Administration) : tout passe');
   process.exit(ko ? 1 : 0);
