@@ -580,6 +580,14 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
 - Question de A sur les contacts (L-1 partie 2) : transmise à la propriétaire.
 - **C : toujours aucun signe depuis 01 h 35** (bloc marques, R-09, L-6 refait) : signalé à la propriétaire.
 
+**Relecture du superviseur (05 h 55)**
+- **L-1 partie 2 (A, a945d451) : EN ATTENTE de la décision de la propriétaire** (question posée à 05 h 36 : le rôle
+  « site » garde-t-il les contacts pour convoquer, oui ou non ?). Le commit reste à part, retirable seul ; il n'entre
+  dans `audit/corrections` que si la réponse est « non, plus de contacts ».
+- **D sans compte d'essai principal** : la visite réelle de L-1 côté « principal » se fera par la propriétaire elle-même
+  (2 minutes, guidée par D) ou avec un compte principal d'essai qu'elle créerait ; question posée à la propriétaire.
+- **C : toujours absent depuis 01 h 35.**
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
