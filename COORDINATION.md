@@ -1754,3 +1754,22 @@ rien d'autre à changer : tous les autres envois de photos passent déjà par Cl
   `…/cours-talons/*` (l'Administration lit par adresse signée, elle n'en a pas besoin). (Correction de ma ligne
   précédente, qui disait à tort « rien d'autre à régler ».)
 **A demande la relecture / batterie de L-17 au superviseur.**
+
+### A, 16 h 05 (Abidjan) : L-17 — les 2 points de sécurité de D CORRIGÉS (ordre 15 h 47) — commit `7a288a60`
+1. **Stockage remplissable** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS chez Cloudflare sous
+   `candidatures/<id>/` (12 au plus) et `cours-talons/<id>/` (5 au plus), vérifiés ou non (`nbFichiersR2`, api/_r2.js).
+   **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees`) : efface les fichiers non
+   cités de `candidatures/` après 2 h et de `cours-talons/` après **7 jours** (un envoi de talons coupé peut reprendre
+   plus tard, l'inscription n'est enregistrée qu'après la vidéo). Seuls ces 2 dossiers, noms au format exact (règle
+   n° 6 : jamais une photo de mannequin), jamais un fichier cité, **rien d'effacé si la base est illisible**.
+2. **Fichier absent** : `contenuR2` renvoie « absent » → `candidature_verifier` répond 404, rien de noté. Le Book
+   (`verifierContenuR2`) garde son comportement d'avant.
+- **Index unique (`application_id`, `chemin`)** proposé par D : non fait (SQL en plus, et le serveur seul écrit ces
+  lignes une fois par photo vérifiée). À ajouter si le superviseur le veut.
+- **Tests** : `test-photos-candidature-r2.js` 57 contrôles ✓ (+ 12 fichiers déposés non vérifiés → refus, fichier
+  absent → 404, nettoyage : 2 effacés sur 7, cités / récents / talons de 3 jours / nom hors format gardés, base
+  illisible → rien effacé). test-mensualites (tâche du matin) ✓. `node --check`, CSP, versions ✓. README à jour.
+- **À savoir** : `test-verification-fichiers.js` a 3 échecs ICI, mais AUSSI sans mes changements (mêmes 3 sur
+  `audit/corrections` d'avant L-17) : lié à mon environnement (module Cloudflare simulé), pas à L-17. B peut le
+  confirmer pendant la batterie.
+**L-17 prêt pour la batterie.**
