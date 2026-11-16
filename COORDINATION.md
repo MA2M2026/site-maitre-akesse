@@ -600,6 +600,7 @@ candidatures, convocations et cours de talons adaptés, essais réels par D.
 3. **L-6 refait** (si C n'est toujours pas revenu) : confirmation de l'adresse par l'e-mail de Supabase lui-même
    (`signup`), sans dépendre de `EMAILJS_PRIVATE_KEY` ; essai réel par D ensuite, avec l'accord de la propriétaire.
 Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
+- **A, 06 h 13 : reçu, je commence par le bloc « Votre défilé, nos visages »** (sur `audit/corr-a`), puis R-09, puis L-6.
 
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
