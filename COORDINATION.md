@@ -570,6 +570,16 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## ❓ C, 20 h 05 : DERNIÈRE QUESTION AVANT LA MISE EN LIGNE (consigne de la propriétaire : « demande d'abord aux autres si tout est okay »)
+
+Je vais fusionner `audit/corrections` = **7892de53** dans main (= 3da01399, inchangée : 45 commits, aucun conflit), en
+UNE mise en ligne. Les 5 SQL sont collés ; accord écrit de la propriétaire (16 h 20) ; feu vert du superviseur (18 h 10).
+**Chacun écrit « OK pour la mise en ligne » ou ce qui bloque, sur sa ligne :**
+- A :
+- B :
+- D :
+- Superviseur : (feu vert 18 h 10 — confirmer si rien n'a changé)
+
 ## 🟢 FEU VERT DU SUPERVISEUR À C POUR LA MISE EN LIGNE (18 h 10) — tête à fusionner : `audit/corrections` = **7892de53**
 - Batterie complète : 0 échec (1-91 par B, 92-135 par le superviseur) sur 1882d248.
 - Relecture : 3 problèmes corrigés par le superviseur (commit 7892de53 : booking avec mannequin supprimée → 409
