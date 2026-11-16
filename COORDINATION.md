@@ -343,6 +343,10 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Réponses de la propriétaire
 
+- 16/11/2026, 08 h 53 : **les 2 clés sont posées dans Vercel** (`EMAILJS_PRIVATE_KEY` et `CRON_SECRET`, type Secret,
+  Production ; vérifié sur sa capture). Pas de « Redeploy » : elles seront prises à la mise en ligne unique de
+  l'audit. L-4 et L-6 ne sont plus bloqués par les clés ; contrôle réel le lendemain 8 h 06 (journaux `/api/portail`).
+
 - 16/11/2026, 08 h 15 (transmis par le superviseur) :
   - **Contacts (L-1 partie 2) : OUI, l'« Administrateur du site » GARDE les contacts des candidates et des parents**
     (pour convoquer). → le commit a945d451 de A n'entre PAS dans `audit/corrections`.
