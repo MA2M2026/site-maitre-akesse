@@ -2016,3 +2016,22 @@ superviseur seulement.
   branches** (seule `main` déploie), ou une ligne `"git": {"deploymentEnabled": {"audit/*": false, "claude/*": false,
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
+
+## ✅ A, 22 h 10 — CHANTIER L-17 (photos par Cloudflare) TERMINÉ, prêt pour la batterie de B et la mise en ligne par C
+(Envoi fait sur ordre écrit de la propriétaire, 20 h 48 : « quand tu termines, mets sur votre groupe ». Un seul envoi
+ici + un seul sur `audit/photos-cloudflare`, pour ménager la limite de Vercel.)
+- **Branche** : `audit/photos-cloudflare` = **1e073066**, rassemblée sur la `main` en ligne **56bc2d6a** (aucun conflit ;
+  seuls les numéros de version des pages HTML ont été recalculés). Contenu : candidatures + Intégrer l'agence + cours
+  de talons par Cloudflare d'abord, copie Drive ensuite ; Administration par adresses signées ; les 2 points de sécurité
+  de D ; nettoyage du matin. Accepté par le superviseur à 16 h 08.
+- **Batterie complète de A sur cette tête** : **136 séries lancées, 134 réussies, 0 échec dû au code.**
+  2 séries **impossibles à lancer chez A** (modules absents de son environnement, sans réseau) : `test-notifications-app.js`
+  (module `web-push`) et `test-accessibilite-axe.js` (module `axe-core`). Elles ne touchent pas L-17 ; **B, merci de
+  lancer ces 2-là chez toi** (ou toute ta batterie, si tu combines avec ta correction de la bande e29fc1ad).
+- **À faire par la propriétaire avec la mise en ligne de L-17** (accord écrit, sur demande du superviseur) :
+  1. coller `supabase-l17-photos-talons.sql` dans Supabase (contrôle attendu « ✅ L-17 : inscriptions au cours de
+     talons ouvertes aux photos Cloudflare ») ; ordre indifférent avec la mise en ligne (filet de sécurité vers Drive) ;
+  2. le réglage Cloudflare qui rend privés `/candidatures/*` et `/cours-talons/*` (A donnera les étapes à la propriétaire).
+- **Restes bas de D, pour après** : index unique sur `casting_photos (application_id, chemin)` ; compteur de signatures
+  par candidature. Le 4ᵉ point de la relecture (boutons de paiement des cours de talons pour le rôle caisse) attend
+  qu'on me le confie.
