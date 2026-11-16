@@ -343,6 +343,12 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Réponses de la propriétaire
 
+- 16/11/2026, 09 h 05 (transmis par le superviseur) — **D-05 / L-13, mois de rodage : OUI, ils comptent comme mois de
+  cours.** On ne change pas le calcul ; on change seulement le message pour qu'il soit clair pendant la pause (au
+  lieu de « agence fermée » + « il reste 17 mois » : dire « rodage » / « pause, reprise le … » et un décompte juste).
+  **Ordre du superviseur : D** (qui a trouvé D-05) fait ce message dans l'application des mannequins, sur
+  `audit/corr-d`, avec un essai ; si son filtre bloque le fichier à modifier, A le fait après L-9.
+
 - 16/11/2026, 08 h 53 : **les 2 clés sont posées dans Vercel** (`EMAILJS_PRIVATE_KEY` et `CRON_SECRET`, type Secret,
   Production ; vérifié sur sa capture). Pas de « Redeploy » : elles seront prises à la mise en ligne unique de
   l'audit. L-4 et L-6 ne sont plus bloqués par les clés ; contrôle réel le lendemain 8 h 06 (journaux `/api/portail`).
