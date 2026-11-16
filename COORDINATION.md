@@ -1728,3 +1728,27 @@ n'existe dans la base qu'APRÈS l'envoi des photos, et la base (`supabase-cours-
 **Cours de talons : proposition VALIDÉE** (points 1 à 4). Le petit SQL est préparé + base d'essai ; il sera collé par
 la propriétaire avec la mise en ligne de L-17 (pas avec celle en cours), après son accord écrit. **A peut coder.** En attendant,
 rien d'autre à changer : tous les autres envois de photos passent déjà par Cloudflare (ou restent privés chez Supabase).
+
+### A, 16 h 15 (heure d'Abidjan) : L-17 TERMINÉ (candidatures + cours de talons) — commit `6f724055` sur `audit/photos-cloudflare`
+- **Cours de talons** codé selon la proposition validée (points 1 à 4) : photos d'abord chez Cloudflare
+  (`cours-talons/<numéro>/`, numéro pas encore inscrit, 5 au plus, contenu relu), copie Drive ensuite ; l'inscription
+  porte `r2:cours-talons/…` ; l'Administration les affiche par adresse signée, copies Drive masquées.
+- **Filet de sécurité** : tant que le SQL n'est pas collé, la base refuse `r2:` → la page renvoie aussitôt
+  l'inscription avec les liens Drive, comme aujourd'hui (la base refuse avant de compter l'essai : pas de double).
+  Donc la mise en ligne du code et le collage du SQL peuvent se faire dans n'importe quel ordre.
+- **SQL à coller avec la mise en ligne de L-17** (accord écrit de la propriétaire) : `supabase-l17-photos-talons.sql`
+  (reprend les fonctions TELLES QU'ELLES SONT dans la base, ne change que la vérification des photos et la copie
+  Drive ; contrôle final « ✅ L-17 … »). Base d'essai : tous les fichiers passent + 6 essais L-17 ✓ (photo d'une autre
+  inscription, d'un autre dossier, nom fabriqué, inscription sans numéro : refusés). `medias_drive_appliquer`
+  (absente de la base d'essai) vérifiée à part : 0 copie Drive ajoutée avec photo Cloudflare, 1 sans.
+- **Sans code recopié** : `P.photosR2` (js/admin/coque.js) partagé par les fiches et les cours de talons ;
+  `envoyerPhotosCandidatureR2` (js/app.js) partagé par les 3 formulaires.
+- **Tests** : `test-photos-candidature-r2.js` 54 contrôles ✓ (+ cours de talons : serveur, téléphone, ordinateur,
+  base pas prête, Administration). Toujours ✓ : test-cours-talons, test-admin-cours-talons, test-photos-drive,
+  test-candidature-fichiers, test-nouvelle-admin-castings, test-envoi-reprise, test-integrer-parcours,
+  test-liste-blanche-formulaires. `node --check`, CSP, versions ✓. README-TECHNIQUE à jour.
+- **Limite connue (à signaler à la propriétaire)** : des photos envoyées pour une inscription de talons jamais
+  terminée restent chez Cloudflare (non listées, non publiques). Nettoyage possible plus tard si elle le souhaite.
+- **Clic Cloudflare** (point 5 de la proposition, présenté avec la mise en ligne) : rien d'autre à régler côté
+  Cloudflare pour ces dossiers (ils ne sont pas servis par /book-photos ; lecture seulement par adresse signée).
+**A demande la relecture / batterie de L-17 au superviseur.**
