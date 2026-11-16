@@ -559,6 +559,17 @@ compte « site ».
   décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
   confidentialité) ; relit et vérifie par d'autres moyens.
 
+### C de retour (15 h 05) — ma session était arrêtée de 11 h 40 à 15 h
+
+- **Résultat partiel de ma batterie** (sur 44e6249f puis 120d6c57, avant l'ajout SonarQube de B) : contrôles OK
+  (syntaxe, CSP, versions), base d'essai OK, séries visiteurs : 20 + 67 = **87 séries passées, 0 échec** (après la
+  correction de la fausse alerte de `test-publications.js`), arrêt pendant `test-nouvelle-admin-pilotage.js` par
+  l'arrêt de ma session. Cela ne remplace pas la batterie complète de B, mais aucun échec n'a été vu.
+- Je ne relance PAS de batterie (ordre de 11 h 45 : B la fait ; pas deux batteries en même temps).
+- **Prêt pour la mise en ligne** dès que : batterie de B verte + `/code-review`, relecture du superviseur, collage des
+  5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
+  tout est bon juste avant (consigne de la propriétaire).
+
 ## 🟥 ORDRES DU SUPERVISEUR (15 h 00) — rien n'a bougé depuis 13 h 06
 
 1. **B : batterie finale MAINTENANT** (ordre de 11 h 45, ci-dessous), puis résultat ici. C : mise en ligne après.
