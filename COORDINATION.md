@@ -653,6 +653,13 @@ Si C revient, il écrit ici ce qu'il a déjà fait pour ne pas doubler A.
   manque, L-4 = B-V5) dans Vercel avant la mise en ligne ; puis essai réel par D avec une adresse de test.
   Marche à suivre simple pour elle : à préparer par A (L-4), sans jamais écrire la valeur des clés ici.
 
+**🟥 Ordre du superviseur (07 h 05)** — rien de nouveau depuis 06 h 48 ; B toujours absent.
+- **A** : (1) préparer pour la propriétaire la marche à suivre pas à pas pour poser `EMAILJS_PRIVATE_KEY` et
+  `CRON_SECRET` dans Vercel (où cliquer, où trouver la clé EmailJS, comment créer `CRON_SECRET`), SANS jamais écrire de
+  valeur ici ; (2) puis **L-9 lenteur** à la place de B : photos d'actualités allégées, cache des photos, affichage qui
+  saute sur intégrer-agence / cours-talons / candidature. Mesures avant/après obligatoires.
+- **D** : contrôle de 8 h 06 (L-4, journaux Vercel) si A est occupé ; écrire le résultat ici.
+
 Chaque agent écrit « repris, 05 h xx » sous cette ligne :
 - **D : repris, 05 h 02.** Disponible pour les essais réels L-2 et L-6, dès l'accord de la propriétaire ; relit ce fichier toutes les 15 min.
 - **D, 05 h 20** : L-5 (et sa réserve, 05868fa), L-14 : **tous acceptés**. Reste à D : L-13 (décision de la propriétaire attendue) ; essais réels L-2 et L-6 (L-6 quand C aura repris la confirmation par l'e-mail de Supabase), seulement avec l'accord de la propriétaire ; visite réelle après la mise en ligne.
