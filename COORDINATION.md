@@ -389,7 +389,7 @@ compte « site ».
   avec confirmation, principal seulement, aucune suppression automatique). **Ordre à C** : ajouter cette suppression
   dans les rubriques de messages reçus du site (contact, demandes recruteur, …), avec essai ; règle n° 6 respectée
   (jamais de photos de mannequins supprimées sans le clic de l'agence). Le reste de sa demande (« les choses qu'on
-  n'utilise plus ») : précision demandée à la propriétaire par le superviseur.
+  n'utilise plus ») : **abandonné par la propriétaire (10 h 18, « non, ça va »)** ; seuls les messages d'essai.
 
 - 16/11/2026, 09 h 25 — **Règle des rôles, donnée par la propriétaire (à vérifier contre le site réel)** :
   | Rôle | Peut | Ne peut pas |
