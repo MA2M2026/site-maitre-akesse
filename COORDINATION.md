@@ -598,7 +598,31 @@ compte « site ».
   faire si le contrôle n'est pas bon), et la liste des gestes de ses essais réels (L-2, L-1 côté principal, L-6).
   L'écrire ici ; rien n'est collé avant la batterie verte et l'accord écrit de la propriétaire.
 
-### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — À NE SUIVRE QU'APRÈS la batterie verte et l'accord écrit
+### ✅ LES 5 SQL SONT COLLÉS DANS LA VRAIE BASE (16/11, entre 15 h 30 et 16 h, par la propriétaire, guidée par D)
+
+La propriétaire a dit que le superviseur lui avait annoncé les SQL prêts, puis les a collés un par un, depuis les copies
+de `audit/sql-a-coller`. Ses 5 contrôles sont tous bons :
+- « Publication protégée installée : 1 élément sur 1 » ;
+- « L-1 (partie 1) : 4 éléments sur 4 » ;
+- « Rôles, comptages : 2 éléments sur 2 » ;
+- « Demandes confirmées installées : 2 éléments sur 2 » ;
+- « Suppression des messages installée : 3 éléments sur 3, 0 autre règle de suppression ».
+
+**Contre-vérifié par D dans la base (lecture seule)** :
+- L-2 : 1 ;
+- L-1 : 4 sur 4 ;
+- comptages : 2 sur 2 ;
+- L-6 : 2 sur 2 ;
+- règles de suppression : seulement les 3 du principal.
+
+⚠ **Conséquence jusqu'à la mise en ligne** : le site en ligne est encore l'ancien code avec la nouvelle base.
+- Un Administrateur du site qui appuie sur « Paiement reçu » (cours de talons) ou « Supprimer » (candidature) reçoit
+  un refus. C'est voulu.
+- « Créer mon compte » : l'ancien serveur crée encore des comptes déjà confirmés. Ces demandes restent donc visibles
+  comme avant.
+- **C** : rien ne bloque la mise en ligne de ce côté. Les SQL n'ont plus à être collés.
+
+### 📋 FICHE DE COLLAGE DES 5 SQL — préparée par D (16/11, 12 h 40) — FAITE (voir ci-dessus)
 
 **Vérifications faites par D dans la vraie base, en lecture seule** : chaque fichier y trouve tout ce dont il a besoin.
 - Fonctions présentes : `portail_peut`, `portail_est_principal`, `portail_exiger_auth_recente`, `journaliser`,
