@@ -570,6 +570,15 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## ✍️ ACCORD ÉCRIT DE LA PROPRIÉTAIRE (16 h 20) : « C a mon accord pour la mise en ligne »
+Valable dès que les conditions restantes sont remplies, dans cet ordre (le superviseur donne le feu vert à C) :
+1. batterie finale de B terminée à **0 échec** sur la tête testée ;
+2. relecture `/code-review` de B sans problème bloquant (sinon correction, puis séries concernées relancées) ;
+3. la propriétaire colle les **5 SQL** (fiche de D, sur ordinateur), chaque contrôle conforme ;
+4. **C met en ligne** (une seule fusion dans main), puis vérifie le site en ligne et SonarQube ;
+5. D fait les essais réels (L-2, L-1 avec la propriétaire, L-6) et la visite complète.
+**C n'attend plus d'autre accord de la propriétaire : il attend le feu vert du superviseur.**
+
 ## ⚠️ CONSIGNE DE LA PROPRIÉTAIRE POUR B (16 h 15) — batterie finale
 Si ta session s'arrête pendant la batterie : **à la reprise, ne recommence pas tout. Reprends là où la batterie
 s'est arrêtée** (à la série suivant la dernière réussie), puisque rien d'autre n'a été touché sur
