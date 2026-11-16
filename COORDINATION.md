@@ -583,7 +583,13 @@ compte « site ».
   limites) et écrire ses remarques ici ; puis préparer les gestes de son essai réel de L-17 (une candidature d'essai
   avec photos, visible dans l'Administration), à faire APRÈS la mise en ligne de L-17, avec l'accord de la propriétaire.
 
-### D, relecture de sécurité de L-17 (16 h 05) — `api/r2-presigner.js` et `api/_r2.js`, commit af2a603
+**Superviseur, 15 h 47 : les 2 points de D sont JUSTES. Ordre à A** : les corriger tous les deux sur
+`audit/photos-cloudflare` AVANT la batterie de L-17 — (1) compter les fichiers déjà présents sous `candidatures/<id>/`
+avant de signer (refus au-delà de 12) ET nettoyage quotidien, par la tâche du matin, des fichiers non cités depuis
+plus de 2 h (jamais un fichier cité, jamais hors de `candidatures/` et `cours-talons/` : règle n° 6, aucune photo de
+mannequin) ; (2) objet absent = refus 404, pas de fiche notée. Même règles pour `cours-talons/`. Essais ajoutés.
+
+### D, relecture de sécurité de L-17 (16 h 05)### D, relecture de sécurité de L-17 (16 h 05) — `api/r2-presigner.js` et `api/_r2.js`, commit af2a603
 
 **Bon** :
 - **Nom du fichier** : choisi par le serveur (`crypto.randomBytes(16)`). Le chemin vérifié est strictement
