@@ -491,7 +491,45 @@ compte « site ».
   (`audit/agent-b`), tenu à jour. **Reste** : après la mise en ligne, contrôle de la tâche de 8 h le lendemain ; mettre à
   jour le rapport commun avec la batterie finale. **Bloque** : rien (pas d'accès humain à l'Administration : D).
 - **C** :
-- **D** :
+- **D** (agent testeur humain, seul à avoir les accès réels, en lecture seule) :
+  - **Audit (15/11)**, rapport `docs/audit/rapport-agent-d.md` (`audit/agent-d`) :
+    - visite réelle des 42 rubriques de l'Administration (rôle « site ») et de 15 écrans de l'application, sur
+      téléphone et ordinateur ;
+    - parcours publics en FR et EN ;
+    - batterie complète sur main (130 séries, 0 échec) ;
+    - 72 tables lues en anonyme ; journal des vrais visiteurs.
+  - **Constats confirmés en vrai** :
+    - D-01 = A-03 : le rôle « site » lit les contacts des parents et les paiements, et voit « Paiement reçu » et
+      « Supprimer » ;
+    - R-02 = D-V1 : une mannequin se publie seule (droits de colonnes + déclencheur) ;
+    - R-04 = D-V2 : la bande « Appli MA2M » couvre « Envoyer » ;
+    - D-02 : photos de candidatures manquantes (liste de L-14 donnée à la propriétaire) ;
+    - D-03 : CV sans logo ;
+    - D-04 : intégrer-agence de 14 à 70 s ;
+    - D-05 : message « agence fermée » ;
+    - comptage anti-robots ; contrôle L-4 par la base ; envois EmailJS du navigateur vérifiés (ils partent) ;
+    - noms réels des règles de suppression.
+  - **Proposition de la liste commune L-1 à L-16.**
+  - **Corrections, toutes acceptées et présentes dans `audit/corrections`** :
+    - L-5, candidature : e6d0907, puis la réserve de C : 05868fa ;
+    - L-14 ;
+    - L-16, part de C (fb15539) et part de B (330ed46) ;
+    - fond `.se-date` (c0bd969) ;
+    - message de pause D-05 / L-13 (1f95f78).
+
+    Chaque correction a été faite avec ses essais visiteur (`test-candidature-fichiers.js` nouveau ; fiche à 320 px,
+    hreflang, titre d'article, application et reprise mis à jour).
+  - **Reste à D, avec l'accord écrit de la propriétaire** :
+    1. essais réels après collage du SQL et mise en ligne :
+       - L-2 : mannequin d'essai qui ne peut plus se publier seule ;
+       - L-1 : côté « site » par D, côté principal par la propriétaire guidée par D (gestes prêts) ;
+       - L-6 : « Créer mon compte » avec une adresse de test ;
+    2. visite complète après la mise en ligne par C, dont R-15 (CV avec logo) ;
+    3. contrôle de la tâche de 8 h demain à 8 h 06.
+  - **Bloque** :
+    - le filtre de confidentialité de D refuse les commandes qui lisent `js/app.js`. D modifie donc ce fichier avec
+      l'outil d'édition et le vérifie par les essais dans le navigateur ; `node --check js/app.js` est fait par C ;
+    - aucun accès aux versions d'essai Vercel ni aux journaux Vercel.
 - **Renfort / superviseur** : audit avec 3 sous-agents + journal des vraies visites + base en lecture (20 constats R-) ;
   4 corrections (A-01, R-03, R-15, A-04) ; maquette « Votre défilé, nos visages » (3 versions, la 3e validée) ;
   supervision depuis 00 h 50 : ordres, relectures (toutes les corrections acceptées ou refusées par écrit, dont L-6
