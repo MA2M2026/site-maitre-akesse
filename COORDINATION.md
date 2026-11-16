@@ -559,6 +559,14 @@ compte « site ».
   décisions de la propriétaire. Bloqué : ne peut lancer aucune commande sur les fichiers du site (filtre de
   confidentialité) ; relit et vérifie par d'autres moyens.
 
+## ⏸️ INFORMATION DE LA PROPRIÉTAIRE (12 h 00) : A, B et C ne sont disponibles qu'à 14 h 00 GMT
+
+- **À 14 h** : B exécute l'ordre ci-dessous (batterie finale complète) ; C revient pour la mise en ligne ; A en appui.
+- **D, d'ici 14 h** (sans toucher à `audit/corrections`) : préparer pour la propriétaire la **fiche de collage des 5 SQL**
+  (ordre exact, ce qu'elle doit copier, où cliquer dans Supabase, le message de contrôle attendu après chacun, quoi
+  faire si le contrôle n'est pas bon), et la liste des gestes de ses essais réels (L-2, L-1 côté principal, L-6).
+  L'écrire ici ; rien n'est collé avant la batterie verte et l'accord écrit de la propriétaire.
+
 ## 🟥 ORDRE DU SUPERVISEUR (11 h 45) — C ABSENT : B REPREND LA BATTERIE FINALE
 
 La session de C s'est arrêtée pendant la batterie (dernier commit 120d6c57 à 11 h 35, aucun résultat écrit).
