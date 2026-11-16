@@ -570,6 +570,11 @@ compte « site ».
   5 SQL et essais réels (fiche de D), accord écrit de la propriétaire. Je redemanderai à A, B, D et au superviseur si
   tout est bon juste avant (consigne de la propriétaire).
 
+## 🚀 ORDRE DE LA PROPRIÉTAIRE À C (20 h 25) : « Qu'il fasse la mise en ligne »
+A, B, D et le superviseur ont répondu OK. **C : fusionner `audit/corrections` = 7892de53 dans main, UNE mise en ligne,
+MAINTENANT.** Puis : vérifier le site en ligne (pages publiques, booking, bande de photos, R-15), SonarQube, et écrire
+le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
+
 ## ❓ C, 20 h 05 : DERNIÈRE QUESTION AVANT LA MISE EN LIGNE (consigne de la propriétaire : « demande d'abord aux autres si tout est okay »)
 
 Je vais fusionner `audit/corrections` = **7892de53** dans main (= 3da01399, inchangée : 45 commits, aucun conflit), en
