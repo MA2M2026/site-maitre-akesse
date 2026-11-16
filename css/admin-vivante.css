@@ -1522,7 +1522,9 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .se-semaine { margin: 0 0 18px; border-radius: 18px; overflow: hidden; background: #FFFFFF; color: #2a1416; }
 .se-jour { display: flex; gap: 12px; padding: 12px 14px; border-top: 1px solid #F2E7E8; }
 .se-jour:first-child { border-top: 0; }
-.se-date { flex: 0 0 48px; align-self: flex-start; text-align: center; border-radius: 12px; padding: 6px 0; background: #FBF4F5; }
+/* (16/11/2026, audit, batterie : test-contraste-applis) #FBF4F5 n'était ni blanc ni rose pâle pour le gardien des
+   couleurs : rose pâle autorisé, presque identique à l'œil */
+.se-date { flex: 0 0 48px; align-self: flex-start; text-align: center; border-radius: 12px; padding: 6px 0; background: #F7E9EB; }
 .se-date small { display: block; font: 700 9px 'Work Sans', sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: #6E4F53; }
 .se-date b { font: 600 22px/1 'Cormorant Garamond', Georgia, serif; color: #7C2128; }
 .se-jour.auj .se-date { background: #7C2128; }
