@@ -174,6 +174,32 @@ Confirmés par D : A-03 (= D-01), B-P4 = C-P1 (page d'accueil en ligne), C-P9, B
 
 On ne tranche pas par vote : on retourne au site, au code ou aux journaux.
 
+### Vérifications de l'agent B (16/11, 00 h) — demandées par A, C, D et le renfort
+
+- **B-V1, A-01 confirmé** : `/docs/rls-matrix.md` et `/docs/falsification.md` répondent 200 sur le site en ligne.
+- **B-V2, R-03 confirmé, C-P4 à corriger** : sur www et admin, `/js/admin/site-mannequins.js` → 404, mais
+  `/js/admin/site%2Dmannequins.js`, `site%2dmannequins.js` et `/js/admin%2Fsite-mannequins.js` → 200 (45 Ko).
+  Cause : `middleware.js` compare l'adresse encodée (`SCRIPTS_NOUVELLE_ADMIN`). Proposition : décoder l'adresse
+  (`decodeURIComponent`) avant la comparaison.
+- **B-V3, A-06 : risque théorique seulement** : `portail_admin_ok` existe dans la base (exécutable par les
+  comptes connectés), donc la branche « 404 → laisser passer » de `api/_commun.js:140` ne sert jamais ;
+  `WHATSAPP_APP_SECRET` est bien posé en production (Vercel, noms des variables lus, jamais les valeurs) → R-14 et
+  A-06 côté WhatsApp : signature vérifiée. Proposition : passer en « refuser » quand la fonction ou la clé manque.
+- **B-V4, A-08 confirmé (basse → moyenne)** : par `formulaire_public_enregistrer`, une candidature peut écrire
+  `created_at`, `statut_change_at`, `video_url`, `type_candidature` (dont `direct`, réservé à l'agence) ; une
+  demande recruteur peut écrire `status` seulement si « nouvelle » (contrôlé). Proposition : liste blanche des
+  colonnes par formulaire.
+- **B-V5, NOUVEAU, haute (à confirmer à 8 h)** : la tâche planifiée de 8 h (`vercel.json` crons → `/api/portail`)
+  exige `CRON_SECRET` (`api/portail.js:202`) et `EMAILJS_PRIVATE_KEY` : **ces deux variables n'existent pas sur
+  Vercel**. La tâche répond donc 401 chaque jour : anniversaires, documents et **relances des mensualités du 3 et
+  du 5** jamais envoyés. Indice : `anniversaires_envoyes` = 0 ligne alors qu'une mannequin a eu son anniversaire
+  depuis le 25/10. Contrôle des journaux Vercel prévu à 8 h 06 (B).
+- **B-V6, D-02 mis à jour** : rattrapage du 15/11 au soir (`medias_drive_surveiller(60)`) : 18 candidatures ont
+  retrouvé 63 photos ; restent sans photo CED… , ATS… , Dak… (12/11 : photos jamais arrivées dans Drive, dossier
+  ne contenant que la vidéo) et une du 26/09 (aucun dossier). À redemander sur WhatsApp.
+- **B-V7** : B est d'accord pour **D comme agent testeur humain**.
+- **Note de forme** : dans le tableau de la section 2, la colonne D est décalée (`||` en trop) : à rectifier par D.
+
 ### Réponses de la propriétaire
 
 - 15/11/2026, 23:11 (question de A, lié à A-03) : valider le paiement d'un cours de talons (et créer la recette en
