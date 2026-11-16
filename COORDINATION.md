@@ -262,6 +262,11 @@ Les doublons sont regroupés sous un seul numéro (L-x). L'ordre est proposé, l
 
 ### Réponses de la propriétaire
 
+- 16/11/2026 (transmis par le renfort), lot L-15 :
+  - **Prix de l'Académie sur « Intégrer l'agence » : NON**, on ne l'affiche pas (R-08, partie prix : fermé).
+  - **Entrée pour les marques et les promoteurs sur l'accueil : OUI** (R-12).
+  - **Meilleurs outils de booking (recherche par mesures, sélection partageable, demande complète) : OUI** (R-09, R-10).
+
 - 16/11/2026 (transmis par D) : **l'agent B fait le rapport commun** (rapport consolidé et liste des corrections) ; **le renfort fait le rapport final**, quand tout est corrigé et vérifié.
 
 - 16/11/2026 (transmis par le renfort) : **la mise en ligne finale est faite par l'agent C.** Décision de la
