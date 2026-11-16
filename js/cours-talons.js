@@ -271,16 +271,17 @@
   // (12/11/2026) chaque photo est lue et allégée DÈS QU'ELLE EST CHOISIE (preparerPhotosEnvoi, js/app.js)
   let photosEnPreparation = Promise.resolve(), nbPhotosEnPreparation = 0;
   $('ct-photos').addEventListener('change', (e) => {
-    const nouvelles = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type || '') || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name || ''));
+    // (16/11/2026) les fichiers qui ne sont pas des photos sont écartés ET signalés par preparerPhotosEnvoi (js/app.js)
+    const nouvelles = Array.from(e.target.files || []);
     e.target.value = '';
     $('ct-photos-info').textContent = T('Préparation des photos…', 'Preparing the photos…');
     nbPhotosEnPreparation++;
-    const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(nouvelles)).then(({ pretes, illisibles }) => {
+    const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(nouvelles)).then(({ pretes, illisibles, pasPhotos }) => {
       nbPhotosEnPreparation--;
       photos = photos.concat(pretes).slice(0, PHOTOS_MAX);
       mediasChanges();
       rafraichirPhotos();
-      if (illisibles.length) { const info = $('ct-photos-info'); info.className = 'ct-info err'; info.textContent += ' ' + textePhotosIllisibles(illisibles); }
+      if (illisibles.length || pasPhotos.length) { const info = $('ct-photos-info'); info.className = 'ct-info err'; info.textContent += ' ' + textePhotosIllisibles(illisibles, pasPhotos); }
     });
     photosEnPreparation = travail.catch(() => { nbPhotosEnPreparation = Math.max(0, nbPhotosEnPreparation - 1); });
   });

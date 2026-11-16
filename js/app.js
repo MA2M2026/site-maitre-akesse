@@ -3001,22 +3001,45 @@ async function allegerPhotoSite(fichier, coteMax = 2400, qualite = 0.88) {
 // laissent plus lire une photo de la galerie (Google Photos, nuage) quelques minutes après le choix). Convertie (HEIC),
 // réduite (1600 px) et COPIÉE EN MÉMOIRE tout de suite : à l'envoi, plus rien à relire sur le téléphone, et c'est
 // plus léger. Lève une erreur si la photo est déjà illisible (la personne la choisit à nouveau).
+// (16/11/2026, audit R-05 / R-06) seul un fichier d'image est accepté (un PDF ou un document n'est plus compté comme
+// photo), et la photo prête doit réellement s'afficher (un HEIC que le téléphone ne sait pas convertir est signalé au
+// lieu de partir illisible). Les captures d'écran PNG / WebP lourdes sont aussi réduites en JPEG 1600 px (une capture
+// de 13 Mo partait telle quelle) : la transparence ne sert à rien sur une photo de candidature.
+const PHOTO_LOURDE_OCTETS = 1.5 * 1024 * 1024;
+// (type inconnu : certains Android donnent une photo de la galerie sans type ni extension, « 1000012345 » : elle n'est
+// pas refusée ici, c'est la vérification de l'affichage qui tranche)
+const estFichierImage = (f) => !f.type || /^image\//.test(f.type);
+function verifierImageLisible(fichier) {
+  return new Promise((ok, ko) => {
+    const adresse = URL.createObjectURL(fichier), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(adresse); if (img.naturalWidth) ok(); else ko(new Error('image vide')); };
+    img.onerror = () => { URL.revokeObjectURL(adresse); ko(new Error('image illisible')); };
+    img.src = adresse;
+  });
+}
 async function preparerPhotoEnvoi(fichier) {
-  const prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  if (!estFichierImage(fichier)) { const e = new Error('pas une photo'); e.pasPhoto = true; throw e; }
+  let prete = await redimensionnerImage(await convertirSiHeic(fichier), PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  if (prete.type !== 'image/jpeg' && prete.size > PHOTO_LOURDE_OCTETS) prete = await reduireEnJpeg(prete, PHOTO_COTE_ENVOI, PHOTO_QUALITE_ENVOI);
+  await verifierImageLisible(prete);
   if (prete !== fichier) return prete;
   return new File([await fichier.arrayBuffer()], fichier.name || 'photo.jpg', { type: fichier.type || 'image/jpeg' });
 }
-// Prépare une liste de photos choisies : { pretes: [File], illisibles: [noms] } (les illisibles sont laissées de côté)
+// Prépare une liste de photos choisies : { pretes: [File], illisibles: [noms], pasPhotos: [noms] } (les illisibles et
+// les fichiers qui ne sont pas des photos sont laissés de côté)
 async function preparerPhotosEnvoi(fichiers) {
-  const pretes = [], illisibles = [];
+  const pretes = [], illisibles = [], pasPhotos = [];
   for (const f of fichiers) {
-    try { pretes.push(await preparerPhotoEnvoi(f)); } catch (e) { illisibles.push(f.name || 'photo'); }
+    try { pretes.push(await preparerPhotoEnvoi(f)); } catch (e) { (e && e.pasPhoto ? pasPhotos : illisibles).push(f.name || 'photo'); }
   }
-  return { pretes, illisibles };
+  return { pretes, illisibles, pasPhotos };
 }
-const textePhotosIllisibles = (illisibles) => illisibles.length ? T(
+const textePhotosIllisibles = (illisibles, pasPhotos = []) => [illisibles.length ? T(
   `${illisibles.length > 1 ? illisibles.length + ' photos n’ont' : '1 photo n’a'} pas pu être ${illisibles.length > 1 ? 'lues' : 'lue'} par le téléphone : choisissez-${illisibles.length > 1 ? 'les' : 'la'} à nouveau (depuis la galerie, de préférence).`,
-  `${illisibles.length > 1 ? illisibles.length + ' photos' : '1 photo'} could not be read by your phone: please choose ${illisibles.length > 1 ? 'them' : 'it'} again (from your gallery, preferably).`) : '';
+  `${illisibles.length > 1 ? illisibles.length + ' photos' : '1 photo'} could not be read by your phone: please choose ${illisibles.length > 1 ? 'them' : 'it'} again (from your gallery, preferably).`) : '',
+  pasPhotos.length ? T(
+    `${pasPhotos.length > 1 ? pasPhotos.length + ' fichiers ne sont pas des photos' : '« ' + pasPhotos[0] + ' » n’est pas une photo'} (document, PDF…) : choisissez des photos (JPEG, PNG).`,
+    `${pasPhotos.length > 1 ? pasPhotos.length + ' files are not photos' : '“' + pasPhotos[0] + '” is not a photo'} (document, PDF…): please choose photos (JPEG, PNG).`) : ''].filter(Boolean).join(' ');
 
 // ---------- Envois fiables (12/11/2026, demande de la propriétaire : « même si la personne quitte la page, que ça
 // s'envoie quand même, et qu'une notification dise candidature envoyée ») ----------

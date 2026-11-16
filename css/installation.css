@@ -33,6 +33,10 @@
 .ma2m-installer--site .ma2m-installer-fermer { width: 34px; font-size: 13px !important; }
 body.ma2m-saisie .ma2m-installer--site { opacity: 0; visibility: hidden; transform: translateY(20px); transition: opacity .2s, transform .2s, visibility .2s; }
 body.ma2m-installer-visible:has(.ma2m-installer--site)::after { height: 64px; }
+/* (16/11/2026, audit R-04 / L-5) pages de formulaire (candidature, Intégrer l'agence, cours de talons, contact) : pas de
+   bande du tout. Elle revenait dès qu'on quittait un champ et cachait la moitié droite de « Envoyer ma candidature ». */
+body:has(#form-casting, #form-talons, #form-contact) .ma2m-installer--site { display: none; }
+body.ma2m-installer-visible:has(#form-casting, #form-talons, #form-contact)::after { height: 0; }
 /* une place gardée en bas de la page : le bas du contenu n'est pas caché sous la bande */
 body.ma2m-installer-visible::after { content: ""; display: block; height: 96px; }
 @keyframes ma2m-installer-arrivee { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
