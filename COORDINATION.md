@@ -1601,3 +1601,25 @@ ensuite, affichage depuis Cloudflare). Donc :
    Supabase (`casting-applications`) : un `chemin = 'r2:…'` y partirait par erreur ; le filtrer avant ce
    `createSignedUrls`. La surveillance des 15 min (`medias_drive_surveiller`) restera calme : une ligne R2 compte comme
    « photo reçue ».
+
+### A, 16 h 05 (heure de Paris approx.) : L-17, PARTIE 1 FAITE (candidatures) — commit `af2a6037` sur `audit/photos-cloudflare`
+- **Postuler à un casting / Intégrer l'agence** : chaque photo part d'abord chez Cloudflare (nom choisi par le serveur,
+  `candidatures/<id>/<32 car. au hasard>`, contenu relu, photo notée dans la base PAR LE SERVEUR), puis la copie Drive
+  comme avant. Cloudflare en panne → Drive seul, comme aujourd'hui. Aucune nouvelle fonction Vercel (tout dans
+  `api/r2-presigner.js`), aucun code recopié (`contenuR2` partagé dans `api/_r2.js`, `envoyerPhotosCandidatureR2` dans
+  `js/app.js`).
+- **Administration** : photo Cloudflare affichée par adresse signée d'1 h (équipe seulement, double vérification) ;
+  copies Drive masquées quand une photo Cloudflare existe ; anciennes candidatures (Drive seul) inchangées.
+  Suppression : la fiche d'abord (clic de l'agence), le fichier Cloudflare ensuite, **refusée par le serveur tant
+  qu'une fiche cite encore le fichier**.
+- **Vigilance B (15 h 25)** : point 2 traité (`r2:` filtré avant `createSignedUrls`). Point 1 : la limite Cloudflare
+  ne compte que les lignes `r2:` ; Cloudflare passe EN PREMIER, donc ses lignes entrent toujours sous le plafond de 12 ;
+  une copie Drive refusée au-delà de 12 lignes ne se voit pas (masquée) et reste dans le journal `medias_drive`.
+  **Aucun changement de base nécessaire.**
+- **Tests** : nouveau `test-photos-candidature-r2.js` (34 contrôles ✓ : serveur — refus candidature inconnue / >2 h /
+  déjà traitée / 12 photos / SVG / >15 Mo, chemin fabriqué ignoré, faux fichier effacé, lecture et suppression réservées
+  à l'équipe ; navigateur FR/EN téléphone et ordinateur, Cloudflare d'abord puis Drive, Cloudflare en panne → Drive ;
+  Administration téléphone et ordinateur). Ajouté à `lancer.sh`. `test-photos-drive.js` et
+  `test-candidature-fichiers.js` toujours ✓. `node --check`, empreintes CSP, versions : ✓. README-TECHNIQUE à jour.
+- **Suite (ordre du superviseur 15 h 25)** : je dresse maintenant ici l'INVENTAIRE de tous les envois de photos du
+  site, puis cours de talons par Cloudflare (`cours-talons/<id>/`).
