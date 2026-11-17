@@ -337,10 +337,11 @@
     const d = await P.bd(sb.from(conf.table).select('*').eq('id', id).maybeSingle());
     if (!d) return P.entete(conf.titre) + '<div class="carte"><h2>Dossier introuvable</h2><p class="doux">Il a peut-être été supprimé.</p><a class="btn" href="#/site/' + conf.page + '">← Retour à la liste</a></div>';
     fiche = { source, d, photos: [] };
+    const douteuxFiche = aVerifier([d.id]).then((x) => x.has(d.id)).catch(() => false);   // (en même temps que les photos)
     if (conf.photos) fiche.photos = (await photosDe(conf, [d.id]).catch(() => ({})))[d.id] || [];
     // (15/11/2026) sans photo : le dossier Drive de la candidate, s'il est connu (P.drive, js/admin/coque.js)
     if (source === 'casting' && !fiche.photos.length) fiche.dossierDrive = (await P.drive.dossiers([d.id]).catch(() => ({})))[d.id] || null;
-    const douteux = (await aVerifier([d.id]).catch(() => new Set())).has(d.id);
+    const douteux = await douteuxFiche;
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
@@ -497,6 +498,7 @@
     P.etude.galerie = fiche.photos.map((x) => x.affiche);
     const age = ageDe(d), mineur = age !== null && age < 18;
     const video = estVideoDrive(d.video_url);
+    const douteux = (await aVerifier([d.id]).catch(() => new Set())).has(d.id);   // (17/11) aussi dans l'étude
     return {
       diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
       nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + P.dateEtHeure(d.created_at)],
@@ -504,7 +506,8 @@
         d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
         mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''],
       // (étude : on fait défiler vite, la vidéo reste un lien ; elle est lue dans la fiche)
-      lien: video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : ''
+      lien: (video ? '<button type="button" class="lien-video" data-action="video-plein-ecran" data-video="' + P.esc(d.video_url) + '">🎬 Voir la vidéo</button>' : '') +
+        (douteux ? ' ' + ETIQUETTE_A_VERIFIER() : '')
     };
   }
   // (12/11/2026) recruteur : les mannequins qu'il a choisis défilent en grand, et sa réponse WhatsApp est prête
@@ -612,8 +615,9 @@
     el.disabled = true;
     const r = await P.bd(sb.from('envois_a_verifier').delete().eq('ref', fiche.d.id).select('ref')).catch(() => null);
     if (!r || !r.length) { el.disabled = false; P.message('Étiquette non retirée : reconnectez-vous puis réessayez.'); return; }
+    const encart = el.closest('.a-verifier');
+    if (encart) encart.remove();
     P.message('Étiquette « À vérifier » retirée.');
-    return P.afficher();
   };
   P.actions['dossier-supprimer'] = async (el) => {
     if (!(P.moi && P.moi.role === 'principal')) return;

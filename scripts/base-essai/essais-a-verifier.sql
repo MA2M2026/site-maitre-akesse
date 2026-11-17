@@ -23,6 +23,11 @@ select essai_refuse($q$insert into envois_a_verifier (ref, table_nom) values ('0
 delete from envois_a_verifier where ref = '00000000-0000-0000-0000-0000000a7e01';
 reset role;
 select set_config('request.jwt.claims', '', false);
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai((select count(*) from envois_a_verifier where ref = '00000000-0000-0000-0000-0000000a7e02') = 1, 'administratrice principale : voit les étiquettes');
+reset role;
+select set_config('request.jwt.claims', '', false);
 select essai((select count(*) from envois_a_verifier where ref = '00000000-0000-0000-0000-0000000a7e01') = 0, 'équipe du site : « C''est une vraie personne » retire l''étiquette');
 -- candidature supprimée : son étiquette part avec elle
 delete from casting_applications where id = '00000000-0000-0000-0000-0000000a7e02';

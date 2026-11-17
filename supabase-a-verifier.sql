@@ -10,7 +10,7 @@
 
 create table if not exists envois_a_verifier (
   ref uuid primary key,
-  table_nom text not null check (table_nom in ('casting_applications', 'messages_contact', 'recruiter_requests', 'cours_talons')),
+  table_nom text not null check (table_nom in ('casting_applications', 'recruiter_requests')),
   raison text,
   cree_le timestamptz not null default now()
 );
@@ -21,10 +21,10 @@ grant all on envois_a_verifier to service_role;
 
 drop policy if exists "L agence lit les envois a verifier" on envois_a_verifier;
 create policy "L agence lit les envois a verifier" on envois_a_verifier for select
-  using (coalesce(portail_peut('site'), false) or exists (select 1 from admins where user_id = auth.uid()));
+  using (coalesce(portail_peut('site'), false));
 drop policy if exists "L agence retire les envois a verifier" on envois_a_verifier;
 create policy "L agence retire les envois a verifier" on envois_a_verifier for delete
-  using (coalesce(portail_peut('site'), false) or exists (select 1 from admins where user_id = auth.uid()));
+  using (coalesce(portail_peut('site'), false));
 
 -- l étiquette part avec la candidature ou la demande supprimée
 create or replace function envois_a_verifier_nettoyer()

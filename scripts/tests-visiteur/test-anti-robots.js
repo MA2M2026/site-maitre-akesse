@@ -41,8 +41,12 @@ async function serveur() {
   // (17/11/2026, décision de la propriétaire : une vraie candidate dont le téléphone ne chargeait pas Turnstile était refusée)
   ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('erreur Turnstile 110200') && JSON.stringify(journal).includes('(accepté quand même)'),
     'serveur : pas de jeton (vérification non chargée sur le téléphone) : accepté, la raison est notée au journal');
-  ok(etiquettes.length === 1 && etiquettes[0].ref === 'id-1' && etiquettes[0].table_nom === 'messages_contact' && /pas de jeton/.test(etiquettes[0].raison),
-    'serveur : envoi sans vérification : étiquette « À vérifier » notée pour l’Administration (jeton vérifié : aucune)');
+  ok(etiquettes.length === 0, 'serveur : message de contact sans vérification : pas d’étiquette (l’Administration n’en affiche pas)');
+  const rpcsAvant = rpcs.length;
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'c9', full_name: 'Awa Essai', email: 'awa@test.ci' }, raisonJeton: 'script Cloudflare non chargé' });
+  ok(r.statut === 200 && rpcs.length === rpcsAvant + 1 && etiquettes.length === 1 && etiquettes[0].ref === 'id-1' && etiquettes[0].table_nom === 'casting_applications' && /pas de jeton/.test(etiquettes[0].raison),
+    'serveur : candidature sans vérification : acceptée, étiquette « À vérifier » notée pour l’Administration');
+  rpcs.length = rpcsAvant + 0; etiquettes.length = 0;
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'x'.repeat(3000) });
   ok(r.statut === 403 && rpcs.length === 2, 'serveur : jeton fabriqué trop long : refusé');
   const fetchStrict = global.fetch;

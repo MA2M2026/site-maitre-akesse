@@ -392,8 +392,9 @@ async function finirDemande(res, idDemande, modeles, dejaLa) {
 // (17/11/2026, décision de la propriétaire) envoi accepté SANS vérification anti-robots : noté dans envois_a_verifier
 // (supabase-a-verifier.sql) ; l'Administration affiche « À vérifier » sur le dossier. Jamais bloquant : si la note
 // échoue (fichier SQL pas encore collé…), l'envoi reste enregistré.
+const TABLES_A_VERIFIER = ['casting_applications', 'recruiter_requests'];   // (celles que l'Administration étiquette)
 async function noterAVerifier(table, id, raison) {
-  if (!id) return;
+  if (!id || !TABLES_A_VERIFIER.includes(table)) return;
   await fetch(SUPABASE_URL + '/rest/v1/envois_a_verifier', {
     method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal,resolution=ignore-duplicates' },
     body: JSON.stringify({ ref: id, table_nom: table, raison: String(raison || '').slice(0, 300) })
@@ -424,6 +425,7 @@ async function formulairePublic(req, corps, res) {
     const m = String((e && e.message) || e);
     if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
     if (/duplicate key|23505/.test(m) && ligne.id) {  // (déjà enregistré : réponse perdue)
+      if (!verif.ok) await noterAVerifier(table, ligne.id, verif.raison);
       if (modeles) return await finirDemande(res, ligne.id, modeles, true);
       return res.status(200).json({ ok: true, id: ligne.id });
     }
