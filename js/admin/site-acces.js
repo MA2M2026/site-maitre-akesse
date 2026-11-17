@@ -109,8 +109,51 @@
     const carte = (l, v, s) => '<div class="carte-pilotage"><span class="l">' + P.esc(l) + '</span><span class="v">' + (v == null ? '—' : P.compte(v)) + '</span><span class="s">' + P.esc(s) + '</span></div>';
     return P.entete('Drive et transferts') + '<div class="cartes-pilotage">' + carte('Photos du Book', photosBook, 'en ligne sur le site') + carte('Mannequins publiés', publies, 'dans The Book') +
       carte('Photos de candidature', photosCandidatures, 'liens vers Google Drive') + '</div>' +
-      '<p class="doux petit-texte">Les photos de candidature sont rangées dans Google Drive ; ici, le nombre de photos enregistrées.</p>';
+      '<p class="doux petit-texte">Les photos de candidature sont rangées dans Google Drive ; ici, le nombre de photos enregistrées.</p>' +
+      (P.moi && P.moi.role === 'principal' ? blocRattrapage() : '');
   }
+  // (17/11/2026, L-18, demande de la propriétaire) RATTRAPAGE : les photos des candidatures et des cours de talons
+  // reçues avant le 17/11 sont copiées du Drive vers Cloudflare, UN dossier à la fois (api/_rattrapage.js), pour
+  // qu'elles ne disparaissent plus de l'Administration. Rien n'est supprimé ; un dossier en échec reste sur Drive.
+  // Administratrice principale seulement ; on peut quitter la page et reprendre plus tard (ce qui est fait reste fait).
+  function blocRattrapage() {
+    return '<section class="carte" id="rattrapage"><h2>Rapatrier les anciennes photos chez Cloudflare</h2>' +
+      '<p class="doux">Les photos des candidatures et des cours de talons reçues avant le 17/11/2026 sont dans Google Drive, qui ne les affiche pas toujours. ' +
+      'Ce bouton les copie chez Cloudflare, dossier par dossier. <b>Rien n’est supprimé</b>, ni dans le Drive ni dans la base. Vous pouvez fermer la page et reprendre plus tard.</p>' +
+      '<button class="btn" type="button" data-action="rattrapage-lancer">Rapatrier les anciennes photos</button> ' +
+      '<button class="btn secondaire" type="button" data-action="rattrapage-arreter" hidden>Arrêter</button>' +
+      '<p class="form-msg" id="rattrapage-msg" role="status" aria-live="polite"></p></section>';
+  }
+  let rattrapageEnCours = false;
+  P.actions['rattrapage-arreter'] = () => { rattrapageEnCours = false; };
+  P.actions['rattrapage-lancer'] = async (el) => {
+    if (rattrapageEnCours) return;
+    rattrapageEnCours = true; el.disabled = true;
+    const arreter = document.querySelector('[data-action="rattrapage-arreter"]'); if (arreter) arreter.hidden = false;
+    const msg = () => document.getElementById('rattrapage-msg');
+    const ecrire = (t) => { const m = msg(); if (m) m.textContent = t; };
+    let faits = 0, photos = 0;
+    const echecs = [];
+    try {
+      for (const [source, nom] of [['candidature', 'candidatures'], ['cours_talons', 'cours de talons']]) {
+        const exclus = [];
+        while (rattrapageEnCours && msg()) {   // (rubrique quittée : on s'arrête)
+          const r = await P.photosR2.appel({ action: 'rattrapage_drive', source, exclus });
+          if (r.fini) break;
+          if (r.echec) { exclus.push(r.echec); echecs.push(r.echec); } else { faits++; photos += r.photos || 0; }
+          ecrire('En cours (' + nom + ') : ' + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + '), ' +
+            P.pluriel(Math.max(0, (r.restants || 0) - (r.echec ? 1 : 0)), 'dossier restant', 'dossiers restants') + (echecs.length ? ', ' + P.pluriel(echecs.length, 'laissé', 'laissés') + ' sur Drive' : '') + '…');
+          await new Promise((ok) => setTimeout(ok, 1500));   // (un peu d'air entre deux dossiers, pour Google)
+        }
+      }
+      ecrire((rattrapageEnCours ? 'Terminé : ' : 'Arrêté : ') + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + ').' +
+        (echecs.length ? ' ' + P.pluriel(echecs.length, 'dossier est resté', 'dossiers sont restés') + ' sur Drive (Google n’a pas répondu) : relancez plus tard.' : ''));
+    } catch (e) {
+      ecrire('Interrompu : ' + ((e && e.message) || e) + ' Ce qui est fait reste fait : relancez plus tard.');
+    } finally {
+      rattrapageEnCours = false; el.disabled = false; if (arreter) arreter.hidden = true;
+    }
+  };
 
   // ---------- Nettoyage des photos ----------
   async function pageNettoyage() {

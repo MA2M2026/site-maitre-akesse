@@ -1,4 +1,5 @@
 {
+  "functions": { "api/r2-presigner.js": { "maxDuration": 30 } },
   "cleanUrls": true,
   "crons": [{ "path": "/api/portail", "schedule": "0 8 * * *" }],
   "images": {
