@@ -2053,6 +2053,25 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## 🟠 SUPERVISEUR (17/11, 03 h 00) : RELECTURE DE 1b6bb4ff (D) — DERNIÈRE PASSE, 4 CHOSES À FAIRE, PUIS MISE EN LIGNE
+Règle simple bien appliquée, rien n'est supprimé. Relecture `/code-review` c5489c4e...1b6bb4ff. **À corriger (dernière
+passe, pas de nouveau système)** :
+1. **Serveur de photos injoignable** (`js/admin/site-dossiers.js:114`, `js/admin/site-cours-talons.js:31`) : compter N
+   avec les seules photos R2 qui ont reçu une adresse signée ; si la signature échoue, les copies Drive s'affichent
+   (sinon une panne Vercel/R2 vide toute la galerie). Une seule fonction partagée dans coque.js (`P.photosR2.filtrer`),
+   utilisée par les deux pages : elle supprime aussi la double définition « copie Drive » (règle n° 5).
+2. **Cours de talons** (`js/cours-talons.js:425`) : remettre la garde retirée — garder la liste la plus longue
+   (`d.liens.length >= r2Liste.length ? d.liens : r2Liste`), sinon des photos R2 non citées sont effacées par le
+   nettoyage du matin.
+3. **Ancien programme Google** (`js/formulaire-candidature.js:480`) : un refus 42501 n'est sauté que si la photo est
+   arrivée chez Cloudflare ; sinon il compte comme photo manquante (journal), comme avant.
+4. Retirer `etat.cheminsR2` devenu inutile (`js/formulaire-candidature.js:450`).
+**Acceptés comme limites connues (rien n'est perdu : tout reste dans le Drive, bouton « Récupérer depuis Drive »)** :
+cas rares d'échecs partiels de Google ou Cloudflare où M ≤ N cache une photo Drive seule ; une photo R2 supprimée
+laisse réapparaître sa copie Drive ; ordre d'affichage des talons ; contrôle du SQL limité à la 1ʳᵉ partie.
+**SQL** : la version collée par la propriétaire contient déjà `lower(` : RIEN à recoller.
+Puis : essais concernés relancés, UN envoi, 3 lignes ici. Le superviseur vérifie et donne le feu vert à C.
+
 ## ✅ PROPRIÉTAIRE (17/11, 02 h 40) : LES 2 GESTES DE L-17 SONT FAITS
 - `supabase-l17-photos-talons.sql` (version de D c5489c4e, avec `lower(`) collé : contrôle **« ✅ L-17 : inscriptions
   au cours de talons ouvertes aux photos Cloudflare »**. Copie : `audit/sql-a-coller`, fichier 6.
