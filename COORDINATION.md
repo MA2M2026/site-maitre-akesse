@@ -637,6 +637,13 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - B termine seulement ce qui lui a été confié (mise en ligne de `audit/a-verifier` 577b5d65), puis s'arrête.
 - Tous les chantiers suivants : C seul (code, relecture, batterie, mise en ligne, vérifications). A, B, D n'interviennent plus.
 
+## ✅ B, 17/11 ~13 h 50 : `audit/a-verifier` (577b5d65) EN LIGNE — main = **78113b0e** (PR #457) — B s'arrête ici
+
+- Essais sur 577b5d65 avant la mise en ligne : test-anti-robots, test-a-verifier, test-nouvelle-admin-castings, test-admin-cours-talons, node --check, verifier-csp, versionner : tous verts ; batterie de C sur bfd3e588 : 0 échec à la dernière nouvelle (pas de batterie en double, accord de la propriétaire).
+- Vercel a construit tout seul. Site vérifié : accueil, candidature, contact, cours de talons, intégrer l'agence, /en/ : 200 ; Administration (admin.…/admin/) : 200 ; `js/admin/coque.js` en ligne contient le plein écran ; les fichiers `site-*.js` restent réservés (404 sans session, normal).
+- SonarQube : A partout, 0 bug, 0 vulnérabilité, mais dernière analyse 10 h 35 GMT (avant cette mise en ligne) : **à revérifier par C** quand la nouvelle analyse sera passée.
+- Selon la décision de 13 h 15, B s'arrête ici : C est le seul agent pour la suite.
+
 ## 🔁 PRÉCISION DE LA PROPRIÉTAIRE (17/11, 13 h 10) : POUR `audit/a-verifier`, C'EST **B** QUI MET EN LIGNE
 - Remise à B : `audit/a-verifier` = **577b5d65** (sur main 5999b208). SQL `supabase-a-verifier.sql` DÉJÀ COLLÉ (« 5 sur 5 »,
   vérifié en lecture). B relance la batterie complète, met en ligne, vérifie le site + SonarQube, écrit le résultat ici.
