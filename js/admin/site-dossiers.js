@@ -341,7 +341,7 @@
       (source === 'recruteur' ? await blocMannequinsChoisis() : '') +
       // (16/11/2026, demande de la propriétaire) supprimer (vieux messages d'essai…) : administratrice principale
       // seulement, avec confirmation ; la base l'impose aussi (supabase-suppression-messages.sql)
-      (P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier' + (conf.photos ? ' et ses photos enregistrées sur le site (les copies Google Drive restent)' : '') + '.</p>' +
+      (P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier' + (conf.photos ? ' et ses photos enregistrées sur le site ; son dossier Google Drive va à la corbeille de Drive (récupérable 30 jours)' : '') + '.</p>' +
       '<button type="button" class="btn" data-action="dossier-supprimer">🗑 Supprimer ce dossier</button></section>' : '') + '</div></div>';
   }
   function apresFiche() {
@@ -595,7 +595,7 @@
   P.actions['dossier-supprimer'] = async (el) => {
     if (!(P.moi && P.moi.role === 'principal')) return;
     const conf = SOURCES[fiche.source];
-    if (!confirm('Supprimer définitivement ce dossier' + (conf.photos ? ' et toutes ses photos' : '') + ' ? Cette action est irréversible.')) return;
+    if (!confirm('Supprimer définitivement ce dossier' + (conf.photos ? ' et toutes ses photos (son dossier Google Drive part à la corbeille de Drive, récupérable 30 jours)' : '') + ' ? Cette action est irréversible.')) return;
     el.disabled = true;
     // la base d'abord, les fichiers ensuite : si la base refuse, les photos restent intactes
     const chemins = conf.photos ? fiche.photos.map((p) => p.chemin).filter((c) => c && !c.startsWith('r2:')) : [];

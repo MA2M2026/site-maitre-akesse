@@ -442,14 +442,14 @@
 
   // (17/11/2026, L-18 c, demande de la propriétaire) supprimer une inscription, même règle que les candidatures :
   // administrateur principal seulement, la base d'abord (ses séances partent avec elle : créneaux libérés), ses photos
-  // chez Cloudflare ensuite (le serveur ne les efface que si l'inscription n'existe plus). Ses fichiers Google Drive
-  // ne sont pas touchés ici.
+  // chez Cloudflare ensuite (le serveur ne les efface que si l'inscription n'existe plus). Son dossier Google Drive
+  // part à la corbeille de Drive par la base elle-même (supabase-l18-supprimer-talons.sql, L-18 d).
   P.actions['talons-supprimer'] = async (el) => {
     if (!(P.moi && P.moi.role === 'principal')) return;
     const d = lignes.find((x) => x.id === el.dataset.id);
     if (!d) return;
     const payee = d.statut === 'inscrite' || d.statut === 'terminee';
-    if (!confirm('Supprimer définitivement l’inscription de ' + d.nom + ' ?' + (payee ? ' Elle a déjà payé : le paiement reste en Comptabilité.' : '') + ' Ses séances et ses photos seront supprimées. Cette action est irréversible.')) return;
+    if (!confirm('Supprimer définitivement l’inscription de ' + d.nom + ' ?' + (payee ? ' Elle a déjà payé : le paiement reste en Comptabilité.' : '') + ' Ses séances et ses photos seront supprimées (son dossier Google Drive part à la corbeille de Drive, récupérable 30 jours). Cette action est irréversible.')) return;
     el.disabled = true;
     const r = await P.bd(sb.from('cours_talons').delete().eq('id', d.id).select('id')).catch(() => null);
     if (!r || !r.length) { el.disabled = false; P.message('Rien n’a été supprimé : reconnectez-vous, ou collez d’abord supabase-l18-supprimer-talons.sql dans Supabase.'); return; }

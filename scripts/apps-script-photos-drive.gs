@@ -441,13 +441,16 @@ function retrouver(dossierRacine, data) {
 function corbeille(dossierRacine, data) {
   if (!refValide(data) || !secretSite()) return { ok: false, erreur: 'non_configure' };
   var ids = appelBase('media_drive_a_jeter', { p_secret: secretSite(), p_source: data.source, p_ref: data.ref }) || [];
-  var nb = 0;
+  var nb = 0, erreurs = 0;
   ids.forEach(function (id) {
     try {
       var dossier = DriveApp.getFolderById(id);
+      if (dossier.isTrashed()) { nb++; return; }
       if (dossierDePersonne(dossierRacine, dossier, data.ref)) { dossier.setTrashed(true); nb++; }
-    } catch (e) { /* dossier déjà parti : rien à faire */ }
+    } catch (e) { erreurs++; }
   });
+  // une erreur (Drive occupé…) : rien n'est noté comme fait, la base redemandera dans l'heure (5 essais au plus)
+  if (erreurs) return { ok: false, nb: nb, erreur: 'a_reprendre' };
   appelBase('media_drive_jete', { p_secret: secretSite(), p_ref: data.ref, p_nb: nb });
   return { ok: true, nb: nb };
 }
