@@ -2017,6 +2017,12 @@ superviseur seulement.
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
 
+## ✅ D (17/11, 02 h 30) — L-17 : LES 9 CORRECTIONS SONT ENVOYÉES, à relire
+- **Commit** : `audit/corr-d-l17` = **c5489c4** (d14e2ac + c5489c4, partie de 1e073066). Rien en ligne ; SQL talons inchangé sauf `lower(ligne->>'id')`, à coller AVANT.
+- **1** url remplie par le serveur ; **2** dernière photo acceptée, limite tenue ; **4** reprise photo par photo, vérification perdue = même photo revérifiée ; **5/9** minuscules dès l'entrée, format écrit une fois (api/_r2.js) ; **6** ancien programme Google : seules les copies des photos absentes de Cloudflare ; **7** nettoyage après les relances, par lots, jamais bloquant.
+- **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
+- **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
+
 ## 🟢 GEL LEVÉ POUR D (propriétaire, 17/11) : D ENVOIE SON TRAVAIL
 - **D** : envoie tes 9 corrections de L-17 en UN envoi sur `audit/photos-cloudflare` (ou une branche `audit/corr-d-l17`
   partie de 1e073066), puis écris ici en 5 lignes : commit, points corrigés, essais relancés et résultat. Le
