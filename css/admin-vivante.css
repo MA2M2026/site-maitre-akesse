@@ -1635,3 +1635,7 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ce-resume dd.ce-expiree { color: #7C2128; }
 .ce-fige { cursor: default; opacity: .85; }
 .ce-fin { margin-top: 10px; }
+
+/* (17/11/2026, L-18) vidéo de candidature lue dans la fiche (lecteur Google Drive, js/admin/site-dossiers.js) */
+.lecteur-video-bloc { display: grid; gap: .4rem; justify-items: start; }
+.lecteur-video { width: min(100%, 320px); aspect-ratio: 9 / 16; max-height: 70vh; border: 0; border-radius: 12px; background: #000; }

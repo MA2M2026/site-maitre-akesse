@@ -11,7 +11,8 @@
 // R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
 
 
-const { SUPABASE_URL, enTetesService, extraireIp, creerClientR2, verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal, limiteDebit } = require('./_commun.js');
+const { SUPABASE_URL, enTetesService, extraireIp, creerClientR2, verifierUtilisateur, adminVerifie, ficheStaff, cheminSur, noterAuJournal, limiteDebit } = require('./_commun.js');
+const { rattraperUnDossier } = require('./_rattrapage.js');
 const { debutR2, repondreR2, contenuR2, messageFichierFaux, nbFichiersR2, lirePhotoDossier, nouvellePhotoDossier, effacerFichiersR2, TYPES_IMAGES } = require('./_r2.js');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
@@ -184,10 +185,28 @@ async function photoCandidature(req, res, debut) {
   }
 }
 
+// (17/11/2026, L-18) rattrapage des anciennes photos Drive vers Cloudflare, UN dossier par appel (api/_rattrapage.js) :
+// réservé à l'administratrice principale (équipe vérifiée + rôle « principal »).
+async function rattrapageDrive(req, res, debut) {
+  try {
+    const utilisateur = await verifierUtilisateur(debut.jeton);
+    if (!utilisateur || !(await adminVerifie(debut.jeton, utilisateur, req.headers['x-appareil']))) { res.status(403).json({ error: 'Réservé à l’équipe de l’agence.' }); return; }
+    const fiche = await ficheStaff(utilisateur.id);
+    if (!fiche || fiche.role !== 'principal' || fiche.actif === false) { res.status(403).json({ error: 'Réservé à l’administratrice principale.' }); return; }
+    const r = await rattraperUnDossier(debut.corps.source, debut.corps.exclus);
+    if (r.corps.echec) await noterAuJournal('[Rattrapage des photos] dossier ' + r.corps.echec + ' laissé sur Drive : ' + r.corps.raison, 'r2-presigner', '/api/r2-presigner').catch(() => {});
+    res.status(r.statut).json(r.corps);
+  } catch (e) {
+    console.error('rattrapage :', e);
+    res.status(503).json({ error: 'Rattrapage impossible pour le moment : ' + String((e && e.message) || e).slice(0, 120) });
+  }
+}
+
 module.exports = async function handler(req, res) {
   const debut = debutR2(req, res); // POST + variables d'environnement (api/_r2.js)
   if (!debut) return;
   if (typeof debut.corps.action === 'string' && debut.corps.action.startsWith('candidature_')) return photoCandidature(req, res, debut);  // (L-17)
+  if (debut.corps.action === 'rattrapage_drive') return rattrapageDrive(req, res, debut);  // (L-18)
   const jeton = debut.jeton;
   const { action, modelId, chemin, contentType, taille } = debut.corps;
 

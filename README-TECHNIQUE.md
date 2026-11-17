@@ -5435,3 +5435,19 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
     première, sinon la boucle sautait à chaque tour. Test : `test-diaporama-luxe.js`.
   - Reporté avec L-17 (décision de la propriétaire) : la caisse ne peut ni lire ni valider les cours de talons (la base
     ne lui donne pas `cours_talons` et la page n'est que dans l'espace « site ») ; en attendant, seul le principal valide.
+- **Chantier L-18, part du superviseur (17/11/2026, demandes de la propriétaire)** :
+  - *Vidéos lues dans la fiche* (toutes les vidéos envoyées) : vidéo de candidature (`video_url`) et de cours de talons
+    (`video`) lue par un lecteur intégré : Google Drive (`/file/d/<id>/view|preview`, `open?id=`, `uc?id=` → `…/preview`),
+    YouTube et Vimeo (`urlVideoIntegree`) ; autre adresse : lien seul. `P.adresseLecteur`, `P.lecteurVideo`,
+    `P.estVideoDrive` (js/admin/coque.js), utilisés par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
+    `frame-src` de l'Administration (`/(admin|app)/`, vercel.json) : + `https://drive.google.com`. Les vidéos restent
+    dans le Drive ; lien « Ouvrir dans Drive » gardé. Tests : `test-nouvelle-admin-castings.js`, `test-admin-cours-talons.js`.
+  - *Rattrapage des anciennes photos Drive → Cloudflare* : Administration › Réglages › Drive, bouton « Rapatrier les
+    anciennes photos » (principale seulement). La page appelle `/api/r2-presigner` action `rattrapage_drive` dossier par
+    dossier (`api/_rattrapage.js`) : télécharge les photos Drive (adresse au format exact `thumbnail?id=…&sz=w2000`
+    seulement), vérifie que ce sont des images, les dépose sous `candidatures/<id>/` ou `cours-talons/<id>/` avec un
+    nom FIXE (empreinte de l'identifiant Drive : jamais de doublon), puis TOUT OU RIEN : candidatures → lignes
+    `r2:` ajoutées dans `casting_photos` (les lignes Drive restent, cachées par la règle M ≤ N) ; talons → liens Drive
+    de `photos` remplacés par leurs copies si l'inscription n'a pas changé. Échec → copies retirées, rien noté, dossier
+    laissé sur Drive et signalé au journal. `maxDuration` 30 s pour `api/r2-presigner.js` (vercel.json).
+    Test : `test-rattrapage-photos.js`.

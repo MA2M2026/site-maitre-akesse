@@ -233,7 +233,7 @@
       ['Paiement validé', d.valide_le ? P.dateHeure(d.valide_le) : '']
     ].filter((x) => x[1]);
     // (13/11/2026, demande de la propriétaire) les photos AFFICHÉES dans la fiche, comme les candidatures casting
-    // (P.visageDistant, js/admin/coque.js), qui s'agrandissent d'un appui ; la vidéo reste un bouton (Google Drive)
+    // (P.visageDistant, js/admin/coque.js), qui s'agrandissent d'un appui ; (17/11, L-18) la vidéo Drive est lue dans la fiche
     const galerie = photos.length ? '<section class="galerie-dossier" aria-label="Photos">' + photos.map((u, i) =>
       '<figure class="photo-dossier"><button type="button" class="photo-ouvrir" data-action="talons-photo-voir" data-id="' + P.esc(d.id) + '" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       P.visageDistant(u, d.nom) + '</button><figcaption><a class="doux petit-texte" href="' + P.esc(u) + '" target="_blank" rel="noopener noreferrer">Ouvrir dans Drive ↗</a></figcaption></figure>').join('') + '</section>' : '';
@@ -242,7 +242,7 @@
     // (13/11/2026, « un peu trop désordonné ») les boutons regroupés en une rangée aérée, sous les photos :
     // la vidéo d'abord, puis les messages
     const boutons = [
-      https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
+      https(d.video) && !P.estVideoDrive(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
       wa ? lienWhatsApp(wa, '💬 WhatsApp') : '',
       waParent ? lienWhatsApp(waParent, '💬 Parent') : '',
       // (17/11/2026, L-18 c) supprimer l'inscription : administrateur principal seulement (la base le vérifie aussi)
@@ -252,6 +252,7 @@
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
       (galerie || P.drive.encart('cours_talons', d.id, dossiersDrive[d.id])) +
+      (P.estVideoDrive(d.video) ? '<section class="ct-video" aria-label="Vidéo de la marche">' + P.lecteurVideo(d.video) + '</section>' : '') +   // (L-18) vidéo lue dans la fiche
       '<div class="ct-actions">' + boutons.join('') + '</div>' + messagesPrets(d, wa, waParent) +
       (payee ? programme(d, wa, waParent) : '') +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +

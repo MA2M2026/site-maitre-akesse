@@ -40,6 +40,14 @@ function familleDuContenu(o) {
   if (texte(0, 5) === '%PDF-') return 'pdf';
   return null;
 }
+// (L-18) extension d'une image aux formats rangés dans candidatures/ et cours-talons/ (JPEG, PNG, WebP), ou null
+function extensionImage(o) {
+  if (familleDuContenu(o) !== 'image') return null;
+  const texte = (de, a) => String.fromCharCode(...o.slice(de, a));
+  if (o[0] === 0xFF && o[1] === 0xD8) return 'jpg';
+  if (o[0] === 0x89 && o[1] === 0x50) return 'png';
+  return texte(0, 4) === 'RIFF' && texte(8, 12) === 'WEBP' ? 'webp' : null;
+}
 // Familles permises selon le type annoncé à l'envoi (octet-stream : seulement une vraie image)
 function famillesPermises(typeFichier) {
   if (/^video\//i.test(typeFichier)) return ['video'];
@@ -153,8 +161,10 @@ function lirePhotoDossier(chemin) {
   return m ? { dossier: m[1], id: m[2] } : null;
 }
 // Nouveau nom (choisi par le serveur, jamais par la page) ; extension : 'jpg', 'png' ou 'webp'
-function nouvellePhotoDossier(dossier, id, extension) {
-  return dossier + '/' + String(id).toLowerCase() + '/' + require('crypto').randomBytes(16).toString('hex') + '.' + extension;
+// (L-18) « nomFixe » (32 caractères hexadécimaux) : nom imposé, pour qu'une même photo ait toujours le même nom
+function nouvellePhotoDossier(dossier, id, extension, nomFixe) {
+  const nom = typeof nomFixe === 'string' && /^[0-9a-f]{32}$/.test(nomFixe) ? nomFixe : require('crypto').randomBytes(16).toString('hex');
+  return dossier + '/' + String(id).toLowerCase() + '/' + nom + '.' + extension;
 }
 // Efface des fichiers par lots de 1 000 (une seule demande par lot, comme api/supprimer-mannequin.js).
 // Renvoie la liste des fichiers que le stockage a REFUSÉ d'effacer (vide si tout est parti).
@@ -231,4 +241,4 @@ async function traiterNoteIntegration(res, corps) {
   await repondreR2(res, undefined, chemin, 'application/pdf', taille, 15 * 1024 * 1024);
 }
 
-module.exports = { debutR2, repondreR2, contenuR2, messageFichierFaux, nbFichiersR2, nettoyerPhotosNonCitees, lirePhotoDossier, nouvellePhotoDossier, effacerFichiersR2, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };
+module.exports = { extensionImage, debutR2, repondreR2, contenuR2, messageFichierFaux, nbFichiersR2, nettoyerPhotosNonCitees, lirePhotoDossier, nouvellePhotoDossier, effacerFichiersR2, familleDuContenu, famillesPermises, TYPES_IMAGES, CHEMIN_NOTE_INTEGRATION, notesIntegration, nettoyerNotesIntegration, traiterNoteIntegration };

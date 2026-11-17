@@ -68,6 +68,7 @@
   // ---------- Outils ----------
   const etat = (source) => (P.etat['dossiers-' + source] = P.etat['dossiers-' + source] || { filtre: SOURCES[source].defaut, pages: 1 });
   const lienWa = (numero) => { const n = numeroWhatsApp(numero); return n ? 'https://wa.me/' + n : null; };
+  const estVideoDrive = (u) => P.estVideoDrive(u), lecteurVideo = (u) => P.lecteurVideo(u);  // (L-18, js/admin/coque.js)
   const contacts = (source, d) => source === 'casting' ? contactsEnvoi(d) : { parent: false, email: d.email || '', phone: d.whatsapp || d.phone };
   const nomDe = (source, d) => source === 'recruteur' ? (d.contact_name || d.company || 'Sans nom') : (d.full_name || 'Sans nom');
   const destinataire = (source, d) => { const c = contacts(source, d); return c.parent ? salutationParent(d.parent_nom) : (source === 'recruteur' ? nomDe(source, d) : nomAvecCivilite(d)); };
@@ -242,9 +243,9 @@
       const v = d[cle];
       if (!v) return '';
       const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
-      const video = cle === 'video_url' && /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view$/.test(String(v));
+      const video = cle === 'video_url' && estVideoDrive(v);
       const valeur = wa ? '<a href="' + P.esc(wa) + '" target="_blank" rel="noopener">' + P.esc(v) + ' ↗ WhatsApp</a>' :
-        video ? '<a href="' + P.esc(v) + '" target="_blank" rel="noopener">▶ Voir la vidéo</a>' :
+        video ? lecteurVideo(v) :
         P.esc((TEXTES_SPECIAUX[cle] && TEXTES_SPECIAUX[cle][v]) || (cle === 'date_naissance' ? P.date(v) + (age !== null ? ' (' + age + ' ans)' : '') : v)) + (unite ? ' ' + unite : '') +
         (parentJoignable && cle === 'phone' ? ' <small class="doux">(mineur : écrire au parent)</small>' : '');
       return '<div><dt>' + P.esc(libelle) + '</dt><dd>' + valeur + '</dd></div>';
@@ -480,13 +481,14 @@
     fiche.photos = (await photosDe(SOURCES.casting, [d.id]).catch(() => ({})))[d.id] || [];
     P.etude.galerie = fiche.photos.map((x) => x.affiche);
     const age = ageDe(d), mineur = age !== null && age < 18;
-    const video = /^https:\/\/drive\.google\.com\/file\/d\/[\w-]+\/view$/.test(String(d.video_url || ''));
+    const video = estVideoDrive(d.video_url);
     return {
       diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
       nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + P.dateEtHeure(d.created_at)],
       infos: [d.height_cm ? '📏 ' + P.etude.taille(d.height_cm) : '', d.city ? '📍 ' + d.city : '',
         d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
         mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''],
+      // (étude : on fait défiler vite, la vidéo reste un lien ; elle est lue dans la fiche)
       lien: video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : ''
     };
   }
