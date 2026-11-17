@@ -2053,6 +2053,39 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## 📦 PASSATION DU SUPERVISEUR (17/11, 06 h 50) — À SUIVRE PAR QUI EST DISPONIBLE (D d'abord, sinon C, puis B, puis A)
+Demande de la propriétaire : « si vous êtes bloqués, donnez à A, B ou C pour terminer ». Tout est prêt et vérifié.
+Celui qui reprend écrit d'abord ici « JE PRENDS l'étape N » (une seule personne par étape), puis fait l'étape.
+
+**ÉTAPE 1 — Mettre en ligne L-17 (photos par Cloudflare) + bande de photos.** Accord écrit de la propriétaire : donné.
+SQL L-17 et règle Cloudflare : déjà faits par elle. Rien d'autre à demander.
+1. partir de `main` (56bc2d6a) ; fusionner `audit/corr-d-l17` (11ec46d8, vérifié par le superviseur) PUIS
+   `audit/corr-b-bande` (e29fc1ad, vérifiée) ; conflits = seulement des numéros `?v=` → `python3 scripts/versionner.py` ;
+2. `python3 scripts/verifier-csp.py`, `node --check` des js touchés ; essais : test-diaporama-luxe, test-affichage-stable,
+   test-photos-candidature-r2, test-cours-talons, test-admin-cours-talons, test-nouvelle-admin-castings (0 échec exigé) ;
+3. UNE fusion dans main (demande de fusion + fusion) ; si Vercel ne construit pas, lancer UNE fois la construction de
+   production du même commit (comme C le 16/11) — jamais en boucle (limite par jour) ;
+4. vérifier le vrai site : candidature avec photos (fichiers dans candidatures/ chez Cloudflare + copie Drive),
+   Administration (photos affichées), cours de talons, bande de photos ; SonarQube (api/measures/component) ;
+5. écrire ici le résultat en 5 lignes.
+
+**ÉTAPE 2 — Chantier L-18 (après l'étape 1), une batterie, une mise en ligne.**
+- Part du superviseur, FINIE et essayée (vidéos lues dans la fiche pour toutes les vidéos envoyées ; bouton
+  « Rapatrier les anciennes photos » dans Réglages › Drive, principale seulement, `api/_rattrapage.js`,
+  `test-rattrapage-photos.js`) : branche **`audit/l18-superviseur` = 6149b0e8**, déjà rassemblée avec 11ec46d8.
+  ⚠ Elle est sur la machine du superviseur : son envoi sur GitHub attend l'accord de la propriétaire (limite Vercel).
+- Part de D, À FAIRE (par D, sinon par B) : (c) bouton « Supprimer » des cours de talons (principale seulement,
+  confirmation, base d'abord puis fichiers R2 non cités) ; (d) suppression dans le Drive quand un dossier est supprimé :
+  nouvelle action dans `scripts/apps-script-photos-drive.gs` qui met à la CORBEILLE (jamais définitif), appelée
+  seulement après le clic de l'agence ; la propriétaire collera la nouvelle version du programme Google.
+- Puis : rassembler les deux parts sur la nouvelle main, `/code-review`, batterie complète (`lancer.sh`, reprendre là
+  où elle s'arrête), UNE mise en ligne, vérification ; ensuite la propriétaire clique « Rapatrier les anciennes photos ».
+
+**ÉTAPE 3 — Plus tard (rien d'urgent)** : accès de la caisse aux paiements des cours de talons (SQL de lecture pour
+`paiements` + page dans l'espace paiements) ; bouton « renvoyer le lien de confirmation » ; réglage Vercel pour ne plus
+construire chaque branche ; cache Cloudflare des photos (Edge 1 jour) ; anciennes photos d'actualités trop lourdes ;
+appareil de confiance pour l'Administration. Rapport final : déjà remis à la propriétaire (17/11, 01 h).
+
 ## 🟢 FEU VERT DU SUPERVISEUR À D (17/11, 06 h 40 ; déjà envoyé dans ta session à 03 h 30 et 06 h 05) — METS EN LIGNE L-17
 `11ec46d` vérifié ligne par ligne : les 4 points sont justes, ACCEPTÉ. À faire maintenant, dans l'ordre :
 1. partir de `main` (56bc2d6a), fusionner `audit/corr-d-l17` (11ec46d8) PUIS `audit/corr-b-bande` (e29fc1ad, vérifiée par
