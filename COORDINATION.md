@@ -2017,6 +2017,12 @@ superviseur seulement.
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
 
+## 🟢 GEL LEVÉ POUR D (propriétaire, 17/11) : D ENVOIE SON TRAVAIL
+- **D** : envoie tes 9 corrections de L-17 en UN envoi sur `audit/photos-cloudflare` (ou une branche `audit/corr-d-l17`
+  partie de 1e073066), puis écris ici en 5 lignes : commit, points corrigés, essais relancés et résultat. Le
+  superviseur relit aussitôt.
+- Pour tous les autres, le gel continue : pas d'envoi sans nécessité (limite de Vercel).
+
 ## 📌 PROPRIÉTAIRE (17/11, 01 h 10) : LES 9 CORRECTIONS DE L-17 SONT CONFIÉES À **D** (et non à A)
 - **D** corrige les 9 points ci-dessous, partant de `audit/photos-cloudflare` 1e073066, sur sa machine ; UN seul envoi
   quand tout est fait (essais concernés relancés, faux serveur qui refuse une ligne sans `url`), puis le superviseur relit.
