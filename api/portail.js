@@ -395,10 +395,12 @@ async function finirDemande(res, idDemande, modeles, dejaLa) {
 const TABLES_A_VERIFIER = ['casting_applications', 'recruiter_requests'];   // (celles que l'Administration étiquette)
 async function noterAVerifier(table, id, raison) {
   if (!id || !TABLES_A_VERIFIER.includes(table)) return;
-  await fetch(SUPABASE_URL + '/rest/v1/envois_a_verifier', {
+  // (relecture de B, 17/11) une étiquette non écrite est notée au journal : jamais un manque silencieux
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/envois_a_verifier', {
     method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal,resolution=ignore-duplicates' },
     body: JSON.stringify({ ref: id, table_nom: table, raison: String(raison || '').slice(0, 300) })
-  }).catch(() => {});
+  }).catch(() => null);
+  if (!rep || !rep.ok) await noterAuJournal('[Anti-robots] étiquette « À vérifier » non enregistrée pour ' + table + ' ' + id + ' (' + (rep ? rep.status : 'base injoignable') + ')', 'portail', '/api/portail').catch(() => {});
 }
 async function formulairePublic(req, corps, res) {
   const table = String(corps.table || ''), recu = corps.ligne;

@@ -47,6 +47,12 @@ async function serveur() {
   ok(r.statut === 200 && rpcs.length === rpcsAvant + 1 && etiquettes.length === 1 && etiquettes[0].ref === 'id-1' && etiquettes[0].table_nom === 'casting_applications' && /pas de jeton/.test(etiquettes[0].raison),
     'serveur : candidature sans vérification : acceptée, étiquette « À vérifier » notée pour l’Administration');
   rpcs.length = rpcsAvant + 0; etiquettes.length = 0;
+  // (relecture de B) la base refuse l'étiquette : c'est noté au journal, l'envoi reste accepté
+  const fetchEtiquette = global.fetch;
+  global.fetch = async (url, o = {}) => (String(url).includes('/rest/v1/envois_a_verifier') ? { ok: false, status: 404, json: async () => ({}), text: async () => '' } : fetchEtiquette(url, o));
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'c9', full_name: 'Awa Essai', email: 'awa@test.ci' } });
+  ok(r.statut === 200 && JSON.stringify(journal).includes('étiquette « À vérifier » non enregistrée'), 'serveur : étiquette refusée par la base : envoi accepté, manque noté au journal');
+  global.fetch = fetchEtiquette; rpcs.length = rpcsAvant;
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'x'.repeat(3000) });
   ok(r.statut === 403 && rpcs.length === 2, 'serveur : jeton fabriqué trop long : refusé');
   const fetchStrict = global.fetch;
