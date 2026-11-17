@@ -2053,6 +2053,34 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## 🙏 MERCI À A, B, C ET D — RÉPARTITION FINALE DÉCIDÉE PAR LA PROPRIÉTAIRE (17/11, 08 h 50)
+L-17 (photos par Cloudflare) et la bande de photos sont EN LIGNE (main b96a776, D, 08 h 14 ; SonarQube A partout).
+Merci à chacun : A (L-17), B (batteries, bande), C (mises en ligne), D (corrections de L-17 et mise en ligne).
+Le superviseur et D s'arrêtent (sessions épuisées). **Seuls B et C travaillent désormais. A : rien à faire.**
+
+**B — termine la part du SUPERVISEUR de L-18** : branche **`audit/l18-superviseur` = cc1ec195** (déjà sur main b96a776).
+- Fait et essayé : (a) vidéos lues dans la fiche pour TOUTES les vidéos envoyées (Drive, YouTube, Vimeo :
+  `P.adresseLecteur` / `P.lecteurVideo`, js/admin/coque.js ; frame-src + drive.google.com) ; (b) bouton « Rapatrier les
+  anciennes photos » (Réglages › Drive, principale seulement ; `api/_rattrapage.js`, action `rattrapage_drive` de
+  `api/r2-presigner.js`, maxDuration 30 s ; tout ou rien, rien supprimé). Essais : test-rattrapage-photos.js,
+  test-nouvelle-admin-castings.js, test-admin-cours-talons.js, test-photos-candidature-r2.js, test-verification-fichiers.js : OK.
+- Reste à B : une relecture `/code-review` de `main...audit/l18-superviseur`, corriger s'il le faut, puis remettre la
+  branche à C. Limites connues acceptées : supprimer une photo Cloudflare fait réapparaître sa copie Drive ; la règle
+  frame-src vaut aussi pour /app/.
+
+**C — termine la part de D de L-18, puis rassemble, batterie, mise en ligne** :
+- branche **`audit/l18-d` = 86d3b64** : (c) bouton « Supprimer » des cours de talons FAIT (SQL
+  `supabase-l18-supprimer-talons.sql` à coller par la propriétaire, essai `test-supprimer-talons.js`) ;
+  (d) suppression dans le Drive PAS COMMENCÉE : nouvelle action dans `scripts/apps-script-photos-drive.gs` qui met les
+  fichiers du dossier à la CORBEILLE (jamais définitif), appelée seulement après le clic de l'agence ; la propriétaire
+  collera la nouvelle version du programme Google (lui donner les étapes simples).
+- Puis : rassembler `audit/l18-d` + `audit/l18-superviseur` (de B) sur main, `/code-review`, BATTERIE COMPLÈTE
+  (`bash scripts/tests-visiteur/lancer.sh`, reprendre avec DEPUIS= si elle s'arrête), UNE mise en ligne, vérification
+  du site + SonarQube ; guider la propriétaire pour le SQL et le programme Google ; puis elle clique « Rapatrier les
+  anciennes photos ». Résultat écrit ici.
+- À vérifier au passage (point de D) : l'essai réel d'une candidature avec photos (à faire par une vraie personne, ou
+  sur la prochaine vraie candidature, en lecture seule).
+
 ## ✅ D (17/11, 08 h 45) — ÉTAPE 1 FAITE : L-17 + BANDE EN LIGNE
 - Fusion [MA2M2026/site-maitre-akesse#455](https://github.com/MA2M2026/site-maitre-akesse/pull/455) : main = **b96a776** (56bc2d6 + 11ec46d + e29fc1ad), Vercel : « Deployment has completed ».
 - Site en ligne vérifié : coque.js contient `filtrer`, cours-talons.js la garde « liste la plus longue », pages /, /integrer-agence, /candidature, /cours-talons (FR/EN) en 200, sans erreur, sans débordement ; bande qui roule sur Intégrer l'agence et Cours de talons.
