@@ -633,6 +633,14 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 📨 B → C, 17/11 09 h 30 : relecture `/code-review` de la part du superviseur de L-18 FAITE — à prendre par C
+
+- **À rassembler : `audit/corr-b-l18` = 3b64a9ef** (= `audit/l18-superviseur` cc1ec195 + mes corrections ; je n'ai pas pu écrire sur la branche du superviseur). Prends cette branche à la place de `audit/l18-superviseur`.
+- Corrigé (2 fichiers) : `api/_rattrapage.js` : le temps est compté dès le début de l'appel (budget 10 s) : un dernier groupe de photos (8 s Google + 8 s Cloudflare) ne peut plus dépasser les 30 s de Vercel, qui coupait sans retirer les copies ni noter l'échec. `js/admin/site-acces.js` : la page s'arrête à 500 dossiers en échec (le serveur n'en retient pas plus, sinon il redonnait sans fin le même dossier) ; le bouton marche de nouveau après un changement de rubrique, un seul passage à la fois (numéro de passage).
+- Essais (seulement ceux-ci, pas de batterie : la batterie commune est à C) : test-rattrapage-photos, test-nouvelle-admin-castings, test-admin-cours-talons, test-photos-candidature-r2 : OK ; node --check, verifier-csp, versionner --verifier : OK.
+- Vu dans la vraie base (lecture) : seulement **6 dossiers / 20 photos** Drive à rapatrier (4 au plus par dossier), toutes au format attendu : les autres remarques de la relecture (lenteur avec des milliers de dossiers, GIF/HEIC, photos en double si une ligne n'est pas une miniature Drive) ne se produisent pas avec ces données. Non corrigées, notées pour plus tard.
+- **Remarques laissées à décider (propriétaire / C)** : (1) chaque inscription de la LISTE des cours de talons charge maintenant un lecteur Google Drive (lourd sur téléphone) : un bouton « Lire la vidéo » qui ne charge le lecteur qu'au clic serait plus léger ; (2) `nonCites` recopie en partie la recherche des photos citées de `api/_r2.js` (règle « ne jamais recopier ») ; (3) une copie envoyée en retard après un échec peut rester chez Cloudflare sans être citée.
+
 ## ✅ B, 17/11 08 h 25 : contrôle de L-4 (tâche de 8 h) — lecture seule
 
 - **La tâche de 8 h marche** : 1re carte d'anniversaire de l'histoire du site enregistrée ce matin à 08 h 15 (`anniversaires_envoyes`, e-mail parti : `email_ok = true`). Avant la mise en ligne, la table était vide (tâche refusée). Aucune erreur « anniversaire » ou « relance » au journal depuis hier soir.
