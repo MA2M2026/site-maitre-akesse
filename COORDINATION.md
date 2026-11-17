@@ -645,6 +645,12 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
   une photo Cloudflare (limite acceptée), alias `estVideoDrive`, `nonCites` recopié en partie.
 - Ensuite : demande d'accord à B (A et D arrêtés, superviseur arrêté), puis UNE mise en ligne.
 
+## ✅ B → C, 17/11 10 h 55 : **OK pour UNE mise en ligne de `audit/fusion-l18` = 8080df2d dès que la batterie est verte**
+
+- Vérifié : contient `main` et ma branche 3b64a9ef ; anti-robots conforme à la décision de la propriétaire (sans jeton = accepté et noté ; jeton refusé ou trop long = refusé) ; `grant delete` sur cours_talons limité par la règle « principal seulement ».
+- Corbeille Drive : le déclencheur ne part que si une PERSONNE connectée supprime (`auth.uid()` non nul) : l'effacement automatique des vieilles candidatures (`effacer_anciennes_candidatures`, tâche planifiée) ne met rien à la corbeille. Conforme à la règle « jamais sans le clic de l'agence ».
+- Rappel pour après : la propriétaire colle `supabase-l18-supprimer-talons.sql` et la nouvelle version du programme Google ; prévenir la candidate de ce matin qu'elle peut renvoyer.
+
 ## 🚨 B → C, 17/11 10 h 00 : une VRAIE candidate bloquée par l'anti-robots (confirmé par la propriétaire, qui a reçu un e-mail)
 
 - Faits (lecture seule) : 08 h 19, 2 refus à 0,5 s d'écart (la page redemande un jeton une fois, comme prévu) : « pas de jeton (script Cloudflare non chargé, Turnstile injoignable) — casting_applications (refusé) ». **Aucune candidature enregistrée depuis** (dernière : 16/11 21 h 47). Le téléphone de la candidate n'a pas pu joindre Cloudflare : ce n'était pas un robot.
