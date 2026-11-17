@@ -1630,7 +1630,21 @@ depuis Google Drive dans l'Administration. Désormais :
    `js/admin/site-cours-talons.js`) : administrateur principal seulement (règle de la base
    `supabase-l18-supprimer-talons.sql`, `portail_est_principal`) ; la base d'abord (ses séances partent avec elle,
    créneaux libérés), puis ses photos Cloudflare (`candidature_supprimer` accepte `cours-talons/` seulement si
-   l'inscription n'existe plus). Les fichiers Google Drive ne sont pas touchés. Test : `test-supprimer-talons.js`.
+   l'inscription n'existe plus). Test : `test-supprimer-talons.js`. Relecture de C : la table ne donnait pas le
+   droit DELETE aux personnes connectées (`supabase-cours-talons.sql` le retire) : `grant delete` ajouté, la règle
+   limite toujours au principal (sans lui, le bouton échouait dans la vraie base).
+8. **L-18 (d), 17/11 : dossier Google Drive à la CORBEILLE quand l'agence supprime** (même fichier SQL) : un
+   déclencheur `after delete` sur `casting_applications` et `cours_talons` (`medias_drive_vers_corbeille`) ne
+   s'active que si une personne CONNECTÉE supprime (`auth.uid()` non nul : le clic du principal ; le nettoyage
+   automatique de la nuit `effacer_anciennes_candidatures` ne touche jamais au Drive) et si un dossier Drive est
+   connu (`medias_drive`, genre `dossier`). Il note la demande (`medias_drive_corbeille`) et appelle le programme
+   Google (pg_net, action `corbeille`). Le programme redemande à la base les dossiers à jeter
+   (`media_drive_a_jeter`, mot secret obligatoire : la clé du programme est publique ; vide si la ligne existe
+   encore ou si la demande ne vient pas de l'agence), vérifie que c'est bien un dossier de personne (sous-dossier
+   du dossier principal, marqué `ref:` à son numéro ou pas encore marqué), le met à la corbeille (`setTrashed`,
+   récupérable 30 jours, jamais d'effacement définitif) puis le signale (`media_drive_jete`). Il faut coller la
+   nouvelle version de `scripts/apps-script-photos-drive.gs` ; avant, la demande reste notée sans effet. Essais :
+   `scripts/base-essai/essais-l18-corbeille.sql`.
 5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
    dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
    rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de
