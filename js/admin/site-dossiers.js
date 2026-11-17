@@ -96,9 +96,10 @@
     if (!conf.photos || !ids.length) return {};
     let lignes = await P.bd(sb.from(conf.photos.table).select('id, chemin, url, ' + conf.photos.colonne).in(conf.photos.colonne, ids));
     // (16/11/2026, L-17) photos des candidatures chez Cloudflare R2 (chemin « r2:… ») : adresses signées d'1 heure
-    // demandées au serveur ; un dossier qui a des photos R2 n'affiche plus ses copies Drive (archive, sinon en double).
-    const avecR2 = new Set(lignes.filter((p) => estPhotoR2(p)).map((p) => p[conf.photos.colonne]));
-    lignes = lignes.filter((p) => estPhotoR2(p) || !(p.url && !p.chemin && avecR2.has(p[conf.photos.colonne])));
+    // demandées au serveur. (relecture du superviseur, 22 h 30) Plus aucune copie Drive n'est cachée « au jugé » : une
+    // photo Cloudflare porte dans son « url » le lien de SA copie Drive (api/r2-presigner.js, candidature_copies), le
+    // doublon a été retiré par le serveur ; chaque ligne est donc une photo différente. Serveur de photos injoignable :
+    // la photo s'affiche par sa copie Drive.
     const signeesR2 = await P.photosR2.adresses(lignes.filter(estPhotoR2).map((p) => p.chemin));
     const chemins = lignes.map((p) => p.chemin).filter((c) => c && !c.startsWith('r2:'));
     const signees = {};
@@ -108,7 +109,7 @@
     }
     const parDossier = {};
     lignes.forEach((p) => {
-      const affiche = estPhotoR2(p) ? signeesR2[p.chemin] : p.chemin ? signees[p.chemin] : p.url;
+      const affiche = estPhotoR2(p) ? signeesR2[p.chemin] || (/^https:\/\//.test(p.url || '') ? p.url : null) : p.chemin ? signees[p.chemin] : p.url;
       if (!affiche) return;
       (parDossier[p[conf.photos.colonne]] = parDossier[p[conf.photos.colonne]] || []).push(Object.assign({ affiche }, p));
     });

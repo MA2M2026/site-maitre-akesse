@@ -20,7 +20,7 @@ do $$
 declare
   def text;
   ancien constant text := $a$(e #>> '{}') !~ '^https://[^\s"<>]+$')$a$;
-  nouveau constant text := $n$((e #>> '{}') !~ '^https://[^\s"<>]+$' and (e #>> '{}') !~ coalesce('^r2:cours-talons/' || (ligne->>'id') || '/[0-9a-f]{32}\.(jpg|png|webp)$', '^$x')))$n$;
+  nouveau constant text := $n$((e #>> '{}') !~ '^https://[^\s"<>]+$' and (e #>> '{}') !~ coalesce('^r2:cours-talons/' || lower(ligne->>'id') || '/[0-9a-f]{32}\.(jpg|png|webp)$', '^$x')))$n$;
   ancien2 constant text := $a$where id = p_ref and not (photos ? m.lien) and jsonb_array_length(photos) < 5;$a$;
   nouveau2 constant text := $n$where id = p_ref and not (photos ? m.lien) and jsonb_array_length(photos) < 5
          and not exists (select 1 from jsonb_array_elements_text(photos) x where x like 'r2:%');  -- (L-17)$n$;

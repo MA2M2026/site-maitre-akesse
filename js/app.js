@@ -1936,32 +1936,49 @@ async function supprimerDeR2(modelId, chemin) {
 // Renvoie { rangs (photos arrivées), chemins (« r2:… », dans le même ordre) }.
 // Partagé par « Postuler à un casting », « Intégrer l'agence » (js/formulaire-candidature.js) et le cours de talons
 // (js/cours-talons.js, dossier « cours-talons » : la page met ensuite les chemins dans l'inscription).
-async function envoyerPhotosCandidatureR2(idCandidature, fichiers, ids, nomPhoto, dossier = 'candidatures') {
+// (relecture du superviseur, 22 h 30) suivi = { rangs, chemins } : photos DÉJÀ arrivées (gardées dans le téléphone),
+// jamais renvoyées ; surArrivee() est appelé après CHAQUE photo arrivée, pour que la page la garde aussitôt : un envoi
+// coupé reprend à la photo suivante (avant : tout repartait, en double, et mangeait le plafond de photos).
+async function envoyerPhotosCandidatureR2(idCandidature, fichiers, ids, nomPhoto, dossier = 'candidatures', suivi = {}) {
   const appel = (corps) => fetch('/api/r2-presigner', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) })
     .then(async (r) => ({ statut: r.status, ok: r.ok, corps: await r.json().catch(() => ({})) }));
-  const arrivees = [], chemins = [];
+  const arrivees = (suivi.rangs || []).slice(), chemins = (suivi.chemins || []).slice();
   for (let i = 0; i < fichiers.length; i++) {
     const f = fichiers[i], type = f && f.type;
+    if (arrivees.includes(i)) { majJauge(ids[i], 100, nomPhoto(i) + T(' : arrivée', ': received')); continue; }
     if (!f || !/^image\/(jpeg|png|webp)$/.test(type)) continue;  // (autre format : seulement la copie Drive, comme avant)
-    let fini = false;
+    let fini = false, depose = null;  // (fichier déjà déposé : le 2ᵉ essai le revérifie au lieu d'en déposer un second)
     for (let essai = 1; essai <= 2 && !fini; essai++) {
       try {
         majJauge(ids[i], 5, nomPhoto(i) + T(' : envoi…', ': sending…'));
-        const signe = await appel({ action: 'candidature_signer', dossier, candidature: idCandidature, contentType: type, taille: f.size });
-        if (!signe.ok) { if (signe.statut === 400 || signe.statut === 403) return { rangs: arrivees, chemins }; throw new Error(signe.corps.error || 'signature'); }  // (refus : inutile de continuer)
-        const envoi = await envoyerAvecProgression(signe.corps.uploadUrl, f, (part) => majJauge(ids[i], 5 + part * 85), type, true);
-        if (!envoi.ok) throw new Error('envoi ' + envoi.status);
-        const verif = await appel({ action: 'candidature_verifier', dossier, candidature: idCandidature, chemin: signe.corps.chemin });
+        if (!depose) {
+          const signe = await appel({ action: 'candidature_signer', dossier, candidature: idCandidature, contentType: type, taille: f.size });
+          if (!signe.ok) { if (signe.statut === 400 || signe.statut === 403) return { rangs: arrivees, chemins }; throw new Error(signe.corps.error || 'signature'); }  // (refus : inutile de continuer)
+          const envoi = await envoyerAvecProgression(signe.corps.uploadUrl, f, (part) => majJauge(ids[i], 5 + part * 85), type, true);
+          if (!envoi.ok) throw new Error('envoi ' + envoi.status);
+          depose = signe.corps.chemin;
+        }
+        const signe = { corps: { chemin: depose } };
+        const verif = await appel({ action: 'candidature_verifier', dossier, candidature: idCandidature, chemin: depose });
         if (verif.statut === 422) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : refusée (pas une vraie photo)', ': refused (not a real photo)')); fini = true; break; }
+        if (verif.statut === 404) depose = null;  // (fichier jamais arrivé : le 2ᵉ essai renvoie la photo)
         if (!verif.ok) throw new Error(verif.corps.error || 'vérification');
         majJauge(ids[i], 100, nomPhoto(i) + T(' : arrivée', ': received'));
         arrivees.push(i); chemins.push('r2:' + signe.corps.chemin); fini = true;
+        if (suivi.surArrivee) { try { await suivi.surArrivee({ rangs: arrivees.slice(), chemins: chemins.slice() }); } catch (e2) { /* garde impossible : l'envoi continue */ } }
       } catch (e) {
         if (essai < 2) await new Promise((r) => setTimeout(r, 900));
       }
     }
   }
   return { rangs: arrivees, chemins };
+}
+// (relecture du superviseur, 16/11 22 h 30) Copie Drive d'une photo, d'après son rang dans l'envoi : (rang) → lien,
+// ou null si Google a écarté une photo sans dire laquelle (liens et rangs de longueurs différentes : on ne devine pas).
+// rangs : ceux renvoyés par envoyerPhotosAvecJauges. Partagé par js/formulaire-candidature.js et js/cours-talons.js.
+function copieDriveParRang(liens, rangs) {
+  if (!Array.isArray(liens) || !Array.isArray(rangs) || rangs.length !== liens.length) return null;
+  return (rang) => { const k = rangs.indexOf(rang); return k < 0 ? null : liens[k]; };
 }
 // Photo redessinée dans un cadre de « coteMax » pixels, sur fond blanc (transparence PNG → blanc).
 function redessinerPhoto(fichier, coteMax, rendu) {

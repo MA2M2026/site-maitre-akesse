@@ -444,12 +444,17 @@ async function envoyerMedias(etat) {
     // photos se fait sans jauge ; une photo qui n'est pas arrivée chez Cloudflare garde sa jauge pour Drive.
     let arriveesR2 = etat.arriveesR2 || [];
     if (!etat.r2Fait) {
-      try { arriveesR2 = (await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto)).rangs; } catch (e) { arriveesR2 = []; }
-      Object.assign(etat, { r2Fait: true, arriveesR2 }); await EnvoiFiable.garder('candidature', etat);
+      // (relecture du superviseur, 22 h 30) chaque photo arrivée est gardée AUSSITÔT : une reprise ne la renvoie pas
+      const suivi = { rangs: arriveesR2, chemins: etat.cheminsR2 || [],
+        surArrivee: (r) => { Object.assign(etat, { arriveesR2: r.rangs, cheminsR2: r.chemins }); return EnvoiFiable.garder('candidature', etat); } };
+      let cheminsR2 = etat.cheminsR2 || [];
+      try { ({ rangs: arriveesR2, chemins: cheminsR2 } = await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto, 'candidatures', suivi)); }
+      catch (e) { arriveesR2 = etat.arriveesR2 || []; cheminsR2 = etat.cheminsR2 || []; }
+      Object.assign(etat, { r2Fait: true, arriveesR2, cheminsR2 }); await EnvoiFiable.garder('candidature', etat);
     }
     const idsDrive = idsPhotos.map((id, i) => (arriveesR2.includes(i) ? 'ca-copie-drive-' + i : id));  // (jauge absente : rien ne bouge)
     try {
-      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsDrive, nomPhoto, {
+      const { liens, echec, dossier, enregistre, manquantes, rangs } = await envoyerPhotosAvecJauges(fichiersPhotos, idsDrive, nomPhoto, {
         nom: candidature.full_name,
         email: candidature.email,
         phone: candidature.phone,
@@ -463,8 +468,13 @@ async function envoyerMedias(etat) {
       dossierDrive = dossier || null;
       // (ancien programme Google, sans enregistrement de son côté : la page enregistre elle-même, comme avant ;
       // une photo déjà enregistrée par Google est refusée en double par la base, code 23505, sans souci)
+      // (relecture du superviseur, 22 h 30) les photos déjà arrivées chez Cloudflare sont déjà dans le dossier : leur
+      // copie Drive n'y est pas ajoutée (elle comptait dans la limite de 12 et faisait refuser, à tort, les autres :
+      // faux « photos manquantes »). Si Google a écarté une photo sans dire laquelle, on ne devine pas : tout est noté.
+      const copieDe = copieDriveParRang(liens, rangs);  // (js/app.js)
+      const aNoter = copieDe ? liens.filter((l) => !arriveesR2.some((rang) => copieDe(rang) === l)) : liens;
       if (!echec && !enregistre) {
-        for (const lien of liens) {
+        for (const lien of aNoter) {
           const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
           if (erreurInsertPhoto && erreurInsertPhoto.code !== '23505') {
             nbPhotosEchouees++;
@@ -475,6 +485,21 @@ async function envoyerMedias(etat) {
             }).then(() => {}).catch(() => {});
           }
         }
+      }
+      // (relecture du superviseur, 22 h 30) chaque photo Cloudflare reçoit le lien de SA copie Drive (même rang dans
+      // l'envoi) : le serveur retire le doublon noté par Google, et la photo n'a plus qu'une ligne dans le dossier ; les
+      // photos arrivées seulement dans Drive sont ensuite notées par la base. 3 essais ; échec : noté au journal (au
+      // pire, une photo s'affiche deux fois dans l'Administration).
+      if (!echec && copieDe && arriveesR2.length) {
+        const cheminsR2 = etat.cheminsR2 || [];
+        const copies = arriveesR2.map((rang, k) => ({ chemin: String(cheminsR2[k] || '').replace(/^r2:/, ''), lien: copieDe(rang) })).filter((c) => c.chemin && c.lien);
+        let relie = !copies.length;
+        for (let essai = 1; essai <= 3 && !relie; essai++) {
+          relie = await fetch('/api/r2-presigner', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'candidature_copies', candidature: candidature.id, copies }) }).then((r) => r.ok, () => false);
+          if (!relie && essai < 3) await new Promise((r) => setTimeout(r, 1500));
+        }
+        if (!relie && window.signalerErreur) window.signalerErreur('Copies Drive non reliées aux photos Cloudflare', 'dossier ' + candidature.id, copies.length + ' photo(s)');
       }
     } catch (e) {
       // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà

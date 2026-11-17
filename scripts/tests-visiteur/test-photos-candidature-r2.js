@@ -15,7 +15,7 @@ const r2 = { mis: [], effaces: [], liste: [], octets: [0xFF, 0xD8, 0xFF, 0xE0, 0
 const chargerAvant = Module._load;
 Module._load = function (demande, parent, estPrincipal) {
   if (demande === '@aws-sdk/client-s3') {
-    class S3Client { async send(c) { if (c.type === 'Get') { if (r2.absent) { const e = new Error('absent'); e.name = 'NoSuchKey'; throw e; } return { Body: { transformToByteArray: async () => Uint8Array.from(r2.octets) } }; } if (c.type === 'Delete') r2.effaces.push(c.input.Key); if (c.type === 'List') return { Contents: r2.liste.map((o) => (typeof o === 'string' ? { Key: c.input.Prefix + o, LastModified: new Date() } : o)).filter((o) => o.Key.startsWith(c.input.Prefix)) }; return {}; } }
+    class S3Client { async send(c) { if (c.type === 'Get') { if (r2.absent) { const e = new Error('absent'); e.name = 'NoSuchKey'; throw e; } return { Body: { transformToByteArray: async () => Uint8Array.from(r2.octets) } }; } if (c.type === 'Delete') r2.effaces.push(c.input.Key); if (c.type === 'Deletes') { r2.lots = (r2.lots || 0) + 1; c.input.Delete.Objects.forEach((o) => r2.effaces.push(o.Key)); } if (c.type === 'List') return { Contents: r2.liste.map((o) => (typeof o === 'string' ? { Key: c.input.Prefix + o, LastModified: new Date() } : o)).filter((o) => o.Key.startsWith(c.input.Prefix)) }; return {}; } }
     const C = (type) => class { constructor(i) { this.input = i; this.type = type; } };
     return { S3Client, PutObjectCommand: C('Put'), GetObjectCommand: C('Get'), DeleteObjectCommand: C('Delete'), DeleteObjectsCommand: C('Deletes'), ListObjectsV2Command: C('List') };
   }
@@ -36,8 +36,22 @@ async function serveur() {
     if (u.includes('cours_talons?select=photos&id=in')) return json((base.citesNettoyage || {}).talons || []);
     if (u.includes('/rest/v1/casting_photos?select=chemin')) return json(base.cites || []);
     if (u.includes('/rest/v1/cours_talons?')) return json(base.talonsInscrite ? [{ id: ID }] : []);
-    if (u.includes('/rest/v1/casting_photos?select=id')) return json(base.photos);
-    if (u.includes('/rest/v1/casting_photos') && m === 'POST') { base.notes.push(JSON.parse(o.body)); return json(null, 201); }
+    // casting_photos simulée sur base.notes : lecture, effacement, modification selon les filtres eq. / is.null
+    if (/\/rest\/v1\/casting_photos\?/.test(u) && m !== 'POST') {
+      const q = new URL(String(url)).searchParams, vrai = (l) => [...q].every(([k, v]) => k === 'select' || (v === 'is.null' ? l[k] == null : v.startsWith('eq.') ? String(l[k]) === v.slice(3) : true));
+      if (m === 'GET') return json(base.notes.filter(vrai).map((l, i) => ({ id: i, ...l })));
+      if (m === 'DELETE') { base.effacees = (base.effacees || []).concat(base.notes.filter(vrai)); base.notes = base.notes.filter((l) => !vrai(l)); return json(null, 204); }
+      if (m === 'PATCH') { const maj = JSON.parse(o.body); base.notes.filter(vrai).forEach((l) => Object.assign(l, maj)); return json(null, 204); }
+    }
+    if (u.includes('/rest/v1/medias_drive?')) return json(base.mediasDrive || []);
+    if (u.includes('rpc/medias_drive_appliquer')) { base.appliquer = (base.appliquer || 0) + 1; return json(0); }
+    // (comme la vraie base : « url » obligatoire, et une même photo une seule fois : index casting_photos_une_fois)
+    if (u.includes('/rest/v1/casting_photos') && m === 'POST') {
+      const l = JSON.parse(o.body);
+      if (!l.url) return json({ code: '23502', message: 'null value in column "url" violates not-null constraint' }, 400);
+      if (base.notes.some((x) => x.application_id === l.application_id && x.url === l.url)) return json({ code: '23505' }, 409);
+      base.notes.push(l); return json(null, 201);
+    }
     if (u.includes('portail_admin_ok')) return json(base.admin === true);
     if (u.includes('/auth/v1/user')) return base.admin ? json({ id: 'admin-1', aal: 'aal2' }) : json({}, 401);
     if (u.includes('journal_erreurs')) return json(null, 201);
@@ -113,6 +127,61 @@ async function serveur() {
   ok(r.statut === 400 && !r2.effaces.includes(cleT), 'serveur : photo d’un cours de talons : jamais effacée par cette action');
   r = await appeler({ action: 'candidature_supprimer', chemin: cle }, JETON_EQUIPE);
   ok(r.statut === 200 && r2.effaces.includes(cle), 'serveur : équipe : fiche déjà supprimée : le fichier est effacé');
+  // ---- (relecture du superviseur, 16/11 22 h 30) ----
+  base.admin = false;
+  // 1. la ligne notée a une « url » (obligatoire dans la base) : la même « r2:… » que le chemin
+  ok(base.notes.length >= 1 && base.notes.every((x) => x.url && x.url === x.chemin && /^r2:candidatures\//.test(x.url)), 'superviseur 1 : la photo notée a une url (obligatoire dans la base), « r2:… » comme son chemin');
+  // même photo vérifiée deux fois (reprise après coupure) : déjà notée, pas d'erreur
+  r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: base.notes[0].chemin.slice(3) });
+  ok(r.statut === 200 && base.notes.length === 1, 'superviseur 1 : même photo vérifiée deux fois : acceptée, notée une seule fois');
+  // 2. la DERNIÈRE photo permise (12ᵉ candidature, 5ᵉ talons) : déjà déposée, la vérification l'accepte
+  const cle12 = 'candidatures/' + ID + '/' + 'e'.repeat(32) + '.jpg';
+  r2.liste = Array.from({ length: 12 }, (_, i) => 'f' + i + '.jpg');
+  r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: cle12 });
+  ok(r.statut === 200 && base.notes.some((x) => x.chemin === 'r2:' + cle12), 'superviseur 2 : 12ᵉ photo d’une candidature (12 fichiers déposés) : vérifiée et notée');
+  r2.liste = ['a', 'b', 'c', 'd', 'e'];
+  r = await appeler({ action: 'candidature_verifier', dossier: 'cours-talons', candidature: ID, chemin: 'cours-talons/' + ID + '/' + 'e'.repeat(32) + '.jpg' });
+  ok(r.statut === 200, 'superviseur 2 : 5ᵉ photo d’un cours de talons (5 fichiers déposés) : vérifiée');
+  r = await appeler({ action: 'candidature_signer', dossier: 'cours-talons', candidature: ID, contentType: 'image/jpeg', taille: 1 });
+  ok(r.statut === 403, 'superviseur 2 : une 6ᵉ photo de talons ne peut toujours pas être déposée'); r2.liste = [];
+  // 5. numéro EN MAJUSCULES : même dossier (minuscules), jamais un second dossier hors plafond et hors nettoyage
+  const MAJ = ID.toUpperCase();
+  r = await appeler({ action: 'candidature_signer', dossier: 'cours-talons', candidature: MAJ, contentType: 'image/jpeg', taille: 1 });
+  ok(r.statut === 200 && r.rep.chemin.startsWith('cours-talons/' + ID + '/'), 'superviseur 5 : numéro en majuscules : rangé sous le numéro en minuscules (' + (r.rep && r.rep.chemin) + ')');
+  r2.liste = ['a', 'b', 'c', 'd', 'e'];
+  r = await appeler({ action: 'candidature_signer', dossier: 'cours-talons', candidature: MAJ, contentType: 'image/jpeg', taille: 1 }); r2.liste = [];
+  ok(r.statut === 403, 'superviseur 5 : numéro en majuscules : le plafond de 5 photos compte bien le même dossier');
+  const nbAvant = base.notes.length, cleMaj = 'candidatures/' + ID + '/' + 'a'.repeat(32) + '.jpg';
+  r = await appeler({ action: 'candidature_verifier', candidature: MAJ, chemin: cleMaj });
+  ok(r.statut === 200 && base.notes.length === nbAvant + 1 && base.notes[nbAvant].application_id === ID, 'superviseur 5 : vérification avec le numéro en majuscules : notée sous le numéro en minuscules');
+  r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: 'candidatures/' + MAJ + '/' + 'a'.repeat(32) + '.jpg' });
+  ok(r.statut === 400, 'superviseur 5 : un chemin « en majuscules » est refusé');
+  // (superviseur 3, 6, 8) la page relie chaque photo Cloudflare à SA copie Drive : le doublon noté par Google est retiré,
+  // la photo garde une seule ligne ; une paire fausse ou d'un autre dossier est ignorée
+  const cc = base.notes.find((x) => x.application_id === ID && /^r2:/.test(x.url));
+  base.notes.push({ application_id: ID, url: 'https://drive.google.com/uc?id=copie-1', chemin: null }, { application_id: ID, url: 'https://drive.google.com/uc?id=seulement-drive', chemin: null });
+  base.mediasDrive = [{ lien: 'https://drive.google.com/uc?id=copie-1' }, { lien: 'https://drive.google.com/uc?id=seulement-drive' }];
+  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [
+    { chemin: cc.chemin.slice(3), lien: 'https://drive.google.com/uc?id=copie-1' },
+    { chemin: 'candidatures/' + ID + '/' + '9'.repeat(32) + '.jpg', lien: 'https://drive.google.com/uc?id=seulement-drive' },  // (aucune photo Cloudflare de ce nom)
+    { chemin: 'cours-talons/' + ID + '/' + 'a'.repeat(32) + '.jpg', lien: 'https://drive.google.com/uc?id=seulement-drive' },
+    { chemin: cc.chemin.slice(3), lien: 'javascript:alert(1)' }, { chemin: cc.chemin.slice(3), lien: 'https://site-pirate.example/x.jpg' }] });
+  const lignesId = base.notes.filter((x) => x.application_id === ID);
+  ok(r.statut === 200 && r.rep.notees === 1 && cc.url === 'https://drive.google.com/uc?id=copie-1' && !lignesId.some((x) => x.chemin == null && /copie-1/.test(x.url))
+    && lignesId.some((x) => /seulement-drive/.test(x.url)) && base.appliquer === 1,
+    'superviseur 3 : copie Drive reliée à sa photo Cloudflare (doublon retiré, photo seulement dans Drive gardée, la base complète ensuite)');
+  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [{ chemin: cc.chemin.slice(3), lien: 'https://drive.google.com/uc?id=autre' }] });
+  ok(r.statut === 200 && r.rep.notees === 0 && cc.url === 'https://drive.google.com/uc?id=copie-1', 'superviseur 3 : une photo déjà reliée ne peut pas être reliée à une autre copie');
+  base.dossier.status = 'vue'; r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [] }); base.dossier.status = 'nouvelle';
+  ok(r.statut === 200, 'superviseur 3 : candidature déjà ouverte par l’agence pendant l’envoi : les copies se relient quand même');
+  base.dossier.created_at = new Date(Date.now() - 25 * 3600e3).toISOString();
+  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [] }); base.dossier.created_at = new Date().toISOString();
+  ok(r.statut === 403, 'superviseur 3 : candidature de plus de 24 h : plus rien à relier');
+  // une copie que Google n'a PAS notée pour ce dossier (lien d'une autre ligne) : aucune ligne n'est retirée
+  const cc2 = base.notes.find((x) => x.application_id === ID && /^r2:/.test(x.url));
+  base.notes.push({ application_id: ID, url: 'https://drive.google.com/uc?id=jamais-note', chemin: null });
+  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [{ chemin: cc2.chemin.slice(3), lien: 'https://drive.google.com/uc?id=jamais-note' }] });
+  ok(r.statut === 200 && base.notes.some((x) => x.chemin == null && /jamais-note/.test(x.url)), 'superviseur 3 : un lien que Google n’a pas noté pour ce dossier ne retire aucune ligne');
   // ---- nettoyage du matin (api/_r2.js) : seulement candidatures/ et cours-talons/, jamais un fichier cité
   const { nettoyerPhotosNonCitees } = require('../../api/_r2.js');
   const ilYa = (h) => new Date(Date.now() - h * 3600e3), A2 = 'aaaaaaaa-1111-4a11-8a11-123456789abc', T2 = 'bbbbbbbb-1111-4a11-8a11-123456789abc';
@@ -126,10 +195,11 @@ async function serveur() {
     { Key: k('cours-talons', T2, '6'), LastModified: ilYa(24 * 3) }, // 3 jours (reprise possible) → gardé
     { Key: 'candidatures/' + A2 + '/photo-mannequin.jpg', LastModified: ilYa(30) }];  // nom hors format → jamais touché
   base.citesNettoyage = { candidatures: [{ chemin: 'r2:' + k('candidatures', A2, '2') }], talons: [{ photos: ['r2:' + k('cours-talons', T2, '5'), 'https://drive.test/x'] }] };
-  r2.effaces.length = 0;
+  r2.effaces.length = 0; r2.lots = 0;
   const nbEffaces = await nettoyerPhotosNonCitees();
   ok(nbEffaces === 2 && r2.effaces.length === 2 && r2.effaces.includes(k('candidatures', A2, '1')) && r2.effaces.includes(k('cours-talons', T2, '4')),
     'nettoyage du matin : seuls les fichiers non cités et anciens sont effacés (candidature > 2 h, talons > 7 jours) (' + r2.effaces.join(', ') + ')');
+  ok(r2.lots === 2, 'superviseur 7 : nettoyage par lots (une demande d’effacement par dossier, pas une par fichier : ' + r2.lots + ')');
   base.nettoyagePanne = true; r2.effaces.length = 0;
   const panne = await nettoyerPhotosNonCitees().then(() => 'effectué', () => 'refusé');
   ok(panne === 'refusé' && !r2.effaces.length, 'nettoyage du matin : base illisible → rien n’est effacé');
@@ -148,15 +218,24 @@ async function navigateur() {
   for (const cas of [
     { nom: 'Intégrer l’agence, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false },
     { nom: 'Casting, ordinateur, anglais', page: '/en/candidature.html', parcours: 'projet', ecran: { width: 1280, height: 900 }, panne: false },
-    { nom: 'Casting, téléphone, Cloudflare en panne', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: true }]) {
+    { nom: 'Casting, téléphone, Cloudflare en panne', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: true },
+    // (superviseur 4) envoi coupé après la 1re photo arrivée chez Cloudflare : la reprise ne la renvoie pas
+    // (2ᵉ relecture) réponse de la 1re vérification perdue : la même photo est revérifiée, jamais déposée deux fois
+    { nom: 'Vérification sans réponse, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, verifPerdue: true },
+    { nom: 'Reprise après coupure, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, reprise: true },
+    // (superviseur 6) ancien programme Google (la page note elle-même les liens Drive) : seules les copies des photos
+    // qui ne sont PAS arrivées chez Cloudflare sont notées (1 sur 3 ici), aucune fausse « photo manquante »
+    { nom: 'Ancien programme Google, ordinateur', page: '/candidature.html', parcours: 'projet', ecran: { width: 1280, height: 900 }, panne: false, ancien: true, r2Max: 2 }]) {
     const tel = cas.ecran.width < 700, n = cas.nom + ' : ';
     const ctx = await b.newContext({ viewport: cas.ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [], r2Appels = [], ordre = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await brancher(p, { tables: { casting_projets: [{ nom: 'Défilé X', actif: true }] }, rpc: { casting_ouvert: true, ajouter_video_candidature: true } }, journal);
     await p.route('**/api/r2-presigner', async (route) => {
-      const c = JSON.parse(route.request().postData() || '{}'); r2Appels.push(c); ordre.push('r2');
+      const c = JSON.parse(route.request().postData() || '{}'); r2Appels.push(c); if (c.action !== 'candidature_copies') ordre.push('r2');  // (relier les copies vient forcément après Drive)
       if (cas.panne) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"panne"}' });
+      if (cas.r2Max != null && c.action === 'candidature_signer' && r2Appels.filter((x) => x.action === 'candidature_signer').length > cas.r2Max) return route.fulfill({ status: 403, contentType: 'application/json', body: '{"error":"plein"}' });
+      if (cas.verifPerdue && c.action === 'candidature_verifier' && r2Appels.filter((x) => x.action === 'candidature_verifier').length === 1) return route.abort('connectionreset');
       if (c.action === 'candidature_signer') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'https://r2.essai/envoi/' + r2Appels.length, chemin: 'candidatures/' + c.candidature + '/' + String(r2Appels.length).padStart(32, '0') + '.jpg' }) });
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"verifie":true}' });
     });
@@ -165,17 +244,18 @@ async function navigateur() {
     const drive = [];
     await p.route(/script\.google\.com/, async (route) => {
       const c = JSON.parse(route.request().postData() || '{}');
-      if (c.photos) { drive.push(c.photos.length); ordre.push('drive'); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, liens: c.photos.map((x, i) => 'https://drive.google.com/thumbnail?id=p' + i), dossier: 'd', enregistre: true }) }); }
+      if (c.photos) { drive.push(c.photos.length); ordre.push('drive'); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, liens: c.photos.map((x, i) => 'https://drive.google.com/thumbnail?id=p' + i), dossier: 'd', enregistre: !cas.ancien }) }); }
       const rep = c.action === 'video_debut' ? { ok: true, session: 's1', dossier: 'd' } : c.action === 'video_morceau' ? { ok: true, video: 'https://drive.google.com/file/d/v1/view', enregistre: true } : { ok: true, recu: 0 };
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rep) });
     });
     await p.goto(base + '/index.html'); await p.waitForTimeout(600);
-    await p.evaluate(async ({ photo, id, page, parcours }) => {
+    await p.evaluate(async ({ photo, id, page, parcours, reprise }) => {
       const octets = Uint8Array.from(atob(photo), (c) => c.charCodeAt(0));
       const f = new File([octets], 'photo.jpg', { type: 'image/jpeg' }), v = new File([new Uint8Array(200000)], 'video.mp4', { type: 'video/mp4' });
-      await EnvoiFiable.garder('candidature', { candidature: { id, full_name: 'Awa Koné', email: 'awa@test.ci', phone: '+2250700000001', experience_mannequin: 'non' },
-        projetNom: parcours === 'projet' ? 'Défilé X' : '', mineur: false, parcours, photos: [f, f, f], video: v, page, photosFaites: false });
-    }, { photo: PHOTO, id: ID, page: cas.page, parcours: cas.parcours });
+      await EnvoiFiable.garder('candidature', Object.assign({ candidature: { id, full_name: 'Awa Koné', email: 'awa@test.ci', phone: '+2250700000001', experience_mannequin: 'non' },
+        projetNom: parcours === 'projet' ? 'Défilé X' : '', mineur: false, parcours, photos: [f, f, f], video: v, page, photosFaites: false },
+        reprise ? { arriveesR2: [0], cheminsR2: ['r2:candidatures/' + id + '/' + 'f'.repeat(32) + '.jpg'] } : {}));
+    }, { photo: PHOTO, id: ID, page: cas.page, parcours: cas.parcours, reprise: !!cas.reprise });
     await p.goto(base + cas.page);
     await p.waitForFunction(() => /Merci|Thank you|mais|but|repartira|resume/.test((document.getElementById('ca-msg') || {}).textContent || '') && document.querySelectorAll('#ca-jauges-photos .jauge').length === 3
       && ![...document.querySelectorAll('#ca-jauges-photos .jauge')].some((j) => /envoi|sending/.test(j.textContent)), null, { timeout: 40000 }).catch(() => {});
@@ -183,11 +263,24 @@ async function navigateur() {
     const signes = r2Appels.filter((c) => c.action === 'candidature_signer'), verifies = r2Appels.filter((c) => c.action === 'candidature_verifier');
     const vertes = await p.locator('#ca-jauges-photos .jauge.terminee').count();
     const msg = await p.evaluate(() => (document.getElementById('ca-msg') || {}).textContent || '');
-    if (!cas.panne) {
+    const notees = journal.filter((j) => j[0] === 'POST' && j[1] === 'casting_photos');
+    if (cas.verifPerdue) {
+      ok(signes.length === 3 && puts.length === 3 && verifies.length === 4 && verifies[0].chemin === verifies[1].chemin, n + '2ᵉ relecture : la photo est revérifiée (même nom), jamais déposée deux fois (3 dépôts, 4 vérifications)');
+      ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
+    } else if (cas.reprise) {
+      ok(signes.length === 2 && verifies.length === 2 && puts.length === 2, n + 'superviseur 4 : la photo déjà arrivée n’est pas renvoyée (2 envois sur 3)');
+      ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
+    } else if (cas.ancien) {
+      ok(verifies.length === 2 && notees.length === 1 && /id=p2/.test(notees[0][3] || ''), n + 'superviseur 6 : seule la copie Drive de la photo absente de Cloudflare est notée par la page (' + notees.map((x) => x[3]).join(' ') + ')');
+      ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg) && !journal.some((j) => j[1] === 'journal_erreurs' && /casting_photos/.test(j[3] || '')), n + 'aucune fausse « photo manquante », journal propre');
+    } else if (!cas.panne) {
       ok(signes.length === 3 && verifies.length === 3 && puts.filter((x) => x === 'PUT').length === 3 && signes.every((c) => c.candidature === ID && !c.chemin),
         n + '3 photos envoyées chez Cloudflare (adresse signée, envoi, vérification), nom choisi par le serveur');
       ok(ordre.indexOf('r2') === 0 && ordre.indexOf('drive') > ordre.lastIndexOf('r2') && drive.length >= 1, n + 'Cloudflare d’abord, PUIS la copie Drive (archive)');
       ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
+      const copies = (r2Appels.find((c) => c.action === 'candidature_copies') || {}).copies || [];
+      ok(copies.map((c) => c.lien).join() === [0, 1, 2].map((k) => 'https://drive.google.com/thumbnail?id=p' + k).join() && copies.every((c) => c.chemin.startsWith('candidatures/' + ID + '/')),
+        n + 'superviseur 3 : chaque photo Cloudflare est reliée à SA copie Drive, dans l’ordre');
     } else {
       ok(signes.length >= 1 && !verifies.length && !puts.length, n + 'Cloudflare refuse : rien n’est envoyé chez Cloudflare');
       ok(drive.length >= 1 && vertes === 3, n + 'les photos partent quand même dans Drive, comme avant, jauges vertes');
@@ -197,7 +290,10 @@ async function navigateur() {
   }
   // 2 bis. cours de talons : Cloudflare d'abord, Drive ensuite ; l'inscription porte les photos Cloudflare ;
   //        base pas encore prête (fichier SQL L-17 pas collé) → l'inscription repart avec les liens Drive
-  for (const cas of [{ nom: 'Cours de talons, téléphone', baseRefuse: false }, { nom: 'Cours de talons, ordinateur, base pas encore prête', baseRefuse: true, ecran: { width: 1280, height: 900 } }]) {
+  for (const cas of [{ nom: 'Cours de talons, téléphone', baseRefuse: false }, { nom: 'Cours de talons, ordinateur, base pas encore prête', baseRefuse: true, ecran: { width: 1280, height: 900 } },
+    // (superviseur 3) une seule des 2 photos arrive chez Cloudflare : l'inscription prend, rang par rang, la photo
+    // Cloudflare de la 1re et la copie Drive de la 2de (aucune perdue, aucune en double)
+    { nom: 'Cours de talons, téléphone, 1 photo sur 2 chez Cloudflare', r2Max: 1 }]) {
     const ecran = cas.ecran || { width: 390, height: 844 }, tel = ecran.width < 700, n = cas.nom + ' : ';
     const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [], r2Appels = [], ordre = [], essais = [];
@@ -210,6 +306,7 @@ async function navigateur() {
     } }, journal);
     await p.route('**/api/r2-presigner', async (route) => {
       const c = JSON.parse(route.request().postData() || '{}'); r2Appels.push(c); ordre.push('r2');
+      if (cas.r2Max != null && c.action === 'candidature_signer' && r2Appels.filter((x) => x.action === 'candidature_signer').length > cas.r2Max) return route.fulfill({ status: 403, contentType: 'application/json', body: '{"error":"plein"}' });
       if (c.action === 'candidature_signer') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'https://r2.essai/envoi/' + r2Appels.length, chemin: 'cours-talons/' + c.candidature + '/' + String(r2Appels.length).padStart(32, '0') + '.jpg' }) });
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"verifie":true}' });
     });
@@ -231,9 +328,10 @@ async function navigateur() {
     await p.waitForFunction(() => !document.getElementById('ct-merci').classList.contains('u-hidden'), null, { timeout: 40000 }).catch(() => {});
     const signes = r2Appels.filter((c) => c.action === 'candidature_signer');
     const inscrites = journal.filter((j) => j[0] === 'POST' && j[1] === 'cours_talons').map((j) => JSON.parse(j[3] || '{}'));
-    ok(signes.length === 2 && signes.every((c) => c.dossier === 'cours-talons' && c.candidature === ID_T), n + '2 photos envoyées chez Cloudflare, dossier cours-talons, numéro de l’inscription');
+    if (cas.r2Max) ok(inscrites.length === 1 && inscrites[0].photos.length === 2 && /^r2:cours-talons\//.test(inscrites[0].photos[0]) && /id=t1$/.test(inscrites[0].photos[1]), n + 'superviseur 3 : photo 1 depuis Cloudflare, photo 2 par sa copie Drive (' + JSON.stringify(inscrites.map((x) => x.photos)) + ')');
+    else ok(signes.length === 2 && signes.every((c) => c.dossier === 'cours-talons' && c.candidature === ID_T), n + '2 photos envoyées chez Cloudflare, dossier cours-talons, numéro de l’inscription');
     ok(ordre[0] === 'r2' && ordre.includes('drive') && ordre.indexOf('drive') > ordre.lastIndexOf('r2'), n + 'Cloudflare d’abord, PUIS la copie Drive');
-    if (!cas.baseRefuse) ok(inscrites.length === 1 && inscrites[0].photos.length === 2 && inscrites[0].photos.every((x) => /^r2:cours-talons\//.test(x)), n + 'l’inscription porte les 2 photos Cloudflare (' + JSON.stringify(inscrites.map((x) => x.photos)) + ')');
+    if (cas.r2Max) { /* (vérifié plus haut) */ } else if (!cas.baseRefuse) ok(inscrites.length === 1 && inscrites[0].photos.length === 2 && inscrites[0].photos.every((x) => /^r2:cours-talons\//.test(x)), n + 'l’inscription porte les 2 photos Cloudflare (' + JSON.stringify(inscrites.map((x) => x.photos)) + ')');
     else ok(essais.length === 2 && inscrites.length === 1 && inscrites[0].photos.every((x) => /^https:\/\/drive/.test(x)), n + 'base refuse les photos Cloudflare : l’inscription repart avec les liens Drive, comme avant (' + JSON.stringify(essais) + ')');
     ok(await p.evaluate(() => !document.getElementById('ct-merci').classList.contains('u-hidden')), n + '« Merci » affiché');
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));
@@ -247,7 +345,9 @@ async function navigateur() {
     const p = await ctx.newPage(); const errs = [], journal = [], d = donnees('principal'), lus = [], supprimes = [];
     p.on('pageerror', (e) => errs.push(e.message));
     const CR2 = 'candidatures/' + ID + '/' + 'b'.repeat(32) + '.jpg';
-    d.tables.casting_photos.push({ id: 'ph-r2', application_id: 'c4', chemin: 'r2:' + CR2, url: null });
+    d.tables.casting_photos.push({ id: 'ph-r2', application_id: 'c4', chemin: 'r2:' + CR2, url: 'r2:' + CR2 });
+    d.memoriser = true;
+    p.on('dialog', (dl) => dl.accept());
     const CT = 'cours-talons/' + ID + '/' + 'c'.repeat(32) + '.jpg';
     d.tables.cours_talons = [{ id: 't-r2', nom: 'AYA CLOUDFLARE', telephone: '+2250700000005', formule: 'groupe', nb_seances: 4, statut: 'plus_tard', photos: ['r2:' + CT], video: null, cree_le: '2026-11-16T10:00:00Z', age: 20, decision: 'plus_tard', montant: 30000 }];
     await brancher(p, d, journal); await photosLocales(p);
@@ -259,8 +359,28 @@ async function navigateur() {
     });
     await seConnecter(p, base + '/admin/'); await p.waitForSelector('.accueil-tete');
     await p.goto(base + '/admin/#/site/b2-candidatures/c4'); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
-    const vu = await p.evaluate(() => [...document.querySelectorAll('.galerie-dossier .photo-dossier img')].map((i) => i.getAttribute('src') || ''));
-    ok(lus.includes(CR2) && vu.length === 1 && /signature=x/.test(vu[0]), n + 'candidature avec photo Cloudflare : affichée par adresse signée, copies Drive masquées (' + JSON.stringify(vu) + ')');
+    const images = () => p.evaluate(() => [...document.querySelectorAll('.galerie-dossier .photo-dossier img')].map((i) => i.getAttribute('src') || ''));
+    const vu = await images();
+    // (superviseur 3) 1 photo chez Cloudflare, 2 copies Drive : des photos ne sont arrivées que dans Drive → tout reste visible
+    ok(lus.includes(CR2) && vu.length === 3 && vu.filter((x) => /signature=x/.test(x)).length === 1 && vu.filter((x) => /drive\.google/.test(x)).length === 2,
+      n + 'superviseur 3 : 1 photo Cloudflare et 2 copies Drive : les photos arrivées seulement dans Drive restent visibles (' + vu.length + ' photos)');
+    // (superviseur 3 et 8) photo Cloudflare RELIÉE à sa copie Drive (url = lien Drive, le doublon a été retiré par le
+    // serveur) : une seule image par photo ; la supprimer ne fait réapparaître aucune copie, et aucune autre ligne n'est touchée
+    const CR2b = 'candidatures/' + ID + '/' + 'd'.repeat(32) + '.jpg';
+    const ph1 = d.tables.casting_photos.find((x) => x.id === 'ph1');
+    d.tables.casting_photos = d.tables.casting_photos.filter((x) => x.id !== 'ph1');
+    d.tables.casting_photos.push({ id: 'ph-r2b', application_id: 'c4', chemin: 'r2:' + CR2b, url: ph1.url });
+    await p.goto(base + '/admin/#/site/b2-candidatures/c1'); await p.waitForTimeout(300);
+    await p.goto(base + '/admin/#/site/b2-candidatures/c4'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
+    const vu2 = await images();
+    ok(vu2.length === 3 && vu2.filter((x) => /signature=x/.test(x)).length === 2 && vu2.filter((x) => /photo-ama-2/.test(x)).length === 1 && !vu2.some((x) => /photo-ama-1/.test(x)),
+      n + 'superviseur 3 : 2 photos Cloudflare (dont une reliée à sa copie Drive) + 1 photo seulement dans Drive : 3 images, aucun doublon (' + vu2.length + ')');
+    await p.locator('[data-action="dossier-photo-supprimer"][data-photo="ph-r2b"]').click();
+    await p.waitForFunction(() => /supprimée/.test((document.getElementById('dos-photo-msg') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
+    const vu3 = await images(), restent = d.tables.casting_photos.filter((x) => x.application_id === 'c4');
+    ok(vu3.length === 2 && !vu3.some((x) => /photo-ama-1/.test(x)) && restent.length === 2 && restent.some((x) => x.id === 'ph2') && supprimes.flat().includes(CR2b),
+      n + 'superviseur 8 : photo Cloudflare supprimée : sa copie Drive ne réapparaît pas, les autres photos restent (' + vu3.length + ' images)');
+    d.memoriser = false;
     await p.goto(base + '/admin/#/site/b2-candidatures/c1'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
     const ancien = await p.evaluate(() => [...document.querySelectorAll('.galerie-dossier .photo-dossier img')].map((i) => i.getAttribute('src') || ''));
     ok(ancien.length === 1 && /drive\.google\.com/.test(ancien[0]), n + 'ancienne candidature (Drive seul) : affichage inchangé');

@@ -349,7 +349,10 @@
     if (d.liens.length) photosArrivees();
     else { ids.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…'))); r2Vertes(); }
     if (!d.r2Fait) {
-      const r = await envoyerPhotosCandidatureR2(etat.ligne.id, liste, ids, nomPhoto, 'cours-talons').catch(() => ({ rangs: [], chemins: [] }));
+      // (relecture du superviseur, 22 h 30) chaque photo arrivée est gardée AUSSITÔT : une reprise ne la renvoie pas
+      const garder = (r) => { Object.assign(d, { r2: r.chemins, r2Rangs: r.rangs }); return EnvoiFiable.garder('cours-talons', etat); };
+      const r = await envoyerPhotosCandidatureR2(etat.ligne.id, liste, ids, nomPhoto, 'cours-talons', { rangs: d.r2Rangs || [], chemins: d.r2 || [], surArrivee: garder })
+        .catch(() => ({ rangs: d.r2Rangs || [], chemins: d.r2 || [] }));
       Object.assign(d, { r2Fait: true, r2: r.chemins, r2Rangs: r.rangs });
       await EnvoiFiable.garder('cours-talons', etat);
     }
@@ -414,9 +417,18 @@
     afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… Vous pouvez passer sur une autre application : l’envoi continue, et s’il est coupé, il reprendra quand vous reviendrez sur cette page.', 'Sending your photos and video… You can switch to another app: sending continues, and if it is interrupted it will resume when you come back to this page.'), 'ok');
     await envoyerMedias(etat);
     afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
-    // (L-17) les photos Cloudflare si elles sont arrivées (la copie Drive reste dans le journal de la base), sinon Drive
-    const r2 = (etat.d.r2 || []).slice(0, 5);
-    const envoi = { liens: r2.length ? r2 : etat.d.liens.slice() }, lienVideo = etat.d.video;
+    // (L-17, relecture du superviseur du 16/11 22 h 30) photo par photo, dans l'ordre : la photo Cloudflare si elle y est
+    // arrivée, sinon SA copie Drive (même rang dans l'envoi : copieDriveParRang, js/app.js). Aucune n'apparaît deux fois.
+    // Cas rare où Google a écarté une photo sans dire laquelle (rangs inconnus) : toutes les photos Cloudflare si toutes y
+    // sont arrivées, sinon les liens Drive s'ils sont au moins aussi nombreux (une photo arrivée d'un seul côté peut
+    // alors manquer : elle reste dans le dossier Drive de l'agence). (La copie Drive reste dans le journal de la base.)
+    const d = etat.d, r2Liste = d.r2 || [], r2Rangs = d.r2Rangs || [], nbPhotos = (etat.photos || []).length;
+    const copieDe = copieDriveParRang(d.liens, d.rangs);
+    const photos = (r2Rangs.length >= nbPhotos ? r2Liste
+      : copieDe ? Array.from({ length: nbPhotos }, (_, i) => (r2Rangs.includes(i) ? r2Liste[r2Rangs.indexOf(i)] : copieDe(i))).filter(Boolean)
+      : d.liens.length >= r2Liste.length ? d.liens : r2Liste).slice(0, 5);
+    const r2 = photos.filter((x) => String(x).startsWith('r2:'));
+    const envoi = { liens: photos.length ? photos : etat.d.liens.slice() }, lienVideo = etat.d.video;
     // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)
     const ligne = Object.assign({}, etat.ligne, { photos: envoi.liens, video: lienVideo || null });
     inscriptionTentee = true;

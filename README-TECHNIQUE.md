@@ -1614,8 +1614,8 @@ depuis Google Drive dans l'Administration. Désormais :
 2. **Copie Google Drive ensuite** (archive, circuit #453 inchangé). Si Cloudflare est en panne, les photos partent
    dans Drive comme avant ; une photo n'est « manquante » que si elle n'est arrivée NI chez Cloudflare NI dans Drive.
 3. **Administration** (`photosDe` de `js/admin/site-dossiers.js`) : photo `r2:` → adresse signée d'1 heure
-   (action `candidature_lire`, équipe seulement, double vérification) ; un dossier qui a des photos R2 masque ses
-   copies Drive. Anciennes candidatures (Drive seul) : affichage inchangé. Suppression d'une photo ou d'un dossier :
+   (action `candidature_lire`, équipe seulement, double vérification) ; chaque ligne est une photo différente (voir 6 :
+   rien n'est caché « au jugé »). Anciennes candidatures (Drive seul) : affichage inchangé. Suppression d'une photo ou d'un dossier :
    action `candidature_supprimer` (équipe seulement).
 4. **Cours de talons** (même route, demande de la propriétaire du 16/11 15 h 20 : « toutes les photos suivent la même
    route ») : mêmes actions avec `dossier: 'cours-talons'` → `cours-talons/<numéro>/…`. L'inscription n'existe dans la
@@ -1623,16 +1623,35 @@ depuis Google Drive dans l'Administration. Désormais :
    chez Cloudflare) ; la page (`js/cours-talons.js`) met `r2:cours-talons/…` dans `photos` de l'inscription, la base
    (`supabase-l17-photos-talons.sql`) n'accepte que les photos Cloudflare de CE numéro, et n'y ajoute plus la copie
    Drive. Base pas encore prête (fichier non collé) : l'inscription repart avec les liens Drive, comme avant.
-   Administration (`js/admin/site-cours-talons.js`) : adresses signées, copies Drive masquées. Outils partagés de
+   Administration (`js/admin/site-cours-talons.js`) : adresses signées, photos dans l'ordre. Outils partagés de
    l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est jamais effacée par l'API.
 5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
    dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
    rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de
    `api/_r2.js`) : efface les fichiers de `candidatures/` (après 2 h) et `cours-talons/` (après 7 jours, reprise
    possible) que plus aucune fiche ne cite ; jamais ailleurs, jamais un fichier cité, rien si la base est illisible.
+6. **Relecture du superviseur (16/11, 22 h 30), corrigée par D** :
+   - la ligne notée par le serveur a une `url` (obligatoire dans `casting_photos`) : `r2:…` en attendant sa copie Drive ;
+   - **une photo = une ligne, sans rien deviner** : après Drive, la page (qui connaît le rang de chaque photo dans les
+     deux envois) appelle `candidature_copies` avec `[{ chemin, lien }]` ; le serveur (`noterCopiesDrive`) retire la
+     ligne « copie Drive » de CETTE photo si Google l'a déjà notée, met le lien Drive dans l'`url` de la ligne
+     Cloudflare (la base ne la rajoutera plus : `medias_drive_appliquer` saute les liens présents) puis relance
+     `medias_drive_appliquer` pour les photos arrivées seulement dans Drive. Sûreté (appel d'un visiteur sans compte) :
+     seulement un lien `drive.google.com`, une ligne n'est retirée que si Google a noté ce lien pour CE dossier
+     (`medias_drive`), une photo déjà reliée ne l'est plus, 24 h au plus. La page fait 3 essais puis note l'échec au
+     journal ; sans cet appel, une photo peut s'afficher deux fois. Rang → copie : `copieDriveParRang` (`js/app.js`,
+     partagé ; rangs inconnus = on ne devine pas). Cours de talons : la page met, rang par rang, la photo Cloudflare ou
+     sinon sa copie Drive ;
+   - la vérification accepte la dernière photo permise (le fichier vérifié est déjà compté), mais refuse au-delà ;
+     une réponse de vérification perdue : la même photo est revérifiée, jamais déposée deux fois ;
+   - reprise d'un envoi coupé photo par photo (`suivi` / `surArrivee` de `envoyerPhotosCandidatureR2`) ;
+   - numéro de candidature mis en minuscules dès l'entrée ; format des noms écrit UNE fois (`lirePhotoDossier`,
+     `nouvellePhotoDossier` de `api/_r2.js`) ; effacements par lots (`effacerFichiersR2`, refus signalés) ;
+   - le nettoyage du matin passe APRÈS les relances des mensualités et ne fait jamais tomber la tâche ;
+   - ancien programme Google : la page ne note que les copies des photos absentes de Cloudflare.
 Pas de nouvelle fonction Vercel (limite de 12) : tout passe par `api/r2-presigner.js`.
 Test : `scripts/tests-visiteur/test-photos-candidature-r2.js` (serveur, candidature FR/EN téléphone/ordinateur,
-Cloudflare en panne, Administration).
+Cloudflare en panne, reprise, ancien programme Google, cours de talons, Administration).
 
 ## Photos du Book sur Cloudflare R2 (plus sur Supabase Storage)
 

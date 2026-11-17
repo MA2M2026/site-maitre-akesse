@@ -207,9 +207,14 @@ async function relancesDuJour(req, res) {
   const documents = await documentsDuJour(process.env.EMAILJS_PRIVATE_KEY).catch(async (e) => { await noterAuJournal('[Documents] ' + ((e && e.message) || e), 'documents'); return 0; });
   // (surveillance : jamais bloquante ; ses propres pannes partent seulement dans les journaux de Vercel)
   const pannes = await surveillanceDuJour(process.env.EMAILJS_PRIVATE_KEY).catch((e) => { console.error('surveillance :', e); return 0; });
-  // (16/11/2026, L-17) photos des candidatures et des cours de talons que plus aucune fiche ne cite (api/_r2.js)
-  const photosNettoyees = await require('./_r2.js').nettoyerPhotosNonCitees().catch(async (e) => { await noterAuJournal('[Photos des candidatures] nettoyage : ' + ((e && e.message) || e), 'r2'); return 0; });
-  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, documents, pannes, photosNettoyees, rien: 'pas un jour de relance' });
+  // (16/11/2026, L-17) photos des candidatures et des cours de talons que plus aucune fiche ne cite (api/_r2.js).
+  // (relecture du superviseur, 22 h 30) lancé APRÈS les relances des mensualités : un long nettoyage ne doit jamais
+  // leur prendre le temps permis à la tâche.
+  // (jamais en échec : une panne du nettoyage, ou de sa note au journal, ne fait jamais tomber la tâche)
+  let nettoye = null;
+  const nettoyer = () => nettoye || (nettoye = require('./_r2.js').nettoyerPhotosNonCitees()
+    .catch(async (e) => { await noterAuJournal('[Photos des candidatures] nettoyage : ' + ((e && e.message) || e), 'r2').catch(() => {}); return 0; }));
+  if (jour !== 3 && jour !== 5) return res.status(200).json({ ok: true, anniversaires, documents, pannes, photosNettoyees: await nettoyer(), rien: 'pas un jour de relance' });
   try {
     const liste = await rpcService('mensualites_relances', { p_jour: jour });
     const cle = process.env.EMAILJS_PRIVATE_KEY;
@@ -223,8 +228,9 @@ async function relancesDuJour(req, res) {
     if ((liste || []).length && envoyes < liste.length) {
       await noterAuJournal('[Mensualités] relance du ' + jour + ' : ' + envoyes + ' e-mail(s) envoyé(s) sur ' + liste.length + (cle ? '' : ' (clé EmailJS absente)'), 'relances');
     }
-    return res.status(200).json({ ok: true, anniversaires, documents, pannes, photosNettoyees, relances: (liste || []).length, envoyes });
+    return res.status(200).json({ ok: true, anniversaires, documents, pannes, photosNettoyees: await nettoyer(), relances: (liste || []).length, envoyes });
   } catch (e) {
+    await nettoyer();
     return res.status(500).json({ error: 'Erreur serveur.' });
   }
 }
