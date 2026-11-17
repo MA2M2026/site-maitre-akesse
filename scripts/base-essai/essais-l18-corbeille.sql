@@ -62,10 +62,30 @@ select essai_refuse($q$select media_drive_a_jeter('mauvais', 'cours_talons', '00
 select essai(media_drive_a_jeter('secret-essai', 'cours_talons', '00000000-0000-0000-0000-0000000d1801') = '["DOSSIER_TALONS_1234"]'::jsonb
   and media_drive_a_jeter('secret-essai', 'candidature', '00000000-0000-0000-0000-0000000d1801') = '[]'::jsonb,
   'programme Google : le bon dossier à jeter, rien avec une mauvaise source');
-select media_drive_jete('secret-essai', '00000000-0000-0000-0000-0000000d1801', 1);
+-- la surveillance efface ensuite le journal medias_drive des lignes disparues : le numéro du dossier reste connu
+update medias_drive set cree_le = now() - interval '8 days' where ref in ('00000000-0000-0000-0000-0000000d1801', '00000000-0000-0000-0000-0000000d1802');
+select medias_drive_surveiller();
+select essai((select count(*) from medias_drive where ref = '00000000-0000-0000-0000-0000000d1802') = 0
+  and media_drive_a_jeter('secret-essai', 'candidature', '00000000-0000-0000-0000-0000000d1802') = '["DOSSIER_CANDIDATE_1234"]'::jsonb,
+  'journal effacé par la surveillance : le dossier à jeter reste connu');
+-- Google n'a pas répondu : la relance de chaque heure redemande (pas avant 50 minutes, 5 essais au plus)
+select essai(medias_drive_corbeille_relancer() = 0, 'relance : rien tant que la dernière demande a moins de 50 minutes');
+update medias_drive_corbeille set dernier = now() - interval '1 hour';
+select essai(medias_drive_corbeille_relancer() = 2, 'relance : deux demandes renvoyées');
+-- (lu dans une seconde requête : la première ne voit pas encore ses propres écritures)
+select essai(true
+  and (select count(*) from essai_appels_google where corps->>'action' = 'corbeille') = 4
+  and (select essais from medias_drive_corbeille where ref = '00000000-0000-0000-0000-0000000d1802') = 2,
+  'relance : les deux demandes non faites sont renvoyées');
+update medias_drive_corbeille set dernier = now() - interval '1 hour';
+update medias_drive_corbeille set essais = 5 where ref = '00000000-0000-0000-0000-0000000d1802';
+select essai(medias_drive_corbeille_relancer() = 1, 'relance : arrêt après 5 essais');
+select essai(media_drive_jete('secret-essai', '00000000-0000-0000-0000-0000000d1801', 1), 'programme Google : « fait » répond vrai (200, pas 204)');
 select essai(media_drive_a_jeter('secret-essai', 'cours_talons', '00000000-0000-0000-0000-0000000d1801') = '[]'::jsonb
   and (select nb from medias_drive_corbeille where ref = '00000000-0000-0000-0000-0000000d1801') = 1,
   'programme Google : une fois fait, plus rien à jeter (pas de second passage)');
+update medias_drive_corbeille set dernier = now() - interval '1 hour';
+select essai(medias_drive_corbeille_relancer() = 0, 'relance : rien pour une demande faite ou épuisée');
 
 -- un visiteur ne lit pas la liste de la corbeille
 set role anon;

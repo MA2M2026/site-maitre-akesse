@@ -1642,9 +1642,15 @@ depuis Google Drive dans l'Administration. Désormais :
    (`media_drive_a_jeter`, mot secret obligatoire : la clé du programme est publique ; vide si la ligne existe
    encore ou si la demande ne vient pas de l'agence), vérifie que c'est bien un dossier de personne (sous-dossier
    du dossier principal, marqué `ref:` à son numéro ou pas encore marqué), le met à la corbeille (`setTrashed`,
-   récupérable 30 jours, jamais d'effacement définitif) puis le signale (`media_drive_jete`). Il faut coller la
-   nouvelle version de `scripts/apps-script-photos-drive.gs` ; avant, la demande reste notée sans effet. Essais :
-   `scripts/base-essai/essais-l18-corbeille.sql`.
+   récupérable 30 jours, jamais d'effacement définitif) puis le signale (`media_drive_jete`, qui renvoie `true` :
+   une fonction `void` ferait répondre 204, pris pour une erreur par `appelBase`). Les numéros des dossiers sont
+   copiés dans `medias_drive_corbeille.dossiers` au moment de la suppression (la surveillance efface ensuite le
+   journal `medias_drive` des lignes disparues). Google injoignable, Drive en panne, ou programme pas encore à jour :
+   rien n'est noté comme fait, la tâche `medias-drive-corbeille` (chaque heure à h 17) redemande, 5 essais sur
+   7 jours au plus. L'adresse et la clé du programme Google sont à un seul endroit : `medias_drive_appel_google`
+   (aussi utilisée désormais par `medias_drive_demander`). Il faut coller la nouvelle version de
+   `scripts/apps-script-photos-drive.gs`. Les textes de suppression de l'Administration le disent. Essais :
+   `scripts/base-essai/essais-l18-corbeille.sql` (16 essais).
 5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
    dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
    rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de
