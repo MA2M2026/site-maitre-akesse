@@ -439,8 +439,20 @@ async function envoyerMedias(etat) {
     const nomPhoto = (i) => 'Photo ' + (i + 1);
     idsPhotos.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
     majJauge('ca-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
+    // (16/11/2026, L-17) d'abord Cloudflare R2 (affichage fiable dans l'Administration) ; ensuite la copie Drive
+    // (archive), comme avant. Les jauges des photos arrivées chez Cloudflare restent vertes : la copie Drive de ces
+    // photos se fait sans jauge ; une photo qui n'est pas arrivée chez Cloudflare garde sa jauge pour Drive.
+    let arriveesR2 = etat.arriveesR2 || [];
+    if (!etat.r2Fait) {
+      // (relecture du superviseur, 22 h 30) chaque photo arrivée est gardée AUSSITÔT : une reprise ne la renvoie pas
+      const suivi = { rangs: arriveesR2, surArrivee: (r) => { etat.arriveesR2 = r.rangs; return EnvoiFiable.garder('candidature', etat); } };
+      try { arriveesR2 = (await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto, 'candidatures', suivi)).rangs; }
+      catch (e) { arriveesR2 = etat.arriveesR2 || []; }
+      Object.assign(etat, { r2Fait: true, arriveesR2 }); await EnvoiFiable.garder('candidature', etat);
+    }
+    const idsDrive = idsPhotos.map((id, i) => (arriveesR2.includes(i) ? 'ca-copie-drive-' + i : id));  // (jauge absente : rien ne bouge)
     try {
-      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsPhotos, nomPhoto, {
+      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsDrive, nomPhoto, {
         nom: candidature.full_name,
         email: candidature.email,
         phone: candidature.phone,
@@ -449,13 +461,22 @@ async function envoyerMedias(etat) {
         source: 'candidature',
         ref: candidature.id
       });
-      nbPhotosEchouees = manquantes;
+      // (une photo manque seulement si elle n'est arrivée NI chez Cloudflare NI dans Drive)
+      nbPhotosEchouees = Math.min(manquantes, fichiersPhotos.length - arriveesR2.length);
       dossierDrive = dossier || null;
       // (ancien programme Google, sans enregistrement de son côté : la page enregistre elle-même, comme avant ;
       // une photo déjà enregistrée par Google est refusée en double par la base, code 23505, sans souci)
-      if (!echec && !enregistre) {
+      // (relecture du superviseur, 17/11 02 h 15) si TOUTES les photos sont arrivées chez Cloudflare, elles sont déjà dans
+      // le dossier : la page n'y ajoute pas leurs copies Drive. Sinon elle les ajoute toutes (l'Administration cache les
+      // copies Drive quand il y a au moins autant de photos Cloudflare : P.photosR2.cacherDrive, js/admin/coque.js) ; un
+      // refus « limite de 12 atteinte » (code 42501) n'est pas compté, au plus autant de fois qu'il y a de photos arrivées
+      // chez Cloudflare (leur place est prise par elles) ; au-delà, c'est une photo manquante (journal), comme avant.
+      const toutesChezCloudflare = arriveesR2.length >= fichiersPhotos.length;
+      let refusDusACloudflare = 0;
+      if (!echec && !enregistre && !toutesChezCloudflare) {
         for (const lien of liens) {
           const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
+          if (erreurInsertPhoto && erreurInsertPhoto.code === '42501' && refusDusACloudflare < arriveesR2.length) { refusDusACloudflare++; continue; }
           if (erreurInsertPhoto && erreurInsertPhoto.code !== '23505') {
             nbPhotosEchouees++;
             sb.from('journal_erreurs').insert({
@@ -469,8 +490,8 @@ async function envoyerMedias(etat) {
     } catch (e) {
       // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà
       // enregistré côté Supabase) — on signale juste que les photos n'ont pas pu partir.
-      nbPhotosEchouees = fichiersPhotos.length;
-      idsPhotos.forEach((id, i) => jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent')));
+      nbPhotosEchouees = fichiersPhotos.length - arriveesR2.length;
+      idsPhotos.forEach((id, i) => { if (!arriveesR2.includes(i)) jaugeEnErreur(id, nomPhoto(i) + T(' : non envoyée', ': not sent')); });
     }
     Promise.resolve(journaliserPhotosEchouees('candidature', candidature.id, nbPhotosEchouees)).catch(() => {});
     // (au moins une photo arrivée : l'étape est franchie ; aucune, à cause du réseau : la reprise réessaiera)

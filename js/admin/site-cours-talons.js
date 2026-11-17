@@ -22,7 +22,13 @@
   let lignes = [];
   // (seulement des adresses https : la base les contrôle aussi)
   const https = (u) => typeof u === 'string' && /^https:\/\/[^\s"<>]+$/.test(u);
-  const photosDe = (d) => (d && Array.isArray(d.photos) ? d.photos : []).filter(https);
+  // (16/11/2026, L-17) photos Cloudflare (« r2:cours-talons/… ») : affichées par adresse signée (P.photosR2, coque.js) ;
+  // copies Drive (que la base peut ajouter : cours_talons_z_medias_drive) cachées s'il y a au moins autant de photos
+  // Cloudflare (P.photosR2.cacherDrive, js/admin/coque.js, règle du superviseur du 17/11) ; rien n'est supprimé.
+  let signeesR2 = {};
+  const photosDe = (d) => P.photosR2.filtrer((d && Array.isArray(d.photos) ? d.photos : [])
+    .map((c) => (P.photosR2.est(c) ? { r2: true, affiche: signeesR2[c] } : { drive: true, affiche: P.photosR2.estCopieDrive(c) ? c : null })))
+    .map((e) => e.affiche);
   const pasInstallee = P.pasActivee('cours_talons');
   // (14/11/2026) « Mon programme » : les séances de chaque élève (supabase-programme-talons.sql) et son lien personnel
   const programmePasInstalle = P.pasActivee('cours_talons_seances');
@@ -106,6 +112,7 @@
     if (args && args[0] === 'planning') { filtre = 'planning'; history.replaceState(null, '', '#/site/b2-cours-talons'); }
     try {
       lignes = await P.bd(sb.from('cours_talons').select('*').order('cree_le', { ascending: false }).limit(500));
+      signeesR2 = await P.photosR2.adresses(lignes.flatMap((d) => (Array.isArray(d.photos) ? d.photos : [])));
       // (15/11/2026) inscriptions sans photo : leur dossier Drive, s'il est connu (P.drive, js/admin/coque.js)
       dossiersDrive = await P.drive.dossiers(lignes.filter((d) => !photosDe(d).length).map((d) => d.id)).catch(() => ({}));
     } catch (e) {

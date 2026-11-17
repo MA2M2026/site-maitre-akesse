@@ -1600,6 +1600,55 @@ Sans cette variable, le bouton "🗑 Supprimer" du tableau de bord et l'envoi
 de nouvelles photos échouent proprement (message d'erreur explicite), sans
 jamais bloquer le reste du site.
 
+## 📸 Photos des candidatures d'abord chez Cloudflare R2 (16/11/2026, chantier L-17)
+
+Demande de la propriétaire : les photos de « Postuler à un casting » et « Intégrer l'agence » s'affichaient mal
+depuis Google Drive dans l'Administration. Désormais :
+1. **Cloudflare R2 d'abord** (`envoyerPhotosCandidatureR2` dans `js/app.js`, appelée par `envoyerMedias` de
+   `js/formulaire-candidature.js`) : pour chaque photo, `api/r2-presigner.js` action `candidature_signer`
+   (le SERVEUR choisit le nom `candidatures/<id>/<32 caractères au hasard>.jpg|png|webp`, rien n'est public ni listé),
+   envoi direct, puis `candidature_verifier` : le serveur relit le début du fichier (`contenuR2` de `api/_r2.js`,
+   faux fichier effacé) et note lui-même la photo dans `casting_photos` avec `chemin = 'r2:candidatures/…'`.
+   Refusé si la candidature n'existe pas, n'est plus « nouvelle », a plus de 2 h, ou a déjà 12 photos R2 ;
+   60 demandes par adresse IP au plus (`limiteDebit`).
+2. **Copie Google Drive ensuite** (archive, circuit #453 inchangé). Si Cloudflare est en panne, les photos partent
+   dans Drive comme avant ; une photo n'est « manquante » que si elle n'est arrivée NI chez Cloudflare NI dans Drive.
+3. **Administration** (`photosDe` de `js/admin/site-dossiers.js`) : photo `r2:` → adresse signée d'1 heure
+   (action `candidature_lire`, équipe seulement, double vérification) ; chaque ligne est une photo différente (voir 6 :
+   rien n'est caché « au jugé »). Anciennes candidatures (Drive seul) : affichage inchangé. Suppression d'une photo ou d'un dossier :
+   action `candidature_supprimer` (équipe seulement).
+4. **Cours de talons** (même route, demande de la propriétaire du 16/11 15 h 20 : « toutes les photos suivent la même
+   route ») : mêmes actions avec `dossier: 'cours-talons'` → `cours-talons/<numéro>/…`. L'inscription n'existe dans la
+   base qu'APRÈS ses photos : le serveur signe seulement pour un numéro pas encore inscrit, 5 photos au plus (comptées
+   chez Cloudflare) ; la page (`js/cours-talons.js`) met `r2:cours-talons/…` dans `photos` de l'inscription, la base
+   (`supabase-l17-photos-talons.sql`) n'accepte que les photos Cloudflare de CE numéro, et n'y ajoute plus la copie
+   Drive. Base pas encore prête (fichier non collé) : l'inscription repart avec les liens Drive, comme avant.
+   Administration (`js/admin/site-cours-talons.js`) : adresses signées, photos dans l'ordre. Outils partagés de
+   l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est jamais effacée par l'API.
+5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
+   dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
+   rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de
+   `api/_r2.js`) : efface les fichiers de `candidatures/` (après 2 h) et `cours-talons/` (après 7 jours, reprise
+   possible) que plus aucune fiche ne cite ; jamais ailleurs, jamais un fichier cité, rien si la base est illisible.
+6. **Relecture du superviseur (16/11, 22 h 30), corrigée par D** :
+   - la ligne notée par le serveur a une `url` (obligatoire dans `casting_photos`) : `r2:…` en attendant sa copie Drive ;
+   - **règle simple d'affichage** (décision du superviseur, 17/11 02 h 15 ; rien n'est jamais supprimé, aucune liaison
+     par rang) : un dossier a N photos Cloudflare et M copies Drive → si M ≤ N, les copies Drive sont cachées ; si M > N,
+     tout est montré (au pire un doublon, jamais une photo cachée). Une seule fonction : `P.photosR2.cacherDrive`
+     (`js/admin/coque.js`), pour les candidatures et les cours de talons. Ancien programme Google : si TOUTES les photos
+     sont chez Cloudflare, la page ne note aucun lien Drive ; sinon elle les note tous (refus « limite atteinte » non
+     compté). Cours de talons : l'inscription porte les photos Cloudflare si toutes y sont arrivées, sinon les liens
+     Drive (roue de secours gardée par la propriétaire) ;
+   - la vérification accepte la dernière photo permise (le fichier vérifié est déjà compté), mais refuse au-delà ;
+     une réponse de vérification perdue : la même photo est revérifiée, jamais déposée deux fois ;
+   - reprise d'un envoi coupé photo par photo (`suivi` / `surArrivee` de `envoyerPhotosCandidatureR2`) ;
+   - numéro de candidature mis en minuscules dès l'entrée ; format des noms écrit UNE fois (`lirePhotoDossier`,
+     `nouvellePhotoDossier` de `api/_r2.js`) ; effacements par lots (`effacerFichiersR2`, refus signalés) ;
+   - le nettoyage du matin passe APRÈS les relances des mensualités et ne fait jamais tomber la tâche ;
+Pas de nouvelle fonction Vercel (limite de 12) : tout passe par `api/r2-presigner.js`.
+Test : `scripts/tests-visiteur/test-photos-candidature-r2.js` (serveur, candidature FR/EN téléphone/ordinateur,
+Cloudflare en panne, reprise, ancien programme Google, cours de talons, Administration).
+
 ## Photos du Book sur Cloudflare R2 (plus sur Supabase Storage)
 
 Le plan gratuit Supabase limite la bande passante ("Cached Egress") à

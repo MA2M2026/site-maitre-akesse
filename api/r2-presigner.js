@@ -11,8 +11,8 @@
 // R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
 
 
-const { verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal, limiteDebit } = require('./_commun.js');
-const { debutR2, repondreR2, TYPES_IMAGES } = require('./_r2.js');
+const { SUPABASE_URL, enTetesService, extraireIp, creerClientR2, verifierUtilisateur, adminVerifie, cheminSur, noterAuJournal, limiteDebit } = require('./_commun.js');
+const { debutR2, repondreR2, contenuR2, messageFichierFaux, nbFichiersR2, lirePhotoDossier, nouvellePhotoDossier, effacerFichiersR2, TYPES_IMAGES } = require('./_r2.js');
 
 // Autorisation : le propriétaire de la photo (mannequin agissant sur son
 // propre model_id) OU un admin — même règle que le déclencheur SQL
@@ -33,9 +33,153 @@ async function autoriser(jeton, modelId, appareil) {
 // donc remplir le stockage en contournant le site.
 const TAILLE_MAX = 15 * 1024 * 1024;
 
+
+// =====================================================================================================
+// (16/11/2026, chantier L-17, demande de la propriétaire) PHOTOS DES CANDIDATURES (« Postuler à un casting »,
+// « Intégrer l'agence ») : d'abord chez Cloudflare R2, l'Administration les affiche depuis R2 ; la copie Google
+// Drive (archive) part ensuite comme avant. Avant : Drive seulement, et Google ne servait pas les photos de façon
+// fiable à l'Administration (elles apparaissaient puis disparaissaient).
+//  - « candidature_signer » (visiteur, SANS compte) : adresse d'envoi d'UNE image vers candidatures/<id>/<nom
+//    aléatoire> — nom choisi par le serveur, jamais par la page ; seulement pour une candidature « nouvelle » de
+//    moins de 2 h, moins de 12 photos, et un nombre de demandes limité par adresse.
+//  - « candidature_verifier » (visiteur) : relit le fichier (vraie image, sinon effacé) et c'est LE SERVEUR qui note
+//    la photo dans casting_photos (chemin « r2:candidatures/… »).
+//  - (16/11 15 h 25) avec « dossier: 'cours-talons' » : mêmes actions pour les COURS DE TALONS (cours-talons/<id>/,
+//    numéro pas encore inscrit, 5 photos au plus, la page met la photo dans l'inscription ; la base la contrôle).
+//  - « candidature_lire » / « candidature_supprimer » (équipe connectée, double authentification) : adresses de
+//    lecture signées d'1 heure (les photos des candidates ne sont jamais servies en accès libre), suppression au clic.
+// =====================================================================================================
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TYPES_CANDIDATURE = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const PHOTOS_MAX_CANDIDATURE = 12;
+// (L-17, élargi le 16/11 15 h 25) les COURS DE TALONS suivent la même route, dossier « cours-talons/<id>/ »
+const DOSSIERS_PHOTOS = { candidatures: 'candidatures', 'cours-talons': 'cours-talons' };
+const PHOTOS_MAX_TALONS = 5;
+// (format unique : lirePhotoDossier, api/_r2.js)
+const cheminCandidature = (id, chemin, dossier) => { const p = lirePhotoDossier(chemin); return !!p && p.dossier === dossier && p.id === id; };
+
+// Inscription au cours de talons : elle n'est enregistrée dans la base qu'APRÈS ses photos. Des photos seulement
+// pour un numéro pas encore inscrit, 5 au plus (comptées chez Cloudflare). Renvoie un message d'erreur, ou null.
+// (relecture du superviseur, 22 h 30) dejaDepose = 1 à la VÉRIFICATION : le fichier vérifié est déjà déposé, donc déjà
+// compté ; avant, la dernière photo permise (la 5ᵉ des talons, la 12ᵉ d'une candidature) était toujours refusée. On
+// garde quand même la limite (strictement plus de fichiers que permis : refusé), sinon des adresses d'envoi demandées
+// d'avance permettraient de noter plus de photos que permis.
+async function talonsOuverte(id, dejaDepose = 0) {
+  const [inscrites, objets] = await Promise.all([
+    fetch(SUPABASE_URL + '/rest/v1/cours_talons?select=id&id=eq.' + id, { headers: enTetesService() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    nbFichiersR2('cours-talons/' + id + '/')
+  ]);
+  if (!Array.isArray(inscrites) || objets === null) return 'Vérification impossible pour le moment : réessayez dans un instant.';
+  if (inscrites.length) return 'Cette inscription ne reçoit plus de photos.';
+  if (objets - dejaDepose >= PHOTOS_MAX_TALONS) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_TALONS + ').';
+  return null;
+}
+
+// La candidature peut-elle encore recevoir des photos ? Renvoie un message d'erreur, ou null.
+async function candidatureOuverte(id, dejaDepose = 0) {
+  const lire = (url) => fetch(SUPABASE_URL + '/rest/v1/' + url, { headers: enTetesService() }).then((r) => (r.ok ? r.json() : null));
+  // (relecture de D) on compte les fichiers DÉJÀ DÉPOSÉS sous candidatures/<id>/, vérifiés ou non : un envoi sans
+  // vérification ne permet donc pas de remplir le stockage (le nettoyage du matin efface ensuite les non cités)
+  const [dossiers, deposes] = await Promise.all([
+    lire('casting_applications?select=id,status,created_at&id=eq.' + id),
+    nbFichiersR2('candidatures/' + id + '/')
+  ]);
+  if (!Array.isArray(dossiers) || deposes === null) return 'Vérification impossible pour le moment : réessayez dans un instant.';
+  const d = dossiers[0];
+  if (!d || d.status !== 'nouvelle' || Date.now() - new Date(d.created_at).getTime() > 2 * 3600 * 1000) return 'Cette candidature ne reçoit plus de photos.';
+  if (deposes - dejaDepose >= PHOTOS_MAX_CANDIDATURE) return 'Nombre maximum de photos atteint (' + PHOTOS_MAX_CANDIDATURE + ').';
+  return null;
+}
+
+async function photoCandidature(req, res, debut) {
+  const { action, candidature, chemin, chemins, contentType, taille } = debut.corps;
+  try {
+    if (action === 'candidature_lire' || action === 'candidature_supprimer') {
+      const utilisateur = await verifierUtilisateur(debut.jeton);
+      if (!utilisateur || !(await adminVerifie(debut.jeton, utilisateur, req.headers['x-appareil']))) {
+        res.status(403).json({ error: 'Réservé à l’équipe de l’agence.' }); return;
+      }
+      const liste = (Array.isArray(chemins) ? chemins : [chemin]).filter((c) => { const p = lirePhotoDossier(c);
+        return !!p && (action === 'candidature_lire' || p.dossier === 'candidatures'); });  // (cours de talons : lecture seulement)
+      if (!liste.length || liste.length > 200) { res.status(400).json({ error: 'Photos invalides.' }); return; }
+      const { GetObjectCommand } = require('@aws-sdk/client-s3');
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      const client = creerClientR2(), bucket = process.env.R2_BUCKET_NAME;
+      if (action === 'candidature_supprimer') {
+        // (sécurité) on n'efface QUE des fichiers que plus aucune fiche ne cite : la fiche a d'abord été supprimée
+        // dans la base par un clic de l'agence (droits de la base) ; un appel direct ne peut rien effacer d'autre.
+        const cites = await fetch(SUPABASE_URL + '/rest/v1/casting_photos?select=chemin&chemin=in.(' + liste.map((c) => '"r2:' + c + '"').join(',') + ')', { headers: enTetesService() });
+        const lignes = cites.ok ? await cites.json() : null;
+        if (!Array.isArray(lignes)) { res.status(503).json({ error: 'Vérification impossible pour le moment.' }); return; }
+        if (lignes.length) { res.status(409).json({ error: 'Photo encore présente dans un dossier : rien n’a été effacé.' }); return; }
+        const refuses = await effacerFichiersR2(liste);
+        if (refuses.length) { res.status(502).json({ error: 'Le stockage n’a pas effacé ' + refuses.length + ' photo(s) : réessayez.' }); return; }
+        res.status(200).json({ ok: true }); return;
+      }
+      const adresses = {};
+      for (const c of liste) adresses[c] = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: c }), { expiresIn: 3600 });
+      res.status(200).json({ adresses }); return;
+    }
+    // ---- visiteur sans compte ----
+    if (typeof candidature !== 'string' || !UUID.test(candidature)) { res.status(400).json({ error: 'Candidature inconnue.' }); return; }
+    // (relecture du superviseur, 22 h 30) numéro en minuscules DÈS L'ENTRÉE : un numéro « en majuscules » ouvrait un
+    // second dossier, invisible du plafond et du nettoyage du matin (format unique : api/_r2.js)
+    const id = candidature.toLowerCase();
+    const nomDossier = debut.corps.dossier || 'candidatures';
+    const dossier = typeof nomDossier === 'string' && Object.prototype.hasOwnProperty.call(DOSSIERS_PHOTOS, nomDossier) ? DOSSIERS_PHOTOS[nomDossier] : null;
+    if (!dossier) { res.status(400).json({ error: 'Dossier inconnu.' }); return; }
+    if (action !== 'candidature_signer' && action !== 'candidature_verifier') { res.status(400).json({ error: 'Action inconnue.' }); return; }
+    if (await limiteDebit(res, 'r2-candidature', extraireIp(req) || 'inconnue', 60)) return;
+    const dejaDepose = action === 'candidature_signer' ? 0 : 1;  // (vérification : le fichier est déjà déposé et compté)
+    const fermee = dossier === 'cours-talons' ? await talonsOuverte(id, dejaDepose) : await candidatureOuverte(id, dejaDepose);
+    if (fermee) { res.status(fermee.startsWith('Vérification') ? 503 : 403).json({ error: fermee }); return; }
+    if (action === 'candidature_signer') {
+      const extension = TYPES_CANDIDATURE[contentType];
+      if (!extension) { res.status(400).json({ error: 'Format de photo non accepté (JPEG, PNG ou WebP).' }); return; }
+      if (!Number.isInteger(taille) || taille <= 0 || taille > TAILLE_MAX) { res.status(400).json({ error: 'Photo trop lourde ou taille inconnue.' }); return; }
+      const cle = nouvellePhotoDossier(dossier, id, extension);
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      const uploadUrl = await getSignedUrl(creerClientR2(), new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: cle, ContentType: contentType, ContentLength: taille }), { expiresIn: 300 });
+      res.status(200).json({ uploadUrl, chemin: cle }); return;
+    }
+    if (action === 'candidature_verifier') {
+      if (!cheminCandidature(id, chemin, dossier)) { res.status(400).json({ error: 'Photo invalide.' }); return; }
+      const type = Object.keys(TYPES_CANDIDATURE).find((t) => chemin.endsWith('.' + TYPES_CANDIDATURE[t]));
+      const etat = await contenuR2(chemin, type);
+      if (etat === 'faux') { res.status(422).json({ error: messageFichierFaux(type), refuse: true }); return; }
+      if (etat === 'absent') { res.status(404).json({ error: 'Photo introuvable : renvoyez-la.' }); return; }  // (relecture de D : rien de noté)
+      // cours de talons : la page met la photo dans l'inscription (« r2:cours-talons/… », contrôlé par la base)
+      if (dossier === 'cours-talons') { res.status(200).json({ ok: true, verifie: etat === 'ok' }); return; }
+      // même photo vérifiée deux fois (reprise après une coupure) : déjà notée, rien à refaire
+      const deja = await fetch(SUPABASE_URL + '/rest/v1/casting_photos?select=id&application_id=eq.' + id + '&chemin=eq.' + encodeURIComponent('r2:' + chemin), { headers: enTetesService() });
+      const lignesDeja = deja.ok ? await deja.json() : null;
+      if (!Array.isArray(lignesDeja)) { res.status(503).json({ error: 'Vérification impossible pour le moment : réessayez dans un instant.' }); return; }
+      if (!lignesDeja.length) {
+        const note = await fetch(SUPABASE_URL + '/rest/v1/casting_photos', {
+          method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          // (relecture du superviseur, 22 h 30) « url » est obligatoire dans casting_photos (text not null) : sans elle,
+          // CHAQUE photo était refusée. On y met le nom de rangement « r2:… » (unique par dossier) ; l'Administration
+          // reconnaît ces photos par leur CHEMIN.
+          body: JSON.stringify({ application_id: id, url: 'r2:' + chemin, chemin: 'r2:' + chemin })
+        });
+        const erreur = note.ok ? null : await note.json().catch(() => ({}));
+        if (erreur && erreur.code !== '23505') { res.status(500).json({ error: 'Photo envoyée mais non enregistrée : la copie de sauvegarde suit.' }); return; }
+      }
+      res.status(200).json({ ok: true, verifie: etat === 'ok' }); return;
+    }
+    res.status(400).json({ error: 'Action inconnue.' });
+  } catch (e) {
+    console.error('r2-presigner (candidature) :', e);
+    await noterAuJournal('[Photos des candidatures] ' + ((e && e.message) || e), 'r2-presigner', '/api/r2-presigner').catch(() => {});
+    res.status(500).json({ error: 'Envoi impossible pour le moment.' });
+  }
+}
+
 module.exports = async function handler(req, res) {
   const debut = debutR2(req, res); // POST + variables d'environnement (api/_r2.js)
   if (!debut) return;
+  if (typeof debut.corps.action === 'string' && debut.corps.action.startsWith('candidature_')) return photoCandidature(req, res, debut);  // (L-17)
   const jeton = debut.jeton;
   const { action, modelId, chemin, contentType, taille } = debut.corps;
 

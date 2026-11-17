@@ -108,6 +108,7 @@
       piste.appendChild(c);
     });
     piste.style.setProperty('--duree', (premiere.length * 4.5) + 's');
+    piste.classList.add('roule'); // la copie est là : la bande peut tourner (css/luxe.css)
     // seulement à l'écran et dans un onglet visible (sinon la bande s'arrête)
     const jouer = (oui) => { piste.style.animationPlayState = oui && !document.hidden ? 'running' : 'paused'; };
     let visible = true;

@@ -23,6 +23,45 @@
   // un dossier sans photo affiche « Photos dans Drive », le lien du dossier s'il est connu, et le bouton « Récupérer
   // les photos depuis Drive » (la base demande au programme Google de retrouver le dossier et d'y rattacher les
   // photos : medias_drive_relancer, supabase-medias-drive.sql). source : 'candidature' ou 'cours_talons'.
+  // (16/11/2026, L-17) photos des candidatures et des cours de talons rangées chez Cloudflare R2 (« r2:… ») :
+  // adresses de lecture signées d'1 heure demandées au serveur (api/r2-presigner.js), suppression au clic.
+  // Partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
+  P.photosR2 = {
+    est: (c) => typeof c === 'string' && /^r2:(candidatures|cours-talons)\//.test(c),
+    // (relecture du superviseur, 17/11 02 h 15 : règle simple, rien n'est jamais supprimé) N photos Cloudflare et M copies
+    // Drive dans un même dossier : si M ≤ N, les copies Drive sont cachées (ce sont des copies) ; si M > N, tout est
+    // montré (au pire un doublon, jamais une photo cachée). Partagé par les candidatures et les cours de talons.
+    cacherDrive: (nbR2, nbDrive) => nbR2 > 0 && nbDrive <= nbR2,
+    // copie Drive : un lien https sans chemin de stockage (une seule définition, règle n° 5)
+    estCopieDrive: (lien, chemin) => !chemin && typeof lien === 'string' && /^https:\/\/[^\s"<>]+$/.test(lien),
+    // (dernière passe du superviseur, 17/11 03 h) photos d'UN dossier → celles à montrer. elements : [{ r2, drive,
+    // affiche }]. N ne compte que les photos Cloudflare qui ont reçu leur adresse signée : si le serveur de photos est
+    // injoignable, les copies Drive s'affichent (la galerie n'est jamais vide). Partagé par les deux pages.
+    filtrer(elements) {
+      const n = elements.filter((e) => e.r2 && e.affiche).length, m = elements.filter((e) => e.drive).length;
+      const cacher = P.photosR2.cacherDrive(n, m);
+      return elements.filter((e) => e.affiche && !(e.drive && cacher));
+    },
+    async appel(corps) {
+      const jeton = await jetonSessionCourante();
+      const rep = await fetch('/api/r2-presigner', { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify(corps) });
+      const r = await rep.json().catch(() => ({}));
+      if (!rep.ok) throw new Error(r.error || 'Photos indisponibles pour le moment.');
+      return r;
+    },
+    // chemins « r2:… » → { chemin: adresse signée } (serveur injoignable : ces photos ne s'affichent pas cette fois)
+    async adresses(chemins) {
+      const liste = [...new Set(chemins.filter(P.photosR2.est).map((c) => c.slice(3)))], adresses = {};
+      for (let i = 0; i < liste.length; i += 200) {
+        try { Object.assign(adresses, (await P.photosR2.appel({ action: 'candidature_lire', chemins: liste.slice(i, i + 200) })).adresses || {}); }
+        catch (e) { /* rien n'est perdu */ }
+      }
+      const parChemin = {};
+      Object.keys(adresses).forEach((c) => { parChemin['r2:' + c] = adresses[c]; });
+      return parChemin;
+    },
+    supprimer: (chemins) => P.photosR2.appel({ action: 'candidature_supprimer', chemins: chemins.filter(P.photosR2.est).map((c) => c.slice(3)) })
+  };
   P.drive = {
     // identifiant du dossier Drive de chaque référence (ceux connus de la base), { ref: idDossier }
     async dossiers(refs) {
