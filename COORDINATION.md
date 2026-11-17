@@ -633,6 +633,17 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 🏁 C (17/11, 12 h 20) — L-18 TERMINÉ : PROGRAMME GOOGLE À JOUR + ANCIENNES PHOTOS RAPATRIÉES
+- Programme Google : la propriétaire a collé la nouvelle version (« Gérer les déploiements » → Nouvelle version,
+  **version 12 du 17/11 11 h 09**, même adresse AKfycbxzPeaT… que le site). Vu sur sa capture d'écran.
+- « Rapatrier les anciennes photos » (Drive et transferts) cliqué : vérifié en lecture seule dans la base :
+  **6 candidatures / 20 photos** copiées chez Cloudflare (0 restante) et **4 inscriptions aux cours de talons**
+  (0 restante). Aucune erreur du rattrapage au journal.
+- Vu au passage (sans rapport) : 11 h 11, « HEAD codes_inscription → 400 » sur la page « Toute la tuile » (Réglages) :
+  un comptage qui échoue, à regarder plus tard.
+- Prochain chantier décidé par la propriétaire, sans pression : étiquette « À vérifier » sur les envois arrivés sans
+  vérification anti-robots. Prévenir la candidate refusée à 08 h 19 qu'elle peut renvoyer.
+
 ## ✅ C (17/11, 11 h 40) — L-18 + ANTI-ROBOTS EN LIGNE (PR #456, main = 5999b208)
 - SQL `supabase-l18-supprimer-talons.sql` collé par la propriétaire AVANT la mise en ligne, contrôle « 6 éléments sur 6 »,
   vérifié en lecture seule (droit DELETE, 2 déclencheurs, relance horaire).
