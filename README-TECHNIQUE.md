@@ -1286,7 +1286,7 @@ mannequins, ils sont gardés 5 minutes par le serveur : un casting fermé peut r
 ## 📝 À faire plus tard (demandé par la propriétaire — à lui rappeler)
 
 - ✅ **Nettoyer les anciennes copies de photos sur Supabase Storage** : fait le 30/09/2026 —
-  outil « Vérifier et nettoyer » (Administration › Outils, `js/nettoyage-supabase.js`) pour les
+  outil « Vérifier et nettoyer » (`js/nettoyage-supabase.js`, retiré le 17/11/2026 : travail terminé) pour les
   images du site et les anciennes photos de dossiers. Les photos des mannequins (`model-photos`)
   restent exclues par décision de la propriétaire (30/09) : ne les ajouter que si elle le demande.
 - ✅ **Sécurité de l'Administration B+ → A+** (24/10/2026) : règle `/(admin|app)/(.*)` de vercel.json (aussi l'application des mannequins),
@@ -4344,11 +4344,13 @@ Les étiquettes « À vérifier » ne concernent que `casting_applications` et `
 aussi notées sur un envoi recommencé (23505), et s'affichent aussi dans le mode Étudier. Les vidéos restent
 rangées dans Google Drive (décision de la propriétaire : pas de passage chez Cloudflare). Essai :
 `test-nouvelle-admin-castings.js` (taille, plein écran, sortie).
-**Plus aucun effacement automatique (17/11/2026, décision de la propriétaire)** : `supabase-sans-effacement-auto.sql`
-(collé, « 3 sur 3 ») vide `nettoyer_photos_traitees_anciennes` (retirait chaque nuit, et par le bouton « Lancer le
-nettoyage maintenant », les photos des candidatures Retenue/Refusée depuis 5 jours et des inscriptions payées/annulées)
-et `effacer_anciennes_candidatures` (supprimait les dossiers refusés après 30 jours, les autres après 6 mois) : les deux
-renvoient 0 et leurs tâches de nuit sont retirées. C'était la vraie cause des « photos qui ne s'affichent pas » des
+**Plus aucun effacement automatique, sauf la règle des 2 ans (17/11/2026, décisions de la propriétaire)** :
+`supabase-sans-effacement-auto.sql` vide `nettoyer_photos_traitees_anciennes` (retirait chaque nuit, et par le bouton
+« Lancer le nettoyage maintenant », les photos des candidatures Retenue/Refusée depuis 5 jours et des inscriptions
+payées/annulées : elle renvoie 0, plus de tâche de nuit). `effacer_anciennes_candidatures` (dossiers refusés après
+30 jours, les autres après 6 mois) devient la SEULE règle automatique, conforme à la politique de confidentialité :
+candidature refusée ou inscription annulée effacée 2 ans après la réponse (tâche `effacement-candidatures-2-ans`, 3 h 30).
+Les définitions d'origine de `supabase-extension.sql` sont neutralisées (recoller ce fichier ne les ramène plus). C'était la vraie cause des « photos qui ne s'affichent pas » des
 anciennes candidatures. La rubrique « Nettoyage des photos » et l'outil `js/nettoyage-supabase.js` (ponctuel, 30/09)
 sont retirés de l'Administration. Un dossier ne part plus que par « Supprimer ce dossier ». Essais :
 `essais-sans-effacement-auto.sql`, `test-nouvelle-admin-outils.js`.

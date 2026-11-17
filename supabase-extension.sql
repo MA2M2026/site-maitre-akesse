@@ -2735,48 +2735,10 @@ create trigger trg_statut_change_at_inscription
 -- Fonction de nettoyage — appelable manuellement (bouton du tableau de bord,
 -- utile pour tester) ET planifiée automatiquement ci-dessous. Renvoie le
 -- nombre de photos supprimées, pour un affichage honnête du résultat.
+-- (17/11/2026, décision de la propriétaire) les photos des dossiers traités ne sont PLUS retirées : la fonction reste
+-- (sans effet) pour les anciens appels, plus aucune tâche de nuit. Voir supabase-sans-effacement-auto.sql.
 create or replace function nettoyer_photos_traitees_anciennes()
-returns integer
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  total integer := 0;
-  n integer;
-begin
-  delete from casting_photos
-  where application_id in (
-    select id from casting_applications
-    where status in ('retenue', 'refusée')
-      and statut_change_at < now() - interval '5 days'
-  );
-  get diagnostics n = row_count;
-  total := total + n;
-
-  delete from inscriptions_photos
-  where inscription_id in (
-    select id from inscriptions_mannequins
-    where statut in ('payée', 'annulée')
-      and statut_change_at < now() - interval '5 days'
-  );
-  get diagnostics n = row_count;
-  total := total + n;
-
-  return total;
-end;
-$$;
-
--- Planification automatique quotidienne (nécessite l'extension pg_cron,
--- disponible sur Supabase). Si votre projet ne l'autorise pas, cette
--- dernière instruction échouera seule — tout le reste ci-dessus reste
--- valable, et le bouton manuel du tableau de bord fonctionnera quand même.
-create extension if not exists pg_cron;
-select cron.schedule(
-  'nettoyage-photos-traitees',
-  '0 3 * * *',
-  $$select nettoyer_photos_traitees_anciennes();$$
-);
+returns integer language sql security definer set search_path = public as $$ select 0 $$;
 
 NOTIFY pgrst, 'reload schema';
 
@@ -5080,31 +5042,10 @@ NOTIFY pgrst, 'reload schema';
 -- ===================================================================
 update casting_applications set status = 'en étude' where status = 'vue';
 
-create or replace function effacer_anciennes_candidatures()
-returns integer
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  n integer;
-begin
-  delete from casting_applications
-  where (status = 'refusée' and statut_change_at < now() - interval '30 days')
-     or (status <> 'refusée' and statut_change_at < now() - interval '6 months');
-  get diagnostics n = row_count;
-  return n;
-end;
-$$;
-revoke all on function effacer_anciennes_candidatures() from public, anon, authenticated;
-
--- Chaque nuit à 3 h 30 (même principe que le nettoyage des photos traitées).
-create extension if not exists pg_cron;
-select cron.schedule(
-  'effacement-anciennes-candidatures',
-  '30 3 * * *',
-  $$select effacer_anciennes_candidatures();$$
-);
+-- (17/11/2026, décision de la propriétaire) l effacement automatique des candidatures (refusées après 30 jours,
+-- autres après 6 mois) est remplacé par UNE seule règle conforme à la politique de confidentialité (candidature
+-- refusée effacée 2 ans après la réponse) : effacer_anciennes_candidatures et sa tâche de nuit sont dans
+-- supabase-sans-effacement-auto.sql (à coller APRÈS ce fichier).
 
 NOTIFY pgrst, 'reload schema';
 

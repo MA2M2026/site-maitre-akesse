@@ -57,7 +57,7 @@ const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && 
     ok(/PHOTOS DU BOOK\s*\d+/i.test(await p.innerText('.cartes-pilotage')) && /rangées dans Google Drive/.test(await p.textContent('#contenu')), n + 'drive : chiffres réels, rien d’inventé');
 
     // 4. (17/11/2026, décision de la propriétaire) plus de rubrique « Nettoyage des photos » : rien n'est retiré automatiquement
-    await p.goto(URL_ADMIN + '#/site/tuile-reglages'); await p.waitForTimeout(1500);
+    await p.goto(URL_ADMIN + '#/site/tuile-reglages'); await p.waitForFunction(() => /Drive et transferts/.test(document.querySelector('#contenu')?.textContent || ''), null, { timeout: 15000 });
     ok(!/Nettoyage des photos/.test(await p.textContent('body')) && !(await p.$('[data-action="nettoyer-traitees"], #nettoyage-supabase-btn')), n + 'plus de rubrique « Nettoyage des photos » ni de bouton de nettoyage');
 
     // 5. Erreurs du site (écran partagé) : classées par gravité, copie pour Claude, « Réglé, effacer »

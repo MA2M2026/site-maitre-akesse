@@ -118,7 +118,6 @@ function donnees(role) {
         { code: 'MA2M-VIEUX1', utilise: false, created_at: '2026-09-01T10:00:00Z', candidature: null },
         { code: 'MA2M-FAIT01', utilise: true, utilise_le: '2026-10-05T10:00:00Z', created_at: '2026-09-20T10:00:00Z', candidature_id: 'c1', candidature: { full_name: 'AWA KONÉ' } }];
       d.rpc.casting_direct_creer = () => ({ code: 'MA2M-DIRECT' });
-      d.rpc.nettoyer_photos_traitees_anciennes = 3;
       d.rpc.cachet_payer = (x) => { const c = d.tables.cachets_mannequins.find((l) => l.id === x.p_id); if (c) Object.assign(c, { statut: 'paye', compte_id: x.p_compte, reference_wave: x.p_reference, paye_le: new Date().toISOString(), mode: 'wave_manuel' }); return 'e-1'; };
       d.rpc.cachet_annuler = (x) => { const c = d.tables.cachets_mannequins.find((l) => l.id === x.p_id); if (c) Object.assign(c, { statut: 'annule', motif_annulation: x.p_motif }); return null; };
       const ilYa = (h) => new Date(Date.now() - h * 3600e3).toISOString();
