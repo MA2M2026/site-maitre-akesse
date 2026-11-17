@@ -215,10 +215,10 @@
     const plus = count > dossiers.length ? '<button type="button" class="btn" data-action="dossiers-plus" data-source="' + source + '">Voir plus (' + (count - dossiers.length) + ' de plus)</button>' : '';
     // (11/11/2026, maquette validée) étudier une à une, en grand ; (12/11/2026, « Les 2 » de la propriétaire) pour
     // CHAQUE filtre (Nouvelles, Retenues, Refusées, À revoir, En attente, Toutes), pas seulement les nouvelles
-    const aEtudier = e.filtre === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[e.filtre] || 0);
     // (17/11/2026, demande de la propriétaire) candidatures : plus de bouton « Étudier », la fiche a désormais le même
-    // affichage en grand (ficheCandidature) ; il reste pour les demandes recruteurs
-    const etudier = source === 'casting' ? '' : boutonEtude(source, e.filtre, aEtudier);
+    // affichage en grand (ficheCandidature) ; il reste pour les demandes recruteurs. L'écran d'étude des candidatures
+    // est GARDÉ exprès (joignable par #/site/b2-candidatures/etude), au cas où la propriétaire le redemande.
+    const etudier = source === 'casting' ? '' : boutonEtude(source, e.filtre, e.filtre === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[e.filtre] || 0));
     // (15/11/2026, « premium partout ») les chiffres en carte façon carte bancaire (P.carteHero, js/admin/coque.js)
     const hero = P.carteHero ? P.carteHero({ titre: String(conf.titre).toUpperCase(), grand: String(total), unite: total > 1 ? 'dossiers' : 'dossier',
       tuiles: conf.statuts.filter((k) => !conf.aPart.includes(k)).slice(0, 3).map((k) => [nb[k] || 0, String(conf.libelles[k]).toLowerCase()]) }) : '';
@@ -338,31 +338,36 @@
       '<button type="button" class="btn rouge" data-action="dossier-code-creer">La personne veut s’inscrire : créer son code</button>';
     return '<section class="carte code-zone"><h2>Code d’inscription</h2>' + corps + '</section>';
   }
+  // (16/11/2026, demande de la propriétaire) supprimer (vieux messages d'essai…) : administratrice principale seulement,
+  // avec confirmation ; la base l'impose aussi (supabase-suppression-messages.sql). Partagé par les deux fiches.
+  function blocSupprimer(conf) {
+    return P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier' + (conf.photos ? ' et ses photos enregistrées sur le site ; son dossier Google Drive va à la corbeille de Drive (récupérable 30 jours)' : '') + '.</p>' +
+      '<button type="button" class="btn" data-action="dossier-supprimer">🗑 Supprimer ce dossier</button></section>' : '';
+  }
+  const retourListe = (conf) => '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>';
   // (17/11/2026, demande de la propriétaire : « très esthétique, très élégant, qui donne envie de lire ») la fiche d'une
   // candidature reprend l'affichage du mode Étudier : grande photo qui défile, nom et informations en bas, puis le
   // dossier en dessous comme une page de magazine. Sur ordinateur : la photo à gauche reste en place, le dossier à droite.
   const ENCART_A_VERIFIER = () => '<section class="carte a-verifier"><h2>' + ETIQUETTE_A_VERIFIER() + '</h2><p class="doux">Envoyé sans la vérification anti-robots : le téléphone n’a pas pu la charger. C’est souvent une vraie personne, mais regardez le dossier avant d’y donner suite.</p>' +
     '<button type="button" class="btn petit" data-action="dossier-a-verifier-ok">✓ C’est une vraie personne</button></section>';
   async function ficheCandidature(d, douteux) {
-    const conf = SOURCES.casting, h = await hautCandidature(d), statut = d[conf.champStatut];
-    const age = ageDe(d), type = typeDe(d);
-    const sous = [age !== null ? age + ' ans' : '', type, 'reçue le ' + P.dateEtHeure(d.created_at)];
-    return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
+    const conf = SOURCES.casting, h = await hautCandidature(d, true), statut = d[conf.champStatut];
+    return retourListe(conf) + '<h1 class="sr-only">' + P.esc(h.nom) + '</h1>' +
       '<div class="fiche-luxe">' +
-      '<div class="fiche-luxe-portrait">' + P.etude.haut(h.diapos, h.nom, sous) +
+      '<div class="fiche-luxe-portrait">' + P.etude.haut(h.diapos, h.nom, h.sous) +
         '<div class="fiche-luxe-etiquettes">' + P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + '</div>' +
         P.etude.infos(h.infos, h.lien) +
         (d.message ? '<blockquote class="fiche-luxe-mot">« ' + P.esc(d.message) + ' »</blockquote>' : '') +
       '</div>' +
       '<div class="fiche-luxe-dossier">' + (douteux ? ENCART_A_VERIFIER() : '') +
-        blocStatut('casting') + blocWhatsApp('casting') + (await blocCode()) + (await blocMessagesEnvoyes(d.id)) +
+        blocStatut('casting') + (await blocCode()) + blocWhatsApp('casting') + (await blocMessagesEnvoyes(d.id)) +
         '<section class="carte fiche-luxe-infos"><h2>Informations</h2>' + blocChamps('casting', d) + '</section>' +
         blocVideo(d) +
         (fiche.photos.length ? '<section class="carte"><h2>Toutes les photos</h2>' + blocPhotos('casting') + '</section>' : blocPhotos('casting')) +
-        (P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier et ses photos enregistrées sur le site ; son dossier Google Drive va à la corbeille de Drive (récupérable 30 jours).</p>' +
-          '<button type="button" class="btn" data-action="dossier-supprimer">🗑 Supprimer ce dossier</button></section>' : '') +
+        blocSupprimer(conf) +
       '</div></div>';
   }
+
 
 
   async function pageFiche(source, id) {
@@ -378,7 +383,7 @@
     if (source === 'casting') return ficheCandidature(d, douteux);
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
-    return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
+    return retourListe(conf) +
       '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h1>' +
       '<p class="doux">' + P.esc(conf.reçue + P.dateEtHeure(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
@@ -390,8 +395,7 @@
       (source === 'recruteur' ? await blocMannequinsChoisis() : '') +
       // (16/11/2026, demande de la propriétaire) supprimer (vieux messages d'essai…) : administratrice principale
       // seulement, avec confirmation ; la base l'impose aussi (supabase-suppression-messages.sql)
-      (P.moi && P.moi.role === 'principal' ? '<section class="carte zone-danger"><h2>Supprimer</h2><p class="doux petit-texte">Supprime définitivement ce dossier' + (conf.photos ? ' et ses photos enregistrées sur le site ; son dossier Google Drive va à la corbeille de Drive (récupérable 30 jours)' : '') + '.</p>' +
-      '<button type="button" class="btn" data-action="dossier-supprimer">🗑 Supprimer ce dossier</button></section>' : '') + '</div></div>';
+      blocSupprimer(conf) + '</div></div>';
   }
   function apresFiche() {
     if (!fiche) return;
@@ -527,12 +531,14 @@
   P.actions['etude-demarrer'] = async (el) => { const source = el.dataset.source || 'casting'; await chargerEtude(source); location.hash = '#/site/' + SOURCES[source].page + '/etude'; };
   P.actions['etude-suivant'] = () => { if (P.etat.etude) P.etat.etude.i += 1; return P.afficher(); };
   // le haut de l'étude (photos qui défilent + nom) et les petites étiquettes, propres à chaque rubrique
-  async function hautCandidature(d) {
-    fiche.photos = (await photosDe(SOURCES.casting, [d.id]).catch(() => ({})))[d.id] || [];
+  // dansFiche (17/11) : la fiche a déjà chargé les photos (fiche.photos) et affiche l'étiquette « À vérifier » dans
+  // son propre encart : rien n'est rechargé, l'étiquette n'est pas répétée sous la photo
+  async function hautCandidature(d, dansFiche) {
+    if (!dansFiche) fiche.photos = (await photosDe(SOURCES.casting, [d.id]).catch(() => ({})))[d.id] || [];
     P.etude.galerie = fiche.photos.map((x) => x.affiche);
     const age = ageDe(d), mineur = age !== null && age < 18;
     const video = estVideoDrive(d.video_url);
-    const douteux = (await aVerifier([d.id]).catch(() => new Set())).has(d.id);   // (17/11) aussi dans l'étude
+    const douteux = !dansFiche && (await aVerifier([d.id]).catch(() => new Set())).has(d.id);   // (17/11) aussi dans l'étude
     return {
       diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
       nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + P.dateEtHeure(d.created_at)],
@@ -627,6 +633,8 @@
   async function rechargerPhotos(message) {
     const conf = SOURCES[fiche.source];
     fiche.photos = (await photosDe(conf, [fiche.d.id]))[fiche.d.id] || [];
+    // (17/11) fiche d'une candidature : la grande photo en tête suit aussi (galerie de l'agrandissement comprise)
+    if (document.querySelector('.fiche-luxe')) { await P.afficher(); if (message) { const m = document.getElementById('dos-photo-msg'); if (m) m.textContent = message; } return; }
     const zone = document.querySelector('.galerie-dossier');
     if (zone) zone.outerHTML = blocPhotos(fiche.source);
     if (message) document.getElementById('dos-photo-msg').textContent = message;
