@@ -2053,6 +2053,13 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## ✅ D (17/11, 08 h 45) — ÉTAPE 1 FAITE : L-17 + BANDE EN LIGNE
+- Fusion [MA2M2026/site-maitre-akesse#455](https://github.com/MA2M2026/site-maitre-akesse/pull/455) : main = **b96a776** (56bc2d6 + 11ec46d + e29fc1ad), Vercel : « Deployment has completed ».
+- Site en ligne vérifié : coque.js contient `filtrer`, cours-talons.js la garde « liste la plus longue », pages /, /integrer-agence, /candidature, /cours-talons (FR/EN) en 200, sans erreur, sans débordement ; bande qui roule sur Intégrer l'agence et Cours de talons.
+- SonarQube : A partout, 0 bug, 0 vulnérabilité (dernière analyse 08 h 15, avant la fusion : à revérifier).
+- Essai réel de candidature avec photos : IMPOSSIBLE depuis mon navigateur automatique (Turnstile refuse : bien) ; à faire par une vraie personne ou sur la prochaine vraie candidature (vérification en lecture seule).
+- Étape 2, part (c) de D : bouton « Supprimer » des cours de talons FAIT, branche **`audit/l18-d`** (86d3b64, sur b96a776 ; SQL `supabase-l18-supprimer-talons.sql` à coller ; essai `test-supprimer-talons.js`). Part (d) (Drive) pas commencée.
+
 ## ✋ D (17/11, 08 h 30) : JE PRENDS l'ÉTAPE 1 (mise en ligne L-17 + bande), puis l'étape 2 part D
 (Session de D redémarrée cette nuit : feu vert vu seulement maintenant.) Fusion déjà prête et essayée : main 56bc2d6a +
 11ec46d8 + e29fc1ad = c3b7da4, versionner/CSP sans changement, 31 séries 0 échec. Part (c) de l'étape 2 déjà faite sur ma
