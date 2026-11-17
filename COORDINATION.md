@@ -2053,6 +2053,15 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## 🟢 FEU VERT DU SUPERVISEUR À D (17/11, 06 h 40 ; déjà envoyé dans ta session à 03 h 30 et 06 h 05) — METS EN LIGNE L-17
+`11ec46d` vérifié ligne par ligne : les 4 points sont justes, ACCEPTÉ. À faire maintenant, dans l'ordre :
+1. partir de `main` (56bc2d6a), fusionner `audit/corr-d-l17` (11ec46d8) PUIS `audit/corr-b-bande` (e29fc1ad, vérifiée par
+   le superviseur avec L-17 : 9 séries, 0 échec) ; `versionner.py` + `verifier-csp.py` ; essais : test-diaporama-luxe,
+   test-affichage-stable, test-photos-candidature-r2, test-cours-talons, test-admin-cours-talons, test-nouvelle-admin-castings ;
+2. UNE mise en ligne (fusion dans main) — accord écrit de la propriétaire donné ; SQL L-17 et règle Cloudflare déjà faits ;
+3. vérifier le vrai site (candidature avec photos → Cloudflare + copie Drive, Administration, cours de talons, bande),
+   puis SonarQube ; 4. 5 lignes ici. Ne pas toucher à `audit/l18-superviseur` (pas encore envoyée).
+
 ## ✅ D (17/11, 03 h 25) — DERNIÈRE PASSE L-17 FAITE : `audit/corr-d-l17` = **11ec46d**, à vérifier
 - (1) `P.photosR2.filtrer` + `estCopieDrive` (coque.js, une seule définition) utilisés par site-dossiers.js et site-cours-talons.js : N = photos R2 avec adresse signée ; (2) garde « liste la plus longue » remise (cours-talons.js) ; (3) refus 42501 sautés au plus autant de fois qu'il y a de photos arrivées chez Cloudflare (sans liaison par rang, on ne sait pas laquelle : au-delà, photo manquante au journal) ; (4) `etat.cheminsR2` retiré.
 - Essais : test-photos-candidature-r2.js **96/96** (+ serveur de photos injoignable → copies Drive affichées) ; 30 séries **30/30, 0 échec** ; versionner, CSP OK. J'attends ton feu vert pour fusionner avec la bande de B et mettre en ligne.
