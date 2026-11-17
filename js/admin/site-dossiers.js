@@ -168,6 +168,14 @@
   });
 
   // ---------- Liste ----------
+  // (17/11/2026, décision de la propriétaire) envois arrivés SANS la vérification anti-robots (supabase-a-verifier.sql,
+  // noterAVerifier dans api/portail.js) : étiquette « À vérifier ». Table absente (fichier pas encore collé) : rien.
+  async function aVerifier(ids) {
+    if (!ids.length) return new Set();
+    const { data, error } = await sb.from('envois_a_verifier').select('ref').in('ref', ids);
+    return new Set(error ? [] : (data || []).map((x) => x.ref));
+  }
+  const ETIQUETTE_A_VERIFIER = () => P.pastille('⚠ À vérifier', 'alerte');
   async function liste(source) {
     const conf = SOURCES[source], e = etat(source);
     const [total, ...parStatut] = await Promise.all([compter(conf)].concat(conf.statuts.map((s) => compter(conf, s))));
@@ -179,7 +187,8 @@
     const { data, count, error } = await q.range(0, e.pages * PAR_PAGE - 1);
     if (error) throw error;
     const dossiers = data || [];
-    const [photos, suivi] = await Promise.all([photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({})), source === 'casting' ? suiviMessages(dossiers.map((d) => d.id)) : {}]);
+    const [photos, suivi, douteux] = await Promise.all([photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({})), source === 'casting' ? suiviMessages(dossiers.map((d) => d.id)) : {},
+      aVerifier(dossiers.map((d) => d.id)).catch(() => new Set())]);
     const pastille = (s) => {
       const compte = s === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[s] || 0);
       return '<button type="button" class="btn petit' + (e.filtre === s ? ' actif' : '') + '" data-action="dossiers-filtre" data-source="' + source + '" data-filtre="' + P.esc(s) + '"' +
@@ -195,7 +204,7 @@
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
         '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (age !== null && age < 18 ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
-        P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
+        P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (douteux.has(d.id) ? ' ' + ETIQUETTE_A_VERIFIER() : '') + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
         (wa ? '<a class="dossier-wa"' + (source === 'casting' ? ' data-candidature="' + P.esc(d.id) + '"' : '') + ' href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
         '</article>';
     };
@@ -328,12 +337,15 @@
     if (conf.photos) fiche.photos = (await photosDe(conf, [d.id]).catch(() => ({})))[d.id] || [];
     // (15/11/2026) sans photo : le dossier Drive de la candidate, s'il est connu (P.drive, js/admin/coque.js)
     if (source === 'casting' && !fiche.photos.length) fiche.dossierDrive = (await P.drive.dossiers([d.id]).catch(() => ({})))[d.id] || null;
+    const douteux = (await aVerifier([d.id]).catch(() => new Set())).has(d.id);
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
       '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h1>' +
       '<p class="doux">' + P.esc(conf.reçue + P.dateEtHeure(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
+      (douteux ? '<section class="carte a-verifier"><h2>' + ETIQUETTE_A_VERIFIER() + '</h2><p class="doux">Envoyé sans la vérification anti-robots : le téléphone n’a pas pu la charger. C’est souvent une vraie personne, mais regardez le dossier avant d’y donner suite.</p>' +
+        '<button type="button" class="btn petit" data-action="dossier-a-verifier-ok">✓ C’est une vraie personne</button></section>' : '') +
       blocPhotos(source) +
       '<div class="fiche-grille"><div class="fiche-col">' + blocStatut(source) + blocWhatsApp(source) + (await blocCode()) + (source === 'casting' ? await blocMessagesEnvoyes(d.id) : '') + '</div>' +
       '<div class="fiche-col"><section class="carte"><h2>Informations</h2>' + blocChamps(source, d) +
@@ -591,6 +603,14 @@
     const r = await P.bd(sb.from('recruiter_request_models').delete().eq('id', el.dataset.choix).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été retiré : reconnectez-vous puis réessayez.'); return; }
     el.closest('.choisi').remove();
+  };
+  P.actions['dossier-a-verifier-ok'] = async (el) => {
+    if (!fiche) return;
+    el.disabled = true;
+    const r = await P.bd(sb.from('envois_a_verifier').delete().eq('ref', fiche.d.id).select('ref')).catch(() => null);
+    if (!r || !r.length) { el.disabled = false; P.message('Étiquette non retirée : reconnectez-vous puis réessayez.'); return; }
+    P.message('Étiquette « À vérifier » retirée.');
+    return P.afficher();
   };
   P.actions['dossier-supprimer'] = async (el) => {
     if (!(P.moi && P.moi.role === 'principal')) return;

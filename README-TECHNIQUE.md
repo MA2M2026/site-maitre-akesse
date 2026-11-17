@@ -4327,6 +4327,12 @@ Essais : `essais-anti-robots.sql`, `test-anti-robots.js` ; la base simulée des 
 jeton ; une vraie candidate dont le téléphone ne chargeait pas Turnstile a été refusée (journal, 8 h 19). Désormais
 « pas de jeton » est traité comme une panne : accepté et noté au journal (« accepté quand même »). Un jeton refusé par
 Cloudflare (ou trop long) reste refusé ; les limites par minute et par adresse restent.
+**Étiquette « À vérifier » (17/11/2026, décision de la propriétaire)** : un envoi accepté sans vérification est noté
+par le serveur dans `envois_a_verifier` (`noterAVerifier`, api/portail.js ; table `supabase-a-verifier.sql` : lecture et
+retrait par l'équipe du site, ajout par le serveur seulement, étiquette retirée avec la candidature supprimée). Les
+Candidatures et Demandes recruteurs (js/admin/site-dossiers.js) affichent « ⚠ À vérifier » sur la carte et un encart
+dans la fiche avec « ✓ C'est une vraie personne » (retire l'étiquette). Table absente : rien ne s'affiche, l'envoi
+passe quand même. Essais : `essais-a-verifier.sql`, `test-anti-robots.js`, `test-a-verifier.js`.
 
 ## Reprise du 1er mars 2027 (07/11/2026, décision de la propriétaire ; Extension 154)
 Plan et décisions : `PLAN-REPRISE-MARS.md` (branche `plan-reprise-mars`). Septembre à novembre 2026 = **période de
