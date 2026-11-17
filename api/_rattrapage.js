@@ -21,7 +21,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const TAILLE_MAX = 15 * 1024 * 1024;
 const PHOTOS_MAX = 20;          // (medias_drive_enregistrer accepte 20 photos au plus par envoi)
 const EN_MEME_TEMPS = 3;        // (photos demandées à Google en même temps : pas de rafale)
-const BUDGET_MS = 22000;        // (la fonction a 30 s : on garde de quoi tout retirer en cas d'échec)
+// (relecture B, 17/11) compté dès le DÉBUT de l'appel (lecture de la base comprise) : un groupe peut encore prendre
+// 16 s (8 s Google + 8 s Cloudflare) et le retrait quelques secondes ; 10 + 16 + 4 < 30 s, la fonction n'est jamais coupée
+const BUDGET_MS = 10000;
+const EXCLUS_MAX = 500;         // (dossiers laissés sur Drive retenus par la page ; au-delà, la page s'arrête : js/admin/site-acces.js)
 const PAGE = 500;
 
 const lire = async (url) => { const r = await fetch(SUPABASE_URL + '/rest/v1/' + url, { headers: enTetesService() }); if (!r.ok) throw new Error('lecture de la base impossible (' + r.status + ')'); return r.json(); };
@@ -81,11 +84,12 @@ async function nonCites(source, id, cles) {
 
 // Rattrape UN dossier. Réponse : { fini: true } | { fait: id, photos: n } | { echec: id, raison }
 async function rattraperUnDossier(source, exclusListe) {
+  const debut = Date.now();
   if (source !== 'candidature' && source !== 'cours_talons') return { statut: 400, corps: { error: 'Source inconnue.' } };
-  const exclus = new Set((Array.isArray(exclusListe) ? exclusListe : []).filter((x) => typeof x === 'string' && UUID.test(x)).slice(0, 500));
+  const exclus = new Set((Array.isArray(exclusListe) ? exclusListe : []).filter((x) => typeof x === 'string' && UUID.test(x)).slice(0, EXCLUS_MAX));
   const d = await prochainDossier(source, exclus);
   if (!d.id) return { statut: 200, corps: { fini: true } };
-  const id = String(d.id).toLowerCase(), dossier = source === 'candidature' ? 'candidatures' : 'cours-talons', debut = Date.now();
+  const id = String(d.id).toLowerCase(), dossier = source === 'candidature' ? 'candidatures' : 'cours-talons';
   const liensDrive = [...new Set(d.liens.filter((l) => LIEN_DRIVE.test(String(l))))].slice(0, PHOTOS_MAX);
   const deposes = [];
   try {
@@ -131,4 +135,4 @@ async function rattraperUnDossier(source, exclusListe) {
   }
 }
 
-module.exports = { rattraperUnDossier, LIEN_DRIVE };
+module.exports = { rattraperUnDossier, LIEN_DRIVE, EXCLUS_MAX };

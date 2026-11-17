@@ -124,14 +124,18 @@
       '<button class="btn secondaire" type="button" data-action="rattrapage-arreter" hidden>Arrêter</button>' +
       '<p class="form-msg" id="rattrapage-msg" role="status" aria-live="polite"></p></section>';
   }
-  let rattrapageEnCours = false;
+  // (relecture B, 17/11) « en cours » = la rubrique de CE passage est encore affichée : rubrique quittée puis rouverte,
+  // le nouveau bouton relance tout de suite ; chaque passage a son numéro (« tour ») : l'ancien s'arrête seul, jamais deux à la fois
+  let rattrapageEnCours = false, blocEnCours = null, tour = 0;
   P.actions['rattrapage-arreter'] = () => { rattrapageEnCours = false; };
   P.actions['rattrapage-lancer'] = async (el) => {
-    if (rattrapageEnCours) return;
-    rattrapageEnCours = true; el.disabled = true;
+    if (rattrapageEnCours && blocEnCours && blocEnCours.isConnected) return;
+    const bloc = document.getElementById('rattrapage');
+    const moi = ++tour;
+    rattrapageEnCours = true; blocEnCours = bloc; el.disabled = true;
     const arreter = document.querySelector('[data-action="rattrapage-arreter"]'); if (arreter) arreter.hidden = false;
     // (relecture) la boucle vit avec SA rubrique : rubrique quittée ou redessinée → elle s'arrête
-    const bloc = document.getElementById('rattrapage'), msg = () => (bloc && bloc.isConnected ? document.getElementById('rattrapage-msg') : null);
+    const msg = () => (bloc && bloc.isConnected && tour === moi ? document.getElementById('rattrapage-msg') : null);
     const ecrire = (t) => { const m = msg(); if (m) m.textContent = t; };
     let faits = 0, photos = 0;
     const echecs = [];
@@ -142,6 +146,7 @@
           const r = await P.photosR2.appel({ action: 'rattrapage_drive', source, exclus });
           if (r.fini) break;
           if (r.echec) { exclus.push(r.echec); echecs.push(r.echec); } else { faits++; photos += r.photos || 0; }
+          if (exclus.length >= 500) break;   // (relecture B) le serveur n'en retient pas plus (EXCLUS_MAX, api/_rattrapage.js) : sinon il redonnerait sans fin le même dossier
           ecrire('En cours (' + nom + ') : ' + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + ')' +
             (echecs.length ? ', ' + P.pluriel(echecs.length, 'laissé', 'laissés') + ' sur Drive' : '') + '…');
           await new Promise((ok) => setTimeout(ok, 1500));   // (un peu d'air entre deux dossiers, pour Google)
@@ -152,7 +157,8 @@
     } catch (e) {
       ecrire('Interrompu : ' + ((e && e.message) || e) + ' Ce qui est fait reste fait : relancez plus tard.');
     } finally {
-      rattrapageEnCours = false; el.disabled = false; if (arreter) arreter.hidden = true;
+      if (tour === moi) { rattrapageEnCours = false; blocEnCours = null; }
+      el.disabled = false; if (arreter) arreter.hidden = true;
     }
   };
 
