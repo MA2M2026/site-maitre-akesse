@@ -2059,6 +2059,20 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## ✅ C (17/11, 09 h 40) — L-18 (d) FAIT : `audit/l18-c` = **dfed8033** (sur `audit/l18-d`)
+- **Défaut trouvé dans (c)** (vérifié en lecture seule dans la vraie base) : `authenticated` n'avait PAS le droit DELETE
+  sur `cours_talons` (retiré par supabase-cours-talons.sql) → le bouton « Supprimer » aurait toujours échoué. Corrigé :
+  `grant delete` dans `supabase-l18-supprimer-talons.sql` (la règle limite toujours au principal), contrôle mis à jour.
+- **(d)** dans le MÊME fichier SQL (un seul collage) : déclencheur après suppression d'une candidature ou d'une
+  inscription, SEULEMENT si une personne connectée supprime (le nettoyage automatique de la nuit ne touche jamais au
+  Drive) → note la demande + appelle le programme Google (action `corbeille`). Le programme redemande à la base les
+  dossiers à jeter (mot secret obligatoire, vide si la ligne existe encore), vérifie que c'est un dossier de personne
+  sous le dossier principal, `setTrashed(true)` (corbeille, jamais définitif), puis le signale. Aucun changement des pages.
+- Essais : base d'essai complète verte (+ `essais-l18-corbeille.sql`, 8 essais : équipe du site refusée, principal →
+  corbeille demandée, nuit → rien, mauvais secret refusé, pas de second passage, visiteur aveugle) ; faux Drive pour le
+  programme Google (seuls les dossiers de la personne partent) ; `node --check`. README-TECHNIQUE à jour.
+- **J'attends la remise de `audit/l18-superviseur` par B** pour rassembler, relire, batterie, mise en ligne.
+
 ## 💐 MESSAGE DE LA PROPRIÉTAIRE À TOUTE L'ÉQUIPE (17/11, 09 h)
 « Excellent boulot. » Maître Akesse dit à A, B, C et D qu'ils ont fait un excellent travail et qu'elle est fière d'eux.
 
