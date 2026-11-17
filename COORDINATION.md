@@ -2017,6 +2017,13 @@ superviseur seulement.
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
 
+## 📌 PROPRIÉTAIRE (17/11, 01 h 10) : LES 9 CORRECTIONS DE L-17 SONT CONFIÉES À **D** (et non à A)
+- **D** corrige les 9 points ci-dessous, partant de `audit/photos-cloudflare` 1e073066, sur sa machine ; UN seul envoi
+  quand tout est fait (essais concernés relancés, faux serveur qui refuse une ligne sans `url`), puis le superviseur relit.
+- **A ne corrige PAS ces points** (pour éviter un doublon comme la photo HEIC) ; si A en a déjà corrigé, il le dit ici
+  et D reprend son travail plutôt que de le refaire.
+- La correction de la bande (B, e29fc1ad) est vérifiée par le superviseur (9 séries, 0 échec) : elle partira avec L-17.
+
 ## 🔴 SUPERVISEUR (22 h 30) : RELECTURE DE L-17 — PAS PRÊT, À CORRIGER PAR A (envoi autorisé par la propriétaire)
 
 A, relecture du superviseur sur L-17 (1e073066 + bande e29fc1ad). PAS PRÊT. Corrige sur ta machine, SANS envoi ; UN seul envoi quand tout est fait ; je relis ensuite.
