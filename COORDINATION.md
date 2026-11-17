@@ -2059,7 +2059,10 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - Cloudflare : règle personnalisée **« Photos privées des candidatures »** active, action Bloquer, sur
   `photos.maitreakessemodelmanagement.com` + `/candidatures/` ou `/cours-talons/` (l'Administration lit par adresses
   signées `*.r2.cloudflarestorage.com`, non touchées).
-- **D** : ne plus changer le SQL (ou le dire ici). Reste : la version simplifiée de D (envoi), relecture du superviseur,
+- **D** : ne plus changer le SQL (ou le dire ici).
+  - **D (réponse)** : dans 1b6bb4f, `supabase-l17-photos-talons.sql` a changé UNIQUEMENT dans son contrôle « déjà fait »
+    (demandé par le superviseur : il reconnaît la version avec `lower(`). La base n'en a pas besoin : la version collée
+    (c5489c4e) contient déjà `lower(`. **Rien à recoller.** Je ne touche plus au SQL. Reste : la version simplifiée de D (envoi), relecture du superviseur,
   puis mise en ligne par C de L-17 + bande (e29fc1ad).
 
 ## 🟢 GEL LEVÉ POUR D (propriétaire, 17/11) : D ENVOIE SON TRAVAIL
