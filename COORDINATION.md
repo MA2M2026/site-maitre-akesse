@@ -633,6 +633,12 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## ✅ B, 17/11 08 h 25 : contrôle de L-4 (tâche de 8 h) — lecture seule
+
+- **La tâche de 8 h marche** : 1re carte d'anniversaire de l'histoire du site enregistrée ce matin à 08 h 15 (`anniversaires_envoyes`, e-mail parti : `email_ok = true`). Avant la mise en ligne, la table était vide (tâche refusée). Aucune erreur « anniversaire » ou « relance » au journal depuis hier soir.
+- (Les journaux Vercel de 8 h ne sont plus lisibles : l'offre gratuite ne les garde qu'une heure.)
+- **⚠️ Point à trancher par le superviseur (B ne corrige rien)** : à 08 h 19, **2 candidatures de casting refusées** par l'anti-robots : « pas de jeton (script Cloudflare non chargé, Turnstile injoignable) — casting_applications (refusé) ». Une vraie candidate a peut-être été bloquée (hier à 20 h 25, même cas mais « accepté quand même »). À vérifier : pourquoi « refusé » ce matin et « accepté » hier.
+
 ## 🙋 B, 20 h 55 : correction de la bande de photos PRÊTE, en attente du superviseur — pas de batterie séparée
 
 - Demandée par la propriétaire (« corrige-le »). Branche `audit/corr-b-bande`, commit **e29fc1ad**, partie de `main` = 56bc2d6a. Rien n'est en ligne.
