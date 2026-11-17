@@ -1624,7 +1624,13 @@ depuis Google Drive dans l'Administration. Désormais :
    (`supabase-l17-photos-talons.sql`) n'accepte que les photos Cloudflare de CE numéro, et n'y ajoute plus la copie
    Drive. Base pas encore prête (fichier non collé) : l'inscription repart avec les liens Drive, comme avant.
    Administration (`js/admin/site-cours-talons.js`) : adresses signées, photos dans l'ordre. Outils partagés de
-   l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est jamais effacée par l'API.
+   l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est effacée par l'API que si
+   son inscription n'existe plus (L-18 c, ci-dessous).
+7. **L-18 (c), 17/11 : bouton « 🗑 Supprimer » d'une inscription au cours de talons** (`talons-supprimer`,
+   `js/admin/site-cours-talons.js`) : administrateur principal seulement (règle de la base
+   `supabase-l18-supprimer-talons.sql`, `portail_est_principal`) ; la base d'abord (ses séances partent avec elle,
+   créneaux libérés), puis ses photos Cloudflare (`candidature_supprimer` accepte `cours-talons/` seulement si
+   l'inscription n'existe plus). Les fichiers Google Drive ne sont pas touchés. Test : `test-supprimer-talons.js`.
 5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
    dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
    rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de

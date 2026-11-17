@@ -124,8 +124,11 @@ async function serveur() {
   r = await appeler({ action: 'candidature_lire', chemins: [cleT] }, JETON_EQUIPE);
   ok(r.statut === 200 && r.rep.adresses && r.rep.adresses[cleT], 'serveur : équipe : photo d’un cours de talons lisible (adresse signée)');
   base.cites = [];
+  // (L-18 c) photo d'un cours de talons : effacée seulement quand l'inscription n'existe plus
+  base.talonsInscrite = true; r = await appeler({ action: 'candidature_supprimer', chemin: cleT }, JETON_EQUIPE); base.talonsInscrite = false;
+  ok(r.statut === 409 && !r2.effaces.includes(cleT), 'serveur : photo d’un cours de talons dont l’inscription existe encore : rien n’est effacé');
   r = await appeler({ action: 'candidature_supprimer', chemin: cleT }, JETON_EQUIPE);
-  ok(r.statut === 400 && !r2.effaces.includes(cleT), 'serveur : photo d’un cours de talons : jamais effacée par cette action');
+  ok(r.statut === 200 && r2.effaces.includes(cleT), 'serveur : inscription au cours de talons supprimée : sa photo est effacée');
   r = await appeler({ action: 'candidature_supprimer', chemin: cle }, JETON_EQUIPE);
   ok(r.statut === 200 && r2.effaces.includes(cle), 'serveur : équipe : fiche déjà supprimée : le fichier est effacé');
   // ---- (relecture du superviseur, 16/11 22 h 30) ----

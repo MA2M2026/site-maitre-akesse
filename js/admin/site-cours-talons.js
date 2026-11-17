@@ -244,7 +244,9 @@
     const boutons = [
       https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
       wa ? lienWhatsApp(wa, '💬 WhatsApp') : '',
-      waParent ? lienWhatsApp(waParent, '💬 Parent') : ''
+      waParent ? lienWhatsApp(waParent, '💬 Parent') : '',
+      // (17/11/2026, L-18 c) supprimer l'inscription : administrateur principal seulement (la base le vérifie aussi)
+      P.moi && P.moi.role === 'principal' ? '<button class="btn petit" type="button" data-action="talons-supprimer" data-id="' + P.esc(d.id) + '">🗑 Supprimer</button>' : ''
     ];   // (14/11/2026) le lien Wave est dans « Messages prêts à envoyer », sous ces boutons
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
@@ -437,6 +439,25 @@
     return P.afficher();
   };
 
+  // (17/11/2026, L-18 c, demande de la propriétaire) supprimer une inscription, même règle que les candidatures :
+  // administrateur principal seulement, la base d'abord (ses séances partent avec elle : créneaux libérés), ses photos
+  // chez Cloudflare ensuite (le serveur ne les efface que si l'inscription n'existe plus). Ses fichiers Google Drive
+  // ne sont pas touchés ici.
+  P.actions['talons-supprimer'] = async (el) => {
+    if (!(P.moi && P.moi.role === 'principal')) return;
+    const d = lignes.find((x) => x.id === el.dataset.id);
+    if (!d) return;
+    const payee = d.statut === 'inscrite' || d.statut === 'terminee';
+    if (!confirm('Supprimer définitivement l’inscription de ' + d.nom + ' ?' + (payee ? ' Elle a déjà payé : le paiement reste en Comptabilité.' : '') + ' Ses séances et ses photos seront supprimées. Cette action est irréversible.')) return;
+    el.disabled = true;
+    const r = await P.bd(sb.from('cours_talons').delete().eq('id', d.id).select('id')).catch(() => null);
+    if (!r || !r.length) { el.disabled = false; P.message('Rien n’a été supprimé : reconnectez-vous, ou collez d’abord supabase-l18-supprimer-talons.sql dans Supabase.'); return; }
+    const r2 = (Array.isArray(d.photos) ? d.photos : []).filter(P.photosR2.est);
+    if (r2.length) await P.photosR2.supprimer(r2).catch(() => { /* fichiers orphelins : effacés par le nettoyage du matin */ });
+    lignes = lignes.filter((x) => x.id !== d.id);
+    P.message('Inscription supprimée.');
+    return P.afficher();
+  };
   P.actions['talons-photo-voir'] = (el) => {
     const d = lignes.find((x) => x.id === el.dataset.id);
     const l = photosDe(d);

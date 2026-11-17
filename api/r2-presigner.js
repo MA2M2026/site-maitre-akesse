@@ -48,6 +48,7 @@ const TAILLE_MAX = 15 * 1024 * 1024;
 //    numéro pas encore inscrit, 5 photos au plus, la page met la photo dans l'inscription ; la base la contrôle).
 //  - « candidature_lire » / « candidature_supprimer » (équipe connectée, double authentification) : adresses de
 //    lecture signées d'1 heure (les photos des candidates ne sont jamais servies en accès libre), suppression au clic.
+//    (L-18 c) suppression aussi pour cours-talons/, seulement si l'inscription n'existe plus.
 // =====================================================================================================
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TYPES_CANDIDATURE = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -100,7 +101,7 @@ async function photoCandidature(req, res, debut) {
         res.status(403).json({ error: 'Réservé à l’équipe de l’agence.' }); return;
       }
       const liste = (Array.isArray(chemins) ? chemins : [chemin]).filter((c) => { const p = lirePhotoDossier(c);
-        return !!p && (action === 'candidature_lire' || p.dossier === 'candidatures'); });  // (cours de talons : lecture seulement)
+        return !!p; });
       if (!liste.length || liste.length > 200) { res.status(400).json({ error: 'Photos invalides.' }); return; }
       const { GetObjectCommand } = require('@aws-sdk/client-s3');
       const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
@@ -108,10 +109,17 @@ async function photoCandidature(req, res, debut) {
       if (action === 'candidature_supprimer') {
         // (sécurité) on n'efface QUE des fichiers que plus aucune fiche ne cite : la fiche a d'abord été supprimée
         // dans la base par un clic de l'agence (droits de la base) ; un appel direct ne peut rien effacer d'autre.
-        const cites = await fetch(SUPABASE_URL + '/rest/v1/casting_photos?select=chemin&chemin=in.(' + liste.map((c) => '"r2:' + c + '"').join(',') + ')', { headers: enTetesService() });
-        const lignes = cites.ok ? await cites.json() : null;
-        if (!Array.isArray(lignes)) { res.status(503).json({ error: 'Vérification impossible pour le moment.' }); return; }
-        if (lignes.length) { res.status(409).json({ error: 'Photo encore présente dans un dossier : rien n’a été effacé.' }); return; }
+        // (17/11/2026, L-18 c) cours de talons aussi : effacé seulement si l'inscription n'existe plus (supprimée d'abord
+        // par le clic de l'administrateur principal, règle de la base supabase-l18-supprimer-talons.sql)
+        const candid = liste.filter((c) => lirePhotoDossier(c).dossier === 'candidatures');
+        const talons = [...new Set(liste.filter((c) => lirePhotoDossier(c).dossier === 'cours-talons').map((c) => lirePhotoDossier(c).id))];
+        const lire = (url) => fetch(SUPABASE_URL + '/rest/v1/' + url, { headers: enTetesService() }).then((r) => (r.ok ? r.json() : null), () => null);
+        const [lignes, inscrites] = await Promise.all([
+          candid.length ? lire('casting_photos?select=chemin&chemin=in.(' + candid.map((c) => '"r2:' + c + '"').join(',') + ')') : [],
+          talons.length ? lire('cours_talons?select=id&id=in.(' + talons.join(',') + ')') : []
+        ]);
+        if (!Array.isArray(lignes) || !Array.isArray(inscrites)) { res.status(503).json({ error: 'Vérification impossible pour le moment.' }); return; }
+        if (lignes.length || inscrites.length) { res.status(409).json({ error: 'Photo encore présente dans un dossier : rien n’a été effacé.' }); return; }
         const refuses = await effacerFichiersR2(liste);
         if (refuses.length) { res.status(502).json({ error: 'Le stockage n’a pas effacé ' + refuses.length + ' photo(s) : réessayez.' }); return; }
         res.status(200).json({ ok: true }); return;
