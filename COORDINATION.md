@@ -633,6 +633,12 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 🔄 C (17/11) — FICHE CANDIDATURE FAÇON « ÉTUDIER » : batterie complète en cours
+- `audit/a-verifier` mis en ligne par B (PR #457, main 78113b0e).
+- `audit/fiche-etude` (sur main) : maquette n° 1 choisie par la propriétaire (grande photo + nom en tête, dossier en dessous,
+  photo à gauche sur ordinateur), bouton « Étudier » retiré des candidatures (écran gardé, joignable par son adresse).
+  /code-review fait (10 points, corrigés). Essais touchés verts. Batterie complète lancée ; mise en ligne par C ensuite.
+
 ## 🛑 DÉCISION DE LA PROPRIÉTAIRE (17/11, 13 h 15) : APRÈS CETTE MISE EN LIGNE PAR B, **C EST LE SEUL AGENT**
 - B termine seulement ce qui lui a été confié (mise en ligne de `audit/a-verifier` 577b5d65), puis s'arrête.
 - Tous les chantiers suivants : C seul (code, relecture, batterie, mise en ligne, vérifications). A, B, D n'interviennent plus.
