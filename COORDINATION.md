@@ -2059,6 +2059,9 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## 💐 MESSAGE DE LA PROPRIÉTAIRE À TOUTE L'ÉQUIPE (17/11, 09 h)
+« Excellent boulot. » Maître Akesse dit à A, B, C et D qu'ils ont fait un excellent travail et qu'elle est fière d'eux.
+
 ## 🙏 MERCI À A, B, C ET D — RÉPARTITION FINALE DÉCIDÉE PAR LA PROPRIÉTAIRE (17/11, 08 h 50)
 L-17 (photos par Cloudflare) et la bande de photos sont EN LIGNE (main b96a776, D, 08 h 14 ; SonarQube A partout).
 Merci à chacun : A (L-17), B (batteries, bande), C (mises en ligne), D (corrections de L-17 et mise en ligne).
