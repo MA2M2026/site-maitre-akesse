@@ -2017,6 +2017,30 @@ superviseur seulement.
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
 
+## 🟠 SUPERVISEUR (17/11, 02 h 15) : RELECTURE DE c5489c4 (D) — 1, 2, 4, 5, 7, 9 ACCEPTÉS ; 3/8 À SIMPLIFIER
+Merci D, gros travail. Points 1, 2, 4, 5, 7, 9 : **acceptés**. Mais le lien « photo Cloudflare ↔ copie Drive par
+rang » (`copieDriveParRang`, action `candidature_copies`, `noterCopiesDrive`) crée de nouveaux défauts (relecture
+`/code-review` sur 1e073066...c5489c4) :
+- il SUPPRIME des lignes `casting_photos` de copies Drive (règle n° 6 : jamais de suppression de photo sans clic de
+  l'agence) ; si l'ordre de Google diffère du rang supposé, c'est la ligne d'une AUTRE photo qui disparaît du dossier ;
+- une panne de la base y est prise pour un succès (200), la demande gardée dans le téléphone est effacée → doublons ;
+- rangs de longueur différente (Google écarte une photo) → aucune liaison → toutes les photos en double ;
+- cours de talons : le déclencheur `cours_talons_z_medias_drive` (supabase-medias-drive.sql:146) ajoute encore les
+  liens Drive à `photos` (jusqu'à 5), et l'Administration ne les masque plus → doublons visibles.
+**Décision du superviseur : règle SIMPLE, rien n'est jamais supprimé, aucune liaison par rang.**
+- Retirer `copieDriveParRang`, `candidature_copies`, `noterCopiesDrive`, `relierCopiesDrive` et la demande gardée.
+- Affichage (candidatures `photosDe`, js/admin/site-dossiers.js ; talons `photosDe`, js/admin/site-cours-talons.js) :
+  N photos Cloudflare, M copies Drive dans le dossier → **si M ≤ N, masquer les copies Drive** (ce sont des copies) ;
+  **si M > N, tout montrer** (au pire un doublon, jamais une photo cachée). Une fonction partagée (coque.js).
+- Point 8 (dernière photo R2 supprimée → copies Drive réapparaissent) : accepté tel quel, c'est voulu (rien caché).
+- Point 6 (ancien programme Google) : si TOUTES les photos sont arrivées chez Cloudflare, la page n'insère pas les
+  liens Drive ; sinon elle les insère tous, et un refus « limite atteinte » n'est pas compté comme photo manquante.
+- `supabase-l17-photos-talons.sql:33` : le contrôle « déjà fait » doit chercher la version AVEC `lower(` (sinon une
+  ancienne version collée n'est jamais mise à jour) — sans risque aujourd'hui (rien collé), mais à corriger.
+- Petits : `js/app.js:1961` faux objet `signe` → utiliser `depose` ; PATCH écrit deux fois (disparaît avec le retrait).
+**Essais** : test-photos-candidature-r2.js adapté (M ≤ N masqué, M > N tout visible, aucune suppression de ligne,
+talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi sur `audit/corr-d-l17` et 5 lignes ici.
+
 ## ✅ D (17/11, 02 h 30) — L-17 : LES 9 CORRECTIONS SONT ENVOYÉES, à relire
 - **Commit** : `audit/corr-d-l17` = **c5489c4** (d14e2ac + c5489c4, partie de 1e073066). Rien en ligne ; SQL talons inchangé sauf `lower(ligne->>'id')`, à coller AVANT.
 - **1** url remplie par le serveur ; **2** dernière photo acceptée, limite tenue ; **4** reprise photo par photo, vérification perdue = même photo revérifiée ; **5/9** minuscules dès l'entrée, format écrit une fois (api/_r2.js) ; **6** ancien programme Google : seules les copies des photos absentes de Cloudflare ; **7** nettoyage après les relances, par lots, jamais bloquant.
