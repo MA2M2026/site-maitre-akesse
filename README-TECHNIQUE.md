@@ -4344,6 +4344,12 @@ Les étiquettes « À vérifier » ne concernent que `casting_applications` et `
 aussi notées sur un envoi recommencé (23505), et s'affichent aussi dans le mode Étudier. Les vidéos restent
 rangées dans Google Drive (décision de la propriétaire : pas de passage chez Cloudflare). Essai :
 `test-nouvelle-admin-castings.js` (taille, plein écran, sortie).
+**Mission sécurité complète (17/11/2026, demande de la propriétaire)** : rapport `docs/audit/rapport-securite-17-11.md`.
+Corrections : bibliothèque inutilisée `@anthropic-ai/sdk` retirée ; `supabase-securite-17-11.sql` (search_path fixé sur
+`compta_type_du_mode`, `cours_talons_prix_mois`, `cours_talons_module`, aussi dans leurs fichiers d'origine ; vieux journal
+manuel `debug_journal_validation_publication` supprimé avec l'accord de la propriétaire). Restent à faire par la
+propriétaire : retirer `ANTHROPIC_API_KEY` de Vercel (inutilisée) et activer « Leaked password protection » dans
+Supabase › Authentication si son offre le permet.
 **Plus aucun effacement automatique, sauf la règle des 2 ans (17/11/2026, décisions de la propriétaire)** :
 `supabase-sans-effacement-auto.sql` vide `nettoyer_photos_traitees_anciennes` (retirait chaque nuit, et par le bouton
 « Lancer le nettoyage maintenant », les photos des candidatures Retenue/Refusée depuis 5 jours et des inscriptions

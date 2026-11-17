@@ -1330,7 +1330,7 @@ grant execute on function compta_materiel_acheter(text, date, int, uuid, text, t
 -- Espace 2 → comptabilité : un paiement validé (montant connu) devient une recette, sur le compte de son moyen
 -- (12/11/2026, moyens de paiement : même version que supabase-moyens-paiement.sql)
 create or replace function compta_type_du_mode(p_mode text)
-returns text language sql immutable as $$
+returns text language sql immutable set search_path = public as $$
   select case p_mode when 'especes' then 'caisse' when 'wave' then 'wave' when 'carte' then 'banque' when 'virement' then 'banque'
     when 'avant_systeme' then 'wave' else 'mobile_money' end;
 $$;
