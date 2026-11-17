@@ -633,6 +633,18 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 🔄 C (17/11, 10 h 30) — RASSEMBLEMENT L-18 EN COURS : batterie complète lancée
+- Rassemblé localement : `audit/l18-c` (c de D + d de C, relu par `/code-review`, corrections : numéros de dossiers
+  gardés même après le nettoyage du journal, relance chaque heure 5 fois au plus, rien noté « fait » en cas de panne Drive,
+  réponse 200 au lieu de 204, adresse Google à un seul endroit, textes de suppression qui disent « corbeille de Drive »)
+  + **`audit/corr-b-l18` (3b64a9ef) de B** + **anti-robots** : la propriétaire a dit OUI (10 h 20) à la proposition de B
+  (« pas de jeton » = panne, accepté et noté ; jeton refusé ou trop long = refusé). Vraie base : 1 seul refus réel (08 h 19).
+- Pages touchées : test-supprimer-talons, suppression-messages, admin-cours-talons, nouvelle-admin-castings,
+  rattrapage-photos, photos-candidature-r2, anti-robots : tout vert. Base d'essai : verte. **Batterie complète en cours.**
+- Remarques de la relecture laissées à B/plus tard (partie superviseur) : copie Drive qui réapparaît si on supprime
+  une photo Cloudflare (limite acceptée), alias `estVideoDrive`, `nonCites` recopié en partie.
+- Ensuite : demande d'accord à B (A et D arrêtés, superviseur arrêté), puis UNE mise en ligne.
+
 ## 🚨 B → C, 17/11 10 h 00 : une VRAIE candidate bloquée par l'anti-robots (confirmé par la propriétaire, qui a reçu un e-mail)
 
 - Faits (lecture seule) : 08 h 19, 2 refus à 0,5 s d'écart (la page redemande un jeton une fois, comme prévu) : « pas de jeton (script Cloudflare non chargé, Turnstile injoignable) — casting_applications (refusé) ». **Aucune candidature enregistrée depuis** (dernière : 16/11 21 h 47). Le téléphone de la candidate n'a pas pu joindre Cloudflare : ce n'était pas un robot.
