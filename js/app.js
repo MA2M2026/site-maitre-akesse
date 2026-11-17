@@ -1980,6 +1980,35 @@ function copieDriveParRang(liens, rangs) {
   if (!Array.isArray(liens) || !Array.isArray(rangs) || rangs.length !== liens.length) return null;
   return (rang) => { const k = rangs.indexOf(rang); return k < 0 ? null : liens[k]; };
 }
+// (relecture du superviseur) Relie chaque photo Cloudflare d'une candidature à SA copie Drive (api/r2-presigner.js,
+// « candidature_copies » : une photo = une ligne dans le dossier). 3 essais ; si le réseau manque encore, la demande
+// est GARDÉE dans le téléphone et refaite à la prochaine page du site visitée (24 h au plus, ensuite le serveur la
+// refuse). Un refus du serveur (400, 403) est définitif : rien n'est gardé. Renvoie true si c'est fait.
+const CLE_COPIES_DRIVE = 'ma2m-copies-drive';
+function copiesDriveEnAttente(liste) {
+  try {
+    if (liste) localStorage.setItem(CLE_COPIES_DRIVE, JSON.stringify(liste));
+    return JSON.parse(localStorage.getItem(CLE_COPIES_DRIVE) || '[]').filter((x) => x && x.id && Array.isArray(x.copies) && Date.now() - x.le < 24 * 3600e3);
+  } catch (e) { return []; }
+}
+async function relierCopiesDrive(id, copies, le = Date.now()) {
+  if (!copies.length) return true;
+  let fini = false, fait = false;
+  for (let essai = 1; essai <= 3 && !fini; essai++) {
+    const statut = await fetch('/api/r2-presigner', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'candidature_copies', candidature: id, copies }) }).then((r) => r.status, () => 0);
+    fait = statut >= 200 && statut < 300;
+    fini = fait || statut === 400 || statut === 403;
+    if (!fini && essai < 3) await new Promise((r) => setTimeout(r, 1500));
+  }
+  const autres = copiesDriveEnAttente().filter((x) => x.id !== id);
+  copiesDriveEnAttente(fini ? autres : autres.concat([{ id, copies, le }]));
+  return fait;
+}
+// (à chaque page du site : reprend une demande restée en attente, sans jamais gêner la page)
+if (typeof window !== 'undefined' && !/\/admin\//.test(location.pathname)) {
+  setTimeout(() => { copiesDriveEnAttente().forEach((x) => { relierCopiesDrive(x.id, x.copies, x.le).catch(() => {}); }); }, 4000);
+}
 // Photo redessinée dans un cadre de « coteMax » pixels, sur fond blanc (transparence PNG → blanc).
 function redessinerPhoto(fichier, coteMax, rendu) {
   return new Promise(resolve => {

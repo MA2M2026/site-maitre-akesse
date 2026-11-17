@@ -1638,8 +1638,9 @@ depuis Google Drive dans l'Administration. Désormais :
      Cloudflare (la base ne la rajoutera plus : `medias_drive_appliquer` saute les liens présents) puis relance
      `medias_drive_appliquer` pour les photos arrivées seulement dans Drive. Sûreté (appel d'un visiteur sans compte) :
      seulement un lien `drive.google.com`, une ligne n'est retirée que si Google a noté ce lien pour CE dossier
-     (`medias_drive`), une photo déjà reliée ne l'est plus, 24 h au plus. La page fait 3 essais puis note l'échec au
-     journal ; sans cet appel, une photo peut s'afficher deux fois. Rang → copie : `copieDriveParRang` (`js/app.js`,
+     (`medias_drive`), une photo déjà reliée ne l'est plus, 24 h au plus. Appel : `relierCopiesDrive` (`js/app.js`) :
+     3 essais, puis la demande est gardée dans le téléphone (`localStorage`, clé `ma2m-copies-drive`) et refaite
+     4 s après l'ouverture de n'importe quelle page du site (pas l'Administration), pendant 24 h. Rang → copie : `copieDriveParRang` (`js/app.js`,
      partagé ; rangs inconnus = on ne devine pas). Cours de talons : la page met, rang par rang, la photo Cloudflare ou
      sinon sa copie Drive ;
    - la vérification accepte la dernière photo permise (le fichier vérifié est déjà compté), mais refuse au-delà ;

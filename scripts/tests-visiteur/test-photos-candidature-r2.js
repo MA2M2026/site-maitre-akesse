@@ -222,6 +222,8 @@ async function navigateur() {
     // (superviseur 4) envoi coupé après la 1re photo arrivée chez Cloudflare : la reprise ne la renvoie pas
     // (2ᵉ relecture) réponse de la 1re vérification perdue : la même photo est revérifiée, jamais déposée deux fois
     { nom: 'Vérification sans réponse, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, verifPerdue: true },
+    // (cas rare réglé) relier les copies échoue 3 fois : la demande est gardée dans le téléphone, puis refaite à la page suivante
+    { nom: 'Copies Drive sans réseau puis page suivante, téléphone', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: false, copiesPanne: true },
     { nom: 'Reprise après coupure, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, reprise: true },
     // (superviseur 6) ancien programme Google (la page note elle-même les liens Drive) : seules les copies des photos
     // qui ne sont PAS arrivées chez Cloudflare sont notées (1 sur 3 ici), aucune fausse « photo manquante »
@@ -235,6 +237,7 @@ async function navigateur() {
       const c = JSON.parse(route.request().postData() || '{}'); r2Appels.push(c); if (c.action !== 'candidature_copies') ordre.push('r2');  // (relier les copies vient forcément après Drive)
       if (cas.panne) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"panne"}' });
       if (cas.r2Max != null && c.action === 'candidature_signer' && r2Appels.filter((x) => x.action === 'candidature_signer').length > cas.r2Max) return route.fulfill({ status: 403, contentType: 'application/json', body: '{"error":"plein"}' });
+      if (c.action === 'candidature_copies' && cas.copiesPanne) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"panne"}' });
       if (cas.verifPerdue && c.action === 'candidature_verifier' && r2Appels.filter((x) => x.action === 'candidature_verifier').length === 1) return route.abort('connectionreset');
       if (c.action === 'candidature_signer') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'https://r2.essai/envoi/' + r2Appels.length, chemin: 'candidatures/' + c.candidature + '/' + String(r2Appels.length).padStart(32, '0') + '.jpg' }) });
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"verifie":true}' });
@@ -264,7 +267,16 @@ async function navigateur() {
     const vertes = await p.locator('#ca-jauges-photos .jauge.terminee').count();
     const msg = await p.evaluate(() => (document.getElementById('ca-msg') || {}).textContent || '');
     const notees = journal.filter((j) => j[0] === 'POST' && j[1] === 'casting_photos');
-    if (cas.verifPerdue) {
+    if (cas.copiesPanne) {
+      const essaisCopies = r2Appels.filter((c) => c.action === 'candidature_copies').length;
+      const garde = await p.evaluate(() => JSON.parse(localStorage.getItem('ma2m-copies-drive') || '[]'));
+      ok(essaisCopies >= 3 && garde.length === 1 && garde[0].copies.length === 3, n + 'réseau coupé : 3 essais, puis la demande est gardée dans le téléphone (' + essaisCopies + ' essais, ' + garde.length + ' gardée)');
+      cas.copiesPanne = false;
+      await p.goto(base + '/index.html'); await p.waitForTimeout(6000);
+      const apres = r2Appels.filter((c) => c.action === 'candidature_copies').length;
+      const reste = await p.evaluate(() => JSON.parse(localStorage.getItem('ma2m-copies-drive') || '[]'));
+      ok(apres > essaisCopies && !reste.length, n + 'page suivante du site : la demande est refaite, puis effacée du téléphone (' + apres + ', ' + reste.length + ')');
+    } else if (cas.verifPerdue) {
       ok(signes.length === 3 && puts.length === 3 && verifies.length === 4 && verifies[0].chemin === verifies[1].chemin, n + '2ᵉ relecture : la photo est revérifiée (même nom), jamais déposée deux fois (3 dépôts, 4 vérifications)');
       ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
     } else if (cas.reprise) {

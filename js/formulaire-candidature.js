@@ -488,18 +488,12 @@ async function envoyerMedias(etat) {
       }
       // (relecture du superviseur, 22 h 30) chaque photo Cloudflare reçoit le lien de SA copie Drive (même rang dans
       // l'envoi) : le serveur retire le doublon noté par Google, et la photo n'a plus qu'une ligne dans le dossier ; les
-      // photos arrivées seulement dans Drive sont ensuite notées par la base. 3 essais ; échec : noté au journal (au
-      // pire, une photo s'affiche deux fois dans l'Administration).
+      // photos arrivées seulement dans Drive sont ensuite notées par la base. Réseau coupé : la demande est gardée dans
+      // le téléphone et refaite à la prochaine page du site visitée (relierCopiesDrive, js/app.js).
       if (!echec && copieDe && arriveesR2.length) {
         const cheminsR2 = etat.cheminsR2 || [];
         const copies = arriveesR2.map((rang, k) => ({ chemin: String(cheminsR2[k] || '').replace(/^r2:/, ''), lien: copieDe(rang) })).filter((c) => c.chemin && c.lien);
-        let relie = !copies.length;
-        for (let essai = 1; essai <= 3 && !relie; essai++) {
-          relie = await fetch('/api/r2-presigner', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'candidature_copies', candidature: candidature.id, copies }) }).then((r) => r.ok, () => false);
-          if (!relie && essai < 3) await new Promise((r) => setTimeout(r, 1500));
-        }
-        if (!relie && window.signalerErreur) window.signalerErreur('Copies Drive non reliées aux photos Cloudflare', 'dossier ' + candidature.id, copies.length + ' photo(s)');
+        await relierCopiesDrive(candidature.id, copies);
       }
     } catch (e) {
       // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà
