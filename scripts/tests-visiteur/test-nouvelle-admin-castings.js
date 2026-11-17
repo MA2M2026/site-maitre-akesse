@@ -80,7 +80,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     }));
     ok(/PETITE AMA Mineure · 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
     ok(fiche.photos === 2, n + 'fiche : les 2 photos de la candidate');
-    ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Ouvrir dans Drive/.test(l)) && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
+    ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Ouvrir la vidéo/.test(l)) && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
       n + 'fiche : WhatsApp sur le numéro du parent, vidéo lue dans la fiche (lecteur Drive), message de la candidate');
     await capture(p, 'fiche' + suffixe);
     // « Écrire sur WhatsApp » : message proposé, adressé au parent

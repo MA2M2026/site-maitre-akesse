@@ -5416,8 +5416,9 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
   - Reporté avec L-17 (décision de la propriétaire) : la caisse ne peut ni lire ni valider les cours de talons (la base
     ne lui donne pas `cours_talons` et la page n'est que dans l'espace « site ») ; en attendant, seul le principal valide.
 - **Chantier L-18, part du superviseur (17/11/2026, demandes de la propriétaire)** :
-  - *Vidéos lues dans la fiche* : vidéo de candidature (`video_url`) et de cours de talons (`video`) au format Drive
-    `…/file/d/<id>/view` affichée par le lecteur Google Drive intégré (`…/preview`) : `P.lecteurVideo`,
+  - *Vidéos lues dans la fiche* (toutes les vidéos envoyées) : vidéo de candidature (`video_url`) et de cours de talons
+    (`video`) lue par un lecteur intégré : Google Drive (`/file/d/<id>/view|preview`, `open?id=`, `uc?id=` → `…/preview`),
+    YouTube et Vimeo (`urlVideoIntegree`) ; autre adresse : lien seul. `P.adresseLecteur`, `P.lecteurVideo`,
     `P.estVideoDrive` (js/admin/coque.js), utilisés par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
     `frame-src` de l'Administration (`/(admin|app)/`, vercel.json) : + `https://drive.google.com`. Les vidéos restent
     dans le Drive ; lien « Ouvrir dans Drive » gardé. Tests : `test-nouvelle-admin-castings.js`, `test-admin-cours-talons.js`.

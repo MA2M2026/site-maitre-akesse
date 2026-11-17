@@ -83,6 +83,13 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     // (17/11/2026, L-18) vidéo Drive lue DANS la fiche (lecteur intégré), plus de simple bouton ; le lien Drive reste
     ok(await p.locator('.ct-fiche[data-id="t2"] iframe.lecteur-video[src="https://drive.google.com/file/d/vid456/preview"]').count() === 1 &&
       await p.locator('.ct-fiche[data-id="t2"] a.btn', { hasText: 'Vidéo de la marche' }).count() === 0, n + 'vidéo de la marche lue dans la fiche (lecteur Google Drive)');
+    // (17/11, « valable pour tous ceux qui envoient des vidéos ») toutes les formes de liens vidéo sont lues
+    const formes = await p.evaluate(() => ['https://drive.google.com/file/d/abcdefghijk123/view?usp=sharing', 'https://drive.google.com/open?id=abcdefghijk123',
+      'https://drive.google.com/uc?id=abcdefghijk123&export=download', 'https://youtu.be/dQw4w9WgXcQ', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://vimeo.com/76979871',
+      'https://exemple.com/video.mp4', 'javascript:alert(1)'].map((u) => window.Portail.adresseLecteur(u)));
+    ok(formes.slice(0, 3).every((x) => x === 'https://drive.google.com/file/d/abcdefghijk123/preview') && formes[3] === 'https://www.youtube.com/embed/dQw4w9WgXcQ' &&
+      formes[4] === formes[3] && /^https:\/\/player\.vimeo\.com\//.test(formes[5]) && formes[6] === null && formes[7] === null,
+      n + 'lecteur : Drive (3 formes), YouTube, Vimeo lus ; adresse inconnue ou dangereuse jamais intégrée (' + JSON.stringify(formes.slice(5)) + ')');
     await p.click('.ct-fiche[data-id="t1"] [data-action="talons-photo-voir"][data-index="1"]'); await p.waitForTimeout(500);
     ok(await p.evaluate(() => !!document.querySelector('.lightbox.active, .lightbox-global.active, [class*="lightbox"].active, [class*="lightbox"][class*="ouvert"]')), n + 'une photo s’agrandit d’un appui');
     await p.keyboard.press('Escape'); await p.waitForTimeout(300);
