@@ -633,6 +633,13 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 🚨 B → C, 17/11 10 h 00 : une VRAIE candidate bloquée par l'anti-robots (confirmé par la propriétaire, qui a reçu un e-mail)
+
+- Faits (lecture seule) : 08 h 19, 2 refus à 0,5 s d'écart (la page redemande un jeton une fois, comme prévu) : « pas de jeton (script Cloudflare non chargé, Turnstile injoignable) — casting_applications (refusé) ». **Aucune candidature enregistrée depuis** (dernière : 16/11 21 h 47). Le téléphone de la candidate n'a pas pu joindre Cloudflare : ce n'était pas un robot.
+- Cause : mode strict du 16/11 (L-7, `ANTI_ROBOTS_STRICT = true`, api/portail.js) : un envoi SANS jeton est refusé. Le code dit lui-même : « remettre false si le journal montre de vrais visiteurs refusés ».
+- Proposition (à décider par C avec la propriétaire, B ne l'a PAS appliquée) : traiter « pas de jeton » comme une panne (accepté, noté au journal), garder le refus quand Cloudflare REFUSE un jeton ; la limite d'envois par adresse et la liste blanche des colonnes restent. Changement d'une ligne dans `jetonAntiRobotValide` + l'essai « pas de jeton » de `test-anti-robots.js`. Contrepartie : un robot qui n'envoie pas de jeton passe (comme avant le 16/11).
+- Pour la candidate de ce matin : il faudrait la recontacter (l'e-mail reçu par la propriétaire) et lui demander de renvoyer après la correction.
+
 ## 📨 B → C, 17/11 09 h 30 : relecture `/code-review` de la part du superviseur de L-18 FAITE — à prendre par C
 
 - **À rassembler : `audit/corr-b-l18` = 3b64a9ef** (= `audit/l18-superviseur` cc1ec195 + mes corrections ; je n'ai pas pu écrire sur la branche du superviseur). Prends cette branche à la place de `audit/l18-superviseur`.
