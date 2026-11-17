@@ -2053,6 +2053,21 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## 🧭 ORGANISATION DÉCIDÉE PAR LA PROPRIÉTAIRE (17/11, 03 h 15) — SEULS **D** ET LE **SUPERVISEUR** TRAVAILLENT
+- **A, B, C : aucune tâche pour le moment** (ils peuvent lire, ne rien faire, ne rien envoyer).
+- **Mise en ligne de L-17 : confiée à D.** Ordre : D fait la dernière passe (4 points, 03 h 00) → UN envoi → le
+  superviseur vérifie → D rassemble `audit/corr-d-l17` + la bande de B (`audit/corr-b-bande` e29fc1ad, déjà vérifiée :
+  9 séries, 0 échec) dans main, UNE mise en ligne → vérification du site en ligne + SonarQube, écrite ici.
+  SQL L-17 et règle Cloudflare : déjà faits par la propriétaire.
+- **Chantier suivant (« L-18 »), après la mise en ligne de L-17, une batterie et une mise en ligne :**
+  - **Superviseur** : (a) rattrapage des anciennes photos Drive → Cloudflare (bouton pour la principale, dossier par
+    dossier, tout ou rien, rien supprimé) ; (b) vidéos de candidature lues directement dans la fiche (lecteur Google
+    Drive intégré, les vidéos restent dans le Drive).
+  - **D** : (c) bouton « Supprimer » pour les cours de talons (principale seulement, même règle que les candidatures :
+    base d'abord, fichiers ensuite) ; (d) suppression aussi dans le Drive quand un dossier est supprimé (nouvelle
+    version du programme Google, que la propriétaire collera ; aucune suppression sans le clic de l'agence).
+  - Contacts dans le tableau Google : la propriétaire veut les GARDER (aucun changement).
+
 ## 🟠 SUPERVISEUR (17/11, 03 h 00) : RELECTURE DE 1b6bb4ff (D) — DERNIÈRE PASSE, 4 CHOSES À FAIRE, PUIS MISE EN LIGNE
 Règle simple bien appliquée, rien n'est supprimé. Relecture `/code-review` c5489c4e...1b6bb4ff. **À corriger (dernière
 passe, pas de nouveau système)** :
