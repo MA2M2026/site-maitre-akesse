@@ -47,7 +47,7 @@ alter table cours_talons add column if not exists mois_payes int not null defaul
 update cours_talons set mois_payes = nb_mois where valide_le is not null and mois_payes = 0;
 
 -- Prix du groupe : 30 000 FCFA le mois (4 dimanches) — décision de la propriétaire du 08/11/2026, inchangée
-create or replace function cours_talons_prix_mois() returns int language sql immutable as $$ select 30000 $$;
+create or replace function cours_talons_prix_mois() returns int language sql immutable set search_path = public as $$ select 30000 $$;
 
 -- À l'inscription (formulaire public, qui envoie la ligne) : la base tire le jeton, compte les mois payés (aucun),
 -- borne la durée et décide du montant à payer maintenant : groupe = 30 000 × mois si tout est payé d'un coup,
@@ -147,7 +147,7 @@ alter table cours_talons_seances add column if not exists rang int check (rang i
 -- Le module (mois du programme) du m-ième mois d'une élève : elle débute → 1, 2, 3… ; elle a la base → ses modules
 -- choisis, dans l'ordre ; au-delà → Perfectionnement (7)
 create or replace function cours_talons_module(p_parcours text, p_modules int[], p_m int) returns int
-language sql immutable as $$
+language sql immutable set search_path = public as $$
   select case when p_parcours = 'base' and p_m <= coalesce(array_length(p_modules, 1), 0) then p_modules[p_m]
     when p_parcours = 'base' then 7 else least(greatest(p_m, 1), 7) end;
 $$;

@@ -115,7 +115,7 @@ grant execute on function mensualites_payer_avance(int, text, text) to authentic
 -- et une ligne au journal pour que le comptable crée le bon compte et corrige.
 -- (Même version dans supabase-administration.sql, pour qu’un nouveau collage de ce fichier ne la remplace pas.)
 create or replace function compta_type_du_mode(p_mode text)
-returns text language sql immutable as $$
+returns text language sql immutable set search_path = public as $$
   select case p_mode when 'especes' then 'caisse' when 'wave' then 'wave' when 'carte' then 'banque' when 'virement' then 'banque'
     when 'avant_systeme' then 'wave' else 'mobile_money' end;
 $$;
