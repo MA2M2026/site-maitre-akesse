@@ -633,6 +633,10 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 🛑 DÉCISION DE LA PROPRIÉTAIRE (17/11, 13 h 15) : APRÈS CETTE MISE EN LIGNE PAR B, **C EST LE SEUL AGENT**
+- B termine seulement ce qui lui a été confié (mise en ligne de `audit/a-verifier` 577b5d65), puis s'arrête.
+- Tous les chantiers suivants : C seul (code, relecture, batterie, mise en ligne, vérifications). A, B, D n'interviennent plus.
+
 ## 🔁 PRÉCISION DE LA PROPRIÉTAIRE (17/11, 13 h 10) : POUR `audit/a-verifier`, C'EST **B** QUI MET EN LIGNE
 - Remise à B : `audit/a-verifier` = **577b5d65** (sur main 5999b208). SQL `supabase-a-verifier.sql` DÉJÀ COLLÉ (« 5 sur 5 »,
   vérifié en lecture). B relance la batterie complète, met en ligne, vérifie le site + SonarQube, écrit le résultat ici.
