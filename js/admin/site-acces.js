@@ -5,8 +5,6 @@
 //    codes disponibles et déjà utilisés, note d'intégration (écran partagé js/note-integration.js) ;
 //  - Accès bloqués : /api/connexion-admin (débloquer, liste blanche des adresses de confiance) ;
 //  - Drive et transferts : seulement des chiffres réels (rien d'inventé) ;
-//  - Nettoyage des photos : nettoyer_photos_traitees_anciennes, et l'outil partagé
-//    js/nettoyage-supabase.js (les photos des mannequins ne sont jamais touchées).
 (function () {
   'use strict';
   const P = window.Portail;
@@ -162,27 +160,11 @@
     }
   };
 
-  // ---------- Nettoyage des photos ----------
-  async function pageNettoyage() {
-    return P.entete('Nettoyage des photos') +
-      '<section class="carte"><h2>Photos des dossiers traités</h2><p class="doux">Une fois une candidature ou une inscription définitivement traitée, ses photos sont retirées de l’Administration après 5 jours (les fichiers restent dans Google Drive). Ce nettoyage tourne chaque nuit ; ce bouton le lance tout de suite.</p>' +
-      '<button class="btn" type="button" data-action="nettoyer-traitees">Lancer le nettoyage maintenant</button><p class="form-msg" id="nt-msg" role="status"></p></section>' +
-      '<section class="carte"><h2>Anciennes photos de l’ancien stockage</h2><p class="doux">Libère de la place en effaçant les anciennes copies qui ne servent plus. <b>Les photos des mannequins ne sont jamais touchées</b>, et rien ne change sur le site. Une confirmation est demandée avant d’effacer.</p>' +
-      '<button class="btn" id="nettoyage-supabase-btn" type="button">Vérifier et nettoyer</button><p class="form-msg" id="nettoyage-supabase-msg" role="status"></p></section>';
-  }
-  P.actions['nettoyer-traitees'] = async (el) => {
-    el.disabled = true;
-    try {
-      const n = await P.rpc('nettoyer_photos_traitees_anciennes');
-      const m = document.getElementById('nt-msg');
-      if (!m) { P.message(n > 0 ? P.pluriel(n, 'photo retirée', 'photos retirées') + ' des dossiers traités.' : 'Rien à nettoyer pour le moment.'); return; }  // (rubrique quittée entre-temps)
-      m.className = 'form-msg ok';
-      m.textContent = n > 0 ? P.pluriel(n, 'photo retirée', 'photos retirées') + ' (dossiers traités depuis plus de 5 jours). Les fichiers restent dans Google Drive.' : 'Rien à nettoyer pour le moment : aucun dossier traité depuis plus de 5 jours.';
-    } finally { if (el.isConnected) el.disabled = false; }
-  };
+  // (17/11/2026, décision de la propriétaire) plus de « Nettoyage des photos » : aucune photo de candidature ni d'inscription
+  // n'est plus retirée automatiquement (supabase-sans-effacement-auto.sql) ; un dossier ne part que par « Supprimer ce
+  // dossier ». L'outil ponctuel de l'ancien stockage (30/09) est retiré aussi : il a fini son travail.
 
-  Object.assign(P.espaces.site.pages, { 'b3b-codes-inscription': pageCodes, 'b3b-acces-bloques': pageBlocages, 'b3a-drive': pageDrive, 'b3a-nettoyage': pageNettoyage });
+  Object.assign(P.espaces.site.pages, { 'b3b-codes-inscription': pageCodes, 'b3b-acces-bloques': pageBlocages, 'b3a-drive': pageDrive });
   P.espaces.site.apres['b3b-codes-inscription'] = () => window.demarrerNoteIntegration();
-  P.espaces.site.apres['b3a-nettoyage'] = () => window.demarrerNettoyageSupabase();
   P.espaces.site.apres['b3a-drive'] = () => P.animerChiffres(document.getElementById('contenu'));
 })();

@@ -323,7 +323,7 @@ apparitions en fondu (`lisibilite.js`). `test-espace1-cadre.js` (tuile de l'anci
   `js/<nom>-gabarit.js` (`window.GABARIT_*`), la logique dans un `window.demarrer…()` :
   convocations, messages groupés, agenda, vidéo de l'accueil, photos mises de côté, rapport des
   profils, fiches événement, erreurs du site (`js/erreurs-site.js`), note d'intégration
-  (`js/note-integration.js`), nettoyage (`js/nettoyage-supabase.js`).
+  (`js/note-integration.js`) ; (17/11/2026) l'outil de nettoyage `js/nettoyage-supabase.js` est retiré.
 - **Outils partagés créés pour l'occasion** : `js/photos.js` (affichage des photos, sorti de
   `js/app.js`, chargé avant lui sur toutes les pages), `PUBLICATIONS`, `sauverPublication`,
   `effacerPublication` (`js/publications-ecriture.js`), `js/partenaires-communs.js`,
@@ -1286,7 +1286,7 @@ mannequins, ils sont gardés 5 minutes par le serveur : un casting fermé peut r
 ## 📝 À faire plus tard (demandé par la propriétaire — à lui rappeler)
 
 - ✅ **Nettoyer les anciennes copies de photos sur Supabase Storage** : fait le 30/09/2026 —
-  outil « Vérifier et nettoyer » (Administration › Outils, `js/nettoyage-supabase.js`) pour les
+  outil « Vérifier et nettoyer » (`js/nettoyage-supabase.js`, retiré le 17/11/2026 : travail terminé) pour les
   images du site et les anciennes photos de dossiers. Les photos des mannequins (`model-photos`)
   restent exclues par décision de la propriétaire (30/09) : ne les ajouter que si elle le demande.
 - ✅ **Sécurité de l'Administration B+ → A+** (24/10/2026) : règle `/(admin|app)/(.*)` de vercel.json (aussi l'application des mannequins),
@@ -1636,7 +1636,7 @@ depuis Google Drive dans l'Administration. Désormais :
 8. **L-18 (d), 17/11 : dossier Google Drive à la CORBEILLE quand l'agence supprime** (même fichier SQL) : un
    déclencheur `after delete` sur `casting_applications` et `cours_talons` (`medias_drive_vers_corbeille`) ne
    s'active que si une personne CONNECTÉE supprime (`auth.uid()` non nul : le clic du principal ; le nettoyage
-   automatique de la nuit `effacer_anciennes_candidatures` ne touche jamais au Drive) et si un dossier Drive est
+   automatique de la nuit ne touche jamais au Drive ; il est d'ailleurs arrêté depuis le 17/11, voir plus bas) et si un dossier Drive est
    connu (`medias_drive`, genre `dossier`). Il note la demande (`medias_drive_corbeille`) et appelle le programme
    Google (pg_net, action `corbeille`). Le programme redemande à la base les dossiers à jeter
    (`media_drive_a_jeter`, mot secret obligatoire : la clé du programme est publique ; vide si la ligne existe
@@ -4344,6 +4344,16 @@ Les étiquettes « À vérifier » ne concernent que `casting_applications` et `
 aussi notées sur un envoi recommencé (23505), et s'affichent aussi dans le mode Étudier. Les vidéos restent
 rangées dans Google Drive (décision de la propriétaire : pas de passage chez Cloudflare). Essai :
 `test-nouvelle-admin-castings.js` (taille, plein écran, sortie).
+**Plus aucun effacement automatique, sauf la règle des 2 ans (17/11/2026, décisions de la propriétaire)** :
+`supabase-sans-effacement-auto.sql` vide `nettoyer_photos_traitees_anciennes` (retirait chaque nuit, et par le bouton
+« Lancer le nettoyage maintenant », les photos des candidatures Retenue/Refusée depuis 5 jours et des inscriptions
+payées/annulées : elle renvoie 0, plus de tâche de nuit). `effacer_anciennes_candidatures` (dossiers refusés après
+30 jours, les autres après 6 mois) devient la SEULE règle automatique, conforme à la politique de confidentialité :
+candidature refusée ou inscription annulée effacée 2 ans après la réponse (tâche `effacement-candidatures-2-ans`, 3 h 30).
+Les définitions d'origine de `supabase-extension.sql` sont neutralisées (recoller ce fichier ne les ramène plus). C'était la vraie cause des « photos qui ne s'affichent pas » des
+anciennes candidatures. La rubrique « Nettoyage des photos » et l'outil `js/nettoyage-supabase.js` (ponctuel, 30/09)
+sont retirés de l'Administration. Un dossier ne part plus que par « Supprimer ce dossier ». Essais :
+`essais-sans-effacement-auto.sql`, `test-nouvelle-admin-outils.js`.
 **Fiche d'une candidature façon « Étudier » (17/11/2026, maquette n° 1 choisie par la propriétaire)** : `ficheCandidature`
 (js/admin/site-dossiers.js) reprend l'en-tête du mode Étudier (`hautCandidature`, `P.etude.haut` : grande photo qui
 défile, nom et « âge · casting · reçue le » sur la photo), puis statut, petites étiquettes, mot de la candidate en
