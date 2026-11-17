@@ -26,6 +26,18 @@
   // (16/11/2026, L-17) photos des candidatures et des cours de talons rangées chez Cloudflare R2 (« r2:… ») :
   // adresses de lecture signées d'1 heure demandées au serveur (api/r2-presigner.js), suppression au clic.
   // Partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
+  // (17/11/2026, L-18, demande de la propriétaire) vidéo de candidature ou de cours de talons (Google Drive) LUE DANS LA FICHE, comme une
+  // photo, au lieu d'un simple lien : lecteur de Google Drive intégré (« …/preview », autorisé par frame-src de
+  // l'Administration, vercel.json). Les vidéos restent dans le Drive. Lien « ouvrir dans Drive » gardé en secours.
+  const RE_VIDEO_DRIVE = /^https:\/\/drive\.google\.com\/file\/d\/([\w-]+)\/view$/;
+  P.estVideoDrive = (u) => RE_VIDEO_DRIVE.test(String(u || ''));
+  P.lecteurVideo = function (u) {
+    const m = RE_VIDEO_DRIVE.exec(String(u || ''));
+    if (!m) return '';
+    return '<span class="lecteur-video-bloc"><iframe class="lecteur-video" src="https://drive.google.com/file/d/' + m[1] + '/preview" title="Vidéo de présentation" loading="lazy" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>' +
+      '<a href="' + P.esc(u) + '" target="_blank" rel="noopener">Ouvrir dans Drive ↗</a></span>';
+  };
+  // partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js
   P.photosR2 = {
     est: (c) => typeof c === 'string' && /^r2:(candidatures|cours-talons)\//.test(c),
     // (relecture du superviseur, 17/11 02 h 15 : règle simple, rien n'est jamais supprimé) N photos Cloudflare et M copies

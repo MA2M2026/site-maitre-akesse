@@ -75,12 +75,13 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       photos: document.querySelectorAll('.photo-dossier img').length,
       champs: document.querySelector('dl.champs').innerText.replace(/\s+/g, ' '),
       liens: [...document.querySelectorAll('dl.champs a')].map((a) => a.textContent + ' ' + a.href),
-      message: (document.querySelector('.message-dossier') || {}).textContent
+      message: (document.querySelector('.message-dossier') || {}).textContent,
+      lecteur: (document.querySelector('dl.champs iframe.lecteur-video') || {}).src || ''   // (L-18) vidéo lue dans la fiche
     }));
     ok(/PETITE AMA Mineure · 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
     ok(fiche.photos === 2, n + 'fiche : les 2 photos de la candidate');
-    ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Voir la vidéo/.test(l)) && /rêve de défiler/.test(fiche.message),
-      n + 'fiche : WhatsApp sur le numéro du parent, vidéo, message de la candidate');
+    ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Ouvrir dans Drive/.test(l)) && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
+      n + 'fiche : WhatsApp sur le numéro du parent, vidéo lue dans la fiche (lecteur Drive), message de la candidate');
     await capture(p, 'fiche' + suffixe);
     // « Écrire sur WhatsApp » : message proposé, adressé au parent
     const wa1 = await p.getAttribute('#dos-wa-ouvrir', 'href');
