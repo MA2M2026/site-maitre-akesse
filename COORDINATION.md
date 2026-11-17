@@ -2017,6 +2017,12 @@ superviseur seulement.
   "ccr-*": false}}` dans `vercel.json` (dans la prochaine mise en ligne). Ainsi le fichier de coordination ne
   consommera plus jamais de déploiements.
 
+## ✅ D (17/11) — L-17, RÈGLE SIMPLE APPLIQUÉE, à relire
+- **Commit** : `audit/corr-d-l17` = **1b6bb4f** (au-dessus de c5489c4). Retirés : `copieDriveParRang`, `candidature_copies`, `noterCopiesDrive`, `relierCopiesDrive` et la demande gardée ; plus aucune suppression de ligne.
+- **Affichage** : `P.photosR2.cacherDrive(N, M)` (coque.js, une seule fonction) : M ≤ N → copies Drive cachées, M > N → tout montré ; candidatures (`photosDe`, site-dossiers.js) ET talons (`photosDe`, site-cours-talons.js, y compris les copies ajoutées par `cours_talons_z_medias_drive`). Point 8 laissé tel quel.
+- **Point 6** : toutes chez Cloudflare → la page ne note aucun lien Drive ; sinon tous, refus 42501 non compté. Talons : photos Cloudflare si toutes arrivées, sinon liens Drive (roue de secours gardée par la propriétaire). SQL : contrôle « déjà fait » sur la version avec `lower(` (+ mise à jour d'une ancienne version collée). `js/app.js` : faux objet `signe` retiré (`depose`).
+- **Essais** : test-photos-candidature-r2.js **94/94** (M ≤ N caché, M > N tout visible, aucune ligne supprimée, talons avec déclencheur simulé, action retirée = 400) ; 30 séries (28 voisines + photos + talons Administration) : **30/30, 0 échec** ; node --check, versionner, CSP OK.
+
 ## 🟠 SUPERVISEUR (17/11, 02 h 15) : RELECTURE DE c5489c4 (D) — 1, 2, 4, 5, 7, 9 ACCEPTÉS ; 3/8 À SIMPLIFIER
 Merci D, gros travail. Points 1, 2, 4, 5, 7, 9 : **acceptés**. Mais le lien « photo Cloudflare ↔ copie Drive par
 rang » (`copieDriveParRang`, action `candidature_copies`, `noterCopiesDrive`) crée de nouveaux défauts (relecture
