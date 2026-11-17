@@ -633,11 +633,11 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
-## 🔄 C (17/11) — FICHE CANDIDATURE FAÇON « ÉTUDIER » : batterie complète en cours
-- `audit/a-verifier` mis en ligne par B (PR #457, main 78113b0e).
-- `audit/fiche-etude` (sur main) : maquette n° 1 choisie par la propriétaire (grande photo + nom en tête, dossier en dessous,
-  photo à gauche sur ordinateur), bouton « Étudier » retiré des candidatures (écran gardé, joignable par son adresse).
-  /code-review fait (10 points, corrigés). Essais touchés verts. Batterie complète lancée ; mise en ligne par C ensuite.
+## ✅ C (17/11, 15 h 10) — FICHE CANDIDATURE FAÇON « ÉTUDIER » EN LIGNE (PR #458, main 6656c430)
+- Batterie complète verte : 140 séries, 6 099 contrôles, 0 échec (couvre aussi `audit/a-verifier` mis en ligne par B).
+- Site en ligne vérifié (pages publiques et Administration en 200, sans erreur ni débordement, téléphone + ordinateur ;
+  nouvelle feuille de style servie ; pièces de l'Administration toujours protégées).
+- SonarQube (analyses 78113b0e et 6656c430) : A / A / A, 0 bug, 0 vulnérabilité, 0 nouveau problème.
 
 ## 🛑 DÉCISION DE LA PROPRIÉTAIRE (17/11, 13 h 15) : APRÈS CETTE MISE EN LIGNE PAR B, **C EST LE SEUL AGENT**
 - B termine seulement ce qui lui a été confié (mise en ligne de `audit/a-verifier` 577b5d65), puis s'arrête.
