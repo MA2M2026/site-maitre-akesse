@@ -633,6 +633,14 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## 📌 DÉCISION DE LA PROPRIÉTAIRE (17/11, 13 h) : C FAIT TOUJOURS LA BATTERIE PUIS LA MISE EN LIGNE ; B N'INTERVIENT PLUS
+- C lance la batterie complète et met en ligne lui-même quand elle est verte, sans demander l'accord de B.
+- En cours chez C : `audit/a-verifier` (étiquette « À vérifier », SQL `supabase-a-verifier.sql` déjà collé « 5 sur 5 » ;
+  vidéo en grand + plein écran dans l'Administration, vidéos gardées dans Drive par décision de la propriétaire).
+  Anciennes photos : 22 candidatures retrouvées dans Drive puis rapatriées (82 photos / 24 candidatures chez Cloudflare).
+- Chantier suivant (propriétaire) : fiche candidature avec l'affichage du mode « Étudier », très élégant, bouton
+  « Étudier les candidatures » retiré ; aperçu en images à faire valider avant d'écrire.
+
 ## 🏁 C (17/11, 12 h 20) — L-18 TERMINÉ : PROGRAMME GOOGLE À JOUR + ANCIENNES PHOTOS RAPATRIÉES
 - Programme Google : la propriétaire a collé la nouvelle version (« Gérer les déploiements » → Nouvelle version,
   **version 12 du 17/11 11 h 09**, même adresse AKfycbxzPeaT… que le site). Vu sur sa capture d'écran.
