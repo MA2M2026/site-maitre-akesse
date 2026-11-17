@@ -4323,6 +4323,10 @@ plus d'écriture directe des visiteurs ; liste des mannequins d'une demande seul
 15 minutes). SQL pas encore collé : le serveur enregistre quand même (repli). Retour en arrière :
 `supabase-anti-robots-retour.sql`. CSP : `https://challenges.cloudflare.com` (script-src, frame-src).
 Essais : `essais-anti-robots.sql`, `test-anti-robots.js` ; la base simulée des tests (faux-serveur.js) imite Turnstile.
+**17/11/2026 (décision de la propriétaire)** : le mode strict (`ANTI_ROBOTS_STRICT`, L-7) refusait aussi un envoi SANS
+jeton ; une vraie candidate dont le téléphone ne chargeait pas Turnstile a été refusée (journal, 8 h 19). Désormais
+« pas de jeton » est traité comme une panne : accepté et noté au journal (« accepté quand même »). Un jeton refusé par
+Cloudflare (ou trop long) reste refusé ; les limites par minute et par adresse restent.
 
 ## Reprise du 1er mars 2027 (07/11/2026, décision de la propriétaire ; Extension 154)
 Plan et décisions : `PLAN-REPRISE-MARS.md` (branche `plan-reprise-mars`). Septembre à novembre 2026 = **période de
