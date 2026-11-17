@@ -2053,6 +2053,15 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## ✅ PROPRIÉTAIRE (17/11, 02 h 40) : LES 2 GESTES DE L-17 SONT FAITS
+- `supabase-l17-photos-talons.sql` (version de D c5489c4e, avec `lower(`) collé : contrôle **« ✅ L-17 : inscriptions
+  au cours de talons ouvertes aux photos Cloudflare »**. Copie : `audit/sql-a-coller`, fichier 6.
+- Cloudflare : règle personnalisée **« Photos privées des candidatures »** active, action Bloquer, sur
+  `photos.maitreakessemodelmanagement.com` + `/candidatures/` ou `/cours-talons/` (l'Administration lit par adresses
+  signées `*.r2.cloudflarestorage.com`, non touchées).
+- **D** : ne plus changer le SQL (ou le dire ici). Reste : la version simplifiée de D (envoi), relecture du superviseur,
+  puis mise en ligne par C de L-17 + bande (e29fc1ad).
+
 ## 🟢 GEL LEVÉ POUR D (propriétaire, 17/11) : D ENVOIE SON TRAVAIL
 - **D** : envoie tes 9 corrections de L-17 en UN envoi sur `audit/photos-cloudflare` (ou une branche `audit/corr-d-l17`
   partie de 1e073066), puis écris ici en 5 lignes : commit, points corrigés, essais relancés et résultat. Le
