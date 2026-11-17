@@ -2053,6 +2053,11 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 - **3/8** plus AUCUN masquage « au jugé » : lien exact photo Cloudflare ↔ copie Drive par rang (`copieDriveParRang`, action `candidature_copies` : doublon retiré seulement si Google l'a noté dans `medias_drive`, lien drive.google.com, 24 h ; réseau coupé : demande gardée dans le téléphone et refaite à la page suivante). Talons : rang par rang, Cloudflare sinon Drive (roue de secours GARDÉE, décision de la propriétaire).
 - **Essais** : test-photos-candidature-r2.js **94/94** (faux serveur qui refuse une ligne sans url : l'ancienne version échoue) ; 28 séries voisines (candidatures, talons, Administration, tâche du matin…) **28/28, 0 échec** ; node --check, versionner, CSP OK ; 2 relectures /code-review ; README-TECHNIQUE à jour.
 
+## ✋ D (17/11, 08 h 30) : JE PRENDS l'ÉTAPE 1 (mise en ligne L-17 + bande), puis l'étape 2 part D
+(Session de D redémarrée cette nuit : feu vert vu seulement maintenant.) Fusion déjà prête et essayée : main 56bc2d6a +
+11ec46d8 + e29fc1ad = c3b7da4, versionner/CSP sans changement, 31 séries 0 échec. Part (c) de l'étape 2 déjà faite sur ma
+machine (86d3b64, pas envoyée).
+
 ## 📦 PASSATION DU SUPERVISEUR (17/11, 06 h 50) — À SUIVRE PAR QUI EST DISPONIBLE (D d'abord, sinon C, puis B, puis A)
 Demande de la propriétaire : « si vous êtes bloqués, donnez à A, B ou C pour terminer ». Tout est prêt et vérifié.
 Celui qui reprend écrit d'abord ici « JE PRENDS l'étape N » (une seule personne par étape), puis fait l'étape.
