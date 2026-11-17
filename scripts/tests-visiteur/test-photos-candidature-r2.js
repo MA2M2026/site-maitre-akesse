@@ -324,6 +324,7 @@ async function navigateur() {
     const CR2 = 'candidatures/' + ID + '/' + 'b'.repeat(32) + '.jpg';
     d.tables.casting_photos.push({ id: 'ph-r2', application_id: 'c4', chemin: 'r2:' + CR2, url: 'r2:' + CR2 });
     d.memoriser = true;
+    let serveurPhotosEnPanne = false;
     p.on('dialog', (dl) => dl.accept());
     const CT = 'cours-talons/' + ID + '/' + 'c'.repeat(32) + '.jpg';
     const dr = (k) => 'https://drive.google.com/thumbnail?id=talon' + k, CT2 = 'cours-talons/' + ID + '/' + 'e'.repeat(32) + '.jpg';
@@ -335,6 +336,7 @@ async function navigateur() {
     await brancher(p, d, journal); await photosLocales(p);
     await p.route('**/api/r2-presigner', async (route) => {
       const c = JSON.parse(route.request().postData() || '{}');
+      if (c.action === 'candidature_lire' && serveurPhotosEnPanne) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"panne"}' });
       if (c.action === 'candidature_lire') { lus.push(...c.chemins); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ adresses: Object.fromEntries(c.chemins.map((x) => [x, 'https://photos.maitreakessemodelmanagement.com/m0/' + x + '?signature=x'])) }) }); }
       if (c.action === 'candidature_supprimer') { supprimes.push(c.chemin || c.chemins); return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); }
       return route.fulfill({ status: 400, contentType: 'application/json', body: '{}' });
@@ -353,6 +355,15 @@ async function navigateur() {
     await p.goto(base + '/admin/#/site/b2-candidatures/c4'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
     const vu2 = await images();
     ok(vu2.length === 2 && vu2.every((x) => /signature=x/.test(x)), n + 'superviseur 3 : 2 photos Cloudflare et 2 copies Drive : les copies Drive sont cachées (' + vu2.length + ')');
+    // (dernière passe du superviseur) serveur de photos injoignable : les copies Drive s'affichent, la galerie n'est pas vide
+    serveurPhotosEnPanne = true;
+    await p.goto(base + '/admin/#/site/b2-candidatures/c1'); await p.waitForTimeout(300);
+    await p.goto(base + '/admin/#/site/b2-candidatures/c4'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
+    const enPanne = await images();
+    ok(enPanne.length === 2 && enPanne.every((x) => /drive\.google/.test(x)), n + 'serveur de photos injoignable : les 2 copies Drive s’affichent (' + enPanne.length + ')');
+    serveurPhotosEnPanne = false;
+    await p.goto(base + '/admin/#/site/b2-candidatures/c1'); await p.waitForTimeout(300);
+    await p.goto(base + '/admin/#/site/b2-candidatures/c4'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
     // (superviseur 8, accepté tel quel) une photo Cloudflare supprimée : rien d'autre n'est supprimé ; 1 Cloudflare et
     // 2 copies (M > N) : tout est montré
     await p.locator('[data-action="dossier-photo-supprimer"][data-photo="ph-r2b"]').click();

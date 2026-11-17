@@ -53,6 +53,16 @@
     // Drive dans un même dossier : si M ≤ N, les copies Drive sont cachées (ce sont des copies) ; si M > N, tout est
     // montré (au pire un doublon, jamais une photo cachée). Partagé par les candidatures et les cours de talons.
     cacherDrive: (nbR2, nbDrive) => nbR2 > 0 && nbDrive <= nbR2,
+    // copie Drive : un lien https sans chemin de stockage (une seule définition, règle n° 5)
+    estCopieDrive: (lien, chemin) => !chemin && typeof lien === 'string' && /^https:\/\/[^\s"<>]+$/.test(lien),
+    // (dernière passe du superviseur, 17/11 03 h) photos d'UN dossier → celles à montrer. elements : [{ r2, drive,
+    // affiche }]. N ne compte que les photos Cloudflare qui ont reçu leur adresse signée : si le serveur de photos est
+    // injoignable, les copies Drive s'affichent (la galerie n'est jamais vide). Partagé par les deux pages.
+    filtrer(elements) {
+      const n = elements.filter((e) => e.r2 && e.affiche).length, m = elements.filter((e) => e.drive).length;
+      const cacher = P.photosR2.cacherDrive(n, m);
+      return elements.filter((e) => e.affiche && !(e.drive && cacher));
+    },
     async appel(corps) {
       const jeton = await jetonSessionCourante();
       const rep = await fetch('/api/r2-presigner', { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify(corps) });

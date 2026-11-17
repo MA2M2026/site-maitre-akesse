@@ -92,17 +92,13 @@
     return count || 0;
   }
   const estPhotoR2 = (p) => !!(p && P.photosR2.est(p.chemin));  // (L-17, js/admin/coque.js)
-  const estCopieDrive = (p) => !!(p && p.url && !p.chemin);
   // Photos d'un ou plusieurs dossiers : { idDossier: [{ id, chemin, url, affiche }] }
   async function photosDe(conf, ids) {
     if (!conf.photos || !ids.length) return {};
-    let lignes = await P.bd(sb.from(conf.photos.table).select('id, chemin, url, ' + conf.photos.colonne).in(conf.photos.colonne, ids));
+    const lignes = await P.bd(sb.from(conf.photos.table).select('id, chemin, url, ' + conf.photos.colonne).in(conf.photos.colonne, ids));
     // (16/11/2026, L-17) photos des candidatures chez Cloudflare R2 (chemin « r2:… ») : adresses signées d'1 heure
-    // demandées au serveur. Copies Drive d'un dossier (lien, sans chemin) cachées s'il a au moins autant de photos
-    // Cloudflare (P.photosR2.cacherDrive, js/admin/coque.js) ; rien n'est supprimé.
-    const nb = {};
-    lignes.forEach((p) => { const n = nb[p[conf.photos.colonne]] = nb[p[conf.photos.colonne]] || { r2: 0, drive: 0 }; if (estPhotoR2(p)) n.r2++; else if (estCopieDrive(p)) n.drive++; });
-    lignes = lignes.filter((p) => !(estCopieDrive(p) && P.photosR2.cacherDrive(nb[p[conf.photos.colonne]].r2, nb[p[conf.photos.colonne]].drive)));
+    // demandées au serveur. Copies Drive cachées s'il y a au moins autant de photos Cloudflare AFFICHABLES
+    // (P.photosR2.filtrer, js/admin/coque.js) ; rien n'est supprimé.
     const signeesR2 = await P.photosR2.adresses(lignes.filter(estPhotoR2).map((p) => p.chemin));
     const chemins = lignes.map((p) => p.chemin).filter((c) => c && !c.startsWith('r2:'));
     const signees = {};
@@ -113,9 +109,10 @@
     const parDossier = {};
     lignes.forEach((p) => {
       const affiche = estPhotoR2(p) ? signeesR2[p.chemin] : p.chemin ? signees[p.chemin] : p.url;
-      if (!affiche) return;
-      (parDossier[p[conf.photos.colonne]] = parDossier[p[conf.photos.colonne]] || []).push(Object.assign({ affiche }, p));
+      (parDossier[p[conf.photos.colonne]] = parDossier[p[conf.photos.colonne]] || [])
+        .push(Object.assign({ affiche, r2: estPhotoR2(p), drive: P.photosR2.estCopieDrive(p.url, p.chemin) }, p));
     });
+    Object.keys(parDossier).forEach((id) => { parDossier[id] = P.photosR2.filtrer(parDossier[id]); if (!parDossier[id].length) delete parDossier[id]; });
     return parDossier;
   }
   // première photo de chaque dossier, pour les médaillons des autres écrans (codes d'accès…) :

@@ -418,11 +418,12 @@
     await envoyerMedias(etat);
     afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
     // (L-17, relecture du superviseur du 17/11 02 h 15 : règle simple) toutes les photos arrivées chez Cloudflare :
-    // l'inscription porte les photos Cloudflare ; sinon les liens Drive (la roue de secours, décision de la propriétaire),
-    // et s'il n'y en a aucun, ce qui est arrivé chez Cloudflare. L'Administration cache les copies Drive quand il y a au
-    // moins autant de photos Cloudflare (P.photosR2.cacherDrive, js/admin/coque.js).
+    // l'inscription porte les photos Cloudflare ; sinon la liste la plus longue (liens Drive à égalité : la roue de
+    // secours, décision de la propriétaire ; sinon les photos Cloudflare, qui seraient effacées par le nettoyage du
+    // matin si l'inscription ne les citait pas). L'Administration cache les copies Drive quand il y a au moins autant
+    // de photos Cloudflare (P.photosR2.filtrer, js/admin/coque.js).
     const d = etat.d, r2Liste = d.r2 || [], nbPhotos = (etat.photos || []).length;
-    const photos = ((d.r2Rangs || []).length >= nbPhotos ? r2Liste : d.liens.length ? d.liens : r2Liste).slice(0, 5);
+    const photos = ((d.r2Rangs || []).length >= nbPhotos ? r2Liste : d.liens.length >= r2Liste.length ? d.liens : r2Liste).slice(0, 5);
     const r2 = photos.filter((x) => String(x).startsWith('r2:'));
     const envoi = { liens: photos.length ? photos : etat.d.liens.slice() }, lienVideo = etat.d.video;
     // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)

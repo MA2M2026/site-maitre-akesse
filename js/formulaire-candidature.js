@@ -445,12 +445,10 @@ async function envoyerMedias(etat) {
     let arriveesR2 = etat.arriveesR2 || [];
     if (!etat.r2Fait) {
       // (relecture du superviseur, 22 h 30) chaque photo arrivée est gardée AUSSITÔT : une reprise ne la renvoie pas
-      const suivi = { rangs: arriveesR2, chemins: etat.cheminsR2 || [],
-        surArrivee: (r) => { Object.assign(etat, { arriveesR2: r.rangs, cheminsR2: r.chemins }); return EnvoiFiable.garder('candidature', etat); } };
-      let cheminsR2 = etat.cheminsR2 || [];
-      try { ({ rangs: arriveesR2, chemins: cheminsR2 } = await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto, 'candidatures', suivi)); }
-      catch (e) { arriveesR2 = etat.arriveesR2 || []; cheminsR2 = etat.cheminsR2 || []; }
-      Object.assign(etat, { r2Fait: true, arriveesR2, cheminsR2 }); await EnvoiFiable.garder('candidature', etat);
+      const suivi = { rangs: arriveesR2, surArrivee: (r) => { etat.arriveesR2 = r.rangs; return EnvoiFiable.garder('candidature', etat); } };
+      try { arriveesR2 = (await envoyerPhotosCandidatureR2(candidature.id, fichiersPhotos, idsPhotos, nomPhoto, 'candidatures', suivi)).rangs; }
+      catch (e) { arriveesR2 = etat.arriveesR2 || []; }
+      Object.assign(etat, { r2Fait: true, arriveesR2 }); await EnvoiFiable.garder('candidature', etat);
     }
     const idsDrive = idsPhotos.map((id, i) => (arriveesR2.includes(i) ? 'ca-copie-drive-' + i : id));  // (jauge absente : rien ne bouge)
     try {
@@ -471,13 +469,14 @@ async function envoyerMedias(etat) {
       // (relecture du superviseur, 17/11 02 h 15) si TOUTES les photos sont arrivées chez Cloudflare, elles sont déjà dans
       // le dossier : la page n'y ajoute pas leurs copies Drive. Sinon elle les ajoute toutes (l'Administration cache les
       // copies Drive quand il y a au moins autant de photos Cloudflare : P.photosR2.cacherDrive, js/admin/coque.js) ; un
-      // refus « limite de 12 atteinte » (code 42501, la place est prise par les photos Cloudflare) n'est pas une photo
-      // manquante.
+      // refus « limite de 12 atteinte » (code 42501) n'est pas compté, au plus autant de fois qu'il y a de photos arrivées
+      // chez Cloudflare (leur place est prise par elles) ; au-delà, c'est une photo manquante (journal), comme avant.
       const toutesChezCloudflare = arriveesR2.length >= fichiersPhotos.length;
+      let refusDusACloudflare = 0;
       if (!echec && !enregistre && !toutesChezCloudflare) {
         for (const lien of liens) {
           const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
-          if (erreurInsertPhoto && erreurInsertPhoto.code === '42501' && arriveesR2.length) continue;
+          if (erreurInsertPhoto && erreurInsertPhoto.code === '42501' && refusDusACloudflare < arriveesR2.length) { refusDusACloudflare++; continue; }
           if (erreurInsertPhoto && erreurInsertPhoto.code !== '23505') {
             nbPhotosEchouees++;
             sb.from('journal_erreurs').insert({
