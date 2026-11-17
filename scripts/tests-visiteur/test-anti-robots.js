@@ -11,11 +11,12 @@ const PORT = String(9840 + Math.floor(Math.random() * 30));
 
 async function serveur() {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-essai'; process.env.TURNSTILE_SECRET_KEY = 'secret-essai';
-  const verifs = [], rpcs = []; let limite = false;
+  const verifs = [], rpcs = [], etiquettes = []; let limite = false;
   global.fetch = async (url, o = {}) => {
     const u = String(url);
     const json = (x, s = 200) => ({ ok: s < 300, status: s, json: async () => x, text: async () => JSON.stringify(x) });
     if (u.includes('challenges.cloudflare.com/turnstile/v0/siteverify')) { const p = new URLSearchParams(String(o.body)); verifs.push(Object.fromEntries(p)); return json({ success: p.get('response') === 'bon-jeton' }); }
+    if (u.includes('/rest/v1/envois_a_verifier')) { etiquettes.push(JSON.parse(o.body)); return json(null, 201); }
     if (u.includes('/rpc/formulaire_public_enregistrer')) { const c = JSON.parse(o.body); rpcs.push(c); return limite ? json({ message: 'LIMITE_ATTEINTE' }, 400) : json('id-1'); }
     return json({});
   };
@@ -28,7 +29,7 @@ async function serveur() {
   };
   const ligne = { id: 'c1', nom: 'Awa', email: 'awa@test.ci', message: 'Bonjour' };
   let r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
-  ok(r.statut === 200 && verifs.pop()?.secret === 'secret-essai' && rpcs.length === 1 && rpcs[0].p_table === 'messages_contact' && rpcs[0].p_ip === '41.2.3.4' && rpcs[0].p_ligne.nom === 'Awa',
+  ok(r.statut === 200 && etiquettes.length === 0 && verifs.pop()?.secret === 'secret-essai' && rpcs.length === 1 && rpcs[0].p_table === 'messages_contact' && rpcs[0].p_ip === '41.2.3.4' && rpcs[0].p_ligne.nom === 'Awa',
     'serveur : jeton vérifié chez Cloudflare avec la clé secrète, puis enregistré (adresse du visiteur transmise)');
   // (16/11/2026, audit L-7 : mode strict, ANTI_ROBOTS_STRICT = true) : un robot est refusé, la raison est notée au
   // journal ; une panne de NOTRE côté ou de Cloudflare ne bloque jamais un vrai visiteur.
@@ -40,6 +41,18 @@ async function serveur() {
   // (17/11/2026, décision de la propriétaire : une vraie candidate dont le téléphone ne chargeait pas Turnstile était refusée)
   ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('erreur Turnstile 110200') && JSON.stringify(journal).includes('(accepté quand même)'),
     'serveur : pas de jeton (vérification non chargée sur le téléphone) : accepté, la raison est notée au journal');
+  ok(etiquettes.length === 0, 'serveur : message de contact sans vérification : pas d’étiquette (l’Administration n’en affiche pas)');
+  const rpcsAvant = rpcs.length;
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'c9', full_name: 'Awa Essai', email: 'awa@test.ci' }, raisonJeton: 'script Cloudflare non chargé' });
+  ok(r.statut === 200 && rpcs.length === rpcsAvant + 1 && etiquettes.length === 1 && etiquettes[0].ref === 'id-1' && etiquettes[0].table_nom === 'casting_applications' && /pas de jeton/.test(etiquettes[0].raison),
+    'serveur : candidature sans vérification : acceptée, étiquette « À vérifier » notée pour l’Administration');
+  rpcs.length = rpcsAvant + 0; etiquettes.length = 0;
+  // (relecture de B) la base refuse l'étiquette : c'est noté au journal, l'envoi reste accepté
+  const fetchEtiquette = global.fetch;
+  global.fetch = async (url, o = {}) => (String(url).includes('/rest/v1/envois_a_verifier') ? { ok: false, status: 404, json: async () => ({}), text: async () => '' } : fetchEtiquette(url, o));
+  r = await appeler({ table: 'casting_applications', ligne: { id: 'c9', full_name: 'Awa Essai', email: 'awa@test.ci' } });
+  ok(r.statut === 200 && JSON.stringify(journal).includes('étiquette « À vérifier » non enregistrée'), 'serveur : étiquette refusée par la base : envoi accepté, manque noté au journal');
+  global.fetch = fetchEtiquette; rpcs.length = rpcsAvant;
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'x'.repeat(3000) });
   ok(r.statut === 403 && rpcs.length === 2, 'serveur : jeton fabriqué trop long : refusé');
   const fetchStrict = global.fetch;

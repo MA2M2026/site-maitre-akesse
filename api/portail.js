@@ -389,6 +389,19 @@ async function finirDemande(res, idDemande, modeles, dejaLa) {
   await noterAuJournal('[Demande recruteur] liste des ' + modeles.length + ' mannequin(s) non enregistrée' + (dejaLa ? '' : ' : demande retirée, le recruteur a vu une erreur'), 'portail', '/api/portail').catch(() => {});
   return res.status(500).json({ error: 'Envoi impossible pour le moment, réessayez.', selection: true });
 }
+// (17/11/2026, décision de la propriétaire) envoi accepté SANS vérification anti-robots : noté dans envois_a_verifier
+// (supabase-a-verifier.sql) ; l'Administration affiche « À vérifier » sur le dossier. Jamais bloquant : si la note
+// échoue (fichier SQL pas encore collé…), l'envoi reste enregistré.
+const TABLES_A_VERIFIER = ['casting_applications', 'recruiter_requests'];   // (celles que l'Administration étiquette)
+async function noterAVerifier(table, id, raison) {
+  if (!id || !TABLES_A_VERIFIER.includes(table)) return;
+  // (relecture de B, 17/11) une étiquette non écrite est notée au journal : jamais un manque silencieux
+  const rep = await fetch(SUPABASE_URL + '/rest/v1/envois_a_verifier', {
+    method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal,resolution=ignore-duplicates' },
+    body: JSON.stringify({ ref: id, table_nom: table, raison: String(raison || '').slice(0, 300) })
+  }).catch(() => null);
+  if (!rep || !rep.ok) await noterAuJournal('[Anti-robots] étiquette « À vérifier » non enregistrée pour ' + table + ' ' + id + ' (' + (rep ? rep.status : 'base injoignable') + ')', 'portail', '/api/portail').catch(() => {});
+}
 async function formulairePublic(req, corps, res) {
   const table = String(corps.table || ''), recu = corps.ligne;
   if (!TABLES_FORMULAIRES.includes(table) || !recu || typeof recu !== 'object' || Array.isArray(recu) || JSON.stringify(recu).length > 30000) {
@@ -407,12 +420,14 @@ async function formulairePublic(req, corps, res) {
   }
   try {
     const id = await rpcService('formulaire_public_enregistrer', { p_table: table, p_ligne: ligne, p_ip: ip });
+    if (!verif.ok) await noterAVerifier(table, id || ligne.id, verif.raison);
     if (modeles) return await finirDemande(res, ligne.id, modeles, false);
     return res.status(200).json({ ok: true, id });
   } catch (e) {
     const m = String((e && e.message) || e);
     if (/LIMITE_ATTEINTE/.test(m)) return res.status(429).json({ error: 'Beaucoup d’envois en ce moment.', limite: true });
     if (/duplicate key|23505/.test(m) && ligne.id) {  // (déjà enregistré : réponse perdue)
+      if (!verif.ok) await noterAVerifier(table, ligne.id, verif.raison);
       if (modeles) return await finirDemande(res, ligne.id, modeles, true);
       return res.status(200).json({ ok: true, id: ligne.id });
     }

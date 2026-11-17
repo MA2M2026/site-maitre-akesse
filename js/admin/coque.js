@@ -40,12 +40,41 @@
     return autre && /^https:\/\/(www\.youtube\.com|player\.vimeo\.com)\//.test(autre) ? autre : null;
   };
   P.estVideoDrive = (u) => !!P.adresseLecteur(u);   // (nom historique : toute vidéo que le lecteur sait lire)
+  // (17/11/2026, demande de la propriétaire) la vidéo en GRAND, avec « ⛶ Plein écran » qui reste dans l'Administration.
+  // Le plein écran est un calque posé sur la page entière (hors des cartes animées, sinon iPhone le coince dans la carte),
+  // avec le plein écran du téléphone ou de l'ordinateur quand il est permis. Un petit lien de secours garde l'original
+  // (vidéo privée, encore en traitement…). Partagé par les candidatures et les cours de talons.
   P.lecteurVideo = function (u) {
     const src = P.adresseLecteur(u);
     if (!src) return '';
-    return '<span class="lecteur-video-bloc"><iframe class="lecteur-video" src="' + P.esc(src) + '" title="Vidéo envoyée" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
-      '<a href="' + P.esc(u) + '" target="_blank" rel="noopener">Ouvrir la vidéo ↗</a></span>';
+    return '<div class="lecteur-video-bloc"><iframe class="lecteur-video" src="' + P.esc(src) + '" title="Vidéo envoyée" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>' +
+      '<button type="button" class="btn petit lecteur-plein" data-action="video-plein-ecran" data-video="' + P.esc(u) + '">⛶ Plein écran</button>' +
+      '<a class="lecteur-secours" href="' + P.esc(u) + '" target="_blank" rel="noopener">La vidéo ne se lit pas ? Ouvrir l’original</a></div>';
   };
+  P.fermerVideo = () => {
+    const calque = document.getElementById('video-plein-calque');
+    if (!calque) return;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => { /* déjà sorti */ });
+    calque.remove(); document.body.classList.remove('video-pleine');
+  };
+  P.actions['video-plein-ecran'] = (el) => {
+    const src = P.adresseLecteur(el.dataset.video);
+    if (!src) return;
+    P.fermerVideo();
+    const calque = document.createElement('div');
+    calque.id = 'video-plein-calque'; calque.className = 'video-plein-calque';
+    calque.setAttribute('role', 'dialog'); calque.setAttribute('aria-modal', 'true'); calque.setAttribute('aria-label', 'Vidéo en plein écran');
+    calque.innerHTML = '<iframe class="lecteur-video" src="' + P.esc(src) + '" title="Vidéo en plein écran" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>' +
+      '<button type="button" class="btn lecteur-fermer" data-action="video-fermer">✕ Fermer</button>';
+    document.body.appendChild(calque); document.body.classList.add('video-pleine');
+    calque.querySelector('.lecteur-fermer').focus();
+    if (calque.requestFullscreen) calque.requestFullscreen().catch(() => { /* refusé : le calque couvre déjà la page */ });
+  };
+  P.actions['video-fermer'] = () => P.fermerVideo();
+  // sortie du plein écran du navigateur, Échap, ou changement de page : le calque part, la page défile de nouveau
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) P.fermerVideo(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') P.fermerVideo(); });
+  addEventListener('hashchange', () => P.fermerVideo());
   // partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js
   P.photosR2 = {
     est: (c) => typeof c === 'string' && /^r2:(candidatures|cours-talons)\//.test(c),

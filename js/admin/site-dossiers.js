@@ -168,6 +168,14 @@
   });
 
   // ---------- Liste ----------
+  // (17/11/2026, décision de la propriétaire) envois arrivés SANS la vérification anti-robots (supabase-a-verifier.sql,
+  // noterAVerifier dans api/portail.js) : étiquette « À vérifier ». Table absente (fichier pas encore collé) : rien.
+  async function aVerifier(ids) {
+    if (!ids.length) return new Set();
+    const { data, error } = await sb.from('envois_a_verifier').select('ref').in('ref', ids);
+    return new Set(error ? [] : (data || []).map((x) => x.ref));
+  }
+  const ETIQUETTE_A_VERIFIER = () => P.pastille('⚠ À vérifier', 'alerte');
   async function liste(source) {
     const conf = SOURCES[source], e = etat(source);
     const [total, ...parStatut] = await Promise.all([compter(conf)].concat(conf.statuts.map((s) => compter(conf, s))));
@@ -179,7 +187,8 @@
     const { data, count, error } = await q.range(0, e.pages * PAR_PAGE - 1);
     if (error) throw error;
     const dossiers = data || [];
-    const [photos, suivi] = await Promise.all([photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({})), source === 'casting' ? suiviMessages(dossiers.map((d) => d.id)) : {}]);
+    const [photos, suivi, douteux] = await Promise.all([photosDe(conf, dossiers.map((d) => d.id)).catch(() => ({})), source === 'casting' ? suiviMessages(dossiers.map((d) => d.id)) : {},
+      aVerifier(dossiers.map((d) => d.id)).catch(() => new Set())]);
     const pastille = (s) => {
       const compte = s === 'toutes' ? total - conf.aPart.reduce((n, x) => n + (nb[x] || 0), 0) : (nb[s] || 0);
       return '<button type="button" class="btn petit' + (e.filtre === s ? ' actif' : '') + '" data-action="dossiers-filtre" data-source="' + source + '" data-filtre="' + P.esc(s) + '"' +
@@ -195,7 +204,7 @@
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
         '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (age !== null && age < 18 ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
-        P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
+        P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (douteux.has(d.id) ? ' ' + ETIQUETTE_A_VERIFIER() : '') + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
         (wa ? '<a class="dossier-wa"' + (source === 'casting' ? ' data-candidature="' + P.esc(d.id) + '"' : '') + ' href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
         '</article>';
     };
@@ -236,6 +245,10 @@
       MESSAGES_CANDIDATS.find((x) => x.source === source && x.statut === d.status && !x.premier);
     return m ? 'c:' + m.cle : 'libre';
   }
+  // (17/11/2026, demande de la propriétaire) la vidéo de présentation en grand, sur toute la largeur, sous les photos
+  function blocVideo(d) {
+    return d && estVideoDrive(d.video_url) ? '<section class="carte fiche-video"><h2>Vidéo de présentation</h2>' + lecteurVideo(d.video_url) + '</section>' : '';
+  }
   function blocChamps(source, d) {
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const parentJoignable = mineur && d.parent_telephone;
@@ -243,9 +256,8 @@
       const v = d[cle];
       if (!v) return '';
       const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
-      const video = cle === 'video_url' && estVideoDrive(v);
+      if (cle === 'video_url' && estVideoDrive(v)) return '';   // (17/11) lue en grand dans son propre bloc (blocVideo)
       const valeur = wa ? '<a href="' + P.esc(wa) + '" target="_blank" rel="noopener">' + P.esc(v) + ' ↗ WhatsApp</a>' :
-        video ? lecteurVideo(v) :
         P.esc((TEXTES_SPECIAUX[cle] && TEXTES_SPECIAUX[cle][v]) || (cle === 'date_naissance' ? P.date(v) + (age !== null ? ' (' + age + ' ans)' : '') : v)) + (unite ? ' ' + unite : '') +
         (parentJoignable && cle === 'phone' ? ' <small class="doux">(mineur : écrire au parent)</small>' : '');
       return '<div><dt>' + P.esc(libelle) + '</dt><dd>' + valeur + '</dd></div>';
@@ -325,16 +337,20 @@
     const d = await P.bd(sb.from(conf.table).select('*').eq('id', id).maybeSingle());
     if (!d) return P.entete(conf.titre) + '<div class="carte"><h2>Dossier introuvable</h2><p class="doux">Il a peut-être été supprimé.</p><a class="btn" href="#/site/' + conf.page + '">← Retour à la liste</a></div>';
     fiche = { source, d, photos: [] };
+    const douteuxFiche = aVerifier([d.id]).then((x) => x.has(d.id)).catch(() => false);   // (en même temps que les photos)
     if (conf.photos) fiche.photos = (await photosDe(conf, [d.id]).catch(() => ({})))[d.id] || [];
     // (15/11/2026) sans photo : le dossier Drive de la candidate, s'il est connu (P.drive, js/admin/coque.js)
     if (source === 'casting' && !fiche.photos.length) fiche.dossierDrive = (await P.drive.dossiers([d.id]).catch(() => ({})))[d.id] || null;
+    const douteux = await douteuxFiche;
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const type = source === 'casting' ? typeDe(d) : null;
     return '<a class="retour-liste" href="#/site/' + conf.page + '">← ' + P.esc(conf.titre) + '</a>' +
       '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h1>' +
       '<p class="doux">' + P.esc(conf.reçue + P.dateEtHeure(d.created_at) + (type ? ' · Postule pour : ' + type : '')) + '</p></div>' +
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
-      blocPhotos(source) +
+      (douteux ? '<section class="carte a-verifier"><h2>' + ETIQUETTE_A_VERIFIER() + '</h2><p class="doux">Envoyé sans la vérification anti-robots : le téléphone n’a pas pu la charger. C’est souvent une vraie personne, mais regardez le dossier avant d’y donner suite.</p>' +
+        '<button type="button" class="btn petit" data-action="dossier-a-verifier-ok">✓ C’est une vraie personne</button></section>' : '') +
+      blocPhotos(source) + blocVideo(d) +
       '<div class="fiche-grille"><div class="fiche-col">' + blocStatut(source) + blocWhatsApp(source) + (await blocCode()) + (source === 'casting' ? await blocMessagesEnvoyes(d.id) : '') + '</div>' +
       '<div class="fiche-col"><section class="carte"><h2>Informations</h2>' + blocChamps(source, d) +
       (d.message ? '<blockquote class="message-dossier">' + P.esc(d.message) + '</blockquote>' : '') + '</section>' +
@@ -482,6 +498,7 @@
     P.etude.galerie = fiche.photos.map((x) => x.affiche);
     const age = ageDe(d), mineur = age !== null && age < 18;
     const video = estVideoDrive(d.video_url);
+    const douteux = (await aVerifier([d.id]).catch(() => new Set())).has(d.id);   // (17/11) aussi dans l'étude
     return {
       diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
       nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + P.dateEtHeure(d.created_at)],
@@ -489,7 +506,8 @@
         d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
         mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''],
       // (étude : on fait défiler vite, la vidéo reste un lien ; elle est lue dans la fiche)
-      lien: video ? '<a href="' + P.esc(d.video_url) + '" target="_blank" rel="noopener">🎬 Voir la vidéo</a>' : ''
+      lien: (video ? '<button type="button" class="lien-video" data-action="video-plein-ecran" data-video="' + P.esc(d.video_url) + '">🎬 Voir la vidéo</button>' : '') +
+        (douteux ? ' ' + ETIQUETTE_A_VERIFIER() : '')
     };
   }
   // (12/11/2026) recruteur : les mannequins qu'il a choisis défilent en grand, et sa réponse WhatsApp est prête
@@ -591,6 +609,15 @@
     const r = await P.bd(sb.from('recruiter_request_models').delete().eq('id', el.dataset.choix).select('id'));
     if (!r || !r.length) { P.message('Rien n’a été retiré : reconnectez-vous puis réessayez.'); return; }
     el.closest('.choisi').remove();
+  };
+  P.actions['dossier-a-verifier-ok'] = async (el) => {
+    if (!fiche) return;
+    el.disabled = true;
+    const r = await P.bd(sb.from('envois_a_verifier').delete().eq('ref', fiche.d.id).select('ref')).catch(() => null);
+    if (!r || !r.length) { el.disabled = false; P.message('Étiquette non retirée : reconnectez-vous puis réessayez.'); return; }
+    const encart = el.closest('.a-verifier');
+    if (encart) encart.remove();
+    P.message('Étiquette « À vérifier » retirée.');
   };
   P.actions['dossier-supprimer'] = async (el) => {
     if (!(P.moi && P.moi.role === 'principal')) return;

@@ -1321,8 +1321,9 @@ a.podium-place:hover b, a.classement-ligne:hover .classement-nom { text-decorati
 .etude-voile b { display: block; font: 600 28px/1.1 var(--av-titre); }
 .etude-voile small { font-size: 13px; color: #F3DDE0; }
 .etude-infos { display: flex; flex-wrap: wrap; gap: 6px; }
-.etude-infos span, .etude-infos a { padding: 7px 11px; border-radius: 12px; background: #FFFFFF; color: #2a1416; font: 600 12.5px var(--av-texte); text-decoration: none; }
-.etude-infos a { color: #7C2128; }
+.etude-infos span, .etude-infos a, .etude-infos .lien-video { padding: 7px 11px; border-radius: 12px; background: #FFFFFF; color: #2a1416; font: 600 12.5px var(--av-texte); text-decoration: none; }
+.etude-infos a, .etude-infos .lien-video { color: #7C2128; }
+.etude-infos .lien-video { border: 0; cursor: pointer; }
 .etude-mot { margin: 0; padding: 11px 13px; border-radius: 14px; background: rgba(255, 255, 255, .1); font-style: italic; font-size: 14px; }
 .etude-decision { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .etude-choix { min-height: 84px; border: 0; border-radius: 18px; background: #FFFFFF; font: 700 14px var(--av-texte); cursor: pointer; box-shadow: var(--av-ombre); transition: transform .15s var(--av-courbe); }
@@ -1637,5 +1638,12 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .ce-fin { margin-top: 10px; }
 
 /* (17/11/2026, L-18) vidéo de candidature lue dans la fiche (lecteur Google Drive, js/admin/site-dossiers.js) */
-.lecteur-video-bloc { display: grid; gap: .4rem; justify-items: start; }
-.lecteur-video { width: min(100%, 320px); aspect-ratio: 9 / 16; max-height: 70vh; border: 0; border-radius: 12px; background: var(--av-creux); }
+.lecteur-video-bloc { display: grid; gap: .6rem; justify-items: center; width: 100%; }
+/* (17/11/2026, demande de la propriétaire) en grand : toute la largeur du téléphone, 520 px au plus sur ordinateur */
+.lecteur-video { width: 100%; max-width: 520px; aspect-ratio: 9 / 16; max-height: 85vh; border: 0; border-radius: 12px; background: var(--av-creux); }
+.video-plein-calque { position: fixed; inset: 0; z-index: 9999; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 10px; justify-items: center;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); background: var(--av-creux); }
+.video-plein-calque .lecteur-video { max-width: none; width: 100%; height: 100%; max-height: none; aspect-ratio: auto; border-radius: 8px; }
+.lecteur-secours { font-size: .82rem; }
+body.video-pleine { overflow: hidden; }
+.fiche-video { margin-bottom: 1rem; }
