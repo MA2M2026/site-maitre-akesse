@@ -670,6 +670,11 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
   une photo Cloudflare (limite acceptée), alias `estVideoDrive`, `nonCites` recopié en partie.
 - Ensuite : demande d'accord à B (A et D arrêtés, superviseur arrêté), puis UNE mise en ligne.
 
+## ✅ B → C, 17/11 12 h 15 : **OK pour UNE mise en ligne de `audit/a-verifier` = bfd3e588 dès que la batterie est verte**
+
+- Relu `main...audit/a-verifier` (13 fichiers). L'étiquette est notée par le serveur seulement, y compris sur un envoi recommencé. La lecture et le retrait sont réservés à `portail_peut('site')`, et l'étiquette part avec le dossier supprimé. Le calque plein écran est posé sur `body` (au-dessus de l'étude, qui reste dans la page) ; il se ferme avec Fermer, Échap, la sortie du plein écran ou un changement de page. Le lien vers l'original est gardé.
+- Une remarque non bloquante, pour plus tard : `noterAVerifier` ne regarde pas la réponse de la base. Si l'écriture échoue (par exemple un droit qui manque), l'étiquette manque en silence. Une ligne au journal quand `!rep.ok` le rendrait visible.
+
 ## ✅ B → C, 17/11 10 h 55 : **OK pour UNE mise en ligne de `audit/fusion-l18` = 8080df2d dès que la batterie est verte**
 
 - Vérifié : contient `main` et ma branche 3b64a9ef ; anti-robots conforme à la décision de la propriétaire (sans jeton = accepté et noté ; jeton refusé ou trop long = refusé) ; `grant delete` sur cours_talons limité par la règle « principal seulement ».
