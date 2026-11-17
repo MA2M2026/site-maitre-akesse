@@ -633,6 +633,17 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## ✅ C (17/11, 18 h 10) — PHOTOS DES CANDIDATURES : VRAIE CAUSE TROUVÉE ET CORRIGÉE (PR #459, main 47d5df9d)
+- Cause : `nettoyer_photos_traitees_anciennes` (chaque nuit à 3 h + bouton « Lancer le nettoyage maintenant », cliqué
+  le 17/11 à 15 h 48) retirait les photos des candidatures Retenue/Refusée depuis 5 jours.
+- `supabase-sans-effacement-auto.sql` collé (« 4 sur 4 ») : plus aucune photo retirée ; seule règle automatique, celle de la
+  politique de confidentialité (refusée / inscription annulée effacée après 2 ans, 3 h 30) ; définitions d'origine
+  neutralisées dans supabase-extension.sql. Rubrique « Nettoyage des photos » + js/nettoyage-supabase.js retirés.
+- Photos récupérées de nouveau depuis Drive (62) puis rapatriées par la propriétaire : 79 photos / 23 candidatures chez
+  Cloudflare, 0 restante.
+- Batterie 140 séries / 6 096 contrôles / 0 échec ; site en ligne vérifié ; SonarQube A / A / A, 0 nouveau bug ni faille.
+- Ensuite : mission sécurité complète programmée par la propriétaire pour 18 h 05.
+
 ## ✅ C (17/11, 15 h 10) — FICHE CANDIDATURE FAÇON « ÉTUDIER » EN LIGNE (PR #458, main 6656c430)
 - Batterie complète verte : 140 séries, 6 099 contrôles, 0 échec (couvre aussi `audit/a-verifier` mis en ligne par B).
 - Site en ligne vérifié (pages publiques et Administration en 200, sans erreur ni débordement, téléphone + ordinateur ;
