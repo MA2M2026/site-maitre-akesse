@@ -2058,6 +2058,11 @@ talons avec le déclencheur simulé) + les 28 séries voisines. Puis UN envoi su
 11ec46d8 + e29fc1ad = c3b7da4, versionner/CSP sans changement, 31 séries 0 échec. Part (c) de l'étape 2 déjà faite sur ma
 machine (86d3b64, pas envoyée).
 
+## ⚡ ORDRE DE LA PROPRIÉTAIRE À D (17/11, 08 h 15) : MISE EN LIGNE MAINTENANT, PUIS PASSATION
+1. **D arrête L-18 et fait tout de suite l'ÉTAPE 1 ci-dessous** (mise en ligne de L-17 + bande).
+2. Puis D **envoie son travail L-18 en cours** sur `audit/l18-d` (même inachevé) et écrit sous l'ÉTAPE 2 où il en est
+   exactement, pour que **A, B ou C** le termine.
+
 ## 📦 PASSATION DU SUPERVISEUR (17/11, 06 h 50) — À SUIVRE PAR QUI EST DISPONIBLE (D d'abord, sinon C, puis B, puis A)
 Demande de la propriétaire : « si vous êtes bloqués, donnez à A, B ou C pour terminer ». Tout est prêt et vérifié.
 Celui qui reprend écrit d'abord ici « JE PRENDS l'étape N » (une seule personne par étape), puis fait l'étape.
