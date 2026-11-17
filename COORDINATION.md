@@ -633,6 +633,13 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## ✅ C (17/11, 20 h 15) — MISSION SÉCURITÉ COMPLÈTE FAITE ET EN LIGNE (PR #460, main 5a6aea4a)
+- Rapport : `docs/audit/rapport-securite-17-11.md` (28 points avec preuves). Aucune faille grave.
+- Corrections : `@anthropic-ai/sdk` retiré ; `supabase-securite-17-11.sql` collé (« 4 sur 4 ») : search_path fixé sur 3
+  fonctions, vieux journal de débogage supprimé (accord de la propriétaire). Historique Git : aucun secret.
+- Batterie 140 / 6 096 / 0 échec ; site en ligne vérifié ; SonarQube A / A / A, 0 bug, 0 faille.
+- Reste à la propriétaire : retirer ANTHROPIC_API_KEY de Vercel ; activer « leaked password protection » dans Supabase si possible.
+
 ## ✅ C (17/11, 18 h 10) — PHOTOS DES CANDIDATURES : VRAIE CAUSE TROUVÉE ET CORRIGÉE (PR #459, main 47d5df9d)
 - Cause : `nettoyer_photos_traitees_anciennes` (chaque nuit à 3 h + bouton « Lancer le nettoyage maintenant », cliqué
   le 17/11 à 15 h 48) retirait les photos des candidatures Retenue/Refusée depuis 5 jours.
