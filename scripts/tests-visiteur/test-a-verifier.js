@@ -30,7 +30,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const deborde = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
     ok(!deborde, n + 'fiche : rien ne déborde');
     await p.click('[data-action="dossier-a-verifier-ok"]'); await p.waitForTimeout(1500);
-    ok(d.tables.envois_a_verifier.length === 0 && !(await p.$('.a-verifier')), n + '« C’est une vraie personne » : l’étiquette disparaît (base et page)');
+    ok(d.tables.envois_a_verifier.length === 0 && !(await p.$('.a-verifier')) && !/À vérifier/.test(await p.textContent('#contenu')), n + '« C’est une vraie personne » : l’étiquette disparaît partout (base et page)');
     // une autre candidature, jamais notée : rien
     await p.goto(URL_ADMIN + '#/site/b2-candidatures/c2'); await p.waitForTimeout(1800);
     ok(!(await p.$('.a-verifier')), n + 'candidature normale : aucune étiquette');

@@ -69,19 +69,20 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('.segments .btn[data-filtre="nouvelle"]'); await p.waitForTimeout(900);
 
     // 2. Fiche d'une mineure
-    await p.click('.dossier-carte .dossier-lien[href$="/c4"]'); await p.waitForSelector('.fiche-tete'); await p.waitForTimeout(1200);
+    await p.click('.dossier-carte .dossier-lien[href$="/c4"]'); await p.waitForSelector('.fiche-luxe'); await p.waitForTimeout(1200);
     const fiche = await p.evaluate(() => ({
-      titre: document.querySelector('.fiche-tete').innerText.replace(/\s+/g, ' '),
+      titre: document.querySelector('.fiche-luxe-portrait').innerText.replace(/\s+/g, ' '),   // (17/11) fiche façon « Étudier »
       photos: document.querySelectorAll('.photo-dossier img').length,
       champs: document.querySelector('dl.champs').innerText.replace(/\s+/g, ' '),
       liens: [...document.querySelectorAll('dl.champs a')].map((a) => a.textContent + ' ' + a.href),
-      message: (document.querySelector('.message-dossier') || {}).textContent,
+      message: (document.querySelector('.fiche-luxe-mot') || {}).textContent,
       lecteur: (document.querySelector('.fiche-video iframe.lecteur-video') || {}).src || '',   // (17/11) vidéo en grand, bloc à part
       videoLarge: (() => { const f = document.querySelector('.fiche-video iframe.lecteur-video'); return f ? Math.round(f.getBoundingClientRect().width) : 0; })(),
       lienDrive: [...document.querySelectorAll('.fiche-video a[href*="drive.google.com"]')].filter((a) => !a.classList.contains('lecteur-secours')).length > 0 || !document.querySelector('.fiche-video a.lecteur-secours'),
       videoDansChamps: !!document.querySelector('dl.champs iframe')
     }));
-    ok(/PETITE AMA Mineure · 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
+    ok(/PETITE AMA/.test(fiche.titre) && /13 ans/.test(fiche.titre) && /CASTING CACAO/.test(fiche.titre) && /Mineure : message au parent/.test(fiche.titre), n + 'fiche (en grand, comme « Étudier ») : nom, âge de la mineure, casting visé');
+    ok(!!(await p.$('.fiche-luxe-portrait .etude-photos')) && !(await p.$('.fiche-tete')), n + 'fiche : grande photo en tête, comme le mode « Étudier »');
     ok(fiche.photos === 2, n + 'fiche : les 2 photos de la candidate');
     ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && !fiche.videoDansChamps && !fiche.lienDrive && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
       n + 'fiche : WhatsApp sur le numéro du parent, vidéo lue dans son propre bloc (seulement un petit lien de secours), message de la candidate');
@@ -119,7 +120,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(maj && /"status":"retenue"/.test(maj[3]), n + 'statut « Retenue » enregistré');
     ok(emails.some((e) => e.to_email === 'mere@test.ci' && /Madame Ama Mère/.test(e.to_name) && !/\*/.test(e.message)), n + 'e-mail parti tout seul au parent, sans marques WhatsApp');
     ok(await p.isVisible('#dos-notif-texte') && /wa\.me\/2250707070707/.test(await p.getAttribute('#dos-notif-wa', 'href')) && /envoyé automatiquement/.test(await p.textContent('#dos-notif-statut')), n + 'message du nouveau statut modifiable, WhatsApp prêt, envoi confirmé');
-    ok(/Retenue/.test(await p.textContent('.fiche-tete > .pastille')), n + 'pastille de la fiche mise à jour');
+    ok(/Retenue/.test(await p.textContent('.fiche-luxe-etiquettes > .pastille')), n + 'pastille de la fiche mise à jour');
     await p.waitForSelector('.code-zone'); await p.click('[data-action="dossier-code-creer"]'); await p.waitForTimeout(1000);
     ok(journal.some((j) => j[0] === 'rpc' && j[1] === 'code_individuel_creer') && /MA2M-ESSAI1/.test(await p.textContent('.code-zone')) && /wa\.me\/2250707070707/.test(await p.getAttribute('.code-zone a.btn', 'href')),
       n + 'code d’inscription créé, envoyable au parent par WhatsApp');
@@ -143,10 +144,12 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(ecrits(journal, 'DELETE', 'casting_applications').length === 1 && /#\/site\/b2-candidatures$/.test(p.url()), n + 'dossier supprimé, retour à la liste');
 
     // 5bis. Étudier les nouvelles une à une (11/11/2026, maquette validée par la propriétaire)
-    await p.goto(URL_ADMIN + '#/site/b2-candidatures'); await p.waitForSelector('.etude-lancer', { timeout: 15000 }); await p.waitForTimeout(600);
-    const nbNouvelles = Number(((await p.textContent('.etude-lancer')).match(/les (\d+) nouvelles/) || [0, 1])[1]);
-    ok(/Étudier (les \d+ nouvelles|la nouvelle candidature)/.test(await p.textContent('.etude-lancer')), n + 'bouton « ▶ Étudier les nouvelles » (' + nbNouvelles + ')');
-    await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
+    // (17/11/2026, demande de la propriétaire) plus de bouton « Étudier » sur les candidatures (la fiche a le même affichage) ;
+    // l'écran reste joignable par son adresse
+    await p.goto(URL_ADMIN + '#/site/b2-candidatures'); await p.waitForSelector('.dossiers-grille, .carte.vide', { timeout: 15000 }); await p.waitForTimeout(600);
+    ok(!(await p.$('.etude-lancer')), n + 'candidatures : plus de bouton « Étudier »');
+    const nbNouvelles = Number(((await p.textContent('[data-filtre="nouvelle"] .nb')) || '1').trim());
+    await p.goto(URL_ADMIN + '#/site/b2-candidatures/etude'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
     const etude = await p.evaluate(() => ({ rang: document.querySelector('.etude-haut').innerText, nom: document.querySelector('.etude-voile b').textContent, choix: document.querySelectorAll('.etude-choix').length }));
     ok(new RegExp('1 / ' + nbNouvelles).test(etude.rang) && etude.nom && etude.choix === 3 && /#\/site\/b2-candidatures\/etude$/.test(p.url()),
       n + 'étudier : 1 / ' + nbNouvelles + ', ' + etude.nom + ' en grand, trois décisions');
@@ -164,15 +167,13 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     await p.click('.etude-suivant'); await p.waitForTimeout(1500);
     ok(nbNouvelles > 1 ? new RegExp('2 / ' + nbNouvelles).test(await p.textContent('.etude-haut')) : /étudiées/.test(await p.textContent('#contenu')), n + '« Candidature suivante » : la suivante s’affiche');
     await p.click('.etude-quitter'); await p.waitForSelector('.dossiers-grille, .carte.vide');
-    // (12/11/2026, remarque de la propriétaire) la place de l'étude reste toujours visible : bouton, ou « aucune nouvelle »
-    { const zone = await p.textContent('.etude-lancer').catch(() => ''); const restent = Number(((await p.textContent('#contenu')).match(/Nouvelle\s*(\d+)/) || [0, -1])[1]);
-      ok(restent === 0 ? /Aucune nouvelle candidature à étudier/.test(zone) : /Étudier/.test(zone), n + 'retour à la liste : l’étude reste à sa place (' + (restent === 0 ? '« Aucune nouvelle candidature à étudier »' : 'bouton « Étudier »') + ')'); }
+    ok(!(await p.$('.etude-lancer')), n + 'retour à la liste : toujours pas de bouton « Étudier » sur les candidatures');
     // (12/11/2026, « Les 2 » de la propriétaire) étudier une à une avec CHAQUE filtre : ici les « Retenue » ; le choix déjà
     // pris s'appelle « Garder » : rien n'est écrit, aucun message ne part
     await p.click('[data-action="dossiers-filtre"][data-filtre="retenue"]'); await p.waitForSelector('[data-filtre="retenue"][aria-pressed="true"]'); await p.waitForTimeout(800);
-    { const nbRet = Number(((await p.textContent('[data-filtre="retenue"] .nb')) || '0').trim()), zone = await p.textContent('.etude-lancer');
-      ok(nbRet > 0 && new RegExp(nbRet > 1 ? 'Étudier les ' + nbRet + ' retenues' : 'Étudier la candidature retenue').test(zone), n + 'filtre « Retenue » : bouton « ▶ Étudier » (' + nbRet + ')');
-      await p.click('.etude-lancer'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
+    { const nbRet = Number(((await p.textContent('[data-filtre="retenue"] .nb')) || '0').trim());
+      ok(nbRet > 0, n + 'filtre « Retenue » (' + nbRet + ')');
+      await p.goto(URL_ADMIN + '#/site/b2-candidatures/etude'); await p.waitForSelector('.etude-decision', { timeout: 15000 }); await p.waitForTimeout(800);
       const r = await p.evaluate(() => ({ haut: document.querySelector('.etude-haut').innerText, actuel: [...document.querySelectorAll('.etude-choix.actuel')].map((b) => b.dataset.statut + ':' + b.innerText.replace(/\s+/g, ' ').trim()), ligne: (document.querySelector('.etude-actuel') || {}).innerText || '' }));
       ok(new RegExp('Retenues · 1 / ' + nbRet).test(r.haut) && r.actuel.length === 1 && /^retenue:.*Garder/.test(r.actuel[0]) && /Retenue/.test(r.ligne), n + 'étude des retenues : « Retenues · 1 / ' + nbRet + ' », « Aujourd’hui : Retenue », choix « Garder »');
       await capture(p, 'etude-retenues' + suffixe);

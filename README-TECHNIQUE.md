@@ -4344,6 +4344,14 @@ Les étiquettes « À vérifier » ne concernent que `casting_applications` et `
 aussi notées sur un envoi recommencé (23505), et s'affichent aussi dans le mode Étudier. Les vidéos restent
 rangées dans Google Drive (décision de la propriétaire : pas de passage chez Cloudflare). Essai :
 `test-nouvelle-admin-castings.js` (taille, plein écran, sortie).
+**Fiche d'une candidature façon « Étudier » (17/11/2026, maquette n° 1 choisie par la propriétaire)** : `ficheCandidature`
+(js/admin/site-dossiers.js) reprend l'en-tête du mode Étudier (`hautCandidature`, `P.etude.haut` : grande photo qui
+défile, nom et « âge · casting · reçue le » sur la photo), puis statut, petites étiquettes, mot de la candidate en
+italique (`.fiche-luxe-mot`), et le dossier en dessous (statut, WhatsApp, code, messages envoyés, informations, vidéo,
+toutes les photos, suppression). Sur ordinateur (≥ 1000 px) la photo reste à gauche (sticky) et le dossier à droite.
+Le bouton « Étudier les candidatures » n'est plus affiché (l'écran reste joignable par `#/site/b2-candidatures/etude`) ;
+il reste pour les demandes recruteurs. `valeurChamp` donne l'affichage d'un champ (partagé par `blocChamps`).
+`rafraichirCode` place le code d'inscription juste après le statut. Essais : `test-nouvelle-admin-castings.js`.
 
 ## Reprise du 1er mars 2027 (07/11/2026, décision de la propriétaire ; Extension 154)
 Plan et décisions : `PLAN-REPRISE-MARS.md` (branche `plan-reprise-mars`). Septembre à novembre 2026 = **période de

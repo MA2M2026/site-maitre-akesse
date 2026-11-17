@@ -1647,3 +1647,29 @@ form.f .recu-frais input:disabled { background: #FFFFFF; color: #2a1416; -webkit
 .lecteur-secours { font-size: .82rem; }
 body.video-pleine { overflow: hidden; }
 .fiche-video { margin-bottom: 1rem; }
+
+/* (17/11/2026, demande de la propriétaire : « très esthétique, très élégant ») fiche d'une candidature façon magazine :
+   le portrait du mode Étudier en tête, le dossier en dessous ; sur ordinateur, le portrait reste à gauche pendant
+   qu'on lit le dossier à droite (maquette n° 1, choisie par la propriétaire) */
+.fiche-luxe { display: grid; gap: 22px; width: 100%; align-items: start; }
+.fiche-luxe-portrait { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 560px; margin: 0 auto; }
+.fiche-luxe-portrait .etude-piste .vis { height: min(68vh, 600px); }
+.fiche-luxe-portrait .etude-voile { padding: 64px 20px 18px; }
+.fiche-luxe-portrait .etude-voile b { font-size: clamp(30px, 6vw, 40px); letter-spacing: .01em; }
+.fiche-luxe-portrait .etude-voile small { display: block; margin-top: 6px; font-size: 13.5px; letter-spacing: .02em; }
+.fiche-luxe-etiquettes { display: flex; flex-wrap: wrap; gap: 6px; }
+.fiche-luxe-mot { margin: 4px 0 0; padding: 4px 0 4px 18px; border-left: 2px solid rgba(255, 255, 255, .55); white-space: pre-wrap;
+  font: italic 500 clamp(19px, 3.6vw, 22px)/1.45 var(--av-titre); color: #FFFFFF; }
+.fiche-luxe-dossier { display: flex; flex-direction: column; gap: 18px; min-width: 0; width: 100%; max-width: 760px; margin: 0 auto; }
+.fiche-luxe-dossier > .carte { padding: clamp(18px, 3vw, 28px); }
+.fiche-luxe-dossier > .carte > h2 { font: 600 clamp(24px, 3.4vw, 30px)/1.15 var(--av-titre); letter-spacing: .01em; margin: 0 0 14px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--av-lignes); }
+.fiche-luxe-infos .champs { row-gap: 18px; }
+.fiche-luxe-dossier .galerie-dossier .photo-dossier { width: min(42vw, 180px); }
+@media (min-width: 1000px) {
+  .fiche-luxe { grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 32px; }
+  /* (sous la barre du haut, collante elle aussi : ~64 px) ; la photo garde une hauteur qui laisse voir le reste */
+  .fiche-luxe-portrait { position: sticky; top: 80px; max-width: none; margin: 0; }
+  .fiche-luxe-portrait .etude-piste .vis { height: min(calc(100vh - 260px), 640px); min-height: 360px; }
+  .fiche-luxe-dossier { max-width: none; margin: 0; }
+}
