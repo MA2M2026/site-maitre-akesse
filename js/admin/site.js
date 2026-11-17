@@ -27,7 +27,7 @@
     ['b3c-textes-pages', 'Textes des pages'], ['b3c-traductions', 'Traductions anglaises'],
     [null, 'Accès et outils'],
     ['b3b-codes-inscription', 'Codes d’accès'], ['b3b-acces-bloques', 'Accès bloqués'], ['b3a-drive', 'Drive et transferts'],
-    ['b3a-nettoyage', 'Nettoyage des photos'], ['b3a-erreurs', 'Erreurs du site']
+    ['b3a-erreurs', 'Erreurs du site']
   ];
   // (16/11/2026, « premium partout ») en tête des tuiles Messages et Réglages, la carte façon carte bancaire
   // (P.carteHero, js/admin/coque.js) avec leurs chiffres utiles ; un chiffre illisible (droits, réseau) est omis.
@@ -70,7 +70,7 @@
       plus: ['partenaires', 'b3c-mot-fondateur', 'b3c-instagram', 'b3c-traductions'] },
     { cle: 'reglages', ic: '⚙️', titre: 'Réglages', sous: 'Accès, outils, erreurs', discret: true, hero: heroReglages,
       pages: ['b3b-codes-inscription', 'b3b-acces-bloques', 'b3a-erreurs'],
-      plus: ['b3a-drive', 'b3a-nettoyage'] }
+      plus: ['b3a-drive'] }
   ];
   // [icône, explication courte] de chaque rubrique, affichées dans sa tuile
   const INFOS = {
@@ -93,7 +93,7 @@
     'partenaires': ['🤝', 'Logos des partenaires'], 'b3c-mot-fondateur': ['🖋️', 'Le mot du fondateur'], 'b3c-instagram': ['📸', 'Le flux Instagram du site'],
     'b3c-traductions': ['🇬🇧', 'Les textes en anglais'],
     'b3b-codes-inscription': ['🔑', 'Codes pour créer un compte'], 'b3b-acces-bloques': ['🚫', 'Comptes bloqués à débloquer'],
-    'b3a-erreurs': ['🩺', 'Le journal des erreurs du site'], 'b3a-drive': ['☁️', 'Drive et transferts de photos'], 'b3a-nettoyage': ['🧹', 'Nettoyage des photos inutiles']
+    'b3a-erreurs': ['🩺', 'Le journal des erreurs du site'], 'b3a-drive': ['☁️', 'Drive et transferts de photos']
   };
   const libelle = (cle) => (MENU.find((m) => m[0] === cle) || [])[1] || cle;
   const tuileDe = (page) => TUILES.find((t) => 'tuile-' + t.cle === page || t.pages.includes(page) || t.plus.includes(page)) || null;
@@ -156,7 +156,7 @@
     '/js/rendu-publications.js', '/js/publications-lecture.js', '/js/publications-ecriture.js', '/js/partenaires-communs.js', '/js/admin/brouillons.js', '/js/admin/site-contenu.js', '/js/admin/site-vitrine.js', '/js/admin/site-traductions.js', '/js/admin/site-textes.js',
     '/js/agenda-gabarit.js', '/js/agenda-admin.js', '/js/admin/site-agenda.js',
     '/js/video-accueil-gabarit.js', '/js/couverture-admin.js', '/js/admin/site-video.js',
-    '/js/note-integration.js', '/js/nettoyage-supabase.js', '/js/admin/site-acces.js',
+    '/js/note-integration.js', '/js/admin/site-acces.js',
     '/js/erreurs-corrigees.js', '/js/erreurs-gabarit.js', '/js/erreurs-site.js', '/js/admin/site-erreurs.js'];
   const charges = new Set();  // une pièce déjà chargée ne l'est jamais deux fois
   const charger = (src) => charges.has(src) ? Promise.resolve() : new Promise((ok, ko) => {

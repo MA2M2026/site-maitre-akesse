@@ -1,7 +1,7 @@
 // Nouvelle Administration — groupe « Accès et outils » (js/admin/site-acces.js), essayé comme
 // l'agence sur téléphone et ordinateur, base SIMULÉE (donnees-nouvelle-admin.js) : codes d'accès
 // (casting direct, codes disponibles / utilisés, note d'intégration), accès bloqués (débloquer,
-// liste blanche), Drive, nettoyage des photos. Rien n'est écrit ni envoyé pour de vrai.
+// liste blanche), Drive (plus de nettoyage des photos : retiré le 17/11). Rien n'est écrit ni envoyé pour de vrai.
 // CAPTURES=dossier : captures d'écran.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admin');
@@ -56,12 +56,9 @@ const api = (journal, chemin, motif) => journal.filter((j) => j[0] === 'API' && 
     await p.goto(URL_ADMIN + '#/site/b3a-drive'); await p.waitForSelector('.cartes-pilotage'); await p.waitForTimeout(1600);
     ok(/PHOTOS DU BOOK\s*\d+/i.test(await p.innerText('.cartes-pilotage')) && /rangées dans Google Drive/.test(await p.textContent('#contenu')), n + 'drive : chiffres réels, rien d’inventé');
 
-    // 4. Nettoyage
-    await p.goto(URL_ADMIN + '#/site/b3a-nettoyage'); await p.waitForSelector('[data-action="nettoyer-traitees"]'); await p.waitForTimeout(600);
-    await p.click('[data-action="nettoyer-traitees"]'); await p.waitForTimeout(900);
-    ok(/3 photos retirées/.test(await p.textContent('#nt-msg')), n + 'nettoyage des dossiers traités lancé');
-    ok(!!(await p.$('#nettoyage-supabase-btn')), n + 'outil de nettoyage Supabase présent');
-    await capture(p, 'nettoyage' + suffixe);
+    // 4. (17/11/2026, décision de la propriétaire) plus de rubrique « Nettoyage des photos » : rien n'est retiré automatiquement
+    await p.goto(URL_ADMIN + '#/site/tuile-reglages'); await p.waitForTimeout(1500);
+    ok(!/Nettoyage des photos/.test(await p.textContent('body')) && !(await p.$('[data-action="nettoyer-traitees"], #nettoyage-supabase-btn')), n + 'plus de rubrique « Nettoyage des photos » ni de bouton de nettoyage');
 
     // 5. Erreurs du site (écran partagé) : classées par gravité, copie pour Claude, « Réglé, effacer »
     await p.goto(URL_ADMIN + '#/site/b3a-erreurs'); await p.waitForSelector('#liste-erreurs'); await p.waitForSelector('.journal-carte', { timeout: 8000 }).catch(() => {});
