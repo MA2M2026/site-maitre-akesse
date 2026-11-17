@@ -17,7 +17,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   const d = donnees('principal'); d.tables.casting_applications = []; d.tables.casting_photos = [];
   await brancher(p, d, []); await photosLocales(p);
   await seConnecter(p, 'http://127.0.0.1:' + PORT + '/admin/'); await p.waitForTimeout(1200);
-  await p.goto('http://127.0.0.1:' + PORT + '/admin/#/site/b2-candidatures'); await p.waitForSelector('.etude-lancer', { timeout: 15000 }).catch(() => {});
+  await p.goto('http://127.0.0.1:' + PORT + '/admin/#/site/b2-candidatures'); await p.waitForSelector('.dossiers-grille, .carte.vide, .carte-hero', { timeout: 15000 }).catch(() => {});
   ok(/0 au total/.test(await p.textContent('#contenu')) && !(await p.$('#contenu .note.erreur [data-action="deconnexion"]')), 'connexion valable, aucune candidature : « 0 au total », sans alerte');
   // la connexion expire : la base ne renvoie plus rien
   await p.evaluate(() => { sb.auth.getSession = async () => ({ data: { session: null }, error: null }); return window.Portail.afficher(); });
