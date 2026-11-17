@@ -26,6 +26,27 @@
   // (16/11/2026, L-17) photos des candidatures et des cours de talons rangées chez Cloudflare R2 (« r2:… ») :
   // adresses de lecture signées d'1 heure demandées au serveur (api/r2-presigner.js), suppression au clic.
   // Partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
+  // (17/11/2026, L-18, demande de la propriétaire) vidéo de candidature ou de cours de talons LUE DANS LA FICHE, comme
+  // une photo, au lieu d'un simple lien (lecteurs autorisés par frame-src de l'Administration, vercel.json). Les vidéos
+  // restent où elles sont (Drive…). Lien « Ouvrir la vidéo » gardé en secours.
+  // Adresse du lecteur intégré pour TOUTE vidéo envoyée (17/11, demande de la propriétaire : « valable pour tous ceux
+  // qui envoient des vidéos ») : Google Drive (…/file/d/<id>/view ou /preview, open?id=, uc?id=), YouTube et Vimeo
+  // (urlVideoIntegree, js/publications-lecture.js, déjà utilisée par les actualités). null si non reconnue.
+  const RE_DRIVE = [/^https:\/\/drive\.google\.com\/file\/d\/([\w-]{6,120})(?:\/(?:view|preview|edit))?(?:[?#].*)?$/, /^https:\/\/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([\w-]{6,120})(?:&.*)?$/];
+  P.adresseLecteur = (u) => {
+    const t = String(u || '').trim();
+    for (const re of RE_DRIVE) { const m = re.exec(t); if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview'; }
+    const autre = /^https:\/\//.test(t) && typeof urlVideoIntegree === 'function' ? urlVideoIntegree(t) : null;
+    return autre && /^https:\/\/(www\.youtube\.com|player\.vimeo\.com)\//.test(autre) ? autre : null;
+  };
+  P.estVideoDrive = (u) => !!P.adresseLecteur(u);   // (nom historique : toute vidéo que le lecteur sait lire)
+  P.lecteurVideo = function (u) {
+    const src = P.adresseLecteur(u);
+    if (!src) return '';
+    return '<span class="lecteur-video-bloc"><iframe class="lecteur-video" src="' + P.esc(src) + '" title="Vidéo envoyée" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
+      '<a href="' + P.esc(u) + '" target="_blank" rel="noopener">Ouvrir la vidéo ↗</a></span>';
+  };
+  // partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js
   P.photosR2 = {
     est: (c) => typeof c === 'string' && /^r2:(candidatures|cours-talons)\//.test(c),
     // (relecture du superviseur, 17/11 02 h 15 : règle simple, rien n'est jamais supprimé) N photos Cloudflare et M copies
@@ -72,7 +93,7 @@
       return parRef;
     },
     encart(source, ref, dossierId) {
-      const lien = /^[\w-]{10,120}$/.test(String(dossierId || '')) ? 'https://drive.google.com/drive/folders/' + dossierId : '';
+      const lien = /^[\w-]{6,120}$/.test(String(dossierId || '')) ? 'https://drive.google.com/drive/folders/' + dossierId : '';
       return '<div class="drive-secours"><p><strong>📁 Photos dans Drive</strong> · aucune photo n’est encore rattachée à ce dossier.' +
         (lien ? '' : ' <span class="doux">(Dossier Drive pas encore connu du site.)</span>') + '</p><div class="ligne">' +
         (lien ? '<a class="btn petit" href="' + P.esc(lien) + '" target="_blank" rel="noopener noreferrer">Ouvrir le dossier Drive ↗</a>' : '') +

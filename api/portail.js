@@ -291,7 +291,11 @@ const TABLES_FORMULAIRES = ['casting_applications', 'messages_contact', 'recruit
 async function jetonAntiRobotValide(jeton, ip, raisonNavigateur) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) return { ok: false, panne: true, raison: 'clé secrète TURNSTILE_SECRET_KEY absente du serveur' };
-  if (typeof jeton !== 'string' || !jeton || jeton.length > 2048) return { ok: false, raison: 'pas de jeton (navigateur : ' + String(raisonNavigateur || 'inconnu').slice(0, 80) + ')' };
+  // (17/11/2026, décision de la propriétaire) pas de jeton = le téléphone n'a pas pu charger la vérification de
+  // Cloudflare (une vraie candidate bloquée le 17/11 à 8 h 19) : traité comme une panne, l'envoi passe (noté au
+  // journal). Un jeton REFUSÉ par Cloudflare reste refusé ; les limites d'envoi par adresse restent.
+  if (typeof jeton !== 'string' || !jeton) return { ok: false, panne: true, raison: 'pas de jeton (navigateur : ' + String(raisonNavigateur || 'inconnu').slice(0, 80) + ')' };
+  if (jeton.length > 2048) return { ok: false, raison: 'jeton trop long' };
   const corps = new URLSearchParams({ secret: secret.trim(), response: jeton });
   if (ip) corps.set('remoteip', ip);
   let rep;
@@ -306,8 +310,8 @@ async function jetonAntiRobotValide(jeton, ip, raisonNavigateur) {
   return { ok: false, panne, raison: 'Cloudflare : ' + (codes.join(', ') || 'réponse ' + rep.status) + (r.hostname ? ' (site ' + r.hostname + ')' : '') };
 }
 // (01/11/2026, 22 h : le premier vrai essai de la propriétaire avait été refusé ; on avait alors tout laissé passer.)
-// (16/11/2026, audit L-7 = B-P5 / A-07) : mode strict. Un envoi sans jeton, ou avec un jeton refusé par Cloudflare, est
-// refusé ; la page redemande alors un jeton une fois, toute seule (js/app.js, envoyerFormulairePublic). Une panne de
+// (16/11/2026, audit L-7 = B-P5 / A-07) : mode strict. Un envoi avec un jeton refusé par Cloudflare est refusé (sans
+// jeton : accepté depuis le 17/11, voir jetonAntiRobotValide) ; la page redemande alors un jeton une fois, toute seule (js/app.js, envoyerFormulairePublic). Une panne de
 // notre côté ou de Cloudflare (voir « panne » ci-dessus) ne bloque jamais un candidat. Remettre false si le journal
 // montre de vrais visiteurs refusés (« [Anti-robots] … (refusé) »).
 const ANTI_ROBOTS_STRICT = true;

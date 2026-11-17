@@ -37,17 +37,21 @@ async function serveur() {
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'jeton-de-robot' });
   ok(r.statut === 403 && r.rep.robot && rpcs.length === 1 && JSON.stringify(journal).includes('(refusé)'), 'serveur : jeton refusé par Cloudflare : envoi REFUSÉ (mode strict), rien d’enregistré, raison notée au journal');
   r = await appeler({ table: 'messages_contact', ligne, raisonJeton: 'erreur Turnstile 110200' });
-  ok(r.statut === 403 && rpcs.length === 1 && JSON.stringify(journal).includes('erreur Turnstile 110200'), 'serveur : pas de jeton : refusé, la raison donnée par le navigateur est notée au journal');
+  // (17/11/2026, décision de la propriétaire : une vraie candidate dont le téléphone ne chargeait pas Turnstile était refusée)
+  ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('erreur Turnstile 110200') && JSON.stringify(journal).includes('(accepté quand même)'),
+    'serveur : pas de jeton (vérification non chargée sur le téléphone) : accepté, la raison est notée au journal');
+  r = await appeler({ table: 'messages_contact', ligne, jeton: 'x'.repeat(3000) });
+  ok(r.statut === 403 && rpcs.length === 2, 'serveur : jeton fabriqué trop long : refusé');
   const fetchStrict = global.fetch;
   global.fetch = async (url, o = {}) => { if (String(url).includes('siteverify')) throw new Error('réseau coupé'); return fetchStrict(url, o); };
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
-  ok(r.statut === 200 && rpcs.length === 2 && JSON.stringify(journal).includes('Cloudflare injoignable') && JSON.stringify(journal).includes('(accepté quand même)'), 'serveur : Cloudflare injoignable : le vrai visiteur passe quand même (noté au journal)');
+  ok(r.statut === 200 && rpcs.length === 3 && JSON.stringify(journal).includes('Cloudflare injoignable') && JSON.stringify(journal).includes('(accepté quand même)'), 'serveur : Cloudflare injoignable : le vrai visiteur passe quand même (noté au journal)');
   global.fetch = async (url, o = {}) => { if (String(url).includes('siteverify')) return { ok: true, status: 200, json: async () => ({ success: false, 'error-codes': ['internal-error'] }) }; return fetchStrict(url, o); };
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
-  ok(r.statut === 200 && rpcs.length === 3, 'serveur : panne interne de Cloudflare (internal-error) : le vrai visiteur passe quand même');
+  ok(r.statut === 200 && rpcs.length === 4, 'serveur : panne interne de Cloudflare (internal-error) : le vrai visiteur passe quand même');
   global.fetch = fetchStrict; delete process.env.TURNSTILE_SECRET_KEY;
   r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
-  ok(r.statut === 200 && rpcs.length === 4, 'serveur : clé secrète absente du serveur : le vrai visiteur passe quand même');
+  ok(r.statut === 200 && rpcs.length === 5, 'serveur : clé secrète absente du serveur : le vrai visiteur passe quand même');
   process.env.TURNSTILE_SECRET_KEY = 'secret-essai';
   global.fetch = fetchAvant; rpcs.length = 1;
   // (16/11/2026, audit L-7 = A-08) : liste blanche des colonnes ; un envoi fabriqué ne remplit aucune colonne interne

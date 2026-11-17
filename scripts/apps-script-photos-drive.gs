@@ -28,6 +28,8 @@
 //      pour un dossier sans photo, et par le bouton « Récupérer les photos depuis Drive » de l'Administration).
 //   5) { cle, action:'controle' } (15/11/2026) : contrôle de santé du matin (supabase-medias-drive-controle.sql) :
 //      une petite image d'essai fait tout le trajet (Drive, partage par lien, annonce à la base), puis à la corbeille.
+//   6) { cle, action:'corbeille', source, ref } (17/11/2026, L-18) : appelé par la base quand l'agence supprime une
+//      candidature ou une inscription au cours de talons : son dossier Drive va à la CORBEILLE (jamais définitif).
 //
 // DEPUIS LE 15/11/2026 : chaque envoi porte { source:'candidature'|'cours_talons', ref:<numéro du dossier> }, et
 // le programme ENREGISTRE LUI-MÊME les liens dans la base du site (media_drive_recu, supabase-medias-drive.sql) :
@@ -106,6 +108,7 @@ function doPost(e) {
     if (data.action === 'video_etat') return videoEtat(data);
     if (data.action === 'retrouver') return reponse(retrouver(dossierRacine, data));
     if (data.action === 'controle') return reponse(controle(dossierRacine));
+    if (data.action === 'corbeille') return reponse(corbeille(dossierRacine, data));
 
     // ---------- 3) Vidéo d'un seul bloc (petites vidéos) ----------
     if (data.video) {
@@ -429,6 +432,42 @@ function retrouver(dossierRacine, data) {
   if (!meilleur.getDescription()) meilleur.setDescription('ref:' + data.ref);
   signalerAuSite(data, meilleur.getId(), liens, lienVideo);
   return { ok: true, nb: liens.length, trouve: true };
+}
+
+// 6) (17/11/2026, L-18) L'agence a supprimé une candidature ou une inscription au cours de talons : son dossier
+// Drive va à la CORBEILLE (jamais d'effacement définitif : récupérable 30 jours dans la corbeille de Google Drive).
+// Seulement ce que la base autorise (media_drive_a_jeter : suppression faite par l'agence, ligne disparue), et
+// seulement un dossier de personne rangé sous le dossier principal (jamais le dossier principal ni un sous-dossier).
+function corbeille(dossierRacine, data) {
+  if (!refValide(data) || !secretSite()) return { ok: false, erreur: 'non_configure' };
+  var ids = appelBase('media_drive_a_jeter', { p_secret: secretSite(), p_source: data.source, p_ref: data.ref }) || [];
+  var nb = 0, erreurs = 0;
+  ids.forEach(function (id) {
+    try {
+      var dossier = DriveApp.getFolderById(id);
+      if (dossier.isTrashed()) { nb++; return; }
+      if (dossierDePersonne(dossierRacine, dossier, data.ref)) { dossier.setTrashed(true); nb++; }
+    } catch (e) { erreurs++; }
+  });
+  // une erreur (Drive occupé…) : rien n'est noté comme fait, la base redemandera dans l'heure (5 essais au plus)
+  if (erreurs) return { ok: false, nb: nb, erreur: 'a_reprendre' };
+  appelBase('media_drive_jete', { p_secret: secretSite(), p_ref: data.ref, p_nb: nb });
+  return { ok: true, nb: nb };
+}
+// dossier d'une personne : rangé dans un sous-dossier du dossier principal, et marqué à son nom (ou pas encore marqué)
+function dossierDePersonne(dossierRacine, dossier, ref) {
+  var racine = dossierRacine.getId();
+  if (dossier.getId() === racine) return false;
+  var description = dossier.getDescription() || '';
+  if (description && description !== 'ref:' + ref) return false;
+  var parents = dossier.getParents();
+  while (parents.hasNext()) {
+    var parent = parents.next();
+    if (parent.getId() === racine) return false;
+    var grandsParents = parent.getParents();
+    while (grandsParents.hasNext()) { if (grandsParents.next().getId() === racine) return true; }
+  }
+  return false;
 }
 
 // 5) Contrôle de santé du matin : le même trajet qu'une vraie photo, avec une image d'essai de 1 point, rangée dans

@@ -233,7 +233,7 @@
       ['Paiement validé', d.valide_le ? P.dateHeure(d.valide_le) : '']
     ].filter((x) => x[1]);
     // (13/11/2026, demande de la propriétaire) les photos AFFICHÉES dans la fiche, comme les candidatures casting
-    // (P.visageDistant, js/admin/coque.js), qui s'agrandissent d'un appui ; la vidéo reste un bouton (Google Drive)
+    // (P.visageDistant, js/admin/coque.js), qui s'agrandissent d'un appui ; (17/11, L-18) la vidéo Drive est lue dans la fiche
     const galerie = photos.length ? '<section class="galerie-dossier" aria-label="Photos">' + photos.map((u, i) =>
       '<figure class="photo-dossier"><button type="button" class="photo-ouvrir" data-action="talons-photo-voir" data-id="' + P.esc(d.id) + '" data-index="' + i + '" aria-label="Agrandir la photo ' + (i + 1) + '">' +
       P.visageDistant(u, d.nom) + '</button><figcaption><a class="doux petit-texte" href="' + P.esc(u) + '" target="_blank" rel="noopener noreferrer">Ouvrir dans Drive ↗</a></figcaption></figure>').join('') + '</section>' : '';
@@ -242,14 +242,17 @@
     // (13/11/2026, « un peu trop désordonné ») les boutons regroupés en une rangée aérée, sous les photos :
     // la vidéo d'abord, puis les messages
     const boutons = [
-      https(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
+      https(d.video) && !P.estVideoDrive(d.video) ? '<a class="btn petit" href="' + P.esc(d.video) + '" target="_blank" rel="noopener">🎬 Vidéo de la marche</a>' : '',
       wa ? lienWhatsApp(wa, '💬 WhatsApp') : '',
-      waParent ? lienWhatsApp(waParent, '💬 Parent') : ''
+      waParent ? lienWhatsApp(waParent, '💬 Parent') : '',
+      // (17/11/2026, L-18 c) supprimer l'inscription : administrateur principal seulement (la base le vérifie aussi)
+      P.moi && P.moi.role === 'principal' ? '<button class="btn petit" type="button" data-action="talons-supprimer" data-id="' + P.esc(d.id) + '">🗑 Supprimer</button>' : ''
     ];   // (14/11/2026) le lien Wave est dans « Messages prêts à envoyer », sous ces boutons
     const id = P.esc(d.id);
     return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
       (galerie || P.drive.encart('cours_talons', d.id, dossiersDrive[d.id])) +
+      (P.estVideoDrive(d.video) ? '<section class="ct-video" aria-label="Vidéo de la marche">' + P.lecteurVideo(d.video) + '</section>' : '') +   // (L-18) vidéo lue dans la fiche
       '<div class="ct-actions">' + boutons.join('') + '</div>' + messagesPrets(d, wa, waParent) +
       (payee ? programme(d, wa, waParent) : '') +
       (ouverte ? '<form class="f ct-suivi" data-form="talons-suivi" data-id="' + id + '">' +
@@ -437,6 +440,25 @@
     return P.afficher();
   };
 
+  // (17/11/2026, L-18 c, demande de la propriétaire) supprimer une inscription, même règle que les candidatures :
+  // administrateur principal seulement, la base d'abord (ses séances partent avec elle : créneaux libérés), ses photos
+  // chez Cloudflare ensuite (le serveur ne les efface que si l'inscription n'existe plus). Son dossier Google Drive
+  // part à la corbeille de Drive par la base elle-même (supabase-l18-supprimer-talons.sql, L-18 d).
+  P.actions['talons-supprimer'] = async (el) => {
+    if (!(P.moi && P.moi.role === 'principal')) return;
+    const d = lignes.find((x) => x.id === el.dataset.id);
+    if (!d) return;
+    const payee = d.statut === 'inscrite' || d.statut === 'terminee';
+    if (!confirm('Supprimer définitivement l’inscription de ' + d.nom + ' ?' + (payee ? ' Elle a déjà payé : le paiement reste en Comptabilité.' : '') + ' Ses séances et ses photos seront supprimées (son dossier Google Drive part à la corbeille de Drive, récupérable 30 jours). Cette action est irréversible.')) return;
+    el.disabled = true;
+    const r = await P.bd(sb.from('cours_talons').delete().eq('id', d.id).select('id')).catch(() => null);
+    if (!r || !r.length) { el.disabled = false; P.message('Rien n’a été supprimé : reconnectez-vous, ou collez d’abord supabase-l18-supprimer-talons.sql dans Supabase.'); return; }
+    const r2 = (Array.isArray(d.photos) ? d.photos : []).filter(P.photosR2.est);
+    if (r2.length) await P.photosR2.supprimer(r2).catch(() => { /* fichiers orphelins : effacés par le nettoyage du matin */ });
+    lignes = lignes.filter((x) => x.id !== d.id);
+    P.message('Inscription supprimée.');
+    return P.afficher();
+  };
   P.actions['talons-photo-voir'] = (el) => {
     const d = lignes.find((x) => x.id === el.dataset.id);
     const l = photosDe(d);

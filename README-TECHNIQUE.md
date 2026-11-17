@@ -1624,7 +1624,33 @@ depuis Google Drive dans l'Administration. Désormais :
    (`supabase-l17-photos-talons.sql`) n'accepte que les photos Cloudflare de CE numéro, et n'y ajoute plus la copie
    Drive. Base pas encore prête (fichier non collé) : l'inscription repart avec les liens Drive, comme avant.
    Administration (`js/admin/site-cours-talons.js`) : adresses signées, photos dans l'ordre. Outils partagés de
-   l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est jamais effacée par l'API.
+   l'Administration : `P.photosR2` (`js/admin/coque.js`). Une photo de cours de talons n'est effacée par l'API que si
+   son inscription n'existe plus (L-18 c, ci-dessous).
+7. **L-18 (c), 17/11 : bouton « 🗑 Supprimer » d'une inscription au cours de talons** (`talons-supprimer`,
+   `js/admin/site-cours-talons.js`) : administrateur principal seulement (règle de la base
+   `supabase-l18-supprimer-talons.sql`, `portail_est_principal`) ; la base d'abord (ses séances partent avec elle,
+   créneaux libérés), puis ses photos Cloudflare (`candidature_supprimer` accepte `cours-talons/` seulement si
+   l'inscription n'existe plus). Test : `test-supprimer-talons.js`. Relecture de C : la table ne donnait pas le
+   droit DELETE aux personnes connectées (`supabase-cours-talons.sql` le retire) : `grant delete` ajouté, la règle
+   limite toujours au principal (sans lui, le bouton échouait dans la vraie base).
+8. **L-18 (d), 17/11 : dossier Google Drive à la CORBEILLE quand l'agence supprime** (même fichier SQL) : un
+   déclencheur `after delete` sur `casting_applications` et `cours_talons` (`medias_drive_vers_corbeille`) ne
+   s'active que si une personne CONNECTÉE supprime (`auth.uid()` non nul : le clic du principal ; le nettoyage
+   automatique de la nuit `effacer_anciennes_candidatures` ne touche jamais au Drive) et si un dossier Drive est
+   connu (`medias_drive`, genre `dossier`). Il note la demande (`medias_drive_corbeille`) et appelle le programme
+   Google (pg_net, action `corbeille`). Le programme redemande à la base les dossiers à jeter
+   (`media_drive_a_jeter`, mot secret obligatoire : la clé du programme est publique ; vide si la ligne existe
+   encore ou si la demande ne vient pas de l'agence), vérifie que c'est bien un dossier de personne (sous-dossier
+   du dossier principal, marqué `ref:` à son numéro ou pas encore marqué), le met à la corbeille (`setTrashed`,
+   récupérable 30 jours, jamais d'effacement définitif) puis le signale (`media_drive_jete`, qui renvoie `true` :
+   une fonction `void` ferait répondre 204, pris pour une erreur par `appelBase`). Les numéros des dossiers sont
+   copiés dans `medias_drive_corbeille.dossiers` au moment de la suppression (la surveillance efface ensuite le
+   journal `medias_drive` des lignes disparues). Google injoignable, Drive en panne, ou programme pas encore à jour :
+   rien n'est noté comme fait, la tâche `medias-drive-corbeille` (chaque heure à h 17) redemande, 5 essais sur
+   7 jours au plus. L'adresse et la clé du programme Google sont à un seul endroit : `medias_drive_appel_google`
+   (aussi utilisée désormais par `medias_drive_demander`). Il faut coller la nouvelle version de
+   `scripts/apps-script-photos-drive.gs`. Les textes de suppression de l'Administration le disent. Essais :
+   `scripts/base-essai/essais-l18-corbeille.sql` (16 essais).
 5. **Relecture de sécurité de D (16/11)** : avant de signer, le serveur compte les fichiers DÉJÀ DÉPOSÉS sous le
    dossier (vérifiés ou non : 12 par candidature, 5 par inscription) ; un fichier jamais déposé est refusé (404),
    rien n'est noté. **Nettoyage chaque matin** (tâche de 8 h, `api/portail.js` → `nettoyerPhotosNonCitees` de
@@ -4297,6 +4323,10 @@ plus d'écriture directe des visiteurs ; liste des mannequins d'une demande seul
 15 minutes). SQL pas encore collé : le serveur enregistre quand même (repli). Retour en arrière :
 `supabase-anti-robots-retour.sql`. CSP : `https://challenges.cloudflare.com` (script-src, frame-src).
 Essais : `essais-anti-robots.sql`, `test-anti-robots.js` ; la base simulée des tests (faux-serveur.js) imite Turnstile.
+**17/11/2026 (décision de la propriétaire)** : le mode strict (`ANTI_ROBOTS_STRICT`, L-7) refusait aussi un envoi SANS
+jeton ; une vraie candidate dont le téléphone ne chargeait pas Turnstile a été refusée (journal, 8 h 19). Désormais
+« pas de jeton » est traité comme une panne : accepté et noté au journal (« accepté quand même »). Un jeton refusé par
+Cloudflare (ou trop long) reste refusé ; les limites par minute et par adresse restent.
 
 ## Reprise du 1er mars 2027 (07/11/2026, décision de la propriétaire ; Extension 154)
 Plan et décisions : `PLAN-REPRISE-MARS.md` (branche `plan-reprise-mars`). Septembre à novembre 2026 = **période de
@@ -5415,3 +5445,19 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
     première, sinon la boucle sautait à chaque tour. Test : `test-diaporama-luxe.js`.
   - Reporté avec L-17 (décision de la propriétaire) : la caisse ne peut ni lire ni valider les cours de talons (la base
     ne lui donne pas `cours_talons` et la page n'est que dans l'espace « site ») ; en attendant, seul le principal valide.
+- **Chantier L-18, part du superviseur (17/11/2026, demandes de la propriétaire)** :
+  - *Vidéos lues dans la fiche* (toutes les vidéos envoyées) : vidéo de candidature (`video_url`) et de cours de talons
+    (`video`) lue par un lecteur intégré : Google Drive (`/file/d/<id>/view|preview`, `open?id=`, `uc?id=` → `…/preview`),
+    YouTube et Vimeo (`urlVideoIntegree`) ; autre adresse : lien seul. `P.adresseLecteur`, `P.lecteurVideo`,
+    `P.estVideoDrive` (js/admin/coque.js), utilisés par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
+    `frame-src` de l'Administration (`/(admin|app)/`, vercel.json) : + `https://drive.google.com`. Les vidéos restent
+    dans le Drive ; lien « Ouvrir dans Drive » gardé. Tests : `test-nouvelle-admin-castings.js`, `test-admin-cours-talons.js`.
+  - *Rattrapage des anciennes photos Drive → Cloudflare* : Administration › Réglages › Drive, bouton « Rapatrier les
+    anciennes photos » (principale seulement). La page appelle `/api/r2-presigner` action `rattrapage_drive` dossier par
+    dossier (`api/_rattrapage.js`) : télécharge les photos Drive (adresse au format exact `thumbnail?id=…&sz=w2000`
+    seulement), vérifie que ce sont des images, les dépose sous `candidatures/<id>/` ou `cours-talons/<id>/` avec un
+    nom FIXE (empreinte de l'identifiant Drive : jamais de doublon), puis TOUT OU RIEN : candidatures → lignes
+    `r2:` ajoutées dans `casting_photos` (les lignes Drive restent, cachées par la règle M ≤ N) ; talons → liens Drive
+    de `photos` remplacés par leurs copies si l'inscription n'a pas changé. Échec → copies retirées, rien noté, dossier
+    laissé sur Drive et signalé au journal. `maxDuration` 30 s pour `api/r2-presigner.js` (vercel.json).
+    Test : `test-rattrapage-photos.js`.
