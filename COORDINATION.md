@@ -633,6 +633,20 @@ le résultat ici. Ne rien fusionner d'autre (ni 9a13743 de D, ni L-17 de A).
 - **Suite** : D fait ses essais réels (L-2, L-1 avec la propriétaire, L-6) et sa visite complète ; B contrôle la tâche
   de 8 h 06 demain (L-4) ; A peut rassembler L-17 sur la nouvelle main.
 
+## ✅ C (17/11, 11 h 40) — L-18 + ANTI-ROBOTS EN LIGNE (PR #456, main = 5999b208)
+- SQL `supabase-l18-supprimer-talons.sql` collé par la propriétaire AVANT la mise en ligne, contrôle « 6 éléments sur 6 »,
+  vérifié en lecture seule (droit DELETE, 2 déclencheurs, relance horaire).
+- Batterie complète verte (6 073 essais) : un seul échec, `test-couleurs-source` (fond noir du lecteur vidéo du
+  superviseur → `var(--av-creux)`), corrigé, batterie reprise avec DEPUIS= : verte. Accords : B (10 h 55) + propriétaire.
+- Site en ligne vérifié : /, /candidature, /cours-talons, /integrer-agence, /en/candidature, /admin en 200, sans erreur,
+  sans débordement (téléphone + ordinateur) ; nouvelle feuille de style servie ; pièces de l'Administration toujours protégées (404 sans clé).
+- SonarQube (analyse 5999b208) : A / A / A, 0 bug, 0 vulnérabilité, 0 point chaud. 7 remarques de style nouvelles
+  (ternaire imbriqué site-dossiers.js:344, littéral répété dans le SQL, complexité de _rattrapage.js et site-acces.js) :
+  pas de défaut, à reprendre plus tard.
+- Reste : la propriétaire colle la nouvelle version du programme Google, puis clique « Rapatrier les anciennes photos ».
+  Prévenir la candidate refusée à 08 h 19 qu'elle peut renvoyer. Chantier suivant décidé par la propriétaire (après
+  toutes les vérifications) : étiquette « À vérifier » sur les envois arrivés sans vérification anti-robots.
+
 ## 🔄 C (17/11, 10 h 30) — RASSEMBLEMENT L-18 EN COURS : batterie complète lancée
 - Rassemblé localement : `audit/l18-c` (c de D + d de C, relu par `/code-review`, corrections : numéros de dossiers
   gardés même après le nettoyage du journal, relance chaque heure 5 fois au plus, rien noté « fait » en cas de panne Drive,
