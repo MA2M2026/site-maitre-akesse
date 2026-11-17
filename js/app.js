@@ -1958,13 +1958,12 @@ async function envoyerPhotosCandidatureR2(idCandidature, fichiers, ids, nomPhoto
           if (!envoi.ok) throw new Error('envoi ' + envoi.status);
           depose = signe.corps.chemin;
         }
-        const signe = { corps: { chemin: depose } };
         const verif = await appel({ action: 'candidature_verifier', dossier, candidature: idCandidature, chemin: depose });
         if (verif.statut === 422) { jaugeEnErreur(ids[i], nomPhoto(i) + T(' : refusée (pas une vraie photo)', ': refused (not a real photo)')); fini = true; break; }
         if (verif.statut === 404) depose = null;  // (fichier jamais arrivé : le 2ᵉ essai renvoie la photo)
         if (!verif.ok) throw new Error(verif.corps.error || 'vérification');
         majJauge(ids[i], 100, nomPhoto(i) + T(' : arrivée', ': received'));
-        arrivees.push(i); chemins.push('r2:' + signe.corps.chemin); fini = true;
+        arrivees.push(i); chemins.push('r2:' + depose); fini = true;
         if (suivi.surArrivee) { try { await suivi.surArrivee({ rangs: arrivees.slice(), chemins: chemins.slice() }); } catch (e2) { /* garde impossible : l'envoi continue */ } }
       } catch (e) {
         if (essai < 2) await new Promise((r) => setTimeout(r, 900));
@@ -1972,42 +1971,6 @@ async function envoyerPhotosCandidatureR2(idCandidature, fichiers, ids, nomPhoto
     }
   }
   return { rangs: arrivees, chemins };
-}
-// (relecture du superviseur, 16/11 22 h 30) Copie Drive d'une photo, d'après son rang dans l'envoi : (rang) → lien,
-// ou null si Google a écarté une photo sans dire laquelle (liens et rangs de longueurs différentes : on ne devine pas).
-// rangs : ceux renvoyés par envoyerPhotosAvecJauges. Partagé par js/formulaire-candidature.js et js/cours-talons.js.
-function copieDriveParRang(liens, rangs) {
-  if (!Array.isArray(liens) || !Array.isArray(rangs) || rangs.length !== liens.length) return null;
-  return (rang) => { const k = rangs.indexOf(rang); return k < 0 ? null : liens[k]; };
-}
-// (relecture du superviseur) Relie chaque photo Cloudflare d'une candidature à SA copie Drive (api/r2-presigner.js,
-// « candidature_copies » : une photo = une ligne dans le dossier). 3 essais ; si le réseau manque encore, la demande
-// est GARDÉE dans le téléphone et refaite à la prochaine page du site visitée (24 h au plus, ensuite le serveur la
-// refuse). Un refus du serveur (400, 403) est définitif : rien n'est gardé. Renvoie true si c'est fait.
-const CLE_COPIES_DRIVE = 'ma2m-copies-drive';
-function copiesDriveEnAttente(liste) {
-  try {
-    if (liste) localStorage.setItem(CLE_COPIES_DRIVE, JSON.stringify(liste));
-    return JSON.parse(localStorage.getItem(CLE_COPIES_DRIVE) || '[]').filter((x) => x && x.id && Array.isArray(x.copies) && Date.now() - x.le < 24 * 3600e3);
-  } catch (e) { return []; }
-}
-async function relierCopiesDrive(id, copies, le = Date.now()) {
-  if (!copies.length) return true;
-  let fini = false, fait = false;
-  for (let essai = 1; essai <= 3 && !fini; essai++) {
-    const statut = await fetch('/api/r2-presigner', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'candidature_copies', candidature: id, copies }) }).then((r) => r.status, () => 0);
-    fait = statut >= 200 && statut < 300;
-    fini = fait || statut === 400 || statut === 403;
-    if (!fini && essai < 3) await new Promise((r) => setTimeout(r, 1500));
-  }
-  const autres = copiesDriveEnAttente().filter((x) => x.id !== id);
-  copiesDriveEnAttente(fini ? autres : autres.concat([{ id, copies, le }]));
-  return fait;
-}
-// (à chaque page du site : reprend une demande restée en attente, sans jamais gêner la page)
-if (typeof window !== 'undefined' && !/\/admin\//.test(location.pathname)) {
-  setTimeout(() => { copiesDriveEnAttente().forEach((x) => { relierCopiesDrive(x.id, x.copies, x.le).catch(() => {}); }); }, 4000);
 }
 // Photo redessinée dans un cadre de « coteMax » pixels, sur fond blanc (transparence PNG → blanc).
 function redessinerPhoto(fichier, coteMax, rendu) {

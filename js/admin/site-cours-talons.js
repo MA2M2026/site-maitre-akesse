@@ -23,12 +23,13 @@
   // (seulement des adresses https : la base les contrôle aussi)
   const https = (u) => typeof u === 'string' && /^https:\/\/[^\s"<>]+$/.test(u);
   // (16/11/2026, L-17) photos Cloudflare (« r2:cours-talons/… ») : affichées par adresse signée (P.photosR2, coque.js) ;
-  // (relecture du superviseur, 22 h 30) plus aucune photo cachée « au jugé » : la page d'inscription met, rang par rang,
-  // la photo Cloudflare OU, si elle n'y est pas arrivée, sa copie Drive (js/cours-talons.js) ; chaque élément est donc
-  // une photo différente, montrée dans l'ordre.
+  // copies Drive (que la base peut ajouter : cours_talons_z_medias_drive) cachées s'il y a au moins autant de photos
+  // Cloudflare (P.photosR2.cacherDrive, js/admin/coque.js, règle du superviseur du 17/11) ; rien n'est supprimé.
   let signeesR2 = {};
-  const photosDe = (d) => (d && Array.isArray(d.photos) ? d.photos : [])
-    .map((c) => (P.photosR2.est(c) ? signeesR2[c] : https(c) ? c : null)).filter(Boolean);
+  const photosDe = (d) => {
+    const l = d && Array.isArray(d.photos) ? d.photos : [], r2 = l.filter(P.photosR2.est), drive = l.filter(https);
+    return (P.photosR2.cacherDrive(r2.length, drive.length) ? [] : drive).concat(r2.map((c) => signeesR2[c]).filter(Boolean));
+  };
   const pasInstallee = P.pasActivee('cours_talons');
   // (14/11/2026) « Mon programme » : les séances de chaque élève (supabase-programme-talons.sql) et son lien personnel
   const programmePasInstalle = P.pasActivee('cours_talons_seances');

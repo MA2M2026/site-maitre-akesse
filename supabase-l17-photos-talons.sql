@@ -21,6 +21,9 @@ declare
   def text;
   ancien constant text := $a$(e #>> '{}') !~ '^https://[^\s"<>]+$')$a$;
   nouveau constant text := $n$((e #>> '{}') !~ '^https://[^\s"<>]+$' and (e #>> '{}') !~ coalesce('^r2:cours-talons/' || lower(ligne->>'id') || '/[0-9a-f]{32}\.(jpg|png|webp)$', '^$x')))$n$;
+  -- version précédente de ce fichier (sans lower) : remplacée si elle a été collée
+  ancienL17 constant text := $a$coalesce('^r2:cours-talons/' || (ligne->>'id') || '/[0-9a-f]{32}$a$;
+  nouveauL17 constant text := $n$coalesce('^r2:cours-talons/' || lower(ligne->>'id') || '/[0-9a-f]{32}$n$;
   ancien2 constant text := $a$where id = p_ref and not (photos ? m.lien) and jsonb_array_length(photos) < 5;$a$;
   nouveau2 constant text := $n$where id = p_ref and not (photos ? m.lien) and jsonb_array_length(photos) < 5
          and not exists (select 1 from jsonb_array_elements_text(photos) x where x like 'r2:%');  -- (L-17)$n$;
@@ -30,8 +33,11 @@ begin
     raise exception 'L-17 : formulaire_public_enregistrer absente : coller d''abord supabase-cours-talons.sql';
   end if;
   def := pg_get_functiondef(to_regprocedure('formulaire_public_enregistrer(text, jsonb, text)'));
-  if position('^r2:cours-talons/' in def) > 0 then
+  if position(nouveauL17 in def) > 0 then
     raise notice 'L-17 : inscription déjà ouverte aux photos Cloudflare';
+  elsif position(ancienL17 in def) > 0 then
+    execute replace(def, ancienL17, nouveauL17);
+    raise notice 'L-17 : inscription mise à jour (numéro en minuscules)';
   elsif position(ancien in def) > 0 then
     execute replace(def, ancien, nouveau);
     raise notice 'L-17 : inscription ouverte aux photos Cloudflare';
@@ -57,6 +63,6 @@ end;
 $$;
 
 -- Contrôle
-select case when position('^r2:cours-talons/' in pg_get_functiondef(to_regprocedure('formulaire_public_enregistrer(text, jsonb, text)'))) > 0
+select case when position('lower(ligne->>''id'')' in pg_get_functiondef(to_regprocedure('formulaire_public_enregistrer(text, jsonb, text)'))) > 0
   then '✅ L-17 : inscriptions au cours de talons ouvertes aux photos Cloudflare'
   else '❌ L-17 : changement absent' end as controle;

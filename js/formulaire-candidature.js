@@ -454,7 +454,7 @@ async function envoyerMedias(etat) {
     }
     const idsDrive = idsPhotos.map((id, i) => (arriveesR2.includes(i) ? 'ca-copie-drive-' + i : id));  // (jauge absente : rien ne bouge)
     try {
-      const { liens, echec, dossier, enregistre, manquantes, rangs } = await envoyerPhotosAvecJauges(fichiersPhotos, idsDrive, nomPhoto, {
+      const { liens, echec, dossier, enregistre, manquantes } = await envoyerPhotosAvecJauges(fichiersPhotos, idsDrive, nomPhoto, {
         nom: candidature.full_name,
         email: candidature.email,
         phone: candidature.phone,
@@ -468,14 +468,16 @@ async function envoyerMedias(etat) {
       dossierDrive = dossier || null;
       // (ancien programme Google, sans enregistrement de son côté : la page enregistre elle-même, comme avant ;
       // une photo déjà enregistrée par Google est refusée en double par la base, code 23505, sans souci)
-      // (relecture du superviseur, 22 h 30) les photos déjà arrivées chez Cloudflare sont déjà dans le dossier : leur
-      // copie Drive n'y est pas ajoutée (elle comptait dans la limite de 12 et faisait refuser, à tort, les autres :
-      // faux « photos manquantes »). Si Google a écarté une photo sans dire laquelle, on ne devine pas : tout est noté.
-      const copieDe = copieDriveParRang(liens, rangs);  // (js/app.js)
-      const aNoter = copieDe ? liens.filter((l) => !arriveesR2.some((rang) => copieDe(rang) === l)) : liens;
-      if (!echec && !enregistre) {
-        for (const lien of aNoter) {
+      // (relecture du superviseur, 17/11 02 h 15) si TOUTES les photos sont arrivées chez Cloudflare, elles sont déjà dans
+      // le dossier : la page n'y ajoute pas leurs copies Drive. Sinon elle les ajoute toutes (l'Administration cache les
+      // copies Drive quand il y a au moins autant de photos Cloudflare : P.photosR2.cacherDrive, js/admin/coque.js) ; un
+      // refus « limite de 12 atteinte » (code 42501, la place est prise par les photos Cloudflare) n'est pas une photo
+      // manquante.
+      const toutesChezCloudflare = arriveesR2.length >= fichiersPhotos.length;
+      if (!echec && !enregistre && !toutesChezCloudflare) {
+        for (const lien of liens) {
           const { error: erreurInsertPhoto } = await sb.from('casting_photos').insert({ application_id: candidature.id, url: lien, chemin: null });
+          if (erreurInsertPhoto && erreurInsertPhoto.code === '42501' && arriveesR2.length) continue;
           if (erreurInsertPhoto && erreurInsertPhoto.code !== '23505') {
             nbPhotosEchouees++;
             sb.from('journal_erreurs').insert({
@@ -485,15 +487,6 @@ async function envoyerMedias(etat) {
             }).then(() => {}).catch(() => {});
           }
         }
-      }
-      // (relecture du superviseur, 22 h 30) chaque photo Cloudflare reçoit le lien de SA copie Drive (même rang dans
-      // l'envoi) : le serveur retire le doublon noté par Google, et la photo n'a plus qu'une ligne dans le dossier ; les
-      // photos arrivées seulement dans Drive sont ensuite notées par la base. Réseau coupé : la demande est gardée dans
-      // le téléphone et refaite à la prochaine page du site visitée (relierCopiesDrive, js/app.js).
-      if (!echec && copieDe && arriveesR2.length) {
-        const cheminsR2 = etat.cheminsR2 || [];
-        const copies = arriveesR2.map((rang, k) => ({ chemin: String(cheminsR2[k] || '').replace(/^r2:/, ''), lien: copieDe(rang) })).filter((c) => c.chemin && c.lien);
-        await relierCopiesDrive(candidature.id, copies);
       }
     } catch (e) {
       // Une coupure réseau ne doit jamais bloquer tout l'envoi (le dossier est déjà

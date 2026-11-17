@@ -417,16 +417,12 @@
     afficherMsg(msg, T('Envoi de vos photos et de votre vidéo… Vous pouvez passer sur une autre application : l’envoi continue, et s’il est coupé, il reprendra quand vous reviendrez sur cette page.', 'Sending your photos and video… You can switch to another app: sending continues, and if it is interrupted it will resume when you come back to this page.'), 'ok');
     await envoyerMedias(etat);
     afficherMsg(msg, T('Enregistrement de votre inscription…', 'Saving your sign-up…'), 'ok');
-    // (L-17, relecture du superviseur du 16/11 22 h 30) photo par photo, dans l'ordre : la photo Cloudflare si elle y est
-    // arrivée, sinon SA copie Drive (même rang dans l'envoi : copieDriveParRang, js/app.js). Aucune n'apparaît deux fois.
-    // Cas rare où Google a écarté une photo sans dire laquelle (rangs inconnus) : toutes les photos Cloudflare si toutes y
-    // sont arrivées, sinon les liens Drive s'ils sont au moins aussi nombreux (une photo arrivée d'un seul côté peut
-    // alors manquer : elle reste dans le dossier Drive de l'agence). (La copie Drive reste dans le journal de la base.)
-    const d = etat.d, r2Liste = d.r2 || [], r2Rangs = d.r2Rangs || [], nbPhotos = (etat.photos || []).length;
-    const copieDe = copieDriveParRang(d.liens, d.rangs);
-    const photos = (r2Rangs.length >= nbPhotos ? r2Liste
-      : copieDe ? Array.from({ length: nbPhotos }, (_, i) => (r2Rangs.includes(i) ? r2Liste[r2Rangs.indexOf(i)] : copieDe(i))).filter(Boolean)
-      : d.liens.length >= r2Liste.length ? d.liens : r2Liste).slice(0, 5);
+    // (L-17, relecture du superviseur du 17/11 02 h 15 : règle simple) toutes les photos arrivées chez Cloudflare :
+    // l'inscription porte les photos Cloudflare ; sinon les liens Drive (la roue de secours, décision de la propriétaire),
+    // et s'il n'y en a aucun, ce qui est arrivé chez Cloudflare. L'Administration cache les copies Drive quand il y a au
+    // moins autant de photos Cloudflare (P.photosR2.cacherDrive, js/admin/coque.js).
+    const d = etat.d, r2Liste = d.r2 || [], nbPhotos = (etat.photos || []).length;
+    const photos = ((d.r2Rangs || []).length >= nbPhotos ? r2Liste : d.liens.length ? d.liens : r2Liste).slice(0, 5);
     const r2 = photos.filter((x) => String(x).startsWith('r2:'));
     const envoi = { liens: photos.length ? photos : etat.d.liens.slice() }, lienVideo = etat.d.video;
     // 3) l'inscription (le serveur vérifie, la base décide du statut et du montant)

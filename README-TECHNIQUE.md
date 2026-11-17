@@ -1632,24 +1632,19 @@ depuis Google Drive dans l'Administration. Désormais :
    possible) que plus aucune fiche ne cite ; jamais ailleurs, jamais un fichier cité, rien si la base est illisible.
 6. **Relecture du superviseur (16/11, 22 h 30), corrigée par D** :
    - la ligne notée par le serveur a une `url` (obligatoire dans `casting_photos`) : `r2:…` en attendant sa copie Drive ;
-   - **une photo = une ligne, sans rien deviner** : après Drive, la page (qui connaît le rang de chaque photo dans les
-     deux envois) appelle `candidature_copies` avec `[{ chemin, lien }]` ; le serveur (`noterCopiesDrive`) retire la
-     ligne « copie Drive » de CETTE photo si Google l'a déjà notée, met le lien Drive dans l'`url` de la ligne
-     Cloudflare (la base ne la rajoutera plus : `medias_drive_appliquer` saute les liens présents) puis relance
-     `medias_drive_appliquer` pour les photos arrivées seulement dans Drive. Sûreté (appel d'un visiteur sans compte) :
-     seulement un lien `drive.google.com`, une ligne n'est retirée que si Google a noté ce lien pour CE dossier
-     (`medias_drive`), une photo déjà reliée ne l'est plus, 24 h au plus. Appel : `relierCopiesDrive` (`js/app.js`) :
-     3 essais, puis la demande est gardée dans le téléphone (`localStorage`, clé `ma2m-copies-drive`) et refaite
-     4 s après l'ouverture de n'importe quelle page du site (pas l'Administration), pendant 24 h. Rang → copie : `copieDriveParRang` (`js/app.js`,
-     partagé ; rangs inconnus = on ne devine pas). Cours de talons : la page met, rang par rang, la photo Cloudflare ou
-     sinon sa copie Drive ;
+   - **règle simple d'affichage** (décision du superviseur, 17/11 02 h 15 ; rien n'est jamais supprimé, aucune liaison
+     par rang) : un dossier a N photos Cloudflare et M copies Drive → si M ≤ N, les copies Drive sont cachées ; si M > N,
+     tout est montré (au pire un doublon, jamais une photo cachée). Une seule fonction : `P.photosR2.cacherDrive`
+     (`js/admin/coque.js`), pour les candidatures et les cours de talons. Ancien programme Google : si TOUTES les photos
+     sont chez Cloudflare, la page ne note aucun lien Drive ; sinon elle les note tous (refus « limite atteinte » non
+     compté). Cours de talons : l'inscription porte les photos Cloudflare si toutes y sont arrivées, sinon les liens
+     Drive (roue de secours gardée par la propriétaire) ;
    - la vérification accepte la dernière photo permise (le fichier vérifié est déjà compté), mais refuse au-delà ;
      une réponse de vérification perdue : la même photo est revérifiée, jamais déposée deux fois ;
    - reprise d'un envoi coupé photo par photo (`suivi` / `surArrivee` de `envoyerPhotosCandidatureR2`) ;
    - numéro de candidature mis en minuscules dès l'entrée ; format des noms écrit UNE fois (`lirePhotoDossier`,
      `nouvellePhotoDossier` de `api/_r2.js`) ; effacements par lots (`effacerFichiersR2`, refus signalés) ;
    - le nettoyage du matin passe APRÈS les relances des mensualités et ne fait jamais tomber la tâche ;
-   - ancien programme Google : la page ne note que les copies des photos absentes de Cloudflare.
 Pas de nouvelle fonction Vercel (limite de 12) : tout passe par `api/r2-presigner.js`.
 Test : `scripts/tests-visiteur/test-photos-candidature-r2.js` (serveur, candidature FR/EN téléphone/ordinateur,
 Cloudflare en panne, reprise, ancien programme Google, cours de talons, Administration).

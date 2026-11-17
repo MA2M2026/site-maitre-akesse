@@ -4,7 +4,8 @@
 //     ancienne, déjà traitée, 12 photos, mauvais format, trop lourde), faux fichier effacé, photo notée par le serveur,
 //     lecture et suppression réservées à l'équipe ;
 //  2. navigateur, candidature FR et EN (téléphone, ordinateur) : R2 d'abord puis Drive ; R2 en panne → Drive seul ;
-//  3. Administration : photo R2 affichée par adresse signée, copies Drive masquées, ancienne candidature inchangée.
+//  3. Administration : photo R2 affichée par adresse signée ; copies Drive cachées seulement si le dossier a au moins
+//     autant de photos Cloudflare (règle du superviseur, 17/11) ; rien n'est jamais supprimé ; ancienne candidature inchangée.
 const Module = require('module'); const chemin = require('path');
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const ID = '9b2f6c1e-1111-4a11-8a11-123456789abc';
@@ -156,32 +157,9 @@ async function serveur() {
   ok(r.statut === 200 && base.notes.length === nbAvant + 1 && base.notes[nbAvant].application_id === ID, 'superviseur 5 : vérification avec le numéro en majuscules : notée sous le numéro en minuscules');
   r = await appeler({ action: 'candidature_verifier', candidature: ID, chemin: 'candidatures/' + MAJ + '/' + 'a'.repeat(32) + '.jpg' });
   ok(r.statut === 400, 'superviseur 5 : un chemin « en majuscules » est refusé');
-  // (superviseur 3, 6, 8) la page relie chaque photo Cloudflare à SA copie Drive : le doublon noté par Google est retiré,
-  // la photo garde une seule ligne ; une paire fausse ou d'un autre dossier est ignorée
-  const cc = base.notes.find((x) => x.application_id === ID && /^r2:/.test(x.url));
-  base.notes.push({ application_id: ID, url: 'https://drive.google.com/uc?id=copie-1', chemin: null }, { application_id: ID, url: 'https://drive.google.com/uc?id=seulement-drive', chemin: null });
-  base.mediasDrive = [{ lien: 'https://drive.google.com/uc?id=copie-1' }, { lien: 'https://drive.google.com/uc?id=seulement-drive' }];
-  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [
-    { chemin: cc.chemin.slice(3), lien: 'https://drive.google.com/uc?id=copie-1' },
-    { chemin: 'candidatures/' + ID + '/' + '9'.repeat(32) + '.jpg', lien: 'https://drive.google.com/uc?id=seulement-drive' },  // (aucune photo Cloudflare de ce nom)
-    { chemin: 'cours-talons/' + ID + '/' + 'a'.repeat(32) + '.jpg', lien: 'https://drive.google.com/uc?id=seulement-drive' },
-    { chemin: cc.chemin.slice(3), lien: 'javascript:alert(1)' }, { chemin: cc.chemin.slice(3), lien: 'https://site-pirate.example/x.jpg' }] });
-  const lignesId = base.notes.filter((x) => x.application_id === ID);
-  ok(r.statut === 200 && r.rep.notees === 1 && cc.url === 'https://drive.google.com/uc?id=copie-1' && !lignesId.some((x) => x.chemin == null && /copie-1/.test(x.url))
-    && lignesId.some((x) => /seulement-drive/.test(x.url)) && base.appliquer === 1,
-    'superviseur 3 : copie Drive reliée à sa photo Cloudflare (doublon retiré, photo seulement dans Drive gardée, la base complète ensuite)');
-  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [{ chemin: cc.chemin.slice(3), lien: 'https://drive.google.com/uc?id=autre' }] });
-  ok(r.statut === 200 && r.rep.notees === 0 && cc.url === 'https://drive.google.com/uc?id=copie-1', 'superviseur 3 : une photo déjà reliée ne peut pas être reliée à une autre copie');
-  base.dossier.status = 'vue'; r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [] }); base.dossier.status = 'nouvelle';
-  ok(r.statut === 200, 'superviseur 3 : candidature déjà ouverte par l’agence pendant l’envoi : les copies se relient quand même');
-  base.dossier.created_at = new Date(Date.now() - 25 * 3600e3).toISOString();
-  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [] }); base.dossier.created_at = new Date().toISOString();
-  ok(r.statut === 403, 'superviseur 3 : candidature de plus de 24 h : plus rien à relier');
-  // une copie que Google n'a PAS notée pour ce dossier (lien d'une autre ligne) : aucune ligne n'est retirée
-  const cc2 = base.notes.find((x) => x.application_id === ID && /^r2:/.test(x.url));
-  base.notes.push({ application_id: ID, url: 'https://drive.google.com/uc?id=jamais-note', chemin: null });
-  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [{ chemin: cc2.chemin.slice(3), lien: 'https://drive.google.com/uc?id=jamais-note' }] });
-  ok(r.statut === 200 && base.notes.some((x) => x.chemin == null && /jamais-note/.test(x.url)), 'superviseur 3 : un lien que Google n’a pas noté pour ce dossier ne retire aucune ligne');
+  // (superviseur, 17/11) l'action qui reliait les copies par rang est retirée : refusée comme inconnue
+  r = await appeler({ action: 'candidature_copies', candidature: ID, copies: [] });
+  ok(r.statut === 400, 'superviseur : plus aucune liaison par rang (action retirée)');
   // ---- nettoyage du matin (api/_r2.js) : seulement candidatures/ et cours-talons/, jamais un fichier cité
   const { nettoyerPhotosNonCitees } = require('../../api/_r2.js');
   const ilYa = (h) => new Date(Date.now() - h * 3600e3), A2 = 'aaaaaaaa-1111-4a11-8a11-123456789abc', T2 = 'bbbbbbbb-1111-4a11-8a11-123456789abc';
@@ -222,11 +200,10 @@ async function navigateur() {
     // (superviseur 4) envoi coupé après la 1re photo arrivée chez Cloudflare : la reprise ne la renvoie pas
     // (2ᵉ relecture) réponse de la 1re vérification perdue : la même photo est revérifiée, jamais déposée deux fois
     { nom: 'Vérification sans réponse, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, verifPerdue: true },
-    // (cas rare réglé) relier les copies échoue 3 fois : la demande est gardée dans le téléphone, puis refaite à la page suivante
-    { nom: 'Copies Drive sans réseau puis page suivante, téléphone', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: false, copiesPanne: true },
     { nom: 'Reprise après coupure, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, reprise: true },
-    // (superviseur 6) ancien programme Google (la page note elle-même les liens Drive) : seules les copies des photos
-    // qui ne sont PAS arrivées chez Cloudflare sont notées (1 sur 3 ici), aucune fausse « photo manquante »
+    // (superviseur 6) ancien programme Google (la page note elle-même les liens Drive) : 2 photos sur 3 chez Cloudflare →
+    // la page note TOUS les liens Drive (l'Administration décide de l'affichage) ; si TOUTES sont chez Cloudflare, aucun
+    { nom: 'Ancien programme Google, tout chez Cloudflare, téléphone', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: false, ancien: true },
     { nom: 'Ancien programme Google, ordinateur', page: '/candidature.html', parcours: 'projet', ecran: { width: 1280, height: 900 }, panne: false, ancien: true, r2Max: 2 }]) {
     const tel = cas.ecran.width < 700, n = cas.nom + ' : ';
     const ctx = await b.newContext({ viewport: cas.ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
@@ -234,10 +211,9 @@ async function navigateur() {
     p.on('pageerror', (e) => errs.push(e.message));
     await brancher(p, { tables: { casting_projets: [{ nom: 'Défilé X', actif: true }] }, rpc: { casting_ouvert: true, ajouter_video_candidature: true } }, journal);
     await p.route('**/api/r2-presigner', async (route) => {
-      const c = JSON.parse(route.request().postData() || '{}'); r2Appels.push(c); if (c.action !== 'candidature_copies') ordre.push('r2');  // (relier les copies vient forcément après Drive)
+      const c = JSON.parse(route.request().postData() || '{}'); r2Appels.push(c); ordre.push('r2');
       if (cas.panne) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"panne"}' });
       if (cas.r2Max != null && c.action === 'candidature_signer' && r2Appels.filter((x) => x.action === 'candidature_signer').length > cas.r2Max) return route.fulfill({ status: 403, contentType: 'application/json', body: '{"error":"plein"}' });
-      if (c.action === 'candidature_copies' && cas.copiesPanne) return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"panne"}' });
       if (cas.verifPerdue && c.action === 'candidature_verifier' && r2Appels.filter((x) => x.action === 'candidature_verifier').length === 1) return route.abort('connectionreset');
       if (c.action === 'candidature_signer') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'https://r2.essai/envoi/' + r2Appels.length, chemin: 'candidatures/' + c.candidature + '/' + String(r2Appels.length).padStart(32, '0') + '.jpg' }) });
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"verifie":true}' });
@@ -267,32 +243,22 @@ async function navigateur() {
     const vertes = await p.locator('#ca-jauges-photos .jauge.terminee').count();
     const msg = await p.evaluate(() => (document.getElementById('ca-msg') || {}).textContent || '');
     const notees = journal.filter((j) => j[0] === 'POST' && j[1] === 'casting_photos');
-    if (cas.copiesPanne) {
-      const essaisCopies = r2Appels.filter((c) => c.action === 'candidature_copies').length;
-      const garde = await p.evaluate(() => JSON.parse(localStorage.getItem('ma2m-copies-drive') || '[]'));
-      ok(essaisCopies >= 3 && garde.length === 1 && garde[0].copies.length === 3, n + 'réseau coupé : 3 essais, puis la demande est gardée dans le téléphone (' + essaisCopies + ' essais, ' + garde.length + ' gardée)');
-      cas.copiesPanne = false;
-      await p.goto(base + '/index.html'); await p.waitForTimeout(6000);
-      const apres = r2Appels.filter((c) => c.action === 'candidature_copies').length;
-      const reste = await p.evaluate(() => JSON.parse(localStorage.getItem('ma2m-copies-drive') || '[]'));
-      ok(apres > essaisCopies && !reste.length, n + 'page suivante du site : la demande est refaite, puis effacée du téléphone (' + apres + ', ' + reste.length + ')');
-    } else if (cas.verifPerdue) {
+    if (cas.verifPerdue) {
       ok(signes.length === 3 && puts.length === 3 && verifies.length === 4 && verifies[0].chemin === verifies[1].chemin, n + '2ᵉ relecture : la photo est revérifiée (même nom), jamais déposée deux fois (3 dépôts, 4 vérifications)');
       ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
     } else if (cas.reprise) {
       ok(signes.length === 2 && verifies.length === 2 && puts.length === 2, n + 'superviseur 4 : la photo déjà arrivée n’est pas renvoyée (2 envois sur 3)');
       ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
     } else if (cas.ancien) {
-      ok(verifies.length === 2 && notees.length === 1 && /id=p2/.test(notees[0][3] || ''), n + 'superviseur 6 : seule la copie Drive de la photo absente de Cloudflare est notée par la page (' + notees.map((x) => x[3]).join(' ') + ')');
+      if (cas.r2Max) ok(verifies.length === 2 && notees.length === 3, n + 'superviseur 6 : 2 photos sur 3 chez Cloudflare : la page note les 3 liens Drive (' + notees.length + ')');
+      else ok(verifies.length === 3 && notees.length === 0, n + 'superviseur 6 : toutes chez Cloudflare : la page ne note aucun lien Drive (' + notees.length + ')');
       ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg) && !journal.some((j) => j[1] === 'journal_erreurs' && /casting_photos/.test(j[3] || '')), n + 'aucune fausse « photo manquante », journal propre');
     } else if (!cas.panne) {
       ok(signes.length === 3 && verifies.length === 3 && puts.filter((x) => x === 'PUT').length === 3 && signes.every((c) => c.candidature === ID && !c.chemin),
         n + '3 photos envoyées chez Cloudflare (adresse signée, envoi, vérification), nom choisi par le serveur');
       ok(ordre.indexOf('r2') === 0 && ordre.indexOf('drive') > ordre.lastIndexOf('r2') && drive.length >= 1, n + 'Cloudflare d’abord, PUIS la copie Drive (archive)');
       ok(vertes === 3 && !/manqu|missing|non envoy|not sent/i.test(msg), n + 'jauges vertes, aucune photo annoncée comme manquante');
-      const copies = (r2Appels.find((c) => c.action === 'candidature_copies') || {}).copies || [];
-      ok(copies.map((c) => c.lien).join() === [0, 1, 2].map((k) => 'https://drive.google.com/thumbnail?id=p' + k).join() && copies.every((c) => c.chemin.startsWith('candidatures/' + ID + '/')),
-        n + 'superviseur 3 : chaque photo Cloudflare est reliée à SA copie Drive, dans l’ordre');
+      ok(!r2Appels.some((c) => c.action === 'candidature_copies'), n + 'superviseur : aucune liaison par rang demandée');
     } else {
       ok(signes.length >= 1 && !verifies.length && !puts.length, n + 'Cloudflare refuse : rien n’est envoyé chez Cloudflare');
       ok(drive.length >= 1 && vertes === 3, n + 'les photos partent quand même dans Drive, comme avant, jauges vertes');
@@ -303,8 +269,7 @@ async function navigateur() {
   // 2 bis. cours de talons : Cloudflare d'abord, Drive ensuite ; l'inscription porte les photos Cloudflare ;
   //        base pas encore prête (fichier SQL L-17 pas collé) → l'inscription repart avec les liens Drive
   for (const cas of [{ nom: 'Cours de talons, téléphone', baseRefuse: false }, { nom: 'Cours de talons, ordinateur, base pas encore prête', baseRefuse: true, ecran: { width: 1280, height: 900 } },
-    // (superviseur 3) une seule des 2 photos arrive chez Cloudflare : l'inscription prend, rang par rang, la photo
-    // Cloudflare de la 1re et la copie Drive de la 2de (aucune perdue, aucune en double)
+    // (superviseur 3) une seule des 2 photos arrive chez Cloudflare : l'inscription prend les liens Drive (roue de secours)
     { nom: 'Cours de talons, téléphone, 1 photo sur 2 chez Cloudflare', r2Max: 1 }]) {
     const ecran = cas.ecran || { width: 390, height: 844 }, tel = ecran.width < 700, n = cas.nom + ' : ';
     const ctx = await b.newContext({ viewport: ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
@@ -340,7 +305,7 @@ async function navigateur() {
     await p.waitForFunction(() => !document.getElementById('ct-merci').classList.contains('u-hidden'), null, { timeout: 40000 }).catch(() => {});
     const signes = r2Appels.filter((c) => c.action === 'candidature_signer');
     const inscrites = journal.filter((j) => j[0] === 'POST' && j[1] === 'cours_talons').map((j) => JSON.parse(j[3] || '{}'));
-    if (cas.r2Max) ok(inscrites.length === 1 && inscrites[0].photos.length === 2 && /^r2:cours-talons\//.test(inscrites[0].photos[0]) && /id=t1$/.test(inscrites[0].photos[1]), n + 'superviseur 3 : photo 1 depuis Cloudflare, photo 2 par sa copie Drive (' + JSON.stringify(inscrites.map((x) => x.photos)) + ')');
+    if (cas.r2Max) ok(inscrites.length === 1 && inscrites[0].photos.length === 2 && inscrites[0].photos.every((x) => /^https:\/\/drive/.test(x)), n + 'superviseur 3 : 1 photo sur 2 chez Cloudflare : l’inscription porte les 2 liens Drive (roue de secours) (' + JSON.stringify(inscrites.map((x) => x.photos)) + ')');
     else ok(signes.length === 2 && signes.every((c) => c.dossier === 'cours-talons' && c.candidature === ID_T), n + '2 photos envoyées chez Cloudflare, dossier cours-talons, numéro de l’inscription');
     ok(ordre[0] === 'r2' && ordre.includes('drive') && ordre.indexOf('drive') > ordre.lastIndexOf('r2'), n + 'Cloudflare d’abord, PUIS la copie Drive');
     if (cas.r2Max) { /* (vérifié plus haut) */ } else if (!cas.baseRefuse) ok(inscrites.length === 1 && inscrites[0].photos.length === 2 && inscrites[0].photos.every((x) => /^r2:cours-talons\//.test(x)), n + 'l’inscription porte les 2 photos Cloudflare (' + JSON.stringify(inscrites.map((x) => x.photos)) + ')');
@@ -361,7 +326,12 @@ async function navigateur() {
     d.memoriser = true;
     p.on('dialog', (dl) => dl.accept());
     const CT = 'cours-talons/' + ID + '/' + 'c'.repeat(32) + '.jpg';
-    d.tables.cours_talons = [{ id: 't-r2', nom: 'AYA CLOUDFLARE', telephone: '+2250700000005', formule: 'groupe', nb_seances: 4, statut: 'plus_tard', photos: ['r2:' + CT], video: null, cree_le: '2026-11-16T10:00:00Z', age: 20, decision: 'plus_tard', montant: 30000 }];
+    const dr = (k) => 'https://drive.google.com/thumbnail?id=talon' + k, CT2 = 'cours-talons/' + ID + '/' + 'e'.repeat(32) + '.jpg';
+    d.tables.cours_talons = [
+      // (déclencheur cours_talons_z_medias_drive simulé : la base a ajouté les copies Drive)
+      { id: 't-cache', nom: 'AYA DEUX', telephone: '+2250700000006', formule: 'groupe', nb_seances: 4, statut: 'plus_tard', photos: ['r2:' + CT, 'r2:' + CT2, dr(1), dr(2)], video: null, cree_le: '2026-11-16T11:00:00Z', age: 20, decision: 'plus_tard', montant: 30000 },
+      { id: 't-tout', nom: 'AYA TROIS', telephone: '+2250700000007', formule: 'groupe', nb_seances: 4, statut: 'plus_tard', photos: ['r2:' + CT, dr(1), dr(2)], video: null, cree_le: '2026-11-16T12:00:00Z', age: 20, decision: 'plus_tard', montant: 30000 },
+      { id: 't-r2', nom: 'AYA CLOUDFLARE', telephone: '+2250700000005', formule: 'groupe', nb_seances: 4, statut: 'plus_tard', photos: ['r2:' + CT], video: null, cree_le: '2026-11-16T10:00:00Z', age: 20, decision: 'plus_tard', montant: 30000 }];
     await brancher(p, d, journal); await photosLocales(p);
     await p.route('**/api/r2-presigner', async (route) => {
       const c = JSON.parse(route.request().postData() || '{}');
@@ -376,22 +346,20 @@ async function navigateur() {
     // (superviseur 3) 1 photo chez Cloudflare, 2 copies Drive : des photos ne sont arrivées que dans Drive → tout reste visible
     ok(lus.includes(CR2) && vu.length === 3 && vu.filter((x) => /signature=x/.test(x)).length === 1 && vu.filter((x) => /drive\.google/.test(x)).length === 2,
       n + 'superviseur 3 : 1 photo Cloudflare et 2 copies Drive : les photos arrivées seulement dans Drive restent visibles (' + vu.length + ' photos)');
-    // (superviseur 3 et 8) photo Cloudflare RELIÉE à sa copie Drive (url = lien Drive, le doublon a été retiré par le
-    // serveur) : une seule image par photo ; la supprimer ne fait réapparaître aucune copie, et aucune autre ligne n'est touchée
+    // (superviseur 3) 2 photos Cloudflare et 2 copies Drive (M ≤ N) : les copies Drive sont cachées
     const CR2b = 'candidatures/' + ID + '/' + 'd'.repeat(32) + '.jpg';
-    const ph1 = d.tables.casting_photos.find((x) => x.id === 'ph1');
-    d.tables.casting_photos = d.tables.casting_photos.filter((x) => x.id !== 'ph1');
-    d.tables.casting_photos.push({ id: 'ph-r2b', application_id: 'c4', chemin: 'r2:' + CR2b, url: ph1.url });
+    d.tables.casting_photos.push({ id: 'ph-r2b', application_id: 'c4', chemin: 'r2:' + CR2b, url: 'r2:' + CR2b });
     await p.goto(base + '/admin/#/site/b2-candidatures/c1'); await p.waitForTimeout(300);
     await p.goto(base + '/admin/#/site/b2-candidatures/c4'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
     const vu2 = await images();
-    ok(vu2.length === 3 && vu2.filter((x) => /signature=x/.test(x)).length === 2 && vu2.filter((x) => /photo-ama-2/.test(x)).length === 1 && !vu2.some((x) => /photo-ama-1/.test(x)),
-      n + 'superviseur 3 : 2 photos Cloudflare (dont une reliée à sa copie Drive) + 1 photo seulement dans Drive : 3 images, aucun doublon (' + vu2.length + ')');
+    ok(vu2.length === 2 && vu2.every((x) => /signature=x/.test(x)), n + 'superviseur 3 : 2 photos Cloudflare et 2 copies Drive : les copies Drive sont cachées (' + vu2.length + ')');
+    // (superviseur 8, accepté tel quel) une photo Cloudflare supprimée : rien d'autre n'est supprimé ; 1 Cloudflare et
+    // 2 copies (M > N) : tout est montré
     await p.locator('[data-action="dossier-photo-supprimer"][data-photo="ph-r2b"]').click();
     await p.waitForFunction(() => /supprimée/.test((document.getElementById('dos-photo-msg') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
     const vu3 = await images(), restent = d.tables.casting_photos.filter((x) => x.application_id === 'c4');
-    ok(vu3.length === 2 && !vu3.some((x) => /photo-ama-1/.test(x)) && restent.length === 2 && restent.some((x) => x.id === 'ph2') && supprimes.flat().includes(CR2b),
-      n + 'superviseur 8 : photo Cloudflare supprimée : sa copie Drive ne réapparaît pas, les autres photos restent (' + vu3.length + ' images)');
+    ok(vu3.length === 3 && restent.length === 3 && ['ph1', 'ph2', 'ph-r2'].every((id) => restent.some((x) => x.id === id)) && supprimes.flat().includes(CR2b),
+      n + 'superviseur 8 : photo Cloudflare supprimée : aucune autre ligne supprimée, tout est montré (' + vu3.length + ' images)');
     d.memoriser = false;
     await p.goto(base + '/admin/#/site/b2-candidatures/c1'); await p.waitForTimeout(300); await p.waitForSelector('.galerie-dossier .photo-dossier', { timeout: 15000 }).catch(() => {});
     const ancien = await p.evaluate(() => [...document.querySelectorAll('.galerie-dossier .photo-dossier img')].map((i) => i.getAttribute('src') || ''));
@@ -399,6 +367,10 @@ async function navigateur() {
     await p.goto(base + '/admin/#/site/b2-cours-talons'); await p.waitForSelector('.ct-fiche', { timeout: 10000 }).catch(() => {});
     await p.evaluate(() => document.querySelectorAll('.ct-fiche').forEach((f) => { if (f.closest('details')) f.closest('details').open = true; }));
     const talons = await p.evaluate(() => { const f = document.querySelector('.ct-fiche[data-id="t-r2"]'); return f ? [...f.querySelectorAll('img')].map((i) => i.getAttribute('src') || '') : null; });
+    const imgs = (id) => p.evaluate((x) => { const f = document.querySelector('.ct-fiche[data-id="' + x + '"]'); return f ? [...f.querySelectorAll('img')].map((i) => i.getAttribute('src') || '') : null; }, id);
+    const cache = await imgs('t-cache'), tout = await imgs('t-tout');
+    ok(Array.isArray(cache) && cache.length === 2 && cache.every((x) => /signature=x/.test(x)), n + 'talons : 2 photos Cloudflare, 2 copies Drive ajoutées par la base : copies cachées (' + (cache && cache.length) + ')');
+    ok(Array.isArray(tout) && tout.length === 3, n + 'talons : 1 photo Cloudflare, 2 copies Drive : tout est montré (' + (tout && tout.length) + ')');
     ok(Array.isArray(talons) && talons.length === 1 && /cours-talons\/.*signature=x/.test(talons[0]), n + 'cours de talons : photo Cloudflare affichée par adresse signée, copie Drive masquée (' + JSON.stringify(talons) + ')');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await ctx.close();

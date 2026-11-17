@@ -28,6 +28,10 @@
   // Partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js.
   P.photosR2 = {
     est: (c) => typeof c === 'string' && /^r2:(candidatures|cours-talons)\//.test(c),
+    // (relecture du superviseur, 17/11 02 h 15 : règle simple, rien n'est jamais supprimé) N photos Cloudflare et M copies
+    // Drive dans un même dossier : si M ≤ N, les copies Drive sont cachées (ce sont des copies) ; si M > N, tout est
+    // montré (au pire un doublon, jamais une photo cachée). Partagé par les candidatures et les cours de talons.
+    cacherDrive: (nbR2, nbDrive) => nbR2 > 0 && nbDrive <= nbR2,
     async appel(corps) {
       const jeton = await jetonSessionCourante();
       const rep = await fetch('/api/r2-presigner', { method: 'POST', headers: enTetesServeur(jeton), body: JSON.stringify(corps) });

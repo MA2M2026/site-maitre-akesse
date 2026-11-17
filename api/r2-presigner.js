@@ -91,52 +91,6 @@ async function candidatureOuverte(id, dejaDepose = 0) {
   return null;
 }
 
-// (relecture du superviseur, 22 h 30) COPIES DRIVE DES PHOTOS CLOUDFLARE, sans rien deviner. Après l'envoi vers Drive,
-// la page sait EXACTEMENT quelle copie Drive va avec quelle photo Cloudflare (même rang dans l'envoi). Elle l'envoie ici :
-// copies = [{ chemin: 'candidatures/<id>/<…>.jpg', lien: 'https://…' }]. Pour chaque paire, le serveur :
-//  1. retire du dossier la ligne « copie Drive » de CETTE photo, si le programme Google l'a déjà notée (un doublon
-//     exact : seulement le lien dans la base ; le fichier reste dans le dossier Drive de l'agence) ;
-//  2. met ce lien Drive dans l'« url » de la ligne Cloudflare : la photo n'a plus qu'UNE ligne, et la base ne
-//     rajoutera jamais cette copie (medias_drive_appliquer saute les liens déjà présents) ;
-//  3. relance medias_drive_appliquer : les photos arrivées SEULEMENT dans Drive, refusées plus tôt par la limite de 12
-//     lignes (que les doublons occupaient), sont notées.
-// Une paire mal formée est ignorée. Sans cet appel (réseau coupé, 3 essais), la photo s'affiche au pire deux fois.
-// (2ᵉ relecture) sûreté, puisque l'appel vient d'un visiteur sans compte : seulement un lien Google Drive ; la ligne
-// « copie Drive » n'est retirée que si Google a lui-même noté ce lien pour CE dossier (journal medias_drive) ; une
-// photo déjà reliée ne l'est jamais une seconde fois. Permis pendant 24 h après la candidature (même si l'agence l'a
-// déjà ouverte : rien n'est déposé ici).
-async function noterCopiesDrive(res, id, copies) {
-  const LIEN = /^https:\/\/drive\.google\.com\/[^\s"<>]{1,400}$/;
-  const service = (url, o = {}) => fetch(SUPABASE_URL + '/rest/v1/' + url, { ...o, headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' } });
-  const lire = (url) => service(url).then((r) => (r.ok ? r.json() : null), () => null);
-  const dossiers = await lire('casting_applications?select=created_at&id=eq.' + id);
-  if (!Array.isArray(dossiers)) { res.status(503).json({ error: 'Vérification impossible pour le moment : réessayez dans un instant.' }); return; }
-  if (!dossiers.length || Date.now() - new Date(dossiers[0].created_at).getTime() > 24 * 3600 * 1000) { res.status(403).json({ error: 'Cette candidature ne reçoit plus de photos.' }); return; }
-  const paires = (Array.isArray(copies) ? copies : []).slice(0, PHOTOS_MAX_CANDIDATURE)
-    .filter((c) => c && cheminCandidature(id, c.chemin, 'candidatures') && typeof c.lien === 'string' && LIEN.test(c.lien));
-  const notesParGoogle = paires.length ? await lire('medias_drive?select=lien&genre=eq.photo&ref=eq.' + id) : [];
-  const deGoogle = new Set((notesParGoogle || []).map((m) => m.lien));
-  let notees = 0;
-  for (const c of paires) {
-    const ligne = 'application_id=eq.' + id + '&chemin=eq.' + encodeURIComponent('r2:' + c.chemin);
-    // seulement une ligne Cloudflare qui attend encore son lien (jamais une ligne déjà reliée à une autre copie)
-    const attend = await lire('casting_photos?select=id&url=eq.' + encodeURIComponent('r2:' + c.chemin) + '&' + ligne);
-    if (!Array.isArray(attend) || !attend.length) continue;
-    const retirerDoublon = () => (deGoogle.has(c.lien)
-      ? service('casting_photos?application_id=eq.' + id + '&chemin=is.null&url=eq.' + encodeURIComponent(c.lien), { method: 'DELETE' }) : null);
-    await retirerDoublon();
-    let maj = await service('casting_photos?' + ligne + '&url=eq.' + encodeURIComponent('r2:' + c.chemin), { method: 'PATCH', body: JSON.stringify({ url: c.lien }) });
-    // (Google a renoté la copie entre-temps : même lien deux fois dans le dossier, refusé par la base) un seul nouvel essai
-    if (!maj.ok && maj.status === 409) {
-      await retirerDoublon();
-      maj = await service('casting_photos?' + ligne + '&url=eq.' + encodeURIComponent('r2:' + c.chemin), { method: 'PATCH', body: JSON.stringify({ url: c.lien }) });
-    }
-    if (maj.ok) notees++;
-  }
-  if (notees) await service('rpc/medias_drive_appliquer', { method: 'POST', body: JSON.stringify({ p_source: 'candidature', p_ref: id }) }).catch(() => {});
-  res.status(200).json({ ok: true, notees });
-}
-
 async function photoCandidature(req, res, debut) {
   const { action, candidature, chemin, chemins, contentType, taille } = debut.corps;
   try {
@@ -174,10 +128,8 @@ async function photoCandidature(req, res, debut) {
     const nomDossier = debut.corps.dossier || 'candidatures';
     const dossier = typeof nomDossier === 'string' && Object.prototype.hasOwnProperty.call(DOSSIERS_PHOTOS, nomDossier) ? DOSSIERS_PHOTOS[nomDossier] : null;
     if (!dossier) { res.status(400).json({ error: 'Dossier inconnu.' }); return; }
-    if (!['candidature_signer', 'candidature_verifier', 'candidature_copies'].includes(action)) { res.status(400).json({ error: 'Action inconnue.' }); return; }
-    if (action === 'candidature_copies' && dossier !== 'candidatures') { res.status(400).json({ error: 'Dossier inconnu.' }); return; }
+    if (action !== 'candidature_signer' && action !== 'candidature_verifier') { res.status(400).json({ error: 'Action inconnue.' }); return; }
     if (await limiteDebit(res, 'r2-candidature', extraireIp(req) || 'inconnue', 60)) return;
-    if (action === 'candidature_copies') { await noterCopiesDrive(res, id, debut.corps.copies); return; }  // (ses propres contrôles)
     const dejaDepose = action === 'candidature_signer' ? 0 : 1;  // (vérification : le fichier est déjà déposé et compté)
     const fermee = dossier === 'cours-talons' ? await talonsOuverte(id, dejaDepose) : await candidatureOuverte(id, dejaDepose);
     if (fermee) { res.status(fermee.startsWith('Vérification') ? 503 : 403).json({ error: fermee }); return; }
@@ -207,8 +159,8 @@ async function photoCandidature(req, res, debut) {
         const note = await fetch(SUPABASE_URL + '/rest/v1/casting_photos', {
           method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
           // (relecture du superviseur, 22 h 30) « url » est obligatoire dans casting_photos (text not null) : sans elle,
-          // CHAQUE photo était refusée. En attendant le lien de sa copie Drive (action « candidature_copies »), on y met
-          // le nom de rangement « r2:… » ; l'Administration reconnaît ces photos par leur CHEMIN.
+          // CHAQUE photo était refusée. On y met le nom de rangement « r2:… » (unique par dossier) ; l'Administration
+          // reconnaît ces photos par leur CHEMIN.
           body: JSON.stringify({ application_id: id, url: 'r2:' + chemin, chemin: 'r2:' + chemin })
         });
         const erreur = note.ok ? null : await note.json().catch(() => ({}));
