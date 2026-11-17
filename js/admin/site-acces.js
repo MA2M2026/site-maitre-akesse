@@ -130,23 +130,24 @@
     if (rattrapageEnCours) return;
     rattrapageEnCours = true; el.disabled = true;
     const arreter = document.querySelector('[data-action="rattrapage-arreter"]'); if (arreter) arreter.hidden = false;
-    const msg = () => document.getElementById('rattrapage-msg');
+    // (relecture) la boucle vit avec SA rubrique : rubrique quittée ou redessinée → elle s'arrête
+    const bloc = document.getElementById('rattrapage'), msg = () => (bloc && bloc.isConnected ? document.getElementById('rattrapage-msg') : null);
     const ecrire = (t) => { const m = msg(); if (m) m.textContent = t; };
     let faits = 0, photos = 0;
     const echecs = [];
     try {
       for (const [source, nom] of [['candidature', 'candidatures'], ['cours_talons', 'cours de talons']]) {
         const exclus = [];
-        while (rattrapageEnCours && msg()) {   // (rubrique quittée : on s'arrête)
+        while (rattrapageEnCours && msg()) {
           const r = await P.photosR2.appel({ action: 'rattrapage_drive', source, exclus });
           if (r.fini) break;
           if (r.echec) { exclus.push(r.echec); echecs.push(r.echec); } else { faits++; photos += r.photos || 0; }
-          ecrire('En cours (' + nom + ') : ' + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + '), ' +
-            P.pluriel(Math.max(0, (r.restants || 0) - (r.echec ? 1 : 0)), 'dossier restant', 'dossiers restants') + (echecs.length ? ', ' + P.pluriel(echecs.length, 'laissé', 'laissés') + ' sur Drive' : '') + '…');
+          ecrire('En cours (' + nom + ') : ' + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + ')' +
+            (echecs.length ? ', ' + P.pluriel(echecs.length, 'laissé', 'laissés') + ' sur Drive' : '') + '…');
           await new Promise((ok) => setTimeout(ok, 1500));   // (un peu d'air entre deux dossiers, pour Google)
         }
       }
-      ecrire((rattrapageEnCours ? 'Terminé : ' : 'Arrêté : ') + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + ').' +
+      ecrire((rattrapageEnCours && msg() ? 'Terminé : ' : 'Arrêté : ') + P.pluriel(faits, 'dossier rapatrié', 'dossiers rapatriés') + ' (' + P.pluriel(photos, 'photo', 'photos') + ').' +
         (echecs.length ? ' ' + P.pluriel(echecs.length, 'dossier est resté', 'dossiers sont restés') + ' sur Drive (Google n’a pas répondu) : relancez plus tard.' : ''));
     } catch (e) {
       ecrire('Interrompu : ' + ((e && e.message) || e) + ' Ce qui est fait reste fait : relancez plus tard.');

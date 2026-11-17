@@ -11,7 +11,7 @@ const { donnees, photosLocales, seConnecter } = require('./donnees-nouvelle-admi
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const A = 'aaaaaaaa-1111-4111-8111-111111111111', B = 'bbbbbbbb-2222-4222-8222-222222222222', T = 'cccccccc-3333-4333-8333-333333333333';
 const drive = (id) => 'https://drive.google.com/thumbnail?id=' + id + '&sz=w2000';
-const JPEG = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 4];
+const JPEG = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 // ---- Cloudflare R2 simulé ----
 const r2 = { mis: [], effaces: [] };
@@ -46,16 +46,26 @@ async function serveur() {
       if (base.googleEnPanne.has(id)) return json({}, 429);
       return { ok: true, status: 200, arrayBuffer: async () => Uint8Array.from(JPEG).buffer };
     }
-    if (d.includes('/rest/v1/casting_photos?select=application_id,url&chemin=is.null')) return json(base.photos.filter((x) => !x.chemin && x.url.startsWith('https://drive.google.com/thumbnail')));
-    if (d.includes('/rest/v1/casting_photos?select=application_id&chemin=like.r2:')) return json(base.photos.filter((x) => String(x.chemin || '').startsWith('r2:')));
+    const q = new URL(u).searchParams;
+    if (d.includes('/rest/v1/casting_photos?select=application_id,url&chemin=is.null')) {
+      const debut = Number(q.get('offset') || 0), n = Number(q.get('limit'));
+      return json(base.photos.filter((x) => !x.chemin && x.url.startsWith('https://drive.google.com/thumbnail')).slice(debut, debut + n));
+    }
+    if (d.includes('/rest/v1/casting_photos?select=application_id&chemin=like.r2:')) {
+      const ids = q.get('application_id').replace(/^in\.\(|\)$/g, '').split(',');
+      return json(base.photos.filter((x) => String(x.chemin || '').startsWith('r2:') && ids.includes(x.application_id)));
+    }
+    if (d.includes('/rest/v1/casting_photos?select=url&chemin=is.null&application_id=eq.')) return json(base.photos.filter((x) => !x.chemin && 'eq.' + x.application_id === q.get('application_id')));
+    if (d.includes('/rest/v1/casting_photos?select=chemin&application_id=eq.')) return json(base.photos.filter((x) => String(x.chemin || '').startsWith('r2:') && 'eq.' + x.application_id === q.get('application_id')));
+    if (d.includes('/rest/v1/cours_talons?select=photos&id=eq.')) return json(base.talons.filter((x) => 'eq.' + x.id === q.get('id')));
     if (d.includes('/rest/v1/casting_photos') && m === 'POST') {
       const l = JSON.parse(o.body);
       if (l.some((x) => !x.url)) return json({ code: '23502' }, 400);
       base.photos.push(...l); return json(null, 201);
     }
-    if (d.includes('/rest/v1/cours_talons?select=id,photos')) return json(base.talons);
+    if (d.includes('/rest/v1/cours_talons?select=id,photos')) return json(base.talons.slice(Number(q.get('offset') || 0)));
     if (d.includes('/rest/v1/cours_talons?id=eq.') && m === 'PATCH') {
-      const q = new URL(u).searchParams, ligne = base.talons.find((x) => 'eq.' + x.id === q.get('id'));
+      const ligne = base.talons.find((x) => 'eq.' + x.id === q.get('id'));
       if (!ligne || q.get('photos') !== 'eq.' + JSON.stringify(ligne.photos) || base.talonsModifiee) return json([]);
       ligne.photos = JSON.parse(o.body).photos; return json([ligne]);
     }
@@ -87,6 +97,32 @@ async function serveur() {
   base.photos = base.photos.filter((x) => !String(x.chemin).startsWith('r2:'));
   r = await rattraperUnDossier('candidature', [A]);
   ok(r.corps.fait === B && r2.mis[r2.mis.length - 1] === nom1, 'serveur : relancer redonne le MÊME nom de fichier (jamais de doublon chez Cloudflare)');
+
+  // (relecture) une copie déjà utilisée par un passage précédent n'est JAMAIS retirée par un passage qui échoue
+  remplir(); await rattraperUnDossier('candidature', []);
+  base.photos.forEach((x) => { if (x.application_id === A && !x.chemin) x.chemin = null; });
+  const dejaA = base.photos.filter((x) => x.application_id === A && String(x.chemin).startsWith('r2:')).map((x) => x.chemin.slice(3));
+  base.photos = base.photos.filter((x) => !(x.application_id === A && String(x.chemin).startsWith('r2:')));   // (le serveur croit A à faire…)
+  base.photos.push({ application_id: A, url: 'r2:' + dejaA[0], chemin: 'r2:' + dejaA[0] });                 // (… mais une copie est citée)
+  base.photos.push({ application_id: A, url: 'r2:x', chemin: null }); base.googleEnPanne.add('photoA2xxxxx'); r2.effaces.length = 0;
+  base.photos = base.photos.filter((x) => x.url !== 'r2:x');
+  const dejaR2 = base.photos.filter((x) => String(x.chemin).startsWith('r2:'));
+  base.photos = base.photos.filter((x) => !String(x.chemin).startsWith('r2:'));
+  const vraiFetch = global.fetch;
+  global.fetch = async (url, o) => (decodeURIComponent(String(url)).includes('select=chemin&application_id=eq.') ? { ok: true, status: 200, json: async () => dejaR2 } : vraiFetch(url, o));
+  r = await rattraperUnDossier('candidature', []);
+  global.fetch = vraiFetch;
+  ok(r.corps.echec === A && !r2.effaces.includes(dejaA[0]), 'serveur : en cas d’échec, une copie déjà citée par la base n’est jamais retirée');
+  // (relecture) plus de 500 lignes Drive : la base est lue par pages, aucun dossier n'est oublié
+  remplir();
+  const anciens = 'dddddddd-4444-4444-8444-444444444444';
+  base.photos = Array.from({ length: 520 }, (_, i) => ({ application_id: A, url: drive('photoA' + String(i).padStart(6, '0')), chemin: 'r2:candidatures/' + A + '/' + 'a'.repeat(32) + '.jpg' }))
+    .concat([{ application_id: A, url: drive('photoA1xxxxx'), chemin: null }]).filter((x) => x.chemin === null);
+  for (let i = 0; i < 520; i++) base.photos.push({ application_id: 'eeeeeeee-5555-4555-8555-' + String(i).padStart(12, '0'), url: drive('photoE' + String(i).padStart(6, '0')), chemin: null });
+  base.photos.push({ application_id: anciens, url: drive('photoD1xxxxx'), chemin: null });
+  base.photos.filter((x) => x.application_id.startsWith('eeeeeeee')).forEach((x) => base.photos.push({ application_id: x.application_id, url: 'r2:' + x.url, chemin: 'r2:' + x.url }));
+  r = await rattraperUnDossier('candidature', ['aaaaaaaa-1111-4111-8111-111111111111']);
+  ok(r.corps.fait === anciens, 'serveur : plus de 500 dossiers déjà faits → la page suivante est lue, l’ancien dossier est trouvé (' + JSON.stringify(r.corps).slice(0, 80) + ')');
 
   remplir();
   r = await rattraperUnDossier('cours_talons', []);
