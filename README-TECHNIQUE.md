@@ -4333,6 +4333,13 @@ retrait par l'équipe du site, ajout par le serveur seulement, étiquette retir�
 Candidatures et Demandes recruteurs (js/admin/site-dossiers.js) affichent « ⚠ À vérifier » sur la carte et un encart
 dans la fiche avec « ✓ C'est une vraie personne » (retire l'étiquette). Table absente : rien ne s'affiche, l'envoi
 passe quand même. Essais : `essais-a-verifier.sql`, `test-anti-robots.js`, `test-a-verifier.js`.
+**Vidéo en grand (17/11/2026, demande de la propriétaire)** : `P.lecteurVideo` (js/admin/coque.js) affiche le lecteur sur
+toute la largeur (520 px au plus), dans son propre bloc « Vidéo de présentation » sous les photos de la fiche
+(`blocVideo`, js/admin/site-dossiers.js ; plus dans la grille des informations). Plus de lien « Ouvrir la vidéo » vers
+Drive : le bouton « ⛶ Plein écran » met la vidéo sur tout l'écran DANS l'Administration (plein écran du navigateur
+quand il est permis, sinon la vidéo couvre la page) ; « ✕ Fermer » ou Échap la remet en place. Les vidéos restent
+rangées dans Google Drive (décision de la propriétaire : pas de passage chez Cloudflare). Essai :
+`test-nouvelle-admin-castings.js` (taille, plein écran, sortie).
 
 ## Reprise du 1er mars 2027 (07/11/2026, décision de la propriétaire ; Extension 154)
 Plan et décisions : `PLAN-REPRISE-MARS.md` (branche `plan-reprise-mars`). Septembre à novembre 2026 = **période de

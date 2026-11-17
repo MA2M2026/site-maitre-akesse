@@ -40,12 +40,35 @@
     return autre && /^https:\/\/(www\.youtube\.com|player\.vimeo\.com)\//.test(autre) ? autre : null;
   };
   P.estVideoDrive = (u) => !!P.adresseLecteur(u);   // (nom historique : toute vidéo que le lecteur sait lire)
+  // (17/11/2026, demande de la propriétaire) la vidéo en GRAND, avec « ⛶ Plein écran » qui reste dans l'Administration
+  // (plus de lien « Ouvrir la vidéo » vers Drive). Partagé par les candidatures et les cours de talons.
   P.lecteurVideo = function (u) {
     const src = P.adresseLecteur(u);
     if (!src) return '';
-    return '<span class="lecteur-video-bloc"><iframe class="lecteur-video" src="' + P.esc(src) + '" title="Vidéo envoyée" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
-      '<a href="' + P.esc(u) + '" target="_blank" rel="noopener">Ouvrir la vidéo ↗</a></span>';
+    return '<div class="lecteur-video-bloc"><iframe class="lecteur-video" src="' + P.esc(src) + '" title="Vidéo envoyée" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>' +
+      '<button type="button" class="btn petit lecteur-plein" data-action="video-plein-ecran" aria-pressed="false">⛶ Plein écran</button></div>';
   };
+  // plein écran : celui du téléphone ou de l'ordinateur quand il est permis, sinon la vidéo couvre toute la page
+  const fermerPleinEcran = (bloc) => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => { /* déjà sorti */ });
+    bloc.classList.remove('plein'); document.body.classList.remove('video-pleine');
+    const b = bloc.querySelector('.lecteur-plein'); if (b) { b.textContent = '⛶ Plein écran'; b.setAttribute('aria-pressed', 'false'); }
+  };
+  P.actions['video-plein-ecran'] = (el) => {
+    const bloc = el.closest('.lecteur-video-bloc');
+    if (!bloc) return;
+    if (bloc.classList.contains('plein')) { fermerPleinEcran(bloc); return; }
+    bloc.classList.add('plein'); document.body.classList.add('video-pleine');
+    el.textContent = '✕ Fermer'; el.setAttribute('aria-pressed', 'true');
+    if (bloc.requestFullscreen) bloc.requestFullscreen().catch(() => { /* refusé : la vidéo couvre déjà la page */ });
+  };
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) return;
+    document.querySelectorAll('.lecteur-video-bloc.plein').forEach(fermerPleinEcran);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.querySelectorAll('.lecteur-video-bloc.plein').forEach(fermerPleinEcran);
+  });
   // partagé par js/admin/site-dossiers.js et js/admin/site-cours-talons.js
   P.photosR2 = {
     est: (c) => typeof c === 'string' && /^r2:(candidatures|cours-talons)\//.test(c),

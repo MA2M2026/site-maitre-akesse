@@ -245,6 +245,10 @@
       MESSAGES_CANDIDATS.find((x) => x.source === source && x.statut === d.status && !x.premier);
     return m ? 'c:' + m.cle : 'libre';
   }
+  // (17/11/2026, demande de la propriétaire) la vidéo de présentation en grand, sur toute la largeur, sous les photos
+  function blocVideo(d) {
+    return d && estVideoDrive(d.video_url) ? '<section class="carte fiche-video"><h2>Vidéo de présentation</h2>' + lecteurVideo(d.video_url) + '</section>' : '';
+  }
   function blocChamps(source, d) {
     const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
     const parentJoignable = mineur && d.parent_telephone;
@@ -252,9 +256,8 @@
       const v = d[cle];
       if (!v) return '';
       const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
-      const video = cle === 'video_url' && estVideoDrive(v);
+      if (cle === 'video_url' && estVideoDrive(v)) return '';   // (17/11) lue en grand dans son propre bloc (blocVideo)
       const valeur = wa ? '<a href="' + P.esc(wa) + '" target="_blank" rel="noopener">' + P.esc(v) + ' ↗ WhatsApp</a>' :
-        video ? lecteurVideo(v) :
         P.esc((TEXTES_SPECIAUX[cle] && TEXTES_SPECIAUX[cle][v]) || (cle === 'date_naissance' ? P.date(v) + (age !== null ? ' (' + age + ' ans)' : '') : v)) + (unite ? ' ' + unite : '') +
         (parentJoignable && cle === 'phone' ? ' <small class="doux">(mineur : écrire au parent)</small>' : '');
       return '<div><dt>' + P.esc(libelle) + '</dt><dd>' + valeur + '</dd></div>';
@@ -346,7 +349,7 @@
       P.pastille(conf.libelles[d[conf.champStatut]] || d[conf.champStatut] || '', TONS[d[conf.champStatut]]) + '</header>' +
       (douteux ? '<section class="carte a-verifier"><h2>' + ETIQUETTE_A_VERIFIER() + '</h2><p class="doux">Envoyé sans la vérification anti-robots : le téléphone n’a pas pu la charger. C’est souvent une vraie personne, mais regardez le dossier avant d’y donner suite.</p>' +
         '<button type="button" class="btn petit" data-action="dossier-a-verifier-ok">✓ C’est une vraie personne</button></section>' : '') +
-      blocPhotos(source) +
+      blocPhotos(source) + blocVideo(d) +
       '<div class="fiche-grille"><div class="fiche-col">' + blocStatut(source) + blocWhatsApp(source) + (await blocCode()) + (source === 'casting' ? await blocMessagesEnvoyes(d.id) : '') + '</div>' +
       '<div class="fiche-col"><section class="carte"><h2>Informations</h2>' + blocChamps(source, d) +
       (d.message ? '<blockquote class="message-dossier">' + P.esc(d.message) + '</blockquote>' : '') + '</section>' +

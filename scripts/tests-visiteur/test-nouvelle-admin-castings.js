@@ -76,12 +76,23 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
       champs: document.querySelector('dl.champs').innerText.replace(/\s+/g, ' '),
       liens: [...document.querySelectorAll('dl.champs a')].map((a) => a.textContent + ' ' + a.href),
       message: (document.querySelector('.message-dossier') || {}).textContent,
-      lecteur: (document.querySelector('dl.champs iframe.lecteur-video') || {}).src || ''   // (L-18) vidéo lue dans la fiche
+      lecteur: (document.querySelector('.fiche-video iframe.lecteur-video') || {}).src || '',   // (17/11) vidéo en grand, bloc à part
+      videoLarge: (() => { const f = document.querySelector('.fiche-video iframe.lecteur-video'); return f ? Math.round(f.getBoundingClientRect().width) : 0; })(),
+      lienDrive: !!document.querySelector('.fiche-video a[href*="drive.google.com"]'),
+      videoDansChamps: !!document.querySelector('dl.champs iframe')
     }));
     ok(/PETITE AMA Mineure · 13 ans/.test(fiche.titre) && /Postule pour : CASTING CACAO/.test(fiche.titre), n + 'fiche : nom, âge de la mineure, casting visé');
     ok(fiche.photos === 2, n + 'fiche : les 2 photos de la candidate');
-    ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && fiche.liens.some((l) => /Ouvrir la vidéo/.test(l)) && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
-      n + 'fiche : WhatsApp sur le numéro du parent, vidéo lue dans la fiche (lecteur Drive), message de la candidate');
+    ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && !fiche.videoDansChamps && !fiche.lienDrive && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
+      n + 'fiche : WhatsApp sur le numéro du parent, vidéo lue dans son propre bloc (sans lien vers Drive), message de la candidate');
+    ok(fiche.videoLarge >= Math.min(320, ecran.width - 80), n + 'fiche : vidéo en grand (' + fiche.videoLarge + ' px de large)');
+    // « ⛶ Plein écran » : la vidéo couvre tout l'écran DANS l'Administration, « ✕ Fermer » la remet à sa place
+    await p.click('.fiche-video [data-action="video-plein-ecran"]'); await p.waitForTimeout(500);
+    const plein = await p.evaluate(() => { const f = document.querySelector('.lecteur-video-bloc.plein .lecteur-video'); if (!f) return null; const r = f.getBoundingClientRect(); return { l: r.width / innerWidth, h: r.height / innerHeight, url: location.href }; });
+    ok(plein && plein.l > 0.9 && plein.h > 0.8 && /admin/.test(plein.url), n + 'plein écran : la vidéo couvre l’écran, on reste dans l’Administration');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+    if (await p.$('.lecteur-video-bloc.plein')) { await p.click('.lecteur-video-bloc.plein [data-action="video-plein-ecran"]'); await p.waitForTimeout(400); }
+    ok(!(await p.$('.lecteur-video-bloc.plein')) && !(await p.evaluate(() => document.body.classList.contains('video-pleine') || !!document.fullscreenElement)), n + 'plein écran : « Échap » ou « Fermer » remet la vidéo à sa place (plein écran quitté)');
     await capture(p, 'fiche' + suffixe);
     // « Écrire sur WhatsApp » : message proposé, adressé au parent
     const wa1 = await p.getAttribute('#dos-wa-ouvrir', 'href');
