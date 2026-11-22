@@ -67,9 +67,11 @@ function donnees() {
 const fs = require('fs');
 const RACINE = path.resolve(__dirname, '../..');
 const vercel = fs.readFileSync(path.join(RACINE, 'vercel.json'), 'utf8');
-for (const page of ['espace-mannequin.html', 'mes-paiements.html', 'inscription-mannequin.html', 'en/inscription-mannequin.html']) {
+for (const page of ['espace-mannequin.html', 'mes-paiements.html']) {
   ok(!fs.existsSync(path.join(RACINE, page)), 'ancienne page ' + page + ' : supprimée');
 }
+// (22/11/2026, demande de la propriétaire) l'Inscription redevient une page du SITE (test-inscription-site.js)
+for (const page of ['inscription-mannequin.html', 'en/inscription-mannequin.html']) ok(fs.existsSync(path.join(RACINE, page)), 'page du site ' + page + ' : présente');
 // renvois gardés jusqu'au 16/11/2026 pour les liens déjà envoyés aux mannequins : vers l'application seulement
 ok((vercel.match(/"source": "\/(espace-mannequin|mes-paiements|inscription-mannequin)[^"]*", "destination": "([^"]*)"/g) || []).every((l) => l.includes('https://mannequin.maitreakessemodelmanagement.com/app/'))
   && !/espace-mannequin-ancien/.test(vercel), 'anciennes adresses : renvoyées vers l’application (temporaire), aucune autre');
