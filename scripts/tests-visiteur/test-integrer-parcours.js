@@ -21,6 +21,8 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
     const crit = await p.textContent('.ia-criteres');
     ok(crit.includes('1,75 m') && crit.includes('1,85 m') && crit.includes('14+') && crit.includes('14 – 17'), n + 'critères : 1,75 m, 1,85 m, 14 ans et plus, accord parental');
     ok(!/FCFA|25 000/.test(await p.textContent('main')), n + 'aucun prix sur la page (décision de la propriétaire)');
+    // (22/11/2026) la page s'affiche en écrans : on va à l'écran des parcours avec « Suivant », comme une visiteuse
+    for (let i = 0; i < 12 && !(await p.isVisible('.ia-parcours-carte[data-parcours="non"] h3')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(350); }
     // carte « Je débute »
     await p.click('.ia-parcours-carte[data-parcours="non"] h3');
     ok(await p.inputValue('#ca-experience') === 'non' && await p.isHidden('#ca-lien-bloc') && await p.getAttribute('.ia-parcours-carte[data-parcours="non"]', 'class').then((c) => c.includes('choisie')),

@@ -21,6 +21,8 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     });
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
+    // (22/11/2026) page en écrans (js/pages-ecrans.js) : on avance avec « Suivant » jusqu'au formulaire, comme une candidate
+    for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-casting')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
     // Remplissage comme une candidate de 15 ans
     // Intégrer l'agence : parcours débutant ; Postuler à un casting : choix du projet
     if (await p.$('#ca-experience')) await choisir(p, '#ca-experience', 'non');

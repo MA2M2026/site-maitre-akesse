@@ -29,6 +29,7 @@
   }
   function allerAuFormulaire() {
     const cible = document.getElementById('form-casting');
+    if (window.PagesEcrans && window.PagesEcrans.montrer(cible)) return;  // (page en écrans : js/pages-ecrans.js)
     if (cible && typeof cible.scrollIntoView === 'function') cible.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   // boutons du haut : vont aux parcours (lien #parcours) et préparent le choix
