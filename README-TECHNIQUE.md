@@ -5548,8 +5548,12 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
 - Autres scripts : `window.PagesEcrans.montrer(élément)` affiche l'écran qui le contient
   (ex. « Je choisis ce parcours » dans `js/integrer-agence.js`).
 - La barre du bas fait partie des boutons qui montent au-dessus du bandeau des cookies (`.ecrans-barre`, css/style.css).
-- Les vidéos s'arrêtent quand on quitte leur écran. Les règles essentielles (un seul écran visible) sont posées par le
-  script dès le départ, la feuille complète arrivant en différé (`js/css-differe.js`).
+- Les vidéos s'arrêtent quand on quitte leur écran. `css/pages-ecrans.css` est chargé **normalement dans le
+  `<head>`** (pas en différé) : un seul écran visible dès l'affichage, sans style ajouté par le script (la protection CSP
+  des pages le refuserait). Ses règles commencent par `body.ecrans-actif` pour passer devant les styles des pages chargés
+  après (css/luxe.css…).
+- Découpage (`data-ecran-coupe`) : l'élément et tout ce qui le suit passent dans le nouvel écran, à chaque niveau de
+  conteneur (ex. la phrase de fin du programme suit le dernier mois) ; conteneurs recopiés vides, sans id.
 - Sur téléphone (390 × 844), chaque écran tient sans faire défiler (textes et cartes resserrés en mode écrans
   seulement). Sur un petit téléphone (360 × 740), quelques écrans (parcours, programme, formulaire) demandent encore
   un léger défilement.

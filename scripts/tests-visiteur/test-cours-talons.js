@@ -75,13 +75,17 @@ async function navigateur() {
     const avert = await p.textContent('.ct-avertissement');
     ok(/intégrer l'agence|member of the agency/i.test(avert) && await p.locator('.ct-avertissement a[href="integrer-agence.html"]').count() === 1, n + 'avertissement « pas pour intégrer l’agence », avec le lien vers « Intégrer l’agence »');
     ok(await p.locator('.video-pleine video source[src*="assets/cours-talons/atelier-talons-elegance.mp4"]').count() === 1, n + 'vidéo de présentation sur la page');
-    const prix = await p.textContent('.ct-formules');
+    // (22/11/2026) page en écrans : les formules sont sur deux écrans (deux sections .ct-formules)
+    const prix = (await p.$$eval('.ct-formules', (l) => l.map((x) => x.textContent))).join(' ');
     ok(prix.includes('30 000') && prix.includes('25 000') && /le mois : 4 dimanches|a month: 4 Sundays/.test(prix) && /1 à 12 mois|1 to 12 months/.test(prix) && /la séance|per session/.test(prix), n + 'prix : groupe 30 000 le mois (4 dimanches, 1 à 12 mois), privé à la séance');
     // (14/11/2026) le programme du groupe, mois après mois (validé par la propriétaire)
-    const prog = await p.$$eval('#programme .lx-prog-mois h3', (l) => l.map((x) => x.textContent));
+    const prog = await p.$$eval('.lx-prog-section .lx-prog-mois h3', (l) => l.map((x) => x.textContent));
     ok(prog.length === 7 && prog[0] === (en ? 'The basics' : 'Les bases') && prog[5] === (en ? 'Pageants' : 'Miss et concours') && prog[6] === (en ? 'Fine-tuning' : 'Perfectionnement'), n + 'programme : 6 mois puis le perfectionnement (' + prog.join(', ') + ')');
     ok(await p.locator('.ct-carte a[href="#programme"]').count() === 1, n + 'la carte du groupe mène au programme');
 
+    // (22/11/2026) page en écrans (js/pages-ecrans.js) : on avance avec la flèche jusqu'au formulaire, comme une élève
+    const refus = p.locator('#bandeau-cookies button', { hasText: /Refuser|Decline|Refuse/ }); if (await refus.count() && await refus.first().isVisible()) await refus.first().click();
+    for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-talons')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
     // étape 1
     await p.click('#ct-suivant');
     ok(/formule|option/i.test(await p.textContent('#ct-msg')), n + 'étape 1 : sans formule, un message demande de choisir');

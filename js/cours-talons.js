@@ -55,9 +55,9 @@
   // l'ordre) ou « J'ai déjà la base » (elle coche ses thèmes, 1 ou 2 mois chacun ; en privé, 4 séances par mois).
   // Les thèmes sont lus dans la section « Le programme » de la page (#programme) : un seul endroit, traduit en anglais.
   const parcours = () => (form.querySelector('input[name="parcours"]:checked') || {}).value || '';
-  const PROGRAMME = Array.from(document.querySelectorAll('#programme .lx-prog-mois[data-module]')).map((li) => ({
+  const PROGRAMME = Array.from(document.querySelectorAll('.lx-prog-section .lx-prog-mois[data-module]')   /* (le programme peut être coupé en écrans) */).map((li) => ({
     module: +li.dataset.module, titre: li.querySelector('h3').textContent.trim(), themes: Array.from(li.querySelectorAll('ol li')).map((x) => x.textContent.trim()) }));
-  const TITRE_SUITE = ((document.querySelector('#programme .lx-prog-mois--suite h3') || {}).textContent || '').trim();
+  const TITRE_SUITE = ((document.querySelector('.lx-prog-section .lx-prog-mois--suite h3') || {}).textContent || '').trim();
   const titreModule = (m) => (PROGRAMME.find((x) => x.module === m) || {}).titre || TITRE_SUITE;
   // modules choisis, dans l'ordre, répétés selon la durée : {3,3,4} = La prestance 2 mois puis Le podium 1 mois
   // (privé : 7 mois de thèmes au plus, soit 28 séances — le privé est limité à 30 ; la base applique la même règle)

@@ -21,6 +21,8 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     const ctx = await b.newContext(Object.assign({ viewport: { width: w, height: h }, isMobile: w < 700, hasTouch: w < 700, serviceWorkers: 'block' }, opts || {}));
     const p = await ctx.newPage(); p.errs = [];
     p.on('pageerror', (e) => p.errs.push(e.message));
+    // (relecture du 22/11/2026) aucune règle refusée par la protection CSP de la page
+    p.on('console', (m) => { if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) p.errs.push('CSP : ' + m.text().slice(0, 120)); });
     await p.addInitScript(() => { try { localStorage.setItem('ma2m_cookies', 'non'); sessionStorage.setItem('ma2m_entree_vue', '1'); } catch (e) { /* */ } });
     await brancher(p, { tables: {}, rpc: {} }, []);
     return p;
@@ -85,6 +87,29 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
       await p.click('.ecran-courant details summary'); await p.waitForTimeout(300);
       ok(faq.ok && faq.nb >= 5 && await p.isVisible('.ecran-courant details[open] p'), n + 'questions fréquentes : un écran avant le formulaire, les réponses s’ouvrent (' + faq.nb + ')');
       await p.click('.ecrans-suivant'); await p.waitForTimeout(400);
+      // le formulaire passe à son étape 2 : la barre s'efface ; retour à l'étape 1 : elle revient
+      await p.click('label.ct-choix:has(input[value="groupe"])'); await p.click('label.ct-parcours-choix:has(input[value="debut"])');
+      await p.click('#ct-suivant'); await p.waitForTimeout(400);
+      const etape2 = await etat(p);
+      await p.click('#ct-retour'); await p.waitForTimeout(400);
+      const etape1 = await etat(p);
+      ok(!etape2.barre && etape1.barre && etape1.retour, n + 'formulaire à l’étape 2 : la barre du bas s’efface ; retour à l’étape 1 : la flèche ← revient');
+      // découpage : une formule par écran (pleine largeur, centrée) ; la phrase de fin du programme suit le DERNIER mois
+      const dec = await p.evaluate(() => {
+        const formules = [...document.querySelectorAll('section.ct-formules')].map((x) => x.querySelectorAll('.ct-carte').length);
+        const prog = [...document.querySelectorAll('section.lx-prog-section')];
+        const dernier = prog[prog.length - 1];
+        return { formules, pied: !!(dernier && dernier.querySelector('.lx-prog-pied') && dernier.querySelector('.lx-prog-mois--suite')), nbProg: prog.length,
+          conteneur: [...document.querySelectorAll('section.ecran-suite')].every((x) => x.querySelector(':scope > .container')) };
+      });
+      ok(dec.formules.join() === '1,1' && dec.nbProg === 2 && dec.pied && dec.conteneur, n + 'une formule par écran, programme en 2 écrans, phrase de fin après le dernier mois, marges gardées ' + JSON.stringify(dec));
+      if (!tel) {
+        const f = await ouvrir(page, w, h);   // (page à part : l'historique de la visite en cours reste intact)
+        await f.goto('http://127.0.0.1:' + PORT + '/' + page + '#formules'); await f.waitForTimeout(1500);
+        const larg = await f.evaluate(() => { const c = document.querySelector('.ecran-courant .ct-carte'), b = document.querySelector('.ecran-courant .ct-cartes'); return c && b ? Math.round(c.getBoundingClientRect().width / b.getBoundingClientRect().width * 100) : 0; });
+        await f.context().close();
+        ok(larg >= 95, n + 'ordinateur : la formule occupe tout son écran, pas une demi-colonne vide (' + larg + ' %)');
+      }
     }
     // le formulaire passe à son étape 2 : la barre des écrans s'efface (les boutons du formulaire prennent le relais)
     if (ia) {

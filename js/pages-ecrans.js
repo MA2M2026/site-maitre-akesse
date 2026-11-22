@@ -5,7 +5,8 @@
 // précédent (adresse #ecran-N). Le formulaire garde ses propres étapes (js/candidature-etapes.js, cours de talons…) :
 // sur son écran, la barre ne montre « ← Retour » que tant que le formulaire est à sa première étape.
 // Sans JavaScript, la page reste la page complète d'avant (rien n'est caché dans le HTML).
-// Partagé par Intégrer l'agence, Postuler à un casting, Cours de talons et Inscription (une seule pièce, règle n° 5).
+// Partagé par Intégrer l'agence, Postuler à un casting et Cours de talons (une seule pièce, règle n° 5). L'Inscription
+// a déjà ses 4 écrans (js/inscription-simplifiee.js).
 (function () {
   const main = document.querySelector('main[data-ecrans]');
   if (!main) return;
@@ -19,26 +20,29 @@
     const coupures = [...s.querySelectorAll(s.dataset.ecranCoupe)].slice(1);
     let apres = s;
     coupures.forEach((c) => {
-      const parent = c.parentElement, nouvelle = s.cloneNode(false);
+      const haut = apres, nouvelle = s.cloneNode(false);   // (section où se trouve l'élément : la dernière créée)
       nouvelle.removeAttribute('id'); nouvelle.removeAttribute('data-ecran-coupe'); nouvelle.removeAttribute('aria-labelledby');
       nouvelle.classList.add('ecran-suite');
-      // (éléments directement dans la section : déplacés tels quels ; sinon dans des copies vides de TOUS leurs conteneurs
-      // jusqu'à la section, sans id : la mise en page, les marges du .container, reste la même)
-      let boite = nouvelle;
+      // L'élément et TOUT ce qui le suit passent dans le nouvel écran, à chaque niveau : ses suivants dans son conteneur,
+      // puis les suivants de ce conteneur dans le sien… jusqu'à la section (ex. la phrase de fin du programme suit le
+      // dernier mois). Les conteneurs sont recopiés vides, sans id : la mise en page (.container…) reste la même.
+      const copies = new Map([[haut, nouvelle]]);
       const chaine = [];
-      for (let e = parent; e && e !== s; e = e.parentElement) chaine.unshift(e);
-      chaine.forEach((e) => { const copie = e.cloneNode(false); copie.removeAttribute('id'); boite.appendChild(copie); boite = copie; });
-      for (let n = c; n;) { const suivant = n.nextSibling; boite.appendChild(n); n = suivant; }
+      for (let e = c.parentElement; e && e !== haut; e = e.parentElement) chaine.unshift(e);
+      let boite = nouvelle;
+      chaine.forEach((e) => { const copie = e.cloneNode(false); copie.removeAttribute('id'); boite.appendChild(copie); boite = copie; copies.set(e, copie); });
+      // (de l'élément vers la section, dans l'ordre d'avant le déplacement : chaine = ses conteneurs d'origine)
+      [c].concat(chaine.slice().reverse()).forEach((e) => {
+        const dest = copies.get(e === c ? c.parentElement : e.parentElement);
+        for (let n = e === c ? c : e.nextSibling; n;) { const suivant = n.nextSibling; dest.appendChild(n); n = suivant; }
+      });
       apres.after(nouvelle); apres = nouvelle;
     });
   });
   const ecrans = [...main.children].filter((e) => e.tagName === 'SECTION');
   if (ecrans.length < 2) return;
-  // l'essentiel (un seul écran visible) s'applique tout de suite : css/pages-ecrans.css arrive en différé
-  // (js/css-differe.js), sans cela la page longue s'afficherait un instant puis « sauterait »
-  const base = document.createElement('style');
-  base.textContent = '.ecrans-actif main>section.ecran:not(.ecran-courant){display:none}.ecrans-barre{position:fixed;left:0;right:0;bottom:0;z-index:150}';
-  document.head.appendChild(base);
+  // (css/pages-ecrans.css est chargé normalement dans le <head> de chaque page : un seul écran visible dès l'affichage,
+  // sans style ajouté par le script, que la protection CSP des pages refuserait)
   document.body.classList.add('ecrans-actif');
   ecrans.forEach((e, i) => { e.classList.add('ecran'); e.dataset.ecran = String(i + 1); });
 
