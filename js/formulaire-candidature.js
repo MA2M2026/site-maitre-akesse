@@ -5,20 +5,6 @@
 // l'agence, parcours débutant allégé). La langue vient de <html lang="en">.
 const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'agence' ? 'agence' : 'projet';
 
-// Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
-// défiler des années totalement absurdes (ex. 2090) et impose souvent de faire
-// défiler très loin pour atteindre un âge plausible — d'où l'impression que la
-// sélection "ne marche pas" alors qu'il faut juste taper la date à la main.
-const AGE_MINIMUM = 14;
-(function limiterDateNaissance() {
-  const champ = document.getElementById('ca-naissance');
-  if (!champ) return;
-  const aujourdhui = new Date();
-  // 14 ans au moins (décision de la propriétaire, 20/10/2026 : mineurs acceptés dès 14 ans, plus d'âge maximum)
-  champ.max = new Date(aujourdhui.getFullYear() - AGE_MINIMUM, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
-  champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
-})();
-
 // --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
 // fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables.
 // remplirSelectNombres, remplirSelectListe, configurerSelectAvecAutre, valeurSelectOuAutre : js/app.js. ---
@@ -133,38 +119,6 @@ function majParcours() {
   if (photosSelectionnees.length) rafraichirApercuPhotos();
 }
 if (PARCOURS === 'agence') document.getElementById('ca-experience').addEventListener('change', majParcours);
-
-// --- Niveau d'études : trois grandes catégories qui se déroulent ---
-const CLASSES_ETUDES = {
-  Primaire: ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'],
-  Secondaire: ['6e', '5e', '4e', '3e', '2nde', '1re', 'Terminale'],
-  'Supérieur': ['BTS', 'Licence 1', 'Licence 2', 'Licence 3', 'Master 1', 'Master 2', 'Doctorat', 'Autre formation supérieure']
-};
-const CLASSES_ETUDES_EN = { 'Licence 1': 'Bachelor year 1', 'Licence 2': 'Bachelor year 2', 'Licence 3': 'Bachelor year 3', 'Doctorat': 'PhD', 'Autre formation supérieure': 'Other higher education' };
-function majEtudes() {
-  const situation = document.getElementById('ca-scolarite').value;
-  const jamais = situation === 'jamais scolarisé(e)';
-  const cat = document.getElementById('ca-etudes-cat');
-  const classe = document.getElementById('ca-etudes-classe');
-  document.getElementById('ca-etudes-cat-wrap').style.display = jamais ? 'none' : '';
-  document.getElementById('ca-etudes-cat-label').textContent = situation === "plus à l'école" ? T('Dernier niveau atteint *', 'Last level reached *') : T("Niveau d'études *", 'Education level *');
-  cat.required = !jamais;
-  if (jamais) cat.value = '';
-  const liste = CLASSES_ETUDES[cat.value];
-  document.getElementById('ca-etudes-classe-wrap').style.display = liste && !jamais ? 'block' : 'none';
-  classe.required = !!liste && !jamais;
-  if (liste && classe.dataset.categorie !== cat.value) {
-    classe.innerHTML = `<option value="">${T('Sélectionner', 'Select')}</option>` + liste.map(c => `<option value="${c}">${EN ? CLASSES_ETUDES_EN[c] || c : c}</option>`).join('');
-    classe.dataset.categorie = cat.value;
-  }
-}
-document.getElementById('ca-scolarite').addEventListener('change', majEtudes);
-document.getElementById('ca-etudes-cat').addEventListener('change', majEtudes);
-function niveauEtudesChoisi() {
-  const cat = document.getElementById('ca-etudes-cat').value;
-  const classe = document.getElementById('ca-etudes-classe').value;
-  return cat ? cat + (classe ? ' · ' + classe : '') : null;
-}
 
 // --- Vidéo de présentation : obligatoire, 3 minutes maximum (décision de la propriétaire, 10/11/2026 ; 1 minute avant).
 // Allégée en 480p pour un envoi rapide (VIDEO_ALLEGEMENT_RAPIDE, js/app.js). Une vidéo lourde
@@ -355,24 +309,11 @@ majCivilite();
 remplirTailleSelonGenre();
 
 // --- Gestion mineur / parent-tuteur ---
-function calculerAgeCandidature() {
-  const valeur = document.getElementById('ca-naissance').value;
-  if (!valeur) return null;
-  const naissance = new Date(valeur);
-  const aujourdhui = new Date();
-  let age = aujourdhui.getFullYear() - naissance.getFullYear();
-  if (aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate())) age -= 1;
-  return age;
-}
+// (22/11/2026, minimisation ARTCI) « 18 ans ou plus » ou « moins de 18 ans » : plus de date de naissance ici
 function estMineur() {
-  const age = calculerAgeCandidature();
-  return age !== null && age < 18;
+  return document.getElementById('ca-majorite').value === 'mineur';
 }
-document.getElementById('ca-naissance').addEventListener('change', () => {
-  // moins de 14 ans : le navigateur bloque l'envoi avec NOTRE phrase (et non « la valeur doit
-  // être inférieure ou égale à… »)
-  const age = calculerAgeCandidature(), champNaissance = document.getElementById('ca-naissance');
-  champNaissance.setCustomValidity(age !== null && age < AGE_MINIMUM ? T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`) : '');
+document.getElementById('ca-majorite').addEventListener('change', () => {
   const blocParent = document.getElementById('ca-bloc-parent');
   const mineur = estMineur();
   blocParent.style.display = mineur ? 'block' : 'none';
@@ -540,7 +481,7 @@ async function envoyerMedias(etat) {
       name: candidature.full_name,
       telephone: candidature.phone,
       email: candidature.email,
-      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
     });
     etat.agencePrevenue = true; etat.agenceComplete = !!(etat.photosFaites && etat.videoFaite); await EnvoiFiable.garder('candidature', etat);
   }
@@ -593,11 +534,6 @@ async function soumettreCandidature() {
     }
   }
 
-  const age = calculerAgeCandidature();
-  if (age !== null && age < AGE_MINIMUM) {
-    afficherMsg(msg, T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`), 'err');
-    return;
-  }
 
   if (document.getElementById('ca-ville').value === 'Abidjan' && document.getElementById('ca-commune').value === 'Abidjan') {
     afficherMsg(msg, T('Merci de préciser votre commune à Abidjan.', 'Please specify your district in Abidjan.'), 'err');
@@ -635,8 +571,7 @@ async function soumettreCandidature() {
     email: document.getElementById('ca-email').value.trim(),
     phone: composerTelephone(document.getElementById('ca-indicatif'), document.getElementById('ca-telephone-numero')),
     city: villeAvecCommune(valeurSelectOuAutre('ca-ville', 'ca-ville-autre'), 'ca-commune', 'ca-commune-autre'),
-    quartier: document.getElementById('ca-quartier').value.trim() || null,
-    date_naissance: document.getElementById('ca-naissance').value || null,
+    mineur: estMineur(),
     genre: genre,
     civilite: genre === 'homme' ? 'Monsieur' : (document.getElementById('ca-civilite').value || null),
     height_cm: taille,
@@ -652,8 +587,6 @@ async function soumettreCandidature() {
     type_candidature: PARCOURS,
     projet_nom: PARCOURS === 'projet' ? projetNom : null,
     experience_mannequin: PARCOURS === 'agence' ? document.getElementById('ca-experience').value : 'oui',
-    situation_scolaire: document.getElementById('ca-scolarite').value || null,
-    niveau_etudes: niveauEtudesChoisi(),
     clothing_size: document.getElementById('ca-vetements').value || null
   };
 
@@ -683,7 +616,6 @@ async function soumettreCandidature() {
   photosSelectionnees = [];
   rafraichirApercuPhotos();
   majParcours();
-  majEtudes();
   document.getElementById('ca-photos-compteur').textContent = '';
   document.getElementById('ca-photos-apercu').innerHTML = '';
   document.getElementById('ca-photos-consigne').classList.add('u-hidden');

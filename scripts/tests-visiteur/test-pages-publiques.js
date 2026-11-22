@@ -23,7 +23,7 @@ const tables = {
 };
 const cas = [
   ['mannequins.html', ['Awa Koné']], ['en/mannequins.html', ['Awa Koné']],
-  ['mannequin.html?id=a1', ['Awa Koné', 'Taille']], ['en/mannequin.html?id=a1', ['Awa Koné', 'Height', 'lbs']],
+  ['mannequin.html?id=a1', ['Awa Koné', 'Taille']], ['en/mannequin.html?id=a1', ['Awa Koné', 'Height']],  // (22/11/2026, ARTCI : le poids, en kg et en lbs, n'est plus public)
   ['actualites.html', ['Casting Orange', 'À la une']], ['en/actualites.html', ['Casting Orange', 'Featured']],
   ['evenements.html', ['Défilé Abidjan', '20 septembre 2026']], ['en/evenements.html', ['Défilé Abidjan', 'September 20, 2026']],
   ['partenaires.html', ['Voir la fiche']], ['en/partenaires.html', ['View Details']],

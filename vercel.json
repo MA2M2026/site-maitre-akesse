@@ -19,8 +19,6 @@
     { "source": "/espace-mannequin.html", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/espace-mannequin.html", "permanent": false },
     { "source": "/mes-paiements", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/mes-paiements.html", "permanent": false },
     { "source": "/mes-paiements.html", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/mes-paiements.html", "permanent": false },
-    { "source": "/inscription-mannequin", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/inscription-mannequin.html", "permanent": false },
-    { "source": "/inscription-mannequin.html", "destination": "https://mannequin.maitreakessemodelmanagement.com/app/inscription-mannequin.html", "permanent": false },
     { "source": "/marketplace", "destination": "/", "permanent": false },
     { "source": "/marketplace/:chemin*", "destination": "/", "permanent": false },
     { "source": "/marketplace/", "destination": "/", "permanent": false },

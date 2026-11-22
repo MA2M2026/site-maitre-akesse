@@ -765,8 +765,9 @@ function render(){
 /* --------------------------------------------------------------- WIZARD */
 function stepComplete(n){
   if (n===1) return !!(state.identite.nomComplet && state.identite.dateNaissance && state.identite.sexe && (state.instagram || state.sansInstagram));
-  if (n===2) return !!(state.physique.taille && state.physique.poids);
-  if (n===3) return !!state.formation.niveau;
+  // (22/11/2026, minimisation ARTCI, décision de la propriétaire) poids et niveau d'études facultatifs
+  if (n===2) return !!state.physique.taille;
+  if (n===3) return true;
   if (n===4) return toutesExperiences().length>0;
   if (n===5) return !!(state.photos.principale && state.photos.book.length);
   return false;
@@ -941,7 +942,7 @@ function stepPhysique(){
   const homme = state.identite.sexe === 'homme';
   return '<h2>Informations physiques</h2><p class="sub">Étape 2 sur 6</p><div class="grid g3">' +
     field('Taille (cm)','f-taille',d.taille,{tag:'select',req:true,options:plageNombres(140,210,1,' cm')}) +
-    field('Poids (kg)','f-poids',d.poids,{tag:'select',req:true,options:plageNombres(35,130,1,' kg')}) +
+    field('Poids (kg) — facultatif','f-poids',d.poids,{tag:'select',options:plageNombres(35,130,1,' kg')}) +
     field('Carnation','f-carnation',d.carnation,{tag:'select',options:[
       {value:'',label:'—'},{value:'Claire',label:'Claire'},{value:'Métisse claire',label:'Métisse claire'},
       {value:'Métisse foncée',label:'Métisse foncée'},{value:'Foncée',label:'Foncée'},{value:'Très foncée',label:'Très foncée'}
@@ -967,7 +968,7 @@ function stepPhysique(){
 function stepFormation(){
   const d = state.formation;
   return '<h2>Formation</h2><p class="sub">Étape 3 sur 6</p>' +
-    field('Niveau d’étude','f-niveau',d.niveau,{tag:'select',full:true,req:true,options:['','Collège','Bac','Licence','Master','Autre'].map(function(o){return {value:o,label:o||'— Sélectionner —'};})}) +
+    field('Niveau d’étude — facultatif','f-niveau',d.niveau,{tag:'select',full:true,options:['','Collège','Bac','Licence','Master','Autre'].map(function(o){return {value:o,label:o||'— Sélectionner —'};})}) +
     '<div class="grid p20-16">' +
     field('Établissement','f-etab',d.etablissement,{placeholder:'Lycée / Université / Établissement'}) +
     field('Formation particulière','f-formPart',d.particuliere) + '</div>' +

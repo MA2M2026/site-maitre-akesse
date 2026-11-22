@@ -41,7 +41,9 @@
   const indispoPasInstallee = P.pasActivee('cours_talons_indispo');
   const quandSeance = (s) => { const a = new Date(s.debut), b = new Date(s.fin); const j = T.JOURS[a.getUTCDay()];
     return j.charAt(0).toUpperCase() + j.slice(1, 3) + '. ' + a.getUTCDate() + ' ' + T.MOIS_COURTS[a.getUTCMonth()] + ' · ' + T.heure(a) + ' – ' + T.heure(b); };
-  const civilite = (d) => T.civilite(d.civilite, d.age) + ' ' + String(d.nom || '').trim();
+  // (22/11/2026, minimisation ARTCI) mineure : son choix « moins de 18 ans », ou son âge (anciennes inscriptions)
+  const mineureDe = (d) => T.mineure(d);  // (js/talons-commun.js)
+  const civilite = (d) => T.civilite(d.civilite, mineureDe(d) || d.age) + ' ' + String(d.nom || '').trim();
   // (15/11/2026) un seul endroit pour les liens WhatsApp de cette page (message écrit facultatif) et pour minuit (UTC = Abidjan)
   const lienWhatsApp = (num, texte, msg, classes, attrs) => '<a class="btn ' + (classes || 'petit') + '"' + (attrs || '') + ' target="_blank" rel="noopener" href="https://wa.me/' + num +
     (msg ? '?text=' + encodeURIComponent(msg) : '') + '">' + texte + '</a>';
@@ -226,7 +228,7 @@
       ['Mois payés', d.formule === 'groupe' && d.valide_le ? (d.mois_payes || 0) + ' / ' + nbMois(d) : ''],
       // (13/11/2026) le moyen choisi par la personne (Orange Money, carte…), Wave sinon
       ['Paiement', d.decision === 'maintenant' ? 'Payé par ' + nomMoyen(d.moyen) + ' à l’inscription' + (d.reference_wave ? ' (réf. ' + d.reference_wave + ')' : '') + ', à vérifier' : 'Paiera plus tard'],
-      ['Téléphone', d.telephone], ['Âge', d.age ? d.age + ' ans' : ''], ['Quartier', d.quartier],
+      ['Téléphone', d.telephone], ['Âge', d.age ? d.age + ' ans' : d.mineure === true ? 'Moins de 18 ans' : d.mineure === false ? '18 ans ou plus' : ''], ['Quartier', d.quartier],
       ['Objectif', [OBJECTIFS[d.objectif], d.concours, d.concours_date ? 'le ' + P.date(d.concours_date) : ''].filter(Boolean).join(' · ')],
       ['Niveau', NIVEAUX[d.niveau]], ['Lieu des cours', d.adresse], ['Disponibilités', d.disponibilites],
       ['Parent ou tuteur', d.parent_nom ? d.parent_nom + ' · ' + (d.parent_telephone || '') : ''], ['Inscrite le', P.dateHeure(d.cree_le)],
@@ -249,7 +251,7 @@
       P.moi && P.moi.role === 'principal' ? '<button class="btn petit" type="button" data-action="talons-supprimer" data-id="' + P.esc(d.id) + '">🗑 Supprimer</button>' : ''
     ];   // (14/11/2026) le lien Wave est dans « Messages prêts à envoyer », sous ces boutons
     const id = P.esc(d.id);
-    return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (d.age && d.age < 18 ? P.pastille('Mineure', 'orange') : '') + '</div>' +
+    return '<article class="carte ct-fiche" data-id="' + id + '"><div class="ligne"><h2>' + P.esc(d.nom) + '</h2>' + P.pastille(st[0], st[1]) + (mineureDe(d) ? P.pastille('Mineure', 'orange') : '') + '</div>' +
       '<dl class="ct-infos">' + infos.map((x) => '<dt>' + P.esc(x[0]) + '</dt><dd>' + P.esc(x[1]) + '</dd>').join('') + '</dl>' +
       (galerie || P.drive.encart('cours_talons', d.id, dossiersDrive[d.id])) +
       (P.estVideoDrive(d.video) ? '<section class="ct-video" aria-label="Vidéo de la marche">' + P.lecteurVideo(d.video) + '</section>' : '') +   // (L-18) vidéo lue dans la fiche

@@ -644,7 +644,7 @@
   // séances de talons de la semaine ; « occupe » (calculé par la base, supabase-creneaux-prives.sql) : relu sans lui
   // tant que ce fichier n'est pas collé
   async function seancesSemaine(auj, dans7) {
-    const lire = (champs) => P.bd(sb.from('cours_talons_seances').select('debut, theme, inscription_id' + champs + ', cours_talons(nom, formule, civilite, age, statut, valide_le)')
+    const lire = (champs) => P.bd(sb.from('cours_talons_seances').select('debut, theme, inscription_id' + champs + ', cours_talons(nom, formule, civilite, age, mineure, statut, valide_le)')
       .gte('debut', new Date(auj.getFullYear(), auj.getMonth(), auj.getDate()).toISOString()).lte('debut', dans7.toISOString()).order('debut').limit(200));
     try { return await lire(', occupe'); } catch (e) { return lire(''); }
   }
@@ -702,7 +702,7 @@
       const aConfirmer = !c.valide_le && c.statut !== 'inscrite' && c.statut !== 'terminee';
       if (!j || s.occupe === false || c.statut === 'annulee') return;
       if (c.formule === 'groupe') { const k = j.cle + heure(s.debut); if (!groupes[k]) { groupes[k] = ['👠', 'Cours de talons en groupe', '', '#/site/b2-cours-talons', 0, heure(s.debut)]; j.lignes.push(groupes[k]); } groupes[k][4]++; groupes[k][2] = groupes[k][5] + ' · ' + groupes[k][4] + (groupes[k][4] > 1 ? ' élèves' : ' élève'); }
-      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && c.age < 18)) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : '', aConfirmer ? 'à confirmer (paiement)' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
+      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && (window.TalonsCommun ? window.TalonsCommun.mineure(c) : c.mineure === true || c.age < 18))) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : '', aConfirmer ? 'à confirmer (paiement)' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
     });
     const html = jours.filter((j, k) => k === 0 || j.lignes.length).map((j, k) => '<div class="se-jour' + (k === 0 ? ' auj' : '') + '"><div class="se-date"><small>' + JOURS_COURTS[j.d.getDay()] + '</small><b>' + j.d.getDate() + '</b></div>' +
       (j.lignes.length ? '<ul>' + j.lignes.map((l) => '<li><a href="' + l[3] + '"><i aria-hidden="true">' + l[0] + '</i><span>' + P.esc(l[1]) + (l[2] ? ' <small>· ' + P.esc(l[2]) + '</small>' : '') + '</span></a></li>').join('') + '</ul>'

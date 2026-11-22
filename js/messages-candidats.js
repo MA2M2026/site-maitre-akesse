@@ -36,7 +36,9 @@ function nomAvecCivilite(d) {
   return [civ, String((d && d.full_name) || '').trim()].filter(Boolean).join(' ') || 'Madame, Monsieur';
 }
 // Moins de 18 ans à la date d'aujourd'hui (date de naissance 'AAAA-MM-JJ').
+// (22/11/2026, minimisation ARTCI) nouvelles candidatures sans date de naissance : leur choix « moins de 18 ans »
 function estMineurDossier(d) {
+  if (d && d.mineur === true) return true;
   if (!d || !d.date_naissance) return false;
   const n = new Date(String(d.date_naissance).slice(0, 10) + 'T12:00:00'), a = new Date();
   let age = a.getFullYear() - n.getFullYear();

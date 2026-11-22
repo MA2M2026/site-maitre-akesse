@@ -102,6 +102,9 @@ module.exports = async function handler(req, res) {
   const simplifiee = type === 'inscription-code' || type === 'inscription-payer';
   const naissance = typeof corps.naissance === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(corps.naissance) ? corps.naissance : '';
   if (simplifiee && !naissance) { res.status(400).json({ error: 'naissance' }); return; }
+  // (22/11/2026, minimisation ARTCI) 4 derniers chiffres du WhatsApp de la candidature : ils protègent le code quand la
+  // candidature n'a plus de date de naissance (inscription_code_lire à 3 informations, supabase-artci-majeure-mineure.sql)
+  const tel4 = typeof corps.tel4 === 'string' ? corps.tel4.replace(/\D/g, '').slice(-4) : '';
   // Informations confirmées ou corrigées par le mannequin : champs connus seulement, courts
   let infos = null;
   if (type === 'inscription-payer') {
@@ -110,6 +113,7 @@ module.exports = async function handler(req, res) {
     ['full_name', 'telephone', 'email', 'ville', 'parent_nom', 'parent_telephone', 'parent_email', 'accord_parent', 'reglement', 'moyen', 'numero_payeur'].forEach((k) => {
       if (typeof d[k] === 'string' && d[k].trim()) infos[k] = d[k].trim().slice(0, 200);
     });
+    if (tel4) infos.tel4 = tel4;
     if (!emailAccepte(infos.email) || !emailAccepte(infos.parent_email)) { res.status(400).json({ error: 'dossier', code: 'email', message: 'Adresse e-mail invalide.' }); return; }
   }
   // Création de compte : champs vérifiés AVANT le code (une faute de frappe dans l'e-mail
@@ -141,7 +145,7 @@ module.exports = async function handler(req, res) {
 
     let valide = false, idInscription = null, casting = null;
     if (type === 'inscription-code') {
-      const r = await rpc('inscription_code_lire', { p_code: code, p_naissance: naissance });
+      const r = await rpc('inscription_code_lire', { p_code: code, p_naissance: naissance, p_tel4: tel4 || null });
       casting = r.ok ? await r.json() : null;
       valide = !!casting;
     } else if (type === 'inscription-payer') {

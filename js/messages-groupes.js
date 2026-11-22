@@ -31,7 +31,7 @@ window.demarrerMessagesGroupes = function () {
 
   const CHAMPS = {
     // date de naissance et contacts du parent : un mineur est joint par son parent.
-    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, genre, civilite, parent_nom, parent_telephone, parent_email',
+    casting: 'id, full_name, email, phone, status, type_candidature, projet_nom, created_at, date_naissance, mineur, genre, civilite, parent_nom, parent_telephone, parent_email',
     inscription: 'id, full_name, email, phone, statut, created_at, date_naissance, genre, civilite, parent_nom, parent_telephone, parent_email'
   };
   let destinataires = [];

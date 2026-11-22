@@ -71,8 +71,8 @@
   const paiementMois = () => (nbMois() > 1 && (form.querySelector('input[name="paiement"]:checked') || {}).value === 'mensuel' ? 'mensuel' : 'tout');
   const civilite = () => (form.querySelector('input[name="civilite"]:checked') || {}).value || '';
   const montant = () => (formule() === 'groupe' ? PRIX.groupe * (paiementMois() === 'mensuel' ? 1 : nbMois()) : (PRIX[formule()] || 0) * nbSeances());
-  const age = () => parseInt($('ct-age').value, 10);
-  const mineure = () => age() > 0 && age() < 18;
+  // (22/11/2026, minimisation ARTCI, décision de la propriétaire) « 18 ans ou plus » ou « moins de 18 ans », plus d'âge
+  const mineure = () => $('ct-majorite').value === 'mineure';
 
   function texteTotal() {
     const f = formule();
@@ -196,7 +196,7 @@
   form.querySelectorAll('input[name="parcours"]').forEach((r) => r.addEventListener('change', majFormule));
   form.querySelectorAll('input[name="paiement"]').forEach((r) => r.addEventListener('change', majFormule));
   $('ct-objectif').addEventListener('change', () => $('ct-bloc-concours').classList.toggle('u-hidden', !['miss', 'beaute'].includes($('ct-objectif').value)));
-  $('ct-age').addEventListener('input', () => $('ct-bloc-parent').classList.toggle('u-hidden', !mineure()));
+  $('ct-majorite').addEventListener('change', () => $('ct-bloc-parent').classList.toggle('u-hidden', !mineure()));
   form.querySelectorAll('input[name="decision"]').forEach((r) => r.addEventListener('change', () => $('ct-bloc-wave').classList.toggle('u-hidden', decision() !== 'maintenant')));
 
   // ---------- étapes
@@ -235,7 +235,7 @@
       if (!civilite()) return erreur(T('Choisissez : Madame ou Mademoiselle.', 'Please choose: Mrs or Miss.'), form.querySelector('input[name="civilite"]'));
       if ($('ct-nom').value.trim().length < 2) return erreur(T('Indiquez votre nom.', 'Please give your name.'), $('ct-nom'));
       if (!/^[0-9 ]{6,14}$/.test($('ct-telephone').value.trim())) return erreur(T('Indiquez un numéro de téléphone valide.', 'Please give a valid phone number.'), $('ct-telephone'));
-      if (!(age() >= 8 && age() <= 90)) return erreur(T('Indiquez votre âge.', 'Please give your age.'), $('ct-age'));
+      if (!$('ct-majorite').value) return erreur(T('Indiquez si vous avez 18 ans ou plus.', 'Please say whether you are 18 or older.'), $('ct-majorite'));
       if (mineure() && ($('ct-parent-nom').value.trim().length < 2 || !/^[0-9 ]{6,14}$/.test($('ct-parent-telephone').value.trim()))) {
         return erreur(T('Moins de 18 ans : indiquez le nom et le téléphone d’un parent ou tuteur.', 'Under 18: please give the name and phone of a parent or guardian.'), $('ct-parent-nom'));
       }
@@ -380,8 +380,7 @@
       parcours: parcours() || 'debut', modules: parcours() === 'base' ? modulesChoisis() : null,
       nom: $('ct-nom').value.trim(),
       telephone: composerTelephone($('ct-indicatif'), $('ct-telephone')),
-      age: age(),
-      quartier: $('ct-quartier').value.trim() || null,
+      mineure: mineure(),
       objectif: $('ct-objectif').value || null,
       concours: ['miss', 'beaute'].includes($('ct-objectif').value) ? ($('ct-concours').value.trim() || null) : null,
       concours_date: ['miss', 'beaute'].includes($('ct-objectif').value) ? ($('ct-concours-date').value || null) : null,
@@ -405,7 +404,7 @@
     return [`Inscription aux cours de talons${EN ? ' (site en anglais)' : ''}`,
       `Formule : ${NOMS_FORMULES[l.formule]}${l.formule === 'groupe' ? (l.nb_mois > 1 ? ' · ' + l.nb_mois + ' mois, payés ' + (l.paiement === 'mensuel' ? 'mois par mois' : 'en une fois') : '') : ' · ' + l.nb_seances + ' séance(s)'} · ${montantTexte}`,
       l.parcours === 'base' ? `Parcours : a déjà la base · thèmes : ${window.TalonsCommun.grouperModules(l.modules).map((x) => titreModule(x.m) + ' (' + x.n + ' mois)').join(', ')}` : 'Parcours : débute (tout le programme)',
-      `Nom : ${l.civilite ? window.TalonsCommun.civilite(l.civilite) + ' ' : ''}${l.nom} · ${l.age} ans · ${l.telephone}`, l.quartier ? `Quartier : ${l.quartier}` : '',
+      `Nom : ${l.civilite ? window.TalonsCommun.civilite(l.civilite) + ' ' : ''}${l.nom} · ${l.mineure ? 'mineure' : 'majeure'} · ${l.telephone}`,
       l.objectif ? `Objectif : ${l.objectif}${l.concours ? ' · ' + l.concours : ''}${l.concours_date ? ' le ' + l.concours_date : ''}` : '',
       l.niveau ? `Niveau : ${l.niveau}` : '', l.adresse ? `Lieu : ${l.adresse}` : '', l.disponibilites ? `Disponibilités : ${l.disponibilites}` : '',
       l.parent_nom ? `⚠️ Mineure. Parent : ${l.parent_nom} · ${l.parent_telephone}` : '',

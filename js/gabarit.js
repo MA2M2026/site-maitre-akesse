@@ -18,7 +18,6 @@
   // [fichier, libellé menu FR, libellé menu EN, libellé bas de page FR, libellé bas de page EN]
   // (libellé bas de page null = absent du bas de page)
   // Ordre du menu « Modèle A » (11/10/2026) ; « Intégrer l'agence » devient le grand bouton rouge.
-  var APP_G = 'https://mannequin.maitreakessemodelmanagement.com/app/';  // (l'application des mannequins, comme MA2M_APPLI)
   var lienPage = function (p) { return p[5] || p[0] + '.html'; };
   var PAGES = [
     ['index', 'Accueil', 'Home', 'Accueil', 'Home'],
@@ -31,8 +30,9 @@
     ['evenements', 'Événements', 'Our Events', 'Nos événements', 'Our Events'],
     ['partenaires', 'Partenaires', 'Our Partners', 'Nos partenaires', 'Our Partners'],
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
-    // (l'inscription et l'espace mannequin sont dans l'application des mannequins, 26/10/2026)
-    ['inscription-mannequin', "Inscription nouveau mannequin de l'agence", 'Registration', 'Inscription', 'Registration', APP_G + 'inscription-mannequin.html'],
+    // (22/11/2026, demande de la propriétaire) l'Inscription redevient une page du site (même en-tête, menu, langues) ;
+    // l'application garde la sienne (app/inscription-mannequin.html)
+    ['inscription-mannequin', "Inscription nouveau mannequin de l'agence", 'Registration', 'Inscription', 'Registration'],
     // (cours de talons, 08/11/2026 : ouverts à toutes, sans intégrer l'agence ; 7e case = petite étiquette du menu)
     ['cours-talons', 'Cours de talons', 'Heel Classes', 'Cours de talons', 'Heel Classes', null, ['Ouvert à toutes', 'Open to all']],
     ['contact', 'Contact', 'Contact', null, null],

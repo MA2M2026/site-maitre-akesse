@@ -36,16 +36,18 @@ const CASTINGS = {
       if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
       const t = () => p.evaluate(() => document.getElementById('inn-ecran').innerText);
       // 1. mauvaise date : refusé, essais restants affichés
-      await p.fill('#inn-code', code.toLowerCase()); await p.fill('#inn-naissance', '2000-01-01'); await p.click('[data-a="entrer"]'); await p.waitForSelector('.inn-bandeau.erreur');
+      await p.fill('#inn-code', code.toLowerCase()); await p.fill('#inn-naissance', '2000-01-01'); await p.fill('#inn-tel4', '1234'); await p.click('[data-a="entrer"]'); await p.waitForSelector('.inn-bandeau.erreur');
       ok(/2 (tentatives|attempts)/.test(await t()), nom + ' ' + code + ' : mauvaise date de naissance refusée, essais restants indiqués');
       if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/inscription-code-' + vp.width + '.png', fullPage: true });
       ok(/Bienvenue chez MA2M|Welcome to MA2M/.test(await t()) && (await p.$$eval('#inn-etapes li', (l) => l.map((x) => x.className + ':' + x.textContent))).join('|') === 'actif:Code|:Vos infos|:Règlement|:Paiement', nom + ' ' + code + ' : accueil « Bienvenue chez MA2M », étapes nommées (Code actif)');
-      await p.fill('#inn-naissance', CASTINGS[code].naissance); await p.click('[data-a="entrer"]'); await p.waitForSelector('[data-a="corriger"]', { timeout: 6000 }).catch(() => {});
+      await p.fill('#inn-naissance', CASTINGS[code].naissance); await p.fill('#inn-tel4', '1234'); await p.click('[data-a="entrer"]'); await p.waitForSelector('[data-a="corriger"]', { timeout: 6000 }).catch(() => {});
       const recap = await t();
       if (process.env.CAPTURES) await p.screenshot({ path: process.env.CAPTURES + '/inscription-recap-' + code + '-' + vp.width + '.png', fullPage: true });
       ok(await p.locator('.inn-cb').count() === 1 && (await p.textContent('.inn-cb-nom')) === CASTINGS[code].casting.full_name.toUpperCase() && await p.locator('.inn-releve > div').count() >= 3, nom + ' ' + code + ' : carte « Future mannequin MA2M » et informations en relevé');
       ok(recap.includes(CASTINGS[code].casting.salutation) && /(félicitations|congratulations)/.test(recap), nom + ' ' + code + ' : « Bonjour " + salutation + ", félicitations », informations du casting');
       const appelCode = journal.find((j) => j[1] === '/api/code-protege' && /inscription-code/.test(j[2]) && JSON.parse(j[2]).naissance === CASTINGS[code].naissance);
+      // (22/11/2026, minimisation ARTCI) les 4 derniers chiffres du WhatsApp partent avec le code (seconde clé)
+      ok(!!appelCode && JSON.parse(appelCode[2]).tel4 === '1234', nom + ' ' + code + ' : les 4 derniers chiffres du WhatsApp partent avec le code');
       ok(appelCode && JSON.parse(appelCode[2]).code === code, nom + ' ' + code + ' : code (en majuscules) et date de naissance envoyés au serveur');
       if (code === 'MA2M-ENFANT') {
         ok(await p.isDisabled('[data-a="oui"]'), nom + ' : mineur sans parent → impossible de continuer sans corriger');

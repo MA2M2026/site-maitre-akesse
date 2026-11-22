@@ -177,7 +177,7 @@ async function navigateur() {
     await p.click('#ct-suivant');
     ok(/Madame ou Mademoiselle|Mrs or Miss/.test(await p.textContent('#ct-msg')), n + 'sans civilité : on demande « Madame ou Mademoiselle »');
     await p.click('label.ct-pastille:has(input[name="civilite"][value="mademoiselle"])');
-    await p.fill('#ct-nom', 'Kouassi Marie'); await p.fill('#ct-telephone', '07 01 02 03 04'); await p.fill('#ct-age', '16');
+    await p.fill('#ct-nom', 'Kouassi Marie'); await p.fill('#ct-telephone', '07 01 02 03 04'); await p.selectOption('#ct-majorite', 'mineure'); await p.dispatchEvent('#ct-majorite', 'change');
     ok(await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : le bloc du parent apparaît');
     await p.click('#ct-suivant');
     ok(await p.isVisible('#ct-nom') && /parent/i.test(await p.textContent('#ct-msg')), n + 'mineure sans parent : on reste à l’étape 2 avec un message');
@@ -253,7 +253,7 @@ async function navigateur() {
       if (en) ok(l.choix_creneaux === 'apres' && !l.creneaux && /lien personnel|personal link/.test(merci), n + '« après mon paiement » envoyé, sans créneau ; merci : « vous recevrez votre lien personnel »');
       else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
       if (!en) ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
-      ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.age === 16 && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
+      ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.mineure === true && !('age' in l) && !('quartier' in l) && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
       ok(Array.isArray(l.photos) && l.photos.length === 2 && l.video === 'https://drive.google.com/video-marche' && !('statut' in l) && !('montant' in l), n + 'liens Drive des 2 photos et de la vidéo ; ni statut ni montant envoyés (la base décide)');
       ok(/Merci|Thank you/.test(merci) && journal.some((j) => j[0] === 'EMAIL'), n + 'message de remerciement, e-mail de notification à l’agence');

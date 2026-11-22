@@ -13,7 +13,7 @@
   const barre = document.getElementById('inn-etapes');
   if (!zone) return;
   const LIEN_WAVE = 'https://pay.wave.com/m/M_ci_5eXs19LXWW_D/c/ci/?amount=25000';
-  const E = { ecran: 'code', code: '', naissance: '', c: null, note: null, erreur: '', correction: false,
+  const E = { ecran: 'code', code: '', naissance: '', tel4: '', c: null, note: null, erreur: '', correction: false,
     reglement: false, parent: false, waveOuvert: false, occupe: false, numero: null, lien: null };
   const numeroValide = (n) => /^[0-9+ ]{6,20}$/.test(String(n || '').trim());
 
@@ -33,9 +33,11 @@
     etapes(1);
     return '<div class="inn-une"><div><small>' + T('Retenue au casting', 'Selected at the casting') + '</small><h1>' + T('Bienvenue chez <em>MA2M</em>', 'Welcome to <em>MA2M</em>') + '</h1></div></div>' +
       '<div class="inn-carte inn-carte--sous-une"><div><h2 class="u-lecteur-ecran">' + T('Inscription nouveaux mannequins', 'New model registration') + '</h2>' +
-      '<p class="inn-doux">' + T('Réservée aux mannequins retenus : entrez le code personnel que l’agence vous a envoyé, et votre date de naissance.', 'For selected models only: enter the personal code sent by the agency, and your date of birth.') + '</p></div>' +
+      '<p class="inn-doux">' + T('Réservée aux mannequins retenus : entrez le code personnel que l’agence vous a envoyé, votre date de naissance et les 4 derniers chiffres du numéro WhatsApp donné à votre candidature.', 'For selected models only: enter the personal code sent by the agency, your date of birth and the last 4 digits of the WhatsApp number given in your application.') + '</p></div>' +
       champ('inn-code', T('Code d’inscription', 'Registration code'), E.code) +
       champ('inn-naissance', T('Votre date de naissance', 'Your date of birth'), E.naissance, 'date') +
+      // (22/11/2026, minimisation ARTCI) la candidature n'a plus de date de naissance : ces 4 chiffres protègent le code
+      champ('inn-tel4', T('4 derniers chiffres de votre numéro WhatsApp', 'Last 4 digits of your WhatsApp number'), E.tel4, 'tel') +
       bandeau(E.erreur, 'erreur') +
       '<button class="btn btn--principal" type="button" data-a="entrer"' + (E.occupe ? ' disabled' : '') + '>' + T('Continuer', 'Continue') + '</button>' +
       '<p class="inn-petit">' + T('Le code ne sert qu’une fois. Après plusieurs essais ratés, l’accès est bloqué un moment.', 'The code works only once. After several failed attempts, access is blocked for a while.') + '</p></div>';
@@ -143,7 +145,7 @@
   // Appel au serveur ; un refus de code dit combien d'essais il reste (messageAccesRefuse, js/app.js)
   async function serveur(donnees) {
     const rep = await fetch('/api/code-protege', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ code: E.code, naissance: E.naissance, appareil: idAppareilMa2m() }, donnees)) });
+      body: JSON.stringify(Object.assign({ code: E.code, naissance: E.naissance, tel4: E.tel4, appareil: idAppareilMa2m() }, donnees)) });
     return { rep, r: await rep.json().catch(() => ({})) };
   }
   const COUPURE = T('Connexion impossible. Vérifiez votre connexion internet puis réessayez.', 'Connection failed. Check your internet connection and try again.');
@@ -153,13 +155,14 @@
   async function entrer() {
     E.code = document.getElementById('inn-code').value.trim().toUpperCase();
     E.naissance = document.getElementById('inn-naissance').value;
-    if (!E.code || !E.naissance) { E.erreur = T('Entrez votre code et votre date de naissance.', 'Enter your code and date of birth.'); dessiner(); return; }
+    E.tel4 = document.getElementById('inn-tel4').value.replace(/\D/g, '').slice(-4);
+    if (!E.code || !E.naissance || E.tel4.length < 4) { E.erreur = T('Entrez votre code, votre date de naissance et les 4 derniers chiffres de votre numéro WhatsApp.', 'Enter your code, your date of birth and the last 4 digits of your WhatsApp number.'); dessiner(); return; }
     E.occupe = true; dessiner();
     try {
       const { rep, r } = await serveur({ type: 'inscription-code' });
       E.occupe = false;
       if (rep.ok && r.casting) { E.c = r.casting; E.note = adresseNote(r.note); aller('recap'); return; }
-      E.erreur = messageAccesRefuse(rep, r, T('Code ou date de naissance incorrect', 'Wrong code or date of birth')) || T('Code ou date de naissance incorrect.', 'Wrong code or date of birth.');
+      E.erreur = messageAccesRefuse(rep, r, T('Code, date de naissance ou chiffres du numéro incorrects', 'Wrong code, date of birth or phone digits')) || T('Code, date de naissance ou chiffres du numéro incorrects.', 'Wrong code, date of birth or phone digits.');
     } catch (e) { E.occupe = false; E.erreur = COUPURE; }
     dessiner();
   }

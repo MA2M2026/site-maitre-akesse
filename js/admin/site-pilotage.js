@@ -124,12 +124,12 @@
   // ---------- Répartition des profils ----------
   async function pageRepartition() {
     const [c, i] = await Promise.all([
-      P.bd(sb.from('casting_applications').select('id, genre, date_naissance').limit(5000)),
+      P.bd(sb.from('casting_applications').select('id, genre, date_naissance, mineur').limit(5000)),
       essai(P.bd(sb.from('inscriptions_mannequins').select('id, genre, date_naissance').limit(5000)))
     ]);
     const tous = c.concat(i || []);
     let f = 0, h = 0, e = 0;
-    tous.forEach((d) => { const a = P.age(d.date_naissance); if (a !== null && a !== undefined && a < 18) e++; else if (d.genre === 'homme') h++; else if (d.genre === 'femme') f++; });
+    tous.forEach((d) => { if (estMineurDossier(d)) e++; else if (d.genre === 'homme') h++; else if (d.genre === 'femme') f++; });
     const total = f + h + e, pc = (n) => (total ? Math.round(100 * n / total) : 0);
     const pf = pc(f), ph = pc(h), pe = total ? 100 - pf - ph : 0;
     return P.entete('Répartition des profils', '<span class="doux">' + P.pluriel(c.length, 'candidature', 'candidatures') + ' + ' + P.pluriel((i || []).length, 'inscription', 'inscriptions') + '</span>') +

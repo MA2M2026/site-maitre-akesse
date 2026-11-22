@@ -71,7 +71,7 @@ async function chargerProfilInterne() {
 
   const { data: profil, error } = serveur ? { data: { ...serveur.profil }, error: null } : await sb
     .from('model_profiles')
-    .select('id, full_name, city, category, niveau_mannequin, height_cm, weight_kg, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
+    .select('id, full_name, city, category, niveau_mannequin, height_cm, chest_cm, waist_cm, hips_cm, inseam_cm, shoe_size, carnation, clothing_size, eye_color, hair_color, bio, years_experience, model_types, languages, availability, video_url')
     .eq('id', id)
     .eq('published', true)
     .single();

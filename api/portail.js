@@ -319,18 +319,29 @@ const ANTI_ROBOTS_STRICT = true;
 // (statut, dates, notes de l'agence, montant…) est retiré AVANT la base : un envoi fabriqué ne peut plus remplir une
 // colonne interne, même ajoutée plus tard. À compléter quand une page envoie un nouveau champ (sinon il est ignoré).
 const COLONNES_FORMULAIRES = {
-  casting_applications: ['id', 'full_name', 'email', 'phone', 'city', 'quartier', 'date_naissance', 'genre', 'civilite',
+  // (22/11/2026, minimisation ARTCI, décision de la propriétaire) plus de quartier, de date de naissance, de situation
+  // scolaire ni de niveau d'études depuis les formulaires publics : « mineur » (18 ans ou plus / moins de 18 ans) à la place
+  casting_applications: ['id', 'full_name', 'email', 'phone', 'city', 'mineur', 'genre', 'civilite',
     'height_cm', 'shoe_size', 'weight_kg', 'chest_cm', 'waist_cm', 'hips_cm', 'message', 'parent_nom', 'parent_telephone',
-    'parent_email', 'type_candidature', 'projet_nom', 'experience_mannequin', 'situation_scolaire', 'niveau_etudes', 'clothing_size'],
+    'parent_email', 'type_candidature', 'projet_nom', 'experience_mannequin', 'clothing_size'],
   messages_contact: ['id', 'nom', 'telephone', 'email', 'type_contact', 'structure', 'ville', 'message'],
   recruiter_requests: ['id', 'company', 'contact_name', 'email', 'phone', 'whatsapp', 'city', 'project_type', 'event_date', 'message'],
-  cours_talons: ['id', 'formule', 'nb_seances', 'nb_mois', 'paiement', 'civilite', 'parcours', 'modules', 'nom', 'telephone', 'age',
-    'quartier', 'objectif', 'concours', 'concours_date', 'niveau', 'creneaux', 'choix_creneaux', 'disponibilites', 'adresse',
+  // (ARTCI) « mineure » au lieu de l'âge ; « age » reste accepté pour une ancienne page gardée par un téléphone
+  cours_talons: ['id', 'formule', 'nb_seances', 'nb_mois', 'paiement', 'civilite', 'parcours', 'modules', 'nom', 'telephone', 'age', 'mineure',
+    'objectif', 'concours', 'concours_date', 'niveau', 'creneaux', 'choix_creneaux', 'disponibilites', 'adresse',
     'parent_nom', 'parent_telephone', 'photos', 'video', 'decision', 'reference_wave', 'moyen']
 };
 function garderColonnesAutorisees(table, ligne) {
   const propre = {};
   for (const c of COLONNES_FORMULAIRES[table] || []) if (Object.prototype.hasOwnProperty.call(ligne, c)) propre[c] = ligne[c];
+  // (22/11/2026, minimisation ARTCI) page ouverte avant la mise en ligne : elle envoie encore une date de naissance et pas
+  // « mineur ». On en déduit « mineur », puis la date n'est pas enregistrée (elle n'est plus dans la liste ci-dessus).
+  if (table === 'casting_applications' && !('mineur' in propre) && typeof ligne.date_naissance === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(ligne.date_naissance)) {
+    const n = new Date(ligne.date_naissance + 'T12:00:00Z'), a = new Date();
+    let age = a.getUTCFullYear() - n.getUTCFullYear();
+    if (a.getUTCMonth() < n.getUTCMonth() || (a.getUTCMonth() === n.getUTCMonth() && a.getUTCDate() < n.getUTCDate())) age--;
+    propre.mineur = age < 18;
+  }
   // (16/11/2026, B-V4) : « direct » est réservé aux dossiers créés par l'agence elle-même (casting à l'agence, sans
   // photo) ; un visiteur n'envoie que « agence » (intégrer l'agence) ou « projet » (un casting).
   if (table === 'casting_applications' && 'type_candidature' in propre && !['agence', 'projet', null].includes(propre.type_candidature)) return null;
