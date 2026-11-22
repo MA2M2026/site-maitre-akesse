@@ -704,7 +704,7 @@ const enHautDeLaPage = (html, balise) => {
 // (jamais de coordonnées, ni la date de naissance : l'âge seul). La base répond trop lentement (plus de
 // 1,2 s) ou pas du tout : la fiche part comme avant et se remplit elle-même. Gardée 3 minutes en mémoire (enMemoire)
 // (une fiche modifiée dans l'Administration se voit au plus 3 minutes après).
-const COLONNES_PROFIL_FICHE = 'id,full_name,city,category,niveau_mannequin,height_cm,weight_kg,chest_cm,waist_cm,hips_cm,inseam_cm,shoe_size,carnation,clothing_size,eye_color,hair_color,bio,years_experience,model_types,languages,availability,video_url';
+const COLONNES_PROFIL_FICHE = 'id,full_name,city,category,niveau_mannequin,height_cm,chest_cm,waist_cm,hips_cm,inseam_cm,shoe_size,carnation,clothing_size,eye_color,hair_color,bio,years_experience,model_types,languages,availability,video_url';
 const COLONNES_PHOTOS_FICHE = 'id,url,url_miniature,url_moyenne,url_petite,compcard_ordre,principale,photo_couverture,couverture_position,tri_statut,created_at';
 // même choix de grande photo que photosAffichees (js/app.js) : vérifié par test-fiche-serveur.js
 function choixCouverture(photos) {

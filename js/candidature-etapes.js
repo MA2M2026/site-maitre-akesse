@@ -103,10 +103,6 @@
     const f = etapes[i - 1];
     if (i === 1 && projet && !$('ca-projet').value) return erreur(1, T('Choisissez un casting (ou « Mon casting n’est pas dans la liste »).', 'Choose a casting (or “My casting is not in the list”).'));
     // (d'abord ce qui compte le plus : l'âge minimum, les photos et la vidéo)
-    if (i === 2) {
-      const age = typeof calculerAgeCandidature === 'function' ? calculerAgeCandidature() : null;
-      if (age !== null && typeof AGE_MINIMUM !== 'undefined' && age < AGE_MINIMUM) return erreur(2, T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`), $('ca-naissance'));
-    }
     if (i === 4) {
       const n = typeof photosSelectionnees !== 'undefined' ? photosSelectionnees.length : 0, min = typeof photosMin === 'function' ? photosMin() : 4;
       if (n < min) return erreur(4, T(`Ajoutez au moins ${min} photos (${n} pour l’instant).`, `Please add at least ${min} photos (${n} so far).`), $('ca-photos'));
@@ -141,9 +137,9 @@
     recap.textContent = '';
     if (projet) { const p = val('ca-projet') === '__autre__' ? val('ca-projet-autre') : val('ca-projet'); const info = (window.CASTINGS_INFOS || {})[p] || {}; ligne('🎫', p, [info.date, info.lieu].filter(Boolean).join(' · '), 1); }
     else ligne('🎓', texteOption('ca-experience'), val('ca-lien-travail'), 1);
-    const age = typeof calculerAgeCandidature === 'function' ? calculerAgeCandidature() : null;
+    const age = $('ca-majorite') && $('ca-majorite').value ? texteOption('ca-majorite') : '';  // (ARTCI : majeure ou mineure)
     const civ = val('ca-genre') === 'homme' ? T('Monsieur', 'Mr') : texteOption('ca-civilite');
-    ligne('👤', [civ, val('ca-nom')].filter(Boolean).join(' '), [age !== null ? age + T(' ans', ' years old') : '', [val('ca-ville') === '__autre__' ? val('ca-ville-autre') : val('ca-ville'), val('ca-commune') && val('ca-commune') !== '__autre__' ? val('ca-commune') : val('ca-commune-autre')].filter(Boolean).join(', '),
+    ligne('👤', [civ, val('ca-nom')].filter(Boolean).join(' '), [age, [val('ca-ville') === '__autre__' ? val('ca-ville-autre') : val('ca-ville'), val('ca-commune') && val('ca-commune') !== '__autre__' ? val('ca-commune') : val('ca-commune-autre')].filter(Boolean).join(', '),
       [val('ca-indicatif'), val('ca-telephone-numero')].filter(Boolean).join(' '), val('ca-email')].filter(Boolean).join(' · '), 2);
     const mesures = [val('ca-poitrine'), val('ca-tourtaille'), val('ca-hanches')].filter(Boolean);
     ligne('📏', [val('ca-taille') ? (Number(val('ca-taille')) / 100).toFixed(2).replace('.', EN ? '.' : ',') + ' m' : '', mesures.length === 3 ? mesures.join(' – ') : ''].filter(Boolean).join(' · '),

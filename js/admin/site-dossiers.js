@@ -35,7 +35,7 @@
   const CHAMPS = {
     casting: [
       ['experience_mannequin', 'Parcours'], ['video_url', 'Vidéo de présentation'],
-      ['email', 'E-mail'], ['phone', 'Téléphone'], ['genre', 'Genre'], ['civilite', 'Civilité'], ['city', 'Ville'], ['quartier', 'Quartier'], ['date_naissance', 'Date de naissance'],
+      ['email', 'E-mail'], ['phone', 'Téléphone'], ['genre', 'Genre'], ['civilite', 'Civilité'], ['city', 'Ville'], ['quartier', 'Quartier'], ['date_naissance', 'Date de naissance'], ['mineur', 'Âge déclaré'],
       ['situation_scolaire', 'Situation scolaire'], ['niveau_etudes', 'Niveau d’études'],
       ['height_cm', 'Taille', 'cm'], ['weight_kg', 'Poids', 'kg'], ['clothing_size', 'Taille vêtements'], ['chest_cm', 'Poitrine', 'cm'], ['waist_cm', 'Taille (tour)', 'cm'],
       ['hips_cm', 'Tour de bassin', 'cm'], ['shoe_size', 'Pointure'],
@@ -46,6 +46,7 @@
   };
   const TEXTES_SPECIAUX = {
     experience_mannequin: { non: 'Débutant·e (jamais été mannequin)', oui: 'Déjà mannequin' },
+    mineur: { true: 'Moins de 18 ans', false: '18 ans ou plus' },
     situation_scolaire: { 'en cours': 'Encore élève / étudiant(e)', "plus à l'école": 'N’est plus à l’école', 'jamais scolarisé(e)': 'Jamais scolarisé(e)' }
   };
   // Premier message quand le statut change (catalogue commun, comme « Messages groupés »)
@@ -73,6 +74,9 @@
   const nomDe = (source, d) => source === 'recruteur' ? (d.contact_name || d.company || 'Sans nom') : (d.full_name || 'Sans nom');
   const destinataire = (source, d) => { const c = contacts(source, d); return c.parent ? salutationParent(d.parent_nom) : (source === 'recruteur' ? nomDe(source, d) : nomAvecCivilite(d)); };
   const ageDe = (d) => { const a = P.age(d.date_naissance); return a === null || a === undefined ? null : a; };
+  // (22/11/2026, minimisation ARTCI) mineur(e) : d'après sa date de naissance (anciennes candidatures) ou son choix
+  // « moins de 18 ans » (nouvelles candidatures, sans date de naissance)
+  const mineurDe = (d) => d.mineur === true || (ageDe(d) !== null && ageDe(d) < 18);
   function typeDe(d) {
     if (d.type_candidature === 'projet') return d.projet_nom || 'Projet';
     if (d.type_candidature === 'agence') return 'Intégrer l’agence';
@@ -202,7 +206,7 @@
       return '<article class="dossier-carte apparait" style="--i:' + Math.min(i, 12) + '">' +
         '<a class="dossier-lien" href="#/site/' + conf.page + '/' + P.esc(d.id) + '">' +
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
-        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (age !== null && age < 18 ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
+        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (source === 'casting' && mineurDe(d) ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
         P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (douteux.has(d.id) ? ' ' + ETIQUETTE_A_VERIFIER() : '') + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
         (wa ? '<a class="dossier-wa"' + (source === 'casting' ? ' data-candidature="' + P.esc(d.id) + '"' : '') + ' href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
@@ -256,7 +260,7 @@
   function valeurChamp(source, d, cle, unite) {
     const v = d[cle];
     if (!v) return '';
-    const age = source === 'casting' ? ageDe(d) : null, parentJoignable = age !== null && age < 18 && d.parent_telephone;
+    const age = source === 'casting' ? ageDe(d) : null, parentJoignable = source === 'casting' && mineurDe(d) && d.parent_telephone;
     const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
     if (cle === 'video_url' && estVideoDrive(v)) return '';   // (17/11) lue en grand dans son propre bloc (blocVideo)
     return wa ? '<a href="' + P.esc(wa) + '" target="_blank" rel="noopener">' + P.esc(v) + ' ↗ WhatsApp</a>' :
@@ -381,7 +385,7 @@
     if (source === 'casting' && !fiche.photos.length) fiche.dossierDrive = (await P.drive.dossiers([d.id]).catch(() => ({})))[d.id] || null;
     const douteux = await douteuxFiche;
     if (source === 'casting') return ficheCandidature(d, douteux);
-    const age = source === 'casting' ? ageDe(d) : null, mineur = age !== null && age < 18;
+    const age = source === 'casting' ? ageDe(d) : null, mineur = source === 'casting' && mineurDe(d);
     const type = source === 'casting' ? typeDe(d) : null;
     return retourListe(conf) +
       '<header class="fiche-tete"><div><h1>' + (conf.photos ? visageDossier(fiche.photos[0] && fiche.photos[0].affiche, nomDe(source, d), 'rond-vis titre-visage') : '') + P.esc(nomDe(source, d)) + (mineur ? ' ' + P.pastille((d.genre === 'femme' ? 'Mineure' : 'Mineur') + ' · ' + age + ' ans', 'info') : '') + '</h1>' +
@@ -536,7 +540,7 @@
   async function hautCandidature(d, dansFiche) {
     if (!dansFiche) fiche.photos = (await photosDe(SOURCES.casting, [d.id]).catch(() => ({})))[d.id] || [];
     P.etude.galerie = fiche.photos.map((x) => x.affiche);
-    const age = ageDe(d), mineur = age !== null && age < 18;
+    const age = ageDe(d), mineur = mineurDe(d);
     const video = estVideoDrive(d.video_url);
     const douteux = !dansFiche && (await aVerifier([d.id]).catch(() => new Set())).has(d.id);   // (17/11) aussi dans l'étude
     return {

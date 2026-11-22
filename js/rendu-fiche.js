@@ -195,7 +195,7 @@
           <summary>${T('Toutes les mensurations', 'All measurements')}</summary>
         <dl class="fiche-mesures" aria-label="${T('Mensurations', 'Measurements')}">
           ${profil.height_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('taille')}${T('Taille', 'Height')}</dt><dd>${profil.height_cm} cm${imperial(enPieds(profil.height_cm))}</dd></div>` : ''}
-          ${profil.weight_kg ? `<div class="fiche-mesure"><dt>${iconeMensuration('poids')}${T('Poids', 'Weight')}</dt><dd>${profil.weight_kg} kg${imperial(enLivres(profil.weight_kg))}</dd></div>` : ''}
+          ${'' /* (22/11/2026, minimisation ARTCI, décision de la propriétaire) le poids n'est plus affiché publiquement */}
           ${!masquer && profil.chest_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}${T('Poitrine', 'Chest')}</dt><dd>${profil.chest_cm} cm${imperial(enPouces(profil.chest_cm))}</dd></div>` : ''}
           ${!masquer && profil.waist_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}${T('Tour de taille', 'Waist')}</dt><dd>${profil.waist_cm} cm${imperial(enPouces(profil.waist_cm))}</dd></div>` : ''}
           ${!masquer && profil.hips_cm ? `<div class="fiche-mesure"><dt>${iconeMensuration('ruban')}${T('Tour de bassin', 'Hips')}</dt><dd>${profil.hips_cm} cm${imperial(enPouces(profil.hips_cm))}</dd></div>` : ''}

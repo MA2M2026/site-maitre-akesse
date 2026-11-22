@@ -5,20 +5,6 @@
 // l'agence, parcours débutant allégé). La langue vient de <html lang="en">.
 const PARCOURS = document.getElementById('form-casting').dataset.parcours === 'agence' ? 'agence' : 'projet';
 
-// Sans bornes min/max, le calendrier natif du champ "date de naissance" laisse
-// défiler des années totalement absurdes (ex. 2090) et impose souvent de faire
-// défiler très loin pour atteindre un âge plausible — d'où l'impression que la
-// sélection "ne marche pas" alors qu'il faut juste taper la date à la main.
-const AGE_MINIMUM = 14;
-(function limiterDateNaissance() {
-  const champ = document.getElementById('ca-naissance');
-  if (!champ) return;
-  const aujourdhui = new Date();
-  // 14 ans au moins (décision de la propriétaire, 20/10/2026 : mineurs acceptés dès 14 ans, plus d'âge maximum)
-  champ.max = new Date(aujourdhui.getFullYear() - AGE_MINIMUM, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
-  champ.min = new Date(aujourdhui.getFullYear() - 100, aujourdhui.getMonth(), aujourdhui.getDate()).toISOString().slice(0, 10);
-})();
-
 // --- Mensurations en listes déroulantes plutôt qu'en saisie libre : évite les
 // fautes de frappe (ex. "17O" au lieu de "170") et les valeurs invraisemblables.
 // remplirSelectNombres, remplirSelectListe, configurerSelectAvecAutre, valeurSelectOuAutre : js/app.js. ---
@@ -323,24 +309,11 @@ majCivilite();
 remplirTailleSelonGenre();
 
 // --- Gestion mineur / parent-tuteur ---
-function calculerAgeCandidature() {
-  const valeur = document.getElementById('ca-naissance').value;
-  if (!valeur) return null;
-  const naissance = new Date(valeur);
-  const aujourdhui = new Date();
-  let age = aujourdhui.getFullYear() - naissance.getFullYear();
-  if (aujourdhui < new Date(aujourdhui.getFullYear(), naissance.getMonth(), naissance.getDate())) age -= 1;
-  return age;
-}
+// (22/11/2026, minimisation ARTCI) « 18 ans ou plus » ou « moins de 18 ans » : plus de date de naissance ici
 function estMineur() {
-  const age = calculerAgeCandidature();
-  return age !== null && age < 18;
+  return document.getElementById('ca-majorite').value === 'mineur';
 }
-document.getElementById('ca-naissance').addEventListener('change', () => {
-  // moins de 14 ans : le navigateur bloque l'envoi avec NOTRE phrase (et non « la valeur doit
-  // être inférieure ou égale à… »)
-  const age = calculerAgeCandidature(), champNaissance = document.getElementById('ca-naissance');
-  champNaissance.setCustomValidity(age !== null && age < AGE_MINIMUM ? T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`) : '');
+document.getElementById('ca-majorite').addEventListener('change', () => {
   const blocParent = document.getElementById('ca-bloc-parent');
   const mineur = estMineur();
   blocParent.style.display = mineur ? 'block' : 'none';
@@ -561,11 +534,6 @@ async function soumettreCandidature() {
     }
   }
 
-  const age = calculerAgeCandidature();
-  if (age !== null && age < AGE_MINIMUM) {
-    afficherMsg(msg, T(`L'agence accepte les candidatures à partir de ${AGE_MINIMUM} ans.`, `The agency accepts applications from age ${AGE_MINIMUM}.`), 'err');
-    return;
-  }
 
   if (document.getElementById('ca-ville').value === 'Abidjan' && document.getElementById('ca-commune').value === 'Abidjan') {
     afficherMsg(msg, T('Merci de préciser votre commune à Abidjan.', 'Please specify your district in Abidjan.'), 'err');
@@ -603,8 +571,7 @@ async function soumettreCandidature() {
     email: document.getElementById('ca-email').value.trim(),
     phone: composerTelephone(document.getElementById('ca-indicatif'), document.getElementById('ca-telephone-numero')),
     city: villeAvecCommune(valeurSelectOuAutre('ca-ville', 'ca-ville-autre'), 'ca-commune', 'ca-commune-autre'),
-    quartier: document.getElementById('ca-quartier').value.trim() || null,
-    date_naissance: document.getElementById('ca-naissance').value || null,
+    mineur: estMineur(),
     genre: genre,
     civilite: genre === 'homme' ? 'Monsieur' : (document.getElementById('ca-civilite').value || null),
     height_cm: taille,

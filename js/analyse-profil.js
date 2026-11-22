@@ -36,7 +36,7 @@ var MA2M_PHOTOS_MINIMUM = 10;
 function ma2mMesuresAttendues(p, avecSupp) {
   var homme = p.category === 'homme';
   return [
-    ['height_cm', 'taille'], ['weight_kg', 'poids'], ['chest_cm', 'tour de poitrine'], ['waist_cm', 'tour de taille'],
+    ['height_cm', 'taille'], ['chest_cm', 'tour de poitrine'], ['waist_cm', 'tour de taille'],
     ['hips_cm', 'tour de bassin']
   ].concat(avecSupp ? (homme ? [['neck_cm', 'tour de cou']] : []).concat([['shoulder_cm', 'largeur d’épaules'], ['arm_cm', 'longueur de bras']]) : []).concat([
     ['inseam_cm', 'entrejambe'],
@@ -64,7 +64,7 @@ function ma2mAnalyserProfil(p, photos, nbProjets, avecSupp) {
   // New Face (débutante) : ne pas encore avoir d'expérience est normal — ni compté, ni réclamé.
   a.newFace = niveauNormalise(p.niveau_mannequin, p.years_experience) === 'New Face';
   if (!a.newFace || nbProjets > 0) manque(a.parcours, 'experiences', nbProjets > 0);
-  manque(a.parcours, 'etudes', !ma2mVide(p.niveau_etude));
+  // (22/11/2026, minimisation ARTCI) poids et niveau d'études facultatifs : jamais réclamés
   manque(a.parcours, 'langues', !ma2mVide(p.languages));
   // Formations de mannequinat : facultatives (beaucoup n'en ont pas suivi) ; simple
   // suggestion ajoutée à la rubrique « parcours » quand celle-ci a déjà autre chose à

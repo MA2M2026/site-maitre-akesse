@@ -37,18 +37,17 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await p.fill('#ca-nom', 'Awa Koné'); await p.fill('#ca-email', 'awa@test.ci'); await p.fill('#ca-telephone-numero', '0700000001');
     await choisir(p, '#ca-ville', 'Abidjan'); await p.waitForTimeout(200);
     if (await p.isVisible('#ca-commune')) await choisir(p, '#ca-commune', 'Cocody');
-    // (22/11/2026, minimisation des données) plus de scolarité ni de niveau d'études ; quartier et poids facultatifs
-    const minimise = !(await p.$('#ca-scolarite')) && !(await p.$('#ca-etudes-cat')) && !(await p.$eval('#ca-quartier', (e) => e.required)) && !(await p.$eval('#ca-poids', (e) => e.required))
-      && /âge minimum|minimum age/.test(await p.textContent('#ca-naissance-pourquoi')) && /sensibles|sensitive/.test(await p.textContent('#ca-message-conseil'));
-    if (!minimise) { console.log('❌ ÉCHEC minimisation des données sur', page); process.exitCode = 1; } else console.log('✓ ' + page + ' : scolarité et niveau d’études retirés, quartier et poids facultatifs, raisons affichées');
-    // moins de 14 ans : l'étape « Vous » refuse d'avancer, avec un message (décision du 20/10/2026)
-    await p.fill('#ca-naissance', '2014-06-01'); await p.dispatchEvent('#ca-naissance', 'change'); await p.waitForTimeout(300);
-    await p.selectOption('#ca-parent-civilite', 'Madame'); await p.fill('#ca-parent-nom', 'Kouassi Marie');
-    await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'parent@test.ci');
+    // (22/11/2026, minimisation ARTCI) plus de scolarité, de niveau d'études, de quartier ni de date de naissance :
+    // « 18 ans ou plus » ou « moins de 18 ans » ; poids facultatif
+    const minimise = !(await p.$('#ca-scolarite')) && !(await p.$('#ca-etudes-cat')) && !(await p.$('#ca-quartier')) && !(await p.$('#ca-naissance'))
+      && !(await p.$eval('#ca-poids', (e) => e.required)) && await p.$eval('#ca-majorite', (e) => e.required && e.options.length === 3)
+      && /parent/.test(await p.textContent('#ca-majorite-pourquoi')) && /sensibles|sensitive/.test(await p.textContent('#ca-message-conseil'));
+    if (!minimise) { console.log('❌ ÉCHEC minimisation des données sur', page); process.exitCode = 1; } else console.log('✓ ' + page + ' : ni date de naissance, ni quartier, ni scolarité, ni niveau d’études ; poids facultatif ; raisons affichées');
+    // sans choisir son âge : l'étape « Vous » refuse d'avancer
     await choisir(p, '#ca-genre', 'femme'); await p.waitForTimeout(200); await p.selectOption('#ca-civilite', 'Madame');
     await suivant();
-    const refus12ans = await etape() === 2 && /14 ans|age 14/.test(await p.textContent('.lx-etape:not([hidden]) .form-msg')) && !journal.some(j => j[0] === 'POST' && j[1] === 'casting_applications');
-    await p.fill('#ca-naissance', '2011-04-02'); await p.dispatchEvent('#ca-naissance', 'change'); await p.waitForTimeout(300);
+    const refus12ans = await etape() === 2 && !journal.some(j => j[0] === 'POST' && j[1] === 'casting_applications');
+    await p.selectOption('#ca-majorite', 'mineur'); await p.dispatchEvent('#ca-majorite', 'change'); await p.waitForTimeout(300);
     const blocParent = await p.isVisible('#ca-bloc-parent');
     await p.selectOption('#ca-parent-civilite', 'Madame'); await p.fill('#ca-parent-nom', 'Kouassi Marie');
     await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'parent@test.ci');
@@ -84,8 +83,8 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const c = inserts[0] || {};
     console.log(`\n===== ${page} (${vp.width}px) =====`);
     console.log('Étapes 1 → 5 (résumé) :', etapesVues.join(' → '), '| photos manquantes signalées :', sansPhotos);
-    console.log('Candidate de 12 ans refusée (minimum 14 ans) :', refus12ans);
-    console.log('Bloc parent visible pour 15 ans :', blocParent, '| case Civilité visible pour une femme :', caseCivilite);
+    console.log('Sans choisir son âge : étape bloquée :', refus12ans);
+    console.log('Bloc parent visible pour « moins de 18 ans » :', blocParent, '| case Civilité visible pour une femme :', caseCivilite);
     console.log('Candidature enregistrée :', inserts.length ? 'OUI' : 'NON', '| parent_nom :', c.parent_nom, '| parent_telephone :', c.parent_telephone, '| parent_email :', c.parent_email, '| email :', c.email, '| civilité :', c.civilite);
     console.log('Parcours :', c.type_candidature, '| projet :', c.projet_nom, '| expérience :', c.experience_mannequin, '| e-mail agence :', journal.filter(j => j[0] === 'EMAIL').map(j => String(JSON.parse(j[1]).template_params.message).split('\n').slice(0, 2).join(' / ')));
     console.log('Message affiché :', (await p.textContent('#ca-msg').catch(() => '')).trim().slice(0, 160));
@@ -93,8 +92,8 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     console.log('Jauges vertes : photos', jaugesVertes, '/ 4, vidéo', videoVerte, '| « 3 minutes maximum » annoncé :', /3 minutes/.test(aideVideo));
     // Échec bloquant (relecture du 11/10/2026) : la candidature doit être enregistrée avec le bon parcours.
     if (jaugesVertes !== 4 || videoVerte !== 1 || !/3 minutes/.test(aideVideo)) { console.log('❌ ÉCHEC jauges ou durée sur', page); process.exitCode = 1; }
-    if (!inserts.length || 'situation_scolaire' in c || 'niveau_etudes' in c || c.weight_kg !== null || c.quartier !== null) { console.log('❌ ÉCHEC données envoyées sur', page, JSON.stringify(c).slice(0, 300)); process.exitCode = 1; }
-    else console.log('✓ ' + page + ' : candidature envoyée sans scolarité, sans niveau d’études, sans poids ni quartier (facultatifs laissés vides)');
+    if (!inserts.length || 'situation_scolaire' in c || 'niveau_etudes' in c || 'quartier' in c || 'date_naissance' in c || c.weight_kg !== null || c.mineur !== true) { console.log('❌ ÉCHEC données envoyées sur', page, JSON.stringify(c).slice(0, 300)); process.exitCode = 1; }
+    else console.log('✓ ' + page + ' : candidature envoyée avec « mineur », sans date de naissance, quartier, scolarité, niveau d’études ni poids');
     if (!refus12ans || !inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
     await ctx.close();
   }
