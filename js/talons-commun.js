@@ -18,6 +18,9 @@ window.TalonsCommun = (function () {
     PRIX_MOIS: 30000,   // groupe : 30 000 FCFA le mois (4 dimanches), comme cours_talons_prix_mois() dans la base
     // vouvoiement (demandes de la propriétaire du 14/11/2026) : la civilité choisie à l'inscription (« madame » ou
     // « mademoiselle ») ; pour une inscription plus ancienne, « Mademoiselle » si elle est mineure, sinon « Madame »
+    // (22/11/2026, minimisation ARTCI) mineure : son choix « moins de 18 ans », ou son âge (anciennes inscriptions).
+    // Règle commune à l'Administration (cours de talons, agenda).
+    mineure: function (d) { return !!d && (d.mineure === true || (!!d.age && d.age < 18)); },
     // age : un âge (anciennes inscriptions) ou true pour une mineure (22/11/2026, ARTCI : plus d'âge demandé)
     civilite: function (choix, age) { return (choix || (age === true || (age && age < 18) ? 'mademoiselle' : 'madame')) === 'mademoiselle' ? 'Mademoiselle' : 'Madame'; },
     // thèmes choisis {3,3,4} → [{ m: 3, n: 2 }, { m: 4, n: 1 }] (nombre de mois de chaque thème)

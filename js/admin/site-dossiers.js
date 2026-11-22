@@ -76,7 +76,7 @@
   const ageDe = (d) => { const a = P.age(d.date_naissance); return a === null || a === undefined ? null : a; };
   // (22/11/2026, minimisation ARTCI) mineur(e) : d'après sa date de naissance (anciennes candidatures) ou son choix
   // « moins de 18 ans » (nouvelles candidatures, sans date de naissance)
-  const mineurDe = (d) => d.mineur === true || (ageDe(d) !== null && ageDe(d) < 18);
+  const mineurDe = (d) => estMineurDossier(d);  // (règle commune : js/messages-candidats.js)
   function typeDe(d) {
     if (d.type_candidature === 'projet') return d.projet_nom || 'Projet';
     if (d.type_candidature === 'agence') return 'Intégrer l’agence';
@@ -259,7 +259,7 @@
   // d'une candidature (ficheCandidature), pour ne rien recopier.
   function valeurChamp(source, d, cle, unite) {
     const v = d[cle];
-    if (!v) return '';
+    if (!v && !(cle === 'mineur' && v === false)) return '';  // (« 18 ans ou plus » : false s'affiche aussi)
     const age = source === 'casting' ? ageDe(d) : null, parentJoignable = source === 'casting' && mineurDe(d) && d.parent_telephone;
     const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
     if (cle === 'video_url' && estVideoDrive(v)) return '';   // (17/11) lue en grand dans son propre bloc (blocVideo)

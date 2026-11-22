@@ -702,7 +702,7 @@
       const aConfirmer = !c.valide_le && c.statut !== 'inscrite' && c.statut !== 'terminee';
       if (!j || s.occupe === false || c.statut === 'annulee') return;
       if (c.formule === 'groupe') { const k = j.cle + heure(s.debut); if (!groupes[k]) { groupes[k] = ['👠', 'Cours de talons en groupe', '', '#/site/b2-cours-talons', 0, heure(s.debut)]; j.lignes.push(groupes[k]); } groupes[k][4]++; groupes[k][2] = groupes[k][5] + ' · ' + groupes[k][4] + (groupes[k][4] > 1 ? ' élèves' : ' élève'); }
-      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && (c.mineure === true || c.age < 18))) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : '', aConfirmer ? 'à confirmer (paiement)' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
+      else j.lignes.push(['👠', 'Cours privé · ' + ((c.civilite === 'mademoiselle' || (!c.civilite && (window.TalonsCommun ? window.TalonsCommun.mineure(c) : c.mineure === true || c.age < 18))) ? 'Mlle ' : 'Mme ') + (c.nom || ''), [heure(s.debut), s.theme ? '« ' + s.theme + ' »' : '', aConfirmer ? 'à confirmer (paiement)' : ''].filter(Boolean).join(' · '), '#/site/b2-cours-talons']);
     });
     const html = jours.filter((j, k) => k === 0 || j.lignes.length).map((j, k) => '<div class="se-jour' + (k === 0 ? ' auj' : '') + '"><div class="se-date"><small>' + JOURS_COURTS[j.d.getDay()] + '</small><b>' + j.d.getDate() + '</b></div>' +
       (j.lignes.length ? '<ul>' + j.lignes.map((l) => '<li><a href="' + l[3] + '"><i aria-hidden="true">' + l[0] + '</i><span>' + P.esc(l[1]) + (l[2] ? ' <small>· ' + P.esc(l[2]) + '</small>' : '') + '</span></a></li>').join('') + '</ul>'

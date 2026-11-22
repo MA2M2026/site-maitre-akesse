@@ -334,6 +334,14 @@ const COLONNES_FORMULAIRES = {
 function garderColonnesAutorisees(table, ligne) {
   const propre = {};
   for (const c of COLONNES_FORMULAIRES[table] || []) if (Object.prototype.hasOwnProperty.call(ligne, c)) propre[c] = ligne[c];
+  // (22/11/2026, minimisation ARTCI) page ouverte avant la mise en ligne : elle envoie encore une date de naissance et pas
+  // « mineur ». On en déduit « mineur », puis la date n'est pas enregistrée (elle n'est plus dans la liste ci-dessus).
+  if (table === 'casting_applications' && !('mineur' in propre) && typeof ligne.date_naissance === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(ligne.date_naissance)) {
+    const n = new Date(ligne.date_naissance + 'T12:00:00Z'), a = new Date();
+    let age = a.getUTCFullYear() - n.getUTCFullYear();
+    if (a.getUTCMonth() < n.getUTCMonth() || (a.getUTCMonth() === n.getUTCMonth() && a.getUTCDate() < n.getUTCDate())) age--;
+    propre.mineur = age < 18;
+  }
   // (16/11/2026, B-V4) : « direct » est réservé aux dossiers créés par l'agence elle-même (casting à l'agence, sans
   // photo) ; un visiteur n'envoie que « agence » (intégrer l'agence) ou « projet » (un casting).
   if (table === 'casting_applications' && 'type_candidature' in propre && !['agence', 'projet', null].includes(propre.type_candidature)) return null;

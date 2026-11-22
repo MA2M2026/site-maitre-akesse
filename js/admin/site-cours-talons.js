@@ -42,7 +42,7 @@
   const quandSeance = (s) => { const a = new Date(s.debut), b = new Date(s.fin); const j = T.JOURS[a.getUTCDay()];
     return j.charAt(0).toUpperCase() + j.slice(1, 3) + '. ' + a.getUTCDate() + ' ' + T.MOIS_COURTS[a.getUTCMonth()] + ' · ' + T.heure(a) + ' – ' + T.heure(b); };
   // (22/11/2026, minimisation ARTCI) mineure : son choix « moins de 18 ans », ou son âge (anciennes inscriptions)
-  const mineureDe = (d) => d.mineure === true || (!!d.age && d.age < 18);
+  const mineureDe = (d) => T.mineure(d);  // (js/talons-commun.js)
   const civilite = (d) => T.civilite(d.civilite, mineureDe(d) || d.age) + ' ' + String(d.nom || '').trim();
   // (15/11/2026) un seul endroit pour les liens WhatsApp de cette page (message écrit facultatif) et pour minuit (UTC = Abidjan)
   const lienWhatsApp = (num, texte, msg, classes, attrs) => '<a class="btn ' + (classes || 'petit') + '"' + (attrs || '') + ' target="_blank" rel="noopener" href="https://wa.me/' + num +

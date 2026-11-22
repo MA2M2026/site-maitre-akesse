@@ -22,13 +22,13 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       menu: !!document.querySelector('.menu-overlay a'),
       pied: !!document.querySelector('.site-footer a'),
       appli: !!document.querySelector('.ap-tete'),
-      code: !!document.querySelector('#inn-ecran input'), date: !!document.querySelector('#inn-ecran input[type="date"]'),
+      code: !!document.querySelector('#inn-ecran input'), date: !!document.querySelector('#inn-ecran input[type="date"]'), tel4: !!document.querySelector('#inn-tel4'),
       lienMenu: [...document.querySelectorAll('.menu-overlay a')].map((a) => a.getAttribute('href') || '').filter((h) => /inscription-mannequin/.test(h)),
       debord: document.documentElement.scrollWidth > innerWidth + 1
     }));
     ok(r.logo && r.menu && r.pied && !r.appli, n + 'en-tête, menu et bas de page du site (pas l’en-tête de l’application)');
     ok(en ? /FR/.test(r.langue) : /EN/.test(r.langue), n + 'bouton de langue présent');
-    ok(r.code && r.date, n + 'le parcours d’inscription s’affiche (code personnel et date de naissance)');
+    ok(r.code && r.date && r.tel4, n + 'le parcours d’inscription s’affiche (code personnel, date de naissance, 4 derniers chiffres du WhatsApp)');
     ok(!r.lienMenu.some((h) => /mannequin\.maitreakesse|\/app\//.test(h)), n + 'le menu mène à la page du site, plus à l’application (' + r.lienMenu.join(', ') + ')');
     ok(!r.debord, n + 'rien ne dépasse de l’écran');
     ok(!errs.length, n + 'aucune erreur de page ' + errs.join(' | '));

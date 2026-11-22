@@ -105,7 +105,7 @@ async function navigateur() {
     await brancher(p, { tables: {}, api: { '/api/code-protege': { ok: true, casting: CASTING, note: avecNote ? NOTE : null } } }, []);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForSelector('#inn-code');
     const avant = await p.isVisible('a[href*="note-integration"]');
-    await p.fill('#inn-code', 'MA2M-BON'); await p.fill('#inn-naissance', '2001-03-04'); await p.click('[data-a="entrer"]');
+    await p.fill('#inn-code', 'MA2M-BON'); await p.fill('#inn-naissance', '2001-03-04'); await p.fill('#inn-tel4', '1234'); await p.click('[data-a="entrer"]');
     await p.waitForSelector('[data-a="oui"]'); await p.click('[data-a="oui"]'); await p.waitForSelector('#inn-regl');
     const lire = await p.getAttribute('a[href*="note-integration"]', 'href').catch(() => null);
     if (avecNote) {
@@ -121,7 +121,7 @@ async function navigateur() {
     await brancher(p, { tables: {}, api: {} }, []);
     await p.route(/\/api\/code-protege/, r => r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'refuse', essaisRestants: 2 }) }));
     await p.goto('http://127.0.0.1:' + PORT + '/app/inscription-mannequin.html'); await p.waitForSelector('#inn-code');
-    await p.fill('#inn-code', 'FAUX'); await p.fill('#inn-naissance', '2001-03-04'); await p.click('[data-a="entrer"]'); await p.waitForSelector('.inn-bandeau.erreur');
+    await p.fill('#inn-code', 'FAUX'); await p.fill('#inn-naissance', '2001-03-04'); await p.fill('#inn-tel4', '1234'); await p.click('[data-a="entrer"]'); await p.waitForSelector('.inn-bandeau.erreur');
     ok(!(await p.isVisible('a[href*="note-integration"]')) && !(await p.isVisible('[data-a="oui"]')), 'code faux : ni informations ni note');
     await ctx.close();
   }

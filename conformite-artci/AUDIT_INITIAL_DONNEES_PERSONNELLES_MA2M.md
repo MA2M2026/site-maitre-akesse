@@ -84,7 +84,7 @@ Identité (nom, date, ville et lieu de naissance, nationalité, ville, quartier,
 
 | # | Constat | Gravité | Proposition |
 |---|---|---|---|
-| 1 | Le **poids** des mannequins était lisible par tout visiteur (colonne ouverte) et affiché sur la fiche publique | moyenne | **fait** : n'est plus affiché ni lu par les pages publiques ; SQL `supabase-artci-poids-prive.sql` à coller après la mise en ligne |
+| 1 | Le **poids** des mannequins était lisible par tout visiteur (colonne ouverte) et affiché sur la fiche publique | moyenne | **fait** : n'est plus affiché ni lu par les pages publiques ; SQL `supabase-artci-poids-prive.sql` à coller après la mise en ligne. **Limite restante** : un compte mannequin connecté peut encore lire le poids des autres fiches publiées (à fermer par une fonction dédiée) |
 | 2 | Date de naissance, quartier, scolarité, niveau d'études demandés à toutes les candidates | moyenne | **fait** : retirés des candidatures et des cours de talons (majeure/mineure à la place) |
 | 3 | **Aucune preuve de consentement** enregistrée (case cochée, mais ni date ni version du texte) | moyenne | à faire : enregistrer date + version de la politique acceptée (voir REGISTRE) |
 | 4 | Durées annoncées non automatisées : messages de contact, demandes de recruteurs (3 ans), fiches de mannequins (3 ans après la fin) | moyenne | à faire : tâches automatiques, après validation des durées |
