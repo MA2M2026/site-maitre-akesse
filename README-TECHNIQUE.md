@@ -168,6 +168,25 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🛡️ Minimisation des données (ARTCI, 22/11/2026, décisions de la propriétaire)
+Dossier préparatoire : `conformite-artci/` (12 documents, jamais publiés : `.vercelignore`).
+- **Candidatures** (`js/formulaire-candidature-champs.js`, commun aux 4 pages casting / intégrer l'agence FR-EN) : plus de
+  date de naissance, de quartier, de situation scolaire ni de niveau d'études ; choix `ca-majorite` (« 18 ans ou plus » /
+  « moins de 18 ans », 14 ans minimum annoncé) → colonne `casting_applications.mineur` ; poids facultatif ; raisons et
+  conseil « pas d'informations sensibles » affichés. Administration : `mineurDe` (`js/admin/site-dossiers.js`) et
+  `estMineurDossier` (`js/messages-candidats.js`) reconnaissent `mineur` OU une date de naissance (anciennes fiches).
+- **Cours de talons** : `ct-majorite` → `cours_talons.mineure` (plus d'âge ni de quartier) ; `mineureDe` dans
+  `js/admin/site-cours-talons.js`, `TalonsCommun.civilite(choix, true)` pour une mineure.
+- **Serveur** (`COLONNES_FORMULAIRES`, `api/portail.js`) : les champs retirés sont refusés même si une ancienne page les envoie.
+- **Inscription** : la date de naissance reste demandée (elle décide de l'accord du parent) ; elle n'est comparée à celle
+  de la candidature que si celle-ci en a une (SQL `supabase-artci-majeure-mineure.sql`, à coller AVANT la mise en ligne).
+- **Poids** : facultatif dans l'Espace mannequin, plus réclamé par `js/analyse-profil.js`, plus affiché ni lu par la fiche
+  publique (`js/rendu-fiche.js`, `js/fiche-mannequin.js`, `middleware.js`) ; lecture fermée aux visiteurs par
+  `supabase-artci-poids-prive.sql`, à coller APRÈS la mise en ligne. La Compcard (document envoyé par l'agence) le garde.
+- **Page Inscription du site** (`inscription-mannequin.html`, `en/inscription-mannequin.html`) : même gabarit que les autres
+  pages (en-tête, menu, langues, bas de page), même parcours `js/inscription-simplifiee.js` ; le menu y mène (plus vers
+  l'application, qui garde `app/inscription-mannequin.html`). Test : `test-inscription-site.js`.
+
 ## 🔐 Rôle « Administrateur du site » sans argent (audit L-1, 16/11/2026, décision de la propriétaire du 15/11)
 
 - **Paiements des cours de talons** : `cours_talons_valider` et `cours_talons_mois_payer` exigent
