@@ -134,38 +134,6 @@ function majParcours() {
 }
 if (PARCOURS === 'agence') document.getElementById('ca-experience').addEventListener('change', majParcours);
 
-// --- Niveau d'études : trois grandes catégories qui se déroulent ---
-const CLASSES_ETUDES = {
-  Primaire: ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2'],
-  Secondaire: ['6e', '5e', '4e', '3e', '2nde', '1re', 'Terminale'],
-  'Supérieur': ['BTS', 'Licence 1', 'Licence 2', 'Licence 3', 'Master 1', 'Master 2', 'Doctorat', 'Autre formation supérieure']
-};
-const CLASSES_ETUDES_EN = { 'Licence 1': 'Bachelor year 1', 'Licence 2': 'Bachelor year 2', 'Licence 3': 'Bachelor year 3', 'Doctorat': 'PhD', 'Autre formation supérieure': 'Other higher education' };
-function majEtudes() {
-  const situation = document.getElementById('ca-scolarite').value;
-  const jamais = situation === 'jamais scolarisé(e)';
-  const cat = document.getElementById('ca-etudes-cat');
-  const classe = document.getElementById('ca-etudes-classe');
-  document.getElementById('ca-etudes-cat-wrap').style.display = jamais ? 'none' : '';
-  document.getElementById('ca-etudes-cat-label').textContent = situation === "plus à l'école" ? T('Dernier niveau atteint *', 'Last level reached *') : T("Niveau d'études *", 'Education level *');
-  cat.required = !jamais;
-  if (jamais) cat.value = '';
-  const liste = CLASSES_ETUDES[cat.value];
-  document.getElementById('ca-etudes-classe-wrap').style.display = liste && !jamais ? 'block' : 'none';
-  classe.required = !!liste && !jamais;
-  if (liste && classe.dataset.categorie !== cat.value) {
-    classe.innerHTML = `<option value="">${T('Sélectionner', 'Select')}</option>` + liste.map(c => `<option value="${c}">${EN ? CLASSES_ETUDES_EN[c] || c : c}</option>`).join('');
-    classe.dataset.categorie = cat.value;
-  }
-}
-document.getElementById('ca-scolarite').addEventListener('change', majEtudes);
-document.getElementById('ca-etudes-cat').addEventListener('change', majEtudes);
-function niveauEtudesChoisi() {
-  const cat = document.getElementById('ca-etudes-cat').value;
-  const classe = document.getElementById('ca-etudes-classe').value;
-  return cat ? cat + (classe ? ' · ' + classe : '') : null;
-}
-
 // --- Vidéo de présentation : obligatoire, 3 minutes maximum (décision de la propriétaire, 10/11/2026 ; 1 minute avant).
 // Allégée en 480p pour un envoi rapide (VIDEO_ALLEGEMENT_RAPIDE, js/app.js). Une vidéo lourde
 // (4K, 60 images/s…) est d'abord ALLÉGÉE par l'appareil du candidat (js/video-allegee.js,
@@ -540,7 +508,7 @@ async function envoyerMedias(etat) {
       name: candidature.full_name,
       telephone: candidature.phone,
       email: candidature.email,
-      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nNiveau d'études : ${candidature.niveau_etudes || candidature.situation_scolaire || '-'}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
     });
     etat.agencePrevenue = true; etat.agenceComplete = !!(etat.photosFaites && etat.videoFaite); await EnvoiFiable.garder('candidature', etat);
   }
@@ -652,8 +620,6 @@ async function soumettreCandidature() {
     type_candidature: PARCOURS,
     projet_nom: PARCOURS === 'projet' ? projetNom : null,
     experience_mannequin: PARCOURS === 'agence' ? document.getElementById('ca-experience').value : 'oui',
-    situation_scolaire: document.getElementById('ca-scolarite').value || null,
-    niveau_etudes: niveauEtudesChoisi(),
     clothing_size: document.getElementById('ca-vetements').value || null
   };
 
@@ -683,7 +649,6 @@ async function soumettreCandidature() {
   photosSelectionnees = [];
   rafraichirApercuPhotos();
   majParcours();
-  majEtudes();
   document.getElementById('ca-photos-compteur').textContent = '';
   document.getElementById('ca-photos-apercu').innerHTML = '';
   document.getElementById('ca-photos-consigne').classList.add('u-hidden');
