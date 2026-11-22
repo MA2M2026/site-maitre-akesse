@@ -5525,8 +5525,11 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
 ## Pages en écrans (22/11/2026, demande de la propriétaire : « trop long à faire défiler »)
 
 Une page dont le `<main>` porte `data-ecrans` s'affiche comme une suite d'écrans : `js/pages-ecrans.js` (partagé)
-et `css/pages-ecrans.css`. Première page : **Intégrer l'agence** (FR/EN), maquette à valider avant les autres
-(Postuler à un casting, Cours de talons, Inscription).
+et `css/pages-ecrans.css`. Pages : **Intégrer l'agence**, **Postuler à un casting** et **Cours de talons** (FR/EN ;
+« continue pour tout », propriétaire, 22/11/2026). Cours de talons : une formule par écran, le programme en deux
+écrans, et les **questions fréquentes en écran juste avant le formulaire** (section déplacée avant `#inscription`,
+demande de la propriétaire) ; son formulaire, dont les choix s'allongent, se fait défiler. **Inscription** : laissée
+telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; une barre de plus n'ajouterait qu'un clic.
 
 - Chaque `<section>` directe du `<main>` = un écran (accueil, vidéo, étapes, critères, parcours, programme…,
   le formulaire en dernier). Rien n'est caché dans le HTML : sans JavaScript, la page reste entière.
@@ -5540,7 +5543,8 @@ et `css/pages-ecrans.css`. Première page : **Intégrer l'agence** (FR/EN), maqu
 - Une section trop longue porte `data-ecran-coupe="sélecteur"` : elle est coupée à chaque élément trouvé
   (ex. le programme : `h3.lx-prog-niveau`, un écran par niveau).
 - Écran du formulaire : la barre ne montre « ← Retour » que tant que le formulaire est à sa 1re étape (ensuite ses
-  propres boutons prennent le relais) ; le bas de page (mentions légales, confidentialité) y est affiché.
+  propres boutons prennent le relais ; étapes `.lx-etape[hidden]` ou `.ct-etape.u-hidden`) ; le bas de page (mentions
+  légales, confidentialité) et le bandeau « Vous êtes mannequin ? » y sont affichés.
 - Autres scripts : `window.PagesEcrans.montrer(élément)` affiche l'écran qui le contient
   (ex. « Je choisis ce parcours » dans `js/integrer-agence.js`).
 - La barre du bas fait partie des boutons qui montent au-dessus du bandeau des cookies (`.ecrans-barre`, css/style.css).

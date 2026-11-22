@@ -8,7 +8,11 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const chemin = require('path');
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const PORT = String(9700 + Math.floor(Math.random() * 60));
-const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366, 768], ['en/integrer-agence.html', 390, 844], ['en/integrer-agence.html', 1366, 768]];
+const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366, 768], ['en/integrer-agence.html', 390, 844], ['en/integrer-agence.html', 1366, 768],
+  // (22/11/2026, « continue pour tout ») Postuler à un casting et Cours de talons, mêmes écrans
+  ['candidature.html', 390, 844], ['en/candidature.html', 1366, 768], ['cours-talons.html', 390, 844], ['en/cours-talons.html', 390, 844], ['cours-talons.html', 1366, 768]];
+// écran du formulaire de chaque page (lien direct partagé, ce qui doit être visible au dernier écran)
+const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candidature: ['#candidature', '#candidature'], 'cours-talons': ['#inscription', '#form-talons'] };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
@@ -37,10 +41,12 @@ const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366
   }));
   for (const [page, w, h] of PAGES) {
     const en = page.startsWith('en/'), n = page + ' (' + w + 'px) : ', tel = w < 700;
+    const nom = page.replace(/^en\//, '').replace('.html', ''), ia = nom === 'integrer-agence', talons = nom === 'cours-talons';
+    const [ancre, form] = FORMULAIRE[nom];
     const p = await ouvrir(page, w, h);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     let e = await etat(p);
-    ok(e.total >= 8 && e.visibles.length === 1 && e.visibles[0] === '1', n + 'un seul écran à la fois (' + e.total + ' écrans), le premier au départ');
+    ok(e.total >= 4 && e.visibles.length === 1 && e.visibles[0] === '1', n + 'un seul écran à la fois (' + e.total + ' écrans), le premier au départ');
     ok(e.compteur === '1 / ' + e.total && !e.retour && e.suivant && e.progression > 0, n + 'en bas : « ' + (en ? 'Start' : 'Commencer') + ' » et « 1 / ' + e.total + ' », pas de Retour au premier écran');
     // (22/11/2026, maquette validée par la propriétaire) de simples flèches rondes, mais un nom lu par les lecteurs d'écran
     const noms = await p.evaluate(() => ({ s: document.querySelector('.ecrans-suivant').getAttribute('aria-label'), r: document.querySelector('.ecrans-retour').getAttribute('aria-label'),
@@ -63,21 +69,32 @@ const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366
       const x = await etat(p);
       if (!(x.progression > avant)) monte = false; avant = x.progression;
     }
-    if (tel) { const x = await etat(p); if (x.depasse > 40) tropHauts.push(x.visibles[0] + ' (+' + x.depasse + ' px)'); }
+    // (le formulaire des cours de talons, avec ses choix qui s'ajoutent, se fait défiler : il garde ses propres étapes)
+    if (tel && !talons) { const x = await etat(p); if (x.depasse > 40) tropHauts.push(x.visibles[0] + ' (+' + x.depasse + ' px)'); }
     ok(monte, n + 'la barre de progression avance à chaque écran');
-    ok(videoArretee === true, n + 'la vidéo s’arrête quand on passe à l’écran suivant');
+    if (nom !== 'candidature') ok(videoArretee === true, n + 'la vidéo s’arrête quand on passe à l’écran suivant');
     if (tel) ok(!tropHauts.length, n + 'chaque écran tient sur le téléphone sans faire défiler ' + tropHauts.join(', '));
     e = await etat(p);
-    ok(e.visibles[0] === String(e.total) && e.hash === '#ecran-' + e.total && !e.suivant && e.retour && await p.isVisible('#form-casting'),
+    ok(e.visibles[0] === String(e.total) && e.hash === '#ecran-' + e.total && !e.suivant && e.retour && await p.isVisible(form),
       n + 'dernier écran : le formulaire, flèche ← seul en bas');
     ok(e.pied !== 'none', n + 'écran du formulaire : le bas de page (mentions légales, confidentialité) est là');
+    if (talons) {
+      // (demande de la propriétaire) les questions fréquentes sont un écran, juste avant le formulaire
+      await p.click('.ecrans-retour'); await p.waitForTimeout(400);
+      const faq = await p.evaluate(() => { const c = document.querySelector('.ecran-courant'); return { ok: !!(c && c.classList.contains('ct-faq')), nb: c ? c.querySelectorAll('details').length : 0 }; });
+      await p.click('.ecran-courant details summary'); await p.waitForTimeout(300);
+      ok(faq.ok && faq.nb >= 5 && await p.isVisible('.ecran-courant details[open] p'), n + 'questions fréquentes : un écran avant le formulaire, les réponses s’ouvrent (' + faq.nb + ')');
+      await p.click('.ecrans-suivant'); await p.waitForTimeout(400);
+    }
     // le formulaire passe à son étape 2 : la barre des écrans s'efface (les boutons du formulaire prennent le relais)
+    if (ia) {
     await p.selectOption('#ca-experience', 'non'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400);
     e = await etat(p);
     ok(!e.barre && await p.isVisible('.lx-etape:not([hidden]) .lx-retour'), n + 'formulaire à l’étape 2 : la barre du bas s’efface, le Retour du formulaire reste');
     await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);
     e = await etat(p);
     ok(e.barre && e.retour, n + 'retour à l’étape 1 : flèche ← revient en bas');
+    }
     // le bouton Retour du téléphone (historique) ramène à l'écran d'avant
     await p.goBack(); await p.waitForTimeout(500);
     e = await etat(p);
@@ -89,6 +106,7 @@ const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366
     await p.context().close();
 
     // un bouton du haut (« Je débute ») mène à l'écran des parcours, carte cochée
+    if (ia) {
     const q = await ouvrir(page, w, h);
     await q.goto('http://127.0.0.1:' + PORT + '/' + page); await q.waitForTimeout(1500);
     await q.click('.ecran-courant .lx-hero-boutons a[data-parcours-choix="non"]'); await q.waitForTimeout(600);
@@ -97,6 +115,7 @@ const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366
     await q.click('.ia-parcours-carte[data-parcours="oui"] button'); await q.waitForTimeout(700);
     ok(await q.isVisible('#form-casting') && await q.inputValue('#ca-experience') === 'oui', n + 'le bouton de la carte (« ' + (en ? 'Choose' : 'Je choisis') + ' … ») ouvre l’écran du formulaire, réglé');
     await q.context().close();
+    }
 
     // « Suivant, Suivant, ← Retour » puis le bouton Retour du téléphone : on revient au 1er écran (pas au 3e)
     const h2 = await ouvrir(page, w, h);
@@ -116,8 +135,8 @@ const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366
 
     // un lien direct vers le formulaire (#candidature, partagé sur WhatsApp) ouvre son écran
     const r = await ouvrir(page, w, h);
-    await r.goto('http://127.0.0.1:' + PORT + '/' + page + '#candidature'); await r.waitForTimeout(1500);
-    ok(await r.isVisible('#form-casting') && !(await r.isVisible('.lx-hero')), n + 'lien direct #candidature : le formulaire s’ouvre tout de suite');
+    await r.goto('http://127.0.0.1:' + PORT + '/' + page + ancre); await r.waitForTimeout(1500);
+    ok(await r.isVisible(form) && !(await r.isVisible('.lx-hero')), n + 'lien direct ' + ancre + ' : le formulaire s’ouvre tout de suite');
     await r.context().close();
   }
   // bandeau des cookies affiché (1re visite, téléphone) : la barre du bas monte au-dessus, « Commencer » reste touchable

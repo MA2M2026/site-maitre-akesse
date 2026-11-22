@@ -22,9 +22,12 @@
       const parent = c.parentElement, nouvelle = s.cloneNode(false);
       nouvelle.removeAttribute('id'); nouvelle.removeAttribute('data-ecran-coupe'); nouvelle.removeAttribute('aria-labelledby');
       nouvelle.classList.add('ecran-suite');
-      // (éléments directement dans la section : déplacés tels quels ; sinon dans une copie vide de leur conteneur, sans id)
-      const boite = parent === s ? nouvelle : parent.cloneNode(false);
-      if (boite !== nouvelle) { boite.removeAttribute('id'); nouvelle.appendChild(boite); }
+      // (éléments directement dans la section : déplacés tels quels ; sinon dans des copies vides de TOUS leurs conteneurs
+      // jusqu'à la section, sans id : la mise en page, les marges du .container, reste la même)
+      let boite = nouvelle;
+      const chaine = [];
+      for (let e = parent; e && e !== s; e = e.parentElement) chaine.unshift(e);
+      chaine.forEach((e) => { const copie = e.cloneNode(false); copie.removeAttribute('id'); boite.appendChild(copie); boite = copie; });
       for (let n = c; n;) { const suivant = n.nextSibling; boite.appendChild(n); n = suivant; }
       apres.after(nouvelle); apres = nouvelle;
     });
@@ -61,8 +64,9 @@
   const formulaire = ecrans[dernier].querySelector('form');
   // formulaire à sa première étape (ou sans étapes) : « ← Retour » ramène à l'écran d'avant
   const formulaireAuDebut = () => {
-    const etapes = formulaire ? [...formulaire.querySelectorAll('.lx-etape')] : [];
-    return !etapes.length || !etapes[0].hidden;
+    // (étapes des candidatures : .lx-etape[hidden] ; cours de talons : .ct-etape.u-hidden)
+    const etapes = formulaire ? [...formulaire.querySelectorAll('.lx-etape, .ct-etape')] : [];
+    return !etapes.length || !(etapes[0].hidden || etapes[0].classList.contains('u-hidden'));
   };
   let courant = -1;
   function majBarre() {
@@ -123,7 +127,7 @@
     aller(ecrans.indexOf(ecran));
   });
   // le formulaire change d'étape : la barre suit (Retour seulement à la première étape)
-  if (formulaire) new MutationObserver(majBarre).observe(formulaire, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  if (formulaire) new MutationObserver(majBarre).observe(formulaire, { subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
 
   function ecranDeAdresse() {
     const h = decoder(location.hash.slice(1));

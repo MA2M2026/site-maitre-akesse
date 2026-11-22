@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="css/paiements-premium.css?v=e68257b9">
 <link rel="stylesheet" href="css/talons-creneaux.css?v=5b55f382">
 <link rel="stylesheet" href="css/cours-talons.css?v=9d54b4a9">
+<link rel="stylesheet" href="css/pages-ecrans.css?v=6bfc965f">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -52,7 +53,7 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="js/gabarit.js?v=01bab7f9"></script>
-<main>
+<main data-ecrans>
 
 <section class="ct-haut lx-hero">
   <img class="lx-hero-photo" src="assets/cours-talons/mannequin-podium.jpg?v=2" alt="" width="1080" height="1350" fetchpriority="high">
@@ -90,7 +91,7 @@
   <video class="vp-horizontale" controls playsinline preload="none" poster="assets/cours-talons/affiche-large.jpg?v=7" width="1280" height="720"><source src="assets/cours-talons/atelier-talons-elegance-large.mp4?v=7" type="video/mp4"></video>
 </section>
 
-<section class="ct-formules" id="formules">
+<section class="ct-formules" id="formules" data-ecran-coupe="article.ct-carte">
   <div class="container">
     <h2 class="lx-titre-section reveal">Deux formules</h2>
     <div class="ct-cartes">
@@ -121,7 +122,7 @@
 <!-- (14/11/2026, programme validé par la propriétaire) le programme du cours en groupe, mois après mois : le même que
      la table cours_talons_programme (supabase-programme-talons.sql) qui remplit le programme de chaque élève ; à changer
      aux deux endroits (et sur en/cours-talons.html). -->
-<section class="lx-prog-section" id="programme" aria-labelledby="ct-programme-titre">
+<section class="lx-prog-section" id="programme" data-ecran-coupe="li.lx-prog-mois[data-module='1'], li.lx-prog-mois[data-module='4']" aria-labelledby="ct-programme-titre">
   <div class="container">
     <p class="lx-surtitre reveal">Le cours en groupe</p>
     <h2 class="lx-titre-section reveal" id="ct-programme-titre">Le programme, mois après mois</h2>
@@ -157,6 +158,18 @@
   <div class="container lx-defile-texte">
     <p class="lx-citation reveal">Chaque pas est une <em>signature</em>.</p>
     <p class="lx-citation-sous reveal reveal-delay-1">Posture · Port de tête · Équilibre · Démarche fluide</p>
+  </div>
+</section>
+
+<!-- (22/11/2026, pages en écrans) les questions fréquentes passent AVANT le formulaire : le formulaire est le dernier écran -->
+<section class="ct-faq">
+  <div class="container">
+    <h2 class="lx-titre-section reveal">Questions fréquentes</h2>
+    <details class="reveal"><summary>Faut-il déjà savoir marcher en talons ?</summary><p>Non. Les cours sont ouverts à toutes, des débutantes aux plus à l’aise : votre vidéo nous aide à adapter le travail à votre niveau.</p></details>
+    <details class="reveal"><summary>À partir de quel âge ?</summary><p>Il n’y a pas d’âge minimum strict. Pour une mineure, nous demandons le nom et le téléphone d’un parent ou d’un tuteur.</p></details>
+    <details class="reveal"><summary>Où ont lieu les cours ?</summary><p>Dans notre salle à la Riviera Faya (Abidjan) ; les cours privés peuvent aussi avoir lieu chez vous ou à l’endroit de votre choix.</p></details>
+    <details class="reveal"><summary>Comment payer ?</summary><p>Par Wave, tout de suite à la fin de l’inscription ou plus tard : l’agence vous recontacte sur WhatsApp.</p></details>
+    <details class="reveal"><summary>Ces cours permettent-ils de devenir mannequin de l’agence ?</summary><p>Non. Pour devenir mannequin, il faut passer par la page « Intégrer l’agence ».</p></details>
   </div>
 </section>
 
@@ -288,16 +301,6 @@
   </div>
 </section>
 
-<section class="ct-faq">
-  <div class="container">
-    <h2 class="lx-titre-section reveal">Questions fréquentes</h2>
-    <details class="reveal"><summary>Faut-il déjà savoir marcher en talons ?</summary><p>Non. Les cours sont ouverts à toutes, des débutantes aux plus à l’aise : votre vidéo nous aide à adapter le travail à votre niveau.</p></details>
-    <details class="reveal"><summary>À partir de quel âge ?</summary><p>Il n’y a pas d’âge minimum strict. Pour une mineure, nous demandons le nom et le téléphone d’un parent ou d’un tuteur.</p></details>
-    <details class="reveal"><summary>Où ont lieu les cours ?</summary><p>Dans notre salle à la Riviera Faya (Abidjan) ; les cours privés peuvent aussi avoir lieu chez vous ou à l’endroit de votre choix.</p></details>
-    <details class="reveal"><summary>Comment payer ?</summary><p>Par Wave, tout de suite à la fin de l’inscription ou plus tard : l’agence vous recontacte sur WhatsApp.</p></details>
-    <details class="reveal"><summary>Ces cours permettent-ils de devenir mannequin de l’agence ?</summary><p>Non. Pour devenir mannequin, il faut passer par la page « Intégrer l’agence ».</p></details>
-  </div>
-</section>
 
 </main>
 
@@ -321,5 +324,6 @@
 <script src="js/talons-commun.js?v=d635b7c1"></script>
 <script src="js/talons-creneaux.js?v=86fa3741"></script>
 <script src="js/cours-talons.js?v=acf977e5"></script>
+<script src="js/pages-ecrans.js?v=7a784328"></script>
 </body>
 </html>
