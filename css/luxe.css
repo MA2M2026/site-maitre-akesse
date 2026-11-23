@@ -1,6 +1,6 @@
 /* Univers « luxe » partagé (10/11/2026, demande de la propriétaire : pages « très luxe », qu'une femme de 40 à 60 ans
    se dise « c'est sérieux ») : pages « Cours de talons » et « Intégrer l'agence ». Couleurs de la charte seulement
-   (rouges et blanc, règle du 28/10/2026 ; pas de doré). Titres en Cormorant Garamond (lettres à empattements des
+   (rouges et blanc, règle du 28/10/2026 ; pas de doré). Titres en Cormorant Garamond jusqu'au 23/11/2026, puis police des titres du site (Big Shoulders Display, maquette validée ; lettres à empattements des
    magazines de mode), filets fins, ornements, chiffres romains, photos de mannequins, beaucoup d'espace.
    Les boutons gardent les couleurs du bouton unique du site (css/bouton-ma2m.css, maître des couleurs) ; dans ces
    pages ils sont seulement arrondis (--bouton-rayon) avec un reflet (accord de la propriétaire, 10/11/2026). */
@@ -8,7 +8,7 @@
 /* (11/11/2026, demande de la propriétaire : plus aucun « voile blanc » qui pâlit le rouge — les cartes et écrins sont
    du même rouge mat que la page, seul un liseré blanc les dessine) */
 :root { --lx-verre: rgba(0, 0, 0, 0.06); --lx-verre-fort: rgba(0, 0, 0, 0.1); --lx-lisere: rgba(255, 255, 255, 0.3); }
-.lx-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+.lx-serif { font-family: var(--police-titre); font-weight: 800; }
 
 /* ---------- couverture : photo de mannequin, voile rouge, cadre fin, titre */
 .lx-hero { position: relative; overflow: hidden; isolation: isolate; display: flex; align-items: flex-end; padding: 58vh 0 3rem; }
@@ -20,7 +20,7 @@
 .lx-hero-cadre { position: absolute; inset: 14px; z-index: -1; border: 1px solid rgba(255, 255, 255, 0.28); pointer-events: none; }
 .lx-hero-lieu { display: none; }
 .lx-hero .eyebrow { color: #fff; letter-spacing: 0.32em; font-size: 0.72rem; }
-.lx-hero h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; color: #fff;
+.lx-hero h1 { font-family: var(--police-titre); font-weight: 800; text-transform: none; letter-spacing: 0; color: #fff;
   font-size: clamp(3rem, 11vw, 6.4rem); line-height: 0.92; text-shadow: 0 6px 30px rgba(90, 20, 27, 0.6); }
 .lx-hero h1 .oeil { display: none; }
 .lx-chapeau { max-width: 56ch; margin-top: 1.2rem; font-size: 1.08rem; line-height: 1.7; color: #fff; }
@@ -57,10 +57,10 @@
 
 /* ---------- titres : surtitre espacé, grand titre, titre de partie centré en italique avec un filet, ornement */
 .lx-surtitre { margin: 0 0 0.8rem; text-align: center; color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.38em; text-transform: uppercase; opacity: 0.85; }
-.lx-grand-titre, .lx-titre-section, .lx-piliers h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; color: #fff; }
+.lx-grand-titre, .lx-titre-section, .lx-piliers h3 { font-family: var(--police-titre); font-weight: 800; text-transform: none; letter-spacing: 0; color: #fff; }
 .lx-grand-titre { margin: 0 auto; max-width: 18em; text-align: center; font-size: clamp(2.1rem, 6vw, 3.4rem); line-height: 1.1; }
 .lx-grand-titre em { font-style: italic; }
-.lx-titre-section { font-size: clamp(2.4rem, 6vw, 3.6rem); font-style: italic; text-align: center; margin-bottom: 2.4rem; }
+.lx-titre-section { font-size: clamp(2.4rem, 6vw, 3.6rem); font-style: normal; text-align: center; margin-bottom: 2.4rem; }
 .lx-titre-section::after { content: ""; display: block; width: 90px; height: 1px; margin: 1.1rem auto 0; background: rgba(255, 255, 255, 0.5); }
 .lx-ornement { position: relative; display: block; width: 160px; height: 1px; margin: 1.6rem auto 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)); }
 .lx-ornement::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; transform: rotate(45deg); border: 1px solid #fff; background: var(--rouge-mat); }
@@ -70,7 +70,7 @@
 .lx-piliers { list-style: none; margin: 3rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
 @media (min-width: 860px) { .lx-piliers { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
 .lx-piliers li { position: relative; padding: 2rem 1.6rem 1.6rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.35); }
-.lx-chiffre { display: block; margin-bottom: 0.6rem; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 2.8rem; line-height: 1; color: #fff; opacity: 0.9; }
+.lx-chiffre { display: block; margin-bottom: 0.6rem; font-family: var(--police-titre); font-weight: 800; font-style: normal; font-size: 2.8rem; line-height: 1; color: #fff; opacity: 0.9; }
 .lx-piliers h3 { margin: 0 0 0.6rem; font-size: 1.7rem; }
 .lx-piliers p { margin: 0 auto; max-width: 30ch; line-height: 1.7; color: #fff; opacity: 0.88; }
 
@@ -105,7 +105,7 @@
 .lx-defile-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
 .lx-defile-voile { position: absolute; inset: 0; z-index: -1;
   background: linear-gradient(180deg, rgba(124, 33, 40, 1) 0%, rgba(90, 20, 27, 0.25) 22%, rgba(90, 20, 27, 0.3) 45%, rgba(90, 20, 27, 0.88) 75%, rgba(124, 33, 40, 1) 100%); }
-.lx-citation { margin: 0; color: #fff; font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(2.2rem, 7vw, 4.4rem); line-height: 1.05; font-weight: 500; text-shadow: 0 6px 30px rgba(90, 20, 27, 0.8); }
+.lx-citation { margin: 0; color: #fff; font-family: var(--police-titre); font-size: clamp(2.2rem, 7vw, 4.4rem); line-height: 1.05; font-weight: 800; text-shadow: 0 6px 30px rgba(90, 20, 27, 0.8); }
 .lx-citation em { font-style: italic; }
 .lx-citation-sous { margin: 1rem 0 0; color: #fff; letter-spacing: 0.22em; text-transform: uppercase; font-size: 0.78rem; font-weight: 600; }
 @media (min-width: 900px) {
@@ -166,13 +166,13 @@
 .lx-prog-mois { display: flex; gap: 1.1rem; align-items: flex-start; padding: 1.5rem 1.4rem; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.22);
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)); color: #fff; }
 .lx-prog-num { flex: 0 0 3.2rem; height: 3.2rem; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.55);
-  font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.35rem; line-height: 1; }
+  font-family: var(--police-titre); font-weight: 800; font-style: normal; font-size: 1.35rem; line-height: 1; }
 .lx-prog-num { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
 .lx-prog-section .lx-surtitre { margin-left: auto; margin-right: auto; }
 .lx-prog-mois--suite .lx-prog-num { font-size: 1.1rem; }
 .lx-prog-num small { font-size: 0.75rem; margin-left: 1px; }
 .lx-prog-quand { margin: 0.1rem 0 0.15rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255, 255, 255, 0.72); }
-.lx-prog-mois h3 { margin: 0 0 0.6rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.9rem; line-height: 1.05; text-transform: none; letter-spacing: 0; color: #fff; }
+.lx-prog-mois h3 { margin: 0 0 0.6rem; font-family: var(--police); font-weight: 600; font-size: 1.1rem; line-height: 1.3; text-transform: none; letter-spacing: 0; color: #fff; }
 .lx-prog-mois ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; }
 .lx-prog-mois ol li { position: relative; padding-left: 1.1rem; font-size: 0.95rem; line-height: 1.45; color: rgba(255, 255, 255, 0.9); }
 .lx-prog-mois ol li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 1px; background: rgba(255, 255, 255, 0.7); }
@@ -182,11 +182,11 @@
 .lx-prog-mois--suite .lx-prog-num { border-color: rgba(124, 33, 40, 0.4); color: #7C2128; }
 .lx-prog-mois--suite h3, .lx-prog-mois--suite p:not(.lx-prog-quand) { color: #7C2128; }
 .lx-prog-mois--suite .lx-prog-quand { color: #8B5A60; }
-.lx-prog-pied { max-width: 34em; margin: 2rem auto 0; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; line-height: 1.4; color: #fff; }
+.lx-prog-pied { max-width: 34em; margin: 2rem auto 0; text-align: center; font-family: var(--police); font-style: normal; font-size: 1.02rem; line-height: 1.5; color: #fff; }
 @media (min-width: 700px) { .lx-prog { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1100px) { .lx-prog { grid-template-columns: repeat(3, 1fr); } .lx-prog-mois--suite { grid-column: 1 / -1; } }
 /* (14/11/2026) version compacte pour la formation de l'agence (integrer-agence.html) : un thème par carte, titres des niveaux */
-.lx-prog-niveau { margin: 2.6rem 0 1rem; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 500; font-size: 1.7rem; color: #fff; text-transform: none; letter-spacing: 0; }
+.lx-prog-niveau { margin: 2.6rem 0 1rem; text-align: center; font-family: var(--police-titre); font-style: normal; font-weight: 800; font-size: 1.7rem; color: #fff; text-transform: none; letter-spacing: 0; }
 .lx-prog-niveau:first-of-type { margin-top: 0.4rem; }
 .lx-prog--compact .lx-prog-mois { padding: 1.1rem 1.2rem; align-items: center; }
 .lx-prog--compact .lx-prog-mois h3 { margin: 0; font-size: 1.35rem; line-height: 1.2; }
@@ -209,7 +209,7 @@
 .ct-progression li, .lx-progression li { counter-increment: etape; position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.55rem; text-align: center;
   font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; opacity: 0.6; transition: opacity 0.3s; }
 .ct-progression li::before, .lx-progression li::before { content: counter(etape); position: relative; z-index: 1; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%;
-  font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.25rem; font-weight: 600; letter-spacing: 0; color: #fff;
+  font-family: var(--police-titre); font-size: 1.25rem; font-weight: 800; letter-spacing: 0; color: #fff;
   background: var(--rouge-profond); border: 1px solid rgba(255, 255, 255, 0.4); transition: background 0.35s, color 0.35s, box-shadow 0.35s; }
 .ct-progression li + li::after, .lx-progression li + li::after { content: ""; position: absolute; top: 1.25rem; right: 50%; width: 100%; height: 1px; background: rgba(255, 255, 255, 0.25); }
 .ct-progression li.fait + li::after, .lx-progression li.fait + li::after, .ct-progression li.fait + li.actif::after, .lx-progression li.fait + li.actif::after { background: #fff; }
@@ -222,5 +222,5 @@
 .ct-etape-titre, .lx-etape-titre { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.2rem; }
 .ct-etape-titre span, .lx-etape-titre span { display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; flex: none;
   background: #fff; color: var(--rouge-profond); font-size: 1.35rem; font-weight: 600; font-style: italic; }
-.ct-etape-titre h3, .lx-etape-titre h3 { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.75rem; text-transform: none; letter-spacing: 0; color: #fff; }
+.ct-etape-titre h3, .lx-etape-titre h3 { margin: 0; font-family: var(--police-titre); font-weight: 800; font-size: 1.75rem; text-transform: none; letter-spacing: 0; color: #fff; }
 .ct-consigne, .lx-consigne { margin: -0.4rem 0 1rem; font-weight: 500; opacity: 0.9; }

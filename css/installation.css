@@ -53,7 +53,7 @@ body.ma2m-installer-visible::after { content: ""; display: block; height: 96px; 
   font: 400 15px/1.45 'Work Sans', system-ui, sans-serif; text-align: center; box-shadow: 0 20px 50px var(--rouge-profond-a35); animation: ma2m-installer-arrivee .35s ease;
 }
 .ma2m-guide-carte img { border-radius: 14px; }
-.ma2m-guide-carte h2 { margin: 8px 0 14px; font: 600 24px/1.15 'Cormorant Garamond', Georgia, serif; color: var(--rouge-profond); }
+.ma2m-guide-carte h2 { margin: 8px 0 14px; font: 800 24px/1.15 var(--police-titre); color: var(--rouge-profond); }
 .ma2m-guide-carte ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .ma2m-guide-carte li { display: flex; gap: 12px; align-items: flex-start; background: var(--blanc-pur); border-radius: 14px; padding: 12px; }
 .ma2m-guide-carte li > b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--rouge-mat); color: var(--blanc-pur); display: grid; place-items: center; font-size: 14px; }

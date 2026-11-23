@@ -32,8 +32,8 @@
     if (window.PagesEcrans && window.PagesEcrans.montrer(cible)) return;  // (page en écrans : js/pages-ecrans.js)
     if (cible && typeof cible.scrollIntoView === 'function') cible.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
-  // boutons du haut : vont aux parcours (lien #parcours) et préparent le choix
-  document.querySelectorAll('.ia-choix-rapide [data-parcours-choix]').forEach((b) => b.addEventListener('click', () => choisir(b.dataset.parcoursChoix, false)));
+  // (23/11/2026, décision de la propriétaire) plus de raccourcis « Je débute / J'ai déjà été mannequin » en haut de page :
+  // la visiteuse parcourt les écrans jusqu'aux parcours, pour comprendre comment fonctionne l'agence
   // cartes : toute la carte se touche ; son bouton amène au formulaire
   cartes.forEach((c) => {
     c.addEventListener('click', (e) => choisir(c.dataset.parcours, !!e.target.closest('button')));

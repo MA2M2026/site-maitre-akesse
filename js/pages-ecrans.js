@@ -61,7 +61,14 @@
   const compteur = document.createElement('span'); compteur.className = 'ecrans-compteur'; compteur.setAttribute('aria-live', 'polite');
   const suivant = document.createElement('button'); suivant.type = 'button'; suivant.className = 'btn btn--principal ecrans-suivant';
   suivant.innerHTML = fleche(1);
-  barre.append(retour, compteur, suivant);
+  // (23/11/2026, choix de la propriétaire) plus de grand bas de page sur ces pages : une petite ligne « Mentions légales ·
+  // Confidentialité » en bas de CHAQUE écran, dans la barre (toujours visible, même pendant le formulaire)
+  const legal = document.createElement('p'); legal.className = 'ecrans-legal';
+  [['mentions-legales.html', T('Mentions légales', 'Legal notice')], ['politique-confidentialite.html', T('Confidentialité', 'Privacy')]].forEach(([href, texte], k) => {
+    if (k) legal.append(' · ');
+    const a = document.createElement('a'); a.href = href; a.textContent = texte; legal.appendChild(a);
+  });
+  barre.append(legal, retour, compteur, suivant);
   document.body.appendChild(barre);
 
   const dernier = ecrans.length - 1;
@@ -73,6 +80,16 @@
     return !etapes.length || !(etapes[0].hidden || etapes[0].classList.contains('u-hidden'));
   };
   let courant = -1;
+  // place laissée à un écran : la fenêtre moins l'en-tête du site et la barre du bas (téléphone, tablette, ordinateur) ;
+  // --ecran-dispo sert à css/pages-ecrans.css (un écran remplit exactement la fenêtre, sans défiler)
+  function mesurer() {
+    const haut = progression.getBoundingClientRect().bottom + window.scrollY;
+    const dispo = Math.max(320, Math.round(window.innerHeight - haut - barre.offsetHeight));
+    document.documentElement.style.setProperty('--ecran-dispo', dispo + 'px');
+    document.documentElement.style.setProperty('--ecran-barre', barre.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', () => mesurer());
+  ecrans[ecrans.length - 1].classList.add('ecran-formulaire');
   function majBarre() {
     const surFormulaire = courant === dernier;
     retour.hidden = courant === 0 || (surFormulaire && !formulaireAuDebut());
@@ -80,9 +97,12 @@
     // (22/11/2026, choix de la propriétaire) de simples flèches rondes ; le nom du bouton reste lu par les lecteurs d'écran
     suivant.setAttribute('aria-label', courant === 0 ? T('Commencer', 'Start') : courant === dernier - 1 ? T('Remplir le formulaire', 'Fill in the form') : T('Suivant', 'Next'));
     compteur.textContent = surFormulaire ? '' : (courant + 1) + ' / ' + ecrans.length;
-    barre.hidden = retour.hidden && suivant.hidden;
-    document.body.classList.toggle('ecrans-sans-barre', barre.hidden);
+    // (formulaire après sa 1re étape : ses propres boutons prennent le relais ; la barre ne garde que la petite ligne)
+    const sansFleches = retour.hidden && suivant.hidden;
+    barre.classList.toggle('ecrans-barre--legal', sansFleches);
+    document.body.classList.toggle('ecrans-sans-barre', sansFleches);
     document.body.classList.toggle('ecrans-dernier', surFormulaire);
+    mesurer();
   }
   function aller(i, ajouterHistorique) {
     i = Math.max(0, Math.min(dernier, i));

@@ -10,14 +10,14 @@
 .pp-cb-tete { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .pp-cb-tete img { height: 26px; width: auto; display: block; }
 .pp-cb-tete span { font: 600 9px 'Work Sans', sans-serif; letter-spacing: .3em; text-transform: uppercase; }
-.pp-cb-grand { font: 600 40px/1 'Cormorant Garamond', Georgia, serif; margin: 24px 0 4px; color: #FFFFFF; }
+.pp-cb-grand { font: 800 40px/1 var(--police-titre); margin: 24px 0 4px; color: #FFFFFF; }
 .pp-cb-grand small { font-size: 22px; }
 .pp-cb-sous { font: 500 12.5px 'Work Sans', sans-serif; color: #F3DDE0; }
 .pp-cb-bas { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin-top: 18px; font: 500 13px 'Work Sans', sans-serif; color: #FFFFFF; }
 .pp-cb-bas b { display: block; font-size: 9px; font-weight: 700; letter-spacing: .2em; color: #F3DDE0; margin-bottom: 3px; text-transform: uppercase; }
 .pp-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .pp-tuile { border-radius: 16px; padding: 14px; background: rgba(255, 255, 255, .1); color: #FFFFFF; }
-.pp-tuile .pp-ch { font: 600 28px/1.05 'Cormorant Garamond', Georgia, serif; }
+.pp-tuile .pp-ch { font: 800 28px/1.05 var(--police-titre); }
 .pp-tuile .pp-ch small { font-size: 18px; color: #F3DDE0; }
 .pp-tuile .pp-dx { color: #F3DDE0; font-size: 12.5px; margin: 2px 0 8px; }
 .pp-pastille { display: inline-block; padding: 5px 11px; border-radius: 999px; font: 600 11.5px 'Work Sans', sans-serif; background: #FFFFFF; color: #7C2128; }
@@ -36,7 +36,7 @@ button.pp-op:first-child { border-top: 0; }
 .pp-blanc { border-radius: 18px; padding: 16px; background: #FFFFFF; color: #2a1416; box-shadow: 0 14px 30px -18px rgba(40, 6, 10, .6); }
 .pp-s { display: block; font: 700 9.5px 'Work Sans', sans-serif; letter-spacing: .2em; color: #6E4F53; text-transform: uppercase; }
 .pp-montant { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; }
-.pp-montant b { font: 600 30px/1.1 'Cormorant Garamond', Georgia, serif; }
+.pp-montant b { font: 800 30px/1.1 var(--police-titre); }
 .pp-montant span { font-size: 13px; color: #5b4547; }
 /* choix du moyen en tuiles (✓ rouge sur la tuile choisie ; « bientôt » estompé, non cliquable) */
 .pp-choix { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }

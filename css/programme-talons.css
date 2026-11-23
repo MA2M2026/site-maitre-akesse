@@ -11,7 +11,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-ic-petit { width: 13px; height: 13px; }
 .pt-surtitre { font: 600 10px 'Work Sans', sans-serif; letter-spacing: .32em; text-transform: uppercase; color: var(--pt-gris); }
 .pt-bloc { padding: 0 20px; margin-top: 36px; }
-.pt-bloc > h2 { font: 500 28px/1.1 'Cormorant Garamond', Georgia, serif; margin: 6px 0 16px; }
+.pt-bloc > h2 { font: 800 28px/1.1 var(--police-titre); margin: 6px 0 16px; }
 
 /* grande photo, nom */
 .pt-une { position: relative; height: 470px; overflow: hidden; background: var(--pt-fonce); color: #FFFFFF; }
@@ -23,9 +23,9 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-entete span { font: 600 9.5px 'Work Sans', sans-serif; letter-spacing: .32em; text-transform: uppercase; }
 .pt-une-texte { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 22px 64px; }
 .pt-une .pt-surtitre { color: var(--pt-rose); }
-.pt-une h1 { font: 500 50px/0.98 'Cormorant Garamond', Georgia, serif; margin-top: 10px; overflow-wrap: anywhere; }
+.pt-une h1 { font: 800 50px/0.98 var(--police-titre); margin-top: 10px; overflow-wrap: anywhere; }
 .pt-une h1 em { font-style: italic; font-weight: 400; }
-.pt-accroche { font: italic 400 19px 'Cormorant Garamond', Georgia, serif; color: var(--pt-rose); margin-top: 8px; }
+.pt-accroche { font: 400 19px var(--police); color: var(--pt-rose); margin-top: 8px; }
 .pt-page > .pt-une + .pt-boutons { margin-top: 28px; }
 
 /* carte d'élève (pp-cb) */
@@ -41,7 +41,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 
 /* calendrier */
 .pt-cal-tete { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 14px; }
-.pt-cal-tete h2 { font: 500 24px 'Cormorant Garamond', Georgia, serif; text-transform: capitalize; }
+.pt-cal-tete h2 { font: 800 24px var(--police-titre); text-transform: capitalize; }
 .pt-fl { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--pt-ligne); background: #FFFFFF; color: var(--pt-encre); display: grid; place-items: center; cursor: pointer; padding: 0; }
 .pt-fl:disabled { opacity: .25; cursor: default; }
 .pt-fl:focus-visible, .pt-second:focus-visible, .pt-info a:focus-visible { outline: 2px solid var(--pt-rouge); outline-offset: 2px; }
@@ -63,10 +63,10 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-seance.proche .pt-date { background: var(--pt-rouge); border-color: var(--pt-rouge); color: #FFFFFF; box-shadow: 0 12px 22px -12px rgba(124,33,40,.9); }
 .pt-seance.faite { opacity: .55; }
 .pt-date small { display: block; font: 600 9px 'Work Sans', sans-serif; letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
-.pt-date b { display: block; font: 500 26px/1 'Cormorant Garamond', Georgia, serif; }
+.pt-date b { display: block; font: 800 26px/1 var(--police-titre); }
 .pt-seance-t { flex: 1; min-width: 0; }
 .pt-seance-t small { font: 600 9.5px 'Work Sans', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: var(--pt-doux); }
-.pt-seance-t b { display: block; font: 500 19px/1.2 'Cormorant Garamond', Georgia, serif; margin: 1px 0 2px; }
+.pt-seance-t b { display: block; font: 800 19px/1.2 var(--police-titre); margin: 1px 0 2px; }
 .pt-seance-t span { font-size: 12.5px; color: var(--pt-gris); }
 .pt-vide { color: var(--pt-gris); font-size: 14px; }
 
@@ -90,7 +90,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-note { text-align: center; font-size: 12px; color: var(--pt-gris); }
 .pt-signature { text-align: center; margin-top: 44px; }
 .pt-signature img { height: 22px; width: auto; }
-.pt-signature p { font: italic 400 16px 'Cormorant Garamond', Georgia, serif; color: var(--pt-gris); margin-top: 6px; }
+.pt-signature p { font: 400 16px var(--police); color: var(--pt-gris); margin-top: 6px; }
 @media (max-width: 360px) { .pt-une h1 { font-size: 42px; } .pt-prevoir { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .pt-progres i { transition: none; } }
 /* groupe sur plusieurs mois (14/11/2026) : un titre par mois ; les mois pas encore réglés, estompés */

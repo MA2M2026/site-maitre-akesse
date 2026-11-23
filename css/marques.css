@@ -31,7 +31,7 @@
 }
 .p-marques .marques-surtitre { display: block; font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--rouge-mat); }
 .mag .p-marques .marques-titre {
-  font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0;
+  font-family: var(--police-titre); font-weight: 800; text-transform: none; letter-spacing: 0;
   font-size: clamp(38px, 4.4vw, 54px); line-height: 1.02; margin: 14px 0; color: var(--rouge-profond);
 }
 .p-marques .marques-titre em { font-style: italic; font-weight: 400; color: var(--rouge-mat); }
@@ -43,7 +43,7 @@
 .p-marques .marques-rond {
   flex: none; width: 38px; height: 38px; border-radius: 50%; background: #FFFFFF; display: grid; place-items: center;
   box-shadow: 0 4px 12px -6px rgba(124, 33, 40, 0.5); color: var(--rouge-mat);
-  font: italic 500 17px 'Cormorant Garamond', Georgia, serif;
+  font: 800 17px var(--police-titre);
 }
 .p-marques .marques-prestations b { display: block; font-weight: 600; font-size: 15px; color: #3A1A1D; }
 .p-marques .marques-prestations span:not(.marques-rond) { display: block; font-size: 13.5px; color: #6E5A5C; line-height: 1.4; }

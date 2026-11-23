@@ -1,6 +1,6 @@
 /* ===== Maître Akesse Model Management — Design tokens =====
    Couleurs : noir profond + bordeaux signature (accent principal), touche d'or mineure héritée du logo
-   Typo : Cormorant Garamond (titres, display) + Jost (texte courant)
+   Typo : Big Shoulders Display (titres, grands chiffres) + Work Sans (texte) — 23/11/2026, maquette validée
    Polices chargées via <link> dans le <head> de chaque page (avec preconnect),
    pas via @import ici — un @import CSS bloque le rendu en créant une dépendance
    en série (attendre style.css, puis découvrir l'import, puis le télécharger),
@@ -33,7 +33,7 @@
   --gris: var(--c-8a837d);
   --gris-clair: var(--c-rgba-255-255-255-0_16); /* fines bordures / aplats discrets sur fond noir */
 
-  --display: 'Cormorant Garamond', serif;
+  --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;   /* (23/11/2026 : police des titres du site, css/jetons.css --police-titre) */
   --texte: 'Jost', sans-serif;
 
   --marge: clamp(1.25rem, 5vw, 4rem);
@@ -3236,14 +3236,14 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
 .fiche-v2 .fiche-onglets a span { color: #7C2128; }
 /* chapitres sur fond blanc */
 .fiche-v2 .fiche-carte, .fiche-selection { background: transparent; border: 0; box-shadow: none; padding: 26px 0 6px; }
-.fiche-v2 .fiche-carte-titre, #fiche-book h2 { display: block; font: 600 clamp(2rem, 7vw, 2.8rem)/1 'Cormorant Garamond', Georgia, serif; letter-spacing: 0; text-transform: none; color: #7C2128; margin: 0 0 4px; }
+.fiche-v2 .fiche-carte-titre, #fiche-book h2 { display: block; font: 800 clamp(2rem, 7vw, 2.8rem)/1 var(--police-titre); letter-spacing: 0; text-transform: none; color: #7C2128; margin: 0 0 4px; }
 .fiche-sous-titre { margin: 0 0 16px; color: #5E5456; font-size: 0.86rem; }
 .fiche-edito { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .fiche-edito-photo { display: block; padding: 0; border: 0; background: #FFFFFF; cursor: zoom-in; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 4px; }
 .fiche-edito-photo.grande { grid-column: 1 / -1; }
 .fiche-edito-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s ease; }
 .fiche-edito-photo:hover img { transform: scale(1.03); }
-.fiche-v2 .fiche-bio { font: italic 500 1.45rem/1.3 'Cormorant Garamond', Georgia, serif; color: #1A1A1A; padding-left: 16px; border-left: 2px solid #7C2128; margin: 8px 0 16px; }
+.fiche-v2 .fiche-bio { font: 500 1.45rem/1.3 var(--police); color: #1A1A1A; padding-left: 16px; border-left: 2px solid #7C2128; margin: 8px 0 16px; }
 .fiche-v2 .fiche-infos li { color: #1A1A1A; }
 .fiche-v2 .fiche-infos .fiche-ico { color: #7C2128; }
 .fiche-v2 .fiche-type { background: #FFFFFF; color: #7C2128; border: 1px solid rgba(124, 33, 40, 0.3); }
@@ -3309,7 +3309,7 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
    niveau, nom en grandes lettres, taille · ville ; petit « + » discret (✓ rouge une fois choisie).
    ========================================================================================================== */
 .book-v2 .book-ouverture { padding: 2.6rem 0 1.2rem; }
-.book-v2 .book-ouverture h1 { margin: 0.35rem 0 0.4rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(3.4rem, 9vw, 6.4rem); line-height: 0.95; letter-spacing: -0.01em; text-transform: none; }
+.book-v2 .book-ouverture h1 { margin: 0.35rem 0 0.4rem; font-family: var(--police-titre); font-weight: 800; font-size: clamp(3.4rem, 9vw, 6.4rem); line-height: 0.95; letter-spacing: -0.01em; text-transform: none; }
 .book-v2 .book-ouverture h1 em { font-style: italic; font-weight: 400; }
 .book-v2 .book-chapo { margin: 0; max-width: 40rem; font-size: 0.98rem; color: var(--c-rgba-255-255-255-0_78); }
 /* la barre : collée sous l'en-tête quand on défile */
@@ -3334,7 +3334,7 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 .book-v2 #grille.medaillon-grille { display: block; }
 .book-v2 .book-chapitre { padding: 1.6rem 0 0.6rem; }
 .book-v2 .book-chapitre-tete { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.4rem 0.9rem; }
-.book-v2 .book-chapitre-tete h2 { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(2.2rem, 5vw, 3rem); line-height: 1; text-transform: none; letter-spacing: 0; color: #FFFFFF; }
+.book-v2 .book-chapitre-tete h2 { margin: 0; font-family: var(--police-titre); font-weight: 800; font-size: clamp(2.2rem, 5vw, 3rem); line-height: 1; text-transform: none; letter-spacing: 0; color: #FFFFFF; }
 .book-v2 .book-chapitre-nb { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-rgba-255-255-255-0_78); }
 .book-v2 .book-chapitre-pres { margin: 0.3rem 0 1.1rem; font-size: 0.92rem; color: var(--c-rgba-255-255-255-0_78); }
 .book-v2 .book-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem 0.7rem; }
