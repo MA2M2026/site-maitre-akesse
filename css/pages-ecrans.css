@@ -48,7 +48,7 @@ body.ecrans-actif .site-footer, body.ecrans-actif .bandeau-integrer { display: n
 .ecrans-barre .ecrans-suivant { margin-left: auto; }
 .ecrans-compteur { font-size: 0.85rem; letter-spacing: 0.08em; opacity: 0.8; white-space: nowrap; }
 @media (min-width: 900px) {
-  .ecrans-barre { justify-content: center; gap: 2rem; }
+  .ecrans-barre { justify-content: center; column-gap: 2rem; }
   .ecrans-barre .ecrans-suivant { margin-left: 0; }
   .ecrans-barre .ecrans-compteur { flex: 0 0 auto; }
 }
@@ -70,9 +70,12 @@ body.ecrans-actif .ia-etapes > li, body.ecrans-actif .ia-avantage { padding: 0.9
 body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { display: flex; align-items: flex-end; padding-top: 30vh; padding-bottom: 1.5rem; }
 body.ecrans-actif .lx-hero-photo { height: 100%; }
 @media (min-width: 900px) {
-  body.ecrans-actif .lx-hero.ecran-courant { padding-top: 3rem; padding-bottom: 2rem; }
+  body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { align-items: center; padding-top: 3rem; padding-bottom: 2rem; }
   body.ecrans-actif .lx-hero-photo { height: 100%; }
-  body.ecrans-actif .lx-hero h1 { font-size: min(5.5rem, 11vh); }
+  body.ecrans-actif .lx-hero h1 { font-size: min(5rem, 10vh); }
+  body.ecrans-actif .lx-hero .lx-chapeau { margin-top: 0.8rem; font-size: 1rem; line-height: 1.6; }
+  body.ecrans-actif .lx-hero .ct-avertissement { margin: 1rem 0 0; padding: 0.8rem 1.1rem; font-size: 0.88rem; line-height: 1.5; }
+  body.ecrans-actif .lx-hero .ct-avertissement p { margin: 0.3rem 0 0.4rem; }
 }
 /* (23/11/2026) le contenu de chaque écran est centré en hauteur : l'écran est rempli, pas tassé en haut (tablette surtout) */
 body.ecrans-actif main > section.ecran.ecran-courant:not(.lx-hero):not(.ecran-formulaire) { display: flex; flex-direction: column; justify-content: center; }
@@ -125,8 +128,6 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.1) 0%, rgba(90, 20, 27, 0.25) 30%, rgba(90, 20, 27, 0.85) 52%, rgba(90, 20, 27, 1) 66%, rgba(90, 20, 27, 1) 100%); }
   body.ecrans-actif .lx-hero .lx-chapeau { font-size: 0.9rem; line-height: 1.5; margin-top: 0.6rem; }
   body.ecrans-actif .lx-hero p.u-mt-1-2 { margin-top: 0.6rem; font-size: 0.88rem; }
-  body.ecrans-actif .lx-hero-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
-  body.ecrans-actif .lx-hero-boutons .btn { min-height: 42px; padding: 0.5rem 1.1rem; margin: 0; }
   body.ecrans-actif .ia-etapes > li { padding: 0.8rem 1rem; }
   body.ecrans-actif .ia-etapes h3 { margin: 0.3rem 0 0.2rem; font-size: 1.35rem; }
   body.ecrans-actif .ia-etapes p, body.ecrans-actif .ia-avantage p { line-height: 1.45; font-size: 0.9rem; }

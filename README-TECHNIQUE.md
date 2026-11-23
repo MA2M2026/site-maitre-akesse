@@ -5566,6 +5566,8 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
   « Je débute / J'ai déjà été mannequin » et le lien « Postuler à un casting » (Intégrer l'agence), « Je postule » et le lien
   « Intégrer l'agence » (Postuler à un casting), « Je m'inscris / Voir les formules » (Cours de talons). Les choix de parcours
   restent sur leur écran. `test-lien-marche.js` supprimé (les liens n'existent plus) ; le contrôle est dans `test-pages-ecrans.js`.
+  Le petit bouton rond « marche » (`.lien-marche`, css/charte-ma2m.css, js/bouton-appui.js) est gardé exprès comme modèle
+  réutilisable, même s'il n'est plus sur ces pages.
 - **Plus de grand bas de page** sur ces pages, même sur le formulaire : une petite ligne « Mentions légales · Confidentialité »
   (`.ecrans-legal`) dans la barre du bas, sur chaque écran (choix de la propriétaire). Après la 1re étape du formulaire, la barre
   ne garde que cette ligne (`.ecrans-barre--legal`).

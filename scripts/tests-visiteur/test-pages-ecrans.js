@@ -14,6 +14,7 @@ const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366
   // (23/11/2026, retour de la propriétaire) tablette debout : chaque écran remplit la tablette
   ['integrer-agence.html', 820, 1180], ['cours-talons.html', 820, 1180]];
 // écran du formulaire de chaque page (lien direct partagé, ce qui doit être visible au dernier écran)
+const innerHeightDe = (h) => h;
 const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candidature: ['#candidature', '#candidature'], 'cours-talons': ['#inscription', '#form-talons'] };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
@@ -64,6 +65,11 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     // (23/11/2026, décision de la propriétaire) plus de raccourcis sur le premier écran : on parcourt tous les écrans
     const raccourcis = await p.evaluate(() => document.querySelectorAll('.lx-hero a[href^="#"], .lx-hero .btn, .lx-hero .lien-marche, .lx-hero a[href*="candidature"], .lx-hero a[href*="integrer-agence"]:not(.ct-avertissement a)').length);
     ok(raccourcis === 0, n + 'premier écran sans raccourci (pas de « Je débute », « Je postule », « Je m’inscris »…) (' + raccourcis + ')');
+    if (w >= 900 && w > h) {
+      // ordinateur : le texte de l'accueil reste en entier dans l'écran (pas repoussé en bas comme sur téléphone)
+      const acc = await p.evaluate(() => { const t = document.querySelector('.lx-hero h1').getBoundingClientRect(), b = document.querySelector('.ecrans-barre').getBoundingClientRect(); return { haut: Math.round(t.top), bas: Math.round(document.querySelector('.lx-hero .container').getBoundingClientRect().bottom), barre: Math.round(b.top) }; });
+      ok(acc.haut < innerHeightDe(h) * 0.5 && acc.bas <= acc.barre, n + 'ordinateur : le texte de l’accueil tient en entier au-dessus de la barre ' + JSON.stringify(acc));
+    }
     if (w >= 700 && h > w) {
       const t = await p.evaluate(() => ({ police: parseFloat(getComputedStyle(document.documentElement).fontSize), photo: Math.round(document.querySelector('.lx-hero-photo').getBoundingClientRect().height), dispo: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ecran-dispo')) }));
       ok(t.police >= 20 && t.photo >= t.dispo * 0.95, n + 'tablette : textes agrandis (' + t.police + ' px) et photo d’accueil sur tout l’écran (' + t.photo + ' / ' + t.dispo + ' px)');
@@ -139,6 +145,16 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);
     e = await etat(p);
     ok(e.barre && e.retour, n + 'retour à l’étape 1 : flèche ← revient en bas');
+    }
+    // (relecture du 23/11/2026) la place calculée pour un écran ne dépend pas du défilement : on descend dans le formulaire,
+    // puis on revient à l'écran d'avant, la hauteur disponible est la même
+    {
+      const dispo = () => p.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ecran-dispo')));
+      const avantDef = await dispo();
+      await p.evaluate(() => window.scrollTo(0, 600)); await p.waitForTimeout(300);
+      await p.evaluate(() => window.dispatchEvent(new Event('resize'))); await p.waitForTimeout(200);
+      ok(Math.abs((await dispo()) - avantDef) <= 2, n + 'hauteur des écrans stable même après avoir fait défiler le formulaire (' + avantDef + ' px)');
+      await p.evaluate(() => window.scrollTo(0, 0));
     }
     // le bouton Retour du téléphone (historique) ramène à l'écran d'avant
     await p.goBack(); await p.waitForTimeout(500);

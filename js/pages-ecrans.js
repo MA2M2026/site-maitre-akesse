@@ -83,12 +83,17 @@
   // place laissée à un écran : la fenêtre moins l'en-tête du site et la barre du bas (téléphone, tablette, ordinateur) ;
   // --ecran-dispo sert à css/pages-ecrans.css (un écran remplit exactement la fenêtre, sans défiler)
   function mesurer() {
-    const haut = progression.getBoundingClientRect().bottom + window.scrollY;
-    const dispo = Math.max(320, Math.round(window.innerHeight - haut - barre.offsetHeight));
+    // (haut du contenu = haut du <main> + la fine barre de progression : le <main> ne colle pas en haut, sa position ne
+    // dépend pas du défilement, contrairement à la barre de progression « collante »)
+    const haut = main.getBoundingClientRect().top + window.scrollY + progression.offsetHeight;
+    const dispo = Math.max(200, Math.round(window.innerHeight - haut - barre.offsetHeight));
     document.documentElement.style.setProperty('--ecran-dispo', dispo + 'px');
     document.documentElement.style.setProperty('--ecran-barre', barre.offsetHeight + 'px');
   }
   window.addEventListener('resize', () => mesurer());
+  // (l'en-tête peut changer de hauteur quand les polices ou le logo arrivent : on remesure)
+  window.addEventListener('load', () => mesurer());
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => mesurer()).catch(() => {});
   ecrans[ecrans.length - 1].classList.add('ecran-formulaire');
   function majBarre() {
     const surFormulaire = courant === dernier;
@@ -118,7 +123,7 @@
     ecrans[i].querySelectorAll('.reveal:not(.visible)').forEach((r) => r.classList.add('visible'));
     progression.firstChild.style.width = Math.round(((i + 1) / ecrans.length) * 100) + '%';
     majBarre();
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); mesurer();
     if (ajouterHistorique !== false) { try { history.pushState({ ecran: i, de: avant }, '', '#ecran-' + (i + 1)); } catch (err) { /* rien */ } }
     // (lecteurs d'écran) le titre du nouvel écran prend le focus, sans faire défiler
     const titre = i > 0 && ecrans[i].querySelector('h1, h2');

@@ -4,8 +4,6 @@
    titres, ornements, galerie, bande « défilé », cartes de verre, écrin du formulaire et boutons arrondis viennent de
    css/luxe.css ; ici, seulement ce qui est propre à la page. */
 .ia-haut-grille { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
-.ia-haut .lien-marche { color: #fff; }
-.ia-choix-rapide { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 1.6rem 0 0.6rem; }
 
 .ia-section { padding: 5rem 0 2rem; }
 .ia-section--criteres { background: none; }  /* (11/11/2026 : plus de halo blanc) */
