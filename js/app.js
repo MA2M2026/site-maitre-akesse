@@ -673,7 +673,8 @@ async function construireCanvasCompcard(ficheData, langue) {
   const en = langue === 'en';
   // (11/11/2026, compcard « premium » choisie par la propriétaire) fond blanc, rouge mat de l'agence, photos en grand
   const ROUGE = '#7C2128', BLANC = '#ffffff', ENCRE = '#2a1416', DOUX = '#8a6a6d', FILET = '#e6d6d7';
-  const SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif', SANS = '"Work Sans", Arial, sans-serif';
+  // (23/11/2026, demande de la propriétaire) nom et mensurations dans la police des titres du site
+  const TITRE = '"Big Shoulders Display", "Arial Narrow", sans-serif', SANS = '"Work Sans", Arial, sans-serif';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
   const DPI = 400;
   const ESCALE = DPI / 25.4;
@@ -686,7 +687,7 @@ async function construireCanvasCompcard(ficheData, langue) {
   const ctx = canvas.getContext('2d');
 
   await Promise.all([
-    document.fonts.load('600 100px "Cormorant Garamond"'), document.fonts.load('italic 400 100px "Cormorant Garamond"'),
+    document.fonts.load('800 100px "Big Shoulders Display"'),
     document.fonts.load('600 100px "Work Sans"'), document.fonts.load('500 100px "Work Sans"')
   ].map((x) => x.catch(() => null)));
   await document.fonts.ready;
@@ -743,15 +744,15 @@ async function construireCanvasCompcard(ficheData, langue) {
   texteEspace('COMPCARD', px(LARGEUR_MM - M), px(18.5), 2.2, 'right');
 
   // --- Nom (grand, élégant) et niveau · ville en italique rouge ---
-  let taillePolice = 40;
-  ctx.font = `600 ${fpx(taillePolice)}px ${SERIF}`;
+  let taillePolice = 44;
+  ctx.font = `800 ${fpx(taillePolice)}px ${TITRE}`;
   const nom = profil.full_name || (en ? 'Model' : 'Mannequin');
-  while (ctx.measureText(nom).width > px(LARGEUR_UTILE) && taillePolice > 22) { taillePolice -= 2; ctx.font = `600 ${fpx(taillePolice)}px ${SERIF}`; }
+  while (ctx.measureText(nom).width > px(LARGEUR_UTILE) && taillePolice > 22) { taillePolice -= 2; ctx.font = `800 ${fpx(taillePolice)}px ${TITRE}`; }
   ctx.fillStyle = ENCRE; ctx.textAlign = 'left';
   ctx.fillText(nom, px(M), px(39));
   const niveauMannequin = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
   ctx.fillStyle = ROUGE;
-  ctx.font = `italic 500 ${fpx(16)}px ${SERIF}`;
+  ctx.font = `500 ${fpx(13)}px ${SANS}`;
   ctx.fillText([niveauMannequin, profil.city].filter(Boolean).join(' · '), px(M), px(47.5));
 
   // Grande photo EN ENTIER (31/10/2026, demande de la propriétaire : une photo en pied avait la tête
@@ -820,7 +821,7 @@ async function construireCanvasCompcard(ficheData, langue) {
       const cx = M + pas * (i + 0.5);
       ctx.fillStyle = DOUX; ctx.font = `600 ${fpx(6.6)}px ${SANS}`;
       texteEspace(label.toUpperCase(), px(cx), px(y + 6.5), 0.55, 'center');
-      ctx.fillStyle = ENCRE; ctx.font = `600 ${fpx(14)}px ${SERIF}`;
+      ctx.fillStyle = ENCRE; ctx.font = `800 ${fpx(15)}px ${TITRE}`;
       let t = String(valeur);
       while (ctx.measureText(t).width > px(pas - 2) && t.length > 4) t = t.slice(0, -2) + '…';
       ctx.textAlign = 'center'; ctx.fillText(t, px(cx), px(y + 13.5)); ctx.textAlign = 'left';
@@ -1387,9 +1388,10 @@ async function construireCanvasCv(d) {
   const fpx = function (pt) { return pt * 0.3528 * ESCALE; };
 
   await Promise.all([
-    document.fonts.load('600 100px Jost'), document.fonts.load('400 100px Jost'), document.fonts.load('italic 400 100px Jost'),
-    document.fonts.load('600 100px "Cormorant Garamond"')
-  ]);
+    // (23/11/2026, demande de la propriétaire) CV dans les polices du site : titres Big Shoulders Display, texte Work Sans
+    document.fonts.load('600 100px "Work Sans"'), document.fonts.load('500 100px "Work Sans"'), document.fonts.load('400 100px "Work Sans"'),
+    document.fonts.load('800 100px "Big Shoulders Display"')
+  ].map((x) => x.catch(() => null)));
   await document.fonts.ready;
 
   const lienFichePublique = 'https://www.maitreakessemodelmanagement.com/mannequin.html?id=' + encodeURIComponent(d.mannequinId || '');
@@ -1428,7 +1430,7 @@ async function construireCanvasCv(d) {
     ctx.fillRect(0, 0, px(LARGEUR_MM), px(hBanniere));
     ctx.fillStyle = '#f0d3d7';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = `400 ${fpx(9)}px Jost, sans-serif`;
+    ctx.font = `400 ${fpx(9)}px "Work Sans", sans-serif`;
     ctx.fillText('Document privé, visible uniquement par ' + ((d.nomComplet || '').split(' ')[0] || 'le mannequin') + ' et l’administrateur MA2M', px(LARGEUR_MM) / 2, px(hBanniere / 2));
 
     // ============== COLONNE GAUCHE (sidebar sombre) ==============
@@ -1458,14 +1460,14 @@ async function construireCanvasCv(d) {
     let y = yColDebut + hPhotoHero + 8;
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = OR;
-    ctx.font = `400 ${fpx(6.2)}px Jost, sans-serif`;
+    ctx.font = `400 ${fpx(6.2)}px "Work Sans", sans-serif`;
     ctx.fillText('F O R M E R   ·   R É V É L E R   ·   V A L O R I S E R', px(SIDEBAR_MM / 2), px(y));
     y += 6;
 
     ctx.textAlign = 'left';
     ctx.fillStyle = IVOIRE;
-    const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `600 ${fpx(16)}px "Cormorant Garamond", serif`);
-    ctx.font = `600 ${fpx(16)}px "Cormorant Garamond", serif`;
+    const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `800 ${fpx(17)}px "Big Shoulders Display", sans-serif`);
+    ctx.font = `800 ${fpx(17)}px "Big Shoulders Display", sans-serif`;
     lignesNom.forEach(function (ligne) { y += 7.5; ctx.fillText(ligne, px(PAD_SIDEBAR), px(y)); });
     y += 6;
 
@@ -1483,12 +1485,12 @@ async function construireCanvasCv(d) {
     infosCv.forEach(function (ligne) {
       dessinerIconeMcvCanvas(ctx, ligne[0], px(PAD_SIDEBAR), px(y - 3.2), px(4.2), OR);
       ctx.fillStyle = 'rgba(244,240,234,.55)';
-      ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+      ctx.font = `400 ${fpx(6.6)}px "Work Sans", sans-serif`;
       ctx.fillText(ligne[1].toUpperCase(), px(PAD_SIDEBAR + 6.5), px(y));
       y += 4;
       ctx.fillStyle = IVOIRE;
       ligne[2].forEach(function (valeur) {
-        const lignesVal = envelopperLignesCanvas(ctx, valeur, px(SIDEBAR_MM - PAD_SIDEBAR * 2 - 6.5), `400 ${fpx(9.5)}px Jost, sans-serif`);
+        const lignesVal = envelopperLignesCanvas(ctx, valeur, px(SIDEBAR_MM - PAD_SIDEBAR * 2 - 6.5), `400 ${fpx(9.5)}px "Work Sans", sans-serif`);
         lignesVal.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR + 6.5), px(y)); y += 4.2; });
       });
       y += 4;
@@ -1499,11 +1501,11 @@ async function construireCanvasCv(d) {
     ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
     y += 5;
     ctx.fillStyle = 'rgba(244,240,234,.55)';
-    ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+    ctx.font = `400 ${fpx(6.6)}px "Work Sans", sans-serif`;
     ctx.fillText('CATÉGORIE', px(PAD_SIDEBAR), px(y));
     y += 5;
     ctx.fillStyle = IVOIRE;
-    ctx.font = `500 ${fpx(11)}px Jost, sans-serif`;
+    ctx.font = `500 ${fpx(11)}px "Work Sans", sans-serif`;
     ctx.fillText(d.niveauMannequin ? libelleNiveauPublic(d.niveauMannequin) : '—', px(PAD_SIDEBAR), px(y));
 
     if (d.citation) {
@@ -1512,7 +1514,7 @@ async function construireCanvasCv(d) {
       ctx.beginPath(); ctx.moveTo(px(PAD_SIDEBAR), px(y)); ctx.lineTo(px(SIDEBAR_MM - PAD_SIDEBAR), px(y)); ctx.stroke();
       y += 6;
       ctx.fillStyle = '#e8e0d2';
-      const lignesCitation = envelopperLignesCanvas(ctx, '« ' + d.citation + ' »', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `italic 400 ${fpx(11)}px "Cormorant Garamond", serif`);
+      const lignesCitation = envelopperLignesCanvas(ctx, '« ' + d.citation + ' »', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `400 ${fpx(9.5)}px "Work Sans", sans-serif`);
       lignesCitation.forEach(function (l) { ctx.fillText(l, px(PAD_SIDEBAR), px(y)); y += 5.5; });
     }
     const finSidebar = y - yColDebut;
@@ -1531,14 +1533,14 @@ async function construireCanvasCv(d) {
     const xMain = SIDEBAR_MM + PAD_MAIN, lMain = MAIN_MM - PAD_MAIN * 2;
     let ym = yColDebut + PAD_MAIN;
     ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_GRIS_CLAIR;
-    ctx.font = `400 ${fpx(6.8)}px Jost, sans-serif`;
+    ctx.font = `400 ${fpx(6.8)}px "Work Sans", sans-serif`;
     ctx.fillText('M O D E L   C V', px(SIDEBAR_MM + MAIN_MM - PAD_MAIN), px(ym));
     ym += 6;
 
     function titreSection(icone, libelle) {
       dessinerIconeMcvCanvas(ctx, icone, px(xMain), px(ym - 3.2), px(4.4), BORDEAUX2);
       ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE;
-      ctx.font = `600 ${fpx(8.4)}px Jost, sans-serif`;
+      ctx.font = `600 ${fpx(8.4)}px "Work Sans", sans-serif`;
       ctx.fillText(libelle.toUpperCase(), px(xMain + 6.5), px(ym));
       ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.3);
       const largeurTexte = ctx.measureText(libelle.toUpperCase()).width / ESCALE;
@@ -1549,7 +1551,7 @@ async function construireCanvasCv(d) {
     // --- Profil ---
     titreSection('user', 'Profil');
     ctx.fillStyle = TEXTE_GRIS_CLAIR;
-    envelopperLignesCanvas(ctx, d.bio || 'Profil à compléter.', px(lMain), `italic 400 ${fpx(10.5)}px Jost, sans-serif`).forEach(function (l) {
+    envelopperLignesCanvas(ctx, d.bio || 'Profil à compléter.', px(lMain), `italic 400 ${fpx(10.5)}px "Work Sans", sans-serif`).forEach(function (l) {
       ctx.fillText(l, px(xMain), px(ym)); ym += 5.2;
     });
     ym += 4;
@@ -1571,10 +1573,10 @@ async function construireCanvasCv(d) {
         ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
         ctx.beginPath(); ctx.moveTo(px(xcMm), px(yc + 2)); ctx.lineTo(px(xcMm + largeurColMm), px(yc + 2)); ctx.stroke();
         ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_GRIS;
-        ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
+        ctx.font = `400 ${fpx(8.2)}px "Work Sans", sans-serif`;
         ctx.fillText(ligne[0], px(xcMm), px(yc));
         ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE;
-        ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
+        ctx.font = `500 ${fpx(8.6)}px "Work Sans", sans-serif`;
         ctx.fillText(String(ligne[1]), px(xcMm + largeurColMm), px(yc));
         yc += 7;
       });
@@ -1587,9 +1589,9 @@ async function construireCanvasCv(d) {
     [['Niveau d’étude', f.niveau || '—'], ['Établissement', f.etablissement || '—'], ['Formation particulière', f.particuliere || 'Aucune'], ['Formation mannequin', f.mannequin || '—']].forEach(function (ligne) {
       ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
       ctx.beginPath(); ctx.moveTo(px(xMain), px(ym + 2)); ctx.lineTo(px(xMain + lMain), px(ym + 2)); ctx.stroke();
-      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(8.2)}px Jost, sans-serif`;
+      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(8.2)}px "Work Sans", sans-serif`;
       ctx.fillText(ligne[0], px(xMain), px(ym));
-      ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(8.6)}px Jost, sans-serif`;
+      ctx.textAlign = 'right'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(8.6)}px "Work Sans", sans-serif`;
       ctx.fillText(String(ligne[1]), px(xMain + lMain), px(ym));
       ctx.textAlign = 'left';
       ym += 7;
@@ -1600,14 +1602,14 @@ async function construireCanvasCv(d) {
     titreSection('star', 'Expérience professionnelle');
     if (groupes.length) {
       groupes.forEach(function (g) {
-        ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `600 ${fpx(7.6)}px Jost, sans-serif`;
+        ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `600 ${fpx(7.6)}px "Work Sans", sans-serif`;
         ctx.fillText(g.label.toUpperCase(), px(xMain), px(ym));
         ym += 5;
         g.items.forEach(function (item) {
           ctx.fillStyle = BORDEAUX2;
           ctx.beginPath(); ctx.arc(px(xMain + 1), px(ym - 1.6), px(0.55), 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = TEXTE_SOMBRE;
-          envelopperLignesCanvas(ctx, item, px(lMain - 3.5), `400 ${fpx(8.4)}px Jost, sans-serif`).forEach(function (l) {
+          envelopperLignesCanvas(ctx, item, px(lMain - 3.5), `400 ${fpx(8.4)}px "Work Sans", sans-serif`).forEach(function (l) {
             ctx.fillText(l, px(xMain + 3.5), px(ym)); ym += 4.6;
           });
           ym += 0.6;
@@ -1615,7 +1617,7 @@ async function construireCanvasCv(d) {
         ym += 1.5;
       });
     } else {
-      ctx.fillStyle = TEXTE_GRIS_CLAIR; ctx.font = `italic 400 ${fpx(8.4)}px Jost, sans-serif`;
+      ctx.fillStyle = TEXTE_GRIS_CLAIR; ctx.font = `italic 400 ${fpx(8.4)}px "Work Sans", sans-serif`;
       ctx.fillText('Aucune expérience renseignée pour le moment.', px(xMain), px(ym));
       ym += 6;
     }
@@ -1631,7 +1633,7 @@ async function construireCanvasCv(d) {
       const iCol = i < nbGauche ? 0 : 1;
       const xs = xMain + iCol * (largeurColSkills + 8);
       const ys = ySkillsDebut + (i - iCol * nbGauche) * 7;
-      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(7.6)}px Jost, sans-serif`;
+      ctx.textAlign = 'left'; ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `400 ${fpx(7.6)}px "Work Sans", sans-serif`;
       ctx.fillText(LIBELLES_COMPETENCES[cle], px(xs), px(ys));
       const yBarre = ys + 1.5, lBarre = largeurColSkills, hBarre = 1.4;
       ctx.fillStyle = '#e3d9c4';
@@ -1666,17 +1668,17 @@ async function construireCanvasCv(d) {
     ctx.textAlign = 'left';
     if (handle) {
       dessinerIconeMcvCanvas(ctx, 'insta', px(xMain), px(yl - 3.3), px(4.2), BORDEAUX2);
-      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+      ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px "Work Sans", sans-serif`;
       ctx.fillText('INSTAGRAM', px(xMain + 6.5), px(yl - 0.2));
-      ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
+      ctx.fillStyle = TEXTE_SOMBRE; ctx.font = `500 ${fpx(9)}px "Work Sans", sans-serif`;
       ctx.fillText('@' + handle, px(xMain + 6.5), px(yl + 4.2));
       zonesLiens.push({ x: xMain, y: yl - 4, l: 70, h: 10, url: 'https://www.instagram.com/' + encodeURIComponent(handle) });
       yl += 12;
     }
     dessinerIconeMcvCanvas(ctx, 'link', px(xMain), px(yl - 3.3), px(4.2), BORDEAUX2);
-    ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px Jost, sans-serif`;
+    ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6.6)}px "Work Sans", sans-serif`;
     ctx.fillText('FICHE EN LIGNE', px(xMain + 6.5), px(yl - 0.2));
-    ctx.fillStyle = BORDEAUX2; ctx.font = `500 ${fpx(9)}px Jost, sans-serif`;
+    ctx.fillStyle = BORDEAUX2; ctx.font = `500 ${fpx(9)}px "Work Sans", sans-serif`;
     ctx.fillText('maitreakessemodelmanagement.com', px(xMain + 6.5), px(yl + 4.2));
     zonesLiens.push({ x: xMain, y: yl - 4, l: 80, h: 10, url: lienFichePublique });
     yl += 10;
@@ -1684,7 +1686,7 @@ async function construireCanvasCv(d) {
     if (dessinerQrCanvas(ctx, lienFichePublique, px(xQr), px(yBlocLiens), px(tailleQr), '#241a12')) {
       ctx.strokeStyle = TRAIT; ctx.lineWidth = px(0.25);
       ctx.strokeRect(px(xQr), px(yBlocLiens), px(tailleQr), px(tailleQr));
-      ctx.textAlign = 'center'; ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6)}px Jost, sans-serif`;
+      ctx.textAlign = 'center'; ctx.fillStyle = TEXTE_GRIS; ctx.font = `400 ${fpx(6)}px "Work Sans", sans-serif`;
       ctx.fillText('Scannez pour ouvrir la fiche', px(xQr + tailleQr / 2), px(yBlocLiens + tailleQr + 3.8));
       zonesLiens.push({ x: xQr, y: yBlocLiens, l: tailleQr, h: tailleQr, url: lienFichePublique });
       yl = Math.max(yl, yBlocLiens + tailleQr + 4);

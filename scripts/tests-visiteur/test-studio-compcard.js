@@ -49,6 +49,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   const [pdf] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }).catch(() => null), p.click('#scPdf')]);
   ok(pdf && /\.pdf$/.test(pdf.suggestedFilename()), '« PDF » : la compcard téléchargée en PDF');
   const [img] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }).catch(() => null), p.click('#scJpeg')]);
+  if (process.env.CAPTURES && img) await img.saveAs(path.join(process.env.CAPTURES, 'compcard-telechargee.jpg'));   // (pour regarder le document)
   ok(img && /\.jpg$/.test(img.suggestedFilename()), '« Image » : la compcard téléchargée en image');
   if (process.env.CAPTURES && img) await img.saveAs(path.join(process.env.CAPTURES, 'compcard-image.jpg'));
   ok((await p.getAttribute('.sc-retour', 'href')) === '/app/#profil', '« ‹ » ramène à Mon profil');

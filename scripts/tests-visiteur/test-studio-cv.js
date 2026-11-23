@@ -38,6 +38,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   const [pdf] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }).catch(() => null), p.click('#scvPdf')]);
   ok(pdf && /\.pdf$/.test(pdf.suggestedFilename()), '« PDF » : le CV téléchargé en PDF');
   const [img] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }).catch(() => null), p.click('#scvJpeg')]);
+  if (process.env.CAPTURES && img) await img.saveAs(path.join(process.env.CAPTURES, 'cv-telechargee.jpg'));   // (pour regarder le document)
   ok(img && /\.jpg$/.test(img.suggestedFilename()), '« Image » : le CV téléchargé en image');
   if (img && process.env.CV_IMAGE) await img.saveAs(process.env.CV_IMAGE);
   await p.click('[data-scv-aller="physique"]'); await p.waitForTimeout(800);

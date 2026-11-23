@@ -5588,6 +5588,10 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
   `--av-titre`, qui vaut maintenant `var(--police-titre)`. Phrases (ex. la phrase de la vitrine) en Work Sans.
   **Non changés exprès** : les documents dessinés (compcard, CV imprimable, carte « Mannequin MA2M » : js/carte-mannequin.js
   et la partie dessin de js/app.js), dont le modèle a été validé à part ; à changer seulement si la propriétaire le demande.
+- **Documents dessinés** (accord de la propriétaire, 23/11/2026) : compcard, CV et carte « Mannequin MA2M » passent aussi aux
+  polices du site : noms, mensurations et titres en Big Shoulders Display (`TITRE`), textes en Work Sans (le CV était en Jost).
+  Essais : test-studio-compcard.js, test-studio-cv.js, test-app-mannequin.js (avec CAPTURES=dossier, les documents téléchargés
+  y sont enregistrés pour les regarder).
 
 ### Formulaire des Cours de talons : une question par écran (23/11/2026, demande de la propriétaire)
 

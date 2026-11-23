@@ -14,7 +14,7 @@ window.CarteMannequin = (function () {
   }));
   async function polices() {
     if (!document.fonts || !document.fonts.load) return;
-    await Promise.all(['500 23px "Cormorant Garamond"', 'italic 400 18px "Cormorant Garamond"', '400 10px "Work Sans"', '500 10px "Work Sans"', '300 10px "Work Sans"', '600 10px "Work Sans"']
+    await Promise.all(['800 23px "Big Shoulders Display"', '400 10px "Work Sans"', '500 10px "Work Sans"', '300 10px "Work Sans"', '600 10px "Work Sans"']
       .map((f) => document.fonts.load(f).catch(() => null)));
   }
   // texte avec espacement des lettres (comme letter-spacing), aligné à gauche, au centre ou à droite
@@ -57,7 +57,8 @@ window.CarteMannequin = (function () {
     ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
   }
   const SANS = (poids, taille) => poids + ' ' + (taille * u).toFixed(1) + 'px "Work Sans", sans-serif';
-  const SERIF = (style, taille) => style + ' ' + (taille * u).toFixed(1) + 'px "Cormorant Garamond", Georgia, serif';
+  // (23/11/2026, demande de la propriétaire) noms et titres de la carte dans la police des titres du site
+  const TITRE = (taille) => '800 ' + (taille * u).toFixed(1) + 'px "Big Shoulders Display", "Arial Narrow", sans-serif';
   // un champ : son titre, puis sa valeur, rapetissée si besoin pour tenir dans sa colonne (largeur max)
   function champ(ctx, titre, valeur, x, y, largeurMax) {
     texte(ctx, titre, x, y, SANS(500, 6.5), ROSE, 0.22 * 6.5);
@@ -93,14 +94,14 @@ window.CarteMannequin = (function () {
     if (photo) { ctx.save(); ctx.globalAlpha = 0.22; ctx.filter = 'grayscale(1)'; arrondi(ctx, W - 49 * u, 46 * u, 34 * u, 45 * u, 5 * u); ctx.clip(); couvrir(ctx, photo, W - 49 * u, 46 * u, 34 * u, 45 * u); ctx.restore(); }
     // nom, catégorie, champs
     const ix = 120 * u;
-    ctx.save(); ctx.font = SERIF(500, 22);
+    ctx.save(); ctx.font = TITRE(22);
     // (15/11/2026, nom coupé sur la carte d'une mannequin) le nom tient toujours : sur une ligne en rapetissant, sinon
     // sur deux lignes (coupées entre deux mots)
     const nom = String(d.nom || '').toUpperCase(), largeurMax = W - ix - 56 * u;
-    const mesure = (t, taille) => { ctx.font = SERIF(500, taille); return ctx.measureText(t).width + t.length * 0.06 * taille * u; };
+    const mesure = (t, taille) => { ctx.font = TITRE(taille); return ctx.measureText(t).width + t.length * 0.06 * taille * u; };
     let taille = 22;
     while (taille > 15 && mesure(nom, taille) > largeurMax) taille -= 1;
-    if (mesure(nom, taille) <= largeurMax) texte(ctx, nom, ix, 66 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+    if (mesure(nom, taille) <= largeurMax) texte(ctx, nom, ix, 66 * u, TITRE(taille), '#FFFFFF', 0.06 * taille);
     else {
       const mots = nom.split(/\s+/);
       let coupe = 1;
@@ -111,8 +112,8 @@ window.CarteMannequin = (function () {
       // (16/11/2026, relecture) chaque ligne tient : un mot trop long est coupé lui aussi ; un seul mot reste à hauteur du nom
       const couper = (t) => { while (mesure(t, taille) > largeurMax && t.length > 2) t = t.slice(0, -2) + '…'; return t; };
       l1 = couper(l1); l2 = couper(l2);
-      texte(ctx, l1, ix, (l2 ? 52 : 66) * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
-      if (l2) texte(ctx, l2, ix, 52 * u + taille * 1.15 * u, SERIF(500, taille), '#FFFFFF', 0.06 * taille);
+      texte(ctx, l1, ix, (l2 ? 52 : 66) * u, TITRE(taille), '#FFFFFF', 0.06 * taille);
+      if (l2) texte(ctx, l2, ix, 52 * u + taille * 1.15 * u, TITRE(taille), '#FFFFFF', 0.06 * taille);
     }
     ctx.restore();
     ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(ix, 76 * u, 26 * u, 1 * u);
@@ -130,7 +131,7 @@ window.CarteMannequin = (function () {
     else { sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr); sg.addColorStop(0, '#ffffff44'); sg.addColorStop(1, '#f3c6cf66'); }
     ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1 * u; ctx.stroke();
-    texte(ctx, 'MA2M', sx, sy + 3.5 * u, SERIF('italic 600', 9.5), '#FFFFFF', 0.05 * 9.5, 'center');
+    texte(ctx, 'MA2M', sx, sy + 3.5 * u, TITRE(9.5), '#FFFFFF', 0.05 * 9.5, 'center');
     ctx.restore();
   }
   // ligne lisible par machine (comme un passeport) : lettres sans accents, « < » pour les blancs
@@ -159,7 +160,7 @@ window.CarteMannequin = (function () {
     texte(ctx, ligneMachine('MA2M<<' + (d.nom || ''), 30), 15 * u, H - 38 * u, (8.5 * u).toFixed(1) + 'px "Courier New", monospace', 'rgba(255,255,255,0.75)', 0.14 * 8.5);
     texte(ctx, ligneMachine(num[1] + '<' + num[2] + '<' + cat + '<<' + mmaa(d.depuis) + '<' + mmaa(d.valable), 30), 15 * u, H - 25 * u, (8.5 * u).toFixed(1) + 'px "Courier New", monospace', 'rgba(255,255,255,0.75)', 0.14 * 8.5);
     texte(ctx, SITE.replace(/^https?:\/\/(www\.)?/, '') + ' · propriété de l’agence', 15 * u, H - 10 * u, SANS(300, 7), ROSE, 0.06 * 7);
-    texte(ctx, 'Maître Akesse', W - 15 * u, H - 10 * u, SERIF('italic 400', 13), '#FFFFFF', 0, 'right');
+    texte(ctx, 'Maître Akesse', W - 15 * u, H - 10 * u, TITRE(13), '#FFFFFF', 0, 'right');
     ctx.restore();
   }
   function canvasVide() { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; }
