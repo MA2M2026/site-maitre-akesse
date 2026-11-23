@@ -6,17 +6,20 @@ body.ecrans-actif main > section.ecran { display: none; }
 body.ecrans-actif main > section.ecran.ecran-courant {
   display: block;
   /* (hauteur de l'écran moins l'en-tête du site et la barre du bas : un écran tient sans faire défiler) */
-  min-height: calc(100vh - 165px - env(safe-area-inset-bottom, 0px));
-  min-height: calc(100dvh - 165px - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100vh - 185px - env(safe-area-inset-bottom, 0px));
+  min-height: var(--ecran-dispo, calc(100dvh - 185px - env(safe-area-inset-bottom, 0px)));   /* (mesurée par le script) */
   animation: ecran-arrivee 0.35s ease both;
 }
 /* (place pour la barre du bas : rien ne se cache derrière) */
-body.ecrans-actif { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
-body.ecrans-actif.ecrans-sans-barre { padding-bottom: 0; }
-/* (le pied de page et les grands espaces entre sections ne servent plus : un écran = une idée) */
+body.ecrans-actif { padding-bottom: var(--ecran-barre, calc(100px + env(safe-area-inset-bottom, 0px))); }
+/* (23/11/2026, choix de la propriétaire) plus de grand bas de page, même sur le formulaire (on ne « change pas de page ») :
+   la petite ligne « Mentions légales · Confidentialité » est dans la barre du bas, sur chaque écran */
 body.ecrans-actif .site-footer, body.ecrans-actif .bandeau-integrer { display: none; }
-/* (sauf sur l'écran du formulaire : mentions légales et politique de confidentialité restent à portée) */
-body.ecrans-actif.ecrans-dernier .site-footer, body.ecrans-actif.ecrans-dernier .bandeau-integrer { display: block; }
+.ecrans-legal { flex: 0 0 100%; max-width: none; order: -1; margin: 0 0 0.35rem; text-align: center; font-size: 0.72rem; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.75); }
+.ecrans-legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.ecrans-barre--legal { padding-top: 0.5rem; padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
+.ecrans-barre--legal .ecrans-legal { margin: 0; }
+.ecrans-barre--legal .ecrans-compteur { display: none; }
 
 .ecrans-progression {
   position: sticky; top: 0; z-index: 40; height: 3px; background: var(--rouge-mat-a50, rgba(255, 255, 255, 0.15));
@@ -25,8 +28,8 @@ body.ecrans-actif.ecrans-dernier .site-footer, body.ecrans-actif.ecrans-dernier 
 
 .ecrans-barre {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 150;
-  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-  padding: 0.7rem max(1rem, env(safe-area-inset-left, 0px)) calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; column-gap: 0.75rem;
+  padding: 0.5rem max(1rem, env(safe-area-inset-left, 0px)) calc(0.7rem + env(safe-area-inset-bottom, 0px));
   background: var(--bordeaux-fonce, #5e1820);
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
 }
@@ -45,13 +48,12 @@ body.ecrans-actif.ecrans-dernier .site-footer, body.ecrans-actif.ecrans-dernier 
 .ecrans-barre .ecrans-suivant { margin-left: auto; }
 .ecrans-compteur { font-size: 0.85rem; letter-spacing: 0.08em; opacity: 0.8; white-space: nowrap; }
 @media (min-width: 900px) {
-  .ecrans-barre { justify-content: center; gap: 2rem; }
+  .ecrans-barre { justify-content: center; column-gap: 2rem; }
   .ecrans-barre .ecrans-suivant { margin-left: 0; }
   .ecrans-barre .ecrans-compteur { flex: 0 0 auto; }
 }
 /* le bouton WhatsApp flottant passe au-dessus de la barre */
-body.ecrans-actif .whatsapp-flottant { bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); }
-body.ecrans-actif.ecrans-sans-barre .whatsapp-flottant { bottom: 1.4rem; }
+body.ecrans-actif .whatsapp-flottant { bottom: calc(var(--ecran-barre, 100px) + 0.8rem); }
 
 /* (une section = un écran : les grands espaces prévus pour la page longue sont réduits) */
 body.ecrans-actif main > section.ecran.ecran-courant:not(.lx-hero) { padding-top: 1.6rem; padding-bottom: 1.6rem; margin-top: 0; margin-bottom: 0; }
@@ -64,19 +66,39 @@ body.ecrans-actif .ia-consigne { margin-bottom: 0.8rem; font-size: 0.92rem; }
 body.ecrans-actif .ia-etapes, body.ecrans-actif .ia-avantages { gap: 0.6rem; }
 body.ecrans-actif .ia-etapes > li, body.ecrans-actif .ia-avantage { padding: 0.9rem 1rem; }
 /* accueil : la photo en haut, le texte remonté pour tenir dans l'écran au-dessus de la barre */
-body.ecrans-actif .lx-hero.ecran-courant { padding-top: 32vh; padding-bottom: 1.5rem; }
-body.ecrans-actif .lx-hero-photo { height: 62vh; }
+/* (23/11/2026) accueil : la photo remplit tout l'écran, le texte posé en bas sur le voile rouge */
+body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { display: flex; align-items: flex-end; padding-top: 30vh; padding-bottom: 1.5rem; }
+body.ecrans-actif .lx-hero-photo { height: 100%; }
 @media (min-width: 900px) {
-  body.ecrans-actif .lx-hero.ecran-courant { padding-top: 3rem; padding-bottom: 2rem; }
+  body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { align-items: center; padding-top: 3rem; padding-bottom: 2rem; }
   body.ecrans-actif .lx-hero-photo { height: 100%; }
-  body.ecrans-actif .lx-hero h1 { font-size: min(5.5rem, 11vh); }
-  body.ecrans-actif .lx-galerie-photo { max-height: calc(100dvh - 330px); }
+  body.ecrans-actif .lx-hero h1 { font-size: min(5rem, 10vh); }
+  body.ecrans-actif .lx-hero .lx-chapeau { margin-top: 0.8rem; font-size: 1rem; line-height: 1.6; }
+  body.ecrans-actif .lx-hero .ct-avertissement { margin: 1rem 0 0; padding: 0.8rem 1.1rem; font-size: 0.88rem; line-height: 1.5; }
+  body.ecrans-actif .lx-hero .ct-avertissement p { margin: 0.3rem 0 0.4rem; }
 }
+/* (23/11/2026) le contenu de chaque écran est centré en hauteur : l'écran est rempli, pas tassé en haut (tablette surtout) */
+body.ecrans-actif main > section.ecran.ecran-courant:not(.lx-hero):not(.ecran-formulaire) { display: flex; flex-direction: column; justify-content: center; }
+body.ecrans-actif main > section.ecran.ecran-courant:not(.lx-hero):not(.ecran-formulaire) > * { width: 100%; }
 /* Cours de talons : une formule par écran, centrée */
 body.ecrans-actif .ct-cartes { grid-template-columns: 1fr; max-width: 640px; margin-left: auto; margin-right: auto; }
-/* vidéo : entière dans l'écran, au-dessus de la barre */
-body.ecrans-actif .video-pleine.ecran-courant { padding: 0; margin: 0; }
-body.ecrans-actif .video-pleine video { max-height: calc(100dvh - 215px); object-fit: contain; }
+/* vidéo : entière dans l'écran, au milieu, au-dessus de la barre ; écran debout (téléphone, tablette) : la version
+   verticale, écran couché (ordinateur) : la version horizontale */
+body.ecrans-actif main > section.ecran.ecran-courant.video-pleine { padding: 0; margin: 0; }
+body.ecrans-actif .video-pleine video { width: auto; max-width: 100%; height: calc(var(--ecran-dispo, 70vh) - 1rem); margin: 0 auto; object-fit: contain; }
+@media (orientation: portrait) {
+  body.ecrans-actif .video-pleine .vp-verticale { display: block; }
+  body.ecrans-actif .video-pleine .vp-horizontale { display: none; }
+}
+@media (orientation: landscape) {
+  body.ecrans-actif .video-pleine .vp-verticale { display: none; }
+  body.ecrans-actif .video-pleine .vp-horizontale { display: block; }
+}
+/* (23/11/2026, retour de la propriétaire : « un peu trop petit au milieu ») les photos qui défilent prennent tout l'écran,
+   en grands rectangles debout */
+body.ecrans-actif .lx-galerie-grille { margin-top: 1rem; padding-bottom: 0; }
+body.ecrans-actif .lx-galerie-grille .lx-tapis .lx-galerie-photo { width: auto; height: calc(var(--ecran-dispo, 70vh) - 9rem); aspect-ratio: 3 / 4; max-height: none; }
+body.ecrans-actif .lx-galerie .lx-grand-titre { font-size: clamp(1.5rem, 4.6vw, 2.4rem); }
 /* programme : une ligne par mois (un écran par niveau, data-ecran-coupe) */
 body.ecrans-actif .lx-prog-section .lx-prog.lx-prog { grid-template-columns: 1fr; gap: 0.4rem; }
 body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-mois { flex-direction: row; align-items: center; gap: 0.75rem; padding: 0.5rem 0.9rem; border-radius: 14px; }
@@ -98,16 +120,14 @@ body.ecrans-actif .lx-formulaire .ca-3 { margin-bottom: 0.5rem; }
 body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
 /* Téléphone : chaque écran tient au-dessus de la barre du bas (textes et cartes resserrés, rien n'est retiré) */
 @media (max-width: 899px) {
-  body.ecrans-actif .lx-hero.ecran-courant { padding-top: 16vh; padding-bottom: 1rem; }
-  body.ecrans-actif .lx-hero-photo { height: 52vh; }
+  /* (le bas du texte laisse la place à la bulle WhatsApp) */
+  body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { padding-top: 12vh; padding-bottom: 4.6rem; }
   body.ecrans-actif .lx-hero h1 { font-size: 2.3rem; margin-bottom: 0; }
   /* (le texte est remonté sur la photo : le voile rouge descend plus tôt, pour qu'il reste bien lisible,
      contrôle test-lisibilite-photos.js) */
-  body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.15) 0%, rgba(90, 20, 27, 0.55) 16%, rgba(90, 20, 27, 0.9) 30%, rgba(90, 20, 27, 1) 48%, rgba(90, 20, 27, 1) 100%); }
+  body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.1) 0%, rgba(90, 20, 27, 0.25) 30%, rgba(90, 20, 27, 0.85) 52%, rgba(90, 20, 27, 1) 66%, rgba(90, 20, 27, 1) 100%); }
   body.ecrans-actif .lx-hero .lx-chapeau { font-size: 0.9rem; line-height: 1.5; margin-top: 0.6rem; }
   body.ecrans-actif .lx-hero p.u-mt-1-2 { margin-top: 0.6rem; font-size: 0.88rem; }
-  body.ecrans-actif .lx-hero-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
-  body.ecrans-actif .lx-hero-boutons .btn { min-height: 42px; padding: 0.5rem 1.1rem; margin: 0; }
   body.ecrans-actif .ia-etapes > li { padding: 0.8rem 1rem; }
   body.ecrans-actif .ia-etapes h3 { margin: 0.3rem 0 0.2rem; font-size: 1.35rem; }
   body.ecrans-actif .ia-etapes p, body.ecrans-actif .ia-avantage p { line-height: 1.45; font-size: 0.9rem; }
@@ -151,14 +171,29 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   body.ecrans-actif .ct-apprendre li { padding: 0.4rem 0.9rem; font-size: 0.85rem; }
   /* programme : le chiffre romain donne déjà le mois, la mention « Mois N » n'est plus répétée */
   body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-mois:not(.lx-prog-mois--suite) .lx-prog-quand { display: none; }
-  body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-mois { padding: 0.3rem 0.7rem; gap: 0.6rem; }
+  body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-mois { padding: 0.25rem 0.7rem; gap: 0.6rem; }
   body.ecrans-actif .lx-prog-section .lx-prog.lx-prog { gap: 0.3rem; }
   body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-num { width: 1.7rem; height: 1.7rem; font-size: 0.75rem; }
-  body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-mois h3 { font-size: 0.92rem; line-height: 1.2; }
+  body.ecrans-actif .lx-prog-section .lx-prog .lx-prog-mois h3 { font-size: 0.84rem; line-height: 1.25; font-weight: 600; }
   body.ecrans-actif .lx-prog-section .lx-titre-section { font-size: 1.65rem; margin-bottom: 0.5rem; }
-  body.ecrans-actif .lx-prog-section .lx-prog-intro { font-size: 0.84rem; line-height: 1.45; margin-bottom: 0.6rem; }
+  body.ecrans-actif .lx-prog-section .lx-prog-intro { font-size: 0.8rem; line-height: 1.45; margin-bottom: 0.6rem; }
   body.ecrans-actif .lx-prog-section .lx-prog-niveau { margin: 0.3rem 0 0.4rem; font-size: 1.3rem; }
   body.ecrans-actif .lx-prog-section .lx-surtitre { margin-bottom: 0.3rem; }
+}
+
+/* Tablette debout (23/11/2026, retour de la propriétaire : « ça sort trop petit, ça prend juste un peu en haut ») :
+   tout est agrandi d'un quart, les cartes passent l'une sous l'autre, l'accueil prend la photo en plein écran */
+@media (min-width: 700px) and (max-width: 1199px) and (orientation: portrait) {
+  html:has(body.ecrans-actif) { font-size: 135%; }
+  body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { align-items: flex-end; padding-top: 30vh; padding-bottom: 6rem; }
+  body.ecrans-actif .lx-hero-photo { left: 0; width: 100%; height: 100%; object-position: 50% 15%; }
+  body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.1) 0%, rgba(90, 20, 27, 0.25) 35%, rgba(90, 20, 27, 0.85) 58%, rgba(90, 20, 27, 1) 72%, rgba(90, 20, 27, 1) 100%); }
+  body.ecrans-actif .lx-hero-texte { max-width: none; }
+  body.ecrans-actif .lx-hero-lieu { display: none; }
+  body.ecrans-actif .ia-etapes, body.ecrans-actif .ia-parcours { grid-template-columns: 1fr; }
+  body.ecrans-actif .ia-avantages, body.ecrans-actif .ia-criteres { grid-template-columns: repeat(2, 1fr); }
+  body.ecrans-actif .lx-prog-section .lx-prog.lx-prog { grid-template-columns: 1fr; }
+  body.ecrans-actif .ecrans-barre .btn.btn { width: 64px; height: 64px; }
 }
 
 @keyframes ecran-arrivee { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }

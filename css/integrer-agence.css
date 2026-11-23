@@ -4,8 +4,6 @@
    titres, ornements, galerie, bande « défilé », cartes de verre, écrin du formulaire et boutons arrondis viennent de
    css/luxe.css ; ici, seulement ce qui est propre à la page. */
 .ia-haut-grille { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
-.ia-haut .lien-marche { color: #fff; }
-.ia-choix-rapide { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 1.6rem 0 0.6rem; }
 
 .ia-section { padding: 5rem 0 2rem; }
 .ia-section--criteres { background: none; }  /* (11/11/2026 : plus de halo blanc) */
@@ -14,8 +12,8 @@
 .ia-etapes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 1.4rem; position: relative; }
 @media (min-width: 800px) { .ia-etapes { grid-template-columns: repeat(3, 1fr); } }
 .ia-etapes li { padding: 2.2rem 1.8rem 2rem; text-align: center; }
-.ia-num { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 500; font-size: 2.8rem; line-height: 1; }
-.ia-etapes h3, .ia-avantage h3, .ia-parcours-tete h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.ia-num { display: block; font-family: var(--police-titre); font-style: normal; font-weight: 800; font-size: 2.8rem; line-height: 1; }
+.ia-etapes h3, .ia-avantage h3, .ia-parcours-tete h3 { font-family: var(--police-titre); font-weight: 800; text-transform: none; letter-spacing: 0; }
 .ia-etapes h3 { margin: 0.8rem 0 0.5rem; font-size: 1.7rem; }
 .ia-etapes p { margin: 0 auto; max-width: 30ch; line-height: 1.65; opacity: 0.9; }
 
@@ -23,9 +21,9 @@
 .ia-criteres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 @media (min-width: 800px) { .ia-criteres { grid-template-columns: repeat(4, 1fr); gap: 1.4rem; } }
 .ia-critere { padding: 1.8rem 1.2rem 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
-.ia-grand { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(2.2rem, 7vw, 3.2rem); line-height: 1; }
+.ia-grand { font-family: var(--police-titre); font-weight: 800; font-size: clamp(2.2rem, 7vw, 3.2rem); line-height: 1; }
 .ia-critere span:not(.ia-grand) { font-size: 0.88rem; line-height: 1.45; opacity: 0.9; }
-.ia-note { margin-top: 1.6rem; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; }
+.ia-note { margin-top: 1.6rem; text-align: center; font-family: var(--police); font-style: normal; font-size: 1rem; }
 
 /* deux parcours à toucher : carte de verre ; la carte choisie devient blanche, avec une coche rouge */
 .ia-consigne { margin: -1rem 0 1.6rem; text-align: center; font-weight: 500; opacity: 0.9; }
@@ -40,7 +38,7 @@
 .ia-ligne { list-style: none; margin: 1.4rem 0 1.6rem; padding: 0 0 0 1.4rem; border-left: 1px solid rgba(255, 255, 255, 0.5); display: grid; gap: 1rem; }
 .ia-ligne li { display: grid; gap: 0.15rem; position: relative; }
 .ia-ligne li::before { content: ""; position: absolute; left: -1.72rem; top: 0.55rem; width: 0.6rem; height: 0.6rem; transform: rotate(45deg); background: var(--rouge-mat); border: 1px solid #fff; }
-.ia-ligne b { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 600; font-size: 1.6rem; }
+.ia-ligne b { font-family: var(--police-titre); font-style: normal; font-weight: 800; font-size: 1.6rem; }
 .ia-ligne span { color: inherit; opacity: 0.9; }
 .ia-parcours-carte .btn { border-radius: 999px; }
 .ia-parcours-carte.choisie { background: #fff; border-color: #fff; transform: translateY(-4px);

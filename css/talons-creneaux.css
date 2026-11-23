@@ -6,7 +6,7 @@
 .ct-jour, .ct-heure, .ct-retirer { font: inherit; cursor: pointer; color: var(--cr-encre); background: transparent; border: 1px solid var(--cr-bord); }
 .ct-jour { flex: 0 0 3.8rem; display: grid; justify-items: center; gap: 0.05rem; padding: 0.5rem 0; border-radius: 14px; }
 .ct-jour small { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.88; }
-.ct-jour b { font: 600 1.45rem/1.05 'Cormorant Garamond', Georgia, serif; }
+.ct-jour b { font: 800 1.45rem/1.05 var(--police-titre); }
 .ct-jour i { font-style: normal; font-size: 0.66rem; opacity: 0.85; }
 .ct-jour.on { background: var(--cr-plein); border-color: var(--cr-plein); color: var(--cr-plein-encre); }
 .ct-jour:disabled { opacity: 0.35; cursor: default; }
@@ -22,7 +22,7 @@
 .ct-choisis { list-style: none; margin: 0.5rem 0 0; padding: 0; border-radius: 16px; overflow: hidden; background: #fff; color: #2A1416; }
 .ct-choisis li { display: flex; gap: 0.7rem; align-items: center; padding: 0.65rem 0.8rem; border-top: 1px solid #F2E7E8; font-size: 0.92rem; }
 .ct-choisis li:first-child { border-top: 0; }
-.ct-choisis em { flex: 0 0 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; color: #7C2128; font: italic 600 0.95rem 'Cormorant Garamond', Georgia, serif; }
+.ct-choisis em { flex: 0 0 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: #F3DDE0; color: #7C2128; font: 800 0.95rem var(--police-titre); }
 .ct-choisis span { flex: 1; min-width: 0; }
 .ct-choisis small { color: #6E4F53; white-space: nowrap; }
 .ct-choisis .ct-retirer { flex: none; width: 2rem; height: 2rem; border-radius: 50%; color: #7C2128; border-color: #EADCDD; }

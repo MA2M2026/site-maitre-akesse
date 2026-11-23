@@ -5559,3 +5559,27 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
   un léger défilement.
 - Tests : `scripts/tests-visiteur/test-pages-ecrans.js` (téléphone et ordinateur, FR/EN, sans JavaScript, adresse
   abîmée, historique) ; `test-integrer-parcours.js` et `test-diaporama-luxe.js` avancent par « Suivant ».
+
+### Retours de la propriétaire sur les écrans (23/11/2026) et nouvelle police
+
+- **Plus de raccourcis sur le premier écran** (la visiteuse parcourt tous les écrans pour comprendre l'agence) : retirés
+  « Je débute / J'ai déjà été mannequin » et le lien « Postuler à un casting » (Intégrer l'agence), « Je postule » et le lien
+  « Intégrer l'agence » (Postuler à un casting), « Je m'inscris / Voir les formules » (Cours de talons). Les choix de parcours
+  restent sur leur écran. `test-lien-marche.js` supprimé (les liens n'existent plus) ; le contrôle est dans `test-pages-ecrans.js`.
+  Le petit bouton rond « marche » (`.lien-marche`, css/charte-ma2m.css, js/bouton-appui.js) est gardé exprès comme modèle
+  réutilisable, même s'il n'est plus sur ces pages.
+- **Plus de grand bas de page** sur ces pages, même sur le formulaire : une petite ligne « Mentions légales · Confidentialité »
+  (`.ecrans-legal`) dans la barre du bas, sur chaque écran (choix de la propriétaire). Après la 1re étape du formulaire, la barre
+  ne garde que cette ligne (`.ecrans-barre--legal`).
+- **Hauteur mesurée** : `js/pages-ecrans.js` calcule la place libre (`--ecran-dispo`) et la hauteur de la barre (`--ecran-barre`) ;
+  chaque écran les remplit exactement ; le contenu est centré en hauteur (sauf l'accueil et le formulaire).
+- **Accueil** : la photo remplit l'écran, le texte est posé en bas sur le voile rouge.
+- **Tablette debout** (700–1199 px, portrait) : tout agrandi (`font-size: 135 %` sur `html`), cartes l'une sous l'autre, photo
+  d'accueil plein écran.
+- **Vidéo** : écran debout → version verticale, couché → horizontale ; au milieu de l'écran, entière.
+- **Photos qui défilent** : grands rectangles debout (3/4) sur presque toute la hauteur de l'écran.
+- **Police** (maquette validée) : titres et grands chiffres en **Big Shoulders Display** (`var(--police-titre)`, css/jetons.css),
+  textes en **Work Sans** (`var(--police)`). Plus de Cormorant Garamond sur le site public (pages luxe, Inscription, programme
+  des talons, fiche, Book, paiements premium) ; elle reste dans l'application des mannequins et l'Administration
+  (`mannequin-app.css`, `admin-vivante.css`), à convertir plus tard si la propriétaire le souhaite. Styles du haut des pages
+  régénérés (`scripts/css-critique.mjs`).

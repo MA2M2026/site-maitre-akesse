@@ -10,8 +10,11 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 const PORT = String(9700 + Math.floor(Math.random() * 60));
 const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366, 768], ['en/integrer-agence.html', 390, 844], ['en/integrer-agence.html', 1366, 768],
   // (22/11/2026, « continue pour tout ») Postuler à un casting et Cours de talons, mêmes écrans
-  ['candidature.html', 390, 844], ['en/candidature.html', 1366, 768], ['cours-talons.html', 390, 844], ['en/cours-talons.html', 390, 844], ['cours-talons.html', 1366, 768]];
+  ['candidature.html', 390, 844], ['en/candidature.html', 1366, 768], ['cours-talons.html', 390, 844], ['en/cours-talons.html', 390, 844], ['cours-talons.html', 1366, 768],
+  // (23/11/2026, retour de la propriétaire) tablette debout : chaque écran remplit la tablette
+  ['integrer-agence.html', 820, 1180], ['cours-talons.html', 820, 1180]];
 // écran du formulaire de chaque page (lien direct partagé, ce qui doit être visible au dernier écran)
+const innerHeightDe = (h) => h;
 const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candidature: ['#candidature', '#candidature'], 'cours-talons': ['#inscription', '#form-talons'] };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
@@ -33,7 +36,9 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     compteur: (document.querySelector('.ecrans-compteur') || {}).textContent || '',
     progression: parseFloat((document.querySelector('.ecrans-progression span') || { style: {} }).style.width) || 0,
     retour: !document.querySelector('.ecrans-retour').hidden, suivant: !document.querySelector('.ecrans-suivant').hidden,
-    barre: !document.querySelector('.ecrans-barre').hidden,
+    // (23/11/2026) « barre » = les flèches ; la petite ligne légale, elle, reste sur chaque écran
+    barre: !document.querySelector('.ecrans-barre').classList.contains('ecrans-barre--legal'),
+    legal: [...document.querySelectorAll('.ecrans-legal a')].filter((a) => a.getBoundingClientRect().height > 0 && a.getBoundingClientRect().bottom <= innerHeight).map((a) => a.getAttribute('href')).join(','),
     hash: location.hash, pied: getComputedStyle(document.querySelector('.site-footer') || document.body).display,
     // ce que l'écran affiché fait dépasser sous la barre du bas (0 = il tient sans faire défiler ; le bas de page, montré
     // sous le formulaire, n'est pas compté)
@@ -42,7 +47,7 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     debord: document.documentElement.scrollWidth - innerWidth
   }));
   for (const [page, w, h] of PAGES) {
-    const en = page.startsWith('en/'), n = page + ' (' + w + 'px) : ', tel = w < 700;
+    const en = page.startsWith('en/'), n = page + ' (' + w + 'px) : ', tel = w < 700 || (w < 1200 && h > w);   // (téléphone ou tablette debout)
     const nom = page.replace(/^en\//, '').replace('.html', ''), ia = nom === 'integrer-agence', talons = nom === 'cours-talons';
     const [ancre, form] = FORMULAIRE[nom];
     const p = await ouvrir(page, w, h);
@@ -56,13 +61,34 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     ok(noms.fleches && parseFloat(noms.rond) >= 28, n + 'boutons en flèches rondes (sans texte)');
     ok(noms.s === (en ? 'Start' : 'Commencer') && noms.r === (en ? 'Back' : 'Retour'), n + 'les flèches ont un nom pour la lecture vocale (« ' + noms.s + ' », « ' + noms.r + ' »)');
     ok(e.pied === 'none', n + 'le bas de page long est rangé (un écran = une idée)');
+    ok(e.legal === 'mentions-legales.html,politique-confidentialite.html', n + 'petite ligne « ' + (en ? 'Legal notice · Privacy' : 'Mentions légales · Confidentialité') + ' » en bas de l’écran (' + e.legal + ')');
+    // (23/11/2026, décision de la propriétaire) plus de raccourcis sur le premier écran : on parcourt tous les écrans
+    const raccourcis = await p.evaluate(() => document.querySelectorAll('.lx-hero a[href^="#"], .lx-hero .btn, .lx-hero .lien-marche, .lx-hero a[href*="candidature"], .lx-hero a[href*="integrer-agence"]:not(.ct-avertissement a)').length);
+    ok(raccourcis === 0, n + 'premier écran sans raccourci (pas de « Je débute », « Je postule », « Je m’inscris »…) (' + raccourcis + ')');
+    if (w >= 900 && w > h) {
+      // ordinateur : le texte de l'accueil reste en entier dans l'écran (pas repoussé en bas comme sur téléphone)
+      const acc = await p.evaluate(() => { const t = document.querySelector('.lx-hero h1').getBoundingClientRect(), b = document.querySelector('.ecrans-barre').getBoundingClientRect(); return { haut: Math.round(t.top), bas: Math.round(document.querySelector('.lx-hero .container').getBoundingClientRect().bottom), barre: Math.round(b.top) }; });
+      ok(acc.haut < innerHeightDe(h) * 0.5 && acc.bas <= acc.barre, n + 'ordinateur : le texte de l’accueil tient en entier au-dessus de la barre ' + JSON.stringify(acc));
+    }
+    if (w >= 700 && h > w) {
+      const t = await p.evaluate(() => ({ police: parseFloat(getComputedStyle(document.documentElement).fontSize), photo: Math.round(document.querySelector('.lx-hero-photo').getBoundingClientRect().height), dispo: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ecran-dispo')) }));
+      ok(t.police >= 20 && t.photo >= t.dispo * 0.95, n + 'tablette : textes agrandis (' + t.police + ' px) et photo d’accueil sur tout l’écran (' + t.photo + ' / ' + t.dispo + ' px)');
+    }
     // tout le parcours avec « Suivant », comme une visiteuse
     const tropHauts = [];
     let avant = e.progression, monte = true, videoArretee = null;
     for (let i = 1; i < e.total; i++) {
       if (tel) { const x = await etat(p); if (x.depasse > 40) tropHauts.push(x.visibles[0] + ' (+' + x.depasse + ' px)'); }
       // la vidéo : on la lance, puis on passe à l'écran suivant → elle doit s'arrêter
+      // (23/11/2026) photos qui défilent : grandes, sur presque toute la hauteur de l'écran
+      if (await p.locator('.ecran-courant .lx-tapis').count()) {
+        const g = await p.evaluate(() => ({ h: document.querySelector('.ecran-courant .lx-galerie-photo').getBoundingClientRect().height, d: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ecran-dispo')) }));
+        if (g.h < g.d * 0.6) tropHauts.push('photos qui défilent trop petites (' + Math.round(g.h) + ' / ' + g.d + ' px)');
+      }
       if (await p.locator('.ecran-courant video').count()) {
+        // écran debout : la vidéo verticale ; couché : l'horizontale
+        const v = await p.evaluate(() => [...document.querySelectorAll('.ecran-courant video')].filter((x) => x.offsetParent).map((x) => x.className).join());
+        if (v !== (h > w ? 'vp-verticale' : 'vp-horizontale')) tropHauts.push('vidéo ' + v + ' sur un écran ' + (h > w ? 'debout' : 'couché'));
         await p.evaluate(() => { const v = [...document.querySelectorAll('.ecran-courant video')].find((x) => x.offsetParent); if (v) { v.muted = true; v.play().catch(() => {}); } });
         await p.waitForTimeout(300);
         await p.click('.ecrans-suivant'); await p.waitForTimeout(400);
@@ -79,7 +105,7 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     e = await etat(p);
     ok(e.visibles[0] === String(e.total) && e.hash === '#ecran-' + e.total && !e.suivant && e.retour && await p.isVisible(form),
       n + 'dernier écran : le formulaire, flèche ← seul en bas');
-    ok(e.pied !== 'none', n + 'écran du formulaire : le bas de page (mentions légales, confidentialité) est là');
+    ok(e.pied === 'none' && e.legal === 'mentions-legales.html,politique-confidentialite.html', n + 'écran du formulaire : pas de grand bas de page (même allure que les autres écrans), la petite ligne légale est là');
     if (talons) {
       // (demande de la propriétaire) les questions fréquentes sont un écran, juste avant le formulaire
       await p.click('.ecrans-retour'); await p.waitForTimeout(400);
@@ -120,6 +146,16 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     e = await etat(p);
     ok(e.barre && e.retour, n + 'retour à l’étape 1 : flèche ← revient en bas');
     }
+    // (relecture du 23/11/2026) la place calculée pour un écran ne dépend pas du défilement : on descend dans le formulaire,
+    // puis on revient à l'écran d'avant, la hauteur disponible est la même
+    {
+      const dispo = () => p.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ecran-dispo')));
+      const avantDef = await dispo();
+      await p.evaluate(() => window.scrollTo(0, 600)); await p.waitForTimeout(300);
+      await p.evaluate(() => window.dispatchEvent(new Event('resize'))); await p.waitForTimeout(200);
+      ok(Math.abs((await dispo()) - avantDef) <= 2, n + 'hauteur des écrans stable même après avoir fait défiler le formulaire (' + avantDef + ' px)');
+      await p.evaluate(() => window.scrollTo(0, 0));
+    }
     // le bouton Retour du téléphone (historique) ramène à l'écran d'avant
     await p.goBack(); await p.waitForTimeout(500);
     e = await etat(p);
@@ -133,9 +169,8 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     // un bouton du haut (« Je débute ») mène à l'écran des parcours, carte cochée
     if (ia) {
     const q = await ouvrir(page, w, h);
-    await q.goto('http://127.0.0.1:' + PORT + '/' + page); await q.waitForTimeout(1500);
-    await q.click('.ecran-courant .lx-hero-boutons a[data-parcours-choix="non"]'); await q.waitForTimeout(600);
-    ok(await q.isVisible('#parcours') && await q.isVisible('.ia-parcours-carte[data-parcours="non"]'), n + '« ' + (en ? 'I\'m a beginner' : 'Je débute') + ' » en haut mène à l’écran des parcours');
+    await q.goto('http://127.0.0.1:' + PORT + '/' + page + '#parcours'); await q.waitForTimeout(1500);
+    ok(await q.isVisible('.ia-parcours-carte[data-parcours="non"]'), n + 'lien direct #parcours : l’écran des parcours s’ouvre');
     // « Je choisis ce parcours » mène au formulaire
     await q.click('.ia-parcours-carte[data-parcours="oui"] button'); await q.waitForTimeout(700);
     ok(await q.isVisible('#form-casting') && await q.inputValue('#ca-experience') === 'oui', n + 'le bouton de la carte (« ' + (en ? 'Choose' : 'Je choisis') + ' … ») ouvre l’écran du formulaire, réglé');

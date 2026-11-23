@@ -5,7 +5,7 @@
    de verre, écrin du formulaire, boutons arrondis) sont dans css/luxe.css ; ici, seulement ce qui est propre à la
    page : formules, étapes du formulaire, cases à toucher, questions fréquentes. */
 
-.ct-serif, .ct-prix span, .ct-etape-titre span { font-family: 'Cormorant Garamond', Georgia, serif; }
+.ct-serif, .ct-prix span, .ct-etape-titre span { font-family: var(--police-titre); font-weight: 800; }
 .ct-haut-grille { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start; }
 
 /* avertissement « ces cours ne permettent pas d'intégrer l'agence » : verre dépoli sur la couverture */
@@ -23,7 +23,7 @@
 .ct-carte--rouge { background: var(--rouge-mat, #7C2128); }
 .ct-carte-num { display: inline-block; padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 600; color: #fff; }
-.ct-carte h3 { margin: 0.9rem 0 0.3rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 2.5rem; text-transform: none; letter-spacing: 0; }
+.ct-carte h3 { margin: 0.9rem 0 0.3rem; font-family: var(--police-titre); font-weight: 800; font-size: 2.5rem; text-transform: none; letter-spacing: 0; }
 .ct-carte-quand { font-weight: 500; opacity: 0.9; }
 .ct-prix { margin: 1.1rem 0 0; font-weight: 600; }
 .ct-prix span { font-size: 3.2rem; font-weight: 600; font-style: italic; line-height: 1; }
@@ -46,7 +46,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
 .ct-choix strong { font-size: 1.05rem; letter-spacing: 0.01em; }
 .ct-choix em { font-style: normal; font-size: 0.92rem; opacity: 0.88; }
-.ct-choix b { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.25rem; font-weight: 600; margin-top: 0.2rem; }
+.ct-choix b { font-family: var(--police-titre); font-style: normal; font-size: 1.25rem; font-weight: 800; margin-top: 0.2rem; }
 .ct-choix > span::after { content: ""; position: absolute; right: 1.3rem; top: 50%; width: 1.8rem; height: 1.8rem; margin-top: -0.9rem; box-sizing: border-box;
   border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.7); background: transparent; transition: all 0.25s ease; }
 .ct-choix:hover > span { transform: translateY(-2px); background: var(--lx-verre-fort); border-color: rgba(255, 255, 255, 0.45); box-shadow: 0 16px 34px -18px rgba(90, 20, 27, 1); }
@@ -60,7 +60,7 @@
 .ct-choix input:focus-visible + span, .ct-pastille input:focus-visible + span { outline: 3px solid #fff; outline-offset: 3px; }
 
 .ct-total { margin: 0.9rem 0 0; font-weight: 600; }
-.ct-total--grand { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; font-style: italic; margin-bottom: 1rem; }
+.ct-total--grand { font-family: var(--police-titre); font-weight: 800; font-size: 1.6rem; font-style: normal; margin-bottom: 1rem; }
 .ct-indicatif { margin-bottom: 0.5rem; }
 .ct-label { font-size: 0.74rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em; }
 .ct-niveaux { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.4rem; }
@@ -95,7 +95,7 @@
 .ct-faq details[open] { background: var(--lx-verre-fort); }
 .ct-faq summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
 .ct-faq summary::-webkit-details-marker { display: none; }
-.ct-faq summary::after { content: "+"; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; line-height: 0.8; transition: transform 0.3s; }
+.ct-faq summary::after { content: "+"; font-family: var(--police); font-size: 1.6rem; line-height: 0.8; transition: transform 0.3s; }
 .ct-faq details[open] summary::after { transform: rotate(45deg); }
 .ct-faq details p { margin: 0.7rem 0 0; line-height: 1.65; opacity: 0.92; }
 
@@ -114,7 +114,7 @@
 .ct-parcours-choix { position: relative; cursor: pointer; display: block; }
 .ct-parcours-choix input { position: absolute; opacity: 0; pointer-events: none; }
 .ct-parcours-choix span { display: block; height: 100%; padding: 1rem 1.15rem; border-radius: 18px; color: #fff; background: var(--lx-verre); border: 1px solid var(--lx-lisere); transition: all 0.25s ease; }
-.ct-parcours-choix strong { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.45rem; line-height: 1.1; }
+.ct-parcours-choix strong { display: block; font-family: var(--police-titre); font-weight: 800; font-size: 1.45rem; line-height: 1.1; }
 .ct-parcours-choix em { display: block; margin-top: 0.3rem; font-style: normal; font-size: 0.88rem; line-height: 1.45; opacity: 0.88; }
 .ct-parcours-choix:hover span { background: var(--lx-verre-fort); }
 .ct-parcours-choix input:checked + span { background: #fff; border-color: #fff; color: var(--rouge-profond); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18), 0 18px 34px -18px rgba(90, 20, 27, 1); }
@@ -127,7 +127,7 @@
 .ct-theme-case { flex: 1; min-width: 0; display: flex; gap: 0.8rem; align-items: flex-start; cursor: pointer; color: #fff; }
 .ct-theme.choisi .ct-theme-case { color: var(--rouge-profond); }
 .ct-theme-case input { flex: none; width: 1.25rem; height: 1.25rem; margin: 0.2rem 0 0; accent-color: var(--rouge-mat); }
-.ct-theme-case strong { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.3rem; line-height: 1.1; }
+.ct-theme-case strong { display: block; font-family: var(--police-titre); font-weight: 800; font-size: 1.3rem; line-height: 1.1; }
 .ct-theme-case em { display: block; margin-top: 0.2rem; font-style: normal; font-size: 0.8rem; line-height: 1.4; opacity: 0.85; }
 .ct-theme select { flex: none; width: auto; min-width: 6.2rem; padding: 0.45rem 0.6rem; border-radius: 10px; font-size: 0.88rem; }
 .ct-theme:not(.choisi) select { display: none; }
@@ -139,7 +139,7 @@
 .ct-programme-choisi ol { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
 .ct-programme-choisi li { display: flex; gap: 0.8rem; align-items: baseline; }
 .ct-programme-choisi small { flex: 0 0 5.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.75; }
-.ct-programme-choisi li span { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; }
+.ct-programme-choisi li span { font-family: var(--police); font-size: 1.2rem; }
 .ct-carte-plus { font-size: 0.92rem; }
 .ct-carte-plus a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 

@@ -26,12 +26,20 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       ok(!errs.length, page + ' : aucune erreur ' + errs.join(' | '));
       await ctx.close(); continue;
     }
-    const auDepart = await visible();
-    await aller(400); await aller(900);
-    const enDescendant = await visible();
-    await aller(600);
-    const enRemontant = await visible();
-    ok(auDepart && !enDescendant && enRemontant, page + ' : visible au départ, effacée en descendant, de retour en remontant (' + [auDepart, enDescendant, enRemontant] + ')');
+    // (23/11/2026) page en écrans : chaque écran tient dans la fenêtre (plus de grand bas de page), il n'y a plus rien à
+    // faire défiler ; la bulle est alors simplement toujours là, au-dessus de la barre du bas
+    const defile = await p.evaluate(() => document.documentElement.scrollHeight - innerHeight > 900);
+    if (defile) {
+      const auDepart = await visible();
+      await aller(400); await aller(900);
+      const enDescendant = await visible();
+      await aller(600);
+      const enRemontant = await visible();
+      ok(auDepart && !enDescendant && enRemontant, page + ' : visible au départ, effacée en descendant, de retour en remontant (' + [auDepart, enDescendant, enRemontant] + ')');
+    } else {
+      const auDessus = await p.evaluate(() => { const w = document.querySelector('.whatsapp-flottant').getBoundingClientRect(), b = document.querySelector('.ecrans-barre'); return !b || w.bottom <= b.getBoundingClientRect().top + 1; });
+      ok(await visible() && auDessus, page + ' : page en écrans (rien à faire défiler) : la bulle reste visible, au-dessus de la barre du bas');
+    }
     if (champ) {
       // sans faire défiler la page (le défilement vers le bas efface déjà la pastille : ici on teste la saisie seule)
       // (14/11/2026) le nom est à l'étape 2 du formulaire en étapes (js/candidature-etapes.js) : on l'ouvre sans défiler
