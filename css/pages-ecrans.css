@@ -101,6 +101,9 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   body.ecrans-actif .lx-hero.ecran-courant { padding-top: 16vh; padding-bottom: 1rem; }
   body.ecrans-actif .lx-hero-photo { height: 52vh; }
   body.ecrans-actif .lx-hero h1 { font-size: 2.3rem; margin-bottom: 0; }
+  /* (le texte est remonté sur la photo : le voile rouge descend plus tôt, pour qu'il reste bien lisible,
+     contrôle test-lisibilite-photos.js) */
+  body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.15) 0%, rgba(90, 20, 27, 0.55) 16%, rgba(90, 20, 27, 0.9) 30%, rgba(90, 20, 27, 1) 48%, rgba(90, 20, 27, 1) 100%); }
   body.ecrans-actif .lx-hero .lx-chapeau { font-size: 0.9rem; line-height: 1.5; margin-top: 0.6rem; }
   body.ecrans-actif .lx-hero p.u-mt-1-2 { margin-top: 0.6rem; font-size: 0.88rem; }
   body.ecrans-actif .lx-hero-boutons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
