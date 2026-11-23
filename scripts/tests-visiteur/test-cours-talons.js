@@ -214,8 +214,9 @@ async function navigateur() {
     await p.click('label.ct-pastille:has(input[name="civilite"][value="mademoiselle"])');
     await p.fill('#ct-nom', 'Kouassi Marie'); await p.fill('#ct-telephone', '07 01 02 03 04'); await p.selectOption('#ct-majorite', 'mineure'); await p.dispatchEvent('#ct-majorite', 'change');
     await noter();
-    await suivant();
-    ok(await nomCourant() === 'parent' && await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : l’écran du parent apparaît');
+    // (relecture du 23/11/2026) « Entrée » au clavier dans un champ : on passe à l'écran suivant, sans rien envoyer ni sauter
+    await p.press('#ct-telephone', 'Enter'); await p.waitForTimeout(300);
+    ok(await nomCourant() === 'parent' && await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : l’écran du parent apparaît (« Entrée » au clavier = écran suivant)');
     await p.click('#ct-suivant');
     ok(await p.isVisible('#ct-parent-nom') && /parent/i.test(await p.textContent('#ct-msg')), n + 'mineure sans parent : on reste sur l’écran du parent avec un message');
     await p.fill('#ct-parent-nom', 'Mme Kouassi'); await p.fill('#ct-parent-telephone', '05 01 02 03 04');

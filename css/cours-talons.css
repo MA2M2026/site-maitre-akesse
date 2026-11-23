@@ -163,14 +163,29 @@
 /* (23/11/2026, demande de la propriétaire : chaque étape tient dans l'écran) une question par écran ; « Étape 3 sur 8 » au
    lieu des 4 ronds (js/cours-talons.js) */
 .ct-compteur { margin: 0 0 0.9rem; text-align: center; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #fff; opacity: 0.85; }
-/* une question par écran (page en écrans, js/pages-ecrans.js) : le formulaire resserré pour que chaque étape tienne */
+
+/* En page en écrans (js/pages-ecrans.js) : le formulaire resserré pour que chaque écran tienne sur un téléphone.
+   Zones à toucher gardées à 40-44 px au moins, listes en 16 px (sinon l'iPhone zoome au toucher). */
+body.ecrans-actif .ct-compteur { margin-bottom: 0.5rem; }
 body.ecrans-actif .ct-inscription .lx-titre-section { font-size: 1.7rem; margin-bottom: 0.3rem; }
 body.ecrans-actif .ct-inscription .lx-titre-section::after { display: none; }
-body.ecrans-actif .ct-inscription .lx-ecrin { padding: 1rem 1.1rem; }
-body.ecrans-actif .ct-etape-titre { margin-bottom: 0.6rem; }
+/* (le grand titre « Inscription » seulement au 1er écran ; ensuite « Étape X sur Y » et le titre de l'étape) */
+body.ecrans-actif .ct-inscription:has(.ct-etape[data-nom="formule"].u-hidden) .lx-titre-section { display: none; }
+body.ecrans-actif .ct-inscription .lx-ecrin { padding: 0.8rem 0.9rem; }
+body.ecrans-actif .ct-etape-titre { margin-bottom: 0.45rem; }
+body.ecrans-actif .ct-etape-titre span { width: 2.1rem; height: 2.1rem; }
 body.ecrans-actif .ct-etape-titre h3 { font-size: 1.4rem; }
 body.ecrans-actif .ct-consigne { margin: 0 0 0.6rem; font-size: 0.88rem; }
-body.ecrans-actif .ct-aide { margin-bottom: 0.7rem; font-size: 0.84rem; line-height: 1.5; }
+body.ecrans-actif .ct-aide { margin-bottom: 0.6rem; font-size: 0.78rem; line-height: 1.4; }
+body.ecrans-actif .ct-inscription .form-champ { margin-bottom: 0.65rem; }
+body.ecrans-actif .ct-inscription .form-champ label, body.ecrans-actif .ct-inscription .ct-label { margin-bottom: 0.25rem; font-size: 0.85rem; }
+body.ecrans-actif .ct-inscription :is(input[type=text], input[type=tel], input[type=date], select) { padding-top: 0.55rem; padding-bottom: 0.55rem; min-height: 44px; font-size: 16px; }
+body.ecrans-actif .ct-inscription input[type=file] { padding: 0.35rem; font-size: 0.82rem; }
+body.ecrans-actif .ct-pastille span { padding: 0.5rem 0.95rem; font-size: 0.86rem; }
+body.ecrans-actif .ct-parent p { margin: 0 0 0.6rem; font-size: 0.86rem; }
+body.ecrans-actif .ct-boutons { margin-top: 0.9rem; }
+body.ecrans-actif .ct-boutons .ct-retour, body.ecrans-actif .ct-boutons .btn--principal { padding-top: 0.7rem; padding-bottom: 0.7rem; }
+/* formules et parcours */
 body.ecrans-actif .ct-choix { margin-bottom: 0.5rem; }
 body.ecrans-actif .ct-choix > span { padding: 0.7rem 3.4rem 0.7rem 1rem; gap: 0.1rem; }
 body.ecrans-actif .ct-choix > span::after { right: 0.9rem; }
@@ -178,67 +193,41 @@ body.ecrans-actif .ct-choix strong { font-size: 0.98rem; }
 body.ecrans-actif .ct-choix em { font-size: 0.82rem; line-height: 1.35; }
 body.ecrans-actif .ct-choix b { font-size: 1.1rem; margin-top: 0; }
 body.ecrans-actif .ct-parcours-choix span { padding: 0.8rem 1rem; }
-/* thèmes : deux par rangée */
+/* thèmes : deux par rangée (descriptions entières, en petit) */
 body.ecrans-actif .ct-themes { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+/* (descriptions entières : si les 6 thèmes ne tiennent pas, la liste défile dans son cadre, l'écran, lui, reste fixe) */
+body.ecrans-actif .ct-themes { max-height: calc(var(--ecran-dispo, 70vh) - 20rem); overflow-y: auto; overscroll-behavior: contain; padding-bottom: 2px; }
 body.ecrans-actif .ct-theme { padding: 0.55rem 0.6rem; border-radius: 12px; gap: 0.4rem; }
 body.ecrans-actif .ct-theme-case { gap: 0.45rem; }
 body.ecrans-actif .ct-theme-case strong { font-size: 1.05rem; }
-body.ecrans-actif .ct-theme-case em { font-size: 0.7rem; line-height: 1.3; }
-body.ecrans-actif .ct-theme select { margin-left: 0; min-width: 0; width: 100%; padding: 0.3rem 0.4rem; font-size: 0.8rem; }
+body.ecrans-actif .ct-theme-case em { font-size: 0.68rem; line-height: 1.25; }
+body.ecrans-actif .ct-inscription .ct-theme select { margin-left: 0; min-width: 0; width: 100%; min-height: 40px; padding: 0.2rem 0.4rem; }
+/* créneaux et calendrier (un écran chacun) */
 body.ecrans-actif .ct-facon > span { padding: 0.6rem 0.8rem; }
-body.ecrans-actif .ct-inscription .form-champ { margin-bottom: 0.65rem; }
-body.ecrans-actif .ct-inscription .form-champ label, body.ecrans-actif .ct-inscription .ct-label { margin-bottom: 0.25rem; font-size: 0.85rem; }
-body.ecrans-actif .ct-inscription :is(input[type=text], input[type=tel], input[type=date], select) { padding-top: 0.55rem; padding-bottom: 0.55rem; min-height: 44px; }
-body.ecrans-actif .ct-pastille span { padding: 0.5rem 0.95rem; font-size: 0.86rem; }
-body.ecrans-actif .ct-boutons { margin-top: 0.9rem; }
-body.ecrans-actif .ct-boutons .ct-retour, body.ecrans-actif .ct-boutons .btn--principal { padding-top: 0.7rem; padding-bottom: 0.7rem; }
-body.ecrans-actif .ct-parent p { margin: 0 0 0.6rem; font-size: 0.86rem; }
-/* le grand titre « Inscription » seulement au 1er écran du formulaire ; ensuite « Étape X sur Y » et le titre de l'étape */
-body.ecrans-actif .ct-inscription:has(.ct-etape[data-nom="formule"].u-hidden) .lx-titre-section { display: none; }
-body.ecrans-actif .ct-themes .ct-theme-case em { font-size: 0.68rem; line-height: 1.25; }
-/* calendrier des créneaux privés : un écran à lui seul, resserré */
-body.ecrans-actif .ct-creneaux .ct-aide { font-size: 0.78rem; margin-bottom: 0.5rem; }
+body.ecrans-actif .ct-creneaux .ct-aide { font-size: 0.74rem; line-height: 1.35; margin-bottom: 0.5rem; }
 body.ecrans-actif .ct-jour { flex-basis: 3.3rem; padding: 0.35rem 0; }
 body.ecrans-actif .ct-jour b { font-size: 1.25rem; }
-body.ecrans-actif .ct-heures { gap: 0.35rem; margin-top: 0.5rem; }
-body.ecrans-actif .ct-heure { padding: 0.45rem 0; font-size: 0.88rem; }
-body.ecrans-actif .ct-legende { font-size: 0.72rem; margin-top: 0.3rem; }
-body.ecrans-actif .ct-repeter { margin: 0.5rem 0 0.5rem; padding: 0.45rem 0.7rem; font-size: 0.82rem; }
-body.ecrans-actif .ct-choisis li { padding: 0.3rem 0.6rem; font-size: 0.8rem; gap: 0.5rem; }
+body.ecrans-actif .ct-heures { grid-template-columns: repeat(5, 1fr); gap: 0.35rem; margin-top: 0.5rem; }
+body.ecrans-actif .ct-heure { min-height: 40px; padding: 0.45rem 0; font-size: 0.88rem; }
+body.ecrans-actif .ct-legende { margin-top: 0.3rem; font-size: 0.68rem; line-height: 1.3; }
+body.ecrans-actif .ct-repeter { margin: 0.5rem 0; padding: 0.35rem 0.6rem; font-size: 0.78rem; line-height: 1.3; }
+/* (séances choisies, jusqu'à 28 : la liste défile dans son petit cadre, l'écran, lui, reste fixe) */
+body.ecrans-actif .ct-choisis { max-height: 5.6rem; overflow-y: auto; overscroll-behavior: contain; box-shadow: inset 0 -10px 10px -10px rgba(42, 20, 22, 0.35); }
+body.ecrans-actif .ct-choisis li { padding: 0.2rem 0.6rem; font-size: 0.8rem; gap: 0.5rem; }
 body.ecrans-actif .ct-choisis em { flex-basis: 1.35rem; height: 1.35rem; font-size: 0.78rem; }
-body.ecrans-actif .ct-choisis .ct-retirer { width: 1.6rem; height: 1.6rem; }
-body.ecrans-actif .ct-garde { margin-top: 0.5rem; padding: 0.45rem 0.7rem; font-size: 0.76rem; }
-body.ecrans-actif .ct-themes + * , body.ecrans-actif #ct-bloc-themes .ct-aide { font-size: 0.78rem; }
-body.ecrans-actif .ct-themes .ct-theme-case em { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-body.ecrans-actif .ct-compteur { margin-bottom: 0.5rem; }
-body.ecrans-actif .ct-inscription .lx-ecrin { padding: 0.8rem 0.9rem; }
-body.ecrans-actif .ct-etape-titre { margin-bottom: 0.45rem; }
-body.ecrans-actif .ct-etape-titre span { width: 2.1rem; height: 2.1rem; }
-/* dernière étape : moyens de paiement, case de confidentialité et « Envoyer » ensemble */
-body.ecrans-actif .ct-wave { margin-top: 0; padding: 0.7rem 0.8rem; }
-body.ecrans-actif .ct-inscription .form-consentement label { font-size: 0.8rem; line-height: 1.4; }
-body.ecrans-actif #ct-moyens { margin-bottom: 0.5rem; }
-/* séances choisies (jusqu'à 28) : la liste défile dans son petit cadre, l'écran, lui, reste fixe */
-body.ecrans-actif .ct-choisis { max-height: 6.6rem; overflow-y: auto; overscroll-behavior: contain; box-shadow: inset 0 -10px 10px -10px rgba(42, 20, 22, 0.35); }
+body.ecrans-actif .ct-choisis .ct-retirer { width: 2.25rem; height: 2.25rem; }
+body.ecrans-actif .ct-garde { margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.72rem; line-height: 1.35; }
 /* photos et vidéo : aperçus plus petits */
 body.ecrans-actif .ct-vignettes { gap: 0.45rem; }
-body.ecrans-actif .ct-vignettes figure { width: 64px; height: 84px; border-radius: 10px; }
-body.ecrans-actif .ct-vignettes button { width: 24px; height: 24px; top: 3px; right: 3px; }
+body.ecrans-actif .ct-vignettes figure { width: 60px; height: 78px; border-radius: 10px; }
+body.ecrans-actif .ct-vignettes button { width: 30px; height: 30px; top: 2px; right: 2px; }
 body.ecrans-actif .ct-info { font-size: 0.8rem; margin-top: 0.2rem; }
 body.ecrans-actif .ct-inscription .jauge { margin-top: 0.3rem; }
-/* moyens de paiement plus compacts */
+/* dernière étape : moyens de paiement, case de confidentialité et « Envoyer » ensemble */
+body.ecrans-actif .ct-wave { margin-top: 0; padding: 0.7rem 0.8rem; }
+body.ecrans-actif #ct-moyens { margin-bottom: 0.5rem; }
 body.ecrans-actif .ct-wave .pp-moyen { min-height: 42px; padding: 6px 9px; font-size: 0.82rem; }
 body.ecrans-actif .ct-wave .pp-moyen i { flex-basis: 24px; width: 24px; height: 24px; }
 body.ecrans-actif .ct-wave .pp-consigne { font-size: 0.8rem; margin: 0.4rem 0; }
 body.ecrans-actif .ct-wave .pp-gros { min-height: 44px; padding-top: 0.5rem; padding-bottom: 0.5rem; }
-/* calendrier : les heures sur deux rangées, textes d'aide plus courts à lire */
-body.ecrans-actif .ct-heures { grid-template-columns: repeat(5, 1fr); }
-body.ecrans-actif .ct-creneaux .ct-aide { font-size: 0.74rem; line-height: 1.35; }
-body.ecrans-actif .ct-legende { font-size: 0.68rem; line-height: 1.3; }
-body.ecrans-actif .ct-repeter { padding: 0.35rem 0.6rem; font-size: 0.78rem; line-height: 1.3; }
-body.ecrans-actif .ct-garde { font-size: 0.72rem; line-height: 1.35; padding: 0.35rem 0.6rem; }
-body.ecrans-actif .ct-choisis { max-height: 5.4rem; }
-/* photos et vidéo : champs de fichier plus bas */
-body.ecrans-actif .ct-etape[data-nom="photos"] .ct-aide { font-size: 0.76rem; line-height: 1.4; }
-body.ecrans-actif .ct-inscription input[type=file] { padding: 0.35rem; font-size: 0.82rem; }
-body.ecrans-actif .ct-vignettes figure { width: 56px; height: 72px; }
+body.ecrans-actif .ct-inscription .form-consentement label { font-size: 0.8rem; line-height: 1.4; }

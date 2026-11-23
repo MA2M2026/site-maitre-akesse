@@ -5602,3 +5602,8 @@ titre et les boutons dès qu'un choix change ; la vérification de chaque écran
 écrans, le formulaire est resserré (css/cours-talons.css, fin) : thèmes sur deux colonnes, heures du calendrier sur deux
 rangées, liste des séances choisies dans un petit cadre qui défile. Essai : `test-cours-talons.js` parcourt tous les écrans
 et vérifie qu'aucun ne dépasse sur téléphone.
+Relecture du 23/11/2026 : la reprise d'un envoi coupé ouvre la dernière étape (`numeroDe('envoi')`) ; « Entrée » dans un
+champ d'un écran du milieu = « Suivant » (plus d'envoi ni de saut d'écran) ; le compteur suit aussi les changements faits par
+le programme (`ecransPrets`) ; la légende pour les lecteurs d'écran reprend « Étape X sur Y » ; un message d'erreur disparaît
+dès qu'on corrige un choix ; les listes longues (thèmes, séances choisies) défilent dans leur cadre au lieu d'être coupées ;
+zones à toucher d'au moins 40 px et listes en 16 px (pas de zoom de l'iPhone).

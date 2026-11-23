@@ -33,6 +33,7 @@
 
   // ---------- état
   let etape = 1;
+  let ecransPrets = false;   // (les écrans du formulaire sont prêts : voir ETAPES plus bas)
   let photos = [];
   let video = null, videoEnPreparation = null, numeroVideo = 0;
   // nouvel essai après une coupure : même identifiant (la base ne double pas l'inscription) et photos / vidéo déjà
@@ -151,6 +152,7 @@
     $('ct-bloc-creneaux').classList.toggle('u-hidden', !p || !maintenantChoisi());
     $('ct-bloc-dispo').classList.toggle('u-hidden', !p || !convenir());
     if (p && maintenantChoisi()) selecteur.dessiner();
+    if (ecransPrets) rafraichir();   // (le compteur suit aussi les changements faits par le programme)
   }
   form.querySelectorAll('input[name="choix_creneaux"]').forEach((r) => r.addEventListener('change', majCreneaux));
   function majFormule() {
@@ -171,6 +173,7 @@
     $('ct-total-final').textContent = texteTotal();
     $('ct-lien-wave').href = LIEN_WAVE_AGENCE + montant();
     dessinerMoyens();
+    if (ecransPrets) rafraichir();   // (le compteur suit aussi les changements faits par le programme)
   }
   // (13/11/2026, maquette premium validée) moyens allumés par l'agence en tuiles ; Wave garde son lien, les autres
   // affichent le numéro (ou le lien de la carte, ou le RIB) — js/moyens-paiement.js
@@ -210,6 +213,7 @@
   const CONDITIONS = { base: () => parcours() === 'base', prive: () => prive(), maintenant: () => prive() && maintenantChoisi(), mineure: () => mineure() };
   const utile = (n) => { const si = ETAPES[n - 1] && ETAPES[n - 1].dataset.si; return !si || (CONDITIONS[si] ? CONDITIONS[si]() : true); };
   const utiles = () => ETAPES.map((f, i) => i + 1).filter(utile);
+  ecransPrets = true;
   // le compteur, le numéro du titre et les boutons suivent les choix (un choix peut ajouter ou retirer des écrans :
   // « Je paie maintenant » ajoute l'écran pour payer, « Moins de 18 ans » celui du parent…) ; « Envoyer » est sur le
   // dernier écran qui la concerne (« Dernière étape » : le paiement Wave s'il est choisi, la case de confidentialité et
@@ -218,12 +222,18 @@
     const n = etape, liste = utiles(), rang = liste.indexOf(n) + 1, fin = n === liste[liste.length - 1];
     $('ct-compteur').textContent = T('Étape ', 'Step ') + rang + T(' sur ', ' of ') + liste.length;
     const rond = ETAPES[n - 1].querySelector('.ct-etape-titre span'); if (rond) rond.textContent = String(rang);
+    const legende = ETAPES[n - 1].querySelector('legend');
+    if (legende) legende.textContent = T('Étape ', 'Step ') + rang + T(' sur ', ' of ') + liste.length + T(' : ', ': ') + ((ETAPES[n - 1].querySelector('.ct-etape-titre h3') || {}).textContent || '');
     $('ct-retour').classList.toggle('u-hidden', n === 1);
     $('ct-envoi-jauges').classList.toggle('u-hidden', !fin || !envoiEnCours);
     $('ct-suivant').classList.toggle('u-hidden', fin);
     $('ct-envoyer').classList.toggle('u-hidden', !fin);
   }
-  form.addEventListener('change', () => rafraichir());
+  form.addEventListener('change', () => {
+    // (un message d'erreur disparaît dès que la personne corrige quelque chose : il ne prend plus de place sur l'écran)
+    if (msg.classList.contains('err')) { msg.className = 'form-msg'; msg.textContent = ''; }
+    rafraichir();
+  });
   function montrer(n, defiler = true) {
     etape = n;
     form.querySelectorAll('.ct-etape').forEach((f) => f.classList.toggle('u-hidden', Number(f.dataset.etape) !== n));
@@ -533,8 +543,10 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    // (« Entrée » ou « OK » du clavier dans un champ d'un écran du milieu : on passe à l'écran suivant, comme « Suivant »)
+    const listeUtile = utiles();
+    if (etape !== listeUtile[listeUtile.length - 1]) { $('ct-suivant').click(); return; }
     for (const n of utiles().filter((k) => k < numeroDe('envoi'))) if (!etapeValide(n)) { montrer(n); etapeValide(n); return; }
-    if (!decision()) { montrer(numeroDe('paiement')); return erreur(T('Choisissez : payer maintenant ou plus tard.', 'Please choose: pay now or later.')); }
     if (!$('ct-consentement').checked) return erreur(T('Cochez la case pour accepter la politique de confidentialité.', 'Please tick the box to accept the privacy policy.'), $('ct-consentement'));
     EnvoiFiable.demanderNotifications();  // (12/11/2026 : « Inscription envoyée ✓ » si elle passe sur une autre application)
     const btn = $('ct-envoyer'); btn.disabled = true; $('ct-retour').disabled = true;
@@ -562,7 +574,7 @@
     const etat = await EnvoiFiable.lire('cours-talons');
     if (!etat || !etat.ligne) return;
     const btn = $('ct-envoyer'); btn.disabled = true;
-    montrer(numeroDe('paiement'), false);
+    montrer(numeroDe('envoi'), false);   // (dernière étape : « Envoyer » désactivé, jauges, pas de « Suivant »)
     afficherMsg(msg, T('Votre inscription n’avait pas fini de s’envoyer : nous terminons l’envoi…', 'Your sign-up had not finished sending: we are finishing it…'), 'ok');
     if (typeof msg.scrollIntoView === 'function') msg.scrollIntoView({ block: 'center' });
     const annuler = document.createElement('button');
