@@ -5583,3 +5583,8 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
   des talons, fiche, Book, paiements premium) ; elle reste dans l'application des mannequins et l'Administration
   (`mannequin-app.css`, `admin-vivante.css`), à convertir plus tard si la propriétaire le souhaite. Styles du haut des pages
   régénérés (`scripts/css-critique.mjs`).
+- **Application des mannequins et Administration** (accord de la propriétaire, 23/11/2026) : même police des titres.
+  `css/mannequin-app.css` utilise `var(--police-titre)` (css/jetons.css) ; `css/admin-vivante.css` garde son jeton
+  `--av-titre`, qui vaut maintenant `var(--police-titre)`. Phrases (ex. la phrase de la vitrine) en Work Sans.
+  **Non changés exprès** : les documents dessinés (compcard, CV imprimable, carte « Mannequin MA2M » : js/carte-mannequin.js
+  et la partie dessin de js/app.js), dont le modèle a été validé à part ; à changer seulement si la propriétaire le demande.
