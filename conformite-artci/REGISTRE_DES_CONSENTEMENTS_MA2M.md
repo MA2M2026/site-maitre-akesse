@@ -2,6 +2,7 @@
 
 ## Situation actuelle [VÉRIFIÉ]
 - Formulaires (candidature, cours de talons, contact) : une case « J'ai pris connaissance de la politique de confidentialité » doit être cochée. **Rien n'est enregistré** : ni la date, ni la version du texte, ni le choix.
+- Depuis le 23/11/2026, sur les pages en écrans, cette case est sur le **dernier écran**, à côté du bouton d'envoi, et un lien « Confidentialité » est visible sur chaque écran [VÉRIFIÉ].
 - Cookies : le choix (accepter / refuser) est gardé **dans le navigateur** du visiteur seulement. Google Analytics est refusé par défaut.
 - Accord parental : **enregistré** dans `accords_parents` (demande, nom du parent, date d'acceptation, date de retrait) [VÉRIFIÉ].
 - Règlement de l'agence à l'inscription : date d'acceptation enregistrée (`reglement_accepte_le`) [VÉRIFIÉ].

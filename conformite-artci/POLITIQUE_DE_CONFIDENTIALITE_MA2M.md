@@ -18,3 +18,5 @@ Données collectées par formulaire, finalités, accès réservé à l'équipe, 
 7. **Durées** complétées : photos des candidatures traitées effacées 5 jours après la décision ; journaux de sécurité [À VALIDER] ; cours de talons [À VALIDER].
 8. **Conseil sur le message libre** : ne pas transmettre d'informations de santé ni de pièces d'identité (déjà affiché sous le champ depuis le 22/11/2026).
 9. **Version et date** de la politique, pour le registre des consentements.
+10. **ARTCI** (décision de la propriétaire, 23/11/2026) : ne pas la citer tant que la déclaration n'est pas faite ; **après** son acceptation, ajouter l'ARTCI comme autorité de protection des données, le numéro et la date de la déclaration, et le nom du responsable. Ne jamais écrire « autorisé par l'ARTCI » sans document.
+11. **Accès à la politique** [VÉRIFIÉ, 23/11/2026] : sur les pages en écrans (candidatures, cours de talons), un lien « Confidentialité » est visible en bas de **chaque** écran, et la case « J'ai pris connaissance de la politique de confidentialité » est sur le dernier écran, avec le bouton d'envoi.

@@ -29,3 +29,5 @@
 6. Mineurs → `PROCEDURE_AUTORISATION_PARENTALE_MA2M.md`
 7. Information des personnes → `POLITIQUE_DE_CONFIDENTIALITE_MA2M.md`
 8. Consentements → `REGISTRE_DES_CONSENTEMENTS_MA2M.md`
+
+_Relu le 23/11/2026 : toujours **non déposé** ; la politique de confidentialité ne citera l'ARTCI et le numéro de déclaration qu'après acceptation (décision de la propriétaire, voir RAPPORT_FINAL)._

@@ -9,7 +9,7 @@
 | Candidature en attente | jusqu'à la réponse, puis règle ci-dessus | | oui |
 | Mannequin de l'agence (fiche, profil, documents) | durée de la collaboration + 3 ans | suivi, litiges éventuels | **non** [À FAIRE] |
 | Profil publié dans The Book | jusqu'au retrait de publication | | retrait au clic de l'agence |
-| Élève des cours de talons | [À DÉFINIR] (proposition : 2 ans après la dernière séance) | suivi pédagogique | **non** |
+| Élève des cours de talons | [À DÉFINIR] (proposition : 2 ans après la dernière séance) | suivi pédagogique | **non** ; suppression au clic de l'administrateur principal possible depuis le 23/11/2026 [VÉRIFIÉ] (inscription, séances, photos ; dossier Drive à la corbeille 30 jours) |
 | Message de contact, demande de recruteur | 3 ans après le dernier échange | relation | **non** [À FAIRE] |
 | Comptes de l'équipe | durée de la fonction, supprimés au départ | sécurité | au clic |
 | Journaux de sécurité (IP, tentatives, actions de l'équipe) | proposition : 12 mois | enquête en cas d'incident | **non** [À DÉFINIR] |
@@ -19,5 +19,6 @@
 | Preuves de consentement et accords parentaux | durée du traitement concerné + délai de prescription [JURISTE] | preuve | à mettre en place |
 | Pièces comptables (paiements, reçus) | durée légale [JURISTE] | obligation comptable | **non** |
 | Sauvegardes Supabase | selon l'offre [À COMPLÉTER] | | chez Supabase |
+| Copies Google Drive d'une fiche supprimée par l'agence | 30 jours dans la corbeille de Google Drive, puis effacement par Google | pouvoir annuler une erreur | **oui** [VÉRIFIÉ] |
 
 **Règle :** une suppression ne sert jamais à dissimuler une collecte passée ; les éléments utiles à la sécurité, aux obligations légales et à la défense des droits sont gardés dans les limites applicables.

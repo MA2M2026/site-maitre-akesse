@@ -21,3 +21,5 @@
 ## Transferts hors de Côte d'Ivoire / CEDEAO
 La base est à Paris (France) [VÉRIFIÉ]. D'autres prestataires peuvent traiter des données ailleurs (Europe, États-Unis) [À COMPLÉTER].
 **[ARTCI / JURISTE]** : formalités et garanties exigées pour ces transferts.
+
+_Relu le 23/11/2026 : aucun nouveau prestataire. Google Drive reçoit désormais aussi les demandes de mise à la corbeille des dossiers supprimés par l'agence (même prestataire, même rôle)._

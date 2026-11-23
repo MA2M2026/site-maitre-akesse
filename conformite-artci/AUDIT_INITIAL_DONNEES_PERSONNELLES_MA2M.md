@@ -1,6 +1,6 @@
 # Audit initial des données personnelles — Maître Akesse Model Management (MA2M)
 
-**Date :** 22/11/2026 · **Auteur :** assistant technique (Claude Code), à la demande de la propriétaire de MA2M
+**Date :** 22/11/2026, complété le 23/11/2026 · **Auteur :** assistant technique (Claude Code), à la demande de la propriétaire de MA2M
 **Statut :** document préparatoire. Ce n'est ni une déclaration déposée auprès de l'ARTCI, ni une autorisation, ni une certification.
 **Référence :** loi ivoirienne n° 2013-450 du 19 juin 2013.
 
@@ -84,7 +84,7 @@ Identité (nom, date, ville et lieu de naissance, nationalité, ville, quartier,
 
 | # | Constat | Gravité | Proposition |
 |---|---|---|---|
-| 1 | Le **poids** des mannequins était lisible par tout visiteur (colonne ouverte) et affiché sur la fiche publique | moyenne | **fait** : n'est plus affiché ni lu par les pages publiques ; SQL `supabase-artci-poids-prive.sql` à coller après la mise en ligne. **Limite restante** : un compte mannequin connecté peut encore lire le poids des autres fiches publiées (à fermer par une fonction dédiée) |
+| 1 | Le **poids** des mannequins était lisible par tout visiteur (colonne ouverte) et affiché sur la fiche publique | moyenne | **fait** : n'est plus affiché ni lu par les pages publiques ; SQL `supabase-artci-poids-prive.sql` collé et vérifié le 22/11/2026. **Limite restante** : un compte mannequin connecté peut encore lire le poids des autres fiches publiées (à fermer par une fonction dédiée) |
 | 2 | Date de naissance, quartier, scolarité, niveau d'études demandés à toutes les candidates | moyenne | **fait** : retirés des candidatures et des cours de talons (majeure/mineure à la place) |
 | 3 | **Aucune preuve de consentement** enregistrée (case cochée, mais ni date ni version du texte) | moyenne | à faire : enregistrer date + version de la politique acceptée (voir REGISTRE) |
 | 4 | Durées annoncées non automatisées : messages de contact, demandes de recruteurs (3 ans), fiches de mannequins (3 ans après la fin) | moyenne | à faire : tâches automatiques, après validation des durées |
@@ -98,3 +98,9 @@ Identité (nom, date, ville et lieu de naissance, nationalité, ville, quartier,
 - Régions et contrats de Vercel, EmailJS, Sentry, Cloudflare, Meta, Google [À COMPLÉTER].
 - Sauvegardes Supabase (durée, restauration) selon l'offre souscrite [À COMPLÉTER].
 - Statut juridique exact du responsable du traitement [MA2M / ARTCI].
+
+## 7. Mise à jour du 23/11/2026
+- Écarts 1 et 2 : **corrigés et en ligne** (vérifié dans la base et sur le site).
+- Présentation des formulaires en écrans (casting, intégrer l'agence, cours de talons) : **aucune nouvelle donnée** ; les liens « Mentions légales · Confidentialité » sont visibles sur chaque écran ; la case de confidentialité est à côté du bouton d'envoi.
+- Bouton « Supprimer » des cours de talons et mise à la corbeille des dossiers Google Drive : **actifs** (vérifié) — utile pour le droit à l'effacement.
+- Écarts 3 à 8 : inchangés (voir RAPPORT_FINAL, « Reste à faire »).

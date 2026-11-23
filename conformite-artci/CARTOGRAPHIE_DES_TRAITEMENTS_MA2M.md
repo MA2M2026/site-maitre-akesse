@@ -19,3 +19,5 @@ Les données détaillées de chaque formulaire sont dans `AUDIT_INITIAL_DONNEES_
 | 12 | Comptabilité et paiements | mannequins, élèves | paiements, reçus, références | obligation légale comptable [JURISTE : durée] | encaissements, comptabilité | durée légale [JURISTE] | à confirmer |
 
 **Remarque :** une seule déclaration ne couvre pas forcément tous ces traitements, ni les transferts hors de Côte d'Ivoire. À faire confirmer par l'ARTCI (voir `QUESTIONS_A_CONFIRMER_AUPRES_ARTCI.md`).
+
+_Relu le 23/11/2026 : aucun traitement nouveau ; les formulaires présentés en écrans et la nouvelle police ne changent ni les données ni les finalités._
