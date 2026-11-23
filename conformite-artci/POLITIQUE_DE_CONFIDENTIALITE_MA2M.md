@@ -15,7 +15,7 @@ Données collectées par formulaire, finalités, accès réservé à l'équipe, 
 4. **Statistiques internes** : comptage des pages vues avec une empreinte (non réversible) de l'adresse IP, sans cookie [JURISTE : consentement ?].
 5. **The Book** : seules les informations professionnelles sont publiées ; **le poids n'est plus affiché publiquement**.
 6. **Bases juridiques** par finalité [À VALIDER, voir CARTOGRAPHIE].
-7. **Durées** complétées : photos des candidatures traitées effacées 5 jours après la décision ; journaux de sécurité [À VALIDER] ; cours de talons [À VALIDER].
+7. **Durées** complétées : adresses IP 12 mois, erreurs techniques 6 mois, statistiques 14 mois (effacement automatique) ; cours de talons : tant que les cours sont suivis, puis suppression par l'agence ou sur demande.
 8. **Conseil sur le message libre** : ne pas transmettre d'informations de santé ni de pièces d'identité (déjà affiché sous le champ depuis le 22/11/2026).
 9. **Version et date** de la politique, pour le registre des consentements.
 10. **ARTCI** (décision de la propriétaire, 23/11/2026) : ne pas la citer tant que la déclaration n'est pas faite ; **après** son acceptation, ajouter l'ARTCI comme autorité de protection des données, le numéro et la date de la déclaration, et le nom du responsable. Ne jamais écrire « autorisé par l'ARTCI » sans document.

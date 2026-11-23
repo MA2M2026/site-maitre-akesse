@@ -36,8 +36,8 @@
 La politique de confidentialité en ligne cite la loi n° 2013-450 et, pour l'Europe, le RGPD. Tant que la déclaration n'est pas faite, **elle ne cite pas l'ARTCI** et n'annonce **aucune autorisation ni numéro**. Après l'acceptation de la déclaration, on ajoutera en une fois : le nom du responsable (la société une fois constituée), l'ARTCI comme autorité de protection des données et le numéro de déclaration.
 
 ## Reste à faire
-- Enregistrer les preuves de consentement (date, version) — voir REGISTRE.
-- Automatiser les durées non encore appliquées — voir CONSERVATION.
-- Mettre à jour la politique de confidentialité — voir le brouillon (avec la mention de l'ARTCI **après** la déclaration).
+- ~~Enregistrer les preuves de consentement (date, version)~~ : **fait le 23/11/2026** — voir REGISTRE.
+- ~~Effacer automatiquement les traces techniques~~ : **fait le 23/11/2026** (IP 12 mois, erreurs 6 mois, statistiques 14 mois). Les dossiers et les photos restent supprimés au clic de l'agence, par choix de la propriétaire — voir CONSERVATION.
+- ~~Mettre à jour la politique de confidentialité~~ : **fait le 23/11/2026** (FR/EN, version du 23/11/2026). Reste : la mention de l'ARTCI **après** la déclaration.
 - Compléter les informations du responsable et des prestataires [À COMPLÉTER].
 - Poser les questions à l'ARTCI, puis choisir et accomplir la formalité.

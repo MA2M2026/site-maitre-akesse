@@ -78,7 +78,7 @@ Identité (nom, date, ville et lieu de naissance, nationalité, ville, quartier,
 - Administration : comptes nominatifs, rôles, double authentification, appareils de confiance, blocage après tentatives.
 - Formulaires publics : anti-robots (Turnstile), limite par adresse IP, liste blanche des champs acceptés côté serveur.
 - Mineurs : accord du parent enregistré (`accords_parents` : demande, acceptation, retrait) ; publication d'un profil mineur bloquée sans accord (`bloquer_publication_mineur`).
-- Conservation : effacement automatique des candidatures après 2 ans (tâche `effacement-candidatures-2-ans`, chaque nuit) ; photos des candidatures traitées effacées 5 jours après la décision (`nettoyer_photos_traitees_anciennes`).
+- Conservation : effacement automatique des candidatures après 2 ans (tâche `effacement-candidatures-2-ans`, chaque nuit)  (candidatures refusées et inscriptions annulées seulement). Les photos ne sont **jamais** effacées automatiquement (décision de la propriétaire du 17/11/2026 : la tâche `nettoyer_photos_traitees_anciennes` est désactivée). Depuis le 23/11/2026 : traces techniques effacées automatiquement (voir CONSERVATION).
 
 ## 5. Écarts et risques relevés
 
@@ -86,12 +86,12 @@ Identité (nom, date, ville et lieu de naissance, nationalité, ville, quartier,
 |---|---|---|---|
 | 1 | Le **poids** des mannequins était lisible par tout visiteur (colonne ouverte) et affiché sur la fiche publique | moyenne | **fait** : n'est plus affiché ni lu par les pages publiques ; SQL `supabase-artci-poids-prive.sql` collé et vérifié le 22/11/2026. **Limite restante** : un compte mannequin connecté peut encore lire le poids des autres fiches publiées (à fermer par une fonction dédiée) |
 | 2 | Date de naissance, quartier, scolarité, niveau d'études demandés à toutes les candidates | moyenne | **fait** : retirés des candidatures et des cours de talons (majeure/mineure à la place) |
-| 3 | **Aucune preuve de consentement** enregistrée (case cochée, mais ni date ni version du texte) | moyenne | à faire : enregistrer date + version de la politique acceptée (voir REGISTRE) |
+| 3 | **Aucune preuve de consentement** enregistrée (case cochée, mais ni date ni version du texte) | moyenne | **fait le 23/11/2026** : date + version de la politique enregistrées avec chaque fiche (voir REGISTRE) |
 | 4 | Durées annoncées non automatisées : messages de contact, demandes de recruteurs (3 ans), fiches de mannequins (3 ans après la fin) | moyenne | à faire : tâches automatiques, après validation des durées |
-| 5 | La politique de confidentialité ne cite pas : cours de talons, Turnstile, WhatsApp Business (Meta), notifications push, statistiques internes `page_views` | faible | à faire : brouillon prêt (POLITIQUE_DE_CONFIDENTIALITE_MA2M.md) |
+| 5 | La politique de confidentialité ne cite pas : cours de talons, Turnstile, WhatsApp Business (Meta), notifications push, statistiques internes `page_views` | faible | **fait le 23/11/2026** : politique en ligne mise à jour (FR/EN) |
 | 6 | **Numéros de téléphone** collectés partout (WhatsApp) | à qualifier | [ARTCI / JURISTE] formalité préalable éventuelle (voir QUESTIONS) |
 | 7 | Lieux d'hébergement de Vercel, EmailJS, Cloudflare R2, Google Drive, Sentry, Meta non confirmés | à qualifier | [À COMPLÉTER] vérifier dans les comptes et contrats |
-| 8 | Journaux techniques (`journal_erreurs`, `audit_log`, IP) sans durée de conservation définie | faible | proposer une durée (ex. 12 mois) [À VALIDER] |
+| 8 | Journaux techniques (`journal_erreurs`, `audit_log`, IP) sans durée de conservation définie | faible | **fait le 23/11/2026** : IP 12 mois, erreurs 6 mois, statistiques 14 mois, effacement automatique chaque nuit ; `audit_log` volontairement gardé (écriture seule) |
 
 ## 6. Ce qui n'a pas pu être vérifié
 - Paramètres de partage réels des dossiers Google Drive et propriétaire des fichiers [À COMPLÉTER].

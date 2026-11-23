@@ -331,6 +331,11 @@ const COLONNES_FORMULAIRES = {
     'objectif', 'concours', 'concours_date', 'niveau', 'creneaux', 'choix_creneaux', 'disponibilites', 'adresse',
     'parent_nom', 'parent_telephone', 'photos', 'video', 'decision', 'reference_wave', 'moyen']
 };
+// (23/11/2026, conformité ARTCI, accord de la propriétaire) preuve du consentement : chaque formulaire public exige la case
+// « J'ai pris connaissance de la politique de confidentialité » ; le serveur enregistre la VERSION de la politique en vigueur
+// (jamais celle envoyée par la page), et la base ajoute la date (déclencheur, supabase-conformite-consentement-traces.sql).
+// À changer en même temps que la date affichée en bas de politique-confidentialite.html (FR et EN).
+const POLITIQUE_VERSION = '2026-11-23';
 function garderColonnesAutorisees(table, ligne) {
   const propre = {};
   for (const c of COLONNES_FORMULAIRES[table] || []) if (Object.prototype.hasOwnProperty.call(ligne, c)) propre[c] = ligne[c];
@@ -420,6 +425,7 @@ async function formulairePublic(req, corps, res) {
   }
   const ligne = garderColonnesAutorisees(table, recu);
   if (!ligne || !Object.keys(ligne).length) return res.status(400).json({ error: 'Formulaire invalide.' });
+  ligne.politique_version = POLITIQUE_VERSION;   // (preuve du consentement : la base y ajoute la date)
   const modeles = table === 'recruiter_requests' ? modelesDeLaDemande(recu) : null;
   if (table === 'recruiter_requests' && (!modeles || !ligne.id)) return res.status(400).json({ error: 'Votre sélection est vide ou invalide : rechargez la page.', selection: true });
   const ip = extraireIp(req) || '';
@@ -453,7 +459,7 @@ async function formulairePublic(req, corps, res) {
     // (SQL de l'Extension 152 pas encore collé : la fonction n'existe pas ; l'envoi passe quand même, comme avant,
     // pour que la mise en ligne du code avant le SQL ne bloque jamais les candidats)
     if (/Could not find the function|PGRST202|does not exist/.test(m)) {
-      const propre = Object.assign({}, ligne); delete propre.status;
+      const propre = Object.assign({}, ligne); delete propre.status; delete propre.politique_version;  // (colonne peut-être absente)
       const rep = await fetch(SUPABASE_URL + '/rest/v1/' + table, { method: 'POST', headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(propre) });
       if (rep.ok || (rep.status === 409 && ligne.id)) {
         if (modeles) return await finirDemande(res, ligne.id, modeles, rep.status === 409);
