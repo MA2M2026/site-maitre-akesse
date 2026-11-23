@@ -55,6 +55,10 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       montant: '30 000 FCFA', photos: [f, f], video: v, d: { liens: ['https://drive.google.com/photo-0', 'https://drive.google.com/photo-1'], rangs: [0, 1], dossier: 'd2', video: null }, page: '/cours-talons.html' });
   }, photo);
   await p.goto(base + '/cours-talons.html');
+  // (23/11/2026, formulaire en petits écrans) pendant la reprise : la dernière étape, « Envoyer » (désactivé), pas de « Suivant »
+  await p.waitForFunction(() => /terminons l’envoi|finishing it|Merci/.test(document.getElementById('ct-msg').textContent + document.getElementById('ct-merci').textContent), null, { timeout: 15000 }).catch(() => {});
+  const pendant = await p.evaluate(() => ({ nom: ([...document.querySelectorAll('.ct-etape')].find((x) => !x.classList.contains('u-hidden')) || { dataset: {} }).dataset.nom, merci: !document.getElementById('ct-merci').classList.contains('u-hidden'), suivant: !document.getElementById('ct-suivant').classList.contains('u-hidden') }));
+  ok(pendant.merci || (pendant.nom === 'envoi' && !pendant.suivant), 'cours de talons, reprise : la page ouvre la dernière étape, sans « Suivant » ' + JSON.stringify(pendant));
   await p.waitForFunction(() => !document.getElementById('ct-merci').classList.contains('u-hidden'), null, { timeout: 30000 }).catch(() => {});
   const t = await p.evaluate(async () => ({ merci: document.getElementById('ct-merci').innerText, garde: await EnvoiFiable.lire('cours-talons') }));
   const inscrits = journal.slice(avantTalons).filter((j) => j[0] === 'POST' && j[1] === 'cours_talons');

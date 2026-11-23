@@ -33,6 +33,7 @@
 
   // ---------- état
   let etape = 1;
+  let ecransPrets = false;   // (les écrans du formulaire sont prêts : voir ETAPES plus bas)
   let photos = [];
   let video = null, videoEnPreparation = null, numeroVideo = 0;
   // nouvel essai après une coupure : même identifiant (la base ne double pas l'inscription) et photos / vidéo déjà
@@ -151,6 +152,7 @@
     $('ct-bloc-creneaux').classList.toggle('u-hidden', !p || !maintenantChoisi());
     $('ct-bloc-dispo').classList.toggle('u-hidden', !p || !convenir());
     if (p && maintenantChoisi()) selecteur.dessiner();
+    if (ecransPrets) rafraichir();   // (le compteur suit aussi les changements faits par le programme)
   }
   form.querySelectorAll('input[name="choix_creneaux"]').forEach((r) => r.addEventListener('change', majCreneaux));
   function majFormule() {
@@ -171,6 +173,7 @@
     $('ct-total-final').textContent = texteTotal();
     $('ct-lien-wave').href = LIEN_WAVE_AGENCE + montant();
     dessinerMoyens();
+    if (ecransPrets) rafraichir();   // (le compteur suit aussi les changements faits par le programme)
   }
   // (13/11/2026, maquette premium validée) moyens allumés par l'agence en tuiles ; Wave garde son lien, les autres
   // affichent le numéro (ou le lien de la carte, ou le RIB) — js/moyens-paiement.js
@@ -201,17 +204,45 @@
 
   // ---------- étapes
   const msg = $('ct-msg');
+  // (23/11/2026, demande de la propriétaire : chaque étape tient dans l'écran) une question par écran : formule, parcours,
+  // thèmes, détails, créneaux, vous, parent, objectif, photos, paiement (data-nom). Les écrans qui ne concernent pas la
+  // personne sont sautés (data-si : « base » = J'ai déjà la base, « prive » = cours privé, « mineure » = moins de 18 ans).
+  const ETAPES = [...form.querySelectorAll('.ct-etape')];
+  const nomEtape = (n) => (ETAPES[n - 1] || { dataset: {} }).dataset.nom;
+  const numeroDe = (nom) => ETAPES.findIndex((f) => f.dataset.nom === nom) + 1;
+  const CONDITIONS = { base: () => parcours() === 'base', prive: () => prive(), maintenant: () => prive() && maintenantChoisi(), mineure: () => mineure() };
+  const utile = (n) => { const si = ETAPES[n - 1] && ETAPES[n - 1].dataset.si; return !si || (CONDITIONS[si] ? CONDITIONS[si]() : true); };
+  const utiles = () => ETAPES.map((f, i) => i + 1).filter(utile);
+  ecransPrets = true;
+  // le compteur, le numéro du titre et les boutons suivent les choix (un choix peut ajouter ou retirer des écrans :
+  // « Je paie maintenant » ajoute l'écran pour payer, « Moins de 18 ans » celui du parent…) ; « Envoyer » est sur le
+  // dernier écran qui la concerne (« Dernière étape » : le paiement Wave s'il est choisi, la case de confidentialité et
+  // « Envoyer », toujours ensemble)
+  function rafraichir() {
+    const n = etape, liste = utiles(), rang = liste.indexOf(n) + 1, fin = n === liste[liste.length - 1];
+    $('ct-compteur').textContent = T('Étape ', 'Step ') + rang + T(' sur ', ' of ') + liste.length;
+    const rond = ETAPES[n - 1].querySelector('.ct-etape-titre span'); if (rond) rond.textContent = String(rang);
+    const legende = ETAPES[n - 1].querySelector('legend');
+    if (legende) legende.textContent = T('Étape ', 'Step ') + rang + T(' sur ', ' of ') + liste.length + T(' : ', ': ') + ((ETAPES[n - 1].querySelector('.ct-etape-titre h3') || {}).textContent || '');
+    $('ct-retour').classList.toggle('u-hidden', n === 1);
+    $('ct-envoi-jauges').classList.toggle('u-hidden', !fin || !envoiEnCours);
+    $('ct-suivant').classList.toggle('u-hidden', fin);
+    $('ct-envoyer').classList.toggle('u-hidden', !fin);
+  }
+  form.addEventListener('change', () => {
+    // (un message d'erreur disparaît dès que la personne corrige quelque chose : il ne prend plus de place sur l'écran)
+    if (msg.classList.contains('err')) { msg.className = 'form-msg'; msg.textContent = ''; }
+    rafraichir();
+  });
   function montrer(n, defiler = true) {
     etape = n;
     form.querySelectorAll('.ct-etape').forEach((f) => f.classList.toggle('u-hidden', Number(f.dataset.etape) !== n));
-    document.querySelectorAll('.lx-progression li').forEach((li, i) => { li.classList.toggle('actif', i === n - 1); li.classList.toggle('fait', i < n - 1); });
-    $('ct-retour').classList.toggle('u-hidden', n === 1);
-    $('ct-envoi-jauges').classList.toggle('u-hidden', n !== 4 || !envoiEnCours);
-    $('ct-suivant').classList.toggle('u-hidden', n === 4);
-    $('ct-envoyer').classList.toggle('u-hidden', n !== 4);
+    rafraichir();
     msg.className = 'form-msg'; msg.textContent = '';
     const titre = form.querySelector('.ct-etape[data-etape="' + n + '"] .ct-etape-titre');
-    if (defiler && titre && typeof titre.scrollIntoView === 'function') titre.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // (page en écrans : chaque étape tient dans l'écran, on remonte simplement en haut ; sinon on amène le titre)
+    if (defiler && document.body.classList.contains('ecrans-actif')) window.scrollTo(0, 0);
+    else if (defiler && titre && typeof titre.scrollIntoView === 'function') titre.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   function erreur(texte, champ) {
     afficherMsg(msg, texte, 'err');
@@ -219,28 +250,38 @@
     return false;
   }
   function etapeValide(n) {
-    if (n === 1) {
-      if (!formule()) return erreur(T('Choisissez une formule.', 'Please choose an option.'));
-      if (!parcours()) return erreur(T('Dites-nous si vous débutez ou si vous avez déjà la base.', 'Please tell us whether you are a beginner or already have the basics.'), form.querySelector('input[name="parcours"]'));
+    const nom = nomEtape(n);
+    if (nom === 'formule' && !formule()) return erreur(T('Choisissez une formule.', 'Please choose an option.'));
+    if (nom === 'parcours' && !parcours()) return erreur(T('Dites-nous si vous débutez ou si vous avez déjà la base.', 'Please tell us whether you are a beginner or already have the basics.'), form.querySelector('input[name="parcours"]'));
+    if (nom === 'themes') {
       if (parcours() === 'base' && formule() !== 'groupe' && modulesTous().length > MAX_MOIS_PRIVE) return erreur(T('En privé : 7 mois de thèmes au plus (28 séances). Retirez un thème ou passez-en un à 1 mois.', 'Private lessons: 7 months of themes at most (28 sessions). Remove a theme or set one to 1 month.'), form.querySelector('#ct-themes input:checked'));
       if (parcours() === 'base' && !modulesChoisis().length) return erreur(T('Cochez au moins un thème à travailler.', 'Please tick at least one theme to work on.'), form.querySelector('#ct-themes input'));
+    }
+    if (nom === 'details') {
       if (formule() === 'prive_exterieur' && !$('ct-adresse').value.trim()) return erreur(T('Indiquez le lieu des cours.', 'Please give the place of the lessons.'), $('ct-adresse'));
+    }
+    if (nom === 'creneaux') {
       if (prive() && !choixCreneaux()) return erreur(T('Dites-nous quand vous choisirez vos créneaux.', 'Please tell us when you will choose your time slots.'), form.querySelector('input[name="choix_creneaux"]'));
+    }
+    if (nom === 'calendrier') {
       if (prive() && maintenantChoisi() && choisis().length < nbSeances()) {
         const reste = nbSeances() - choisis().length;
-        return erreur(T('Choisissez vos créneaux (encore ' + reste + '), ou une autre façon ci-dessus.', 'Please choose your time slots (' + reste + ' more), or another option above.'), $('ct-heures').querySelector('button:not([disabled])') || $('ct-bloc-facons'));
+        return erreur(T('Choisissez vos créneaux (encore ' + reste + '), ou revenez en arrière pour une autre façon.', 'Please choose your time slots (' + reste + ' more), or go back for another option.'), $('ct-heures').querySelector('button:not([disabled])') || $('ct-jours'));
       }
     }
-    if (n === 2) {
+    if (nom === 'vous') {
       if (!civilite()) return erreur(T('Choisissez : Madame ou Mademoiselle.', 'Please choose: Mrs or Miss.'), form.querySelector('input[name="civilite"]'));
       if ($('ct-nom').value.trim().length < 2) return erreur(T('Indiquez votre nom.', 'Please give your name.'), $('ct-nom'));
       if (!/^[0-9 ]{6,14}$/.test($('ct-telephone').value.trim())) return erreur(T('Indiquez un numéro de téléphone valide.', 'Please give a valid phone number.'), $('ct-telephone'));
       if (!$('ct-majorite').value) return erreur(T('Indiquez si vous avez 18 ans ou plus.', 'Please say whether you are 18 or older.'), $('ct-majorite'));
+    }
+    if (nom === 'parent') {
       if (mineure() && ($('ct-parent-nom').value.trim().length < 2 || !/^[0-9 ]{6,14}$/.test($('ct-parent-telephone').value.trim()))) {
         return erreur(T('Moins de 18 ans : indiquez le nom et le téléphone d’un parent ou tuteur.', 'Under 18: please give the name and phone of a parent or guardian.'), $('ct-parent-nom'));
       }
     }
-    if (n === 3) {
+    if (nom === 'paiement' && !decision()) return erreur(T('Choisissez : payer maintenant ou plus tard.', 'Please choose: pay now or later.'));
+    if (nom === 'photos') {
       if (nbPhotosEnPreparation) return erreur(T('Vos photos sont en cours de préparation : un instant, puis appuyez à nouveau.', 'Your photos are being prepared: wait a moment, then tap again.'), $('ct-photos'));
       if (photos.length < PHOTOS_MIN) return erreur(T('Ajoutez 2 à 5 photos.', 'Please add 2 to 5 photos.'), $('ct-photos'));
       if (!video && !videoEnPreparation) return erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video'));
@@ -248,9 +289,10 @@
     return true;
   }
   $('ct-suivant').addEventListener('click', () => {
-    if (etapeValide(etape)) montrer(etape + 1);
+    if (!etapeValide(etape)) return;
+    const suite = utiles().find((k) => k > etape); if (suite) montrer(suite);
   });
-  $('ct-retour').addEventListener('click', () => montrer(Math.max(1, etape - 1)));
+  $('ct-retour').addEventListener('click', () => { const avant = utiles().filter((k) => k < etape).pop(); montrer(avant || 1); });
 
   // ---------- photos (2 à 5)
   function rafraichirPhotos() {
@@ -445,7 +487,7 @@
       envoiEnCours = false;
       await selecteur.relire();
       majCreneaux();
-      montrer(1);
+      montrer(numeroDe('calendrier'));   // (le calendrier des créneaux : un écran à lui seul)
       erreur(T('Un de vos créneaux n’est plus disponible (réservé entre-temps). Choisissez-en un autre, puis renvoyez votre inscription (vos photos et votre vidéo sont gardées).', 'One of your slots is no longer available (booked in the meantime). Please choose another one, then send your sign-up again (your photos and video are kept).'), $('ct-heures'));
       return;
     }
@@ -501,19 +543,21 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    for (const n of [1, 2, 3]) if (!etapeValide(n)) { montrer(n); etapeValide(n); return; }
-    if (!decision()) return erreur(T('Choisissez : payer maintenant ou plus tard.', 'Please choose: pay now or later.'));
+    // (« Entrée » ou « OK » du clavier dans un champ d'un écran du milieu : on passe à l'écran suivant, comme « Suivant »)
+    const listeUtile = utiles();
+    if (etape !== listeUtile[listeUtile.length - 1]) { $('ct-suivant').click(); return; }
+    for (const n of utiles().filter((k) => k < numeroDe('envoi'))) if (!etapeValide(n)) { montrer(n); etapeValide(n); return; }
     if (!$('ct-consentement').checked) return erreur(T('Cochez la case pour accepter la politique de confidentialité.', 'Please tick the box to accept the privacy policy.'), $('ct-consentement'));
     EnvoiFiable.demanderNotifications();  // (12/11/2026 : « Inscription envoyée ✓ » si elle passe sur une autre application)
     const btn = $('ct-envoyer'); btn.disabled = true; $('ct-retour').disabled = true;
     try {
-      if (!video && !videoEnPreparation) { montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      if (!video && !videoEnPreparation) { montrer(numeroDe('photos')); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
       // (le message et les jauges d'abord : la préparation de la vidéo peut prendre un moment)
       envoiEnCours = true; $('ct-envoi-jauges').classList.remove('u-hidden');
       afficherMsg(msg, T('Préparation de votre vidéo…', 'Preparing your video…'), 'ok');
       if (videoEnPreparation) await videoEnPreparation;
       await photosEnPreparation;
-      if (!video) { envoiEnCours = false; montrer(3); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      if (!video) { envoiEnCours = false; montrer(numeroDe('photos')); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
       const etat = { ligne: Object.assign({ id: idInscription }, ligneInscription([], null)), montant: fcfa(montant()), photos, video, d: dejaEnvoye, page: location.pathname };
       await EnvoiFiable.garder('cours-talons', etat);
       await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), true);
@@ -530,7 +574,7 @@
     const etat = await EnvoiFiable.lire('cours-talons');
     if (!etat || !etat.ligne) return;
     const btn = $('ct-envoyer'); btn.disabled = true;
-    montrer(4, false);
+    montrer(numeroDe('envoi'), false);   // (dernière étape : « Envoyer » désactivé, jauges, pas de « Suivant »)
     afficherMsg(msg, T('Votre inscription n’avait pas fini de s’envoyer : nous terminons l’envoi…', 'Your sign-up had not finished sending: we are finishing it…'), 'ok');
     if (typeof msg.scrollIntoView === 'function') msg.scrollIntoView({ block: 'center' });
     const annuler = document.createElement('button');

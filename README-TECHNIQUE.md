@@ -5583,3 +5583,27 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
   des talons, fiche, Book, paiements premium) ; elle reste dans l'application des mannequins et l'Administration
   (`mannequin-app.css`, `admin-vivante.css`), à convertir plus tard si la propriétaire le souhaite. Styles du haut des pages
   régénérés (`scripts/css-critique.mjs`).
+- **Application des mannequins et Administration** (accord de la propriétaire, 23/11/2026) : même police des titres.
+  `css/mannequin-app.css` utilise `var(--police-titre)` (css/jetons.css) ; `css/admin-vivante.css` garde son jeton
+  `--av-titre`, qui vaut maintenant `var(--police-titre)`. Phrases (ex. la phrase de la vitrine) en Work Sans.
+  **Non changés exprès** : les documents dessinés (compcard, CV imprimable, carte « Mannequin MA2M » : js/carte-mannequin.js
+  et la partie dessin de js/app.js), dont le modèle a été validé à part ; à changer seulement si la propriétaire le demande.
+
+### Formulaire des Cours de talons : une question par écran (23/11/2026, demande de la propriétaire)
+
+Chaque étape tient dans l'écran du téléphone. Les 4 anciennes étapes deviennent 12 petits écrans (`<fieldset class="ct-etape"
+data-etape="N" data-nom="…">`, cours-talons.html FR/EN) : formule · parcours · thèmes (`data-si="base"`) · détails (durée,
+paiement mois par mois / nombre de séances, lieu, programme, total) · créneaux (`data-si="prive"`) · calendrier
+(`data-si="maintenant"`) · vous · parent (`data-si="mineure"`) · objectif et niveau · photos et vidéo · paiement (maintenant
+ou plus tard) · dernière étape (moyens de paiement si « maintenant », case de confidentialité et « Envoyer », toujours
+ensemble). js/cours-talons.js : `utiles()` ne garde que les écrans qui concernent la personne (`CONDITIONS`), « Suivant » et
+« Retour » sautent les autres, `rafraichir()` met à jour le compteur « Étape 3 sur 8 » (à la place des 4 ronds), le numéro du
+titre et les boutons dès qu'un choix change ; la vérification de chaque écran se fait par son nom (`etapeValide`). En mode
+écrans, le formulaire est resserré (css/cours-talons.css, fin) : thèmes sur deux colonnes, heures du calendrier sur deux
+rangées, liste des séances choisies dans un petit cadre qui défile. Essai : `test-cours-talons.js` parcourt tous les écrans
+et vérifie qu'aucun ne dépasse sur téléphone.
+Relecture du 23/11/2026 : la reprise d'un envoi coupé ouvre la dernière étape (`numeroDe('envoi')`) ; « Entrée » dans un
+champ d'un écran du milieu = « Suivant » (plus d'envoi ni de saut d'écran) ; le compteur suit aussi les changements faits par
+le programme (`ecransPrets`) ; la légende pour les lecteurs d'écran reprend « Étape X sur Y » ; un message d'erreur disparaît
+dès qu'on corrige un choix ; les listes longues (thèmes, séances choisies) défilent dans leur cadre au lieu d'être coupées ;
+zones à toucher d'au moins 40 px et listes en 16 px (pas de zoom de l'iPhone).

@@ -114,8 +114,8 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
       ok(faq.ok && faq.nb >= 5 && await p.isVisible('.ecran-courant details[open] p'), n + 'questions fréquentes : un écran avant le formulaire, les réponses s’ouvrent (' + faq.nb + ')');
       await p.click('.ecrans-suivant'); await p.waitForTimeout(400);
       // le formulaire passe à son étape 2 : la barre s'efface ; retour à l'étape 1 : elle revient
-      await p.click('label.ct-choix:has(input[value="groupe"])'); await p.click('label.ct-parcours-choix:has(input[value="debut"])');
-      await p.click('#ct-suivant'); await p.waitForTimeout(400);
+      await p.click('label.ct-choix:has(input[value="groupe"])');
+      await p.click('#ct-suivant'); await p.waitForTimeout(400);   // (→ « Où en êtes-vous ? », 2e écran du formulaire)
       const etape2 = await etat(p);
       await p.click('#ct-retour'); await p.waitForTimeout(400);
       const etape1 = await etat(p);
