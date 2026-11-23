@@ -93,7 +93,7 @@
   window.addEventListener('resize', () => mesurer());
   // (l'en-tête peut changer de hauteur quand les polices ou le logo arrivent : on remesure)
   window.addEventListener('load', () => mesurer());
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => mesurer()).catch(() => {});
+  if ('fonts' in document) document.fonts.ready.then(() => mesurer()).catch(() => { /* rien */ });   /* (SonarCloud S6544) */
   ecrans[ecrans.length - 1].classList.add('ecran-formulaire');
   function majBarre() {
     const surFormulaire = courant === dernier;
