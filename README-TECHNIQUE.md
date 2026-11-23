@@ -5521,3 +5521,41 @@ au 12/11/2026 ; les vidéos, elles, arrivaient). Voir `maquettes/URGENT-photos-c
     de `photos` remplacés par leurs copies si l'inscription n'a pas changé. Échec → copies retirées, rien noté, dossier
     laissé sur Drive et signalé au journal. `maxDuration` 30 s pour `api/r2-presigner.js` (vercel.json).
     Test : `test-rattrapage-photos.js`.
+
+## Pages en écrans (22/11/2026, demande de la propriétaire : « trop long à faire défiler »)
+
+Une page dont le `<main>` porte `data-ecrans` s'affiche comme une suite d'écrans : `js/pages-ecrans.js` (partagé)
+et `css/pages-ecrans.css`. Pages : **Intégrer l'agence**, **Postuler à un casting** et **Cours de talons** (FR/EN ;
+« continue pour tout », propriétaire, 22/11/2026). Cours de talons : une formule par écran, le programme en deux
+écrans, et les **questions fréquentes en écran juste avant le formulaire** (section déplacée avant `#inscription`,
+demande de la propriétaire) ; son formulaire, dont les choix s'allongent, se fait défiler. **Inscription** : laissée
+telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; une barre de plus n'ajouterait qu'un clic.
+
+- Chaque `<section>` directe du `<main>` = un écran (accueil, vidéo, étapes, critères, parcours, programme…,
+  le formulaire en dernier). Rien n'est caché dans le HTML : sans JavaScript, la page reste entière.
+- En bas, une barre fixe : flèche ronde ← · « N / total » · flèche ronde → (maquette validée par la propriétaire le
+  22/11/2026 : « plus premium » que des mots). Boutons du site (blancs, arrondis avec reflet : classe `lx-boutons`,
+  css/luxe.css) ; chaque flèche garde un nom pour la lecture vocale (aria-label « Commencer », « Suivant »,
+  « Remplir le formulaire », « Retour »). En haut, une fine barre de progression.
+- Adresse `#ecran-N` : le bouton Retour du téléphone revient à l'écran d'avant ; « ← Retour » remonte l'historique
+  quand c'est possible (quitter la page ne demande pas un appui par écran visité). Un lien `#id` (ex. `#candidature`,
+  `#parcours`) ouvre l'écran qui contient l'élément.
+- Une section trop longue porte `data-ecran-coupe="sélecteur"` : elle est coupée à chaque élément trouvé
+  (ex. le programme : `h3.lx-prog-niveau`, un écran par niveau).
+- Écran du formulaire : la barre ne montre « ← Retour » que tant que le formulaire est à sa 1re étape (ensuite ses
+  propres boutons prennent le relais ; étapes `.lx-etape[hidden]` ou `.ct-etape.u-hidden`) ; le bas de page (mentions
+  légales, confidentialité) et le bandeau « Vous êtes mannequin ? » y sont affichés.
+- Autres scripts : `window.PagesEcrans.montrer(élément)` affiche l'écran qui le contient
+  (ex. « Je choisis ce parcours » dans `js/integrer-agence.js`).
+- La barre du bas fait partie des boutons qui montent au-dessus du bandeau des cookies (`.ecrans-barre`, css/style.css).
+- Les vidéos s'arrêtent quand on quitte leur écran. `css/pages-ecrans.css` est chargé **normalement dans le
+  `<head>`** (pas en différé) : un seul écran visible dès l'affichage, sans style ajouté par le script (la protection CSP
+  des pages le refuserait). Ses règles commencent par `body.ecrans-actif` pour passer devant les styles des pages chargés
+  après (css/luxe.css…).
+- Découpage (`data-ecran-coupe`) : l'élément et tout ce qui le suit passent dans le nouvel écran, à chaque niveau de
+  conteneur (ex. la phrase de fin du programme suit le dernier mois) ; conteneurs recopiés vides, sans id.
+- Sur téléphone (390 × 844), chaque écran tient sans faire défiler (textes et cartes resserrés en mode écrans
+  seulement). Sur un petit téléphone (360 × 740), quelques écrans (parcours, programme, formulaire) demandent encore
+  un léger défilement.
+- Tests : `scripts/tests-visiteur/test-pages-ecrans.js` (téléphone et ordinateur, FR/EN, sans JavaScript, adresse
+  abîmée, historique) ; `test-integrer-parcours.js` et `test-diaporama-luxe.js` avancent par « Suivant ».

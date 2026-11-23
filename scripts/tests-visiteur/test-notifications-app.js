@@ -58,12 +58,14 @@ const appeler = async (corps, secret) => {
     envois[0].payload.url === '/admin/#/site/b2-cours-talons' && appels.some((x) => /notifications_reglages\?cle=in\.\(evenement_cours_talons/.test(x.url)),
     'cours de talons : notification sur les téléphones de l’Administration (nom, formule, ouvre la page Cours de talons)');
   // (15/11/2026) la veille de chaque cours de talons : notification qui ouvre le planning
+  // (22/11/2026) cours placés DEMAIN par rapport au jour de l'essai (une date fixe vieillissait : « Aujourd'hui » le jour J)
+  const demain = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   envois.length = 0; appels.length = 0;
-  await appeler({ table: 'cours_talons_rappels', record: { cle: 'g:1', debut: '2026-11-22T15:00:00+00:00', formule: 'groupe', nb: 6, lieu: 'Salle MA2M, Riviera Faya', theme: 'Posture et équilibre' } });
+  await appeler({ table: 'cours_talons_rappels', record: { cle: 'g:1', debut: demain + 'T15:00:00+00:00', formule: 'groupe', nb: 6, lieu: 'Salle MA2M, Riviera Faya', theme: 'Posture et équilibre' } });
   ok(envois.length === 1 && envois[0].payload.titre === '👠 Demain 15 h : cours en groupe' && envois[0].payload.texte === '6 élèves · Salle MA2M, Riviera Faya · « Posture et équilibre »' &&
     envois[0].payload.url === '/admin/#/site/b2-cours-talons/planning' && appels.some((x) => /notifications_reglages\?cle=in\.\(evenement_rappel_talons/.test(x.url)), 'veille d’un cours en groupe : « Demain 15 h », 6 élèves, ouvre le planning');
   envois.length = 0;
-  await appeler({ table: 'cours_talons_rappels', record: { cle: 'p:1', debut: '2026-11-23T10:30:00Z', formule: 'prive_salle', nb: 1, nom: 'Mme Koné', lieu: 'Cocody Angré' } });
+  await appeler({ table: 'cours_talons_rappels', record: { cle: 'p:1', debut: demain + 'T10:30:00Z', formule: 'prive_salle', nb: 1, nom: 'Mme Koné', lieu: 'Cocody Angré' } });
   ok(envois[0] && envois[0].payload.titre === '👠 Demain 10 h 30 : cours privé' && /^Mme Koné · Cocody Angré · touchez pour lui envoyer son rappel$/.test(envois[0].payload.texte), 'veille d’un cours privé : son nom, son lieu');
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\nTout est bon.');
   process.exit(ko ? 1 : 0);

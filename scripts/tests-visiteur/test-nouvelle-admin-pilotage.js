@@ -65,6 +65,9 @@ const texte = (p, sel) => p.evaluate((s) => document.querySelector(s).innerText.
     await capture(p, 'pilotage-repartition' + suffixe);
 
     // 5. Évolution : courbe des 6 semaines
+    // (22/11/2026) les candidatures d'essai datent d'octobre 2026 : la date du navigateur est fixée au 23/10/2026 pour cette
+    // vue (sinon, avec le temps, elles sortaient des 6 semaines et l'essai vieillissait)
+    await p.clock.setFixedTime(new Date('2026-10-23T12:00:00Z'));
     await p.goto(URL_ADMIN + '#/site/b1-evolution'); await p.waitForSelector('#contenu .entete'); await p.waitForTimeout(1800);
     const courbe = await p.$('svg.courbe');
     ok(courbe && (await p.$$('svg.courbe circle')).length === 6 && /4 candidatures en 6 semaines/.test(await texte(p, '.entete')), n + 'évolution : courbe de 6 semaines, 4 candidatures');

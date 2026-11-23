@@ -32,6 +32,9 @@ const vue = (p, zone) => p.evaluate((z) => { const i = [...document.querySelecto
         for (let i = 0; i < 40; i++) { if (![...z.querySelectorAll('.lx-hero-photo')].some((x) => +getComputedStyle(x).opacity > 0.98)) t++; await new Promise((r) => setTimeout(r, 160)); } return t; });
       ok(trous === 0, n + 'pas de trou pendant les fondus (' + trous + ')');
       // (13/11/2026) la bande du milieu défile toute seule, comme un tapis roulant, sans qu'on la pousse
+      // (22/11/2026) page en écrans (js/pages-ecrans.js) : on va à l'écran de la bande avec « Suivant », comme une visiteuse
+      const refus = p.locator('#bandeau-cookies button', { hasText: /Refuser|Decline|Refuse/ }); if (await refus.count() && await refus.first().isVisible()) await refus.first().click();
+      for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('.lx-galerie')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
       await p.evaluate(() => document.querySelector('.lx-galerie').scrollIntoView());
       const pos = () => p.evaluate(() => { const t = document.querySelector('.lx-tapis'); return t ? new DOMMatrix(getComputedStyle(t).transform).m41 : null; });
       const x1 = await pos(); await p.waitForTimeout(2500); const x2 = await pos();

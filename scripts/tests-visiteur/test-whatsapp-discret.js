@@ -15,7 +15,9 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     await brancher(p, { tables, rpc }, []);
-    await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(2000);
+    // (22/11/2026) page en écrans (js/pages-ecrans.js) : seul l'écran du formulaire (avec le bas de page) défile ; on l'ouvre
+    // directement par son lien, comme un lien partagé
+    await p.goto('http://127.0.0.1:' + PORT + '/' + page + (champ ? '#candidature' : '')); await p.waitForTimeout(2000);
     const visible = () => p.evaluate(() => { const w = document.querySelector('.whatsapp-flottant'); return !!w && getComputedStyle(w).opacity === '1' && getComputedStyle(w).pointerEvents !== 'none'; });
     const aller = async (y) => { await p.evaluate((v) => window.scrollTo(0, v), y); await p.waitForTimeout(600); };
     if (!champ) {  // écran de connexion trop court pour défiler : on vérifie que le style s'applique
