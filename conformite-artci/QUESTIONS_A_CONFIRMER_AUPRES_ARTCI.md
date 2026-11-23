@@ -9,3 +9,5 @@
 7. **Durées de conservation** : les durées proposées (2 ans pour les candidatures, 3 ans après la fin de la collaboration, 12 mois pour les journaux de sécurité) conviennent-elles ? Quelle durée pour les pièces comptables ?
 8. **Statistiques internes** : un comptage de visites avec une empreinte d'adresse IP (sans cookie) demande-t-il le consentement ?
 9. **Désignation d'un correspondant** à la protection des données : obligatoire ou recommandée pour MA2M ?
+
+10. **Mention de l'ARTCI** : avant la déclaration, faut-il déjà citer l'ARTCI dans la politique de confidentialité (comme autorité de protection des données), ou seulement après l'acceptation de la déclaration ? (choix actuel de la propriétaire : seulement après, 23/11/2026)

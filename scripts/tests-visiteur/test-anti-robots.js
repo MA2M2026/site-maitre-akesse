@@ -31,6 +31,13 @@ async function serveur() {
   let r = await appeler({ table: 'messages_contact', ligne, jeton: 'bon-jeton' });
   ok(r.statut === 200 && etiquettes.length === 0 && verifs.pop()?.secret === 'secret-essai' && rpcs.length === 1 && rpcs[0].p_table === 'messages_contact' && rpcs[0].p_ip === '41.2.3.4' && rpcs[0].p_ligne.nom === 'Awa',
     'serveur : jeton vérifié chez Cloudflare avec la clé secrète, puis enregistré (adresse du visiteur transmise)');
+  // (23/11/2026, conformité ARTCI) preuve du consentement : la version de la politique est ajoutée par le SERVEUR ; une
+  // version ou une date envoyées par la page sont remplacées ou ignorées (la base pose la date elle-même)
+  const rpcsAvantV = rpcs.length;
+  await appeler({ table: 'messages_contact', ligne: Object.assign({}, ligne, { id: 'c-v', politique_version: 'falsifiee', consentement_le: '2000-01-01' }), jeton: 'bon-jeton' });
+  const lv = (rpcs[rpcsAvantV] || {}).p_ligne || {};
+  ok(lv.politique_version === '2026-11-23' && !('consentement_le' in lv), 'serveur : version de la politique ajoutée par le serveur (' + lv.politique_version + '), date jamais reçue de la page');
+  rpcs.splice(rpcsAvantV);
   // (16/11/2026, audit L-7 : mode strict, ANTI_ROBOTS_STRICT = true) : un robot est refusé, la raison est notée au
   // journal ; une panne de NOTRE côté ou de Cloudflare ne bloque jamais un vrai visiteur.
   const journal = []; const fetchAvant = global.fetch;

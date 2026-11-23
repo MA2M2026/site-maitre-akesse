@@ -13,9 +13,11 @@ Les données détaillées de chaque formulaire sont dans `AUDIT_INITIAL_DONNEES_
 | 6 | Espace mannequin (application) | mannequins | profil complet, photos, CV, Compcard, mensualités | contrat | la mannequin, l'équipe | durée de la collaboration + 3 ans [À VALIDER] | à confirmer |
 | 7 | Cours de talons | élèves, parents | identité, contacts, majeure/mineure, objectif, photos, vidéo, paiement, séances | contrat | équipe | [À DÉFINIR] | à confirmer |
 | 8 | Demandes de contact | visiteurs | civilité, nom, contacts, message | mesures à la demande de la personne | équipe | 3 ans (pas encore automatique) | à confirmer |
-| 9 | Administration et sécurité | équipe, visiteurs | comptes, rôles, double authentification, IP, journaux | intérêt légitime / obligation de sécurité | administrateur principal | [À DÉFINIR] (proposition : 12 mois pour les journaux) | à confirmer |
-| 10 | Statistiques | visiteurs | Google Analytics (avec accord), `page_views` (empreinte IP) | consentement (GA) ; intérêt légitime (statistiques internes) [JURISTE] | équipe | GA : 14 mois ; interne [À DÉFINIR] | à confirmer |
+| 9 | Administration et sécurité | équipe, visiteurs | comptes, rôles, double authentification, IP, journaux | intérêt légitime / obligation de sécurité | administrateur principal | IP : 12 mois, erreurs : 6 mois (automatique) ; journal des actions gardé | à confirmer |
+| 10 | Statistiques | visiteurs | Google Analytics (avec accord), `page_views` (empreinte IP) | consentement (GA) ; intérêt légitime (statistiques internes) [JURISTE] | équipe | GA : 14 mois ; interne : 14 mois (automatique) | à confirmer |
 | 11 | Communication et notifications | mannequins, candidats, élèves | WhatsApp (Meta), e-mails (EmailJS), notifications push | contrat / mesures à la demande | équipe | [À DÉFINIR] | à confirmer (téléphone : voir QUESTIONS) |
 | 12 | Comptabilité et paiements | mannequins, élèves | paiements, reçus, références | obligation légale comptable [JURISTE : durée] | encaissements, comptabilité | durée légale [JURISTE] | à confirmer |
 
 **Remarque :** une seule déclaration ne couvre pas forcément tous ces traitements, ni les transferts hors de Côte d'Ivoire. À faire confirmer par l'ARTCI (voir `QUESTIONS_A_CONFIRMER_AUPRES_ARTCI.md`).
+
+_Relu le 23/11/2026 : aucun traitement nouveau ; les formulaires présentés en écrans et la nouvelle police ne changent ni les données ni les finalités._

@@ -168,6 +168,20 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🧾 Preuve du consentement et effacement des traces techniques (ARTCI, 23/11/2026, accord de la propriétaire)
+- **Politique de confidentialité** (`politique-confidentialite.html`, `en/…`) mise à jour : cours de talons, Turnstile,
+  WhatsApp Business, notifications, paiement, statistiques internes, durées, mineurs ; ligne « version du 23/11/2026 ».
+  **Changer le texte = changer aussi `POLITIQUE_VERSION` dans `api/portail.js`** (et la date affichée).
+- **Preuve** : `formulairePublic` (`api/portail.js`) ajoute `politique_version` à chaque envoi ; la base pose
+  `consentement_le` elle-même (déclencheurs `*_consentement`) et empêche toute modification ensuite
+  (`*_consentement_garder`). Tables : `casting_applications`, `cours_talons`, `messages_contact`, `recruiter_requests`.
+- **Effacement automatique des traces techniques seulement** (choix de la propriétaire) : `effacer_traces_techniques()`,
+  tâche `effacement-traces-techniques` chaque nuit à 3 h 47 : IP des formulaires et des connexions 12 mois (sauf IP encore
+  bloquée), `journal_erreurs` 6 mois, `page_views` 14 mois. `audit_log` n'est **jamais** effacé (écriture seule).
+  Aucune personne, fiche ni photo n'est effacée automatiquement (décision du 17/11/2026 inchangée).
+- SQL : `supabase-conformite-consentement-traces.sql`, à coller AVANT la mise en ligne. Essais :
+  `scripts/base-essai/essais-conformite.sql` ; `test-anti-robots.js` vérifie que la version vient du serveur.
+
 ## 🛡️ Minimisation des données (ARTCI, 22/11/2026, décisions de la propriétaire)
 Dossier préparatoire : `conformite-artci/` (12 documents, jamais publiés : `.vercelignore`).
 - **Candidatures** (`js/formulaire-candidature-champs.js`, commun aux 4 pages casting / intégrer l'agence FR-EN) : plus de
@@ -5588,6 +5602,10 @@ telle quelle, elle est déjà en 4 écrans (`js/inscription-simplifiee.js`) ; un
   `--av-titre`, qui vaut maintenant `var(--police-titre)`. Phrases (ex. la phrase de la vitrine) en Work Sans.
   **Non changés exprès** : les documents dessinés (compcard, CV imprimable, carte « Mannequin MA2M » : js/carte-mannequin.js
   et la partie dessin de js/app.js), dont le modèle a été validé à part ; à changer seulement si la propriétaire le demande.
+- **Documents dessinés** (accord de la propriétaire, 23/11/2026) : compcard, CV et carte « Mannequin MA2M » passent aussi aux
+  polices du site : noms, mensurations et titres en Big Shoulders Display (`TITRE`), textes en Work Sans (le CV était en Jost).
+  Essais : test-studio-compcard.js, test-studio-cv.js, test-app-mannequin.js (avec CAPTURES=dossier, les documents téléchargés
+  y sont enregistrés pour les regarder).
 
 ### Formulaire des Cours de talons : une question par écran (23/11/2026, demande de la propriétaire)
 

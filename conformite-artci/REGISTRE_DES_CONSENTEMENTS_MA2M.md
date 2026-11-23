@@ -1,13 +1,14 @@
 # Registre des consentements — MA2M
 
 ## Situation actuelle [VÉRIFIÉ]
-- Formulaires (candidature, cours de talons, contact) : une case « J'ai pris connaissance de la politique de confidentialité » doit être cochée. **Rien n'est enregistré** : ni la date, ni la version du texte, ni le choix.
+- Formulaires (candidature, cours de talons, contact) : une case « J'ai pris connaissance de la politique de confidentialité » doit être cochée. **Depuis le 23/11/2026**, chaque candidature, inscription aux cours de talons, message de contact et demande de recruteur garde la **version** de la politique acceptée (ajoutée par le serveur du site) et la **date** de l'accord (posée par la base elle-même) ; ces deux valeurs ne peuvent plus être modifiées ensuite (colonnes `politique_version` et `consentement_le`). Les fiches plus anciennes restent sans preuve : on n'en fabrique pas après coup.
+- Depuis le 23/11/2026, sur les pages en écrans, cette case est sur le **dernier écran**, à côté du bouton d'envoi, et un lien « Confidentialité » est visible sur chaque écran [VÉRIFIÉ].
 - Cookies : le choix (accepter / refuser) est gardé **dans le navigateur** du visiteur seulement. Google Analytics est refusé par défaut.
 - Accord parental : **enregistré** dans `accords_parents` (demande, nom du parent, date d'acceptation, date de retrait) [VÉRIFIÉ].
 - Règlement de l'agence à l'inscription : date d'acceptation enregistrée (`reglement_accepte_le`) [VÉRIFIÉ].
 
-## Proposition [À VALIDER]
-Pour chaque formulaire public, enregistrer avec la fiche :
+## Proposition pour aller plus loin [À VALIDER]
+En plus de la date et de la version (déjà enregistrées), on pourrait enregistrer :
 | Champ | Exemple |
 |---|---|
 | date et heure | 2026-11-22 14:05 |
