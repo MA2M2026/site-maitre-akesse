@@ -47,6 +47,12 @@ body.ecrans-actif .site-footer, body.ecrans-actif .bandeau-integrer { display: n
 .ecrans-barre .ecrans-retour[hidden], .ecrans-barre .ecrans-suivant[hidden] { display: none; }
 .ecrans-barre .ecrans-suivant { margin-left: auto; }
 .ecrans-compteur { font-size: 0.85rem; letter-spacing: 0.08em; opacity: 0.8; white-space: nowrap; }
+/* (23/11/2026, visite du site en ligne) ordinateur et tablette couchée : la petite ligne légale passe à gauche, sur la même
+   rangée que les flèches (sur deux rangées, la barre était trop haute et cachait le bouton « Suivant » du formulaire) */
+@media (min-width: 900px) and (orientation: landscape) {
+  .ecrans-barre .ecrans-legal { position: absolute; left: max(1.5rem, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); flex: none; margin: 0; text-align: left; }
+  body.ecrans-actif .ecran-formulaire .lx-titre-section { font-size: 2.4rem; margin-bottom: 0.6rem; }
+}
 @media (min-width: 900px) {
   .ecrans-barre { justify-content: center; column-gap: 2rem; }
   .ecrans-barre .ecrans-suivant { margin-left: 0; }
