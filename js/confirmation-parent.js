@@ -37,7 +37,10 @@
       }, function (err) {
         var m = String((err && err.message) || '');
         if (/REPONSE_DEJA_DONNEE/.test(m)) return lire().catch(function () { etat('', 'Réponse déjà enregistrée.', CONTACT.trim()); });
-        etat('erreur', 'Pas enregistré.', /nom du parent/.test(m) ? 'Écrivez votre propre nom (parent ou tuteur), pas celui de votre enfant.' : 'Vérifiez votre nom complet et la connexion, puis réessayez.');
+        let aide = 'Vérifiez votre nom complet et la connexion, puis réessayez.';
+        if (/nom du parent/.test(m)) aide = 'Écrivez votre propre nom (parent ou tuteur), pas celui de votre enfant.';
+        else if (/prénom et nom/.test(m)) aide = 'Écrivez votre prénom et votre nom.';
+        etat('erreur', 'Pas enregistré.', aide);
       })
       .then(function () { bouton.disabled = false; });
   }

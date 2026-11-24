@@ -180,10 +180,14 @@ Constat : une candidate mineure avait écrit son propre nom, numéro et e-mail �
   `casting_applications_parent` refuse ces copies (`PARENT_IDENTIQUE`, traduit par `api/portail.js` en
   `parentIdentique`) et donne un lien personnel (`parent_jeton`) à chaque candidature de mineur. Le parent répond sur
   `confirmation-parent.html` (`js/confirmation-parent.js`) : `candidature_parent_lire` / `candidature_parent_repondre`
-  (nom obligatoire, pas celui de l'enfant). `parent_confirme_le`, `parent_refuse_le`, `parent_confirme_nom` et le lien
-  ne se modifient pas à la main. `candidature_parent_lien` (agence) crée le lien d'une ancienne candidature.
+  (prénom et nom : au moins 2 mots ; jamais exactement le nom de l'enfant). Un nom pris DANS celui de l'enfant n'est pas
+  bloqué (en Côte d'Ivoire, l'enfant porte souvent les noms de ses parents) : l'Administration le signale
+  (`nomPrisDansNomEnfant`, `js/app.js`). La réponse est définitive. `parent_confirme_le`, `parent_refuse_le`,
+  `parent_confirme_nom` et le lien ne se modifient pas à la main. `candidature_parent_lien` (agence) crée le lien d'une
+  ancienne candidature.
 - **Administration** (`js/admin/site-dossiers.js`) : bloc « Parent ou tuteur » (état, alerte rouge si coordonnées
-  recopiées, envoi du lien par WhatsApp ou e-mail, copie du lien), pastille « Parent non confirmé » dans la liste,
+  recopiées, message complet expliquant la démarche avec le lien : WhatsApp vers le parent, ou WhatsApp sans
+  destinataire si son numéro est celui de l'enfant ; e-mail ; « Copier le message »), pastille « Parent non confirmé » dans la liste,
   ville « Abidjan · commune », vidéo sur toute la largeur de sa carte sur le rouge profond (`css/admin-vivante.css`).
 - Tests : `scripts/base-essai/essais-parent-candidature.sql`, `test-visiteur.js`, `test-confirmation-parent.js`,
   `test-nouvelle-admin-castings.js`, `test-anti-robots.js` ; le faux serveur des tests renvoie maintenant une erreur de
