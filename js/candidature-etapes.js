@@ -119,6 +119,17 @@
     }
     if (i === 2) {
       if ($('ca-ville').value === 'Abidjan' && $('ca-commune') && $('ca-commune').value === 'Abidjan') return erreur(2, T('Merci de préciser votre commune à Abidjan.', 'Please specify your district in Abidjan.'), $('ca-commune'));
+      // (24/11/2026, décision de la propriétaire) mineur : les coordonnées du parent ne peuvent pas être les siennes
+      // (la base refuse aussi : supabase-parent-candidature.sql ; le nom de famille seul peut être le même)
+      if ($('ca-majorite') && $('ca-majorite').value === 'mineur' && typeof coordonneesParentCopiees === 'function') {
+        // (numéros avec leur indicatif, comme ils seront enregistrés et comparés par la base)
+        const numero = (ind, num) => (typeof composerTelephone === 'function' ? composerTelephone($(ind), $(num)) : val(num));
+        const copie = coordonneesParentCopiees({ nom: val('ca-nom'), telephone: numero('ca-indicatif', 'ca-telephone-numero'), email: val('ca-email'),
+          parentNom: val('ca-parent-nom'), parentTelephone: numero('ca-parent-indicatif', 'ca-parent-telephone-numero'), parentEmail: val('ca-parent-email') });
+        if (copie === 'telephone') return erreur(2, T('Le WhatsApp du parent doit être celui de votre parent ou tuteur, pas le vôtre.', 'The parent’s WhatsApp must be your parent’s or guardian’s number, not yours.'), $('ca-parent-telephone-numero'));
+        if (copie === 'email') return erreur(2, T('L’e-mail du parent doit être celui de votre parent ou tuteur, pas le vôtre.', 'The parent’s email must be your parent’s or guardian’s, not yours.'), $('ca-parent-email'));
+        if (copie === 'nom') return erreur(2, T('Écrivez le nom de votre parent ou tuteur, pas le vôtre.', 'Enter your parent’s or guardian’s name, not yours.'), $('ca-parent-nom'));
+      }
     }
     return true;
   }

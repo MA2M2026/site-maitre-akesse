@@ -24,7 +24,7 @@ function donnees(role) {
         { candidature_id: 'c1', sorte: 'information', canal: 'email', modele: 'retenue', envoye_le: '2026-11-10T09:00:00Z' }],
       casting_applications: [
         { id: 'c4', full_name: 'PETITE AMA', email: 'ama@test.ci', phone: '+225 0101010101', genre: 'femme', civilite: 'Mademoiselle', date_naissance: '2013-03-03', type_candidature: 'projet', projet_nom: 'CASTING CACAO',
-          status: 'nouvelle', created_at: '2026-10-22T08:00:00Z', city: 'Cocody', experience_mannequin: 'non', height_cm: 158, parent_nom: 'Madame Ama Mère', parent_telephone: '0707070707', parent_email: 'mere@test.ci',
+          status: 'nouvelle', created_at: '2026-10-22T08:00:00Z', city: 'Cocody', experience_mannequin: 'non', height_cm: 158, parent_nom: 'Madame Ama Mère', parent_telephone: '0707070707', parent_email: 'mere@test.ci', parent_jeton: '7d3f1c2a-5b6e-4c8d-9a0b-1c2d3e4f5a6b',
           message: 'Je rêve de défiler pour MA2M.', video_url: 'https://drive.google.com/file/d/abc123/view' },
         { id: 'c1', full_name: 'AWA KONÉ', email: 'awa@test.ci', phone: '+225 0102030405', genre: 'femme', date_naissance: '2000-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-21T10:00:00Z' },
         { id: 'c2', full_name: 'BINTOU TRAORÉ', email: 'bintou@test.ci', phone: '+225 0505050505', genre: 'femme', date_naissance: '1998-01-01', type_candidature: 'agence', status: 'nouvelle', created_at: '2026-10-20T10:00:00Z' },

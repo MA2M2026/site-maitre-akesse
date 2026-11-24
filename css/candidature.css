@@ -70,3 +70,8 @@
 .lx-recommencer { margin-top: 1rem; }
 .lx-progression[hidden] { display: none; }
 @media (max-width: 520px) { .lx-resume .lx-etape-boutons #btn-envoyer { width: 100%; order: -1; margin-left: 0; } .lx-resume .lx-etape-boutons .lx-retour { width: 100%; } }
+/* (24/11/2026) consignes de la vidéo et engagement « Ma vidéo respecte ces consignes » */
+.ca-video-aide p { margin: 0.2rem 0; }
+.ca-video-aide ol { margin: 0.3rem 0 0.4rem; padding-left: 1.2rem; }
+.ca-video-aide li { margin: 0.15rem 0; }
+.ca-video-engagement { display: flex; align-items: flex-start; gap: 0.7rem; margin: 0.8rem 0 0.2rem; }

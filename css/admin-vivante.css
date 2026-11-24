@@ -1673,3 +1673,12 @@ body.video-pleine { overflow: hidden; }
   .fiche-luxe-portrait .etude-piste .vis { height: min(calc(100vh - 260px), 640px); min-height: 360px; }
   .fiche-luxe-dossier { max-width: none; margin: 0; }
 }
+
+/* (24/11/2026, demande de la propriétaire) vidéo de la fiche : toute la largeur de la carte, sur le rouge profond de la charte (plus de bandes
+   blanches sur les côtés), haute comme l'écran ; « ⛶ Plein écran » reste là */
+.fiche-video .lecteur-video { max-width: none; aspect-ratio: auto; height: min(80vh, 900px); max-height: none; background: var(--rouge-profond); }
+/* (24/11/2026) candidature d'une personne mineure : bloc « Parent ou tuteur » */
+.bloc-parent .etat-parent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
+.bloc-parent .ligne { flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.alerte-parent { margin: 0 0 12px; padding: 10px 12px; border-left: 4px solid var(--av-rouge); border-radius: 8px;
+  background: color-mix(in srgb, var(--av-rouge) 10%, transparent); color: var(--av-rouge-texte); font-weight: 600; line-height: 1.45; }
