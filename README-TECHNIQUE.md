@@ -184,7 +184,7 @@ Constat : une candidate mineure avait écrit son propre nom, numéro et e-mail �
   ne se modifient pas à la main. `candidature_parent_lien` (agence) crée le lien d'une ancienne candidature.
 - **Administration** (`js/admin/site-dossiers.js`) : bloc « Parent ou tuteur » (état, alerte rouge si coordonnées
   recopiées, envoi du lien par WhatsApp ou e-mail, copie du lien), pastille « Parent non confirmé » dans la liste,
-  ville « Abidjan · commune », vidéo sur toute la largeur de sa carte sur fond noir (`css/admin-vivante.css`).
+  ville « Abidjan · commune », vidéo sur toute la largeur de sa carte sur le rouge profond (`css/admin-vivante.css`).
 - Tests : `scripts/base-essai/essais-parent-candidature.sql`, `test-visiteur.js`, `test-confirmation-parent.js`,
   `test-nouvelle-admin-castings.js`, `test-anti-robots.js` ; le faux serveur des tests renvoie maintenant une erreur de
   fonction simulée comme la vraie base (refus avec son message).

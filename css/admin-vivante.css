@@ -1674,9 +1674,9 @@ body.video-pleine { overflow: hidden; }
   .fiche-luxe-dossier { max-width: none; margin: 0; }
 }
 
-/* (24/11/2026, demande de la propriétaire) vidéo de la fiche : toute la largeur de la carte, sur fond noir (plus de bandes
+/* (24/11/2026, demande de la propriétaire) vidéo de la fiche : toute la largeur de la carte, sur le rouge profond de la charte (plus de bandes
    blanches sur les côtés), haute comme l'écran ; « ⛶ Plein écran » reste là */
-.fiche-video .lecteur-video { max-width: none; aspect-ratio: auto; height: min(80vh, 900px); max-height: none; background: #000; }
+.fiche-video .lecteur-video { max-width: none; aspect-ratio: auto; height: min(80vh, 900px); max-height: none; background: var(--rouge-profond); }
 /* (24/11/2026) candidature d'une personne mineure : bloc « Parent ou tuteur » */
 .bloc-parent .etat-parent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; }
 .bloc-parent .ligne { flex-wrap: wrap; gap: 8px; margin-top: 10px; }
