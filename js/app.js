@@ -2861,7 +2861,8 @@ async function jetonAntiRobot() {
 function coordonneesParentCopiees(c) {
   const chiffres = (x) => String(x || '').replace(/\D/g, '').slice(-8);
   const nom = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|mr|m)\.?\s+/, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+    .replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|mr|m)\.?\s+/, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean)
+    .sort((a, b) => a.localeCompare(b)).join(' ');
   const tel = chiffres(c.parentTelephone);
   if (tel.length >= 6 && tel === chiffres(c.telephone)) return 'telephone';
   if (String(c.parentEmail || '').trim() && String(c.parentEmail).trim().toLowerCase() === String(c.email || '').trim().toLowerCase()) return 'email';

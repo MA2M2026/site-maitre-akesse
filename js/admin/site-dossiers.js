@@ -180,6 +180,12 @@
     return new Set(error ? [] : (data || []).map((x) => x.ref));
   }
   const ETIQUETTE_A_VERIFIER = () => P.pastille('⚠ À vérifier', 'alerte');
+  // (24/11/2026) mineur(e) : la réponse du parent dans la liste (rien quand il a confirmé)
+  function pastilleParentListe(d) {
+    if (d.parent_confirme_le) return '';
+    if (d.parent_refuse_le) return ' ' + P.pastille('Refusée par le parent', 'erreur');
+    return ' ' + P.pastille('Parent non confirmé', 'alerte');
+  }
   async function liste(source) {
     const conf = SOURCES[source], e = etat(source);
     const [total, ...parStatut] = await Promise.all([compter(conf)].concat(conf.statuts.map((s) => compter(conf, s))));
@@ -206,8 +212,7 @@
       return '<article class="dossier-carte apparait" style="--i:' + Math.min(i, 12) + '">' +
         '<a class="dossier-lien" href="#/site/' + conf.page + '/' + P.esc(d.id) + '">' +
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
-        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (source === 'casting' && mineurDe(d) ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') +
-          (d.parent_confirme_le ? '' : ' ' + P.pastille(d.parent_refuse_le ? 'Refusée par le parent' : 'Parent non confirmé', d.parent_refuse_le ? 'erreur' : 'alerte')) : '') + '</span>' +
+        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (source === 'casting' && mineurDe(d) ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') + pastilleParentListe(d) : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
         P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (douteux.has(d.id) ? ' ' + ETIQUETTE_A_VERIFIER() : '') + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
         (wa ? '<a class="dossier-wa"' + (source === 'casting' ? ' data-candidature="' + P.esc(d.id) + '"' : '') + ' href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
@@ -371,17 +376,27 @@
   const texteLienParent = (d, jeton) => 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' + (String(d.full_name || '').trim() || 'Votre enfant') +
     ' a envoyé une candidature à l’agence Maître Akesse Model Management. Comme cette personne est mineure, nous ne donnons aucune suite sans votre accord.\n\n' +
     'Merci de confirmer (ou de refuser) sa candidature avec ce lien personnel : ' + lienParent(jeton) + '\n\nBien cordialement,\nMaître Akesse Model Management';
+  // état de la réponse du parent (pastille, avec son nom et la date)
+  function etatReponseParent(d) {
+    const quand = (date) => ' <span class="doux">' + P.esc([d.parent_confirme_nom, P.dateEtHeure(date)].filter(Boolean).join(' · ')) + '</span>';
+    if (d.parent_confirme_le) return P.pastille('✓ Confirmée par le parent', 'ok') + quand(d.parent_confirme_le);
+    if (d.parent_refuse_le) return P.pastille('Refusée par le parent', 'erreur') + quand(d.parent_refuse_le);
+    return P.pastille('Parent non confirmé', 'alerte');
+  }
+  // boutons d'envoi du lien (rien une fois la réponse donnée : elle est définitive)
+  function envoiLienParent(d, copie) {
+    if (d.parent_confirme_le || d.parent_refuse_le) return '';
+    if (!d.parent_jeton) return '<button type="button" class="btn rouge" data-action="dossier-parent-lien">Préparer le lien de confirmation du parent</button>';
+    const wa = copie === 'telephone' ? null : lienWa(d.parent_telephone);
+    let boutons = '';
+    if (wa) boutons += '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton))) + '" target="_blank" rel="noopener">💬 Envoyer le lien au parent par WhatsApp</a>';
+    if (d.parent_email && copie !== 'email') boutons += '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>';
+    return boutons + '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le lien</button>';
+  }
   function blocParent(d) {
     if (!mineurDe(d)) return '';
     const copie = coordonneesParentCopiees({ nom: d.full_name, telephone: d.phone, email: d.email, parentNom: d.parent_nom, parentTelephone: d.parent_telephone, parentEmail: d.parent_email });
-    const quand = (date) => ' <span class="doux">' + P.esc([d.parent_confirme_nom, P.dateEtHeure(date)].filter(Boolean).join(' · ')) + '</span>';
-    const etatParent = d.parent_confirme_le ? P.pastille('✓ Confirmée par le parent', 'ok') + quand(d.parent_confirme_le) :
-      d.parent_refuse_le ? P.pastille('Refusée par le parent', 'erreur') + quand(d.parent_refuse_le) : P.pastille('Parent non confirmé', 'alerte');
-    const wa = d.parent_jeton && copie !== 'telephone' ? lienWa(d.parent_telephone) : null;
-    const envoi = d.parent_confirme_le ? '' : !d.parent_jeton ? '<button type="button" class="btn rouge" data-action="dossier-parent-lien">Préparer le lien de confirmation du parent</button>' :
-      (wa ? '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton))) + '" target="_blank" rel="noopener">💬 Envoyer le lien au parent par WhatsApp</a>' : '') +
-      (d.parent_email && copie !== 'email' ? '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>' : '') +
-      '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le lien</button>';
+    const etatParent = etatReponseParent(d), envoi = envoiLienParent(d, copie);
     return '<section class="carte bloc-parent"><h2>Parent ou tuteur</h2>' +
       (copie ? '<p class="alerte-parent" role="alert">⚠️ Attention : ' + P.esc(COPIES[copie]) + '. Ce n’est sans doute pas le vrai parent : appelez la famille avant toute suite.</p>' : '') +
       '<p class="etat-parent">' + etatParent + '</p>' + blocChamps('casting', d, CHAMPS_PARENT) +
