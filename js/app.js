@@ -2858,11 +2858,21 @@ async function jetonAntiRobot() {
 // siennes ? 'telephone', 'email', 'nom' ou null. Même règle que la base (supabase-parent-candidature.sql) : les 8
 // derniers chiffres du numéro ; le nom sans civilité, sans accents, mots dans n'importe quel ordre (le nom de famille seul
 // peut être le même). Partagée par le formulaire (js/candidature-etapes.js) et l'Administration (js/admin/site-dossiers.js).
+// mots d'un nom, comparables (sans civilité, sans accents, rangés) : même règle que nom_comparable dans la base
+function motsDuNom(x) {
+  return String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|mr|m)\.?\s+/, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+}
+// (24/11/2026, essai réel) le nom donné par le parent fait-il entièrement partie du nom de l'enfant ? Ce n'est pas
+// bloqué (en Côte d'Ivoire, un enfant porte souvent les noms de ses parents) : l'Administration le signale seulement.
+function nomPrisDansNomEnfant(parentNom, enfantNom) {
+  const parent = motsDuNom(parentNom), enfant = motsDuNom(enfantNom);
+  return parent.length > 0 && parent.every((m) => enfant.includes(m));
+}
 function coordonneesParentCopiees(c) {
   const chiffres = (x) => String(x || '').replace(/\D/g, '').slice(-8);
-  const nom = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|mr|m)\.?\s+/, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean)
-    .sort((a, b) => a.localeCompare(b)).join(' ');
+  const nom = (x) => motsDuNom(x).join(' ');
   const tel = chiffres(c.parentTelephone);
   if (tel.length >= 6 && tel === chiffres(c.telephone)) return 'telephone';
   if (String(c.parentEmail || '').trim() && String(c.parentEmail).trim().toLowerCase() === String(c.email || '').trim().toLowerCase()) return 'email';

@@ -9,7 +9,7 @@
 --    parent par WhatsApp ou par e-mail depuis la fiche. Le parent confirme (avec son nom) ou refuse. Tant qu il n a
 --    pas répondu, la fiche affiche « Parent non confirmé ». La réponse est DÉFINITIVE : ni le parent (ni un enfant qui
 --    aurait vu le lien), ni l équipe ne peuvent la changer ensuite. Pour revenir dessus, la famille contacte l agence.
---    Le parent écrit son prénom et son nom, qui ne peuvent pas être une partie du nom de l enfant (ajout du 24/11/2026).
+--    Le parent écrit son prénom et son nom (ajout du 24/11/2026). Un nom pris dans celui de l enfant est signalé à l agence.
 -- A COLLER UNE FOIS dans Supabase (SQL Editor, bouton orange Run without RLS), AVANT la mise en ligne.
 -- Peut être recollé sans risque.
 
@@ -60,7 +60,7 @@ begin
     new.parent_confirme_le := null; new.parent_refuse_le := null; new.parent_confirme_nom := null;
     return new;
   end if;
-  -- (modification) la réponse du parent ne change que par sa page (candidature_parent_repondre) ;
+  -- (modification) la réponse du parent ne change que par sa page (candidature_parent_repondre),
   -- le lien ne se crée que par candidature_parent_lien
   if coalesce(current_setting('ma2m.parent_reponse', true), '') <> '1' then
     new.parent_confirme_le := old.parent_confirme_le; new.parent_refuse_le := old.parent_refuse_le;
@@ -108,13 +108,12 @@ begin
   select * into c from casting_applications where parent_jeton = p_jeton for update;
   if not found then raise exception 'Lien inconnu ou expiré.'; end if;
   if c.parent_confirme_le is not null or c.parent_refuse_le is not null then raise exception 'REPONSE_DEJA_DONNEE'; end if;
-  -- (24/11/2026, essai réel) prénom ET nom du parent, et pas une partie du nom de l enfant (ex. 2 de ses 3 prénoms)
+  -- (24/11/2026, essai réel) prénom ET nom du parent. Un nom pris dans celui de l enfant n est PAS bloqué (en Côte d Ivoire
+  -- un enfant porte souvent les noms de ses parents) : l Administration le signale pour un appel de vérification.
   if length(trim(coalesce(p_parent_nom, ''))) < 3 or coalesce(array_length(string_to_array(nom_comparable(p_parent_nom), ' '), 1), 0) < 2 then
     raise exception 'Écrivez votre nom complet (prénom et nom).';
   end if;
-  if string_to_array(nom_comparable(p_parent_nom), ' ') <@ string_to_array(nom_comparable(c.full_name), ' ') then
-    raise exception 'Écrivez le nom du parent, pas celui de la candidate.';
-  end if;
+  if nom_comparable(p_parent_nom) = nom_comparable(c.full_name) then raise exception 'Écrivez le nom du parent, pas celui de la candidate.'; end if;
   perform set_config('ma2m.parent_reponse', '1', true);
   if p_accepte then
     update casting_applications set parent_confirme_le = now(), parent_refuse_le = null, parent_confirme_nom = left(trim(p_parent_nom), 120) where id = c.id;

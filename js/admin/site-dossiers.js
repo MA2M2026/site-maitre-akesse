@@ -376,21 +376,28 @@
   // (24/11/2026, demande de la propriétaire) un vrai message qui explique tout AVANT le lien : beaucoup de parents
   // n'ouvrent pas un lien sans savoir de quoi il s'agit
   const texteLienParent = (d, jeton) => {
-    const fils = d.genre === 'homme' || d.civilite === 'Monsieur', enfant = String(d.full_name || '').trim();
+    // (genre inconnu : « Votre enfant … cette personne », jamais un genre deviné)
+    let qui = ['Votre enfant', 'cette personne a'];
+    if (d.genre === 'homme' || d.civilite === 'Monsieur') qui = ['Votre fils', 'il a'];
+    else if (d.genre === 'femme') qui = ['Votre fille', 'elle a'];
+    const enfant = String(d.full_name || '').trim(), numero = typeof MA2M_TELEPHONES !== 'undefined' ? MA2M_TELEPHONES[1] : '+225 05 45 65 66 87';
     return 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' +
       'Ici l’agence de mannequins Maître Akesse Model Management, à Abidjan.\n\n' +
-      (fils ? 'Votre fils' : 'Votre fille') + (enfant ? ' ' + enfant : '') + ' vient de déposer une candidature sur notre site pour devenir mannequin. ' +
-      'Comme ' + (fils ? 'il' : 'elle') + ' a moins de 18 ans, nous avons besoin de votre accord avant d’étudier sa candidature.\n\n' +
-      '👉 Pour nous répondre (1 minute) : ouvrez ce lien personnel, écrivez votre nom, puis choisissez « Je confirme » ou « Je refuse ».\n' +
+      qui[0] + (enfant ? ' ' + enfant : '') + ' vient de déposer une candidature sur notre site pour devenir mannequin. ' +
+      'Comme ' + qui[1] + ' moins de 18 ans, nous avons besoin de votre accord avant d’étudier sa candidature.\n\n' +
+      '👉 Pour nous répondre (1 minute) : ouvrez ce lien personnel, écrivez votre prénom et votre nom, puis choisissez « Je confirme » ou « Je refuse ».\n' +
       lienParent(jeton) + '\n\n' +
-      'Ce lien est réservé à vous seul : merci de ne pas le transmettre. Pour toute question, appelez-nous ou écrivez-nous au +225 05 45 65 66 87.\n\n' +
+      'Ce lien est réservé à vous seul : merci de ne pas le transmettre. Pour toute question, appelez-nous ou écrivez-nous au ' + numero + '.\n\n' +
       'Bien cordialement,\nL’équipe Maître Akesse Model Management';
   };
   // état de la réponse du parent (pastille, avec son nom et la date)
   function etatReponseParent(d) {
     const quand = (date) => ' <span class="doux">' + P.esc([d.parent_confirme_nom, P.dateEtHeure(date)].filter(Boolean).join(' · ')) + '</span>';
-    if (d.parent_confirme_le) return P.pastille('✓ Confirmée par le parent', 'ok') + quand(d.parent_confirme_le);
-    if (d.parent_refuse_le) return P.pastille('Refusée par le parent', 'erreur') + quand(d.parent_refuse_le);
+    // (essai réel du 24/11) nom donné par le « parent » pris dans celui de l'enfant : accepté (familles), mais signalé
+    const douteux = (d.parent_confirme_le || d.parent_refuse_le) && nomPrisDansNomEnfant(d.parent_confirme_nom, d.full_name)
+      ? '<span class="alerte-parent">⚠️ Le nom donné par le parent fait partie du nom de l’enfant : vérifiez par téléphone avant toute suite.</span>' : '';
+    if (d.parent_confirme_le) return P.pastille('✓ Confirmée par le parent', 'ok') + quand(d.parent_confirme_le) + douteux;
+    if (d.parent_refuse_le) return P.pastille('Refusée par le parent', 'erreur') + quand(d.parent_refuse_le) + douteux;
     return P.pastille('Parent non confirmé', 'alerte');
   }
   // boutons d'envoi du lien (rien une fois la réponse donnée : elle est définitive)
@@ -426,7 +433,7 @@
     // (le message complet, avec ses explications et le lien, pas le lien seul)
     const texte = texteLienParent(fiche.d, fiche.d.parent_jeton);
     try { await navigator.clipboard.writeText(texte); st.textContent = 'Message copié (avec le lien) : collez-le dans WhatsApp, SMS ou e-mail au parent.'; }
-    catch (e) { st.textContent = texte; }   // (presse-papiers refusé : le message s'affiche pour être copié à la main)
+    catch (e) { st.textContent = texte; st.classList.add('message-a-copier'); }   // (presse-papiers refusé : le message s'affiche, avec ses retours à la ligne, pour être copié à la main)
   };
   P.actions['dossier-parent-email'] = async (el) => {
     const d = fiche.d, st = document.getElementById('dos-parent-statut');

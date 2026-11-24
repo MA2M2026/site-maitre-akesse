@@ -8,7 +8,9 @@ const PORT = String(9600 + Math.floor(Math.random() * 90));
 const BASE = 'http://127.0.0.1:' + PORT + '/confirmation-parent.html?j=';
 const JETON = '7d3f1c2a-5b6e-4c8d-9a0b-1c2d3e4f5a6b';
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
-const comparable = (x) => String(x || '').toLowerCase().replace(/^(madame|monsieur|mademoiselle)\s+/, '').split(/\s+/).filter(Boolean).sort().join(' ');
+// (même normalisation que nom_comparable dans la base : sans civilité, sans accents, sans ponctuation, mots rangés)
+const comparable = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|mr|m)\.?\s+/, '')
+  .replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean).sort((a, b) => a.localeCompare(b)).join(' ');
 
 function donnees() {
   const c = { jeton: JETON, candidate: 'Amon Emira', nom: null, confirme_le: null, refuse_le: null };
@@ -23,7 +25,7 @@ function donnees() {
         if ((x.p_parent_nom || '').trim().length < 3) throw new Error('Écrivez votre nom complet.');
         const mots = comparable(x.p_parent_nom).split(' '), enfant = comparable(c.candidate).split(' ');
         if (mots.length < 2) throw new Error('Écrivez votre nom complet (prénom et nom).');
-        if (mots.every((m) => enfant.includes(m))) throw new Error('Écrivez le nom du parent, pas celui de la candidate.');
+        if (mots.join(' ') === enfant.join(' ')) throw new Error('Écrivez le nom du parent, pas celui de la candidate.');
         if (x.p_accepte) Object.assign(c, { confirme_le: new Date().toISOString(), refuse_le: null, nom: x.p_parent_nom.trim() });
         else Object.assign(c, { refuse_le: new Date().toISOString(), confirme_le: null, nom: x.p_parent_nom.trim() });
         return x.p_accepte ? 'confirme' : 'refuse';

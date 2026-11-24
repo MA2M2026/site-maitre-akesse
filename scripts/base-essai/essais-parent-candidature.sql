@@ -22,8 +22,7 @@ select set_config('essai.jeton', (select parent_jeton::text from casting_applica
 select set_config('essai.cand3', formulaire_public_enregistrer('casting_applications', '{"full_name":"Yao Akissi Marie Grace","email":"g@exemple.ci","phone":"+225 0102030499","mineur":true,"genre":"femme","parent_nom":"Madame Yao Rose","parent_telephone":"+225 0708090699","type_candidature":"agence"}'::jsonb, '9.9.9.26')::text, false);
 select set_config('essai.jeton3', (select parent_jeton::text from casting_applications where id = current_setting('essai.cand3')::uuid), false);
 set role anon;
-select essai_refuse(format($$select candidature_parent_repondre(%L, true, 'Marie Yao')$$, current_setting('essai.jeton3')), 'deux des prénoms et nom de l enfant : refusé');
-select essai(candidature_parent_repondre(current_setting('essai.jeton3')::uuid, true, 'Rose Yao') = 'confirme', 'vrai parent au même nom de famille : accepté');
+select essai(candidature_parent_repondre(current_setting('essai.jeton3')::uuid, true, 'Marie Yao') = 'confirme', 'parent dont le nom est pris dans celui de l enfant (Marie Yao pour Yao Akissi Marie Grace) : accepté, l Administration le signale');
 reset role;
 set role anon;
 select essai_refuse(format($$select candidature_parent_lien(%L)$$, current_setting('essai.cand')), 'visiteur : ne récupère pas le lien du parent');
