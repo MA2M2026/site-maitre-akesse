@@ -1168,7 +1168,7 @@ const PHRASE_LIEN_SUR = '(Ce lien mène à notre site officiel. Si WhatsApp affi
 function texteLienRassurant(texte) {
   const t = String(texte == null ? '' : texte);
   const m = /https:\/\/(?:www\.|mannequin\.)?maitreakessemodelmanagement\.com\S*/.exec(t);
-  if (!m || t.indexOf('« Ouvrir le lien ? »') >= 0) return t;
+  if (!m || /Ouvrir le lien\s*\?/.test(t)) return t;   // (déjà expliqué, quelle que soit l'espace avant « ? »)
   const fin = t.indexOf('\n', m.index + m[0].length);
   return fin < 0 ? t + '\n' + PHRASE_LIEN_SUR : t.slice(0, fin) + '\n' + PHRASE_LIEN_SUR + t.slice(fin);
 }

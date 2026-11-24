@@ -432,7 +432,7 @@
   P.actions['dossier-parent-copier'] = async () => {
     const st = document.getElementById('dos-parent-statut');
     // (le message complet, avec ses explications et le lien, pas le lien seul)
-    const texte = texteLienRassurant(texteLienParent(fiche.d, fiche.d.parent_jeton));
+    const texte = texteLienParent(fiche.d, fiche.d.parent_jeton);   // (copie aussi pour SMS ou e-mail : sans la phrase propre à WhatsApp)
     try { await navigator.clipboard.writeText(texte); st.textContent = 'Message copié (avec le lien) : collez-le dans WhatsApp, SMS ou e-mail au parent.'; }
     catch (e) { st.textContent = texte; st.classList.add('message-a-copier'); }   // (presse-papiers refusé : le message s'affiche, avec ses retours à la ligne, pour être copié à la main)
   };

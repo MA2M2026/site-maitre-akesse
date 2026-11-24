@@ -168,6 +168,17 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🔗 Liens envoyés par WhatsApp : phrase rassurante (24/11/2026, demande de la propriétaire)
+WhatsApp affiche « Ouvrir le lien ? » quand un lien vient d'un numéro absent des contacts de la personne (on ne peut pas
+l'empêcher). `texteLienRassurant(texte)` (`js/app.js`, phrase `PHRASE_LIEN_SUR`) ajoute, juste après la ligne du premier
+lien du site (www. ou mannequin.), une phrase qui explique que c'est une sécurité normale ; une seule fois, et rien si le
+texte en parle déjà (« Ouvrir le lien ? », espaces quelconques). Appliquée à tous les messages WhatsApp (wa.me) préparés
+par l'Administration et le portail : dossiers (candidats, lien du parent), messages groupés, infos, convocations et
+tournées, places, mannequins (accord du parent, mot de passe provisoire), cours de talons, reçus et documents de compta,
+paiements, rapport des profils. Pas sur les textes copiés (ils peuvent partir par SMS ou e-mail) ni sur le bouton public
+« Partager » des pages. L'assistant IA de WhatsApp Business (réponses automatiques « IA ») se règle dans l'application
+WhatsApp Business, pas dans le site.
+
 ## 👨‍👩‍👧 Candidatures de mineurs : le parent confirme lui-même (24/11/2026, décision de la propriétaire)
 Constat : une candidate mineure avait écrit son propre nom, numéro et e-mail à la place de ceux de son parent.
 - **Formulaire** (`js/formulaire-candidature-champs.js`, `js/candidature-etapes.js`) : champs du parent avec « * » ;
