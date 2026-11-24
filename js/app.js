@@ -1161,6 +1161,17 @@ function numeroWhatsApp(tel) {
   if ((n.length === 10 && n.charAt(0) === '0') || n.length === 8) n = '225' + n; // numéro ivoirien sans indicatif
   return n.length >= 8 ? n : '';
 }
+// (24/11/2026, demande de la propriétaire) WhatsApp affiche « Ouvrir le lien ? » quand un lien vient d'un numéro qui
+// n'est pas dans les contacts : ça inquiète certaines personnes. Juste après le premier lien du site dans un message
+// WhatsApp préparé par le site, une phrase rassure (une seule fois). Partagée par tous ces messages.
+const PHRASE_LIEN_SUR = '(Ce lien mène à notre site officiel. Si WhatsApp affiche « Ouvrir le lien ? », c’est une sécurité normale de WhatsApp : appuyez sur « Ouvrir le lien ».)';
+function texteLienRassurant(texte) {
+  const t = String(texte == null ? '' : texte);
+  const m = /https:\/\/(?:www\.|mannequin\.)?maitreakessemodelmanagement\.com\S*/.exec(t);
+  if (!m || t.indexOf('« Ouvrir le lien ? »') >= 0) return t;
+  const fin = t.indexOf('\n', m.index + m[0].length);
+  return fin < 0 ? t + '\n' + PHRASE_LIEN_SUR : t.slice(0, fin) + '\n' + PHRASE_LIEN_SUR + t.slice(fin);
+}
 
 // ---- « 📇 Mes contacts » (24/10/2026, demande de la propriétaire) ----
 // Bouton à côté d'un numéro : ouvre le répertoire du téléphone (Chrome sur Android : API « Contact

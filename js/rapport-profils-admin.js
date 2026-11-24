@@ -242,7 +242,7 @@ window.demarrerRapportProfils = function () {
         var mannequin = profils.find(function (x) { return x.id === id; }) || {};
         texte = 'Bonjour ' + salutationParent(parents[id].parent_nom) + ', voici un message de l’agence pour votre enfant ' + (mannequin.full_name || '') + ' :\n\n' + texte;
       }
-      if (numero) { window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texte), '_blank', 'noopener'); versApplication(); }
+      if (numero) { window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texteLienRassurant(texte)), '_blank', 'noopener'); versApplication(); }
       else {
         // sans numéro : copie du message ; si la copie échoue, le message est montré
         // sélectionné (à copier à la main) et le profil n'est PAS noté comme prévenu

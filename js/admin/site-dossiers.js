@@ -241,7 +241,7 @@
 
   // ---------- Fiche ----------
   let fiche = null; // { source, d, photos }
-  function lienWaTexte(source, d, texte) { const l = lienWa(contacts(source, d).phone); return l ? l + '?text=' + encodeURIComponent(texte) : null; }
+  function lienWaTexte(source, d, texte) { const l = lienWa(contacts(source, d).phone); return l ? l + '?text=' + encodeURIComponent(texteLienRassurant(texte)) : null; }
   function noteParent(source, d) { return contacts(source, d).parent ? ' Personne mineure : le message part vers son parent (' + salutationParent(d.parent_nom) + ').' : ''; }
   function modeleDe(cle) {
     if (cle.indexOf('c:') !== 0) return MODELES_LIBRES[cle] || null;
@@ -410,7 +410,7 @@
     if (!d.parent_jeton) return '<button type="button" class="btn rouge" data-action="dossier-parent-lien">Préparer le lien de confirmation du parent</button>';
     const mailCopie = coordonneesParentCopiees({ email: d.email, parentEmail: d.parent_email }) === 'email';
     const wa = lienWa(d.parent_telephone);
-    let boutons = wa ? '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton))) + '" target="_blank" rel="noopener">💬 Envoyer au parent par WhatsApp</a>' : '';
+    let boutons = wa ? '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienRassurant(texteLienParent(d, d.parent_jeton)))) + '" target="_blank" rel="noopener">💬 Envoyer au parent par WhatsApp</a>' : '';
     if (d.parent_email && !mailCopie) boutons += '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>';
     return boutons + '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le message</button>';
   }
@@ -432,7 +432,7 @@
   P.actions['dossier-parent-copier'] = async () => {
     const st = document.getElementById('dos-parent-statut');
     // (le message complet, avec ses explications et le lien, pas le lien seul)
-    const texte = texteLienParent(fiche.d, fiche.d.parent_jeton);
+    const texte = texteLienRassurant(texteLienParent(fiche.d, fiche.d.parent_jeton));
     try { await navigator.clipboard.writeText(texte); st.textContent = 'Message copié (avec le lien) : collez-le dans WhatsApp, SMS ou e-mail au parent.'; }
     catch (e) { st.textContent = texte; st.classList.add('message-a-copier'); }   // (presse-papiers refusé : le message s'affiche, avec ses retours à la ligne, pour être copié à la main)
   };

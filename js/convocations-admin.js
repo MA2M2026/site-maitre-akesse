@@ -329,7 +329,7 @@ window.demarrerConvocationsPanneau = function () {
   }
   function lienTournee(tournee, p, pers) {
     var num = pers.jeton && numeroWhatsApp(pers.telephone);
-    return num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(TOURNEES[tournee].message(p, pers)) : null;
+    return num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(texteLienRassurant(TOURNEES[tournee].message(p, pers))) : null;
   }
   function ajouterTournee(tournee, groupe, boite, p, personnes, envois, toutOuvert, liste, faitesIci) {
     var t = TOURNEES[tournee], deja = faites(p, tournee, faitesIci);
@@ -412,7 +412,7 @@ window.demarrerConvocationsPanneau = function () {
   function lienWhatsApp(e) {
     var pers = personnes.find(function (x) { return x.participant_id === e.participant_id; });
     var num = pers && numeroWhatsApp(pers.telephone);
-    return num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(messageConvocation(projet, pers, e.sorte).texte) : '';
+    return num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(texteLienRassurant(messageConvocation(projet, pers, e.sorte).texte)) : '';
   }
   function bouton(texte, action) {
     var b = document.createElement('button');

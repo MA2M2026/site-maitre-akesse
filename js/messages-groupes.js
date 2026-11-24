@@ -291,7 +291,7 @@ window.demarrerMessagesGroupes = function () {
     const d = choisis().find(x => numeroWhatsApp(contactsEnvoi(x).phone) && !faits.has(x.id));
     if (!d || !t) return;
     void versApplication();
-    window.open('https://wa.me/' + numeroWhatsApp(contactsEnvoi(d).phone) + '?text=' + encodeURIComponent(personnaliser(d)), '_blank', 'noopener');
+    window.open('https://wa.me/' + numeroWhatsApp(contactsEnvoi(d).phone) + '?text=' + encodeURIComponent(texteLienRassurant(personnaliser(d))), '_blank', 'noopener');
     noterFait('wa', d.id);
     afficherListe();
     $('mg-wa-etat').textContent = `Ouvert pour ${d.full_name || d.phone}. Appuyez sur « Envoyer » dans WhatsApp, puis revenez ici pour la personne suivante.`;

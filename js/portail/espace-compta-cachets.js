@@ -39,11 +39,11 @@
   // l'Administration : les messages d'un mineur vont au parent)
   function lienRecuWhatsApp(c, registre) {
     // cachet versé au parent : le reçu part au numéro payé, au nom du parent
-    if (c.parent_nom) return 'https://wa.me/' + c.telephone + '?text=' + encodeURIComponent(K.texteRecu(c, c.parent_nom));
+    if (c.parent_nom) return 'https://wa.me/' + c.telephone + '?text=' + encodeURIComponent(texteLienRassurant(K.texteRecu(c, c.parent_nom)));
     const m = registre.find((x) => x.id === c.agence_mannequin_id);
     const parent = m && m.parent_telephone && mineure(m) ? m : null;
     const n = parent ? numero(parent.parent_telephone) : c.telephone;
-    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(K.texteRecu(c, parent ? parent.parent_nom || 'Madame, Monsieur' : ''));
+    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(texteLienRassurant(K.texteRecu(c, parent ? parent.parent_nom || 'Madame, Monsieur' : '')));
   }
   async function page() {
     // (toutes les questions à la base partent en même temps : écran prêt plus vite)

@@ -349,5 +349,5 @@ function lienWhatsAppCode(d, code) {
   const texte = contacts.parent
     ? messageParent(`Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *${code}*` + fin)
     : messageCandidat(`Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*` + fin);
-  return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(personnaliserMessage(texte, d, null, () => ''));
+  return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(texteLienRassurant(personnaliserMessage(texte, d, null, () => '')));
 }

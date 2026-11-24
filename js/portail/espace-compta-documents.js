@@ -140,7 +140,7 @@
       const texte = 'Bonjour' + (nomClient ? ' ' + nomClient : '') + ',\n\nVeuillez trouver ci-joint votre ' + libelle + ' N° ' + d.numero + ' d’un montant de ' + P.fcfa(d.total_ttc) + '.\n\nCordialement,\n' + agence;
       P.etat.docPartage = { fichier, contenu, nomFichier, texte };
       const n = tiers && tiers.telephone && window.numeroWhatsAppMa2m ? window.numeroWhatsAppMa2m(tiers.telephone) : '';
-      const lienWa = 'https://wa.me/' + (n || '') + '?text=' + encodeURIComponent(texte);
+      const lienWa = 'https://wa.me/' + (n || '') + '?text=' + encodeURIComponent(texteLienRassurant(texte));
       const lienMail = 'mailto:' + encodeURIComponent((tiers && tiers.email) || '') + '?subject=' + encodeURIComponent(libelle.charAt(0).toUpperCase() + libelle.slice(1) + ' N° ' + d.numero + ' · ' + agence) + '&body=' + encodeURIComponent(texte);
       const peutPartager = !!(navigator.canShare && navigator.canShare({ files: [fichier] }));
       P.fenetre('<h2>Envoyer ' + P.esc(d.numero) + '</h2><p class="doux">' + (nomClient ? 'Pour ' + P.esc(nomClient) + '. ' : '') +

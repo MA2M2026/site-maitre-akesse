@@ -381,7 +381,7 @@
   }
   function lienWhatsApp(tel, texte) {
     const n = window.numeroWhatsAppMa2m(tel);  // js/messages-mensualites.js
-    return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(texte) : null;
+    return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(texteLienRassurant(texte)) : null;
   }
   // Message au mannequin (au parent s'il est mineur) : e-mail envoyé tout de suite, WhatsApp en un geste
   function prevenir(r, valide, motif) {
