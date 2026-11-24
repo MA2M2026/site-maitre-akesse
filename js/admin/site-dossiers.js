@@ -206,7 +206,8 @@
       return '<article class="dossier-carte apparait" style="--i:' + Math.min(i, 12) + '">' +
         '<a class="dossier-lien" href="#/site/' + conf.page + '/' + P.esc(d.id) + '">' +
         (source === 'casting' ? visageDossier(ph && ph.affiche, nomDe(source, d), 'dossier-visage') : '<span class="dossier-sigle" aria-hidden="true">' + P.esc(P.initiales(nomDe(source, d))) + '</span>') +
-        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (source === 'casting' && mineurDe(d) ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') : '') + '</span>' +
+        '<span class="dossier-texte"><span class="dossier-nom">' + P.esc(nomDe(source, d)) + (source === 'casting' && mineurDe(d) ? ' ' + P.pastille(d.genre === 'femme' ? 'Mineure' : 'Mineur', 'info') +
+          (d.parent_confirme_le ? '' : ' ' + P.pastille(d.parent_refuse_le ? 'Refusée par le parent' : 'Parent non confirmé', d.parent_refuse_le ? 'erreur' : 'alerte')) : '') + '</span>' +
         '<span class="dossier-meta">' + P.esc(meta(source, d)) + '</span>' +
         P.pastille(conf.libelles[statut] || statut || '', TONS[statut]) + (douteux.has(d.id) ? ' ' + ETIQUETTE_A_VERIFIER() : '') + (source === 'casting' && suivi ? resumeSuivi(suivi[d.id]) : '') + '</span></a>' +
         (wa ? '<a class="dossier-wa"' + (source === 'casting' ? ' data-candidature="' + P.esc(d.id) + '"' : '') + ' href="' + P.esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + (c.parent ? 'du parent de ' : '') + P.esc(nomDe(source, d)) + '">' + (c.parent ? 'WhatsApp parent ↗' : 'WhatsApp ↗') + '</a>' : '') +
@@ -252,6 +253,9 @@
     return m ? 'c:' + m.cle : 'libre';
   }
   // (17/11/2026, demande de la propriétaire) la vidéo de présentation en grand, sur toute la largeur, sous les photos
+  // (24/11/2026, demande de la propriétaire) une commune d'Abidjan s'affiche « Abidjan · Adjamé » (le formulaire
+  // enregistre la commune seule : villeAvecCommune, js/app.js)
+  const villeLisible = (v) => (v && typeof COMMUNES_ABIDJAN !== 'undefined' && COMMUNES_ABIDJAN.includes(v) ? 'Abidjan · ' + v : v);
   function blocVideo(d) {
     return d && estVideoDrive(d.video_url) ? '<section class="carte fiche-video"><h2>Vidéo de présentation</h2>' + lecteurVideo(d.video_url) + '</section>' : '';
   }
@@ -263,12 +267,13 @@
     const age = source === 'casting' ? ageDe(d) : null, parentJoignable = source === 'casting' && mineurDe(d) && d.parent_telephone;
     const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
     if (cle === 'video_url' && estVideoDrive(v)) return '';   // (17/11) lue en grand dans son propre bloc (blocVideo)
+    if (cle === 'city' && source === 'casting') return P.esc(villeLisible(v));
     return wa ? '<a href="' + P.esc(wa) + '" target="_blank" rel="noopener">' + P.esc(v) + ' ↗ WhatsApp</a>' :
       P.esc((TEXTES_SPECIAUX[cle] && TEXTES_SPECIAUX[cle][v]) || (cle === 'date_naissance' ? P.date(v) + (age !== null ? ' (' + age + ' ans)' : '') : v)) + (unite ? ' ' + unite : '') +
       (parentJoignable && cle === 'phone' ? ' <small class="doux">(mineur : écrire au parent)</small>' : '');
   }
-  function blocChamps(source, d) {
-    return '<dl class="champs">' + CHAMPS[source].map(([cle, libelle, unite]) => {
+  function blocChamps(source, d, seulement, sauf) {
+    return '<dl class="champs">' + CHAMPS[source].filter(([cle]) => (!seulement || seulement.includes(cle)) && !(sauf && sauf.includes(cle))).map(([cle, libelle, unite]) => {
       const valeur = valeurChamp(source, d, cle, unite);
       return valeur ? '<div><dt>' + P.esc(libelle) + '</dt><dd>' + valeur + '</dd></div>' : '';
     }).join('') + '</dl>';
@@ -354,6 +359,50 @@
   // dossier en dessous comme une page de magazine. Sur ordinateur : la photo à gauche reste en place, le dossier à droite.
   const ENCART_A_VERIFIER = () => '<section class="carte a-verifier"><h2>' + ETIQUETTE_A_VERIFIER() + '</h2><p class="doux">Envoyé sans la vérification anti-robots : le téléphone n’a pas pu la charger. C’est souvent une vraie personne, mais regardez le dossier avant d’y donner suite.</p>' +
     '<button type="button" class="btn petit" data-action="dossier-a-verifier-ok">✓ C’est une vraie personne</button></section>';
+  // (24/11/2026, décision de la propriétaire) candidature d'une personne mineure : le parent confirme lui-même avec son
+  // lien personnel (confirmation-parent.html, supabase-parent-candidature.sql). Alerte si ses coordonnées sont celles de
+  // la candidate (coordonneesParentCopiees, js/app.js). Les coordonnées du parent sont lues ici, plus dans « Informations ».
+  const CHAMPS_PARENT = ['parent_nom', 'parent_telephone', 'parent_email'];
+  const COPIES = { telephone: 'le WhatsApp du parent est celui de la candidate', email: 'l’e-mail du parent est celui de la candidate', nom: 'le nom du parent est celui de la candidate' };
+  const lienParent = (jeton) => location.origin + '/confirmation-parent?j=' + encodeURIComponent(jeton);
+  const texteLienParent = (d, jeton) => 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' + (String(d.full_name || '').trim() || 'Votre enfant') +
+    ' a envoyé une candidature à l’agence Maître Akesse Model Management. Comme cette personne est mineure, nous ne donnons aucune suite sans votre accord.\n\n' +
+    'Merci de confirmer (ou de refuser) sa candidature avec ce lien personnel : ' + lienParent(jeton) + '\n\nBien cordialement,\nMaître Akesse Model Management';
+  function blocParent(d) {
+    if (!mineurDe(d)) return '';
+    const copie = coordonneesParentCopiees({ nom: d.full_name, telephone: d.phone, email: d.email, parentNom: d.parent_nom, parentTelephone: d.parent_telephone, parentEmail: d.parent_email });
+    const quand = (date) => ' <span class="doux">' + P.esc([d.parent_confirme_nom, P.dateEtHeure(date)].filter(Boolean).join(' · ')) + '</span>';
+    const etatParent = d.parent_confirme_le ? P.pastille('✓ Confirmée par le parent', 'ok') + quand(d.parent_confirme_le) :
+      d.parent_refuse_le ? P.pastille('Refusée par le parent', 'erreur') + quand(d.parent_refuse_le) : P.pastille('Parent non confirmé', 'alerte');
+    const wa = d.parent_jeton && copie !== 'telephone' ? lienWa(d.parent_telephone) : null;
+    const envoi = d.parent_confirme_le ? '' : !d.parent_jeton ? '<button type="button" class="btn rouge" data-action="dossier-parent-lien">Préparer le lien de confirmation du parent</button>' :
+      (wa ? '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton))) + '" target="_blank" rel="noopener">💬 Envoyer le lien au parent par WhatsApp</a>' : '') +
+      (d.parent_email && copie !== 'email' ? '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>' : '') +
+      '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le lien</button>';
+    return '<section class="carte bloc-parent"><h2>Parent ou tuteur</h2>' +
+      (copie ? '<p class="alerte-parent" role="alert">⚠️ Attention : ' + P.esc(COPIES[copie]) + '. Ce n’est sans doute pas le vrai parent : appelez la famille avant toute suite.</p>' : '') +
+      '<p class="etat-parent">' + etatParent + '</p>' + blocChamps('casting', d, CHAMPS_PARENT) +
+      (envoi ? '<div class="ligne">' + envoi + '</div><p class="doux petit-texte" id="dos-parent-statut" role="status">Le parent ouvre son lien personnel, écrit son nom, puis confirme ou refuse. Sa réponse s’affiche ici.</p>' : '') + '</section>';
+  }
+  P.actions['dossier-parent-lien'] = async (el) => {
+    el.disabled = true;
+    try { fiche.d.parent_jeton = await P.rpc('candidature_parent_lien', { p_id: fiche.d.id }); return P.afficher(); }
+    catch (e) { P.message(P.erreurTexte(e)); el.disabled = false; }
+  };
+  P.actions['dossier-parent-copier'] = async () => {
+    const st = document.getElementById('dos-parent-statut');
+    try { await navigator.clipboard.writeText(lienParent(fiche.d.parent_jeton)); st.textContent = 'Lien copié : collez-le dans un message au parent.'; }
+    catch (e) { st.textContent = lienParent(fiche.d.parent_jeton); }
+  };
+  P.actions['dossier-parent-email'] = async (el) => {
+    const d = fiche.d, st = document.getElementById('dos-parent-statut');
+    el.disabled = true; st.textContent = 'Envoi en cours…';
+    try {
+      await envoyerEmailCandidat({ to_email: d.parent_email, to_name: salutationParent(d.parent_nom), message: messagePourEmail(texteLienParent(d, d.parent_jeton)) });
+      st.textContent = 'E-mail envoyé au parent.';
+    } catch (err) { st.textContent = 'L’e-mail n’est pas parti' + (err && err.text ? ' (' + err.text + ')' : '') + '. Réessayez.'; }
+    el.disabled = false;
+  };
   async function ficheCandidature(d, douteux) {
     const conf = SOURCES.casting, h = await hautCandidature(d, true), statut = d[conf.champStatut];
     return retourListe(conf) + '<h1 class="sr-only">' + P.esc(h.nom) + '</h1>' +
@@ -364,8 +413,8 @@
         (d.message ? '<blockquote class="fiche-luxe-mot">« ' + P.esc(d.message) + ' »</blockquote>' : '') +
       '</div>' +
       '<div class="fiche-luxe-dossier">' + (douteux ? ENCART_A_VERIFIER() : '') +
-        blocStatut('casting') + (await blocCode()) + blocWhatsApp('casting') + (await blocMessagesEnvoyes(d.id)) +
-        '<section class="carte fiche-luxe-infos"><h2>Informations</h2>' + blocChamps('casting', d) + '</section>' +
+        blocParent(d) + blocStatut('casting') + (await blocCode()) + blocWhatsApp('casting') + (await blocMessagesEnvoyes(d.id)) +
+        '<section class="carte fiche-luxe-infos"><h2>Informations</h2>' + blocChamps('casting', d, null, mineurDe(d) ? CHAMPS_PARENT : null) + '</section>' +
         blocVideo(d) +
         (fiche.photos.length ? '<section class="carte"><h2>Toutes les photos</h2>' + blocPhotos('casting') + '</section>' : blocPhotos('casting')) +
         blocSupprimer(conf) +
@@ -546,7 +595,7 @@
     return {
       diapos: fiche.photos.map((x, i) => P.etude.diapo(x.affiche, d.full_name, i)),
       nom: nomDe('casting', d), sous: [age !== null ? age + ' ans' : '', typeDe(d), 'reçue le ' + P.dateEtHeure(d.created_at)],
-      infos: [d.height_cm ? '📏 ' + P.etude.taille(d.height_cm) : '', d.city ? '📍 ' + d.city : '',
+      infos: [d.height_cm ? '📏 ' + P.etude.taille(d.height_cm) : '', d.city ? '📍 ' + villeLisible(d.city) : '',
         d.experience_mannequin === 'non' ? '👠 ' + accord(d, 'Débutante', 'Débutant') : d.experience_mannequin === 'oui' ? '⭐ Déjà mannequin' : '',
         mineur ? '👧 ' + accord(d, 'Mineure', 'Mineur') + ' : message au parent' : ''],
       // (étude : on fait défiler vite, la vidéo reste un lien ; elle est lue dans la fiche)

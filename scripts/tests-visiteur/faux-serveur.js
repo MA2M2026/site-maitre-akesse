@@ -65,7 +65,9 @@ function brancher(page, donnees, journal) {
         if (nom === 'vitrine_eligibles' && !(donnees.rpc && nom in donnees.rpc)) return json({ code: 'PGRST202', message: 'Could not find the function public.vitrine_eligibles without parameters in the schema cache' }, 404);
         const valeur = donnees.rpc && cle in donnees.rpc ? donnees.rpc[cle] : [];
         if (valeur && valeur.erreur) return json({ message: valeur.erreur, code: 'P0001' }, 400);
-        return json(typeof valeur === 'function' ? valeur(JSON.parse(req.postData() || '{}')) : valeur);
+        // (24/11/2026) une fonction simulée qui lève une erreur répond comme la vraie base (refus avec son message)
+        if (typeof valeur === 'function') { try { return json(valeur(JSON.parse(req.postData() || '{}'))); } catch (e) { return json({ message: e.message, code: 'P0001' }, 400); } }
+        return json(valeur);
       }
       if (url.pathname.startsWith('/rest/v1/')) {
         const table = url.pathname.split('/')[3];

@@ -2854,6 +2854,20 @@ async function jetonAntiRobot() {
     });
   } catch (e) { raisonJetonAntiRobot = 'script Cloudflare non chargé (' + ((e && e.message) || e) + ')'; return null; }
 }
+// (24/11/2026, décision de la propriétaire) candidature d'une personne mineure : coordonnées du parent recopiées des
+// siennes ? 'telephone', 'email', 'nom' ou null. Même règle que la base (supabase-parent-candidature.sql) : les 8
+// derniers chiffres du numéro ; le nom sans civilité, sans accents, mots dans n'importe quel ordre (le nom de famille seul
+// peut être le même). Partagée par le formulaire (js/candidature-etapes.js) et l'Administration (js/admin/site-dossiers.js).
+function coordonneesParentCopiees(c) {
+  const chiffres = (x) => String(x || '').replace(/\D/g, '').slice(-8);
+  const nom = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|mr|m)\.?\s+/, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+  const tel = chiffres(c.parentTelephone);
+  if (tel.length >= 6 && tel === chiffres(c.telephone)) return 'telephone';
+  if (String(c.parentEmail || '').trim() && String(c.parentEmail).trim().toLowerCase() === String(c.email || '').trim().toLowerCase()) return 'email';
+  if (nom(c.parentNom) && nom(c.parentNom) === nom(c.nom)) return 'nom';
+  return null;
+}
 async function envoyerFormulairePublic(table, ligne, dejaRedemande) {
   const jeton = await jetonAntiRobot();
   const rep = await fetch('/api/portail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'formulaire', table, ligne, jeton, raisonJeton: raisonJetonAntiRobot }) })
@@ -2863,9 +2877,8 @@ async function envoyerFormulairePublic(table, ligne, dejaRedemande) {
   if (rep.ok) return { error: null };
   // (16/11/2026, anti-robots strict) : un jeton refusé ou perdu est redemandé UNE fois, sans rien demander au visiteur
   // (Cloudflare n'affiche une case à cocher que s'il a un doute).
-  if (rep.status === 403 && r.robot && !dejaRedemande) return envoyerFormulairePublic(table, ligne, true);
-  // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
-  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris, retires: Array.isArray(r.retires) ? r.retires : null } };
+  if (rep.status === 403 && r.robot && !dejaRedemande) return envoyerFormulairePublic(table, ligne, true);  // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
+  return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris, parentIdentique: !!r.parentIdentique, retires: Array.isArray(r.retires) ? r.retires : null } };
 }
 async function insererAvecPatience(table, ligne, surAttente) {
   const attentes = [15, 25, 35];

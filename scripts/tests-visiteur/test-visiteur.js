@@ -51,10 +51,23 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const refus12ans = await etape() === 2 && !journal.some(j => j[0] === 'POST' && j[1] === 'casting_applications');
     await p.selectOption('#ca-majorite', 'mineur'); await p.dispatchEvent('#ca-majorite', 'change'); await p.waitForTimeout(300);
     const blocParent = await p.isVisible('#ca-bloc-parent');
-    await p.selectOption('#ca-parent-civilite', 'Madame'); await p.fill('#ca-parent-nom', 'Kouassi Marie');
+    // (24/11/2026) une ado recopie SES coordonnées à la place de celles du parent : refusé, champ par champ ; message obligatoire
+    await p.selectOption('#ca-parent-civilite', 'Madame'); await p.fill('#ca-parent-nom', 'Koné Awa');
     await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'parent@test.ci');
     await choisir(p, '#ca-genre', 'femme'); await p.waitForTimeout(200);
     const caseCivilite = await p.isVisible('#ca-civilite'); await p.selectOption('#ca-civilite', 'Madame');
+    const msgEtape = () => p.textContent('.lx-etape:not([hidden]) .form-msg');
+    await suivant(); const refusMessage = await etape() === 2 && /Message/.test(await msgEtape());
+    await p.fill('#ca-message', 'Je veux devenir mannequin.');
+    await suivant(); const refusNom = await etape() === 2 && /(nom de votre parent|parent’s or guardian’s name)/.test(await msgEtape());
+    await p.fill('#ca-parent-nom', 'Kouassi Marie'); await p.fill('#ca-parent-telephone-numero', '07 00 00 00 01');
+    await suivant(); const refusTel = await etape() === 2 && /WhatsApp/.test(await msgEtape());
+    await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'AWA@test.ci');
+    await suivant(); const refusMail = await etape() === 2 && /(e-mail|email)/i.test(await msgEtape());
+    await p.fill('#ca-parent-email', 'parent@test.ci');
+    const etoilesParent = await p.evaluate(() => ['ca-parent-civilite', 'ca-parent-nom', 'ca-parent-indicatif', 'ca-parent-email'].every((id) => /\*\s*$/.test(document.querySelector('label[for="' + id + '"]').textContent)));
+    if (!refusMessage || !refusNom || !refusTel || !refusMail || !etoilesParent) { console.log('❌ ÉCHEC parent / message obligatoires sur', page, refusMessage, refusNom, refusTel, refusMail, etoilesParent); process.exitCode = 1; }
+    else console.log('✓ ' + page + ' : message obligatoire ; nom, WhatsApp et e-mail de la candidate refusés comme parent ; champs du parent avec *');
     await suivant(); etapesVues.push(await etape());
     await choisir(p, '#ca-taille', '160'); await choisir(p, '#ca-vetements', '');
     for (const sel of ['#ca-pointure', '#ca-poitrine', '#ca-tourtaille', '#ca-hanches']) if (await p.isVisible(sel)) await choisir(p, sel, '');
@@ -64,6 +77,13 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const sansPhotos = await etape() === 4 && /photo/i.test(await p.textContent('.lx-etape:not([hidden]) .form-msg'));
     await p.setInputFiles('#ca-photos', [0, 1, 2, 3].map(i => __dirname + '/medias/photo' + i + '.jpg')); await p.waitForTimeout(1500);
     await p.setInputFiles('#ca-video', __dirname + '/medias/video.mp4'); await p.waitForTimeout(4000);
+    // (24/11/2026) consignes de la vidéo + engagement obligatoire
+    await p.check('#ca-consentement').catch(async () => { await p.evaluate(() => { const c = document.getElementById('ca-consentement'); c.disabled = false; c.checked = true; }); });
+    await suivant(); const refusConsignes = await etape() === 4 && /(consignes|instructions)/i.test(await p.textContent('.lx-etape:not([hidden]) .form-msg'));
+    const consignes = await p.textContent('.ca-video-aide');
+    if (!refusConsignes || !/TikTok/.test(consignes) || !/(quelques pas|few steps)/.test(consignes)) { console.log('❌ ÉCHEC consignes vidéo sur', page, refusConsignes, consignes.slice(0, 120)); process.exitCode = 1; }
+    else console.log('✓ ' + page + ' : consignes de la vidéo (pas de TikTok, quelques pas) et case « Ma vidéo respecte ces consignes » obligatoire');
+    await p.check('#ca-video-consignes');
     await p.check('#ca-consentement').catch(async () => { await p.evaluate(() => { const c = document.getElementById('ca-consentement'); c.disabled = false; c.checked = true; }); });
     await suivant(); etapesVues.push(await etape());
     // le résumé « Votre candidature » : chaque ligne, avec « Changer »

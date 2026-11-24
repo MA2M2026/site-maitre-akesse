@@ -583,8 +583,7 @@ async function soumettreCandidature() {
     message: messageAvecLien(),
     parent_nom: mineur ? [document.getElementById('ca-parent-civilite').value, document.getElementById('ca-parent-nom').value.trim()].filter(Boolean).join(' ') : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
-    parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,
-    type_candidature: PARCOURS,
+    parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,    type_candidature: PARCOURS,
     projet_nom: PARCOURS === 'projet' ? projetNom : null,
     experience_mannequin: PARCOURS === 'agence' ? document.getElementById('ca-experience').value : 'oui',
     clothing_size: document.getElementById('ca-vetements').value || null
@@ -596,7 +595,9 @@ async function soumettreCandidature() {
     (reste) => afficherMsg(msg, texteAttenteEnvoi(reste), 'ok'));
 
   if (erreurInsert) {
-    afficherMsg(msg, T("Erreur lors de l'envoi. Réessayez ou contactez-nous directement.", 'Error while sending. Please try again or contact us directly.'), 'err');
+    // (24/11/2026) mineur : coordonnées du parent recopiées des siennes, refusées par la base
+    if (erreurInsert.parentIdentique) afficherMsg(msg, T('Les coordonnées du parent (nom, WhatsApp ou e-mail) sont les vôtres : touchez « Changer » sur la ligne « Vous » et écrivez celles de votre parent ou tuteur.', 'The parent’s details (name, WhatsApp or email) are yours: tap “Change” on the “You” line and enter your parent’s or guardian’s details.'), 'err');
+    else afficherMsg(msg, T("Erreur lors de l'envoi. Réessayez ou contactez-nous directement.", 'Error while sending. Please try again or contact us directly.'), 'err');
     btn.disabled = false;
     return;
   }

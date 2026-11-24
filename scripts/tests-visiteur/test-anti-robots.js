@@ -11,13 +11,13 @@ const PORT = String(9840 + Math.floor(Math.random() * 30));
 
 async function serveur() {
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-essai'; process.env.TURNSTILE_SECRET_KEY = 'secret-essai';
-  const verifs = [], rpcs = [], etiquettes = []; let limite = false;
+  const verifs = [], rpcs = [], etiquettes = []; let limite = false, erreurRpc = null;
   global.fetch = async (url, o = {}) => {
     const u = String(url);
     const json = (x, s = 200) => ({ ok: s < 300, status: s, json: async () => x, text: async () => JSON.stringify(x) });
     if (u.includes('challenges.cloudflare.com/turnstile/v0/siteverify')) { const p = new URLSearchParams(String(o.body)); verifs.push(Object.fromEntries(p)); return json({ success: p.get('response') === 'bon-jeton' }); }
     if (u.includes('/rest/v1/envois_a_verifier')) { etiquettes.push(JSON.parse(o.body)); return json(null, 201); }
-    if (u.includes('/rpc/formulaire_public_enregistrer')) { const c = JSON.parse(o.body); rpcs.push(c); return limite ? json({ message: 'LIMITE_ATTEINTE' }, 400) : json('id-1'); }
+    if (u.includes('/rpc/formulaire_public_enregistrer')) { const c = JSON.parse(o.body); rpcs.push(c); return erreurRpc ? json({ message: erreurRpc }, 400) : limite ? json({ message: 'LIMITE_ATTEINTE' }, 400) : json('id-1'); }
     return json({});
   };
   const portail = require('../../api/portail.js');
@@ -38,6 +38,13 @@ async function serveur() {
   const lv = (rpcs[rpcsAvantV] || {}).p_ligne || {};
   ok(lv.politique_version === '2026-11-23' && !('consentement_le' in lv), 'serveur : version de la politique ajoutée par le serveur (' + lv.politique_version + '), date jamais reçue de la page');
   rpcs.splice(rpcsAvantV);
+  // (24/11/2026) candidature d'une mineure : la base refuse les coordonnées de la candidate recopiées pour le parent ;
+  // le serveur le dit clairement à la page (parentIdentique), au lieu d'une erreur générale
+  erreurRpc = 'PARENT_IDENTIQUE : le WhatsApp du parent est celui de la candidate';
+  const rPar = await appeler({ table: 'casting_applications', ligne: { id: 'c-par', full_name: 'Amon Emira', mineur: true, phone: '0103961603', parent_telephone: '0103961603' }, jeton: 'bon-jeton' });
+  erreurRpc = null;
+  ok(rPar.statut === 400 && rPar.rep && rPar.rep.parentIdentique === true && /parent/.test(rPar.rep.error), 'serveur : coordonnées du parent recopiées de la candidate refusées avec un message clair (parentIdentique)');
+  rpcs.pop();
   // (16/11/2026, audit L-7 : mode strict, ANTI_ROBOTS_STRICT = true) : un robot est refusé, la raison est notée au
   // journal ; une panne de NOTRE côté ou de Cloudflare ne bloque jamais un vrai visiteur.
   const journal = []; const fetchAvant = global.fetch;

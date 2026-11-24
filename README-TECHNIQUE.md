@@ -168,6 +168,27 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 👨‍👩‍👧 Candidatures de mineurs : le parent confirme lui-même (24/11/2026, décision de la propriétaire)
+Constat : une candidate mineure avait écrit son propre nom, numéro et e-mail à la place de ceux de son parent.
+- **Formulaire** (`js/formulaire-candidature-champs.js`, `js/candidature-etapes.js`) : champs du parent avec « * » ;
+  message obligatoire ; à l'étape « Vous », refus si le WhatsApp, l'e-mail ou le nom complet du parent sont ceux de la
+  candidate (règle commune `coordonneesParentCopiees`, `js/app.js` : 8 derniers chiffres, nom sans civilité ni accents,
+  mots dans n'importe quel ordre ; le nom de famille seul peut être le même). Consignes de la vidéo (seule, face caméra,
+  nom/âge/taille/commune puis quelques pas ; pas de TikTok, danse, chant, musique, filtres, amis) et case obligatoire
+  « Ma vidéo respecte ces consignes » (`#ca-video-consignes`).
+- **Base** (`supabase-parent-candidature.sql`, à coller AVANT la mise en ligne) : le déclencheur
+  `casting_applications_parent` refuse ces copies (`PARENT_IDENTIQUE`, traduit par `api/portail.js` en
+  `parentIdentique`) et donne un lien personnel (`parent_jeton`) à chaque candidature de mineur. Le parent répond sur
+  `confirmation-parent.html` (`js/confirmation-parent.js`) : `candidature_parent_lire` / `candidature_parent_repondre`
+  (nom obligatoire, pas celui de l'enfant). `parent_confirme_le`, `parent_refuse_le`, `parent_confirme_nom` et le lien
+  ne se modifient pas à la main. `candidature_parent_lien` (agence) crée le lien d'une ancienne candidature.
+- **Administration** (`js/admin/site-dossiers.js`) : bloc « Parent ou tuteur » (état, alerte rouge si coordonnées
+  recopiées, envoi du lien par WhatsApp ou e-mail, copie du lien), pastille « Parent non confirmé » dans la liste,
+  ville « Abidjan · commune », vidéo sur toute la largeur de sa carte sur fond noir (`css/admin-vivante.css`).
+- Tests : `scripts/base-essai/essais-parent-candidature.sql`, `test-visiteur.js`, `test-confirmation-parent.js`,
+  `test-nouvelle-admin-castings.js`, `test-anti-robots.js` ; le faux serveur des tests renvoie maintenant une erreur de
+  fonction simulée comme la vraie base (refus avec son message).
+
 ## 🧾 Preuve du consentement et effacement des traces techniques (ARTCI, 23/11/2026, accord de la propriétaire)
 - **Politique de confidentialité** (`politique-confidentialite.html`, `en/…`) mise à jour : cours de talons, Turnstile,
   WhatsApp Business, notifications, paiement, statistiques internes, durées, mineurs ; ligne « version du 23/11/2026 ».

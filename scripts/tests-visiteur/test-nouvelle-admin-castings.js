@@ -73,7 +73,7 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     const fiche = await p.evaluate(() => ({
       titre: document.querySelector('.fiche-luxe-portrait').innerText.replace(/\s+/g, ' '),   // (17/11) fiche façon « Étudier »
       photos: document.querySelectorAll('.photo-dossier img').length,
-      champs: document.querySelector('dl.champs').innerText.replace(/\s+/g, ' '),
+      champs: [...document.querySelectorAll('dl.champs')].map((x) => x.innerText).join(' ').replace(/\s+/g, ' '),
       liens: [...document.querySelectorAll('dl.champs a')].map((a) => a.textContent + ' ' + a.href),
       message: (document.querySelector('.fiche-luxe-mot') || {}).textContent,
       lecteur: (document.querySelector('.fiche-video iframe.lecteur-video') || {}).src || '',   // (17/11) vidéo en grand, bloc à part
@@ -87,6 +87,23 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(/mineur : écrire au parent/.test(fiche.champs) && fiche.liens.some((l) => /0707070707 ↗ WhatsApp https:\/\/wa\.me\/2250707070707/.test(l)) && !fiche.videoDansChamps && !fiche.lienDrive && fiche.lecteur === 'https://drive.google.com/file/d/abc123/preview' && /rêve de défiler/.test(fiche.message),
       n + 'fiche : WhatsApp sur le numéro du parent, vidéo lue dans son propre bloc (seulement un petit lien de secours), message de la candidate');
     ok(fiche.videoLarge >= Math.min(320, ecran.width - 80), n + 'fiche : vidéo en grand (' + fiche.videoLarge + ' px de large)');
+    // (24/11/2026) vidéo sur toute la largeur de sa carte, sur fond noir (plus de bandes blanches) ; ville « Abidjan · Cocody »
+    const videoPleine = await p.evaluate(() => { const f = document.querySelector('.fiche-video iframe.lecteur-video'), c = document.querySelector('.fiche-video'); const cs = getComputedStyle(c);
+      return f.getBoundingClientRect().width >= c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2 && getComputedStyle(f).backgroundColor === 'rgb(0, 0, 0)'; });
+    ok(videoPleine && /Abidjan · Cocody/.test(fiche.champs), n + 'fiche : vidéo sur toute la largeur de sa carte, fond noir ; ville « Abidjan · Cocody »');
+    // (24/11/2026) bloc « Parent ou tuteur » : état, coordonnées du parent, lien de confirmation prêt à partir sur WhatsApp
+    const parent = await p.evaluate(() => { const b = document.querySelector('.bloc-parent'); if (!b) return null;
+      const wa = b.querySelector('a.btn[href^="https://wa.me/"]');
+      return { texte: b.innerText.replace(/\s+/g, ' '), wa: wa ? decodeURIComponent(wa.href) : '', email: !!b.querySelector('[data-action="dossier-parent-email"]'), alerte: !!b.querySelector('.alerte-parent'),
+        infos: document.querySelector('.fiche-luxe-infos').innerText,
+        copies: [coordonneesParentCopiees({ nom: 'Awa Koné', telephone: '+225 0700000001', email: 'a@b.ci', parentNom: 'Madame Koné Awa', parentTelephone: '0102030405' }),
+          coordonneesParentCopiees({ nom: 'Awa Koné', telephone: '+225 07 00 00 00 01', parentTelephone: '0700000001' }),
+          coordonneesParentCopiees({ nom: 'Awa Koné', email: 'Awa@B.ci', parentEmail: 'awa@b.ci', parentNom: 'Marie Koné' }),
+          coordonneesParentCopiees({ nom: 'Awa Koné', telephone: '0700000001', email: 'a@b.ci', parentNom: 'Madame Marie Koné', parentTelephone: '0700000099', parentEmail: 'm@b.ci' })] }; });
+    ok(parent && /Parent non confirmé/.test(parent.texte) && /Madame Ama Mère/.test(parent.texte) && /mere@test\.ci/.test(parent.texte) && !parent.alerte && parent.email
+      && /^https:\/\/wa\.me\/2250707070707\?text=Bonjour Madame Ama Mère/.test(parent.wa) && /PETITE AMA a envoyé une candidature/.test(parent.wa) && /\/confirmation-parent\?j=7d3f1c2a-5b6e-4c8d-9a0b-1c2d3e4f5a6b/.test(parent.wa)
+      && !/Nom du parent/.test(parent.infos), n + 'fiche d’une mineure : bloc « Parent ou tuteur » (non confirmé), lien de confirmation prêt à partir sur le WhatsApp du parent, par e-mail aussi');
+    ok(parent && JSON.stringify(parent.copies) === JSON.stringify(['nom', 'telephone', 'email', null]), n + 'coordonnées du parent recopiées de la candidate repérées (nom dans le désordre, numéro avec ou sans indicatif, e-mail) ; vrai parent au même nom de famille accepté');
     // « ⛶ Plein écran » : la vidéo couvre tout l'écran DANS l'Administration ; « Échap » / « ✕ Fermer » la remet en place.
     // Deux fois : avec le plein écran du navigateur, puis SANS (comme Safari sur iPhone : le calque seul doit couvrir l'écran)
     for (const sansNatif of [false, true]) {

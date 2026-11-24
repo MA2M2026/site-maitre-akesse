@@ -451,6 +451,9 @@ async function formulairePublic(req, corps, res) {
     // (14/11/2026) cours privés : un créneau choisi vient d'être pris par une autre élève (supabase-creneaux-prives.sql)
     if (table === 'cours_talons' && /CRENEAU_PRIS|CRENEAUX_INVALIDES/.test(m)) return res.status(409).json({ error: 'Un de vos créneaux n’est plus disponible.', creneauPris: true });
     if (/Aucun casting ouvert/.test(m)) return res.status(403).json({ error: 'Aucun casting n’est ouvert en ce moment.' });
+    // (24/11/2026, décision de la propriétaire) mineur : la base refuse le WhatsApp, l'e-mail ou le nom de la candidate
+    // recopiés à la place de ceux du parent (supabase-parent-candidature.sql)
+    if (table === 'casting_applications' && /PARENT_IDENTIQUE/.test(m)) return res.status(400).json({ error: 'Indiquez les coordonnées de votre parent, pas les vôtres.', parentIdentique: true });
     // (cours de talons : SQL de l'Extension 160 pas encore collé ; la page propose alors d'envoyer l'inscription par WhatsApp)
     if (table === 'cours_talons' && /Formulaire inconnu|PGRST202|Could not find the function|relation "(public\.)?cours_talons" does not exist/.test(m)) {
       await noterAuJournal('[Cours de talons] inscription reçue avant l’installation de supabase-cours-talons.sql (envoyée par WhatsApp)', 'portail', '/api/portail').catch(() => {});
