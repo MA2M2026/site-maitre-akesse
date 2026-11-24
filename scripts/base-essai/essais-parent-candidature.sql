@@ -18,12 +18,20 @@ select set_config('essai.majeure', formulaire_public_enregistrer('casting_applic
 select essai((select parent_jeton is null from casting_applications where id = current_setting('essai.majeure')::uuid), 'majeure : pas de lien parent');
 select set_config('essai.jeton', (select parent_jeton::text from casting_applications where id = current_setting('essai.cand')::uuid), false);
 -- un visiteur ne crée ni ne lit de lien, et ne peut pas se confirmer lui-même sans le lien
+-- (essai réel du 24/11) une partie du nom de l enfant ne passe pas non plus
+select set_config('essai.cand3', formulaire_public_enregistrer('casting_applications', '{"full_name":"Yao Akissi Marie Grace","email":"g@exemple.ci","phone":"+225 0102030499","mineur":true,"genre":"femme","parent_nom":"Madame Yao Rose","parent_telephone":"+225 0708090699","type_candidature":"agence"}'::jsonb, '9.9.9.26')::text, false);
+select set_config('essai.jeton3', (select parent_jeton::text from casting_applications where id = current_setting('essai.cand3')::uuid), false);
+set role anon;
+select essai_refuse(format($$select candidature_parent_repondre(%L, true, 'Marie Yao')$$, current_setting('essai.jeton3')), 'deux des prénoms et nom de l enfant : refusé');
+select essai(candidature_parent_repondre(current_setting('essai.jeton3')::uuid, true, 'Rose Yao') = 'confirme', 'vrai parent au même nom de famille : accepté');
+reset role;
 set role anon;
 select essai_refuse(format($$select candidature_parent_lien(%L)$$, current_setting('essai.cand')), 'visiteur : ne récupère pas le lien du parent');
 select essai(candidature_parent_lire(gen_random_uuid()) is null, 'faux lien : rien n est montré');
 select essai((candidature_parent_lire(current_setting('essai.jeton')::uuid) ->> 'etat') = 'en_attente', 'le parent ouvre son lien : en attente');
 select essai_refuse(format($$select candidature_parent_repondre(%L, true, 'X')$$, current_setting('essai.jeton')), 'confirmation sans nom complet : refusée');
 select essai_refuse(format($$select candidature_parent_repondre(%L, true, 'Emira Amon')$$, current_setting('essai.jeton')), 'confirmation avec le nom de la candidate : refusée');
+select essai_refuse(format($$select candidature_parent_repondre(%L, true, 'Madame Amon')$$, current_setting('essai.jeton')), 'nom du parent en un seul mot (sans prénom) : refusé');
 select essai(candidature_parent_repondre(current_setting('essai.jeton')::uuid, true, 'Awa Amon') = 'confirme', 'le parent confirme, avec son nom');
 reset role;
 select essai((select parent_confirme_le is not null and parent_confirme_nom = 'Awa Amon' from casting_applications where id = current_setting('essai.cand')::uuid), 'confirmation et nom du parent enregistrés');
