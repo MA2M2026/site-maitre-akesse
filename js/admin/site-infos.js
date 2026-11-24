@@ -289,7 +289,7 @@
     const c = info.destinataires.find((x) => contacts[x] && numeroWhatsApp(contactsEnvoi(contacts[x]).phone) && !faits.has(x));
     if (!c) return;
     const d = contacts[c];
-    window.open('https://wa.me/' + numeroWhatsApp(contactsEnvoi(d).phone) + '?text=' + encodeURIComponent(pourPersonne(info, d)), '_blank', 'noopener');
+    window.open('https://wa.me/' + numeroWhatsApp(contactsEnvoi(d).phone) + '?text=' + encodeURIComponent(texteLienRassurant(pourPersonne(info, d))), '_blank', 'noopener');
     await noterFait('faits_wa', c);
     return P.afficher();
   };

@@ -46,7 +46,7 @@
   const civilite = (d) => T.civilite(d.civilite, mineureDe(d) || d.age) + ' ' + String(d.nom || '').trim();
   // (15/11/2026) un seul endroit pour les liens WhatsApp de cette page (message écrit facultatif) et pour minuit (UTC = Abidjan)
   const lienWhatsApp = (num, texte, msg, classes, attrs) => '<a class="btn ' + (classes || 'petit') + '"' + (attrs || '') + ' target="_blank" rel="noopener" href="https://wa.me/' + num +
-    (msg ? '?text=' + encodeURIComponent(msg) : '') + '">' + texte + '</a>';
+    (msg ? '?text=' + encodeURIComponent(texteLienRassurant(msg)) : '') + '">' + texte + '</a>';
   const JOUR_MS = 86400000;
   const debutJourUTC = (d) => { const x = d || new Date(); return Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate()); };
   // (14/11/2026) groupe sur plusieurs mois : durée, façon de payer, mois payés

@@ -181,7 +181,7 @@
         '<p class="doux petit-texte">Il ne sera plus affiché après fermeture : envoyez-le maintenant. À sa connexion, elle devra choisir son propre mot de passe.</p>' +
         (r.deconnecte ? '<p class="doux petit-texte">✓ Ses appareils encore connectés ont été déconnectés (dans l’heure au plus tard).</p>'
           : '<p class="note erreur">Ses appareils encore connectés n’ont pas pu être déconnectés : si un téléphone a été perdu ou volé, recommencez dans quelques minutes.</p>') +
-        '<div class="ligne"><a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(texte) + '">💬 Envoyer par WhatsApp</a>' +
+        '<div class="ligne"><a class="btn rouge" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(texteLienRassurant(texte)) + '">💬 Envoyer par WhatsApp</a>' +
         '<button type="button" class="btn" data-action="mannequin-mdp-copier">📋 Copier le message</button>' +
         '<button type="button" class="btn" data-action="fermer-fenetre-recharger">Fermer</button></div>');
     } finally { el.disabled = false; }
@@ -236,7 +236,7 @@
         ' sur l’accueil de son site. Votre accord est nécessaire : ' + lien;
       P.fenetre('<h2>Lien d’accord du parent</h2><p>Envoyez ce lien au parent. Il écrit son nom et appuie sur « J’accepte » ; il peut retirer son accord à tout moment.</p>' +
         '<p><input readonly value="' + P.esc(lien) + '" style="width:100%" aria-label="Lien d’accord"></p>' +
-        '<div class="ligne"><a class="btn rouge" href="https://wa.me/?text=' + encodeURIComponent(texte) + '" target="_blank" rel="noopener">Envoyer par WhatsApp</a>' +
+        '<div class="ligne"><a class="btn rouge" href="https://wa.me/?text=' + encodeURIComponent(texteLienRassurant(texte)) + '" target="_blank" rel="noopener">Envoyer par WhatsApp</a>' +
         '<button type="button" class="btn" data-action="fermer-fenetre">Fermer</button></div>');
     } catch (e) { P.message(P.erreurTexte(e)); } finally { el.disabled = false; }
   };

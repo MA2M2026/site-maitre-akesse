@@ -159,8 +159,8 @@
     if (mineure && numeroWhatsApp(c.parent_telephone)) liste.push({ inv, cle: inv.id + '-p', parent: true, nom, parent_nom: c.parent_nom, tel: c.parent_telephone, envoye: inv.parent_envoye_le });
     return liste;
   }
-  const lienWa = (d, sorte) => 'https://wa.me/' + numeroWhatsApp(d.tel) + '?text=' + encodeURIComponent(messagePlaces(ecran.projet, ecran.appel,
-    { nom: d.nom, sexe: d.inv.sexe, parent: d.parent, parent_nom: d.parent_nom, jeton: d.inv.jeton }, sorte));
+  const lienWa = (d, sorte) => 'https://wa.me/' + numeroWhatsApp(d.tel) + '?text=' + encodeURIComponent(texteLienRassurant(messagePlaces(ecran.projet, ecran.appel,
+    { nom: d.nom, sexe: d.inv.sexe, parent: d.parent, parent_nom: d.parent_nom, jeton: d.inv.jeton }, sorte)));
   const visageBouton = (d) => P.visage((d.inv.model_id && ecran.photos[d.inv.model_id]) || '', d.nom, 'rond-vis pl-btn-vis');
   const nomDe = (d) => d.parent ? d.nom + ' (parent : ' + (d.parent_nom || 'Madame, Monsieur') + ')' : d.nom;
   // annonce d'une place libérée : qui a déjà été prévenu, retenu le temps de la session
