@@ -401,16 +401,16 @@
     return P.pastille('Parent non confirmé', 'alerte');
   }
   // boutons d'envoi du lien (rien une fois la réponse donnée : elle est définitive)
-  // (24/11/2026, demande de la propriétaire) le bouton WhatsApp est toujours là, avec le message complet. Numéro du
-  // parent recopié de la candidate : WhatsApp s'ouvre SANS destinataire, pour choisir le vrai parent (après l'appel).
+  // (24/11/2026, demande de la propriétaire) WhatsApp ouvre directement le numéro du parent, message complet écrit.
+  // Règle de l'agence : numéro du « parent » = celui de l'enfant → candidature refusée, on ne cherche pas le parent :
+  // aucun bouton d'envoi (l'alerte le dit).
+  const numeroParentRecopie = (d) => coordonneesParentCopiees({ telephone: d.phone, parentTelephone: d.parent_telephone }) === 'telephone';
   function envoiLienParent(d) {
-    if (d.parent_confirme_le || d.parent_refuse_le) return '';
+    if (d.parent_confirme_le || d.parent_refuse_le || numeroParentRecopie(d)) return '';
     if (!d.parent_jeton) return '<button type="button" class="btn rouge" data-action="dossier-parent-lien">Préparer le lien de confirmation du parent</button>';
-    const telCopie = coordonneesParentCopiees({ telephone: d.phone, parentTelephone: d.parent_telephone }) === 'telephone';
     const mailCopie = coordonneesParentCopiees({ email: d.email, parentEmail: d.parent_email }) === 'email';
-    const texte = '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton)), wa = telCopie ? null : lienWa(d.parent_telephone);
-    let boutons = wa ? '<a class="btn rouge" href="' + P.esc(wa + texte) + '" target="_blank" rel="noopener">💬 Envoyer au parent par WhatsApp</a>'
-      : '<a class="btn rouge" href="' + P.esc('https://wa.me/' + texte) + '" target="_blank" rel="noopener">💬 WhatsApp : choisir le contact du parent</a>';
+    const wa = lienWa(d.parent_telephone);
+    let boutons = wa ? '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton))) + '" target="_blank" rel="noopener">💬 Envoyer au parent par WhatsApp</a>' : '';
     if (d.parent_email && !mailCopie) boutons += '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>';
     return boutons + '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le message</button>';
   }
@@ -419,7 +419,8 @@
     const copie = coordonneesParentCopiees({ nom: d.full_name, telephone: d.phone, email: d.email, parentNom: d.parent_nom, parentTelephone: d.parent_telephone, parentEmail: d.parent_email });
     const etatParent = etatReponseParent(d), envoi = envoiLienParent(d);
     return '<section class="carte bloc-parent"><h2>Parent ou tuteur</h2>' +
-      (copie ? '<p class="alerte-parent" role="alert">⚠️ Attention : ' + P.esc(COPIES[copie]) + '. Ce n’est sans doute pas le vrai parent : appelez la famille avant toute suite.</p>' : '') +
+      (copie ? '<p class="alerte-parent" role="alert">⚠️ Attention : ' + P.esc(COPIES[copie]) + '. ' +
+        (numeroParentRecopie(d) ? 'Candidature à refuser (règle de l’agence) : on ne contacte pas le parent.' : 'Ce n’est sans doute pas le vrai parent : vérifiez avant toute suite.') + '</p>' : '') +
       '<p class="etat-parent">' + etatParent + '</p>' + blocChamps('casting', d, CHAMPS_PARENT) +
       (envoi ? '<div class="ligne">' + envoi + '</div><p class="doux petit-texte" id="dos-parent-statut" role="status">Le parent ouvre son lien personnel, écrit son nom, puis confirme ou refuse. Sa réponse s’affiche ici.</p>' : '') + '</section>';
   }

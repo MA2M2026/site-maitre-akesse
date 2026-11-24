@@ -106,14 +106,14 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     // numéro du parent recopié de la candidate : WhatsApp s'ouvre sans destinataire, pour choisir le vrai parent ; « Copier le message »
     const sansNumero = await p.evaluate(() => { const b = document.querySelector('.bloc-parent .btn[href^="https://wa.me/"]'); return b && b.textContent; });
     ok(/Envoyer au parent par WhatsApp/.test(sansNumero || '') && await p.locator('.bloc-parent [data-action="dossier-parent-copier"]').textContent() === 'Copier le message', n + 'boutons : « Envoyer au parent par WhatsApp » et « Copier le message » (message complet)');
-    // Cas d'Emira (essai du 24/11) : numéro et e-mail du « parent » = ceux de l'enfant → WhatsApp SANS destinataire, pas d'e-mail ;
+    // Cas d'Emira (essai du 24/11) : numéro et e-mail du « parent » = ceux de l'enfant → règle de l'agence : candidature à refuser, aucun envoi ;
     // puis réponse d'un « parent » dont le nom est pris dans celui de l'enfant → acceptée mais signalée. (fiche relue, puis remise en état)
     const c4 = d.tables.casting_applications.find((x) => x.id === 'c4'), avantC4 = Object.assign({}, c4);
     Object.assign(c4, { parent_telephone: c4.phone, parent_email: c4.email });
     await p.reload(); await p.waitForSelector('.bloc-parent', { timeout: 15000 }); await p.waitForTimeout(800);
     const copie = await p.evaluate(() => { const b = document.querySelector('.bloc-parent .btn[href^="https://wa.me/"]'); return { href: b && b.getAttribute('href'), texte: b && b.textContent, email: !!document.querySelector('.bloc-parent [data-action="dossier-parent-email"]'), alerte: (document.querySelector('.bloc-parent .alerte-parent') || {}).textContent || '' }; });
-    ok(/^https:\/\/wa\.me\/\?text=/.test(copie.href || '') && /choisir le contact du parent/.test(copie.texte || '') && !copie.email && /WhatsApp du parent est celui de la candidate/.test(copie.alerte),
-      n + 'numéro et e-mail du parent recopiés : WhatsApp s’ouvre sans destinataire (choisir le vrai parent), pas de bouton e-mail, alerte rouge');
+    ok(!copie.href && !copie.email && !(await p.$('.bloc-parent [data-action="dossier-parent-copier"]')) && /WhatsApp du parent est celui de la candidate/.test(copie.alerte) && /Candidature à refuser \(règle de l’agence\)/.test(copie.alerte),
+      n + 'numéro du parent = celui de l’enfant : « Candidature à refuser (règle de l’agence) », aucun bouton d’envoi au parent');
     Object.assign(c4, avantC4, { parent_confirme_le: '2026-11-24T09:30:00Z', parent_confirme_nom: 'Ama Petite' });
     await p.reload(); await p.waitForSelector('.bloc-parent', { timeout: 15000 }); await p.waitForTimeout(800);
     const signale = await p.textContent('.bloc-parent .etat-parent');
