@@ -373,9 +373,19 @@
   const COPIES = { telephone: 'le WhatsApp du parent est celui de la candidate', email: 'l’e-mail du parent est celui de la candidate', nom: 'le nom du parent est celui de la candidate' };
   // (toujours l'adresse publique du site, comme les autres liens personnels, même depuis admin. ou un aperçu)
   const lienParent = (jeton) => 'https://www.maitreakessemodelmanagement.com/confirmation-parent?j=' + encodeURIComponent(jeton);
-  const texteLienParent = (d, jeton) => 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' + (String(d.full_name || '').trim() || 'Votre enfant') +
-    ' a envoyé une candidature à l’agence Maître Akesse Model Management. Comme cette personne est mineure, nous ne donnons aucune suite sans votre accord.\n\n' +
-    'Merci de confirmer (ou de refuser) sa candidature avec ce lien personnel : ' + lienParent(jeton) + '\n\nBien cordialement,\nMaître Akesse Model Management';
+  // (24/11/2026, demande de la propriétaire) un vrai message qui explique tout AVANT le lien : beaucoup de parents
+  // n'ouvrent pas un lien sans savoir de quoi il s'agit
+  const texteLienParent = (d, jeton) => {
+    const fils = d.genre === 'homme' || d.civilite === 'Monsieur', enfant = String(d.full_name || '').trim();
+    return 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' +
+      'Ici l’agence de mannequins Maître Akesse Model Management, à Abidjan.\n\n' +
+      (fils ? 'Votre fils' : 'Votre fille') + (enfant ? ' ' + enfant : '') + ' vient de déposer une candidature sur notre site pour devenir mannequin. ' +
+      'Comme ' + (fils ? 'il' : 'elle') + ' a moins de 18 ans, nous avons besoin de votre accord avant d’étudier sa candidature.\n\n' +
+      '👉 Pour nous répondre (1 minute) : ouvrez ce lien personnel, écrivez votre nom, puis choisissez « Je confirme » ou « Je refuse ».\n' +
+      lienParent(jeton) + '\n\n' +
+      'Ce lien est réservé à vous seul : merci de ne pas le transmettre. Pour toute question, appelez-nous ou écrivez-nous au +225 05 45 65 66 87.\n\n' +
+      'Bien cordialement,\nL’équipe Maître Akesse Model Management';
+  };
   // état de la réponse du parent (pastille, avec son nom et la date)
   function etatReponseParent(d) {
     const quand = (date) => ' <span class="doux">' + P.esc([d.parent_confirme_nom, P.dateEtHeure(date)].filter(Boolean).join(' · ')) + '</span>';
@@ -384,19 +394,23 @@
     return P.pastille('Parent non confirmé', 'alerte');
   }
   // boutons d'envoi du lien (rien une fois la réponse donnée : elle est définitive)
-  function envoiLienParent(d, copie) {
+  // (24/11/2026, demande de la propriétaire) le bouton WhatsApp est toujours là, avec le message complet. Numéro du
+  // parent recopié de la candidate : WhatsApp s'ouvre SANS destinataire, pour choisir le vrai parent (après l'appel).
+  function envoiLienParent(d) {
     if (d.parent_confirme_le || d.parent_refuse_le) return '';
     if (!d.parent_jeton) return '<button type="button" class="btn rouge" data-action="dossier-parent-lien">Préparer le lien de confirmation du parent</button>';
-    const wa = copie === 'telephone' ? null : lienWa(d.parent_telephone);
-    let boutons = '';
-    if (wa) boutons += '<a class="btn rouge" href="' + P.esc(wa + '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton))) + '" target="_blank" rel="noopener">💬 Envoyer le lien au parent par WhatsApp</a>';
-    if (d.parent_email && copie !== 'email') boutons += '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>';
-    return boutons + '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le lien</button>';
+    const telCopie = coordonneesParentCopiees({ telephone: d.phone, parentTelephone: d.parent_telephone }) === 'telephone';
+    const mailCopie = coordonneesParentCopiees({ email: d.email, parentEmail: d.parent_email }) === 'email';
+    const texte = '?text=' + encodeURIComponent(texteLienParent(d, d.parent_jeton)), wa = telCopie ? null : lienWa(d.parent_telephone);
+    let boutons = wa ? '<a class="btn rouge" href="' + P.esc(wa + texte) + '" target="_blank" rel="noopener">💬 Envoyer au parent par WhatsApp</a>'
+      : '<a class="btn rouge" href="' + P.esc('https://wa.me/' + texte) + '" target="_blank" rel="noopener">💬 WhatsApp : choisir le contact du parent</a>';
+    if (d.parent_email && !mailCopie) boutons += '<button type="button" class="btn" data-action="dossier-parent-email">✉️ Par e-mail</button>';
+    return boutons + '<button type="button" class="btn" data-action="dossier-parent-copier">Copier le message</button>';
   }
   function blocParent(d) {
     if (!mineurDe(d)) return '';
     const copie = coordonneesParentCopiees({ nom: d.full_name, telephone: d.phone, email: d.email, parentNom: d.parent_nom, parentTelephone: d.parent_telephone, parentEmail: d.parent_email });
-    const etatParent = etatReponseParent(d), envoi = envoiLienParent(d, copie);
+    const etatParent = etatReponseParent(d), envoi = envoiLienParent(d);
     return '<section class="carte bloc-parent"><h2>Parent ou tuteur</h2>' +
       (copie ? '<p class="alerte-parent" role="alert">⚠️ Attention : ' + P.esc(COPIES[copie]) + '. Ce n’est sans doute pas le vrai parent : appelez la famille avant toute suite.</p>' : '') +
       '<p class="etat-parent">' + etatParent + '</p>' + blocChamps('casting', d, CHAMPS_PARENT) +
@@ -409,8 +423,10 @@
   };
   P.actions['dossier-parent-copier'] = async () => {
     const st = document.getElementById('dos-parent-statut');
-    try { await navigator.clipboard.writeText(lienParent(fiche.d.parent_jeton)); st.textContent = 'Lien copié : collez-le dans un message au parent.'; }
-    catch (e) { st.textContent = lienParent(fiche.d.parent_jeton); }
+    // (le message complet, avec ses explications et le lien, pas le lien seul)
+    const texte = texteLienParent(fiche.d, fiche.d.parent_jeton);
+    try { await navigator.clipboard.writeText(texte); st.textContent = 'Message copié (avec le lien) : collez-le dans WhatsApp, SMS ou e-mail au parent.'; }
+    catch (e) { st.textContent = texte; }   // (presse-papiers refusé : le message s'affiche pour être copié à la main)
   };
   P.actions['dossier-parent-email'] = async (el) => {
     const d = fiche.d, st = document.getElementById('dos-parent-statut');

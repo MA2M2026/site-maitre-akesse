@@ -101,8 +101,11 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
           coordonneesParentCopiees({ nom: 'Awa Koné', email: 'Awa@B.ci', parentEmail: 'awa@b.ci', parentNom: 'Marie Koné' }),
           coordonneesParentCopiees({ nom: 'Awa Koné', telephone: '0700000001', email: 'a@b.ci', parentNom: 'Madame Marie Koné', parentTelephone: '0700000099', parentEmail: 'm@b.ci' })] }; });
     ok(parent && /Parent non confirmé/.test(parent.texte) && /Madame Ama Mère/.test(parent.texte) && /mere@test\.ci/.test(parent.texte) && !parent.alerte && parent.email
-      && /^https:\/\/wa\.me\/2250707070707\?text=Bonjour Madame Ama Mère/.test(parent.wa) && /PETITE AMA a envoyé une candidature/.test(parent.wa) && /\/confirmation-parent\?j=7d3f1c2a-5b6e-4c8d-9a0b-1c2d3e4f5a6b/.test(parent.wa)
-      && !/Nom du parent/.test(parent.infos), n + 'fiche d’une mineure : bloc « Parent ou tuteur » (non confirmé), lien de confirmation prêt à partir sur le WhatsApp du parent, par e-mail aussi');
+      && /^https:\/\/wa\.me\/2250707070707\?text=Bonjour Madame Ama Mère/.test(parent.wa) && /Votre fille PETITE AMA vient de déposer une candidature/.test(parent.wa) && /moins de 18 ans/.test(parent.wa) && /« Je confirme » ou « Je refuse »/.test(parent.wa) && /ne pas le transmettre/.test(parent.wa) && /\/confirmation-parent\?j=7d3f1c2a-5b6e-4c8d-9a0b-1c2d3e4f5a6b/.test(parent.wa)
+      && !/Nom du parent/.test(parent.infos), n + 'fiche d’une mineure : bloc « Parent ou tuteur » (non confirmé), message explicatif avec le lien prêt à partir sur le WhatsApp du parent, par e-mail aussi');
+    // numéro du parent recopié de la candidate : WhatsApp s'ouvre sans destinataire, pour choisir le vrai parent ; « Copier le message »
+    const sansNumero = await p.evaluate(() => { const b = document.querySelector('.bloc-parent .btn[href^="https://wa.me/"]'); return b && b.textContent; });
+    ok(/Envoyer au parent par WhatsApp/.test(sansNumero || '') && await p.locator('.bloc-parent [data-action="dossier-parent-copier"]').textContent() === 'Copier le message', n + 'boutons : « Envoyer au parent par WhatsApp » et « Copier le message » (message complet)');
     ok(parent && JSON.stringify(parent.copies) === JSON.stringify(['nom', 'telephone', 'email', null]), n + 'coordonnées du parent recopiées de la candidate repérées (nom dans le désordre, numéro avec ou sans indicatif, e-mail) ; vrai parent au même nom de famille accepté');
     // « ⛶ Plein écran » : la vidéo couvre tout l'écran DANS l'Administration ; « Échap » / « ✕ Fermer » la remet en place.
     // Deux fois : avec le plein écran du navigateur, puis SANS (comme Safari sur iPhone : le calque seul doit couvrir l'écran)
