@@ -24,6 +24,13 @@
       var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
       return JOURS[d.getUTCDay()] + ' ' + (+m[3] === 1 ? '1er' : +m[3]) + ' ' + MOIS[+m[2] - 1] + ' ' + m[1];
     },
+    // (24/11/2026) bandeau d'état d'une page à lien personnel : « titre » en gras puis le texte (accord du parent,
+    // confirmation du parent) ; boite : l'élément du bandeau
+    etat: function (boite, classe, titre, texte) {
+      boite.hidden = false; boite.className = 'pl-etat ' + (classe || ''); boite.textContent = '';
+      var s = document.createElement('strong'); s.textContent = titre; boite.appendChild(s);
+      if (texte) boite.appendChild(document.createTextNode(' ' + texte));
+    },
     // jeton bien formé (36 caractères) et configuration de la base présente
     jetonValable: function (jeton) { return /^[0-9a-f]{36}$/.test(jeton) && typeof SUPABASE_URL !== 'undefined'; },
     // Page « Places limitées » (js/places.js et middleware.js) : places encore libres, phrase d'accueil, et

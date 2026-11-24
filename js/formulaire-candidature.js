@@ -583,7 +583,8 @@ async function soumettreCandidature() {
     message: messageAvecLien(),
     parent_nom: mineur ? [document.getElementById('ca-parent-civilite').value, document.getElementById('ca-parent-nom').value.trim()].filter(Boolean).join(' ') : null,
     parent_telephone: mineur ? composerTelephone(document.getElementById('ca-parent-indicatif'), document.getElementById('ca-parent-telephone-numero')) : null,
-    parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,    type_candidature: PARCOURS,
+    parent_email: mineur ? (document.getElementById('ca-parent-email').value.trim().toLowerCase() || null) : null,
+    type_candidature: PARCOURS,
     projet_nom: PARCOURS === 'projet' ? projetNom : null,
     experience_mannequin: PARCOURS === 'agence' ? document.getElementById('ca-experience').value : 'oui',
     clothing_size: document.getElementById('ca-vetements').value || null

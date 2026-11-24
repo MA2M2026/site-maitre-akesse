@@ -16,9 +16,10 @@ function donnees() {
   return {
     cand: c, tables: {},
     rpc: {
-      candidature_parent_lire: (x) => (x.p_jeton === c.jeton ? { candidate: c.candidate, parent_nom: c.nom, etat: etat() } : null),
+      candidature_parent_lire: (x) => (x.p_jeton === c.jeton ? { candidate: c.candidate.split(' ')[0], parent_nom: c.nom, etat: etat() } : null),
       candidature_parent_repondre: (x) => {
         if (x.p_jeton !== c.jeton) throw new Error('Lien inconnu ou expiré.');
+        if (c.confirme_le || c.refuse_le) throw new Error('REPONSE_DEJA_DONNEE');
         if ((x.p_parent_nom || '').trim().length < 3) throw new Error('Écrivez votre nom complet.');
         if (comparable(x.p_parent_nom) === comparable(c.candidate)) throw new Error('Écrivez le nom du parent, pas celui de la candidate.');
         if (x.p_accepte) Object.assign(c, { confirme_le: new Date().toISOString(), refuse_le: null, nom: x.p_parent_nom.trim() });
@@ -45,8 +46,8 @@ function donnees() {
 
     await p.goto(BASE + JETON); await p.waitForSelector('#ap-form:not([hidden])', { timeout: 8000 });
     const t1 = await p.textContent('#ap-texte');
-    ok(/Amon Emira a envoyé une candidature/.test(t1) && /mineure/.test(t1) && /parent ou tuteur légal/.test(t1) && await p.isVisible('#ap-accepter') && await p.isVisible('#ap-refuser'),
-      n + 'lien ouvert : nom de l’enfant, ce qu’il confirme, boutons « Je confirme » et « Je refuse »');
+    ok(/^Amon a envoyé une candidature/.test(t1) && !/Emira/.test(t1) && /définitive/.test(t1) && /mineure/.test(t1) && /parent ou tuteur légal/.test(t1) && await p.isVisible('#ap-accepter') && await p.isVisible('#ap-refuser'),
+      n + 'lien ouvert : premier mot du nom de l’enfant seulement, ce qu’il confirme (réponse définitive), boutons « Je confirme » et « Je refuse »');
     await p.fill('#ap-nom', 'Ma'); await p.click('#ap-accepter'); await p.waitForTimeout(400);
     ok(!reponses() && /Votre nom complet/.test(await p.textContent('#ap-etat')), n + 'nom trop court : rien n’est envoyé, on lui demande son nom complet');
     await p.fill('#ap-nom', 'Emira Amon'); await p.click('#ap-accepter'); await p.waitForTimeout(800);
@@ -54,12 +55,20 @@ function donnees() {
     await p.fill('#ap-nom', '  Madame Awa Amon  '); await p.click('#ap-accepter'); await p.waitForFunction(() => /confirmée/.test(document.getElementById('ap-etat').textContent), null, { timeout: 5000 }).catch(() => {});
     ok(d.cand.confirme_le && d.cand.nom === 'Madame Awa Amon' && /Candidature confirmée\. Par Madame Awa Amon/.test(await p.textContent('#ap-etat')), n + '« Je confirme » : confirmation enregistrée avec son nom');
     await p.reload(); await p.waitForFunction(() => /confirmée/.test(document.getElementById('ap-etat').textContent), null, { timeout: 8000 }).catch(() => {});
-    ok(/Candidature confirmée/.test(await p.textContent('#ap-etat')) && /changer d’avis/.test(await p.textContent('#ap-etat')), n + 'retour sur le lien : déjà confirmée, il peut encore changer d’avis');
+    ok(/Candidature confirmée/.test(await p.textContent('#ap-etat')) && /contactez l’agence/.test(await p.textContent('#ap-etat')) && await p.isHidden('#ap-form'),
+      n + 'retour sur le lien : déjà confirmée, plus de formulaire (réponse définitive : contacter l’agence pour la changer)');
     const pales = await lirePageEntiere(p);
     ok(!pales.length, n + 'textes lisibles ' + pales.slice(0, 4).map((x) => x.texte.slice(0, 20) + ' (' + x.contraste + ')').join(', '));
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), n + 'rien ne dépasse de l’écran');
+    // Un autre parent refuse ; un second onglet resté ouvert ne peut plus changer la réponse
+    Object.assign(d.cand, { confirme_le: null, refuse_le: null, nom: null });
+    await p.goto(BASE + JETON); await p.waitForSelector('#ap-form:not([hidden])', { timeout: 8000 });
+    const p2 = await ctx.newPage(); await brancher(p2, d, journal); await p2.goto(BASE + JETON); await p2.waitForSelector('#ap-form:not([hidden])', { timeout: 8000 });
     await p.fill('#ap-nom', 'Madame Awa Amon'); await p.click('#ap-refuser'); await p.waitForFunction(() => /refusée/.test(document.getElementById('ap-etat').textContent), null, { timeout: 5000 }).catch(() => {});
-    ok(d.cand.refuse_le && !d.cand.confirme_le && /Candidature refusée/.test(await p.textContent('#ap-etat')), n + '« Je refuse » (après confirmation) : refus enregistré');
+    ok(d.cand.refuse_le && !d.cand.confirme_le && /Candidature refusée/.test(await p.textContent('#ap-etat')) && await p.isHidden('#ap-form'), n + '« Je refuse » : refus enregistré, plus de formulaire');
+    await p2.fill('#ap-nom', 'Autre Adulte'); await p2.click('#ap-accepter'); await p2.waitForFunction(() => /refusée/.test(document.getElementById('ap-etat').textContent), null, { timeout: 5000 }).catch(() => {});
+    ok(d.cand.refuse_le && !d.cand.confirme_le && /Candidature refusée/.test(await p2.textContent('#ap-etat')) && await p2.isHidden('#ap-form'), n + 'autre onglet resté ouvert : impossible de remplacer la réponse, il voit le refus');
+    await p2.close();
     await p.goto(BASE + '11111111-2222-3333-4444-555555555555'); await p.waitForFunction(() => !/Chargement/.test(document.getElementById('ap-texte').textContent), null, { timeout: 8000 }).catch(() => {});
     ok(/n’est pas \(ou plus\) valable/.test(await p.textContent('#ap-texte')) && await p.isHidden('#ap-form'), n + 'lien inconnu : « pas (ou plus) valable », pas de formulaire');
     const avant = journal.length;

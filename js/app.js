@@ -2877,7 +2877,8 @@ async function envoyerFormulairePublic(table, ligne, dejaRedemande) {
   if (rep.ok) return { error: null };
   // (16/11/2026, anti-robots strict) : un jeton refusé ou perdu est redemandé UNE fois, sans rien demander au visiteur
   // (Cloudflare n'affiche une case à cocher que s'il a un doute).
-  if (rep.status === 403 && r.robot && !dejaRedemande) return envoyerFormulairePublic(table, ligne, true);  // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
+  if (rep.status === 403 && r.robot && !dejaRedemande) return envoyerFormulairePublic(table, ligne, true);
+  // (beaucoup d'envois : même code que l'ancienne règle de la base, le navigateur patiente et réessaie)
   return { error: { code: rep.status === 429 ? '42501' : String(rep.status), message: r.error || 'Envoi refusé.', pasPret: !!r.pasPret, creneauPris: !!r.creneauPris, parentIdentique: !!r.parentIdentique, retires: Array.isArray(r.retires) ? r.retires : null } };
 }
 async function insererAvecPatience(table, ligne, surAttente) {

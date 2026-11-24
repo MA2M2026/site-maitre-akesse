@@ -7,11 +7,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var jeton = new URLSearchParams(location.search).get('j') || '';
   var rpc = window.LienPublic.rpc;
-  function etat(classe, titre, texte) {
-    var b = $('ap-etat'); b.hidden = false; b.className = 'pl-etat ' + (classe || ''); b.textContent = '';
-    var s = document.createElement('strong'); s.textContent = titre; b.appendChild(s);
-    if (texte) b.appendChild(document.createTextNode(' ' + texte));
-  }
+  function etat(classe, titre, texte) { window.LienPublic.etat($('ap-etat'), classe, titre, texte); }
   function dessiner(e) {
     var prenom = e.prenom || 'votre enfant';
     $('ap-texte').textContent = 'L’agence Maître Akesse Model Management souhaite montrer la photo de ' + prenom +

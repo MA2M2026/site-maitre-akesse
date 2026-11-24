@@ -33,11 +33,19 @@ select essai((select parent_confirme_le is not null and parent_confirme_nom = 'A
   'modification du dossier : le statut change, mais la réponse du parent et son lien restent intacts');
 update casting_applications set parent_confirme_le = now(), parent_confirme_nom = 'Faux' where id = current_setting('essai.majeure')::uuid;
 select essai((select parent_confirme_le is null from casting_applications where id = current_setting('essai.majeure')::uuid), 'personne ne peut écrire une fausse confirmation à la main');
--- refus par le parent
+-- la réponse est définitive : personne ne peut la remplacer avec le lien
 set role anon;
-select essai(candidature_parent_repondre(current_setting('essai.jeton')::uuid, false, 'Awa Amon') = 'refuse', 'le parent peut aussi refuser');
+select essai_refuse(format($$select candidature_parent_repondre(%L, false, 'Autre Adulte')$$, current_setting('essai.jeton')), 'réponse déjà donnée : impossible de la remplacer avec le lien');
+select essai((candidature_parent_lire(current_setting('essai.jeton')::uuid) ->> 'candidate') = 'Amon', 'la page du parent ne montre que le premier mot du nom de l enfant');
 reset role;
-select essai((select parent_refuse_le is not null and parent_confirme_le is null from casting_applications where id = current_setting('essai.cand')::uuid), 'refus du parent enregistré');
+select essai((select parent_confirme_le is not null and parent_refuse_le is null and parent_confirme_nom = 'Awa Amon' from casting_applications where id = current_setting('essai.cand')::uuid), 'la première réponse reste intacte');
+-- refus par un parent (autre candidature)
+select set_config('essai.cand2', formulaire_public_enregistrer('casting_applications', '{"full_name":"Kone Bintou","email":"b@exemple.ci","phone":"+225 0102030405","mineur":true,"genre":"femme","parent_nom":"Monsieur Kone Issa","parent_telephone":"+225 0708090605","type_candidature":"agence"}'::jsonb, '9.9.9.25')::text, false);
+select set_config('essai.jeton2', (select parent_jeton::text from casting_applications where id = current_setting('essai.cand2')::uuid), false);
+set role anon;
+select essai(candidature_parent_repondre(current_setting('essai.jeton2')::uuid, false, 'Kone Issa') = 'refuse', 'le parent peut refuser');
+reset role;
+select essai((select parent_refuse_le is not null and parent_confirme_le is null from casting_applications where id = current_setting('essai.cand2')::uuid), 'refus du parent enregistré');
 -- ancienne candidature de mineur sans lien : l agence le crée
 insert into casting_applications (id, full_name, email, phone, mineur, parent_nom, parent_telephone)
   values ('00000000-0000-0000-0000-0000000a2401', 'Ancienne Mineure', 'a@exemple.ci', '+225 0101010101', true, 'Papa Essai', '+225 0202020202');

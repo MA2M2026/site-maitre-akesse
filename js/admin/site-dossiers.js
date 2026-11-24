@@ -264,7 +264,9 @@
   function valeurChamp(source, d, cle, unite) {
     const v = d[cle];
     if (!v && !(cle === 'mineur' && v === false)) return '';  // (« 18 ans ou plus » : false s'affiche aussi)
-    const age = source === 'casting' ? ageDe(d) : null, parentJoignable = source === 'casting' && mineurDe(d) && d.parent_telephone;
+    // (24/11/2026) WhatsApp du parent recopié de la candidate : pas de lien « ↗ WhatsApp » vers ce numéro
+    const age = source === 'casting' ? ageDe(d) : null, parentJoignable = source === 'casting' && mineurDe(d) && d.parent_telephone &&
+      coordonneesParentCopiees({ telephone: d.phone, parentTelephone: d.parent_telephone }) !== 'telephone';
     const wa = (parentJoignable ? cle === 'parent_telephone' : (cle === 'phone' || cle === 'whatsapp')) ? lienWa(v) : null;
     if (cle === 'video_url' && estVideoDrive(v)) return '';   // (17/11) lue en grand dans son propre bloc (blocVideo)
     if (cle === 'city' && source === 'casting') return P.esc(villeLisible(v));
@@ -364,7 +366,8 @@
   // la candidate (coordonneesParentCopiees, js/app.js). Les coordonnées du parent sont lues ici, plus dans « Informations ».
   const CHAMPS_PARENT = ['parent_nom', 'parent_telephone', 'parent_email'];
   const COPIES = { telephone: 'le WhatsApp du parent est celui de la candidate', email: 'l’e-mail du parent est celui de la candidate', nom: 'le nom du parent est celui de la candidate' };
-  const lienParent = (jeton) => location.origin + '/confirmation-parent?j=' + encodeURIComponent(jeton);
+  // (toujours l'adresse publique du site, comme les autres liens personnels, même depuis admin. ou un aperçu)
+  const lienParent = (jeton) => 'https://www.maitreakessemodelmanagement.com/confirmation-parent?j=' + encodeURIComponent(jeton);
   const texteLienParent = (d, jeton) => 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' + (String(d.full_name || '').trim() || 'Votre enfant') +
     ' a envoyé une candidature à l’agence Maître Akesse Model Management. Comme cette personne est mineure, nous ne donnons aucune suite sans votre accord.\n\n' +
     'Merci de confirmer (ou de refuser) sa candidature avec ce lien personnel : ' + lienParent(jeton) + '\n\nBien cordialement,\nMaître Akesse Model Management';

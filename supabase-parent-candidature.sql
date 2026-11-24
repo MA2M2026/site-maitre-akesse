@@ -7,7 +7,8 @@
 --    parent, son e-mail ou son nom complet ne peuvent pas être ceux de la candidate (le nom de famille seul, si).
 -- 2. Confirmation par le parent : chaque candidature de mineur reçoit un lien personnel (jeton). L agence l envoie au
 --    parent par WhatsApp ou par e-mail depuis la fiche. Le parent confirme (avec son nom) ou refuse. Tant qu il n a
---    pas répondu, la fiche affiche « Parent non confirmé ». La réponse et sa date ne se modifient pas ensuite.
+--    pas répondu, la fiche affiche « Parent non confirmé ». La réponse est DÉFINITIVE : ni le parent (ni un enfant qui
+--    aurait vu le lien), ni l équipe ne peuvent la changer ensuite. Pour revenir dessus, la famille contacte l agence.
 -- A COLLER UNE FOIS dans Supabase (SQL Editor, bouton orange Run without RLS), AVANT la mise en ligne.
 -- Peut être recollé sans risque.
 
@@ -77,7 +78,8 @@ create or replace function candidature_parent_lien(p_id uuid)
 returns uuid language plpgsql security definer set search_path = public, extensions, pg_temp as $$
 declare j uuid; m boolean;
 begin
-  if not exists (select 1 from admins where admins.user_id = auth.uid()) then raise exception 'Accès refusé'; end if;
+  -- (relecture : même règle que les autres fonctions de l Administration, double vérification comprise)
+  if not exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()) then raise exception 'Accès refusé'; end if;
   select parent_jeton, coalesce(mineur, false) or (date_naissance is not null and age(current_date, date_naissance) < interval '18 years')
     into j, m from casting_applications where id = p_id;
   if not found then raise exception 'Candidature introuvable.'; end if;
@@ -91,10 +93,10 @@ begin
 end;
 $$;
 
--- Le parent, avec son lien : lire (prénom de la candidate seulement), confirmer ou refuser
+-- Le parent, avec son lien : lire (premier mot du nom seulement, minimisation), confirmer ou refuser une seule fois
 create or replace function candidature_parent_lire(p_jeton uuid)
 returns json language sql stable security definer set search_path = public, extensions, pg_temp as $$
-  select json_build_object('candidate', trim(c.full_name), 'parent_nom', c.parent_confirme_nom,
+  select json_build_object('candidate', split_part(trim(c.full_name), ' ', 1), 'parent_nom', c.parent_confirme_nom,
     'etat', case when c.parent_refuse_le is not null then 'refuse' when c.parent_confirme_le is not null then 'confirme' else 'en_attente' end)
   from casting_applications c where c.parent_jeton = p_jeton;
 $$;
@@ -104,6 +106,7 @@ declare c casting_applications;
 begin
   select * into c from casting_applications where parent_jeton = p_jeton for update;
   if not found then raise exception 'Lien inconnu ou expiré.'; end if;
+  if c.parent_confirme_le is not null or c.parent_refuse_le is not null then raise exception 'REPONSE_DEJA_DONNEE'; end if;
   if length(trim(coalesce(p_parent_nom, ''))) < 3 then raise exception 'Écrivez votre nom complet.'; end if;
   if nom_comparable(p_parent_nom) = nom_comparable(c.full_name) then raise exception 'Écrivez le nom du parent, pas celui de la candidate.'; end if;
   perform set_config('ma2m.parent_reponse', '1', true);
