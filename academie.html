@@ -54,7 +54,7 @@
   100% { left: 130%; }
 }</style>
 <link rel="stylesheet" href="css/pages-ecrans.css?v=99ea25cd">
-<noscript id="css-complet"><link rel="stylesheet" href="css/polices.css?v=f8b78de5"><link rel="stylesheet" href="css/menu.css?v=b8f7ef94"><link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="css/style.css?v=37dbe80e"><link rel="stylesheet" href="css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="css/luxe.css?v=aa3ae02d"><link rel="stylesheet" href="css/integrer-agence.css?v=06ab5586"><link rel="stylesheet" href="css/candidature.css?v=95bc3c5c"><link rel="stylesheet" href="css/jetons.css?v=c6c0c637"><link rel="stylesheet" href="css/installation.css?v=f02732d5"><link rel="stylesheet" href="css/charte-ma2m.css?v=f4263a67"><link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41"></noscript>
+<noscript id="css-complet"><link rel="stylesheet" href="css/polices.css?v=f8b78de5"><link rel="stylesheet" href="css/menu.css?v=ae3392a5"><link rel="stylesheet" href="css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="css/style.css?v=a429d16c"><link rel="stylesheet" href="css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="css/luxe.css?v=aa3ae02d"><link rel="stylesheet" href="css/integrer-agence.css?v=3b1d9a12"><link rel="stylesheet" href="css/candidature.css?v=95bc3c5c"><link rel="stylesheet" href="css/jetons.css?v=a7178e63"><link rel="stylesheet" href="css/installation.css?v=f02732d5"><link rel="stylesheet" href="css/charte-ma2m.css?v=f4263a67"><link rel="stylesheet" href="css/bouton-ma2m.css?v=c65b8b41"></noscript>
 <script src="js/css-differe.js?v=d938ae04" async></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
@@ -70,7 +70,7 @@
 <header class="site-header-v2" data-gabarit="entete" data-page="academie"></header>
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
-<script src="js/gabarit.js?v=494f3e6c"></script>
+<script src="js/gabarit.js?v=8523b0dd"></script>
 <main data-ecrans>
 
 <section class="ia-haut lx-hero">
@@ -85,6 +85,11 @@
       <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2 lx-chapeau">Le département formation de Maître Akesse Model Management. Nous formons celles et ceux qui veulent apprendre le mannequinat, et nous perfectionnons les mannequins expérimentées aux standards de la maison.</p>
     </div>
   </div>
+</section>
+
+<section class="video-pleine reveal" aria-label="Vidéo : comment intégrer l’agence">
+  <video class="vp-verticale" controls playsinline preload="none" poster="assets/integrer-agence/affiche.jpg?v=6" width="720" height="1280"><source src="assets/integrer-agence/integrer-agence.mp4?v=6" type="video/mp4"></video>
+  <video class="vp-horizontale" controls playsinline preload="none" poster="assets/integrer-agence/affiche-large.jpg?v=6" width="1280" height="720"><source src="assets/integrer-agence/integrer-agence-large.mp4?v=6" type="video/mp4"></video>
 </section>
 
 <section class="ia-section">
@@ -145,7 +150,7 @@
   </div>
 </section>
 
-<section class="ia-section" id="tarifs">
+<section class="ia-section" id="tarifs" data-ecran-coupe=".ac-tableau, .ac-modalites">
   <div class="container">
     <h2 class="lx-titre-section reveal">Les frais de formation</h2>
     <div class="ac-tableau lx-verre reveal" role="region" aria-label="Frais de formation" tabindex="0"><table>
@@ -182,24 +187,74 @@
       <details class="lx-verre reveal"><summary>Combien de temps durent les cours ?</summary><p>18 mois pour la formation initiale (deux fois 9 mois), 9 mois pour le recyclage, de mars à novembre.</p></details>
       <details class="lx-verre reveal"><summary>Et après la formation ?</summary><p>Plus aucun cours n'est obligatoire. Les séances de Révision restent ouvertes, gratuitement.</p></details>
     </div>
-    <p class="ac-boutons reveal"><a class="btn btn--principal" href="integrer-agence.html#porte-academie">Postuler à MA2M Academy</a></p>
+    <p class="ac-boutons reveal"><a class="btn btn--principal" href="#candidature">Postuler à MA2M Academy</a></p>
+  </div>
+</section>
+
+<section class="ia-section ia-section--criteres">
+  <div class="container">
+    <h2 class="lx-titre-section reveal">Nos critères</h2>
+    <div class="ia-criteres"><div class="ia-critere lx-verre reveal reveal-delay-0"><span class="ia-grand">1,75 m</span><span>minimum pour les femmes</span></div><div class="ia-critere lx-verre reveal reveal-delay-1"><span class="ia-grand">1,85 m</span><span>minimum pour les hommes</span></div><div class="ia-critere lx-verre reveal reveal-delay-2"><span class="ia-grand">14+</span><span>ans minimum</span></div><div class="ia-critere lx-verre reveal reveal-delay-2"><span class="ia-grand">14 – 17</span><span>avec l'accord d'un parent ou d'un tuteur, qui confirme par un lien personnel</span></div></div>
+    <p class="ia-note reveal">Merci de ne postuler que si vous remplissez ces critères.</p>
+  </div>
+</section>
+
+<section class="u-pt-1 ia-formulaire lx-formulaire" id="candidature">
+  <div class="container ca-1">
+    <h2 class="lx-titre-section reveal">Votre candidature</h2>
+    <form id="form-casting" data-parcours="agence">
+      <div id="ca-bloc-agence-info" class="ca-2">
+        <p class="ca-3">📤 Votre candidature à <strong>MA2M Academy</strong> : remplissez simplement le formulaire ci-dessous.</p>
+        <p class="ca-5">📩 Si votre candidature est retenue, nous vous écrivons par WhatsApp ou par e-mail avec la date et le dress code du casting en présentiel. 😎</p>
+      </div>
+
+      <div class="form-champ">
+        <label for="ca-porte">Votre projet *</label>
+        <select id="ca-porte" required>
+          <option value="">Sélectionner</option>
+          <option value="academie">Me former au mannequinat</option>
+          <option value="equipe">Me former et intégrer l'agence</option>
+        </select>
+      </div>
+      <div class="form-champ">
+        <label for="ca-experience">Avez-vous déjà été mannequin ? *</label>
+        <select id="ca-experience" required>
+          <option value="">Sélectionner</option>
+          <option value="non">Non, ce serait ma première expérience</option>
+          <option value="oui">Oui, j'ai déjà été mannequin</option>
+        </select>
+      </div>
+      <div class="form-champ u-hidden" id="ca-lien-bloc">
+        <label for="ca-lien-travail">Lien vers votre travail (facultatif) : Instagram, book, agence précédente…</label>
+        <input type="text" inputmode="url" id="ca-lien-travail" maxlength="300" placeholder="https://www.instagram.com/…">
+      </div>
+      <script src="js/formulaire-candidature-champs.js?v=6e378a13"></script>
+    </form>
   </div>
 </section>
 
 </main>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
-<script src="js/gabarit.js?v=494f3e6c"></script>
+<script src="js/gabarit.js?v=8523b0dd"></script>
 
 <script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
 <script src="js/supabase-config.js?v=9e1844d8"></script>
+<script src="js/vendor/emailjs-browser-3.12.1.min.js?v=3d7499d7"></script>
+<script src="js/emailjs-config.js?v=8fcea597"></script>
 <script src="js/verrou-defilement.js?v=83d529ab"></script>
+<script src="js/conversion-heic.js?v=82dc3921"></script>
 <script src="js/photos.js?v=c819e38b"></script>
 <script src="js/partage.js?v=64c736d3"></script>
-<script src="js/app.js?v=6e5dea13"></script>
+<script src="js/app.js?v=b0918d70"></script>
 <script src="js/confort.js?v=cad83e86"></script>
-<script src="js/menu.js?v=9fe5a355"></script>
+<script src="js/video-allegee.js?v=c3f34d58"></script>
+<script src="js/menu.js?v=8382bd5a"></script>
 <script src="js/diaporama-luxe.js?v=56c3c955"></script>
+<script src="js/integrer-agence.js?v=a872f7de"></script>
+<script src="js/formulaire-candidature.js?v=989bdd75"></script>
+<script src="js/candidature-etapes.js?v=b5b566a3"></script>
+<script src="js/brouillon.js?v=8c0a08ff"></script>
 <script src="js/pages-ecrans.js?v=6414142f"></script>
 </body>
 </html>

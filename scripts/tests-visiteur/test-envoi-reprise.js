@@ -30,12 +30,12 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const octets = Uint8Array.from(atob(photo), (c) => c.charCodeAt(0));
     const f = new File([octets], 'photo.jpg', { type: 'image/jpeg' }), v = new File([new Uint8Array(200000)], 'video.mp4', { type: 'video/mp4' });
     await EnvoiFiable.garder('candidature', { candidature: { id: '11111111-2222-3333-4444-555555555555', full_name: 'Awa Koné', email: 'awa@test.ci', phone: '+2250700000001', experience_mannequin: 'non' },
-      projetNom: '', mineur: false, parcours: 'agence', photos: [f, f, f], video: v, page: '/integrer-agence.html', photosFaites: true, dossier: 'd1', nbPhotosEchouees: 0 });
+      projetNom: '', mineur: false, parcours: 'agence', photos: [f, f, f], video: v, page: '/academie.html', photosFaites: true, dossier: 'd1', nbPhotosEchouees: 0 });
   }, photo);
   // 2. bandeau sur une autre page
   await p.goto(base + '/index.html'); await p.waitForSelector('#envoi-a-finir', { timeout: 8000 }).catch(() => {});
   const bandeau = await p.evaluate(() => { const b = document.getElementById('envoi-a-finir'); return b ? { texte: b.innerText, lien: b.querySelector('a').getAttribute('href') } : null; });
-  ok(bandeau && /pas terminé/.test(bandeau.texte) && bandeau.lien === '/integrer-agence.html', 'autre page du site : bandeau « Votre envoi n’est pas terminé » → « Terminer l’envoi » ' + JSON.stringify(bandeau));
+  ok(bandeau && /pas terminé/.test(bandeau.texte) && bandeau.lien === '/academie.html', 'autre page du site : bandeau « Votre envoi n’est pas terminé » → « Terminer l’envoi » ' + JSON.stringify(bandeau));
   // 3. retour sur le formulaire : la reprise se fait toute seule
   drive.length = 0;
   await p.click('#envoi-a-finir a'); await p.waitForTimeout(500);

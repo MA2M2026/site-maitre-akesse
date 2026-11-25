@@ -201,6 +201,25 @@ décisions : document « Audit — Restructuration MA2M » (Claude Docs) ; texte
   mensualité seulement aux élèves) ; désactivation automatique du profil en fin de contrat ; nouveau PDF « Note
   d'information de MA2M Academy » ; documentation de l'agence.
 
+### Deux départements au lieu de trois portes (25/11/2026, après la mise en ligne du matin, demande de la propriétaire)
+- **Menu** : sous le grand bouton « Intégrer l'agence », deux sous-titres (`js/menu.js`, classe `menu-sous-rejoindre`,
+  `order: 91` dans `css/menu.css`) : **MA2M Academy** (`academie.html`) et **Agence de représentation**
+  (`representation.html`), comme Femmes / Hommes sous The Book. `js/gabarit.js` : les deux pages sont dans `PAGES`
+  pour le bas de page seulement (`visible()` les retire du menu).
+- **`integrer-agence.html`** : page d'aiguillage courte (deux cartes, gratuité, critères), sans formulaire ; garde son
+  adresse pour les anciens liens.
+- **`academie.html`** : présentation, vidéo, programme, recyclage, frais (écran coupé en deux : `data-ecran-coupe`),
+  Atelier, FAQ, critères puis LE formulaire de candidature (même formulaire qu'avant). « Votre projet » (`#ca-porte`) :
+  `academie` (me former) ou `equipe` (me former et intégrer l'agence) ; l'adresse `#porte-equipe` le règle d'avance.
+- **`representation.html`** (page sans écrans) : deux boutons (`js/representation.js`) ; « Simple représentation »
+  ouvre `#simple` et le formulaire, réglé d'avance dans le HTML (`#ca-porte` = `reseau` caché, déjà mannequin) ;
+  « Intégrer l'agence et me faire représenter » ouvre `#integrer` et mène à `academie.html#porte-equipe`.
+- Fabriquées par `outils` de la séance (gabarit d'Intégrer l'agence) ; essais : `test-integrer-parcours.js` réécrit,
+  formulaires des autres essais pointés sur `academie.html`.
+- **Police** : retour à **Cormorant Garamond** pour tous les titres (site, application, Administration : `--mag-titre`
+  de `css/jetons.css`, `--display` de `css/style.css`) et pour la compcard, le CV, la carte mannequin et les cartes
+  d'événement (graisse 600, la plus forte de Cormorant). Styles intégrés aux pages régénérés (`css-critique.mjs`).
+
 ## 🔗 Liens envoyés par WhatsApp : phrase rassurante (24/11/2026, demande de la propriétaire)
 WhatsApp affiche « Ouvrir le lien ? » quand un lien vient d'un numéro absent des contacts de la personne (on ne peut pas
 l'empêcher). `texteLienRassurant(texte)` (`js/app.js`, phrase `PHRASE_LIEN_SUR`) ajoute, juste après la ligne du premier

@@ -8,14 +8,14 @@ const { chromium } = require('playwright'); const { spawn } = require('child_pro
 const chemin = require('path');
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const PORT = String(9700 + Math.floor(Math.random() * 60));
-const PAGES = [['integrer-agence.html', 390, 844], ['integrer-agence.html', 1366, 768], ['en/integrer-agence.html', 390, 844], ['en/integrer-agence.html', 1366, 768],
+const PAGES = [['academie.html', 390, 844], ['academie.html', 1366, 768], ['en/academie.html', 390, 844], ['en/academie.html', 1366, 768],
   // (22/11/2026, « continue pour tout ») Postuler à un casting et Cours de talons, mêmes écrans
   ['candidature.html', 390, 844], ['en/candidature.html', 1366, 768], ['cours-talons.html', 390, 844], ['en/cours-talons.html', 390, 844], ['cours-talons.html', 1366, 768],
   // (23/11/2026, retour de la propriétaire) tablette debout : chaque écran remplit la tablette
-  ['integrer-agence.html', 820, 1180], ['cours-talons.html', 820, 1180]];
+  ['academie.html', 820, 1180], ['cours-talons.html', 820, 1180]];
 // écran du formulaire de chaque page (lien direct partagé, ce qui doit être visible au dernier écran)
 const innerHeightDe = (h) => h;
-const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candidature: ['#candidature', '#candidature'], 'cours-talons': ['#inscription', '#form-talons'] };
+const FORMULAIRE = { academie: ['#candidature', '#form-casting'], candidature: ['#candidature', '#candidature'], 'cours-talons': ['#inscription', '#form-talons'] };
 (async () => {
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: chemin.resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise((r) => setTimeout(r, 900));
@@ -48,7 +48,7 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
   }));
   for (const [page, w, h] of PAGES) {
     const en = page.startsWith('en/'), n = page + ' (' + w + 'px) : ', tel = w < 700 || (w < 1200 && h > w);   // (téléphone ou tablette debout)
-    const nom = page.replace(/^en\//, '').replace('.html', ''), ia = nom === 'integrer-agence', talons = nom === 'cours-talons';
+    const nom = page.replace(/^en\//, '').replace('.html', ''), ia = nom === 'academie', talons = nom === 'cours-talons';
     const [ancre, form] = FORMULAIRE[nom];
     const p = await ouvrir(page, w, h);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
@@ -166,14 +166,12 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     ok(e.debord <= 1 && !p.errs.length, n + 'rien ne dépasse sur le côté, aucune erreur ' + p.errs.join(' | '));
     await p.context().close();
 
-    // le lien #parcours mène à l'écran de la 1re porte ; son bouton ouvre le formulaire réglé (3 portes, 25/11/2026)
+    // (25/11/2026) le bouton « Rejoindre l'Académie » de la page Agence de représentation (#porte-equipe) ouvre
+    // l'écran du formulaire, réglé sur « Me former et intégrer l'agence »
     if (ia) {
     const q = await ouvrir(page, w, h);
-    await q.goto('http://127.0.0.1:' + PORT + '/' + page + '#parcours'); await q.waitForTimeout(1500);
-    ok(await q.isVisible('.ia-parcours-carte[data-porte="reseau"]'), n + 'lien direct #parcours : l’écran de la 1re porte s’ouvre');
-    // « Je choisis ce parcours » mène au formulaire
-    await q.click('.ia-parcours-carte[data-porte="reseau"] button'); await q.waitForTimeout(700);
-    ok(await q.isVisible('#form-casting') && await q.inputValue('#ca-porte') === 'reseau' && await q.inputValue('#ca-experience') === 'oui', n + 'le bouton de la carte (« ' + (en ? 'Choose' : 'Je choisis') + ' … ») ouvre l’écran du formulaire, réglé');
+    await q.goto('http://127.0.0.1:' + PORT + '/' + page + '#porte-equipe'); await q.waitForTimeout(1800);
+    ok(await q.isVisible('#form-casting') && await q.inputValue('#ca-porte') === 'equipe', n + 'lien #porte-equipe : l’écran du formulaire s’ouvre, réglé sur « intégrer l’agence »');
     await q.context().close();
     }
 
@@ -202,16 +200,16 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
   // bandeau des cookies affiché (1re visite, téléphone) : la barre du bas monte au-dessus, « Commencer » reste touchable
   const k = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
   const kp = await k.newPage(); await brancher(kp, { tables: {}, rpc: {} }, []);
-  await kp.goto('http://127.0.0.1:' + PORT + '/integrer-agence.html'); await kp.waitForTimeout(2500);
+  await kp.goto('http://127.0.0.1:' + PORT + '/academie.html'); await kp.waitForTimeout(2500);
   const libre = await kp.evaluate(() => { const bt = document.querySelector('.ecrans-suivant'), r = bt.getBoundingClientRect();
     const bandeau = document.getElementById('bandeau-cookies'); const vu = bandeau && getComputedStyle(bandeau).display !== 'none' && bandeau.getBoundingClientRect().height > 0;
     return { vu, ok: bt.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)) }; });
   ok(libre.vu && libre.ok, 'bandeau des cookies affiché : « Commencer » reste visible et touchable au-dessus (' + JSON.stringify(libre) + ')');
   await k.close();
   // sans JavaScript : la page entière, comme avant (rien n'est caché dans la page)
-  const s = await ouvrir('integrer-agence.html', 390, 844, { javaScriptEnabled: false });
-  await s.goto('http://127.0.0.1:' + PORT + '/integrer-agence.html'); await s.waitForTimeout(800);
-  ok(await s.isVisible('.lx-hero') && await s.isVisible('#parcours') && await s.isVisible('#candidature') && !(await s.locator('.ecrans-barre').count()), 'sans JavaScript : la page reste entière (accueil, parcours, formulaire)');
+  const s = await ouvrir('academie.html', 390, 844, { javaScriptEnabled: false });
+  await s.goto('http://127.0.0.1:' + PORT + '/academie.html'); await s.waitForTimeout(800);
+  ok(await s.isVisible('.lx-hero') && await s.isVisible('#tarifs') && await s.isVisible('#candidature') && !(await s.locator('.ecrans-barre').count()), 'sans JavaScript : la page reste entière (accueil, parcours, formulaire)');
   await s.context().close();
   await b.close();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\n✅ Pages en écrans : tout passe');

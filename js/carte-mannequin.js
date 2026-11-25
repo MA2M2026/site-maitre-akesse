@@ -14,7 +14,7 @@ window.CarteMannequin = (function () {
   }));
   async function polices() {
     if (!document.fonts || !document.fonts.load) return;
-    await Promise.all(['800 23px "Big Shoulders Display"', '400 10px "Work Sans"', '500 10px "Work Sans"', '300 10px "Work Sans"', '600 10px "Work Sans"']
+    await Promise.all(['600 23px "Cormorant Garamond"', '400 10px "Work Sans"', '500 10px "Work Sans"', '300 10px "Work Sans"', '600 10px "Work Sans"']
       .map((f) => document.fonts.load(f).catch(() => null)));
   }
   // texte avec espacement des lettres (comme letter-spacing), aligné à gauche, au centre ou à droite
@@ -58,7 +58,7 @@ window.CarteMannequin = (function () {
   }
   const SANS = (poids, taille) => poids + ' ' + (taille * u).toFixed(1) + 'px "Work Sans", sans-serif';
   // (23/11/2026, demande de la propriétaire) noms et titres de la carte dans la police des titres du site
-  const TITRE = (taille) => '800 ' + (taille * u).toFixed(1) + 'px "Big Shoulders Display", "Arial Narrow", sans-serif';
+  const TITRE = (taille) => '600 ' + (taille * u).toFixed(1) + 'px "Cormorant Garamond", Georgia, serif';   // (25/11/2026 : police d'avant)
   // un champ : son titre, puis sa valeur, rapetissée si besoin pour tenir dans sa colonne (largeur max)
   function champ(ctx, titre, valeur, x, y, largeurMax) {
     texte(ctx, titre, x, y, SANS(500, 6.5), ROSE, 0.22 * 6.5);

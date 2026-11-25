@@ -21,7 +21,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const c = JSON.parse(route.request().postData() || '{}'); envois.push(c);
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, liens: (c.photos || []).map((x, i) => 'https://drive.google.com/photo-' + i), dossier: 'd1' }) });
   });
-  await p.goto('http://127.0.0.1:' + PORT + '/integrer-agence.html'); await p.waitForTimeout(1500);
+  await p.goto('http://127.0.0.1:' + PORT + '/academie.html'); await p.waitForTimeout(1500);
 
   // 1. quatre vraies photos : préparées, copiées en mémoire
   await p.setInputFiles('#ca-photos', [0, 1, 2, 3].map((i) => path.join(__dirname, 'medias', 'photo' + i + '.jpg')));

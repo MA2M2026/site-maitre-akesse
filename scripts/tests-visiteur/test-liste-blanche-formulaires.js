@@ -15,7 +15,7 @@ for (const t of ['test-visiteur.js', 'test-contact-recruteur.js', 'test-cours-ta
 const envois = fs.readFileSync(fichier, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 fs.unlinkSync(fichier);
 const attendus = [
-  ['casting_applications', 'integrer-agence.html'], ['casting_applications', 'en/integrer-agence.html'],
+  ['casting_applications', 'academie.html'], ['casting_applications', 'en/academie.html'],
   ['casting_applications', 'candidature.html'], ['casting_applications', 'en/candidature.html'],
   ['messages_contact', 'contact.html'], ['messages_contact', 'en/contact.html'],
   ['recruiter_requests', 'selection.html'], ['recruiter_requests', 'en/selection.html'],

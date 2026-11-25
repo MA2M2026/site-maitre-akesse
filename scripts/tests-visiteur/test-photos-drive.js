@@ -37,9 +37,9 @@ async function garderCandidature(p, page, parcours) {
 
   // ---------- 1 à 3 : candidatures
   for (const cas of [
-    { nom: 'Intégrer l’agence, téléphone, Google lent puis coupé', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, google: 'coupe' },
+    { nom: 'Intégrer l’agence, téléphone, Google lent puis coupé', page: '/academie.html', parcours: 'agence', ecran: { width: 390, height: 844 }, google: 'coupe' },
     { nom: 'Casting, ordinateur, anglais, enregistré par Google', page: '/en/candidature.html', parcours: 'projet', ecran: { width: 1280, height: 900 }, google: 'enregistre' },
-    { nom: 'Intégrer l’agence, ancien programme Google', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 1280, height: 900 }, google: 'ancien' }]) {
+    { nom: 'Intégrer l’agence, ancien programme Google', page: '/academie.html', parcours: 'agence', ecran: { width: 1280, height: 900 }, google: 'ancien' }]) {
     const tel = cas.ecran.width < 700;
     const ctx = await b.newContext({ viewport: cas.ecran, isMobile: tel, hasTouch: tel, serviceWorkers: 'block' });
     const p = await ctx.newPage(); const errs = [], journal = [], envoisPhotos = [];

@@ -27,20 +27,13 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
     ok(en ? /15,000 FCFA/.test(texte) && /10,000 FCFA/.test(texte) : /15 000 FCFA/.test(texte) && /10 000 FCFA/.test(texte), n + 'frais affichés : 15 000 FCFA d’inscription, 10 000 FCFA par mois');
     ok(en ? /Joining the agency and the representation contract are free/.test(texte) : /L'entrée à l'agence et le contrat de représentation sont gratuits/.test(texte), n + 'rappel : l’entrée à l’agence est gratuite');
     ok(await p.locator('a[href="cours-talons.html"]').count() >= 1, n + 'lien vers l’Atelier Talons & Élégance');
+    ok(await p.locator('#form-casting').count() === 1 && await p.locator('.video-pleine video').count() >= 1, n + 'la vidéo et le formulaire de candidature sont sur la page');
     ok(await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 1, n + 'aucun débordement horizontal');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
     await p.context().close();
   }
-  // « Postuler à MA2M Academy » : le formulaire d'« Intégrer l'agence » arrive réglé sur l'Academy
-  {
-    const { p, errs } = await ouvrir('integrer-agence.html#porte-academie', { width: 390, height: 844 });
-    await p.waitForTimeout(800);
-    ok(await p.inputValue('#ca-porte') === 'academie' && await p.inputValue('#ca-experience') === 'non', 'integrer-agence.html#porte-academie : formulaire réglé sur MA2M Academy');
-    ok(!errs.length, 'integrer-agence.html#porte-academie : aucune erreur ' + errs.join(' | '));
-    await p.context().close();
-  }
   // les pages de l'agence ne montrent aucun montant ; la page Academy est dans le menu
-  for (const page of ['index.html', 'qui-sommes-nous.html', 'services.html', 'en/index.html', 'en/qui-sommes-nous.html', 'en/services.html']) {
+  for (const page of ['index.html', 'qui-sommes-nous.html', 'services.html', 'integrer-agence.html', 'en/index.html', 'en/qui-sommes-nous.html', 'en/services.html', 'en/integrer-agence.html']) {
     const { p, errs } = await ouvrir(page, { width: 390, height: 844 });
     const t = await p.evaluate(() => document.querySelector('main').textContent);
     ok(!/FCFA/.test(t), page + ' : aucun montant');
@@ -50,7 +43,7 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
   }
   // messages de l'Administration : porte et en-tête (fonctions partagées, sans envoi)
   {
-    const { p } = await ouvrir('integrer-agence.html', { width: 1000, height: 800 });
+    const { p } = await ouvrir('academie.html', { width: 1000, height: 800 });
     await p.addScriptTag({ url: '/js/messages-convocations.js' }); await p.addScriptTag({ url: '/js/messages-candidats.js' });
     const r = await p.evaluate(() => {
       const t = messageCandidatParCle('retenue').modele('agence');

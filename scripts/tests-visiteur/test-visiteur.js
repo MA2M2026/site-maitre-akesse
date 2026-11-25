@@ -5,7 +5,7 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const [page, vp] of [['integrer-agence.html', { width: 390, height: 844 }], ['en/integrer-agence.html', { width: 1280, height: 900 }], ['candidature.html', { width: 1280, height: 900 }], ['en/candidature.html', { width: 390, height: 844 }]]) {
+  for (const [page, vp] of [['academie.html', { width: 390, height: 844 }], ['en/academie.html', { width: 1280, height: 900 }], ['candidature.html', { width: 1280, height: 900 }], ['en/candidature.html', { width: 390, height: 844 }]]) {
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables: { casting_projets: [{ nom: 'Défilé X', actif: true, description: 'Grand défilé', date_casting: '2030-12-05', lieu: 'Hôtel Ivoire' }] }, rpc: { casting_ouvert: true } }, journal);

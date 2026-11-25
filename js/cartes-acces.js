@@ -5,7 +5,7 @@
 // SEULEMENT aux cartes (stockage privé « cartes-photos », supabase-cartes.sql).
 // (11/11/2026, maquette « G · Couverture » validée par la propriétaire) LE BADGE : un quart de A4 (105 × 148,5 mm),
 // 4 par feuille A4 avec traits de coupe, à glisser dans un étui porté au cou. La photo en pleine page, « MODEL » en
-// très grand, le nom de l'événement en grand (police du site, Big Shoulders), la date et le lieu avec des tirets,
+// très grand, le nom de l'événement en grand (police du site, Cormorant Garamond), la date et le lieu avec des tirets,
 // le numéro, une bande « MODEL · BACKSTAGE ». Le VOILE qui monte du bas prend la couleur de l'événement, lue sur
 // l'affiche jointe au projet (Convocations, Extension 162) ; sans affiche : noir. Logo au choix : agence,
 // partenaire (téléversé) ou aucun (par défaut). Dessin sur canvas (outils de js/app.js : chargerJsPdf,
@@ -17,7 +17,7 @@
   const CARTE_L = 105, CARTE_H = 148.5, DPI = 260, NOIR_BASE = '#0b0606', ROUGE_TIRET = '#E03A3A', GRIS_COUPE = '#9a9a9a';
   const px = (mm) => mm * DPI / 25.4;
   const pt = (n) => n * 0.3528 * DPI / 25.4;  // taille de police en points → pixels
-  const TITRE = '"Big Shoulders Display", "Arial Narrow", Arial, sans-serif', TEXTE = '"Work Sans", Arial, sans-serif';
+  const TITRE = '"Cormorant Garamond", Georgia, serif', TEXTE = '"Work Sans", Arial, sans-serif';
   const sansCivilite = (nom) => String(nom || '').replace(/^\s*(madame|mademoiselle|monsieur|mme|mlle|m\.)\s+/i, '').trim();
   const dateCourte = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
   function datesProjet(p) {
@@ -143,7 +143,7 @@
   }
   // seule : un badge par page (105 × 148,5 mm) ; sinon 4 badges par feuille A4 portrait, traits de coupe
   async function fabriquerPdf(projet, cartes, seule, reglages) {
-    await Promise.all([chargerJsPdf(), document.fonts.load('800 40px "Big Shoulders Display"'),
+    await Promise.all([chargerJsPdf(), document.fonts.load('600 40px "Cormorant Garamond"'),
       document.fonts.load('500 40px "Work Sans"'), document.fonts.load('700 40px "Work Sans"')]);
     const { jsPDF } = window.jspdf;
     const L = seule ? CARTE_L : 2 * CARTE_L, H = seule ? CARTE_H : 2 * CARTE_H, parFeuille = seule ? 1 : 4;
