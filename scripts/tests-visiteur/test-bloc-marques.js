@@ -42,7 +42,7 @@ const PORT = String(9700 + Math.floor(Math.random() * 60));
       ok(info.liens.some(([t, h]) => t.includes(bouton) && h === 'mannequins.html') && info.liens.some(([t, h]) => t.includes(lien) && h === 'contact.html'), n + 'boutons vers The Book et le contact');
       ok(!!info.imgDims, n + 'photo avec ses dimensions (pas de saut au chargement)');
       ok(info.carteVisible, n + 'la carte blanche est bien visible');
-      ok(/Big Shoulders/.test(info.police), n + 'titre dans la police des titres du site (Big Shoulders Display, 23/11/2026)');
+      ok(/Cormorant Garamond/.test(info.police), n + 'titre dans la police des titres du site (Cormorant Garamond, retour du 25/11/2026)');
       ok(info.deborde <= 1 && !info.sortent, n + 'aucun débordement (' + info.deborde + ' px, ' + info.sortent + ' élément(s))');
       const fonds = await p.evaluate(`(${fondsInterdits.toString()})()`);
       const dansBloc = (fonds || []).filter((f) => /marques/.test(JSON.stringify(f)));
