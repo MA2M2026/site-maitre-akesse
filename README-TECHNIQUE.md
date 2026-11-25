@@ -236,6 +236,15 @@ décisions : document « Audit — Restructuration MA2M » (Claude Docs) ; texte
   l'agence ». Utilisé par l'e-mail envoyé à l'agence (`titreEmailCandidature`, `js/formulaire-candidature.js` : plus
   « candidature casting » hors casting) et par l'Administration (`typeDe`). « Talent Network » / « Agency Roster »
   restent les noms techniques écrits dans la ligne « Parcours choisi : … » lue par la base.
+- **Agence de représentation, simple représentation : fiche et code d'espace sans paiement** (25/11/2026, accord de la
+  propriétaire, `supabase-representation-fiche.sql`, essais `essais-representation-fiche.sql` et
+  `test-admin-representation.js`). Sur la fiche d'une candidature retenue de porte `reseau` (`blocRepresentation`,
+  `js/admin/site-dossiers.js`) : « Créer sa fiche » (`representation_creer_fiche` : fiche du registre recopiée de la
+  candidature, `candidature_id` = une seule fiche, formation notée faite 18/18 donc aucune mensualité, relation
+  `talent_network` « en_attente » du contrat ; mineur : seulement après la confirmation du parent), puis « Générer le
+  code d'espace » (`code_espace_creer` accepte désormais, SANS paiement, une personne qui a une relation Talent Network
+  en attente ou active ; les autres restent soumises à l'inscription payée). Message WhatsApp :
+  `lienWhatsAppCodeEspaceRepresentation` (`js/messages-candidats.js`).
 - **Message au parent d'une mineure** : `texteConfirmationParent(d, lien)` (`js/messages-candidats.js`, utilisé par
   `js/admin/site-dossiers.js`), trois versions validées : porte Academy (« Ici MA2M Academy… », signé « L'équipe MA2M
   Academy »), Talent Network (représentation, « démarche gratuite »), ancienne candidature sans porte (« Académie et
