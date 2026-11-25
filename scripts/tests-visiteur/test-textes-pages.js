@@ -46,7 +46,7 @@ const json = (x, s = 200) => new Response(JSON.stringify(x), { status: s, header
   const qsn = await demander('qui-sommes-nous');
   ok(qsn === null || !/data-texte="[^"]+">Nouveau texte/.test(qsn), 'Qui sommes-nous : les textes d’une autre page ne s’y mélangent pas');
   lignes = [];
-  ok((await demander('integrer-agence')) === null || visible(await demander('integrer-agence')).includes('data-texte="integrer-agence-1">Choisissez votre parcours'), 'sans texte enregistré : la page telle qu’écrite');
+  ok((await demander('integrer-agence')) === null || visible(await demander('integrer-agence')).includes('Choisissez votre département'), 'sans texte enregistré : la page telle qu’écrite');
   panne = true;
   const sansTable = await demander('services');
   ok(sansTable === null || visible(sansTable).includes('data-texte="services-1">Nos services'), 'table pas encore créée (SQL pas collé) : la page telle qu’écrite, jamais cassée');
