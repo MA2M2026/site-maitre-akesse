@@ -29,6 +29,40 @@ function salutationParent(nom) {
   if (!n) return 'Madame, Monsieur';
   return CIVILITES.some(c => n.indexOf(c + ' ') === 0) ? n : 'Madame, Monsieur ' + n;
 }
+// (24/11/2026) message au parent d'une candidate mineure, avec son lien personnel de confirmation (confirmation-parent.html) :
+// un vrai message qui explique tout AVANT le lien. Utilisé par l'Administration (js/admin/site-dossiers.js).
+function texteConfirmationParent(d, lien) {
+  // (genre inconnu : « Votre enfant … cette personne », jamais un genre deviné)
+  let qui = ['Votre enfant', 'cette personne a', 'que cette personne soit représentée'];
+  if (d.genre === 'homme' || d.civilite === 'Monsieur') qui = ['Votre fils', 'il a', 'être représenté'];
+  else if (d.genre === 'femme') qui = ['Votre fille', 'elle a', 'être représentée'];
+  const enfant = String(d.full_name || '').trim(), numero = typeof MA2M_TELEPHONES !== 'undefined' ? MA2M_TELEPHONES[1] : '+225 05 45 65 66 87';
+  // (25/11/2026, validé par la propriétaire) trois versions selon le département choisi : MA2M Academy (formation),
+  // Agence de représentation (Talent Network, gratuit), ou neutre pour une ancienne candidature sans porte
+  const porte = d.type_candidature === 'agence' ? porteCandidature(d) : null;
+  const academy = porte && (porte.cle === 'academie' || porte.cle === 'equipe');
+  let presentation = 'Ici l’agence de mannequins Maître Akesse Model Management, à Abidjan.';
+  let demarche = ' vient de déposer une candidature sur notre site pour devenir mannequin. ';
+  let signature = 'L’équipe Maître Akesse Model Management';
+  if (academy) {
+    presentation = 'Ici MA2M Academy, l’Académie des Arts du Mannequinat de Maître Akesse Model Management, à Abidjan.';
+    demarche = ' vient de déposer sur notre site une candidature pour suivre notre formation au mannequinat. ';
+    signature = 'L’équipe MA2M Academy';
+  } else if (porte && porte.cle === 'reseau') {
+    demarche = ' vient de déposer sur notre site une candidature pour ' + qui[2] + ' par notre agence. Cette démarche est gratuite. ';
+  } else if (d.type_candidature === 'agence') {
+    presentation = 'Ici Maître Akesse Model Management (Académie et Agence), à Abidjan.';
+    demarche = ' vient de déposer une candidature auprès de Maître Akesse Model Management sur notre site. ';
+  }
+  return 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' +
+    presentation + '\n\n' +
+    qui[0] + (enfant ? ' ' + enfant : '') + demarche +
+    'Comme ' + qui[1] + ' moins de 18 ans, nous avons besoin de votre accord avant d’étudier sa candidature.\n\n' +
+    '👉 Pour nous répondre (1 minute) : ouvrez ce lien personnel, écrivez votre prénom et votre nom, puis choisissez « Je confirme » ou « Je refuse ».\n' +
+    lien + '\n\n' +
+    'Ce lien est réservé à vous seul : merci de ne pas le transmettre. Pour toute question, appelez-nous ou écrivez-nous au ' + numero + '.\n\n' +
+    'Bien cordialement,\n' + signature;
+}
 // Civilité de la personne selon son genre (décision de la propriétaire, 07/10/2026 :
 // « Mademoiselle » ou « Monsieur » pour tous les candidats et inscrits) + nom complet.
 // La civilité choisie dans le formulaire (Madame / Mademoiselle / Monsieur, Extension 132)

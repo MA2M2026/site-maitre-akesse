@@ -29,7 +29,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   await p.evaluate(async (photo) => {
     const octets = Uint8Array.from(atob(photo), (c) => c.charCodeAt(0));
     const f = new File([octets], 'photo.jpg', { type: 'image/jpeg' }), v = new File([new Uint8Array(200000)], 'video.mp4', { type: 'video/mp4' });
-    await EnvoiFiable.garder('candidature', { candidature: { id: '11111111-2222-3333-4444-555555555555', full_name: 'Awa Koné', email: 'awa@test.ci', phone: '+2250700000001', experience_mannequin: 'non' },
+    await EnvoiFiable.garder('candidature', { candidature: { id: '11111111-2222-3333-4444-555555555555', full_name: 'Awa Koné', email: 'awa@test.ci', phone: '+2250700000001', experience_mannequin: 'non', message: 'Parcours choisi : MA2M Academy\n\nBonjour' },
       projetNom: '', mineur: false, parcours: 'agence', photos: [f, f, f], video: v, page: '/academie.html', photosFaites: true, dossier: 'd1', nbPhotosEchouees: 0 });
   }, photo);
   // 2. bandeau sur une autre page
@@ -40,10 +40,12 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   drive.length = 0;
   await p.click('#envoi-a-finir a'); await p.waitForTimeout(500);
   await p.waitForFunction(() => /Merci|reste repartira/.test((document.getElementById('ca-msg') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
-  const fin = await p.evaluate(async () => ({ msg: document.getElementById('ca-msg').textContent, garde: await EnvoiFiable.lire('candidature'), bandeau: !!document.getElementById('envoi-a-finir') }));
+  const fin = await p.evaluate(async () => ({ msg: document.getElementById('ca-msg').textContent, garde: await EnvoiFiable.lire('candidature'), bandeau: !!document.getElementById('envoi-a-finir'),
+    fiche: (document.querySelector('#ca-msg .ca-fiche-inscription') || {}).href || '' }));
   const courriels = journal.filter((j) => j[0] === 'EMAIL').length;
   ok(drive.includes('video_debut') && !drive.includes('photos'), 'reprise : la vidéo repart toute seule, les photos ne sont pas renvoyées (' + drive.join(', ') + ')');
   ok(/Merci/.test(fin.msg) && fin.garde === null && !fin.bandeau, 'reprise : message de fin, dossier oublié du téléphone, pas de bandeau sur le formulaire');
+  ok(/\/documents\/MA2M-Academy-Frais-de-formation\.pdf$/.test(fin.fiche), 'MA2M Academy : après l’envoi, bouton « Consulter la fiche d’inscription » (les tarifs ne sont pas sur le site)');
   ok(courriels === 1, 'l’agence est prévenue une seule fois (' + courriels + ')');
   // 4. cours de talons : inscription coupée pendant la vidéo (photos déjà arrivées) → au retour, la vidéo repart,
   //    l'inscription est enregistrée une fois, puis oubliée du téléphone

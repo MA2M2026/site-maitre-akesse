@@ -24,8 +24,11 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
     const texte = await p.evaluate(() => document.querySelector('main').textContent);
     ok(/MA2M Academy/.test(texte) && (en ? /18 months/.test(texte) && /9 months/.test(texte) : /18 mois/.test(texte) && /9 mois/.test(texte)), n + 'formation initiale de 18 mois et recyclage de 9 mois présentés');
     ok(await p.locator('main .lx-prog-mois').count() === 27 && await p.locator('#recyclage .lx-prog-mois').count() === 9, n + 'programme : 2 niveaux de 9 mois, recyclage de 9 mois');
-    ok(en ? /15,000 FCFA/.test(texte) && /10,000 FCFA/.test(texte) : /15 000 FCFA/.test(texte) && /10 000 FCFA/.test(texte), n + 'frais affichés : 15 000 FCFA d’inscription, 10 000 FCFA par mois');
-    ok(en ? /Joining the agency and the representation contract are free/.test(texte) : /L'entrée à l'agence et le contrat de représentation sont gratuits/.test(texte), n + 'rappel : l’entrée à l’agence est gratuite');
+    // (25/11/2026, décision de la propriétaire) aucun montant sur le site : seulement ce que comprennent l'inscription et la formation
+    const inclus = await p.textContent('#tarifs');
+    ok(!/FCFA|\d\s?000/.test(texte) && (en ? /training outfits/.test(inclus) && /every Sunday, from 3 pm to 6 pm/.test(inclus) && /report every quarter/.test(inclus) && !/entrance assessment/i.test(inclus)
+      : /tenues de formation/.test(inclus) && /chaque dimanche, de 15 h à 18 h/.test(inclus) && /bulletin chaque trimestre/.test(inclus) && !/évaluation d.entrée/i.test(inclus)), n + 'aucun montant : ce que comprennent l’inscription et la formation');
+    ok(en ? /remain your personal asset\. Joining the agency is free/.test(inclus) : /restent votre acquis personnel\. L'entrée à l'agence est gratuite/.test(inclus), n + 'rappel : acquis personnel, entrée à l’agence gratuite');
     ok(await p.locator('a[href="cours-talons.html"]').count() >= 1, n + 'lien vers l’Atelier Talons & Élégance');
     ok(await p.locator('#form-casting').count() === 1 && await p.locator('.video-pleine video').count() >= 1, n + 'la vidéo et le formulaire de candidature sont sur la page');
     ok(await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 1, n + 'aucun débordement horizontal');
@@ -61,6 +64,18 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
     ok(/MAÎTRE AKESSE MODEL MANAGEMENT\* ✨\n/.test(r.reseau) && /pour rejoindre le Talent Network/.test(r.reseau), 'message « retenue », porte Talent Network : en-tête de l’agence, « pour rejoindre le Talent Network »');
     ok(/pour intégrer l'agence/.test(r.ancienne), 'ancienne candidature (sans porte) : texte inchangé');
     ok(/MA2M ACADEMY/.test(r.inscription) && /inscription à MA2M Academy est validée/.test(r.inscription), 'inscription validée : message de MA2M Academy');
+    // (25/11/2026) message au parent d'une mineure : trois versions selon le département
+    const par = await p.evaluate(() => {
+      const d = (porte, genre) => ({ full_name: 'AMA PETITE', genre, parent_nom: 'Madame Ama Mère', type_candidature: 'agence', message: porte ? 'Parcours choisi : ' + porte + '\n\nBonjour' : 'Bonjour' });
+      return { academie: texteConfirmationParent(d('MA2M Academy', 'femme'), 'https://lien'), equipe: texteConfirmationParent(d('Agency Roster', 'homme'), 'https://lien'),
+        reseau: texteConfirmationParent(d('Talent Network', 'femme'), 'https://lien'), ancienne: texteConfirmationParent(d(null), 'https://lien'),
+        casting: texteConfirmationParent({ full_name: 'AMA PETITE', genre: 'femme', parent_nom: 'Madame Ama Mère', type_candidature: 'casting', message: 'Bonjour' }, 'https://lien') };
+    });
+    ok(/^Bonjour Madame Ama Mère,\n\nIci MA2M Academy, l’Académie des Arts du Mannequinat/.test(par.academie) && /Votre fille AMA PETITE vient de déposer sur notre site une candidature pour suivre notre formation au mannequinat/.test(par.academie)
+      && /\nhttps:\/\/lien\n/.test(par.academie) && /L’équipe MA2M Academy$/.test(par.academie) && /Votre fils AMA PETITE .*formation au mannequinat/.test(par.equipe), 'parent, porte Academy : présentation, démarche et signature de MA2M Academy');
+    ok(/Ici l’agence de mannequins Maître Akesse Model Management/.test(par.reseau) && /pour être représentée par notre agence\. Cette démarche est gratuite\./.test(par.reseau) && /L’équipe Maître Akesse Model Management$/.test(par.reseau), 'parent, Talent Network : représentation gratuite, signature de l’agence');
+    ok(/Ici Maître Akesse Model Management \(Académie et Agence\)/.test(par.ancienne) && /Votre enfant AMA PETITE vient de déposer une candidature auprès de Maître Akesse Model Management/.test(par.ancienne), 'parent, ancienne candidature sans porte : version neutre');
+    ok(/Ici l’agence de mannequins/.test(par.casting) && /pour devenir mannequin/.test(par.casting) && !/Academy/.test(par.casting), 'parent, autre candidature (casting) : texte inchangé');
     await p.context().close();
   }
   await b.close();

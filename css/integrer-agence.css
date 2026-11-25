@@ -100,3 +100,10 @@
 .rp-etiquette, .rp-volet .lx-titre-section { text-align: center; }
 .rp-ligne { max-width: 640px; margin: 1.6rem auto; }
 .rp-bon { max-width: 640px; margin: 0 auto 1rem; }
+
+/* Académie : ce que comprennent l'inscription et la formation (aucun montant sur le site, décision du 25/11/2026) */
+.ac-inclus { max-width: 920px; margin: 0 auto; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.ac-inclus-bloc { padding: 1.2rem 1.3rem; }
+.ac-inclus-bloc h3 { margin: 0 0 0.7rem; font-size: 1.15rem; }
+.ac-inclus-bloc ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.4rem; line-height: 1.5; }
+.ca-fiche-inscription { display: inline-block; margin-top: 0.8rem; }
