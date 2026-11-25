@@ -383,21 +383,7 @@
   const lienParent = (jeton) => 'https://www.maitreakessemodelmanagement.com/confirmation-parent?j=' + encodeURIComponent(jeton);
   // (24/11/2026, demande de la propriétaire) un vrai message qui explique tout AVANT le lien : beaucoup de parents
   // n'ouvrent pas un lien sans savoir de quoi il s'agit
-  const texteLienParent = (d, jeton) => {
-    // (genre inconnu : « Votre enfant … cette personne », jamais un genre deviné)
-    let qui = ['Votre enfant', 'cette personne a'];
-    if (d.genre === 'homme' || d.civilite === 'Monsieur') qui = ['Votre fils', 'il a'];
-    else if (d.genre === 'femme') qui = ['Votre fille', 'elle a'];
-    const enfant = String(d.full_name || '').trim(), numero = typeof MA2M_TELEPHONES !== 'undefined' ? MA2M_TELEPHONES[1] : '+225 05 45 65 66 87';
-    return 'Bonjour ' + salutationParent(d.parent_nom) + ',\n\n' +
-      'Ici l’agence de mannequins Maître Akesse Model Management, à Abidjan.\n\n' +
-      qui[0] + (enfant ? ' ' + enfant : '') + ' vient de déposer une candidature sur notre site pour devenir mannequin. ' +
-      'Comme ' + qui[1] + ' moins de 18 ans, nous avons besoin de votre accord avant d’étudier sa candidature.\n\n' +
-      '👉 Pour nous répondre (1 minute) : ouvrez ce lien personnel, écrivez votre prénom et votre nom, puis choisissez « Je confirme » ou « Je refuse ».\n' +
-      lienParent(jeton) + '\n\n' +
-      'Ce lien est réservé à vous seul : merci de ne pas le transmettre. Pour toute question, appelez-nous ou écrivez-nous au ' + numero + '.\n\n' +
-      'Bien cordialement,\nL’équipe Maître Akesse Model Management';
-  };
+  const texteLienParent = (d, jeton) => texteConfirmationParent(d, lienParent(jeton));  // (js/messages-candidats.js)
   // état de la réponse du parent (pastille, avec son nom et la date)
   function etatReponseParent(d) {
     const quand = (date) => ' <span class="doux">' + P.esc([d.parent_confirme_nom, P.dateEtHeure(date)].filter(Boolean).join(' · ')) + '</span>';

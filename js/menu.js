@@ -43,6 +43,23 @@ document.addEventListener('DOMContentLoaded', () => {
         apres = li;
       });
     }
+    // (25/11/2026, demande de la propriétaire) sous « Intégrer l'agence », comme Femmes / Hommes sous The Book :
+    // ses deux départements, chacun sur sa page
+    const integrer = [...liste.querySelectorAll('li > a')].find(a => /(^|\/)integrer-agence(\.html)?$/.test(a.getAttribute('href') || ''));
+    if (integrer) {
+      let apres = integrer.parentNode;
+      [['academie', 'MA2M Academy', 'MA2M Academy'], ['representation', 'Agence de représentation', 'Representation agency']].forEach(([page, fr, anglais]) => {
+        const li = document.createElement('li');
+        li.className = 'menu-sous menu-sous-rejoindre';   // (sous le grand bouton, css/menu.css)
+        const a = document.createElement('a');
+        a.href = integrer.getAttribute('href').replace(/integrer-agence(\.html)?$/, page + '.html');
+        a.textContent = en ? anglais : fr;
+        if (pageOuverte === page) a.className = 'actif';
+        li.appendChild(a);
+        liste.insertBefore(li, apres.nextSibling);
+        apres = li;
+      });
+    }
     // rang de chaque rubrique, une fois toutes les rubriques en place : apparition en cascade
     // (css/menu.css)
     liste.querySelectorAll('li').forEach((li, n) => li.style.setProperty('--rang', n + 1));

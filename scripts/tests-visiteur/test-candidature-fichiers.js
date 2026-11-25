@@ -21,7 +21,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   p.on('pageerror', (e) => errs.push(e.message));
   await brancher(p, { tables: {}, rpc: { casting_ouvert: true } }, journal);
   await p.route(/script\.google\.com/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"liens":[],"dossier":"d1"}' }));
-  await p.goto('http://127.0.0.1:' + PORT + '/integrer-agence.html'); await p.waitForTimeout(1500);
+  await p.goto('http://127.0.0.1:' + PORT + '/academie.html'); await p.waitForTimeout(1500);
   const compteur = () => p.textContent('#ca-photos-compteur');
 
   // 1. un PDF : écarté, avec « n'est pas une photo »
@@ -95,7 +95,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await pa.waitForTimeout(800);
     const r = !!(await pa.$('#ma2m-installer')); await pa.close(); return r;
   };
-  const surAccueilAndroid = await bandeCreee('index.html'), surIntegrerAndroid = await bandeCreee('integrer-agence.html');
+  const surAccueilAndroid = await bandeCreee('index.html'), surIntegrerAndroid = await bandeCreee('academie.html');
   await android.close();
   ok(surAccueilAndroid && !surIntegrerAndroid, 'Android : la bande « Appli MA2M » est créée sur l’accueil (' + surAccueilAndroid + ') mais jamais sur Intégrer l’agence (' + surIntegrerAndroid + '), même sans :has');
 

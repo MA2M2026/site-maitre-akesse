@@ -197,13 +197,13 @@ async function navigateur() {
   const b = await chromium.launch();
   // 2. candidature : dossier gardé dans le téléphone (EnvoiFiable), l'envoi des photos repart à l'ouverture de la page
   for (const cas of [
-    { nom: 'Intégrer l’agence, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false },
+    { nom: 'Intégrer l’agence, téléphone', page: '/academie.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false },
     { nom: 'Casting, ordinateur, anglais', page: '/en/candidature.html', parcours: 'projet', ecran: { width: 1280, height: 900 }, panne: false },
     { nom: 'Casting, téléphone, Cloudflare en panne', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: true },
     // (superviseur 4) envoi coupé après la 1re photo arrivée chez Cloudflare : la reprise ne la renvoie pas
     // (2ᵉ relecture) réponse de la 1re vérification perdue : la même photo est revérifiée, jamais déposée deux fois
-    { nom: 'Vérification sans réponse, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, verifPerdue: true },
-    { nom: 'Reprise après coupure, téléphone', page: '/integrer-agence.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, reprise: true },
+    { nom: 'Vérification sans réponse, téléphone', page: '/academie.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, verifPerdue: true },
+    { nom: 'Reprise après coupure, téléphone', page: '/academie.html', parcours: 'agence', ecran: { width: 390, height: 844 }, panne: false, reprise: true },
     // (superviseur 6) ancien programme Google (la page note elle-même les liens Drive) : 2 photos sur 3 chez Cloudflare →
     // la page note TOUS les liens Drive (l'Administration décide de l'affichage) ; si TOUTES sont chez Cloudflare, aucun
     { nom: 'Ancien programme Google, tout chez Cloudflare, téléphone', page: '/candidature.html', parcours: 'projet', ecran: { width: 390, height: 844 }, panne: false, ancien: true },

@@ -479,7 +479,7 @@
   --mag-lignes: var(--lignes);
 }
 :root {
-  --mag-titre: 'Big Shoulders Display', 'Arial Narrow', system-ui, sans-serif;
+  --mag-titre: 'Cormorant Garamond', Georgia, serif;   /* (25/11/2026, demande de la propriétaire : retour à la police d'avant) */
   --mag-texte: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --police: var(--mag-texte);
   --police-titre: var(--mag-titre);

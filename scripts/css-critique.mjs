@@ -34,6 +34,7 @@ export const PAGES = {
   'partenaires.html': '/partenaires', 'en/partenaires.html': '/en/partenaires',
   'services.html': '/services', 'en/services.html': '/en/services', 'contact.html': '/contact', 'en/contact.html': '/en/contact',
   'candidature.html': '/candidature', 'en/candidature.html': '/en/candidature', 'integrer-agence.html': '/integrer-agence', 'en/integrer-agence.html': '/en/integrer-agence',
+  'academie.html': '/academie', 'en/academie.html': '/en/academie', 'representation.html': '/representation', 'en/representation.html': '/en/representation',
   'selection.html': '/selection', 'en/selection.html': '/en/selection',
   'mentions-legales.html': '/mentions-legales', 'en/mentions-legales.html': '/en/mentions-legales',
   'politique-confidentialite.html': '/politique-confidentialite', 'en/politique-confidentialite.html': '/en/politique-confidentialite'

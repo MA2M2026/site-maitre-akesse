@@ -201,6 +201,42 @@ décisions : document « Audit — Restructuration MA2M » (Claude Docs) ; texte
   mensualité seulement aux élèves) ; désactivation automatique du profil en fin de contrat ; nouveau PDF « Note
   d'information de MA2M Academy » ; documentation de l'agence.
 
+### Deux départements au lieu de trois portes (25/11/2026, après la mise en ligne du matin, demande de la propriétaire)
+- **Menu** : sous le grand bouton « Intégrer l'agence », deux sous-titres (`js/menu.js`, classe `menu-sous-rejoindre`,
+  `order: 91` dans `css/menu.css`) : **MA2M Academy** (`academie.html`) et **Agence de représentation**
+  (`representation.html`), comme Femmes / Hommes sous The Book. `js/gabarit.js` : les deux pages sont dans `PAGES`
+  pour le bas de page seulement (`visible()` les retire du menu).
+- **`integrer-agence.html`** : page d'aiguillage courte (deux cartes, gratuité, critères), sans formulaire ; garde son
+  adresse pour les anciens liens.
+- **`academie.html`** : présentation, vidéo, programme, recyclage, frais (écran coupé en deux : `data-ecran-coupe`),
+  Atelier, FAQ, critères puis LE formulaire de candidature (même formulaire qu'avant). « Votre projet » (`#ca-porte`) :
+  `academie` (me former) ou `equipe` (me former et intégrer l'agence) ; l'adresse `#porte-equipe` le règle d'avance.
+- **`representation.html`** (page sans écrans) : deux boutons (`js/representation.js`) ; « Simple représentation »
+  ouvre `#simple` et le formulaire, réglé d'avance dans le HTML (`#ca-porte` = `reseau` caché, déjà mannequin) ;
+  « Intégrer l'agence et me faire représenter » ouvre `#integrer` et mène à `academie.html#porte-equipe`.
+- Fabriquées par `outils` de la séance (gabarit d'Intégrer l'agence) ; essais : `test-integrer-parcours.js` réécrit,
+  formulaires des autres essais pointés sur `academie.html`.
+- **Police** : retour à **Cormorant Garamond** pour tous les titres (site, application, Administration : `--mag-titre`
+  de `css/jetons.css`, `--display` de `css/style.css`) et pour la compcard, le CV, la carte mannequin et les cartes
+  d'événement (graisse 600, la plus forte de Cormorant). Styles intégrés aux pages régénérés (`css-critique.mjs`).
+- **Aucun montant sur le site, même sur l'Académie** (décision de la propriétaire, 25/11/2026) : la section `#tarifs`
+  d'`academie.html` dit seulement ce que comprennent les droits d'inscription (dossier, tenues de formation) et les frais
+  de formation (dimanche 15 h-18 h, thème mensuel, masterclasses, défilés, suivi et bulletin trimestriel), un bloc par
+  écran (`data-ecran-coupe=".ac-inclus-bloc"`). Les montants sont dans la fiche
+  `assets/documents/MA2M-Academy-Frais-de-formation.pdf` (cachée des moteurs : `robots.txt` et `X-Robots-Tag` dans
+  `vercel.json`) ; après l'envoi d'une candidature Academy (porte `academie` ou `equipe`),
+  `js/formulaire-candidature.js` ajoute le bouton « Consulter la fiche d'inscription » juste APRÈS `#ca-msg` (pas
+  dedans : `afficherMsg` compare le texte du message). Pour changer les prix : refaire ce PDF (même nom).
+- **Message au parent d'une mineure** : `texteConfirmationParent(d, lien)` (`js/messages-candidats.js`, utilisé par
+  `js/admin/site-dossiers.js`), trois versions validées : porte Academy (« Ici MA2M Academy… », signé « L'équipe MA2M
+  Academy »), Talent Network (représentation, « démarche gratuite »), ancienne candidature sans porte (« Académie et
+  Agence ») ; les candidatures de casting gardent le texte d'avant. Essai : `test-refonte-academie.js`.
+- **`representation.html`** : un brouillon gardé ou un envoi coupé qui reprend rouvre tout seul le volet « Simple
+  représentation » (`js/representation.js`), sinon le message d'envoi serait caché.
+- **Textes modifiables** : `integrer-agence` a ses repères `data-texte` (16). `academie` et `representation` ne sont pas
+  encore modifiables depuis l'Administration (à ajouter dans `PAGES` de `scripts/textes-pages.py`, `PAGES_TEXTES` de
+  `middleware.js` et `js/admin/site-textes.js` si la propriétaire le demande).
+
 ## 🔗 Liens envoyés par WhatsApp : phrase rassurante (24/11/2026, demande de la propriétaire)
 WhatsApp affiche « Ouvrir le lien ? » quand un lien vient d'un numéro absent des contacts de la personne (on ne peut pas
 l'empêcher). `texteLienRassurant(texte)` (`js/app.js`, phrase `PHRASE_LIEN_SUR`) ajoute, juste après la ligne du premier

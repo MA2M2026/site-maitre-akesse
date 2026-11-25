@@ -673,8 +673,9 @@ async function construireCanvasCompcard(ficheData, langue) {
   const en = langue === 'en';
   // (11/11/2026, compcard « premium » choisie par la propriétaire) fond blanc, rouge mat de l'agence, photos en grand
   const ROUGE = '#7C2128', BLANC = '#ffffff', ENCRE = '#2a1416', DOUX = '#8a6a6d', FILET = '#e6d6d7';
-  // (23/11/2026, demande de la propriétaire) nom et mensurations dans la police des titres du site
-  const TITRE = '"Big Shoulders Display", "Arial Narrow", sans-serif', SANS = '"Work Sans", Arial, sans-serif';
+  // (23/11/2026, demande de la propriétaire) nom et mensurations dans la police des titres du site ; (25/11/2026)
+  // retour à la police d'avant : Cormorant Garamond (graisse 600, la plus forte qu'elle ait)
+  const TITRE = '"Cormorant Garamond", Georgia, serif', SANS = '"Work Sans", Arial, sans-serif';
   const LARGEUR_MM = 210, HAUTEUR_MM = 297;
   const DPI = 400;
   const ESCALE = DPI / 25.4;
@@ -687,7 +688,7 @@ async function construireCanvasCompcard(ficheData, langue) {
   const ctx = canvas.getContext('2d');
 
   await Promise.all([
-    document.fonts.load('800 100px "Big Shoulders Display"'),
+    document.fonts.load('600 100px "Cormorant Garamond"'),
     document.fonts.load('600 100px "Work Sans"'), document.fonts.load('500 100px "Work Sans"')
   ].map((x) => x.catch(() => null)));
   await document.fonts.ready;
@@ -745,9 +746,9 @@ async function construireCanvasCompcard(ficheData, langue) {
 
   // --- Nom (grand, élégant) et niveau · ville en italique rouge ---
   let taillePolice = 44;
-  ctx.font = `800 ${fpx(taillePolice)}px ${TITRE}`;
+  ctx.font = `600 ${fpx(taillePolice)}px ${TITRE}`;
   const nom = profil.full_name || (en ? 'Model' : 'Mannequin');
-  while (ctx.measureText(nom).width > px(LARGEUR_UTILE) && taillePolice > 22) { taillePolice -= 2; ctx.font = `800 ${fpx(taillePolice)}px ${TITRE}`; }
+  while (ctx.measureText(nom).width > px(LARGEUR_UTILE) && taillePolice > 22) { taillePolice -= 2; ctx.font = `600 ${fpx(taillePolice)}px ${TITRE}`; }
   ctx.fillStyle = ENCRE; ctx.textAlign = 'left';
   ctx.fillText(nom, px(M), px(39));
   const niveauMannequin = libelleNiveauPublic(niveauNormalise(profil.niveau_mannequin, profil.years_experience));
@@ -821,7 +822,7 @@ async function construireCanvasCompcard(ficheData, langue) {
       const cx = M + pas * (i + 0.5);
       ctx.fillStyle = DOUX; ctx.font = `600 ${fpx(6.6)}px ${SANS}`;
       texteEspace(label.toUpperCase(), px(cx), px(y + 6.5), 0.55, 'center');
-      ctx.fillStyle = ENCRE; ctx.font = `800 ${fpx(15)}px ${TITRE}`;
+      ctx.fillStyle = ENCRE; ctx.font = `600 ${fpx(15)}px ${TITRE}`;
       let t = String(valeur);
       while (ctx.measureText(t).width > px(pas - 2) && t.length > 4) t = t.slice(0, -2) + '…';
       ctx.textAlign = 'center'; ctx.fillText(t, px(cx), px(y + 13.5)); ctx.textAlign = 'left';
@@ -1399,9 +1400,10 @@ async function construireCanvasCv(d) {
   const fpx = function (pt) { return pt * 0.3528 * ESCALE; };
 
   await Promise.all([
-    // (23/11/2026, demande de la propriétaire) CV dans les polices du site : titres Big Shoulders Display, texte Work Sans
+    // (23/11/2026, demande de la propriétaire) CV dans les polices du site : titres Cormorant Garamond (depuis le
+    // 25/11/2026, retour à la police d'avant), texte Work Sans
     document.fonts.load('600 100px "Work Sans"'), document.fonts.load('500 100px "Work Sans"'), document.fonts.load('400 100px "Work Sans"'),
-    document.fonts.load('800 100px "Big Shoulders Display"')
+    document.fonts.load('600 100px "Cormorant Garamond"')
   ].map((x) => x.catch(() => null)));
   await document.fonts.ready;
 
@@ -1477,8 +1479,8 @@ async function construireCanvasCv(d) {
 
     ctx.textAlign = 'left';
     ctx.fillStyle = IVOIRE;
-    const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `800 ${fpx(17)}px "Big Shoulders Display", sans-serif`);
-    ctx.font = `800 ${fpx(17)}px "Big Shoulders Display", sans-serif`;
+    const lignesNom = envelopperLignesCanvas(ctx, d.nomComplet || '', px(SIDEBAR_MM - PAD_SIDEBAR * 2), `600 ${fpx(17)}px "Cormorant Garamond", Georgia, serif`);
+    ctx.font = `600 ${fpx(17)}px "Cormorant Garamond", Georgia, serif`;
     lignesNom.forEach(function (ligne) { y += 7.5; ctx.fillText(ligne, px(PAD_SIDEBAR), px(y)); });
     y += 6;
 

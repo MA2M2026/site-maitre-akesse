@@ -15,7 +15,7 @@
   --av-rouge-texte: var(--rouge-ma2m-texte);
 }
 :root {
-  --av-titre: var(--police-titre, 'Big Shoulders Display', 'Arial Narrow', sans-serif);   /* (23/11/2026, police des titres du site) */
+  --av-titre: var(--police-titre, 'Cormorant Garamond', Georgia, serif);   /* (23/11/2026, police des titres du site) */
   --av-texte: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --av-rayon: 18px;
   --av-rayon-petit: 12px;

@@ -11,6 +11,12 @@ select set_config('essai.porte3', formulaire_public_enregistrer('casting_applica
 select essai((select porte = 'reseau' from casting_applications where id = current_setting('essai.porte1')::uuid), 'porte Talent Network recopiée du message');
 select essai((select porte = 'academie' from casting_applications where id = current_setting('essai.porte2')::uuid), 'porte MA2M Academy recopiée du message');
 select essai((select porte is null from casting_applications where id = current_setting('essai.porte3')::uuid), 'candidature sans porte (ancienne page) : rien d inventé');
+-- l équipe (compte connecté, pas le propriétaire de la base) peut toujours ajouter et modifier une candidature
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+update casting_applications set message = E'Parcours choisi : Agency Roster\n\nModifié par l équipe' where id = current_setting('essai.porte3')::uuid;
+reset role;
+select essai((select porte = 'equipe' from casting_applications where id = current_setting('essai.porte3')::uuid), 'l équipe modifie une candidature : accepté, la porte suit le message');
 select essai_refuse($$update casting_applications set porte = 'autre' where id = current_setting('essai.porte1')::uuid$$, 'porte inconnue refusée');
 -- mannequins déjà inscrites : Agency Roster et formation initiale
 select essai((select count(*) = 2 and bool_and(statut in ('active', 'suspendue', 'terminee')) from relations_ma2m where mannequin_id = '00000000-0000-0000-0000-0000000000d1'),

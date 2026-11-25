@@ -508,6 +508,17 @@ async function envoyerMedias(etat) {
   afficherMsg(msg, soucis.length
     ? T(`Candidature envoyée, mais ${soucis.join(' ; ')} (connexion instable ?). Le reste du dossier est bien enregistré.`, `Application sent, but ${soucis.join('; ')} (unstable connection?). The rest of your application has been saved.`)
     : T('Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.'), 'ok');
+  // (25/11/2026, décision de la propriétaire) MA2M Academy : les tarifs ne sont pas sur le site ; une fois le dossier
+  // envoyé, la candidate peut consulter la fiche d'inscription (droits d'inscription et frais de formation, en PDF)
+  const porteEnvoyee = window.Partage.porteDuMessage(candidature.message);
+  // (le bouton est placé juste après le message, pas dedans : afficherMsg compare le texte du message)
+  if (porteEnvoyee && (porteEnvoyee.cle === 'academie' || porteEnvoyee.cle === 'equipe') && msg && !document.getElementById('ca-fiche-inscription')) {
+    const fiche = document.createElement('a');
+    fiche.id = 'ca-fiche-inscription'; fiche.className = 'btn btn--principal ca-fiche-inscription';
+    fiche.href = '/assets/documents/MA2M-Academy-Frais-de-formation.pdf'; fiche.target = '_blank'; fiche.rel = 'noopener';
+    fiche.textContent = T('Consulter la fiche d’inscription', 'View the registration sheet');
+    msg.insertAdjacentElement('afterend', fiche);
+  }
   if (complet) {
     await EnvoiFiable.oublier('candidature');
     void EnvoiFiable.prevenir(T('Candidature envoyée ✓', 'Application sent ✓'), T('Merci ! Votre candidature est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your application has reached Maître Akesse Model Management.'), etat.page);
