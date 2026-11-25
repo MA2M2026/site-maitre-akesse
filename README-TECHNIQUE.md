@@ -231,6 +231,11 @@ décisions : document « Audit — Restructuration MA2M » (Claude Docs) ; texte
   représentation) et le lien vers le travail, inscription = MA2M Academy (paiement des seuls frais de formation, agence
   gratuite), relation avec MA2M (`relations_ma2m`), confirmation du parent par lien personnel. Version
   `POLITIQUE_VERSION = '2026-11-25'` (`api/portail.js`), enregistrée avec chaque consentement.
+- **Libellés en clair pour l'agence** (25/11/2026) : `Partage.libellePorte(cle)` (`js/partage.js`) donne « Agence de
+  représentation : simple représentation », « MA2M Academy : se former », « MA2M Academy : se former et intégrer
+  l'agence ». Utilisé par l'e-mail envoyé à l'agence (`titreEmailCandidature`, `js/formulaire-candidature.js` : plus
+  « candidature casting » hors casting) et par l'Administration (`typeDe`). « Talent Network » / « Agency Roster »
+  restent les noms techniques écrits dans la ligne « Parcours choisi : … » lue par la base.
 - **Message au parent d'une mineure** : `texteConfirmationParent(d, lien)` (`js/messages-candidats.js`, utilisé par
   `js/admin/site-dossiers.js`), trois versions validées : porte Academy (« Ici MA2M Academy… », signé « L'équipe MA2M
   Academy »), Talent Network (représentation, « démarche gratuite »), ancienne candidature sans porte (« Académie et

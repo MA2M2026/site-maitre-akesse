@@ -80,7 +80,7 @@
   function typeDe(d) {
     if (d.type_candidature === 'projet') return d.projet_nom || 'Projet';
     // (25/11/2026) la porte choisie sur « Intégrer l'agence » (js/messages-candidats.js, porteCandidature)
-    if (d.type_candidature === 'agence') { const porte = porteCandidature(d); return porte ? porte.libelle : 'Intégrer l’agence'; }
+    if (d.type_candidature === 'agence') { const porte = porteCandidature(d); return porte ? window.Partage.libellePorte(porte.cle) : 'Intégrer l’agence'; }  // (libellé en clair, js/partage.js)
     if (d.type_candidature === 'direct') return 'Casting direct (agence)';
     return null;
   }

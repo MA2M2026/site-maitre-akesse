@@ -75,6 +75,9 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
       && /\nhttps:\/\/lien\n/.test(par.academie) && /L’équipe MA2M Academy$/.test(par.academie) && /Votre fils AMA PETITE .*formation au mannequinat/.test(par.equipe), 'parent, porte Academy : présentation, démarche et signature de MA2M Academy');
     ok(/Ici l’agence de mannequins Maître Akesse Model Management/.test(par.reseau) && /pour être représentée par notre agence\. Cette démarche est gratuite\./.test(par.reseau) && /L’équipe Maître Akesse Model Management$/.test(par.reseau), 'parent, Talent Network : représentation gratuite, signature de l’agence');
     ok(/Ici Maître Akesse Model Management \(Académie et Agence\)/.test(par.ancienne) && /Votre enfant AMA PETITE vient de déposer une candidature auprès de Maître Akesse Model Management/.test(par.ancienne), 'parent, ancienne candidature sans porte : version neutre');
+    const lib = await p.evaluate(() => ['reseau', 'academie', 'equipe', 'autre'].map((c) => Partage.libellePorte(c)));
+    ok(lib[0] === 'Agence de représentation : simple représentation' && lib[1] === 'MA2M Academy : se former' && lib[2] === "MA2M Academy : se former et intégrer l'agence" && lib[3] === '',
+      'libellés en clair pour l’agence (e-mail, Administration) : plus « Talent Network » ni « Agency Roster »');
     ok(/Ici l’agence de mannequins/.test(par.casting) && /pour devenir mannequin/.test(par.casting) && !/Academy/.test(par.casting), 'parent, autre candidature (casting) : texte inchangé');
     await p.context().close();
   }
