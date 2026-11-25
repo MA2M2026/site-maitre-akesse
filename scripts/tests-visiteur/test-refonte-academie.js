@@ -61,7 +61,7 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
       };
     });
     ok(/MA2M ACADEMY/.test(r.academie) && /pour MA2M Academy/.test(r.academie) && /L'équipe MA2M Academy/.test(r.academie), 'message « retenue », porte Academy : en-tête, signature et texte MA2M Academy');
-    ok(/MAÎTRE AKESSE MODEL MANAGEMENT\* ✨\n/.test(r.reseau) && /pour rejoindre le Talent Network/.test(r.reseau), 'message « retenue », porte Talent Network : en-tête de l’agence, « pour rejoindre le Talent Network »');
+    ok(/MAÎTRE AKESSE MODEL MANAGEMENT\* ✨\n/.test(r.reseau) && /pour être représentée par notre agence/.test(r.reseau) && !/Talent Network/.test(r.reseau), 'message « retenue », représentation simple : en-tête de l’agence, « pour être représentée par notre agence » (plus « Talent Network »)');
     ok(/pour intégrer l'agence/.test(r.ancienne), 'ancienne candidature (sans porte) : texte inchangé');
     ok(/MA2M ACADEMY/.test(r.inscription) && /inscription à MA2M Academy est validée/.test(r.inscription), 'inscription validée : message de MA2M Academy');
     // (25/11/2026) message au parent d'une mineure : trois versions selon le département

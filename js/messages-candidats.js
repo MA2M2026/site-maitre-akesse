@@ -313,7 +313,13 @@ function messageAcademy(d) {
   const porte = porteCandidature(d);
   return (porte && porte.cle === 'academie') || !!(d && !('type_candidature' in d) && 'statut' in d);
 }
-const CANDIDATURE_PAR_PORTE = { reseau: 'pour rejoindre le Talent Network', academie: 'pour MA2M Academy', equipe: "pour rejoindre l'équipe de l'agence" };
+// (25/11/2026, demande de la propriétaire) en clair pour la candidate : plus « Talent Network » ({représenté} : accordé au genre)
+const CANDIDATURE_PAR_PORTE = { reseau: 'pour être {représenté} par notre agence', academie: 'pour MA2M Academy', equipe: "pour rejoindre l'équipe de l'agence" };
+function accordRepresente(d) {
+  if (d.genre === 'femme' || d.civilite === 'Madame' || d.civilite === 'Mademoiselle') return 'représentée';
+  if (d.genre === 'homme' || d.civilite === 'Monsieur') return 'représenté';
+  return 'représenté(e)';
+}
 
 // {date}, {heure}, {lieu} : rdv = { date: 'AAAA-MM-JJ', heure, lieu } ; une valeur vide
 // est remplacée par manquant('date' | 'heure' | 'lieu').
@@ -324,7 +330,7 @@ function remplirRdv(texte, rdv, manquant) {
 // Message prêt pour UNE personne (d = sa candidature ou son inscription).
 function personnaliserMessage(texte, d, rdv, manquant) {
   const porte = porteCandidature(d);
-  const candidature = porte ? CANDIDATURE_PAR_PORTE[porte.cle] : d.type_candidature === 'agence' ? "pour intégrer l'agence"
+  const candidature = porte ? CANDIDATURE_PAR_PORTE[porte.cle].replace('{représenté}', accordRepresente(d)) : d.type_candidature === 'agence' ? "pour intégrer l'agence"
     : d.type_candidature === 'projet' && d.projet_nom ? `au casting « ${d.projet_nom} »` : 'à notre casting';
   const contacts = contactsEnvoi(d);
   const enTete = messageAcademy(d) ? String(texte).split(ENTETE_MESSAGE).join(ENTETE_ACADEMY).split(SIGNATURE_MESSAGE).join(SIGNATURE_ACADEMY) : texte;
