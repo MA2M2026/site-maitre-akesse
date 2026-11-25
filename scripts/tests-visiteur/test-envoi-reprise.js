@@ -46,6 +46,10 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   ok(drive.includes('video_debut') && !drive.includes('photos'), 'reprise : la vidéo repart toute seule, les photos ne sont pas renvoyées (' + drive.join(', ') + ')');
   ok(/Merci/.test(fin.msg) && fin.garde === null && !fin.bandeau, 'reprise : message de fin, dossier oublié du téléphone, pas de bandeau sur le formulaire');
   ok(/\/assets\/documents\/MA2M-Academy-Frais-de-formation\.pdf$/.test(fin.fiche), 'MA2M Academy : après l’envoi, bouton « Consulter la fiche d’inscription » (les tarifs ne sont pas sur le site)');
+  // (25/11/2026) e-mail à l'agence : le département en clair, plus « candidature casting » ni « Agency Roster »
+  const corps = decodeURIComponent(String((journal.find((j) => j[0] === 'EMAIL') || [])[1] || '')).replace(/\\n/g, '\n');
+  ok(/Nouvelle candidature — MA2M Academy : se former · Débutant\(e\)/.test(corps) && /Postule pour : MA2M Academy : se former · Débutant\(e\)/.test(corps) && !/candidature casting|Agency Roster|Talent Network/.test(corps),
+    'e-mail à l’agence : « Nouvelle candidature — MA2M Academy : se former · Débutant(e) »');
   ok(courriels === 1, 'l’agence est prévenue une seule fois (' + courriels + ')');
   // 4. cours de talons : inscription coupée pendant la vidéo (photos déjà arrivées) → au retour, la vidéo repart,
   //    l'inscription est enregistrée une fois, puis oubliée du téléphone

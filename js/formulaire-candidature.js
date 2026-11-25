@@ -110,6 +110,17 @@ function porteChoisie() {
   const libelle = champ && window.Partage.PORTES_CANDIDATURE[champ.value];
   return libelle ? { cle: champ.value, libelle } : null;
 }
+// e-mail à l'agence (25/11/2026, demande de la propriétaire) : le département en clair, plus « candidature casting »
+// pour une candidature de MA2M Academy ou de l'Agence de représentation
+function libelleEmailPorte(candidature) {
+  const porte = window.Partage.porteDuMessage(candidature.message);
+  return porte ? window.Partage.libellePorte(porte.cle) : '';
+}
+function titreEmailCandidature(candidature) {
+  if (PARCOURS === 'projet') return 'Nouvelle candidature casting';
+  const libelle = libelleEmailPorte(candidature);
+  return 'Nouvelle candidature — ' + (libelle ? libelle + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin') : "Intégrer l'agence");
+}
 function photosMin() { return estDebutant() ? 3 : 4; }
 function majParcours() {
   if (PARCOURS !== 'agence') return;
@@ -491,7 +502,8 @@ async function envoyerMedias(etat) {
       name: candidature.full_name,
       telephone: candidature.phone,
       email: candidature.email,
-      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (window.Partage.porteDuMessage(candidature.message) ? ' · ' + window.Partage.porteDuMessage(candidature.message).libelle : '') + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+      // (25/11/2026) en clair : « Nouvelle candidature — MA2M Academy : se former et intégrer l'agence · Débutant(e) »
+      message: `${titreEmailCandidature(candidature)}${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : (libelleEmailPorte(candidature) || "Intégrer l'agence") + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
     });
     etat.agencePrevenue = true; etat.agenceComplete = !!(etat.photosFaites && etat.videoFaite); await EnvoiFiable.garder('candidature', etat);
   }

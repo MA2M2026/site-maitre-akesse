@@ -501,7 +501,12 @@
     const cle = m && Object.keys(PORTES_CANDIDATURE).find((k) => PORTES_CANDIDATURE[k] === m[1].trim());
     return cle ? { cle, libelle: PORTES_CANDIDATURE[cle] } : null;
   }
-  racine.Partage = { PORTES_CANDIDATURE, porteDuMessage, rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enMetres, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
+  // (25/11/2026, demande de la propriétaire) libellés en clair pour l'agence (e-mail, Administration) : « Talent Network »
+  // et « Agency Roster » restent les noms techniques écrits dans le message (« Parcours choisi : … », lu par la base)
+  const LIBELLES_PORTES = { reseau: 'Agence de représentation : simple représentation', academie: 'MA2M Academy : se former',
+    equipe: "MA2M Academy : se former et intégrer l'agence" };
+  function libellePorte(cle) { return LIBELLES_PORTES[cle] || ''; }
+  racine.Partage = { PORTES_CANDIDATURE, porteDuMessage, LIBELLES_PORTES, libellePorte, rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enMetres, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
     Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
     lienFicheMannequin, lieuProjet, dateLieuProjet, ma2mCompteParType, nombreTypeAgenda, projetsAvecNoms };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };
