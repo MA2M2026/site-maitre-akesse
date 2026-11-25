@@ -12,8 +12,7 @@
 -- 3. Fin de contrat : chaque nuit, une relation dont la date de fin est passée devient terminée.
 --    Rien n est effacé. Le profil n est pas caché automatiquement tant que la page de l Administration
 --    qui le montre n est pas en ligne (étape suivante, avec accord de la propriétaire).
--- A COLLER UNE FOIS dans Supabase (SQL Editor, bouton orange Run without RLS), APRÈS la mise en ligne
--- des pages. Peut être recollé sans risque.
+-- A COLLER UNE FOIS dans Supabase (SQL Editor, bouton orange Run without RLS). Peut être recollé sans risque.
 
 -- ---------- 1. porte de candidature ----------
 alter table public.casting_applications add column if not exists porte text;
@@ -32,7 +31,7 @@ $$;
 revoke all on function porte_depuis_message(text) from public, anon, authenticated;
 
 create or replace function candidature_porte_remplir()
-returns trigger language plpgsql set search_path = public, pg_temp as $$
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
   if new.type_candidature = 'agence' and new.porte is null then
     new.porte := porte_depuis_message(new.message);
