@@ -342,6 +342,13 @@
   async function blocCode() {
     const d = fiche.d;
     if (fiche.source !== 'casting' || d.status !== 'retenue') return '';
+    // (25/11/2026, refonte) Talent Network : jamais de frais. Le code mène à l'inscription PAYANTE de MA2M Academy : on
+    // ne le propose pas ; la personne est ajoutée par « Ajouter une personne » en attendant les contrats sur le site.
+    const porte = porteCandidature(d);  // (js/messages-candidats.js)
+    if (porte && porte.cle === 'reseau') {
+      return '<section class="carte code-zone"><h2>Talent Network</h2><p>Pas de code d’inscription : l’inscription avec code est celle de MA2M Academy, payante. ' +
+        'Une mannequin Talent Network ne paie rien. Ajoutez-la avec « Ajouter une personne » (Mannequins), en attendant la signature des contrats sur le site.</p></section>';
+    }
     const codes = await P.bd(sb.from('codes_inscription').select('code, utilise, utilise_le').eq('candidature_id', d.id)).catch(() => []);
     const libre = codes.find((c) => !c.utilise), utilise = codes.find((c) => c.utilise);
     let corps;

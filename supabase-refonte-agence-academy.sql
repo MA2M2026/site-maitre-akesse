@@ -119,7 +119,8 @@ $$;
 revoke all on function relation_duree(text), relations_liste(uuid), relation_enregistrer(uuid, uuid, text, text, date, date, text), mes_relations() from public, anon;
 grant execute on function relations_liste(uuid), relation_enregistrer(uuid, uuid, text, text, date, date, text), mes_relations() to authenticated;
 
--- rangement des mannequins actuelles (une seule fois : seulement celles qui n ont encore aucune relation)
+-- rangement des mannequins actuelles : seulement celles inscrites AVANT le 26/11/2026 et sans relation
+-- (une personne ajoutée plus tard n est jamais rangée automatiquement, même si le fichier est recollé)
 insert into public.relations_ma2m (mannequin_id, sorte, statut, debut, fin, notes)
 select m.id, s.sorte,
   case m.statut when 'actif' then 'active' when 'suspendu' then 'suspendue' else 'terminee' end,
@@ -128,7 +129,8 @@ select m.id, s.sorte,
   'Rangée automatiquement le 25/11/2026 (décision de la direction : Agency Roster et formation initiale)'
 from public.agence_mannequins m
 cross join (values ('agency_roster'), ('formation_initiale')) s(sorte)
-where not exists (select 1 from public.relations_ma2m r where r.mannequin_id = m.id);
+where m.cree_le < timestamptz '2026-11-26 00:00:00+00'
+  and not exists (select 1 from public.relations_ma2m r where r.mannequin_id = m.id);
 
 -- ---------- 3. fin de contrat ----------
 create or replace function relations_terminer_echues()

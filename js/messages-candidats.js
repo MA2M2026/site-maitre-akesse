@@ -267,10 +267,12 @@ function noterMessageCandidat(candidatureId, cle, canal, sorte) {
 function typeCandidature(d) { return d && d.type_candidature === 'projet' ? 'projet' : 'agence'; }
 // (25/11/2026) porte choisie sur « Intégrer l'agence » : écrite par le formulaire en première ligne du message
 // (« Parcours choisi : Talent Network », js/formulaire-candidature.js), en attendant sa propre colonne en base.
-const PORTES_LIBELLES = { 'Talent Network': 'reseau', 'MA2M Academy': 'academie', 'Agency Roster': 'equipe' };
+// (colonne « porte » en base une fois supabase-refonte-agence-academy.sql collé : elle passe en premier)
 function porteCandidature(d) {
-  const m = d && d.type_candidature === 'agence' && /^Parcours choisi : (.+)$/m.exec(String(d.message || ''));
-  return m && PORTES_LIBELLES[m[1].trim()] ? { cle: PORTES_LIBELLES[m[1].trim()], libelle: m[1].trim() } : null;
+  if (!d || d.type_candidature !== 'agence') return null;
+  const P = window.Partage;
+  if (d.porte && P.PORTES_CANDIDATURE[d.porte]) return { cle: d.porte, libelle: P.PORTES_CANDIDATURE[d.porte] };
+  return P.porteDuMessage(d.message);
 }
 // message de MA2M Academy : porte « Me former », ou inscription (ligne d'inscriptions_mannequins : « statut », sans type)
 function messageAcademy(d) {

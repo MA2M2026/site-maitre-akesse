@@ -23,16 +23,22 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
     ok(!/FCFA|25 000/.test(await p.textContent('main')), n + 'aucun prix sur la page (décision de la propriétaire)');
     ok((await p.textContent('main')).includes(en ? 'Joining the agency is free' : "L'entrée à l'agence est gratuite"), n + 'la gratuité de l’entrée à l’agence est annoncée (refonte du 25/11/2026)');
     ok(await p.locator('.ia-parcours-carte[data-porte]').count() === 3, n + 'trois portes : Talent Network, MA2M Academy, équipe de l’agence');
-    // (22/11/2026) la page s'affiche en écrans : on va à l'écran des portes avec « Suivant », comme une visiteuse
-    for (let i = 0; i < 12 && !(await p.isVisible('.ia-parcours-carte[data-porte="academie"] h3')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(350); }
-    // porte « Me former » : formulaire réglé sur MA2M Academy et débutant·e
+    // (22/11/2026) la page s'affiche en écrans (une porte par écran sur téléphone) : « Suivant », comme une visiteuse
+    const versEcran = async (sel) => { for (let i = 0; i < 14 && !(await p.isVisible(sel)); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(350); } };
+    await versEcran('.ia-parcours-carte[data-porte="reseau"] h3');
+    await p.click('.ia-parcours-carte[data-porte="reseau"] h3');
+    ok(await p.inputValue('#ca-porte') === 'reseau' && await p.inputValue('#ca-experience') === 'oui', n + '« Me faire représenter » touché : Talent Network, déjà mannequin');
+    // porte « Me former » : formulaire réglé sur MA2M Academy et débutant·e ; son bouton amène au formulaire
+    await versEcran('.ia-parcours-carte[data-porte="academie"] h3');
     await p.click('.ia-parcours-carte[data-porte="academie"] h3');
     ok(await p.inputValue('#ca-porte') === 'academie' && await p.inputValue('#ca-experience') === 'non' && await p.isHidden('#ca-lien-bloc')
       && await p.getAttribute('.ia-parcours-carte[data-porte="academie"]', 'class').then((c) => c.includes('choisie')), n + '« Me former » touché : formulaire réglé sur MA2M Academy, débutant·e, carte cochée');
-    // porte « Me faire représenter » via son bouton : amène au formulaire, déjà mannequin
-    await p.click('.ia-parcours-carte[data-porte="reseau"] button'); await p.waitForTimeout(900);
-    ok(await p.inputValue('#ca-porte') === 'reseau' && await p.inputValue('#ca-experience') === 'oui' && await p.isVisible('#ca-lien-bloc'), n + '« Me faire représenter » : Talent Network, déjà mannequin, lien vers son travail proposé');
+    await p.click('.ia-parcours-carte[data-porte="academie"] button'); await p.waitForTimeout(900);
     ok(await p.evaluate(() => { const r = document.getElementById('form-casting').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }), n + 'le bouton amène au formulaire');
+    // dans le formulaire : on change pour Talent Network (déjà mannequin, lien vers son travail proposé)
+    await p.selectOption('#ca-porte', 'reseau');
+    ok(await p.inputValue('#ca-experience') === 'oui' && await p.isVisible('#ca-lien-bloc') && await p.getAttribute('.ia-parcours-carte[data-porte="reseau"]', 'class').then((c) => c.includes('choisie')),
+      n + 'Talent Network choisi dans le formulaire : déjà mannequin, lien proposé, carte mise à jour');
     // la porte et le lien passent en tête du message lu par l'agence
     await p.fill('#ca-lien-travail', 'https://www.instagram.com/awa'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400); await p.fill('#ca-message', 'Bonjour');
     const msg = await p.evaluate(() => messageAvecLien());

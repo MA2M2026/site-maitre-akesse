@@ -147,7 +147,7 @@
   function dessinerResume() {
     recap.textContent = '';
     if (projet) { const p = val('ca-projet') === '__autre__' ? val('ca-projet-autre') : val('ca-projet'); const info = (window.CASTINGS_INFOS || {})[p] || {}; ligne('🎫', p, [info.date, info.lieu].filter(Boolean).join(' · '), 1); }
-    else ligne('🎓', texteOption('ca-experience'), val('ca-lien-travail'), 1);
+    else ligne('🎓', [$('ca-porte') && val('ca-porte') ? texteOption('ca-porte') : '', texteOption('ca-experience')].filter(Boolean).join(' · '), val('ca-lien-travail'), 1);  // (porte : refonte du 25/11/2026)
     const age = $('ca-majorite') && $('ca-majorite').value ? texteOption('ca-majorite') : '';  // (ARTCI : majeure ou mineure)
     const civ = val('ca-genre') === 'homme' ? T('Monsieur', 'Mr') : texteOption('ca-civilite');
     ligne('👤', [civ, val('ca-nom')].filter(Boolean).join(' '), [age, [val('ca-ville') === '__autre__' ? val('ca-ville-autre') : val('ca-ville'), val('ca-commune') && val('ca-commune') !== '__autre__' ? val('ca-commune') : val('ca-commune-autre')].filter(Boolean).join(', '),
