@@ -64,3 +64,25 @@
 /* formulaire de candidature : écrin et boutons (css/luxe.css, .lx-formulaire) */
 
 @media (prefers-reduced-motion: reduce) { .ia-parcours-carte.choisie .ia-rond { animation: none; } }
+/* (25/11/2026, refonte Agence + MA2M Academy) les 3 portes d'entrée, la phrase « gratuit », la FAQ */
+@media (min-width: 1100px) { .ia-parcours--3 { grid-template-columns: repeat(3, 1fr); align-items: start; } }
+.ia-etiquette { margin: 0 0 0.8rem; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; }
+.ia-texte { margin: 1.1rem 0 0; line-height: 1.55; }
+.ia-sous { margin: 1.2rem 0 -0.6rem; }
+.ia-bon { margin: 0 0 1.4rem; padding-left: 1.1rem; display: grid; gap: 0.35rem; font-size: 0.95rem; opacity: 0.92; }
+.ia-parcours-carte .btn { margin: 0.3rem 0.4rem 0 0; }
+.ia-lien-academie { background: transparent; border: 1px solid currentColor; color: inherit; }
+.ia-intro { max-width: 62ch; margin: 0 auto 1rem; text-align: center; line-height: 1.6; }
+.ia-gratuit { max-width: 62ch; margin: 1.6rem auto 0; padding: 1.1rem 1.4rem; text-align: center; font-weight: 600; }
+.ia-faq { display: grid; gap: 0.8rem; max-width: 760px; margin: 0 auto; }
+.ia-faq details { padding: 1rem 1.3rem; }
+.ia-faq summary { cursor: pointer; font-weight: 600; }
+.ia-faq details p { margin: 0.7rem 0 0; line-height: 1.55; }
+/* page MA2M Academy (academie.html, 25/11/2026) : tableau des frais, modalités, boutons */
+.ac-tableau { max-width: 820px; margin: 0 auto; padding: 0.4rem 1rem; overflow-x: auto; }
+.ac-tableau table { width: 100%; border-collapse: collapse; min-width: 520px; }
+.ac-tableau th, .ac-tableau td { padding: 0.8rem 0.6rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.25); vertical-align: top; }
+.ac-tableau tbody tr:last-child th, .ac-tableau tbody tr:last-child td { border-bottom: 0; }
+.ac-tableau thead th { font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.ac-modalites { max-width: 760px; margin: 1.6rem auto 0; padding-left: 1.2rem; display: grid; gap: 0.5rem; line-height: 1.55; }
+.ac-boutons { text-align: center; margin-top: 1.6rem; }

@@ -32,7 +32,7 @@
   function ecranCode() {
     etapes(1);
     return '<div class="inn-une"><div><small>' + T('Retenue au casting', 'Selected at the casting') + '</small><h1>' + T('Bienvenue chez <em>MA2M</em>', 'Welcome to <em>MA2M</em>') + '</h1></div></div>' +
-      '<div class="inn-carte inn-carte--sous-une"><div><h2 class="u-lecteur-ecran">' + T('Inscription nouveaux mannequins', 'New model registration') + '</h2>' +
+      '<div class="inn-carte inn-carte--sous-une"><div><h2 class="u-lecteur-ecran">' + T('Inscription à MA2M Academy', 'MA2M Academy registration') + '</h2>' +
       '<p class="inn-doux">' + T('Réservée aux mannequins retenus : entrez le code personnel que l’agence vous a envoyé, votre date de naissance et les 4 derniers chiffres du numéro WhatsApp donné à votre candidature.', 'For selected models only: enter the personal code sent by the agency, your date of birth and the last 4 digits of the WhatsApp number given in your application.') + '</p></div>' +
       champ('inn-code', T('Code d’inscription', 'Registration code'), E.code) +
       champ('inn-naissance', T('Votre date de naissance', 'Your date of birth'), E.naissance, 'date') +
@@ -78,7 +78,7 @@
   function ecranReglement() {
     etapes(3);
     return '<div class="inn-carte"><div><div class="inn-surtitre">' + T('Étape 2 sur 3', 'Step 2 of 3') + '</div><h2>' + T('Règlement et paiement', 'Rules and payment') + '</h2></div>' +
-      (E.note ? '<a class="btn" href="' + esc(E.note) + '" target="_blank" rel="noopener">' + T('Lire le règlement (PDF)', 'Read the rules (PDF)') + '</a>' : '') +
+      (E.note ? '<a class="btn" href="' + esc(E.note) + '" target="_blank" rel="noopener">' + T('Lire la note d’information de MA2M Academy (PDF)', 'Read the MA2M Academy information note (PDF)') + '</a>' : '') +
       (mineur() ? '<label class="inn-case" for="inn-parent"><input id="inn-parent" type="checkbox"' + (E.parent ? ' checked' : '') + '><span>' +
         T('Je suis ' + esc(E.c.parent_nom) + ', parent ou tuteur légal, et j’autorise cette inscription.', 'I am ' + esc(E.c.parent_nom) + ', parent or legal guardian, and I authorise this registration.') + '</span></label>' : '') +
       '<label class="inn-case" for="inn-regl"><input id="inn-regl" type="checkbox"' + (E.reglement ? ' checked' : '') + '><span>' + T('J’ai lu et j’accepte le règlement de l’agence.', 'I have read and accept the agency’s rules.') + '</span></label>' +
@@ -106,7 +106,7 @@
     if (E.numero === null) E.numero = (E.c && E.c.telephone) || '';
     const m = moyenInn(), mobile = m.code === 'wave' || (MP && MP.MOBILE.indexOf(m.code) >= 0);
     return '<div class="inn-carte"><div><div class="inn-surtitre">' + T('Étape 3 sur 3', 'Step 3 of 3') + '</div><h2>' + T('Paiement de l’inscription', 'Registration payment') + '</h2></div>' +
-      '<div class="pp-blanc mp-pp"><span class="pp-s">' + T('Inscription + 1er mois', 'Registration + 1st month') + '</span><div class="pp-montant"><b>25 000 FCFA</b><span>' + T('en une fois', 'in one payment') + '</span></div>' +
+      '<div class="pp-blanc mp-pp"><span class="pp-s">' + T('Inscription à MA2M Academy + 1er mois de formation', 'MA2M Academy registration + 1st training month') + '</span><div class="pp-montant"><b>25 000 FCFA</b><span>' + T('en une fois', 'in one payment') + '</span></div>' +
       '<div class="pp-tva"><span>' + T('Inscription', 'Registration') + ' <b>15 000 FCFA</b></span><span>' + T('1er mois', '1st month') + ' <b>10 000 FCFA</b></span></div>' +
       (MP ? MP.choix(E.moyens || [m], m.code, 'inscription') : '') + bandeau(E.erreur, 'erreur') + '<div class="mp-pp-suite">' +
       (m.code === 'wave' ? '<a class="btn btn--principal pp-gros" data-bouton-libre data-a="wave" href="' + esc(E.lien || LIEN_WAVE) + '" target="_blank" rel="noopener">' + T('1 · Payer avec Wave', '1 · Pay with Wave') + '</a>' : '') +

@@ -168,6 +168,39 @@ rouge, à toute personne ou IA qui ouvre le dépôt, l'obligation de lire `CLAUD
 agents de code (Codex, Copilot, Cursor…). `GUIDE-DE-SECOURS.md` est le guide de la
 propriétaire pour se débrouiller sans IA (version PDF imprimable remise le 13/10/2026).
 
+## 🏛️ Refonte « Agence + MA2M Academy » (25/11/2026, cahier des charges v0.2 et textes validés par la propriétaire)
+Règle de fond : **on ne paie jamais pour entrer à l'agence, on paie seulement la formation**. La maison a deux
+départements : l'Agence (Talent Network = représentation non exclusive, 2 ans ; Agency Roster = équipe, exclusif,
+5 ans) et **MA2M Academy** (formation initiale 18 mois = 2 × 9 mois ; recyclage 9 mois pour une expérimentée qui
+entre dans l'équipe, représentée dès la signature ; 15 000 FCFA d'inscription + 10 000 FCFA par mois de cours ;
+Révision gratuite et facultative ensuite). Commission de l'agence : 20 %, mannequin payée sous 15 jours. Audit et
+décisions : document « Audit — Restructuration MA2M » (Claude Docs) ; textes validés : un document par page.
+- **Montants** : uniquement sur les pages de l'Academy (`academie.html`, `cours-talons.html`, l'inscription). Jamais
+  sur `integrer-agence.html`, l'accueil, Qui sommes-nous, Services (essai `test-refonte-academie.js`).
+- **`integrer-agence.html`** (FR/EN) : 3 portes (`data-porte` = `reseau` | `academie` | `equipe`), FAQ, critères.
+  Le formulaire a la liste « Votre parcours » (`#ca-porte`) ; `js/integrer-agence.js` la règle depuis les cartes
+  (Talent Network → déjà mannequin, Academy → débutant·e) et depuis l'adresse `#porte-academie` (bouton « Postuler »
+  de la page Academy). La porte part en **première ligne du message** (`Parcours choisi : Talent Network`,
+  `messageAvecLien()` de `js/formulaire-candidature.js`) : aucun changement de base n'était nécessaire.
+- **`academie.html`** (FR/EN, nouvelle) : fabriquée à partir de la page Intégrer l'agence (même en-tête et scripts,
+  sans formulaire) ; programme des 2 niveaux (même texte que `formation_programme`), recyclage 9 mois, frais, Atelier,
+  FAQ. Menu, bas de page (`js/gabarit.js`), `sitemap.xml`, `pages-publiques.js`.
+- **Messages** (`js/messages-candidats.js`) : `porteCandidature(d)` lit la première ligne du message ; `{candidature}`
+  devient « pour rejoindre le Talent Network », « pour MA2M Academy », « pour rejoindre l'équipe de l'agence » ;
+  porte Academy et inscriptions (`messageAcademy`) → en-tête `ENTETE_ACADEMY` et signature `SIGNATURE_ACADEMY`.
+  L'Administration affiche la porte dans le type de la candidature (`typeDe`, `js/admin/site-dossiers.js`).
+- **Base (à coller par la propriétaire, APRÈS la mise en ligne)** : `supabase-refonte-agence-academy.sql` — colonne
+  `casting_applications.porte` remplie par un déclencheur depuis le message (anciennes candidatures reprises) ; table
+  `relations_ma2m` (talent_network, agency_roster, formation_initiale, recyclage ; début, fin, statut ; RLS sans
+  politique, fonctions `relations_liste`, `relation_enregistrer` réservées à l'équipe avec double vérification,
+  `mes_relations` pour la mannequin) ; les mannequins déjà inscrites rangées en Agency Roster + formation initiale ;
+  tâche de nuit `relations-fin-de-contrat` (relation échue → terminée, rien d'effacé). Essais :
+  `scripts/base-essai/essais-refonte-agence-academy.sql`.
+- **Reste à faire** (étapes suivantes, avec la propriétaire) : écrans de l'Administration pour les relations et les
+  contrats ; contrats signés sur le site (textes du juriste) ; application qui s'adapte à la relation (rappels de
+  mensualité seulement aux élèves) ; désactivation automatique du profil en fin de contrat ; nouveau PDF « Note
+  d'information de MA2M Academy » ; documentation de l'agence.
+
 ## 🔗 Liens envoyés par WhatsApp : phrase rassurante (24/11/2026, demande de la propriétaire)
 WhatsApp affiche « Ouvrir le lien ? » quand un lien vient d'un numéro absent des contacts de la personne (on ne peut pas
 l'empêcher). `texteLienRassurant(texte)` (`js/app.js`, phrase `PHRASE_LIEN_SUR`) ajoute, juste après la ligne du premier

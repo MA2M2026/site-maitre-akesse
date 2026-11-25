@@ -39,7 +39,7 @@
       '<p class="form-msg large" id="cd-msg" role="status"></p><div class="large"><button class="btn rouge" type="submit">Créer la fiche et son code</button></div></form>' +
       '<section class="carte"><h2>Codes disponibles <span class="doux">(' + libres.length + ')</span></h2>' + (libres.map(carteCode).join('') || '<p class="doux">Aucun code disponible pour le moment.</p>') +
       '<details class="section-ouverte"><summary>Anciens codes déjà utilisés (' + utilises.length + ')</summary>' + (utilises.map(carteCode).join('') || '<p class="doux">Aucun code déjà utilisé.</p>') + '</details></section>' +
-      '<section class="carte f"><h2 class="large">Note d’intégration (PDF)</h2><p class="doux large">Le document « Note d’information et procédure d’intégration », montré aux mannequins uniquement après la validation de leur code d’inscription. Il n’est jamais public : son adresse est secrète. Un nouveau dépôt remplace l’ancien document.</p>' +
+      '<section class="carte f"><h2 class="large">Note d’information de MA2M Academy (PDF)</h2><p class="doux large">Le document « Note d’information de MA2M Academy », montré aux élèves uniquement après la validation de leur code d’inscription. Il n’est jamais public : son adresse est secrète. Un nouveau dépôt remplace l’ancien document.</p>' +
       '<div class="large" id="ni-etat">Chargement…</div><label class="fl large" for="ni-fichier">Choisir le document (PDF)<input accept="application/pdf" id="ni-fichier" type="file"></label>' +
       '<div class="large"><button class="btn rouge" id="ni-envoyer-btn" type="button" disabled>Déposer ce document</button></div><p class="form-msg large" id="ni-msg" role="status"></p></section>';
   }

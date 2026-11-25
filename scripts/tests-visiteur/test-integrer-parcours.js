@@ -1,6 +1,6 @@
 // Page « Intégrer l'agence » réorganisée (08/11/2026), comme une visiteuse, téléphone et ordinateur, FR et EN.
 // Rien n'est envoyé (aucun formulaire validé) : vidéo présente, critères, deux parcours à toucher qui règlent la liste
-// « Avez-vous déjà été mannequin ? » du formulaire, lien facultatif vers son travail seulement pour « déjà mannequin »
+// « Votre parcours » et « Avez-vous déjà été mannequin ? » du formulaire (3 portes depuis le 25/11/2026), lien facultatif vers son travail seulement pour « déjà mannequin »
 // et repris en tête du message, aucun prix affiché, aucun débordement, aucune erreur.
 const { chromium } = require('playwright'); const { spawn } = require('child_process'); const { brancher } = require('./faux-serveur');
 const chemin = require('path');
@@ -21,25 +21,29 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
     const crit = await p.textContent('.ia-criteres');
     ok(crit.includes('1,75 m') && crit.includes('1,85 m') && crit.includes('14+') && crit.includes('14 – 17'), n + 'critères : 1,75 m, 1,85 m, 14 ans et plus, accord parental');
     ok(!/FCFA|25 000/.test(await p.textContent('main')), n + 'aucun prix sur la page (décision de la propriétaire)');
-    // (22/11/2026) la page s'affiche en écrans : on va à l'écran des parcours avec « Suivant », comme une visiteuse
-    for (let i = 0; i < 12 && !(await p.isVisible('.ia-parcours-carte[data-parcours="non"] h3')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(350); }
-    // carte « Je débute »
-    await p.click('.ia-parcours-carte[data-parcours="non"] h3');
-    ok(await p.inputValue('#ca-experience') === 'non' && await p.isHidden('#ca-lien-bloc') && await p.getAttribute('.ia-parcours-carte[data-parcours="non"]', 'class').then((c) => c.includes('choisie')),
-      n + '« Je débute » touché : formulaire réglé sur débutant·e, carte cochée, pas de lien demandé');
-    // carte « Déjà mannequin » via son bouton : amène au formulaire
-    await p.click('.ia-parcours-carte[data-parcours="oui"] button'); await p.waitForTimeout(900);
-    ok(await p.inputValue('#ca-experience') === 'oui' && await p.isVisible('#ca-lien-bloc'), n + '« Déjà mannequin » choisi : formulaire réglé, champ « lien vers votre travail » proposé');
+    ok((await p.textContent('main')).includes(en ? 'Joining the agency is free' : "L'entrée à l'agence est gratuite"), n + 'la gratuité de l’entrée à l’agence est annoncée (refonte du 25/11/2026)');
+    ok(await p.locator('.ia-parcours-carte[data-porte]').count() === 3, n + 'trois portes : Talent Network, MA2M Academy, équipe de l’agence');
+    // (22/11/2026) la page s'affiche en écrans : on va à l'écran des portes avec « Suivant », comme une visiteuse
+    for (let i = 0; i < 12 && !(await p.isVisible('.ia-parcours-carte[data-porte="academie"] h3')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(350); }
+    // porte « Me former » : formulaire réglé sur MA2M Academy et débutant·e
+    await p.click('.ia-parcours-carte[data-porte="academie"] h3');
+    ok(await p.inputValue('#ca-porte') === 'academie' && await p.inputValue('#ca-experience') === 'non' && await p.isHidden('#ca-lien-bloc')
+      && await p.getAttribute('.ia-parcours-carte[data-porte="academie"]', 'class').then((c) => c.includes('choisie')), n + '« Me former » touché : formulaire réglé sur MA2M Academy, débutant·e, carte cochée');
+    // porte « Me faire représenter » via son bouton : amène au formulaire, déjà mannequin
+    await p.click('.ia-parcours-carte[data-porte="reseau"] button'); await p.waitForTimeout(900);
+    ok(await p.inputValue('#ca-porte') === 'reseau' && await p.inputValue('#ca-experience') === 'oui' && await p.isVisible('#ca-lien-bloc'), n + '« Me faire représenter » : Talent Network, déjà mannequin, lien vers son travail proposé');
     ok(await p.evaluate(() => { const r = document.getElementById('form-casting').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }), n + 'le bouton amène au formulaire');
-    // (14/11/2026) le message est à l'étape 2 du formulaire en étapes : « Suivant », comme une candidate
+    // la porte et le lien passent en tête du message lu par l'agence
     await p.fill('#ca-lien-travail', 'https://www.instagram.com/awa'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400); await p.fill('#ca-message', 'Bonjour');
     const msg = await p.evaluate(() => messageAvecLien());
-    ok(msg === (en ? 'Link to my work: ' : 'Lien vers mon travail : ') + 'https://www.instagram.com/awa\n\nBonjour', n + 'le lien passe en tête du message lu par l’agence');
-    // choisir dans la liste du formulaire garde les cartes à jour
-    await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);   // (retour à l'étape 1)
+    ok(msg === 'Parcours choisi : Talent Network\n\n' + (en ? 'Link to my work: ' : 'Lien vers mon travail : ') + 'https://www.instagram.com/awa\n\nBonjour', n + 'la porte puis le lien passent en tête du message lu par l’agence');
+    // choisir dans la liste du formulaire garde les cartes à jour ; « équipe » laisse l'expérience au choix
+    await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);
+    await p.selectOption('#ca-porte', 'equipe');
+    ok(await p.getAttribute('.ia-parcours-carte[data-porte="equipe"]', 'class').then((c) => c.includes('choisie')) && await p.inputValue('#ca-experience') === 'oui',
+      n + 'porte « équipe » choisie dans le formulaire : carte mise à jour, expérience gardée');
     await p.selectOption('#ca-experience', 'non');
-    ok(await p.getAttribute('.ia-parcours-carte[data-parcours="non"]', 'class').then((c) => c.includes('choisie')) && await p.isHidden('#ca-lien-bloc') && await p.evaluate(() => messageAvecLien()) === 'Bonjour',
-      n + 'retour à « débutant·e » dans le formulaire : carte mise à jour, lien ignoré');
+    ok(await p.isHidden('#ca-lien-bloc') && await p.evaluate(() => messageAvecLien()) === 'Parcours choisi : Agency Roster\n\nBonjour', n + 'équipe, débutant·e : lien ignoré, porte gardée');
     const deb = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     ok(deb <= 1, n + 'aucun débordement horizontal (' + deb + ' px)');
     ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));

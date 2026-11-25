@@ -79,7 +79,8 @@
   const mineurDe = (d) => estMineurDossier(d);  // (règle commune : js/messages-candidats.js)
   function typeDe(d) {
     if (d.type_candidature === 'projet') return d.projet_nom || 'Projet';
-    if (d.type_candidature === 'agence') return 'Intégrer l’agence';
+    // (25/11/2026) la porte choisie sur « Intégrer l'agence » (js/messages-candidats.js, porteCandidature)
+    if (d.type_candidature === 'agence') { const porte = porteCandidature(d); return porte ? porte.libelle : 'Intégrer l’agence'; }
     if (d.type_candidature === 'direct') return 'Casting direct (agence)';
     return null;
   }

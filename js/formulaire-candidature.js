@@ -98,7 +98,17 @@ function messageAvecLien() {
   const texte = document.getElementById('ca-message').value.trim();
   const champ = document.getElementById('ca-lien-travail');
   const lien = champ && !document.getElementById('ca-lien-bloc').classList.contains('u-hidden') ? champ.value.trim() : '';
-  return lien ? T('Lien vers mon travail : ', 'Link to my work: ') + lien + (texte ? '\n\n' + texte : '') : texte;
+  const corps = lien ? T('Lien vers mon travail : ', 'Link to my work: ') + lien + (texte ? '\n\n' + texte : '') : texte;
+  // (25/11/2026, refonte Agence + MA2M Academy) la porte choisie passe en toute première ligne du message lu par
+  // l'agence (Administration : js/messages-candidats.js, porteCandidature) en attendant sa propre colonne en base
+  const porte = porteChoisie();
+  return porte ? 'Parcours choisi : ' + porte.libelle + '\n\n' + corps : corps;
+}
+// les 3 portes de la page « Intégrer l'agence » (libellé en français : c'est l'agence qui le lit)
+const PORTES_CANDIDATURE = { reseau: 'Talent Network', academie: 'MA2M Academy', equipe: 'Agency Roster' };
+function porteChoisie() {
+  const champ = PARCOURS === 'agence' && document.getElementById('ca-porte');
+  return champ && PORTES_CANDIDATURE[champ.value] ? { cle: champ.value, libelle: PORTES_CANDIDATURE[champ.value] } : null;
 }
 function photosMin() { return estDebutant() ? 3 : 4; }
 function majParcours() {
@@ -481,7 +491,7 @@ async function envoyerMedias(etat) {
       name: candidature.full_name,
       telephone: candidature.phone,
       email: candidature.email,
-      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+      message: `Nouvelle candidature casting${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : "Intégrer l'agence" + (porteChoisie() ? ' · ' + porteChoisie().libelle : '') + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
     });
     etat.agencePrevenue = true; etat.agenceComplete = !!(etat.photosFaites && etat.videoFaite); await EnvoiFiable.garder('candidature', etat);
   }
