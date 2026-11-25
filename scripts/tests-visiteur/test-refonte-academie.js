@@ -25,7 +25,7 @@ const PORT = String(9960 + Math.floor(Math.random() * 30));
     ok(/MA2M Academy/.test(texte) && (en ? /18 months/.test(texte) && /9 months/.test(texte) : /18 mois/.test(texte) && /9 mois/.test(texte)), n + 'formation initiale de 18 mois et recyclage de 9 mois présentés');
     ok(await p.locator('main .lx-prog-mois').count() === 27 && await p.locator('#recyclage .lx-prog-mois').count() === 9, n + 'programme : 2 niveaux de 9 mois, recyclage de 9 mois');
     // (25/11/2026, décision de la propriétaire) aucun montant sur le site : seulement ce que comprennent l'inscription et la formation
-    const inclus = await p.textContent('#tarifs');
+    const inclus = texte;  // (l'écran est coupé en deux : la 2e moitié n'est plus dans #tarifs)
     ok(!/FCFA|\d\s?000/.test(texte) && (en ? /training outfits/.test(inclus) && /every Sunday, from 3 pm to 6 pm/.test(inclus) && /report every quarter/.test(inclus) && !/entrance assessment/i.test(inclus)
       : /tenues de formation/.test(inclus) && /chaque dimanche, de 15 h à 18 h/.test(inclus) && /bulletin chaque trimestre/.test(inclus) && !/évaluation d.entrée/i.test(inclus)), n + 'aucun montant : ce que comprennent l’inscription et la formation');
     ok(en ? /remain your personal asset\. Joining the agency is free/.test(inclus) : /restent votre acquis personnel\. L'entrée à l'agence est gratuite/.test(inclus), n + 'rappel : acquis personnel, entrée à l’agence gratuite');
