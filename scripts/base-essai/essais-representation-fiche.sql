@@ -11,6 +11,12 @@ select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai_refuse($$select representation_creer_fiche(current_setting('essai.tn')::uuid)$$, 'candidature pas encore retenue : refusé');
 update casting_applications set status = 'retenue' where id in (current_setting('essai.tn')::uuid, current_setting('essai.ac')::uuid);
 select essai_refuse($$select representation_creer_fiche(current_setting('essai.ac')::uuid)$$, 'candidature MA2M Academy : pas de fiche gratuite');
+reset role;
+select set_config('essai.mineure', formulaire_public_enregistrer('casting_applications', '{"full_name":"Petite Representee","email":"pr@exemple.ci","phone":"+225 0707070723","mineur":false,"genre":"femme","type_candidature":"agence","message":"Parcours choisi : Talent Network\n\nBonjour"}'::jsonb, '9.9.9.43')::text, false);
+update casting_applications set status = 'retenue', date_naissance = current_date - interval '15 years' where id = current_setting('essai.mineure')::uuid;
+set role authenticated;
+select essai_qui('00000000-0000-0000-0000-0000000000a1');
+select essai_refuse($$select representation_creer_fiche(current_setting('essai.mineure')::uuid)$$, 'mineure (par sa date de naissance) sans confirmation du parent : refusé');
 select set_config('essai.m', representation_creer_fiche(current_setting('essai.tn')::uuid)::text, false);
 select essai(representation_creer_fiche(current_setting('essai.tn')::uuid) = current_setting('essai.m')::uuid, 'deuxième clic : la même fiche, pas de doublon');
 reset role;
@@ -21,10 +27,11 @@ select essai((select formation_fin(current_setting('essai.m')::uuid) < formation
 select essai((select mensualite_etat_regle(current_setting('essai.m')::uuid, (reprise_date() + interval '1 month')::date, formation_fin(current_setting('essai.m')::uuid), false) = 'termine'), 'après la reprise : rien à payer (terminé)');
 -- code d espace : sans paiement pour la représentation simple, toujours refusé sans paiement pour les autres
 with i as (insert into agence_mannequins (full_name, genre) values ('Sans Paiement Ni Contrat', 'femme') returning id) select set_config('essai.sans', id::text, false) from i;
+insert into relations_ma2m (mannequin_id, sorte, statut, debut, fin) values (current_setting('essai.sans')::uuid, 'talent_network', 'en_attente', current_date, current_date + 700);
 set role authenticated;
 select essai_qui('00000000-0000-0000-0000-0000000000a1');
 select essai(code_espace_creer(current_setting('essai.m')::uuid) like 'ESP-%', 'représentation simple : code d espace créé sans paiement');
-select essai_refuse($$select code_espace_creer(current_setting('essai.sans')::uuid)$$, 'sans inscription payée ni représentation : toujours refusé');
+select essai_refuse($$select code_espace_creer(current_setting('essai.sans')::uuid)$$, 'relation ajoutée à la main sans candidature de représentation, sans paiement : toujours refusé');
 -- une personne qui n est pas de l équipe ne crée rien
 select essai_qui('00000000-0000-0000-0000-0000000000b9');
 select essai_refuse($$select representation_creer_fiche(current_setting('essai.tn')::uuid)$$, 'personne hors équipe : refusé');

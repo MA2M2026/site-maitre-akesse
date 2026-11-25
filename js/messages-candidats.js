@@ -399,23 +399,21 @@ const LIEN_INSCRIPTION = MA2M_APPLI + 'inscription-mannequin.html';  // MA2M_APP
 // (25/11/2026, accord de la propriétaire) Agence de représentation, simple représentation : pas d'inscription ni de
 // paiement ; son code d'espace (ESP-…) lui permet de créer son compte dans l'application. Mineur : au parent.
 function lienWhatsAppCodeEspaceRepresentation(d, code, valableJusquau) {
+  const fin = `\n\nOuvrez l'application MA2M Mannequin : ${MA2M_APPLI}\npuis touchez « Créer mon compte (code reçu après l'inscription) » et entrez ce code personnel : *${code}*\n\n` +
+    `Il ne sert qu'une seule fois${valableJusquau ? ' et reste valable jusqu’au ' + valableJusquau : ''}. La représentation par l'agence est gratuite : vous n'avez rien à payer.`;
+  return lienWhatsAppPersonnel(d, `Bonne nouvelle : l'Agence de représentation de Maître Akesse Model Management vous accueille. Pour créer votre espace mannequin :` + fin,
+    `L'Agence de représentation de Maître Akesse Model Management accueille votre enfant {prénom}. Pour créer son espace mannequin :` + fin);
+}
+// lien wa.me d'un message personnel : à la candidate, ou à son parent si elle est mineure (même règle pour tous les codes)
+function lienWhatsAppPersonnel(d, corpsCandidat, corpsParent) {
   const contacts = contactsEnvoi(d);
   const numero = numeroWhatsApp(contacts.phone);
   if (!numero) return null;
-  const fin = `\n\nOuvrez l'application MA2M Mannequin : ${MA2M_APPLI}\npuis touchez « Créer mon compte (code reçu après l'inscription) » et entrez ce code personnel : *${code}*\n\n` +
-    `Il ne sert qu'une seule fois${valableJusquau ? ' et reste valable jusqu’au ' + valableJusquau : ''}. La représentation par l'agence est gratuite : vous n'avez rien à payer.`;
-  const texte = contacts.parent
-    ? messageParent(`L'Agence de représentation de Maître Akesse Model Management accueille votre enfant {prénom}. Pour créer son espace mannequin :` + fin)
-    : messageCandidat(`Bonne nouvelle : l'Agence de représentation de Maître Akesse Model Management vous accueille. Pour créer votre espace mannequin :` + fin);
+  const texte = contacts.parent ? messageParent(corpsParent) : messageCandidat(corpsCandidat);
   return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(texteLienRassurant(personnaliserMessage(texte, d, null, () => '')));
 }
 function lienWhatsAppCode(d, code) {
-  const contacts = contactsEnvoi(d);
-  const numero = numeroWhatsApp(contacts.phone);
-  if (!numero) return null;
   const fin = `\n\nIl ne sert qu'une seule fois. Inscription : ${LIEN_INSCRIPTION}`;
-  const texte = contacts.parent
-    ? messageParent(`Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *${code}*` + fin)
-    : messageCandidat(`Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*` + fin);
-  return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(texteLienRassurant(personnaliserMessage(texte, d, null, () => '')));
+  return lienWhatsAppPersonnel(d, `Voici votre code personnel pour vous inscrire chez Maître Akesse Model Management : *${code}*` + fin,
+    `Voici le code personnel de votre enfant {prénom} pour son inscription chez Maître Akesse Model Management : *${code}*` + fin);
 }

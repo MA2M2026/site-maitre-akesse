@@ -900,6 +900,16 @@ drop policy if exists codes_espace_lecture on codes_espace;
 create policy codes_espace_lecture on codes_espace for select using (portail_peut('paiements'));
 grant select on codes_espace to authenticated;
 
+-- (25/11/2026) représentation simple sans paiement : la vraie règle est dans supabase-representation-fiche.sql.
+-- Ici, seulement une version qui dit non, créée UNIQUEMENT si la fonction n existe pas encore (un nouveau collage
+-- de ce fichier ne défait donc jamais la vraie règle).
+do $do$ begin
+  if to_regprocedure('public.code_espace_sans_paiement(uuid)') is null then
+    execute 'create function public.code_espace_sans_paiement(p_mannequin uuid) returns boolean language sql stable as $f$ select false $f$';
+    execute 'revoke all on function public.code_espace_sans_paiement(uuid) from public, anon, authenticated';
+  end if;
+end $do$;
+-- définition identique à supabase-representation-fiche.sql
 create or replace function code_espace_creer(p_mannequin uuid)
 returns text language plpgsql security definer set search_path = public, extensions as $$
 declare
@@ -907,14 +917,16 @@ declare
   nouveau text;
   alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 begin
-  if not portail_peut('paiements') then raise exception 'Accès refusé'; end if;
+  if not portail_peut('paiements') or not exists (select 1 from admins where user_id = auth.uid() and portail_mfa_ok()) then raise exception 'Accès refusé'; end if;
   select * into m from agence_mannequins where id = p_mannequin;
   if not found then raise exception 'Mannequin introuvable.'; end if;
   if m.user_id is not null then raise exception 'Ce mannequin a déjà son espace.'; end if;
-  if not exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'inscription' and statut = 'valide') then
+  -- (25/11/2026) MA2M Academy : après l inscription payée et validée. Représentation simple : gratuite, sans paiement.
+  if not exists (select 1 from paiements_mannequins where mannequin_id = p_mannequin and objet = 'inscription' and statut = 'valide')
+     and not code_espace_sans_paiement(p_mannequin) then
     raise exception 'Pas d''espace mannequin sans inscription payée et validée.';
   end if;
-  -- un seul code valable à la fois : l'ancien est annulé
+  -- un seul code valable à la fois : l ancien est annulé
   update codes_espace set annule = true where mannequin_id = p_mannequin and utilise_le is null and not annule;
   loop
     nouveau := 'ESP-';

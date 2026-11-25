@@ -345,7 +345,10 @@
   // supabase-representation-fiche.sql) puis envoi par WhatsApp.
   async function blocRepresentation(d) {
     const titre = '<h2>Agence de représentation</h2><p class="doux petit-texte">Simple représentation : gratuit, pas de code d’inscription (l’inscription payante est celle de MA2M Academy).</p>';
-    const fiches = await P.bd(sb.from('agence_mannequins').select('id, user_id').eq('candidature_id', d.id).limit(1)).catch(() => []);
+    // (lecture impossible : on le dit, au lieu de proposer de recréer une fiche ou un code déjà envoyé)
+    const illisible = '<section class="carte code-zone">' + titre + '<p>Impossible de lire sa fiche pour l’instant (réseau ou connexion). Rechargez la page.</p></section>';
+    let fiches;
+    try { fiches = await P.bd(sb.from('agence_mannequins').select('id, user_id').eq('candidature_id', d.id).limit(1)); } catch (e) { return illisible; }
     const m = fiches[0];
     if (!m) {
       if (mineurDe(d) && !d.parent_confirme_le) return '<section class="carte code-zone">' + titre + '<p>Attendez la confirmation du parent pour créer sa fiche.</p></section>';
@@ -353,8 +356,11 @@
         '<button type="button" class="btn rouge" data-action="dossier-representation-fiche">Créer sa fiche</button></section>';
     }
     if (m.user_id) return '<section class="carte code-zone">' + titre + '<p>✓ Sa fiche est créée et son espace dans l’application aussi.</p></section>';
-    const codes = await P.bd(sb.from('codes_espace').select('code, expire_le').eq('mannequin_id', m.id).eq('annule', false).is('utilise_le', null)
-      .gt('expire_le', new Date().toISOString()).order('expire_le', { ascending: false }).limit(1)).catch(() => []);
+    let codes;
+    try {
+      codes = await P.bd(sb.from('codes_espace').select('code, expire_le').eq('mannequin_id', m.id).eq('annule', false).is('utilise_le', null)
+        .gt('expire_le', new Date().toISOString()).order('expire_le', { ascending: false }).limit(1));
+    } catch (e) { return illisible; }
     const code = codes[0];
     if (!code) {
       return '<section class="carte code-zone">' + titre + '<p>✓ Sa fiche est créée.</p><p>2. Générez son code d’espace : elle s’en servira pour créer son compte dans l’application (une seule fois, valable 7 jours).</p>' +
