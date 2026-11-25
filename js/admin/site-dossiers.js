@@ -339,16 +339,39 @@
     P.convoquerSelection(ids, { titre: [d.project_type, d.company].filter(Boolean).join(' · ') || 'Sélection client', type: typeDuProjet(d.project_type),
       date: d.event_date || '', ville: d.city || '', client: d.company || d.contact_name || '' });
   };
+  // (25/11/2026, accord de la propriétaire) Agence de représentation, simple représentation : gratuit, pas de code
+  // d'inscription. 1) « Créer sa fiche » : fiche du registre recopiée de la candidature + relation en attente du contrat
+  // (representation_creer_fiche) ; 2) « Générer le code d'espace » (code_espace_creer, sans paiement pour elle seulement :
+  // supabase-representation-fiche.sql) puis envoi par WhatsApp.
+  async function blocRepresentation(d) {
+    const titre = '<h2>Agence de représentation</h2><p class="doux petit-texte">Simple représentation : gratuit, pas de code d’inscription (l’inscription payante est celle de MA2M Academy).</p>';
+    const fiches = await P.bd(sb.from('agence_mannequins').select('id, user_id').eq('candidature_id', d.id).limit(1)).catch(() => []);
+    const m = fiches[0];
+    if (!m) {
+      if (mineurDe(d) && !d.parent_confirme_le) return '<section class="carte code-zone">' + titre + '<p>Attendez la confirmation du parent pour créer sa fiche.</p></section>';
+      return '<section class="carte code-zone">' + titre + '<p>1. Créez sa fiche : ses informations sont recopiées de sa candidature, et son contrat de représentation est noté « en attente de signature ».</p>' +
+        '<button type="button" class="btn rouge" data-action="dossier-representation-fiche">Créer sa fiche</button></section>';
+    }
+    if (m.user_id) return '<section class="carte code-zone">' + titre + '<p>✓ Sa fiche est créée et son espace dans l’application aussi.</p></section>';
+    const codes = await P.bd(sb.from('codes_espace').select('code, expire_le').eq('mannequin_id', m.id).eq('annule', false).is('utilise_le', null)
+      .gt('expire_le', new Date().toISOString()).order('expire_le', { ascending: false }).limit(1)).catch(() => []);
+    const code = codes[0];
+    if (!code) {
+      return '<section class="carte code-zone">' + titre + '<p>✓ Sa fiche est créée.</p><p>2. Générez son code d’espace : elle s’en servira pour créer son compte dans l’application (une seule fois, valable 7 jours).</p>' +
+        '<button type="button" class="btn rouge" data-action="dossier-representation-code" data-id="' + P.esc(m.id) + '">Générer le code d’espace</button></section>';
+    }
+    const wa = lienWhatsAppCodeEspaceRepresentation(d, code.code, P.dateHeure(code.expire_le));  // js/messages-candidats.js
+    return '<section class="carte code-zone">' + titre + '<p>✓ Sa fiche est créée.</p><p class="code-valeur"><strong id="dos-code">' + P.esc(code.code) + '</strong>, code d’espace valable jusqu’au ' + P.esc(P.dateHeure(code.expire_le)) + '</p><div class="ligne">' +
+      '<button type="button" class="btn" data-action="dossier-code-copier">Copier</button>' +
+      (wa ? '<a class="btn rouge" href="' + P.esc(wa) + '" target="_blank" rel="noopener">💬 Envoyer par WhatsApp</a>' : '') + '</div></section>';
+  }
   async function blocCode() {
     const d = fiche.d;
     if (fiche.source !== 'casting' || d.status !== 'retenue') return '';
     // (25/11/2026, refonte) Talent Network : jamais de frais. Le code mène à l'inscription PAYANTE de MA2M Academy : on
     // ne le propose pas ; la personne est ajoutée par « Ajouter une personne » en attendant les contrats sur le site.
     const porte = porteCandidature(d);  // (js/messages-candidats.js)
-    if (porte && porte.cle === 'reseau') {
-      return '<section class="carte code-zone"><h2>Talent Network</h2><p>Pas de code d’inscription : l’inscription avec code est celle de MA2M Academy, payante. ' +
-        'Une mannequin Talent Network ne paie rien. Ajoutez-la avec « Ajouter une personne » (Mannequins), en attendant la signature des contrats sur le site.</p></section>';
-    }
+    if (porte && porte.cle === 'reseau') return blocRepresentation(d);
     const codes = await P.bd(sb.from('codes_inscription').select('code, utilise, utilise_le').eq('candidature_id', d.id)).catch(() => []);
     const libre = codes.find((c) => !c.utilise), utilise = codes.find((c) => c.utilise);
     let corps;
@@ -709,6 +732,19 @@
   P.actions['dossier-code-creer'] = async (el) => {
     el.disabled = true;
     try { await P.rpc('code_individuel_creer', { p_candidature: fiche.d.id }); }
+    catch (e) { el.disabled = false; P.message('Code non créé : ' + P.erreurTexte(e)); return; }
+    await rafraichirCode();
+  };
+  P.actions['dossier-representation-fiche'] = async (el) => {
+    el.disabled = true;
+    try { await P.rpc('representation_creer_fiche', { p_candidature: fiche.d.id }); }
+    catch (e) { el.disabled = false; P.message('Fiche non créée : ' + P.erreurTexte(e)); return; }
+    P.message('Fiche créée.');
+    await rafraichirCode();
+  };
+  P.actions['dossier-representation-code'] = async (el) => {
+    el.disabled = true;
+    try { await P.rpc('code_espace_creer', { p_mannequin: el.dataset.id }); }
     catch (e) { el.disabled = false; P.message('Code non créé : ' + P.erreurTexte(e)); return; }
     await rafraichirCode();
   };

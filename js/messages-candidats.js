@@ -396,6 +396,19 @@ function envoyerDansApplication(cles, sorte, titre, texte, image, fiche, lien) {
 // Partagé le 22/10/2026 (ancien tableau de bord, fiche et « Codes d'accès » de la nouvelle
 // Administration). Renvoie le lien wa.me prêt à ouvrir, ou null sans numéro utilisable.
 const LIEN_INSCRIPTION = MA2M_APPLI + 'inscription-mannequin.html';  // MA2M_APPLI : js/messages-mensualites.js
+// (25/11/2026, accord de la propriétaire) Agence de représentation, simple représentation : pas d'inscription ni de
+// paiement ; son code d'espace (ESP-…) lui permet de créer son compte dans l'application. Mineur : au parent.
+function lienWhatsAppCodeEspaceRepresentation(d, code, valableJusquau) {
+  const contacts = contactsEnvoi(d);
+  const numero = numeroWhatsApp(contacts.phone);
+  if (!numero) return null;
+  const fin = `\n\nOuvrez l'application MA2M Mannequin : ${MA2M_APPLI}\npuis touchez « Créer mon compte (code reçu après l'inscription) » et entrez ce code personnel : *${code}*\n\n` +
+    `Il ne sert qu'une seule fois${valableJusquau ? ' et reste valable jusqu’au ' + valableJusquau : ''}. La représentation par l'agence est gratuite : vous n'avez rien à payer.`;
+  const texte = contacts.parent
+    ? messageParent(`L'Agence de représentation de Maître Akesse Model Management accueille votre enfant {prénom}. Pour créer son espace mannequin :` + fin)
+    : messageCandidat(`Bonne nouvelle : l'Agence de représentation de Maître Akesse Model Management vous accueille. Pour créer votre espace mannequin :` + fin);
+  return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(texteLienRassurant(personnaliserMessage(texte, d, null, () => '')));
+}
 function lienWhatsAppCode(d, code) {
   const contacts = contactsEnvoi(d);
   const numero = numeroWhatsApp(contacts.phone);
