@@ -41,11 +41,11 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   await p.click('#envoi-a-finir a'); await p.waitForTimeout(500);
   await p.waitForFunction(() => /Merci|reste repartira/.test((document.getElementById('ca-msg') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
   const fin = await p.evaluate(async () => ({ msg: document.getElementById('ca-msg').textContent, garde: await EnvoiFiable.lire('candidature'), bandeau: !!document.getElementById('envoi-a-finir'),
-    fiche: (document.querySelector('#ca-msg .ca-fiche-inscription') || {}).href || '' }));
+    fiche: (document.getElementById('ca-fiche-inscription') || {}).href || '' }));
   const courriels = journal.filter((j) => j[0] === 'EMAIL').length;
   ok(drive.includes('video_debut') && !drive.includes('photos'), 'reprise : la vidéo repart toute seule, les photos ne sont pas renvoyées (' + drive.join(', ') + ')');
   ok(/Merci/.test(fin.msg) && fin.garde === null && !fin.bandeau, 'reprise : message de fin, dossier oublié du téléphone, pas de bandeau sur le formulaire');
-  ok(/\/documents\/MA2M-Academy-Frais-de-formation\.pdf$/.test(fin.fiche), 'MA2M Academy : après l’envoi, bouton « Consulter la fiche d’inscription » (les tarifs ne sont pas sur le site)');
+  ok(/\/assets\/documents\/MA2M-Academy-Frais-de-formation\.pdf$/.test(fin.fiche), 'MA2M Academy : après l’envoi, bouton « Consulter la fiche d’inscription » (les tarifs ne sont pas sur le site)');
   ok(courriels === 1, 'l’agence est prévenue une seule fois (' + courriels + ')');
   // 4. cours de talons : inscription coupée pendant la vidéo (photos déjà arrivées) → au retour, la vidéo repart,
   //    l'inscription est enregistrée une fois, puis oubliée du téléphone

@@ -18,4 +18,15 @@
   const h = (location.hash || '').slice(1);
   if (h === 'integrer') ouvrir('integrer', true);
   else if (h === 'simple' || h === 'candidature') ouvrir('simple', true);
+  else {
+    // un brouillon gardé sur l'appareil (js/brouillon.js) ou un envoi coupé qui reprend (js/envoi-fiable.js) : le
+    // formulaire « Simple représentation » se rouvre tout seul, pour que la candidate voie son texte et le message d'envoi
+    let brouillon = null;
+    try { brouillon = localStorage.getItem('ma2m_brouillon_' + location.pathname.replace(/\.html$/, '') + '_form-casting'); } catch (e) { brouillon = null; }
+    if (brouillon) ouvrir('simple', false);
+    // (EnvoiFiable : constante globale de js/app.js, chargé avant ce fichier)
+    else if (typeof EnvoiFiable !== 'undefined' && typeof EnvoiFiable.lire === 'function') {
+      Promise.resolve(EnvoiFiable.lire('candidature')).then((e) => { if (e) ouvrir('simple', false); }).catch(() => {});
+    }
+  }
 })();

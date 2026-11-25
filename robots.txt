@@ -6,5 +6,6 @@ Disallow: /selection
 Disallow: /en/selection
 Disallow: /reinitialiser-mot-de-passe
 Disallow: /outils/
+Disallow: /assets/documents/MA2M-Academy
 
 Sitemap: https://www.maitreakessemodelmanagement.com/sitemap.xml

@@ -511,12 +511,13 @@ async function envoyerMedias(etat) {
   // (25/11/2026, décision de la propriétaire) MA2M Academy : les tarifs ne sont pas sur le site ; une fois le dossier
   // envoyé, la candidate peut consulter la fiche d'inscription (droits d'inscription et frais de formation, en PDF)
   const porteEnvoyee = window.Partage.porteDuMessage(candidature.message);
-  if (porteEnvoyee && (porteEnvoyee.cle === 'academie' || porteEnvoyee.cle === 'equipe') && msg && !msg.querySelector('.ca-fiche-inscription')) {
+  // (le bouton est placé juste après le message, pas dedans : afficherMsg compare le texte du message)
+  if (porteEnvoyee && (porteEnvoyee.cle === 'academie' || porteEnvoyee.cle === 'equipe') && msg && !document.getElementById('ca-fiche-inscription')) {
     const fiche = document.createElement('a');
-    fiche.className = 'btn btn--principal ca-fiche-inscription';
-    fiche.href = '/documents/MA2M-Academy-Frais-de-formation.pdf'; fiche.target = '_blank'; fiche.rel = 'noopener';
+    fiche.id = 'ca-fiche-inscription'; fiche.className = 'btn btn--principal ca-fiche-inscription';
+    fiche.href = '/assets/documents/MA2M-Academy-Frais-de-formation.pdf'; fiche.target = '_blank'; fiche.rel = 'noopener';
     fiche.textContent = T('Consulter la fiche d’inscription', 'View the registration sheet');
-    msg.appendChild(document.createElement('br')); msg.appendChild(fiche);
+    msg.insertAdjacentElement('afterend', fiche);
   }
   if (complet) {
     await EnvoiFiable.oublier('candidature');
