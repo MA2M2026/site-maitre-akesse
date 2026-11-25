@@ -335,7 +335,7 @@ const COLONNES_FORMULAIRES = {
 // « J'ai pris connaissance de la politique de confidentialité » ; le serveur enregistre la VERSION de la politique en vigueur
 // (jamais celle envoyée par la page), et la base ajoute la date (déclencheur, supabase-conformite-consentement-traces.sql).
 // À changer en même temps que la date affichée en bas de politique-confidentialite.html (FR et EN).
-const POLITIQUE_VERSION = '2026-11-23';
+const POLITIQUE_VERSION = '2026-11-25';  // (25/11/2026 : refonte MA2M Academy / Agence de représentation)
 function garderColonnesAutorisees(table, ligne) {
   const propre = {};
   for (const c of COLONNES_FORMULAIRES[table] || []) if (Object.prototype.hasOwnProperty.call(ligne, c)) propre[c] = ligne[c];
