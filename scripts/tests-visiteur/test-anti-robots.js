@@ -36,7 +36,7 @@ async function serveur() {
   const rpcsAvantV = rpcs.length;
   await appeler({ table: 'messages_contact', ligne: Object.assign({}, ligne, { id: 'c-v', politique_version: 'falsifiee', consentement_le: '2000-01-01' }), jeton: 'bon-jeton' });
   const lv = (rpcs[rpcsAvantV] || {}).p_ligne || {};
-  ok(lv.politique_version === '2026-11-23' && !('consentement_le' in lv), 'serveur : version de la politique ajoutée par le serveur (' + lv.politique_version + '), date jamais reçue de la page');
+  ok(lv.politique_version === '2026-11-25' && !('consentement_le' in lv), 'serveur : version de la politique ajoutée par le serveur (' + lv.politique_version + '), date jamais reçue de la page');
   rpcs.splice(rpcsAvantV);
   // (24/11/2026) candidature d'une mineure : la base refuse les coordonnées de la candidate recopiées pour le parent ;
   // le serveur le dit clairement à la page (parentIdentique), au lieu d'une erreur générale
