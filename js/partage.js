@@ -491,7 +491,17 @@
     const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(propre));
     return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join('');
   }
-  racine.Partage = { rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enMetres, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
+  // (25/11/2026, refonte Agence + MA2M Academy) les 3 portes d'« Intégrer l'agence » : clé ↔ libellé écrit en première
+  // ligne du message de candidature (« Parcours choisi : … »). Même table dans porte_depuis_message
+  // (supabase-refonte-agence-academy.sql) : à changer aux deux endroits.
+  const PORTES_CANDIDATURE = { reseau: 'Talent Network', academie: 'MA2M Academy', equipe: 'Agency Roster' };
+  // la porte écrite au tout début d'un message (comme la base : rien si la ligne est ailleurs)
+  function porteDuMessage(message) {
+    const m = /^Parcours choisi : ([^\n]+)/.exec(String(message == null ? '' : message));
+    const cle = m && Object.keys(PORTES_CANDIDATURE).find((k) => PORTES_CANDIDATURE[k] === m[1].trim());
+    return cle ? { cle, libelle: PORTES_CANDIDATURE[cle] } : null;
+  }
+  racine.Partage = { PORTES_CANDIDATURE, porteDuMessage, rognerBlancs, empreinteTexte, urlHttpSure, deriverNiveauMannequin, niveauNormalise, libelleNiveauPublic, enMetres, enPieds, enPouces, enLivres, pointureUS, TRADUCTIONS_EN, enAnglais, cleProjet, anneesDe, memeProjet, TYPES_EXPERIENCE_AGENDA, estDoublonDe, fusionnerExperiences, photosAffichees, experiencesDepuisParcours,
     Noeud, documentVirtuel, titreLisible, MA2M_TYPES_AGENDA, libelleTypeAgenda, dateAgenda, dateDuJour, separerAgenda,
     lienFicheMannequin, lieuProjet, dateLieuProjet, ma2mCompteParType, nombreTypeAgenda, projetsAvecNoms };
   racine.ListesFormulaires = { VILLES_CI, COMMUNES_ABIDJAN, INDICATIFS_PAYS, indicatifsAffiches, optionsIndicatifs, optionsListe, optionsNombres, remplirSelectsHtml };

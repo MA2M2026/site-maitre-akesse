@@ -25,6 +25,7 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-casting')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
     // Remplissage comme une candidate de 15 ans
     // Intégrer l'agence : parcours débutant ; Postuler à un casting : choix du projet
+    if (await p.$('#ca-porte')) await choisir(p, '#ca-porte', 'equipe');   // (3 portes, 25/11/2026 : l'expérience n'est demandée que pour l'équipe)
     if (await p.$('#ca-experience')) await choisir(p, '#ca-experience', 'non');
     const etapesVues = [await etape()];
     if (await p.$('.lx-casting')) {

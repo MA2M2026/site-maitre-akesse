@@ -16,7 +16,7 @@ window.demarrerNoteIntegration = function () {
       const n = await actionImageSite({ action: 'lire', categorie: 'note-integration' });
       if (numero !== demande) return;
       etat.textContent = '';
-      if (!n.chemin) { etat.textContent = 'Aucun document déposé : les mannequins ne voient pas encore de note d’intégration.'; return; }
+      if (!n.chemin) { etat.textContent = 'Aucun document déposé : les élèves ne voient pas encore de note d’information de MA2M Academy.'; return; }
       etat.append('Document en place, déposé le ' + new Date(n.date).toLocaleDateString('fr-FR') + '. ');
       const lien = document.createElement('a');
       lien.href = PHOTOS_DIRECTES + n.chemin; lien.target = '_blank'; lien.rel = 'noopener'; lien.textContent = 'Voir le document';

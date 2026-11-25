@@ -139,7 +139,7 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     }
     // le formulaire passe à son étape 2 : la barre des écrans s'efface (les boutons du formulaire prennent le relais)
     if (ia) {
-    await p.selectOption('#ca-experience', 'non'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400);
+    await p.selectOption('#ca-porte', 'academie'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400);   // (3 portes depuis le 25/11/2026)
     e = await etat(p);
     ok(!e.barre && await p.isVisible('.lx-etape:not([hidden]) .lx-retour'), n + 'formulaire à l’étape 2 : la barre du bas s’efface, le Retour du formulaire reste');
     await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);
@@ -166,14 +166,14 @@ const FORMULAIRE = { 'integrer-agence': ['#candidature', '#form-casting'], candi
     ok(e.debord <= 1 && !p.errs.length, n + 'rien ne dépasse sur le côté, aucune erreur ' + p.errs.join(' | '));
     await p.context().close();
 
-    // un bouton du haut (« Je débute ») mène à l'écran des parcours, carte cochée
+    // le lien #parcours mène à l'écran de la 1re porte ; son bouton ouvre le formulaire réglé (3 portes, 25/11/2026)
     if (ia) {
     const q = await ouvrir(page, w, h);
     await q.goto('http://127.0.0.1:' + PORT + '/' + page + '#parcours'); await q.waitForTimeout(1500);
-    ok(await q.isVisible('.ia-parcours-carte[data-parcours="non"]'), n + 'lien direct #parcours : l’écran des parcours s’ouvre');
+    ok(await q.isVisible('.ia-parcours-carte[data-porte="reseau"]'), n + 'lien direct #parcours : l’écran de la 1re porte s’ouvre');
     // « Je choisis ce parcours » mène au formulaire
-    await q.click('.ia-parcours-carte[data-parcours="oui"] button'); await q.waitForTimeout(700);
-    ok(await q.isVisible('#form-casting') && await q.inputValue('#ca-experience') === 'oui', n + 'le bouton de la carte (« ' + (en ? 'Choose' : 'Je choisis') + ' … ») ouvre l’écran du formulaire, réglé');
+    await q.click('.ia-parcours-carte[data-porte="reseau"] button'); await q.waitForTimeout(700);
+    ok(await q.isVisible('#form-casting') && await q.inputValue('#ca-porte') === 'reseau' && await q.inputValue('#ca-experience') === 'oui', n + 'le bouton de la carte (« ' + (en ? 'Choose' : 'Je choisis') + ' … ») ouvre l’écran du formulaire, réglé');
     await q.context().close();
     }
 

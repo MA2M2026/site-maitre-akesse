@@ -14,6 +14,10 @@
 
 const ENTETE_MESSAGE = '✨ *MAÎTRE AKESSE MODEL MANAGEMENT* ✨';
 const SIGNATURE_MESSAGE = "_L'équipe Maître Akesse Model Management_";
+// (25/11/2026, refonte validée par la propriétaire) les messages de MA2M Academy (porte « Me former », inscriptions,
+// formation) portent l'en-tête et la signature de l'Academy : personnaliserMessage les échange au moment de l'envoi
+const ENTETE_ACADEMY = '✨ *MA2M ACADEMY* ✨ · Maître Akesse Model Management';
+const SIGNATURE_ACADEMY = "_L'équipe MA2M Academy_";
 function messageCandidat(corps) { return `${ENTETE_MESSAGE}\n\nBonjour {prénom},\n\n${corps}\n\n${SIGNATURE_MESSAGE}`; }
 // Mineur (décision de la propriétaire, 07/10/2026) : le message part vers le parent, qu'on
 // salue par sa civilité et son nom complet ({parent} : « Madame Kouassi Marie »).
@@ -237,9 +241,9 @@ ${DRESS_CODE}
   inscription('ins_relance_paiement', 'en attente de paiement', { groupe: true }, '💳 Paiement à vérifier : relance', `Nous avons bien reçu votre inscription. _Votre paiement est toujours en cours de vérification._ Si vous avez payé par Wave, gardez bien votre reçu : nous vous confirmons la suite très bientôt.`, `Nous avons bien reçu la demande d'inscription de votre enfant {prénom}. _Le paiement est toujours en cours de vérification._ Si vous avez payé par Wave, gardez bien votre reçu : nous vous confirmons la suite très bientôt.`),
   inscription('ins_verification', 'dossier en vérification', { premier: true }, '🔎 Dossier en vérification : 1er message', `Suite à votre inscription sur notre site, nous vous confirmons que _votre paiement a bien été reçu_ ✅\n\nVotre dossier (informations et photos) est maintenant _en cours de vérification_ par notre équipe. Nous revenons vers vous très bientôt.\n\nMerci pour votre confiance. 🙏`, `Suite à la demande d'inscription de votre enfant {prénom} sur notre site, nous vous confirmons que _votre paiement a bien été reçu_ ✅\n\nSon dossier (informations et photos) est maintenant _en cours de vérification_ par notre équipe. Nous revenons vers vous très bientôt.\n\nMerci pour votre confiance. 🙏`),
   inscription('ins_relance_verification', 'dossier en vérification', { groupe: true }, '🔎 Dossier en vérification : relance', `_Votre dossier est toujours en cours de vérification._ Nous prenons le temps de regarder chaque profil avec attention. Nous revenons vers vous très bientôt.`, `_Le dossier de votre enfant {prénom} est toujours en cours de vérification._ Nous prenons le temps de regarder chaque profil avec attention. Nous revenons vers vous très bientôt.`),
-  inscription('ins_validee', 'payée', { premier: true }, '✅ Inscription validée : 1er message', `Félicitations ! 🎉 Suite à votre inscription sur notre site, nous avons le plaisir de vous confirmer que _votre inscription est validée_.\n\nBienvenue chez Maître Akesse Model Management ! ✨\n\n📩 Vous recevrez très bientôt un second message avec la suite : _formation, séances photo et castings_.`, `Félicitations ! 🎉 Suite à la demande d'inscription de votre enfant {prénom} sur notre site, nous avons le plaisir de vous confirmer que _son inscription est validée_.\n\nBienvenue chez Maître Akesse Model Management ! ✨\n\n📩 Vous recevrez très bientôt un second message avec la suite : _formation, séances photo et castings_.`),
+  inscription('ins_validee', 'payée', { premier: true }, '✅ Inscription validée : 1er message', `Félicitations ! 🎉 Suite à votre inscription sur notre site, nous avons le plaisir de vous confirmer que _votre inscription à MA2M Academy est validée_.\n\nBienvenue à _MA2M Academy_, l'Académie des Arts du Mannequinat ! ✨\n\n📩 Vous recevrez très bientôt la date de votre _première séance de formation_.`, `Félicitations ! 🎉 Suite à la demande d'inscription de votre enfant {prénom} sur notre site, nous avons le plaisir de vous confirmer que _son inscription à MA2M Academy est validée_.\n\nBienvenue à l'Académie des Arts du Mannequinat ! ✨\n\n📩 Vous recevrez très bientôt la date de sa _première séance de formation_.`),
   inscription('ins_formation', 'payée', { groupe: true, rdv: true }, '📅 Inscription validée : convocation à la formation', () => CONVOCATION_FORMATION, () => CONVOCATION_FORMATION_PARENT),
-  inscription('ins_refus', 'annulée', { premier: true }, '✉️ Inscription refusée : 1er message', `Merci pour votre inscription sur notre site et pour l'intérêt que vous portez à notre agence.\n\nAprès vérification, _nous ne pouvons pas valider votre inscription_ pour le moment. Pour en connaître la raison, répondez simplement à ce message.`, `Merci pour la demande d'inscription de votre enfant {prénom} sur notre site et pour l'intérêt que vous portez à notre agence.\n\nAprès vérification, _nous ne pouvons pas valider son inscription_ pour le moment. Pour en connaître la raison, répondez simplement à ce message.`)
+  inscription('ins_refus', 'annulée', { premier: true }, '✉️ Inscription refusée : 1er message', `Merci pour votre inscription sur notre site et pour l'intérêt que vous portez à MA2M Academy.\n\nAprès vérification, _nous ne pouvons pas valider votre inscription_ pour le moment. Pour en connaître la raison, répondez simplement à ce message.`, `Merci pour la demande d'inscription de votre enfant {prénom} sur notre site et pour l'intérêt que vous portez à MA2M Academy.\n\nAprès vérification, _nous ne pouvons pas valider son inscription_ pour le moment. Pour en connaître la raison, répondez simplement à ce message.`)
 ))((...args) => entreeMessage('inscription', ...args));
 
 function messageCandidatParCle(cle) { return MESSAGES_CANDIDATS.find(m => m.cle === cle) || null; }
@@ -261,6 +265,21 @@ function noterMessageCandidat(candidatureId, cle, canal, sorte) {
     .then(() => {}, () => {});
 }
 function typeCandidature(d) { return d && d.type_candidature === 'projet' ? 'projet' : 'agence'; }
+// (25/11/2026) porte choisie sur « Intégrer l'agence » : écrite par le formulaire en première ligne du message
+// (« Parcours choisi : Talent Network », js/formulaire-candidature.js), en attendant sa propre colonne en base.
+// (colonne « porte » en base une fois supabase-refonte-agence-academy.sql collé : elle passe en premier)
+function porteCandidature(d) {
+  if (!d || d.type_candidature !== 'agence') return null;
+  const P = window.Partage;
+  if (d.porte && P.PORTES_CANDIDATURE[d.porte]) return { cle: d.porte, libelle: P.PORTES_CANDIDATURE[d.porte] };
+  return P.porteDuMessage(d.message);
+}
+// message de MA2M Academy : porte « Me former », ou inscription (ligne d'inscriptions_mannequins : « statut », sans type)
+function messageAcademy(d) {
+  const porte = porteCandidature(d);
+  return (porte && porte.cle === 'academie') || !!(d && !('type_candidature' in d) && 'statut' in d);
+}
+const CANDIDATURE_PAR_PORTE = { reseau: 'pour rejoindre le Talent Network', academie: 'pour MA2M Academy', equipe: "pour rejoindre l'équipe de l'agence" };
 
 // {date}, {heure}, {lieu} : rdv = { date: 'AAAA-MM-JJ', heure, lieu } ; une valeur vide
 // est remplacée par manquant('date' | 'heure' | 'lieu').
@@ -270,10 +289,12 @@ function remplirRdv(texte, rdv, manquant) {
 }
 // Message prêt pour UNE personne (d = sa candidature ou son inscription).
 function personnaliserMessage(texte, d, rdv, manquant) {
-  const candidature = d.type_candidature === 'agence' ? "pour intégrer l'agence"
+  const porte = porteCandidature(d);
+  const candidature = porte ? CANDIDATURE_PAR_PORTE[porte.cle] : d.type_candidature === 'agence' ? "pour intégrer l'agence"
     : d.type_candidature === 'projet' && d.projet_nom ? `au casting « ${d.projet_nom} »` : 'à notre casting';
   const contacts = contactsEnvoi(d);
-  return remplirRdv(contacts.email ? texte : sansPhraseEmail(texte), rdv, manquant)
+  const enTete = messageAcademy(d) ? String(texte).split(ENTETE_MESSAGE).join(ENTETE_ACADEMY).split(SIGNATURE_MESSAGE).join(SIGNATURE_ACADEMY) : texte;
+  return remplirRdv(contacts.email ? enTete : sansPhraseEmail(enTete), rdv, manquant)
     .replace(/\{parent\}/gi, salutationParent(d.parent_nom))
     .replace(/\{pr[ée]nom\}/gi, nomAvecCivilite(d))
     .replace(/\{candidature\}/gi, candidature)
@@ -322,7 +343,7 @@ function coeurMessage(texte) {
   let salut = false;
   return String(texte || '').split('\n').filter((l) => {
     const t = l.trim();
-    if (t === ENTETE_MESSAGE || t === SIGNATURE_MESSAGE) return false;
+    if (t === ENTETE_MESSAGE || t === SIGNATURE_MESSAGE || t === ENTETE_ACADEMY || t === SIGNATURE_ACADEMY) return false;
     if (!salut && /^Bonjour\b.*,$/.test(t)) { salut = true; return false; }
     return true;
   }).join('\n').trim();
