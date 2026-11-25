@@ -219,6 +219,23 @@ décisions : document « Audit — Restructuration MA2M » (Claude Docs) ; texte
 - **Police** : retour à **Cormorant Garamond** pour tous les titres (site, application, Administration : `--mag-titre`
   de `css/jetons.css`, `--display` de `css/style.css`) et pour la compcard, le CV, la carte mannequin et les cartes
   d'événement (graisse 600, la plus forte de Cormorant). Styles intégrés aux pages régénérés (`css-critique.mjs`).
+- **Aucun montant sur le site, même sur l'Académie** (décision de la propriétaire, 25/11/2026) : la section `#tarifs`
+  d'`academie.html` dit seulement ce que comprennent les droits d'inscription (dossier, tenues de formation) et les frais
+  de formation (dimanche 15 h-18 h, thème mensuel, masterclasses, défilés, suivi et bulletin trimestriel), un bloc par
+  écran (`data-ecran-coupe=".ac-inclus-bloc"`). Les montants sont dans la fiche
+  `assets/documents/MA2M-Academy-Frais-de-formation.pdf` (cachée des moteurs : `robots.txt` et `X-Robots-Tag` dans
+  `vercel.json`) ; après l'envoi d'une candidature Academy (porte `academie` ou `equipe`),
+  `js/formulaire-candidature.js` ajoute le bouton « Consulter la fiche d'inscription » juste APRÈS `#ca-msg` (pas
+  dedans : `afficherMsg` compare le texte du message). Pour changer les prix : refaire ce PDF (même nom).
+- **Message au parent d'une mineure** : `texteConfirmationParent(d, lien)` (`js/messages-candidats.js`, utilisé par
+  `js/admin/site-dossiers.js`), trois versions validées : porte Academy (« Ici MA2M Academy… », signé « L'équipe MA2M
+  Academy »), Talent Network (représentation, « démarche gratuite »), ancienne candidature sans porte (« Académie et
+  Agence ») ; les candidatures de casting gardent le texte d'avant. Essai : `test-refonte-academie.js`.
+- **`representation.html`** : un brouillon gardé ou un envoi coupé qui reprend rouvre tout seul le volet « Simple
+  représentation » (`js/representation.js`), sinon le message d'envoi serait caché.
+- **Textes modifiables** : `integrer-agence` a ses repères `data-texte` (16). `academie` et `representation` ne sont pas
+  encore modifiables depuis l'Administration (à ajouter dans `PAGES` de `scripts/textes-pages.py`, `PAGES_TEXTES` de
+  `middleware.js` et `js/admin/site-textes.js` si la propriétaire le demande).
 
 ## 🔗 Liens envoyés par WhatsApp : phrase rassurante (24/11/2026, demande de la propriétaire)
 WhatsApp affiche « Ouvrir le lien ? » quand un lien vient d'un numéro absent des contacts de la personne (on ne peut pas
