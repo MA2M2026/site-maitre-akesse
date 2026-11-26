@@ -25,7 +25,7 @@
   // ---------- construction : barre, 4 étapes, résumé
   const el = (tag, cls, texte) => { const e = document.createElement(tag); if (cls) e.className = cls; if (texte) e.textContent = texte; return e; };
   const barre = el('ol', 'lx-progression'); barre.setAttribute('aria-label', T('Étapes', 'Steps'));
-  NOMS.forEach((n) => barre.appendChild(el('li', '', n)));
+  NOMS.concat([T('Vérifier', 'Review')]).forEach((n) => barre.appendChild(el('li', '', n)));
   form.parentNode.insertBefore(barre, form);
   // (« Aucun casting n'est ouvert » : le formulaire est caché par la page, la barre des étapes aussi)
   const majBarre = () => { barre.hidden = form.classList.contains('u-hidden'); };
@@ -87,10 +87,19 @@
   function montrer(n, defiler) {
     courante = n;
     etapes.concat([resume]).forEach((f, i) => { f.hidden = i + 1 !== n; });
-    Array.from(barre.children).forEach((li, i) => { li.className = i + 1 < n ? 'fait' : i + 1 === n ? 'actif' : ''; });
+    Array.from(barre.children).forEach((li, i) => {
+      li.className = i + 1 < n ? 'fait' : i + 1 === n ? 'actif' : '';
+      if (i + 1 === n) li.setAttribute('aria-current', 'step');
+      else li.removeAttribute('aria-current');
+    });
     msgs.forEach((m) => { m.className = 'form-msg'; m.textContent = ''; });
     if (n === 5) dessinerResume();
-    if (defiler !== false && typeof barre.scrollIntoView === 'function') barre.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (defiler !== false) {
+      const titre = etapes.concat([resume])[n - 1].querySelector('h3');
+      titre.tabIndex = -1;
+      titre.focus({ preventScroll: true });
+      barre.scrollIntoView({ block: 'start' });
+    }
   }
   function erreur(i, texte, champ) {
     if (typeof afficherMsg === 'function') afficherMsg(msgs[i - 1], texte, 'err'); else msgs[i - 1].textContent = texte;

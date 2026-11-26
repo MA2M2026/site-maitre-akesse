@@ -1,0 +1,109 @@
+:root {
+  --candidature-rouge: #751d2a;
+  --candidature-noir: #171313;
+  --candidature-ivoire: #f8f5f3;
+  --candidature-blanc: #fff;
+}
+
+.ma2m-accueil {
+  margin: 0;
+  background: var(--candidature-noir);
+  color: var(--candidature-blanc);
+  font: 1rem/1.55 "Work Sans", system-ui, sans-serif;
+}
+
+.ma2m-accueil a { color: inherit; }
+.ma2m-accueil :focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
+.ma2m-entree { display: grid; min-height: 85svh; position: relative; isolation: isolate; align-items: end; }
+.ma2m-entree img, .ma2m-entree::after { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ma2m-entree img { object-fit: cover; object-position: 50% 28%; z-index: -2; }
+.ma2m-entree::after { content: ""; background: linear-gradient(transparent 12%, #171313d9 68%, #171313); z-index: -1; }
+.ma2m-entree-texte, .ma2m-choix { padding: clamp(1.25rem, 6vw, 5rem); }
+.ma2m-entree-texte { max-width: 36rem; }
+.ma2m-entree h1, .ma2m-choix h2 { margin: 0; font: 600 clamp(2.5rem, 7vw, 4.75rem)/1 "Cormorant Garamond", Georgia, serif; }
+.ma2m-marque { position: absolute; top: 1.25rem; left: clamp(1.25rem, 6vw, 5rem); padding: .2rem .55rem; background: var(--candidature-noir); font-weight: 650; letter-spacing: .18em; }
+.ma2m-action { display: inline-flex; align-items: center; min-height: 3rem; box-sizing: border-box; padding: .65rem 1.25rem; border-radius: 2rem; background: var(--candidature-rouge); text-decoration: none; font-weight: 650; }
+.ma2m-choix { color: var(--candidature-noir); background: var(--candidature-ivoire); }
+.ma2m-choix h2 { font-size: clamp(2rem, 5vw, 3.5rem); }
+.ma2m-choix ul { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; gap: .75rem; }
+.ma2m-choix li a { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid #17131335; border-radius: 1rem; text-decoration: none; background: var(--candidature-blanc); }
+.ma2m-choix li a:hover, .ma2m-choix li a:focus-visible { border-color: var(--candidature-rouge); color: var(--candidature-rouge); }
+.ma2m-choix strong, .ma2m-choix small { display: block; }
+.ma2m-choix small { font-size: .94rem; margin-top: .25rem; }
+.ma2m-langue { display: inline-block; margin-top: 1.5rem; padding: .65rem 0; }
+
+@media (min-width: 64rem) {
+  .ma2m-accueil main { display: grid; grid-template-columns: 1.15fr 1fr; min-height: 100svh; }
+  .ma2m-choix { align-content: center; }
+}
+
+.ma2m-candidature .lx-progression:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .25rem;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding: 0;
+  color: var(--candidature-blanc);
+}
+
+.ma2m-candidature .lx-progression li {
+  min-width: 0;
+  padding: .45rem .15rem;
+  border: 0;
+  border-bottom: .2rem solid #fff6;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  box-shadow: none;
+  opacity: 1;
+  text-align: center;
+  font: 600 .72rem/1.2 system-ui, sans-serif;
+  letter-spacing: normal;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+
+.ma2m-candidature .lx-progression :is(.actif, .fait) {
+  background: var(--candidature-rouge);
+  border-color: var(--candidature-ivoire);
+}
+
+.ma2m-candidature #form-casting.lx-en-etapes {
+  color-scheme: dark;
+  color: var(--candidature-blanc);
+  background: var(--candidature-noir);
+  border: 1px solid #fff4;
+  border-radius: 1.25rem;
+  box-shadow: none;
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+.ma2m-candidature .lx-etape { min-inline-size: 0; }
+.ma2m-candidature .lx-etape-titre h3 { color: var(--candidature-ivoire); }
+.ma2m-candidature .lx-etape-titre > span { background: var(--candidature-rouge); color: white; }
+.ma2m-candidature .lx-en-etapes :is(.lx-suivant, #btn-envoyer, .lx-recommencer) {
+  background: var(--candidature-rouge);
+  border-color: var(--candidature-rouge);
+  color: var(--candidature-blanc);
+  box-shadow: none;
+}
+.ma2m-candidature .lx-en-etapes :is(button, .btn) { min-height: 44px; }
+.ma2m-candidature .lx-en-etapes :is(input, select, textarea) { accent-color: var(--candidature-rouge); }
+.ma2m-candidature .lx-en-etapes :is(.lx-casting, .lx-casting-autre).choisi {
+  color: var(--candidature-blanc);
+  background: var(--candidature-rouge);
+  box-shadow: none;
+}
+.ma2m-candidature .lx-en-etapes .lx-casting:not(.choisi) { background: none; box-shadow: none; }
+.ma2m-candidature .lx-recap { background: var(--candidature-ivoire); color: var(--candidature-noir); }
+.ma2m-candidature .lx-recap .lx-changer { color: var(--candidature-rouge); }
+.ma2m-candidature .lx-recap .lx-changer:focus-visible { outline-color: var(--candidature-rouge); }
+.ma2m-autres-parcours { display: inline-flex; align-items: center; min-height: 44px; color: var(--candidature-blanc); text-decoration: underline; text-underline-offset: .2em; }
+
+.ma2m-candidature .lx-progression li::before,
+.ma2m-candidature .lx-progression li::after { content: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ma2m-candidature .lx-etape { animation: none; }
+}

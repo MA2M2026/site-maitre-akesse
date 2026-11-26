@@ -5,7 +5,16 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
   let srv; process.on('exit', () => srv && srv.kill());
   srv = spawn('python3', ['-m', 'http.server', PORT], { cwd: require('path').resolve(__dirname, '../..'), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 800));
   const b = await chromium.launch();
-  for (const [page, vp] of [['academie.html', { width: 390, height: 844 }], ['en/academie.html', { width: 1280, height: 900 }], ['candidature.html', { width: 1280, height: 900 }], ['en/candidature.html', { width: 390, height: 844 }]]) {
+  const pages = [
+    ['academie.html', { width: 390, height: 844 }],
+    ['en/academie.html', { width: 1280, height: 900 }],
+    ['candidature.html', { width: 1280, height: 900 }],
+    ['en/candidature.html', { width: 390, height: 844 }],
+    ['representation.html', { width: 768, height: 1024 }],
+    ['en/representation.html', { width: 390, height: 844 }],
+  ];
+  for (const [page, vp] of pages) {
+    const representation = page.endsWith('representation.html');
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables: { casting_projets: [{ nom: 'Défilé X', actif: true, description: 'Grand défilé', date_casting: '2030-12-05', lieu: 'Hôtel Ivoire' }] }, rpc: { casting_ouvert: true } }, journal);
@@ -21,12 +30,13 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     });
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     if (await p.isVisible('#bandeau-cookies [data-cookies="oui"]')) await p.click('#bandeau-cookies [data-cookies="oui"]');
+    if (representation) await p.click('.rp-bouton[data-choix="simple"]');
     // (22/11/2026) page en écrans (js/pages-ecrans.js) : on avance avec « Suivant » jusqu'au formulaire, comme une candidate
     for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-casting')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
     // Remplissage comme une candidate de 15 ans
     // Intégrer l'agence : parcours débutant ; Postuler à un casting : choix du projet
-    if (await p.$('#ca-porte')) await choisir(p, '#ca-porte', 'equipe');   // (3 portes, 25/11/2026 : l'expérience n'est demandée que pour l'équipe)
-    if (await p.$('#ca-experience')) await choisir(p, '#ca-experience', 'non');
+    if (!representation && await p.$('#ca-porte')) await choisir(p, '#ca-porte', 'equipe');   // (3 portes, 25/11/2026 : l'expérience n'est demandée que pour l'équipe)
+    if (!representation && await p.$('#ca-experience')) await choisir(p, '#ca-experience', 'non');
     const etapesVues = [await etape()];
     if (await p.$('.lx-casting')) {
       await suivant();
@@ -92,7 +102,9 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const resumeOk = /(Madame|Mrs) Awa Koné/.test(resume) && /Abidjan/.test(resume) && /1,60 m|1\.60 m/.test(resume) && /4 photos/.test(resume) && await p.locator('.lx-recap .lx-changer').count() === 4
       && (page.includes('candidature') ? /Défilé X/.test(resume) : true) && await p.locator('.lx-recap .lx-vignettes i').count() === 4;
     await p.click('.lx-recap .lx-recap-ligne:nth-child(2) .lx-changer'); await p.waitForTimeout(300);
-    const changerOk = await etape() === 2;
+    const changerOk = await etape() === 2
+      && await p.getAttribute('.lx-progression li:nth-child(2)', 'aria-current') === 'step'
+      && await p.evaluate(() => document.activeElement.matches('.lx-etape h3'));
     await suivant(); await suivant(); await suivant();
     const deborde = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1 ? document.documentElement.scrollWidth + ' > ' + innerWidth + ' : ' + Array.from(document.querySelectorAll('#form-casting *')).filter((e) => e.getBoundingClientRect().right > innerWidth + 1).slice(0, 3).map((e) => e.tagName + '.' + e.className).join(', ') : false);
     await p.screenshot({ path: __dirname + '/medias/capture-' + Date.now() + '.png' });
@@ -117,6 +129,10 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     if (jaugesVertes !== 4 || videoVerte !== 1 || !/3 minutes/.test(aideVideo)) { console.log('❌ ÉCHEC jauges ou durée sur', page); process.exitCode = 1; }
     if (!inserts.length || 'situation_scolaire' in c || 'niveau_etudes' in c || 'quartier' in c || 'date_naissance' in c || c.weight_kg !== null || c.mineur !== true) { console.log('❌ ÉCHEC données envoyées sur', page, JSON.stringify(c).slice(0, 300)); process.exitCode = 1; }
     else console.log('✓ ' + page + ' : candidature envoyée avec « mineur », sans date de naissance, quartier, scolarité, niveau d’études ni poids');
+    if (representation && (c.experience_mannequin !== 'oui' || !c.message?.startsWith('Parcours choisi : Talent Network'))) {
+      console.log('❌ ÉCHEC orientation représentation sur', page);
+      process.exitCode = 1;
+    }
     if (!refus12ans || !inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
     await ctx.close();
   }
