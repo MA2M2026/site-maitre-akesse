@@ -246,7 +246,7 @@ body.ma2m-ecrans-pleins main[data-ecrans] > .ma2m-couverture-parcours.ecran-cour
 }
 .ma2m-ecrans-pleins .ecrans-progression span {background:#cf8492;}
 .ma2m-ecrans-pleins .whatsapp-flottant {display:none;}
-.ma2m-ecrans-pleins .video-pleine video {
+body.ecrans-actif.ma2m-ecrans-pleins .video-pleine video {
   height:calc(var(--ecran-dispo) - 3rem);
 }
 .ma2m-ecrans-pleins .ma2m-introduction-parcours > p {line-height:1.45;}
@@ -255,4 +255,4 @@ body.ma2m-ecrans-pleins main[data-ecrans] > .ma2m-couverture-parcours.ecran-cour
 .ma2m-ecrans-pleins .rp-volet :is(.ia-intro,.ia-ligne,.ia-bon) {margin-block:.6rem;}
 .ma2m-ecrans-pleins .rp-volet .ia-ligne {gap:.45rem;}
 .ma2m-ecrans-pleins .rp-volet .ia-ligne > li {padding-block:.6rem;}
-.ma2m-ecrans-pleins .lx-galerie-grille .lx-tapis .lx-galerie-photo {height:calc(var(--ecran-dispo) - 10.5rem);}
+body.ecrans-actif.ma2m-ecrans-pleins .lx-galerie-grille .lx-tapis .lx-galerie-photo {height:calc(var(--ecran-dispo) - 10.5rem);}
