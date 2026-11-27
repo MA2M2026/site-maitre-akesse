@@ -382,15 +382,15 @@
 /* Le panneau de lecture est indépendant de la photo. */
 .p-couv .lignes {
   padding: clamp(1rem, 3vw, 2.5rem);
-  border: 1px solid var(--rouge-mat-a15);
-  background: var(--one-ivoire);
-  color: var(--one-encre);
+  border: 1px solid var(--blanc-a22);
+  background: var(--one-verre);
+  color: var(--one-ivoire);
 }
-.p-couv .lignes .ligne::before { background: var(--one-carmin); }
+.p-couv .lignes .ligne::before { background: var(--one-sable); }
 .mag .p-couv :is(.numero span, .modele) {
   padding: 0.25em 0.45em;
-  background: var(--one-ivoire);
-  color: var(--one-encre);
+  background: var(--one-verre);
+  color: var(--one-ivoire);
 }
 .mag .p-couv .modele[hidden] { display: none; }
 @media (min-width: 701px) {
