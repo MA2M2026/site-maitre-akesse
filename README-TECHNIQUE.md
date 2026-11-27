@@ -5758,3 +5758,5 @@ La direction visuelle utilise les jetons `--one-*` de `css/jetons.css`. L’orie
 Les ouvertures des actualités, événements et services prolongent les images dans le fond. Les autres pages ajoutées à la charte utilisent la même composition sans photo, y compris le calendrier, le contact, la sélection et les informations légales. Les fiches mannequins et les en-têtes de travail des applications utilisent les filets et contrastes de la charte.
 
 Dans The Book, les portraits sont présentés en pleine lumière sur un fond ivoire. Le nom, le niveau et les informations publiques se lisent sous l’image. La carte entière ouvre toujours la fiche, tandis que le bouton de sélection reste indépendant. Le composant `js/rendu-book.js` sert les deux langues côté serveur et côté navigateur.
+
+La navigation publique partagée donne accès au Book, à l’agence, aux actualités et au contact sur ordinateur. Le menu complet reste disponible dans les deux langues. Le fond ivoire du portfolio se retrouve dans l’en-tête, certains chapitres du magazine et les ouvertures des pages pratiques. Les ouvertures photographiques et les formulaires conservent leur propre composition.

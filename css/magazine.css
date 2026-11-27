@@ -398,3 +398,17 @@
   .mag-parcours { grid-template-columns: minmax(0, 1fr); }
   .mag-parcours li:nth-child(n) { grid-column: 1; }
 }
+
+/* Les chapitres de lecture et le portfolio respirent entre les pleines pages photo. */
+.mag :is(.p-sommaire, .p-visages, .p-agence, .p-partenaires) {
+  background: var(--one-ivoire);
+  border-bottom: 1px solid var(--rouge-mat-a15);
+}
+.mag .p-sommaire .vignette {
+  transform: none;
+  box-shadow: none;
+  border: 1px solid var(--rouge-mat-a15);
+}
+.mag :is(.p-sommaire, .p-agence) li { border-top: 1px solid var(--rouge-mat-a22); }
+.mag .p-visages .grille span { font-family: var(--mag-titre); font-size: max(15px, 3cqmin); }
+.p-couv .lignes .une { font-size: max(30px, 7.1cqmin); text-wrap: balance; }

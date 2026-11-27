@@ -236,3 +236,11 @@
       linear-gradient(0deg, var(--one-voile), transparent 48%);
   }
 }
+
+/* Les parcours gardent leur photographie d’ouverture et des sections de lecture cadrées. */
+.lx-section .lx-titre-section { text-wrap: balance; }
+.lx-ecrin, .lx-formulaire #form-casting {
+  background: var(--one-scene);
+  border-radius: var(--rayon-carte);
+  box-shadow: none;
+}

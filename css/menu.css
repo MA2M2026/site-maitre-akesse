@@ -144,3 +144,16 @@ html body .menu-overlay .nav-links li a .menu-etiquette { display: inline-block;
 /* (25/11/2026) les deux départements, sous le grand bouton « Intégrer l'agence » (js/menu.js) */
 html body .menu-overlay .nav-links li.menu-sous-rejoindre { order: 91; }
 html body .menu-overlay .nav-links li.menu-rejoindre + li.menu-sous-rejoindre { margin-top: 0.6rem; }
+
+/* Chaque rubrique se lit directement, avec le menu complet sur téléphone et ordinateur. */
+html body .menu-overlay .nav-links li:not(.menu-sous):not(.menu-rejoindre):not(.item-marketplace) a::before {
+  content: none !important;
+}
+html body .menu-overlay .nav-links li a {
+  letter-spacing: 0.08em !important;
+}
+@media (hover: hover) {
+  html body .menu-overlay .nav-links li:not(.menu-rejoindre) a:hover {
+    letter-spacing: 0.08em !important;
+  }
+}

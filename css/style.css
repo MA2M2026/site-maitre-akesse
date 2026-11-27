@@ -3476,3 +3476,32 @@ main .one-ouverture--editorial {
   border-color: var(--blanc-a22);
 }
 .fiche-carte-titre { padding-bottom: 0.75rem; border-bottom: 1px solid var(--blanc-a22); }
+
+/* La navigation et les pages pratiques partagent le papier du portfolio. */
+.site-header-v2 .logo-img-header img { filter: none; }
+.site-header-v2 .logo-img-header::after { display: none; }
+.site-header-v2 .header-v2-inner { gap: 1rem; }
+.site-header-v2 .header-v2-droite { gap: clamp(0.5rem, 2vw, 1.4rem); }
+.site-header-v2 :is(.menu-trigger, .lang-switch) { color: var(--one-carmin); }
+.navigation-principale { display: none; }
+@media (min-width: 60rem) {
+  .navigation-principale { display: flex; gap: clamp(1.3rem, 3vw, 3rem); }
+  .navigation-principale a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hauteur-tactile);
+    font: 600 0.82rem var(--texte);
+    color: var(--one-encre);
+    text-decoration: none;
+  }
+  .navigation-principale a:is(:hover, :focus-visible, [aria-current="page"]) {
+    color: var(--one-carmin);
+    text-decoration: underline;
+    text-underline-offset: 0.42em;
+  }
+}
+main .one-ouverture:not(.one-ouverture--editorial) {
+  background: var(--one-ivoire);
+  border-bottom-color: var(--rouge-mat-a15);
+}
+.one-ouverture:not(.one-ouverture--editorial) h1 { color: var(--one-encre); }

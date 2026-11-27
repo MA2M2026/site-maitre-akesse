@@ -19,6 +19,11 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     await brancher(p, { tables, rpc }, []);
     await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(1500);
     if (await p.isVisible('#bandeau-cookies [data-cookies="non"]')) await p.click('#bandeau-cookies [data-cookies="non"]');
+    const navigation = p.locator('.navigation-principale');
+    ok(await navigation.isVisible(), page + ' : les raccourcis sont visibles sur ordinateur');
+    const liens = await navigation.getByRole('link').evaluateAll((elements) => elements.map((lien) => lien.getAttribute('href')));
+    ok(liens.join(',') === 'mannequins.html,qui-sommes-nous.html,actualites.html,contact.html', page + ' : quatre destinations dans la langue en cours');
+    ok(await navigation.locator('[aria-current="page"]').getAttribute('href') === page.split('/').pop(), page + ' : la destination courante est indiquée');
     await p.focus('.menu-trigger'); await p.keyboard.press('Enter'); await p.waitForTimeout(600);
     const dansMenu = () => p.evaluate(() => !!document.activeElement.closest('.menu-overlay'));
     const entre = await dansMenu();
