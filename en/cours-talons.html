@@ -45,7 +45,7 @@
 <meta name="theme-color" content="#7C2128">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=dbd587c8">
+  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
 </head>
 <body class="ma2m-parcours-talons">
 <script async src="../js/filet-reveal.js?v=0e57f29d"></script>
@@ -54,25 +54,28 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="../js/gabarit.js?v=07c3b9fc"></script>
-<main data-ecrans>
+<main class="ma2m-parcours-public">
 
-<section class="ct-haut lx-hero">
-  <img class="lx-hero-photo" src="../assets/cours-talons/mannequin-podium.jpg?v=2" alt="" width="1080" height="1350" fetchpriority="high">
-  <div class="lx-hero-voile" aria-hidden="true"></div>
-  <div class="lx-hero-cadre" aria-hidden="true"></div>
-  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Riviera Faya</p>
-  <div class="container ct-haut-grille">
-    <div class="ct-haut-texte lx-hero-texte">
-      <div class="eyebrow reveal">MA2M Academy</div>
-      <h1 class="reveal reveal-delay-1">Talons &amp; Élégance Workshop<span class="oeil">.</span></h1>
-      <p class="lx-chapeau reveal reveal-delay-2">Preparing for a Miss or beauty pageant, wanting more elegance and poise, or simply learning at last to walk confidently in heels? Posture, head carriage, balance, a fluid walk: we teach you everything, whatever your level.</p>
-      <div class="ct-avertissement reveal reveal-delay-2" role="note">
+<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
+  <div class="ma2m-couverture-portrait" aria-hidden="true">
+    <span>HEELS</span>
+  </div>
+  <div class="ma2m-couverture-presentation">
+    <h1 id="ma2m-titre-parcours">Talons &amp; Élégance Workshop</h1>
+    <a class="ma2m-action" href="/en/cours-talons.html?vue=candidature#inscription">Register</a>
+    <a class="ma2m-lien-infos" href="#informations-parcours">See options and programme ↓</a>
+  </div>
+</section>
+
+<div class="ma2m-informations-parcours" id="informations-parcours">
+<nav class="ma2m-rubriques" aria-label="Page sections"><a href="#formules">Options and prices</a><a href="#programme">Programme</a><a href="#questions-talons">Common questions</a></nav>
+<section class="ma2m-introduction-parcours" aria-label="About this path">
+  <p>Preparing for a Miss or beauty pageant, wanting more elegance and poise, or simply learning at last to walk confidently in heels? Posture, head carriage, balance, a fluid walk: we teach you everything, whatever your level.</p>
+  <div class="ct-avertissement" role="note">
         <strong>These classes do not make you a member of the agency.</strong>
         <p>The Workshop is open to all, to learn to walk in heels. It is neither a casting nor a registration as an agency model.</p>
         <a class="ct-lien-agence" href="integrer-agence.html">Want to become a model? Choose my path →</a>
       </div>
-    </div>
-  </div>
 </section>
 <section class="lx-promesse">
   <div class="container">
@@ -159,7 +162,7 @@
 </section>
 
 <!-- (22/11/2026, pages en écrans) les questions fréquentes passent AVANT le formulaire : le formulaire est le dernier écran -->
-<section class="ct-faq">
+<section class="ct-faq" id="questions-talons">
   <div class="container">
     <h2 class="lx-titre-section reveal">Frequently asked questions</h2>
     <details class="reveal"><summary>Do I need to already walk in heels?</summary><p>No. The classes are open to all, from beginners to the most comfortable: your video helps us adapt the work to your level.</p></details>
@@ -170,10 +173,13 @@
   </div>
 </section>
 
+<div class="ma2m-pied-infos"><a class="ma2m-action" href="/en/cours-talons.html?vue=candidature#inscription">Start</a></div>
+</div>
 <section class="ct-inscription" id="inscription">
   <div class="container ct-form-boite">
     <h2 class="lx-titre-section reveal">Sign-up</h2>
     <p class="ct-compteur" id="ct-compteur" aria-live="polite"></p>
+    <a class="ma2m-retour-talons" href="/en/cours-talons.html">← Heel classes</a>
     <form id="form-talons" class="lx-ecrin" novalidate>
 
       <fieldset class="ct-etape" data-etape="1" data-nom="formule">
@@ -361,7 +367,7 @@
 <script src="../js/moyens-paiement.js?v=e15e92a3"></script>
 <script src="../js/talons-commun.js?v=d635b7c1"></script>
 <script src="../js/talons-creneaux.js?v=86fa3741"></script>
-<script src="../js/cours-talons.js?v=4e417b6a"></script>
+<script src="../js/cours-talons.js?v=c69cdd44"></script>
 <script src="/js/guide-medias.js?v=62b8734e"></script>
 <script src="../js/pages-ecrans.js?v=6414142f"></script>
 </body>

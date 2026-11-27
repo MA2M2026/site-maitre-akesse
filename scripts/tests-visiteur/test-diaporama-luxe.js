@@ -23,14 +23,18 @@ const vue = (p, zone) => p.evaluate((z) => { const i = [...document.querySelecto
       await brancher(p, { tables, rpc }, []);
       await p.goto('http://127.0.0.1:' + PORT + '/' + page); await p.waitForTimeout(800);
       const n = appareil + ' ' + page + ' : ';
-      const haut1 = await vue(p, '.lx-hero-photo');
-      await p.waitForTimeout(7600);
-      const haut2 = await vue(p, '.lx-hero-photo');
-      ok(haut1 && haut2 && haut1 !== haut2, n + 'la grande photo du haut change toute seule (' + haut1 + ' → ' + haut2 + ')');
-      // pendant le fondu, jamais de trou : au moins une photo opaque à tout instant
-      const trous = await p.evaluate(async () => { let t = 0; const z = document.querySelector('.lx-hero-photo').parentElement;
-        for (let i = 0; i < 40; i++) { if (![...z.querySelectorAll('.lx-hero-photo')].some((x) => +getComputedStyle(x).opacity > 0.98)) t++; await new Promise((r) => setTimeout(r, 160)); } return t; });
-      ok(trous === 0, n + 'pas de trou pendant les fondus (' + trous + ')');
+      if (/cours-talons/.test(page)) {
+        ok(await p.locator('.ma2m-couverture-portrait').isVisible(), n + 'le portrait de la couverture est visible');
+      } else {
+        const haut1 = await vue(p, '.lx-hero-photo');
+        await p.waitForTimeout(7600);
+        const haut2 = await vue(p, '.lx-hero-photo');
+        ok(haut1 && haut2 && haut1 !== haut2, n + 'la grande photo du haut change toute seule (' + haut1 + ' → ' + haut2 + ')');
+        // pendant le fondu, jamais de trou : au moins une photo opaque à tout instant
+        const trous = await p.evaluate(async () => { let t = 0; const z = document.querySelector('.lx-hero-photo').parentElement;
+          for (let i = 0; i < 40; i++) { if (![...z.querySelectorAll('.lx-hero-photo')].some((x) => +getComputedStyle(x).opacity > 0.98)) t++; await new Promise((r) => setTimeout(r, 160)); } return t; });
+        ok(trous === 0, n + 'pas de trou pendant les fondus (' + trous + ')');
+      }
       // (13/11/2026) la bande du milieu défile toute seule, comme un tapis roulant, sans qu'on la pousse
       // (22/11/2026) page en écrans (js/pages-ecrans.js) : on va à l'écran de la bande avec « Suivant », comme une visiteuse
       const refus = p.locator('#bandeau-cookies button', { hasText: /Refuser|Decline|Refuse/ }); if (await refus.count() && await refus.first().isVisible()) await refus.first().click();

@@ -58,7 +58,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=dbd587c8">
+  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
 </head>
 <body class="ma2m-candidature">
 <script async src="js/filet-reveal.js?v=0e57f29d"></script>
@@ -69,19 +69,27 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="js/gabarit.js?v=07c3b9fc"></script>
-<main data-ecrans>
+<main class="ma2m-parcours-public">
 
-<section class="u-pb-1 cand-haut lx-hero lx-hero--mur">
-  <div class="container">
-    <div class="eyebrow reveal">Postuler à un casting</div>
-    <h1 class="reveal reveal-delay-1">Postuler à un casting<span class="oeil">.</span></h1>
-    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2 lx-chapeau">Un projet/casting précis est lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations, vos photos et une courte vidéo de présentation. Notre équipe étudie chaque candidature.</p>
+<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
+  <div class="ma2m-couverture-portrait" aria-hidden="true">
+    <span>CASTING</span>
   </div>
-  <div class="lx-hero-cadre" aria-hidden="true"></div>
-  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Côte d’Ivoire</p>
+  <div class="ma2m-couverture-presentation">
+    <h1 id="ma2m-titre-parcours">Postuler à un casting</h1>
+    <a class="ma2m-action" href="/candidature.html?vue=candidature#candidature">Postuler à un casting</a>
+    <a class="ma2m-lien-infos" href="#informations-parcours">En savoir plus ↓</a>
+  </div>
 </section>
 
-<section class="lx-promesse">
+<div class="ma2m-informations-parcours" id="informations-parcours">
+<nav class="ma2m-rubriques" aria-label="Rubriques du parcours"><a href="#deroulement-casting">Déroulement</a><a href="#galerie-casting">Photos</a></nav>
+<section class="ma2m-introduction-parcours" aria-label="Présentation du parcours">
+  <p>Un projet/casting précis est lancé par l'agence ? Remplissez ce formulaire avec vos informations, vos mensurations, vos photos et une courte vidéo de présentation. Notre équipe étudie chaque candidature.</p>
+
+</section>
+
+<section class="lx-promesse" id="deroulement-casting">
   <div class="container">
     <p class="lx-surtitre reveal">Comment postuler</p>
     <h2 class="lx-grand-titre reveal">Trois étapes, <em>en toute simplicité</em>.</h2>
@@ -94,7 +102,7 @@
   </div>
 </section>
 
-<section class="lx-galerie">
+<section class="lx-galerie" id="galerie-casting">
   <div class="container">
     <p class="lx-surtitre reveal">L’univers de l’agence</p>
     <h2 class="lx-grand-titre reveal">Shootings, défilés, castings : chaque projet est une scène.</h2>
@@ -106,6 +114,8 @@
   </div>
 </section>
 
+<div class="ma2m-pied-infos"><a class="ma2m-action" href="/candidature.html?vue=candidature#candidature">Commencer</a></div>
+</div>
 <section class="u-pt-1 cand-formulaire lx-formulaire" id="candidature">
   <div class="container ca-1 ca-1-haut">
     <h2 class="lx-titre-section reveal">Votre candidature</h2>

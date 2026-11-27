@@ -55,7 +55,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=dbd587c8">
+  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
 </head>
 <body class="ma2m-candidature">
 <script async src="js/filet-reveal.js?v=0e57f29d"></script>
@@ -66,20 +66,24 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="js/gabarit.js?v=07c3b9fc"></script>
-<main>
+<main class="ma2m-parcours-public">
 
-<section class="ia-haut lx-hero">
-  <img class="lx-hero-photo" src="assets/cours-talons/galerie-blanc.jpg?v=1" alt="" width="864" height="1080" fetchpriority="high">
-  <div class="lx-hero-voile" aria-hidden="true"></div>
-  <div class="lx-hero-cadre" aria-hidden="true"></div>
-  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Côte d’Ivoire</p>
-  <div class="container ia-haut-grille">
-    <div class="lx-hero-texte">
-      <div class="eyebrow reveal">Intégrer l'agence</div>
-      <h1 class="reveal reveal-delay-1"><span>Agence de représentation</span><span class="oeil">.</span></h1>
-      <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2 lx-chapeau">Vous êtes déjà mannequin ? Que vous soyez mannequin de l'agence ou de l'extérieur, Maître Akesse Model Management peut gérer votre carrière. Postuler est totalement gratuit.</p>
-    </div>
+<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
+  <div class="ma2m-couverture-portrait" aria-hidden="true">
+    <span>AGENCE</span>
   </div>
+  <div class="ma2m-couverture-presentation">
+    <h1 id="ma2m-titre-parcours"><span>Agence de représentation</span></h1>
+    <a class="ma2m-action" href="/representation.html?vue=candidature#candidature">Postuler à la représentation</a>
+    <a class="ma2m-lien-infos" href="#informations-parcours">Voir les options de représentation ↓</a>
+  </div>
+</section>
+
+<div class="ma2m-informations-parcours" id="informations-parcours">
+<nav class="ma2m-rubriques" aria-label="Rubriques du parcours"><a href="#choix">Les deux options</a><a href="#criteres-representation">Critères</a></nav>
+<section class="ma2m-introduction-parcours" aria-label="Présentation du parcours">
+  <p>Vous êtes déjà mannequin ? Que vous soyez mannequin de l'agence ou de l'extérieur, Maître Akesse Model Management peut gérer votre carrière. Postuler est totalement gratuit.</p>
+
 </section>
 
 <section class="ia-section" id="choix">
@@ -112,7 +116,7 @@
   </div>
 </section>
 
-<section class="ia-section ia-section--criteres">
+<section class="ia-section ia-section--criteres" id="criteres-representation">
   <div class="container">
     <h2 class="lx-titre-section reveal">Nos critères</h2>
     <div class="ia-criteres"><div class="ia-critere lx-verre reveal reveal-delay-0"><span class="ia-grand">1,75 m</span><span>minimum pour les femmes</span></div><div class="ia-critere lx-verre reveal reveal-delay-1"><span class="ia-grand">1,85 m</span><span>minimum pour les hommes</span></div><div class="ia-critere lx-verre reveal reveal-delay-2"><span class="ia-grand">14+</span><span>ans minimum</span></div><div class="ia-critere lx-verre reveal reveal-delay-2"><span class="ia-grand">14 – 17</span><span>avec l'accord d'un parent ou d'un tuteur, qui confirme par un lien personnel</span></div></div>
@@ -120,6 +124,8 @@
   </div>
 </section>
 
+<div class="ma2m-pied-infos"><a class="ma2m-action" href="/representation.html?vue=candidature#candidature">Postuler à la représentation</a></div>
+</div>
 <section class="u-pt-1 ia-formulaire lx-formulaire rp-volet" id="candidature" hidden>
   <div class="container ca-1">
     <h2 class="lx-titre-section reveal">Votre candidature</h2>

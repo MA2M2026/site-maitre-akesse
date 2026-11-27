@@ -61,7 +61,7 @@
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <script src="../js/bouton-appui.js?v=bedca56e" defer></script>
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=dbd587c8">
+  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
 </head>
 <body class="ma2m-candidature">
 <script async src="../js/filet-reveal.js?v=0e57f29d"></script>
@@ -72,24 +72,27 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="../js/gabarit.js?v=07c3b9fc"></script>
-<main data-ecrans>
+<main class="ma2m-parcours-public">
 
-<section class="ia-haut lx-hero">
-  <img class="lx-hero-photo" src="../assets/cours-talons/mannequin-podium.jpg?v=2" alt="" width="1080" height="1350" fetchpriority="high">
-  <div class="lx-hero-voile" aria-hidden="true"></div>
-  <div class="lx-hero-cadre" aria-hidden="true"></div>
-  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Riviera Faya</p>
-  <div class="container ia-haut-grille">
-    <div class="lx-hero-texte">
-      <div class="eyebrow reveal">Academy of Modelling Arts</div>
-      <h1 class="reveal reveal-delay-1">MA2M Academy<span class="oeil">.</span></h1>
-      <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2 lx-chapeau">The training department of Maître Akesse Model Management. We train those who want to learn modelling, and we bring experienced models up to the standards of the house.</p>
-      <p class="ac-boutons"><a class="btn btn--principal" href="/en/academie.html?vue=candidature#candidature">Apply now</a></p>
-    </div>
+<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
+  <div class="ma2m-couverture-portrait" aria-hidden="true">
+    <span>ACADEMY</span>
+  </div>
+  <div class="ma2m-couverture-presentation">
+    <h1 id="ma2m-titre-parcours">MA2M Academy</h1>
+    <a class="ma2m-action" href="/en/academie.html?vue=candidature#candidature">Apply to MA2M Academy</a>
+    <a class="ma2m-lien-infos" href="#informations-parcours">Explore the training ↓</a>
   </div>
 </section>
 
-<section class="video-pleine reveal" aria-label="Video: how to join the agency">
+<div class="ma2m-informations-parcours" id="informations-parcours">
+<nav class="ma2m-rubriques" aria-label="Page sections"><a href="#video-parcours">Video</a><a href="#formation">Training</a><a href="#recyclage">Refresher course</a><a href="#tarifs">What is included</a></nav>
+<section class="ma2m-introduction-parcours" aria-label="About this path">
+  <p>The training department of Maître Akesse Model Management. We train those who want to learn modelling, and we bring experienced models up to the standards of the house.</p>
+
+</section>
+
+<section class="video-pleine reveal" id="video-parcours" aria-label="Video: how to join the agency">
   <video class="vp-verticale" controls playsinline preload="none" poster="../assets/integrer-agence/affiche.jpg?v=6" width="720" height="1280"><source src="../assets/integrer-agence/integrer-agence.mp4?v=6" type="video/mp4"></video>
   <video class="vp-horizontale" controls playsinline preload="none" poster="../assets/integrer-agence/affiche-large.jpg?v=6" width="1280" height="720"><source src="../assets/integrer-agence/integrer-agence-large.mp4?v=6" type="video/mp4"></video>
 </section>
@@ -131,7 +134,7 @@
       <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">VIII</span><div><p class="lx-prog-quand">Month 8</p><h3>Advertising modelling</h3></div></li>
       <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">IX</span><div><p class="lx-prog-quand">Month 9</p><h3>The big end-of-training show</h3></div></li>
     </ol>
-    
+
   </div>
 </section>
 
@@ -198,6 +201,8 @@
   </div>
 </section>
 
+<div class="ma2m-pied-infos"><a class="ma2m-action" href="/en/academie.html?vue=candidature#candidature">Start</a></div>
+</div>
 <section class="u-pt-1 ia-formulaire lx-formulaire" id="candidature">
   <div class="container ca-1">
     <h2 class="lx-titre-section reveal">Your application</h2>
