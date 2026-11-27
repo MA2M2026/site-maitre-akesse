@@ -13,8 +13,6 @@
   'use strict';
   const form = document.getElementById('form-talons');
   if (!form) return;
-  const vueAutonome = new URLSearchParams(location.search).get('vue') === 'candidature';
-  if (vueAutonome) document.body.classList.add('ma2m-talons-autonome');
   const $ = (id) => document.getElementById(id);
   // Prix (décision de la propriétaire, 08/11/2026) : le groupe est un forfait de 4 dimanches par mois (prix du mois :
   // js/talons-commun.js) ; le privé se paie à la séance (à l'extérieur : 30 000 au départ, l'agence ajuste jusqu'à
@@ -212,24 +210,6 @@
   const ETAPES = [...form.querySelectorAll('.ct-etape')];
   const nomEtape = (n) => (ETAPES[n - 1] || { dataset: {} }).dataset.nom;
   const numeroDe = (nom) => ETAPES.findIndex((f) => f.dataset.nom === nom) + 1;
-  const recapitulatif = document.createElement('details');
-  recapitulatif.className = 'ma2m-recap-talons';
-  const verification = document.createElement('p');
-  const choixCours = document.createElement('p');
-  const choixPaiement = document.createElement('p');
-  const titreRecap = document.createElement('summary');
-  titreRecap.textContent = T('Vérifier mes choix', 'Check my choices');
-  recapitulatif.append(titreRecap, verification, choixCours, choixPaiement);
-  const derniereEtape = ETAPES[numeroDe('envoi') - 1];
-  derniereEtape.querySelector('.ct-etape-titre').after(recapitulatif);
-  function verifierInscription() {
-    verification.textContent = $('ct-nom').value.trim();
-    const formuleChoisie = form.querySelector('input[name="formule"]:checked');
-    choixCours.textContent = (formuleChoisie?.closest('label').querySelector('strong').textContent || '') + ' · ' + texteTotal();
-    choixPaiement.textContent = decision() === 'maintenant'
-      ? T('Paiement maintenant', 'Pay now') : T('Paiement plus tard', 'Pay later');
-  }
-
   const CONDITIONS = { base: () => parcours() === 'base', prive: () => prive(), maintenant: () => prive() && maintenantChoisi(), mineure: () => mineure() };
   const utile = (n) => { const si = ETAPES[n - 1] && ETAPES[n - 1].dataset.si; return !si || (CONDITIONS[si] ? CONDITIONS[si]() : true); };
   const utiles = () => ETAPES.map((f, i) => i + 1).filter(utile);
@@ -248,25 +228,12 @@
     $('ct-envoi-jauges').classList.toggle('u-hidden', !fin || !envoiEnCours);
     $('ct-suivant').classList.toggle('u-hidden', fin);
     $('ct-envoyer').classList.toggle('u-hidden', !fin);
-    if (fin) verifierInscription();
   }
   form.addEventListener('change', () => {
     // (un message d'erreur disparaît dès que la personne corrige quelque chose : il ne prend plus de place sur l'écran)
     if (msg.classList.contains('err')) { msg.className = 'form-msg'; msg.textContent = ''; }
     rafraichir();
   });
-  const mots = {
-    formule: T('FORMULE', 'OPTION'), parcours: T('NIVEAU', 'LEVEL'), themes: T('THÈMES', 'TOPICS'),
-    details: T('DÉTAILS', 'DETAILS'), creneaux: T('CRÉNEAUX', 'SLOTS'), calendrier: T('DATES', 'DATES'),
-    vous: T('IDENTITÉ', 'IDENTITY'), parent: T('PARENT', 'GUARDIAN'), objectif: T('OBJECTIF', 'GOAL'),
-    photos: 'PHOTOS', video: T('VIDÉO', 'VIDEO'), paiement: T('PAIEMENT', 'PAYMENT')
-  };
-  ETAPES.forEach((ecran) => {
-    const mot = mots[ecran.dataset.nom];
-    if (mot) ecran.querySelector('.ct-etape-titre').dataset.motEditorial = mot;
-  });
-  form.classList.add('ma2m-talons-actif');
-  form.prepend($('ct-retour'));
   function montrer(n, defiler = true) {
     etape = n;
     form.querySelectorAll('.ct-etape').forEach((f) => f.classList.toggle('u-hidden', Number(f.dataset.etape) !== n));
@@ -274,10 +241,7 @@
     msg.className = 'form-msg'; msg.textContent = '';
     const titre = form.querySelector('.ct-etape[data-etape="' + n + '"] .ct-etape-titre');
     // (page en écrans : chaque étape tient dans l'écran, on remonte simplement en haut ; sinon on amène le titre)
-    if (defiler && vueAutonome) {
-      ETAPES[n - 1].scrollTop = 0;
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    } else if (defiler && document.body.classList.contains('ecrans-actif')) window.scrollTo(0, 0);
+    if (defiler && document.body.classList.contains('ecrans-actif')) window.scrollTo(0, 0);
     else if (defiler && titre && typeof titre.scrollIntoView === 'function') titre.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   function erreur(texte, champ) {
@@ -320,8 +284,6 @@
     if (nom === 'photos') {
       if (nbPhotosEnPreparation) return erreur(T('Vos photos sont en cours de préparation : un instant, puis appuyez à nouveau.', 'Your photos are being prepared: wait a moment, then tap again.'), $('ct-photos'));
       if (photos.length < PHOTOS_MIN) return erreur(T('Ajoutez 2 à 5 photos.', 'Please add 2 to 5 photos.'), $('ct-photos'));
-    }
-    if (nom === 'video') {
       if (!video && !videoEnPreparation) return erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video'));
     }
     return true;
@@ -561,13 +523,6 @@
           : ligne.creneaux && ligne.creneaux.length
           ? T('Merci ! Votre inscription est bien reçue et vos créneaux sont gardés 48 h, le temps de votre paiement. L’agence vous recontacte sur WhatsApp.', 'Thank you! Your sign-up has been received and your slots are held for 48 hours while you pay. The agency will contact you on WhatsApp.')
           : T('Merci ! Votre inscription est bien reçue. L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.', 'Thank you! Your sign-up has been received. The agency will contact you on WhatsApp to set the date and the payment.'));
-    if (!error) {
-      const titre = document.createElement('h3');
-      titre.textContent = T('Félicitations !', 'Congratulations!');
-      merci.classList.add('ma2m-inscription-recue');
-      merci.appendChild(titre);
-    }
-    $('ct-retour').classList.add('u-hidden');
     merci.appendChild(p1);
     if (envoi.liens.length && lienVideo) {
       const pOk = document.createElement('p');
@@ -582,14 +537,6 @@
       p2.textContent = T('Vos photos ou votre vidéo n’ont pas pu partir (connexion instable ?) : envoyez-les sur WhatsApp au +225 05 45 65 66 87 avec votre nom.', 'Your photos or video could not be sent (unstable connection?): please send them on WhatsApp to +225 05 45 65 66 87 with your name.');
       merci.appendChild(p2);
     }
-    if (!error) {
-      const accueil = document.createElement('a');
-      accueil.className = 'ma2m-action ma2m-retour-accueil';
-      accueil.href = document.documentElement.lang === 'en' ? '/en/' : '/';
-      accueil.textContent = T('⌂ Retour à l’accueil', '⌂ Back to home');
-      merci.appendChild(accueil);
-    }
-    form.classList.add('ma2m-talons-termine');
     form.querySelectorAll('.ct-etape, .ct-boutons').forEach((el) => el.classList.add('u-hidden'));
     if (typeof merci.scrollIntoView === 'function') merci.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
@@ -604,13 +551,13 @@
     EnvoiFiable.demanderNotifications();  // (12/11/2026 : « Inscription envoyée ✓ » si elle passe sur une autre application)
     const btn = $('ct-envoyer'); btn.disabled = true; $('ct-retour').disabled = true;
     try {
-      if (!video && !videoEnPreparation) { montrer(numeroDe('video')); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      if (!video && !videoEnPreparation) { montrer(numeroDe('photos')); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
       // (le message et les jauges d'abord : la préparation de la vidéo peut prendre un moment)
       envoiEnCours = true; $('ct-envoi-jauges').classList.remove('u-hidden');
       afficherMsg(msg, T('Préparation de votre vidéo…', 'Preparing your video…'), 'ok');
       if (videoEnPreparation) await videoEnPreparation;
       await photosEnPreparation;
-      if (!video) { envoiEnCours = false; montrer(numeroDe('video')); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
+      if (!video) { envoiEnCours = false; montrer(numeroDe('photos')); erreur(T('Ajoutez la vidéo de votre marche.', 'Please add the video of your walk.'), $('ct-video')); return; }
       const etat = { ligne: Object.assign({ id: idInscription }, ligneInscription([], null)), montant: fcfa(montant()), photos, video, d: dejaEnvoye, page: location.pathname };
       await EnvoiFiable.garder('cours-talons', etat);
       await EnvoiFiable.seul('cours-talons', () => terminerInscription(etat), true);

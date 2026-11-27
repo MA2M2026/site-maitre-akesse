@@ -5748,28 +5748,3 @@ champ d'un écran du milieu = « Suivant » (plus d'envoi ni de saut d'écran) ;
 le programme (`ecransPrets`) ; la légende pour les lecteurs d'écran reprend « Étape X sur Y » ; un message d'erreur disparaît
 dès qu'on corrige un choix ; les listes longues (thèmes, séances choisies) défilent dans leur cadre au lieu d'être coupées ;
 zones à toucher d'au moins 40 px et listes en 16 px (pas de zoom de l'iPhone).
-
-### Présentation commune des candidatures et des cours de talons
-
-La charte du formulaire validée sur téléphone est intégrée en français et en anglais dans
-`css/candidature-ma2m.css`. Le portrait de la maquette est partagé par la couverture de
-`candidature-ma2m.html` et les titres d’étape. Les boutons principaux sont bordeaux, les champs
-sont espacés et l’action principale reste en bas pendant le défilement. Les inscriptions aux cours
-de talons conservent leurs étapes de calendrier et de paiement. Les cases photo s’appuient sur
-le sélecteur et les aperçus déjà utilisés, sans modification du stockage ni des validations.
-
-### Entrée des parcours depuis le menu public
-
-Les entrées Casting, MA2M Academy, Représentation et Cours de talons ouvrent chacune leur
-couverture. Le bouton principal ouvre directement le formulaire dans sa vue dédiée.
-Les vidéos, programmes, critères et tarifs de l’Atelier restent accessibles depuis les
-rubriques de la page, qui se lisent en défilant. La navigation générale par écrans reste
-réservée aux autres pages qui utilisent `data-ecrans`.
-
-### Navigation plein écran des parcours publics
-
-Les pages Cours de talons, Casting, Intégrer l’agence, MA2M Academy et Représentation
-utilisent le mode `data-ecrans="plein"` de `js/pages-ecrans.js`. La couverture est le
-premier écran, puis le bouton bordeaux affiche chaque section à sa suite. Les rubriques
-longues peuvent être découpées avec `data-ecran-coupe`. L’action finale ouvre le formulaire
-du parcours ou, pour la page Intégrer l’agence, le choix des candidatures.

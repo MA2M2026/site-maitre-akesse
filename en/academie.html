@@ -53,6 +53,7 @@
   0%, 55% { left: -60%; }
   100% { left: 130%; }
 }</style>
+<link rel="stylesheet" href="../css/pages-ecrans.css?v=99ea25cd">
 <noscript id="css-complet"><link rel="stylesheet" href="../css/polices.css?v=f8b78de5"><link rel="stylesheet" href="../css/menu.css?v=ae3392a5"><link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="../css/style.css?v=a429d16c"><link rel="stylesheet" href="../css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="../css/luxe.css?v=aa3ae02d"><link rel="stylesheet" href="../css/integrer-agence.css?v=d08dbfe9"><link rel="stylesheet" href="../css/candidature.css?v=95bc3c5c"><link rel="stylesheet" href="../css/jetons.css?v=a7178e63"><link rel="stylesheet" href="../css/installation.css?v=f02732d5"><link rel="stylesheet" href="../css/charte-ma2m.css?v=f4263a67"><link rel="stylesheet" href="../css/bouton-ma2m.css?v=c65b8b41"></noscript>
 <script src="../js/css-differe.js?v=d938ae04" async></script>
 <link rel="manifest" href="../manifest.json">
@@ -60,10 +61,8 @@
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <script src="../js/bouton-appui.js?v=bedca56e" defer></script>
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
-  <link rel="stylesheet" href="/css/pages-ecrans.css?v=346bf420">
 </head>
-<body class="ma2m-candidature">
+<body>
 <script async src="../js/filet-reveal.js?v=0e57f29d"></script>
 
 
@@ -71,28 +70,24 @@
 <header class="site-header-v2" data-gabarit="entete" data-page="academie"></header>
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
-<script src="../js/gabarit.js?v=07c3b9fc"></script>
-<main class="ma2m-parcours-public" data-ecrans="plein">
+<script src="../js/gabarit.js?v=8523b0dd"></script>
+<main data-ecrans>
 
-<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
-  <div class="ma2m-couverture-portrait" aria-hidden="true">
-    <span>ACADEMY</span>
-  </div>
-  <div class="ma2m-couverture-presentation">
-    <h1 id="ma2m-titre-parcours">MA2M Academy</h1>
-    <a class="ma2m-action" href="/en/academie.html?vue=candidature#candidature">Apply to MA2M Academy</a>
-    <a class="ma2m-lien-infos" href="#informations-parcours">Explore the training ↓</a>
+<section class="ia-haut lx-hero">
+  <img class="lx-hero-photo" src="../assets/cours-talons/mannequin-podium.jpg?v=2" alt="" width="1080" height="1350" fetchpriority="high">
+  <div class="lx-hero-voile" aria-hidden="true"></div>
+  <div class="lx-hero-cadre" aria-hidden="true"></div>
+  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Riviera Faya</p>
+  <div class="container ia-haut-grille">
+    <div class="lx-hero-texte">
+      <div class="eyebrow reveal">Academy of Modelling Arts</div>
+      <h1 class="reveal reveal-delay-1">MA2M Academy<span class="oeil">.</span></h1>
+      <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2 lx-chapeau">The training department of Maître Akesse Model Management. We train those who want to learn modelling, and we bring experienced models up to the standards of the house.</p>
+    </div>
   </div>
 </section>
 
-<div class="ma2m-informations-parcours" id="informations-parcours">
-<nav class="ma2m-rubriques" aria-label="Page sections"><a href="#video-parcours">Video</a><a href="#formation">Training</a><a href="#recyclage">Refresher course</a><a href="#tarifs">What is included</a></nav>
-<section class="ma2m-introduction-parcours" aria-label="About this path">
-  <p>The training department of Maître Akesse Model Management. We train those who want to learn modelling, and we bring experienced models up to the standards of the house.</p>
-
-</section>
-
-<section class="video-pleine reveal" id="video-parcours" aria-label="Video: how to join the agency">
+<section class="video-pleine reveal" aria-label="Video: how to join the agency">
   <video class="vp-verticale" controls playsinline preload="none" poster="../assets/integrer-agence/affiche.jpg?v=6" width="720" height="1280"><source src="../assets/integrer-agence/integrer-agence.mp4?v=6" type="video/mp4"></video>
   <video class="vp-horizontale" controls playsinline preload="none" poster="../assets/integrer-agence/affiche-large.jpg?v=6" width="1280" height="720"><source src="../assets/integrer-agence/integrer-agence-large.mp4?v=6" type="video/mp4"></video>
 </section>
@@ -105,7 +100,7 @@
   </div>
 </section>
 
-<section class="lx-prog-section lx-prog--compact" id="formation" data-ecran-coupe="li.lx-prog-mois:nth-child(3n+1)" aria-labelledby="ac-formation-titre">
+<section class="lx-prog-section lx-prog--compact" data-ecran-coupe="h3.lx-prog-niveau" id="formation" aria-labelledby="ac-formation-titre">
   <div class="container">
     <p class="lx-surtitre reveal">Initial training</p>
     <h2 class="lx-titre-section reveal" id="ac-formation-titre">Initial training · 18 months</h2>
@@ -134,7 +129,7 @@
       <li class="lx-prog-mois reveal reveal-delay-1"><span class="lx-prog-num">VIII</span><div><p class="lx-prog-quand">Month 8</p><h3>Advertising modelling</h3></div></li>
       <li class="lx-prog-mois reveal reveal-delay-2"><span class="lx-prog-num">IX</span><div><p class="lx-prog-quand">Month 9</p><h3>The big end-of-training show</h3></div></li>
     </ol>
-
+    
   </div>
 </section>
 
@@ -146,7 +141,7 @@
   </div>
 </section>
 
-<section class="lx-prog-section lx-prog--compact" id="recyclage" data-ecran-coupe="li.lx-prog-mois:nth-child(3n+1)" aria-labelledby="ac-recyclage-titre">
+<section class="lx-prog-section lx-prog--compact" id="recyclage" aria-labelledby="ac-recyclage-titre">
   <div class="container">
     <p class="lx-surtitre reveal">Refresher course</p>
     <h2 class="lx-titre-section reveal" id="ac-recyclage-titre">Refresher course · 9 months</h2>
@@ -189,7 +184,7 @@
       <details class="lx-verre reveal"><summary>How long do the classes last?</summary><p>18 months for the initial training (two times 9 months), 9 months for the refresher course, from March to November.</p></details>
       <details class="lx-verre reveal"><summary>And after the training?</summary><p>No class is compulsory any more. Review sessions stay open, free of charge.</p></details>
     </div>
-    <p class="ac-boutons reveal"><a class="btn btn--principal" href="/en/academie.html?vue=candidature#candidature">Apply to MA2M Academy</a></p>
+    <p class="ac-boutons reveal"><a class="btn btn--principal" href="#candidature">Apply to MA2M Academy</a></p>
   </div>
 </section>
 
@@ -201,15 +196,13 @@
   </div>
 </section>
 
-<div class="ma2m-pied-infos"><a class="ma2m-action" href="/en/academie.html?vue=candidature#candidature">Start</a></div>
-</div>
 <section class="u-pt-1 ia-formulaire lx-formulaire" id="candidature">
   <div class="container ca-1">
     <h2 class="lx-titre-section reveal">Your application</h2>
-    <a class="ma2m-autres-parcours" href="/en/candidature-ma2m.html#parcours">See all application paths</a>
     <form id="form-casting" data-parcours="agence">
       <div id="ca-bloc-agence-info" class="ca-2">
-        <p class="ca-5">If selected, you’ll receive the casting date and dress code by WhatsApp or email.</p>
+        <p class="ca-3">📤 Your application to <strong>MA2M Academy</strong>: simply fill in the form below.</p>
+        <p class="ca-5">📩 If your application is selected, we write to you by WhatsApp or e-mail with the date and dress code of the in-person casting. 😎</p>
       </div>
 
       <div class="form-champ">
@@ -232,7 +225,7 @@
         <label for="ca-lien-travail">Link to your work (optional): Instagram, book, previous agency…</label>
         <input type="text" inputmode="url" id="ca-lien-travail" maxlength="300" placeholder="https://www.instagram.com/…">
       </div>
-      <script src="../js/formulaire-candidature-champs.js?v=c6d0a419"></script>
+      <script src="../js/formulaire-candidature-champs.js?v=6e378a13"></script>
     </form>
   </div>
 </section>
@@ -240,7 +233,7 @@
 </main>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
-<script src="../js/gabarit.js?v=07c3b9fc"></script>
+<script src="../js/gabarit.js?v=8523b0dd"></script>
 
 <script src="../js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
 <script src="../js/supabase-config.js?v=9e1844d8"></script>
@@ -256,10 +249,9 @@
 <script src="../js/menu.js?v=8382bd5a"></script>
 <script src="../js/diaporama-luxe.js?v=56c3c955"></script>
 <script src="../js/integrer-agence.js?v=a872f7de"></script>
-<script src="../js/formulaire-candidature.js?v=ad8cc408"></script>
-<script src="../js/candidature-etapes.js?v=a03d8442"></script>
-<script src="/js/guide-medias.js?v=62b8734e"></script>
+<script src="../js/formulaire-candidature.js?v=4a2ab58f"></script>
+<script src="../js/candidature-etapes.js?v=b5b566a3"></script>
 <script src="../js/brouillon.js?v=8c0a08ff"></script>
-<script src="/js/pages-ecrans.js?v=20d595cd"></script>
+<script src="../js/pages-ecrans.js?v=6414142f"></script>
 </body>
 </html>

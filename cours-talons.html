@@ -39,43 +39,39 @@
 <link rel="stylesheet" href="css/paiements-premium.css?v=3119677c">
 <link rel="stylesheet" href="css/talons-creneaux.css?v=c73161e5">
 <link rel="stylesheet" href="css/cours-talons.css?v=cfbc5bbb">
+<link rel="stylesheet" href="css/pages-ecrans.css?v=99ea25cd">
 <script src="js/bouton-appui.js?v=bedca56e" defer></script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7C2128">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
-  <link rel="stylesheet" href="/css/pages-ecrans.css?v=346bf420">
 </head>
-<body class="ma2m-parcours-talons">
+<body>
 <script async src="js/filet-reveal.js?v=0e57f29d"></script>
 
 <header class="site-header-v2" data-gabarit="entete" data-page="cours-talons"></header>
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
-<script src="js/gabarit.js?v=07c3b9fc"></script>
-<main class="ma2m-parcours-public" data-ecrans="plein">
+<script src="js/gabarit.js?v=8523b0dd"></script>
+<main data-ecrans>
 
-<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
-  <div class="ma2m-couverture-portrait" aria-hidden="true">
-    <span>TALONS</span>
-  </div>
-  <div class="ma2m-couverture-presentation">
-    <h1 id="ma2m-titre-parcours">Atelier Talons &amp; Élégance</h1>
-    <a class="ma2m-action" href="/cours-talons.html?vue=candidature#inscription">M’inscrire</a>
-    <a class="ma2m-lien-infos" href="#informations-parcours">Voir les formules et le programme ↓</a>
-  </div>
-</section>
-
-<div class="ma2m-informations-parcours" id="informations-parcours">
-<nav class="ma2m-rubriques" aria-label="Rubriques du parcours"><a href="#formules">Formules et tarifs</a><a href="#programme">Programme</a><a href="#questions-talons">Questions fréquentes</a></nav>
-<section class="ma2m-introduction-parcours" aria-label="Présentation du parcours">
-  <p>Vous préparez un concours de Miss ou de beauté, vous voulez gagner en élégance et en prestance, ou simplement apprendre enfin à marcher en talons avec assurance ? Posture, port de tête, équilibre, démarche fluide : nous vous apprenons tout, quel que soit votre niveau.</p>
-  <div class="ct-avertissement" role="note">
+<section class="ct-haut lx-hero">
+  <img class="lx-hero-photo" src="assets/cours-talons/mannequin-podium.jpg?v=2" alt="" width="1080" height="1350" fetchpriority="high">
+  <div class="lx-hero-voile" aria-hidden="true"></div>
+  <div class="lx-hero-cadre" aria-hidden="true"></div>
+  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Riviera Faya</p>
+  <div class="container ct-haut-grille">
+    <div class="ct-haut-texte lx-hero-texte">
+      <div class="eyebrow reveal">MA2M Academy</div>
+      <h1 class="reveal reveal-delay-1">Atelier Talons &amp; Élégance<span class="oeil">.</span></h1>
+      <p class="lx-chapeau reveal reveal-delay-2">Vous préparez un concours de Miss ou de beauté, vous voulez gagner en élégance et en prestance, ou simplement apprendre enfin à marcher en talons avec assurance ? Posture, port de tête, équilibre, démarche fluide : nous vous apprenons tout, quel que soit votre niveau.</p>
+      <div class="ct-avertissement reveal reveal-delay-2" role="note">
         <strong>Ces cours ne permettent pas d'intégrer l'agence.</strong>
         <p>L'Atelier est ouvert à toutes, pour apprendre à marcher en talons. Ce n'est ni un casting ni une inscription comme mannequin de l'agence.</p>
         <a class="ct-lien-agence" href="integrer-agence.html">Vous voulez devenir mannequin ? Choisir mon parcours →</a>
       </div>
+    </div>
+  </div>
 </section>
 <section class="lx-promesse">
   <div class="container">
@@ -125,7 +121,7 @@
 <!-- (14/11/2026, programme validé par la propriétaire) le programme du cours en groupe, mois après mois : le même que
      la table cours_talons_programme (supabase-programme-talons.sql) qui remplit le programme de chaque élève ; à changer
      aux deux endroits (et sur en/cours-talons.html). -->
-<section class="lx-prog-section" id="programme" data-ecran-coupe="li.lx-prog-mois:nth-child(3n+1)" aria-labelledby="ct-programme-titre">
+<section class="lx-prog-section" id="programme" data-ecran-coupe="li.lx-prog-mois[data-module='1'], li.lx-prog-mois[data-module='4']" aria-labelledby="ct-programme-titre">
   <div class="container">
     <p class="lx-surtitre reveal">Le cours en groupe</p>
     <h2 class="lx-titre-section reveal" id="ct-programme-titre">Le programme, mois après mois</h2>
@@ -165,7 +161,7 @@
 </section>
 
 <!-- (22/11/2026, pages en écrans) les questions fréquentes passent AVANT le formulaire : le formulaire est le dernier écran -->
-<section class="ct-faq" id="questions-talons" data-ecran-coupe="details:nth-of-type(2n+1)">
+<section class="ct-faq">
   <div class="container">
     <h2 class="lx-titre-section reveal">Questions fréquentes</h2>
     <details class="reveal"><summary>Faut-il déjà savoir marcher en talons ?</summary><p>Non. Les cours sont ouverts à toutes, des débutantes aux plus à l’aise : votre vidéo nous aide à adapter le travail à votre niveau.</p></details>
@@ -176,13 +172,10 @@
   </div>
 </section>
 
-<div class="ma2m-pied-infos"><a class="ma2m-action" href="/cours-talons.html?vue=candidature#inscription">Commencer</a></div>
-</div>
 <section class="ct-inscription" id="inscription">
   <div class="container ct-form-boite">
     <h2 class="lx-titre-section reveal">Inscription</h2>
     <p class="ct-compteur" id="ct-compteur" aria-live="polite"></p>
-    <a class="ma2m-retour-talons" href="/cours-talons.html">← Cours de talons</a>
     <form id="form-talons" class="lx-ecrin" novalidate>
 
       <fieldset class="ct-etape" data-etape="1" data-nom="formule">
@@ -299,30 +292,25 @@
       </fieldset>
       <fieldset class="ct-etape u-hidden" data-etape="10" data-nom="photos">
         <legend class="u-lecteur-ecran">Étape 10 : photos et vidéo</legend>
-        <div class="ct-etape-titre"><span>10</span><h3>Ajoutez vos photos</h3></div>
-        <p class="ct-aide">Vos photos aident à préparer votre cours.</p>
+        <div class="ct-etape-titre"><span>10</span><h3>2 à 5 photos et une vidéo de votre marche</h3></div>
+        <p class="ct-aide">Elles servent seulement à évaluer votre niveau, pour bien préparer vos cours. Une photo en pied (de la tête aux pieds) et une photo du visage suffisent ; la vidéo : marchez simplement face à la caméra, en talons si vous en avez, 3 minutes maximum.</p>
         <div class="form-champ"><label for="ct-photos">Photos (2 à 5) *</label><input type="file" id="ct-photos" accept="image/*" multiple><div id="ct-photos-apercu" class="ct-vignettes"></div><p class="ct-info" id="ct-photos-info"></p></div>
-      </fieldset>
-      <fieldset class="ct-etape u-hidden" data-etape="11" data-nom="video">
-        <legend class="u-lecteur-ecran">Étape 11 : vidéo</legend>
-        <div class="ct-etape-titre"><span>11</span><h3>Filmez votre marche</h3></div>
-        <p class="ct-aide">Marchez face à la caméra, en talons si vous en avez.</p>
         <div class="form-champ"><label for="ct-video">Vidéo de votre marche (3 minutes maximum) *</label><input type="file" id="ct-video" accept="video/*"><p class="ct-info" id="ct-video-info"></p>
           <div id="ct-video-jauge" class="jauge u-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="jauge-haut"><span class="jauge-titre"></span><span class="jauge-pc">0 %</span></div><div class="jauge-barre"><span class="jauge-remplie"></span></div></div>
         </div>
       </fieldset>
 
-      <fieldset class="ct-etape u-hidden" data-etape="12" data-nom="paiement">
+      <fieldset class="ct-etape u-hidden" data-etape="11" data-nom="paiement">
         <legend class="u-lecteur-ecran">Étape 11 : paiement</legend>
-        <div class="ct-etape-titre"><span>12</span><h3>Le paiement</h3></div>
+        <div class="ct-etape-titre"><span>11</span><h3>Le paiement</h3></div>
         <p class="ct-total ct-total--grand" id="ct-total-final"></p>
         <p class="ct-consigne">👆 Touchez votre choix.</p>
         <label class="ct-choix"><input type="radio" name="decision" value="maintenant"><span><strong>Je paie maintenant</strong><em>Votre place est réservée dès que l’agence voit votre paiement.</em></span></label>
         <label class="ct-choix"><input type="radio" name="decision" value="plus_tard"><span><strong>Je paierai plus tard</strong><em>L’agence vous recontacte sur WhatsApp pour fixer la date et le paiement.</em></span></label>
       </fieldset>
-      <fieldset class="ct-etape u-hidden" data-etape="13" data-nom="envoi">
+      <fieldset class="ct-etape u-hidden" data-etape="12" data-nom="envoi">
         <legend class="u-lecteur-ecran">Étape 12 : dernière étape</legend>
-        <div class="ct-etape-titre"><span>13</span><h3>Vérifiez votre inscription</h3></div>
+        <div class="ct-etape-titre"><span>12</span><h3>Dernière étape</h3></div>
         <div id="ct-bloc-wave" class="ct-wave u-hidden">
           <!-- (13/11/2026) moyen de paiement en tuiles et où payer (js/moyens-paiement.js) -->
           <div id="ct-moyens"></div>
@@ -336,7 +324,7 @@
 
       <div class="ct-boutons lx-boutons">
         <button type="button" class="btn ct-retour u-hidden" id="ct-retour">← Retour</button>
-        <button type="button" class="btn btn--principal" id="ct-suivant">Continuer →</button>
+        <button type="button" class="btn btn--principal" id="ct-suivant">Suivant →</button>
         <button type="submit" class="btn btn--principal u-hidden" id="ct-envoyer">Envoyer mon inscription</button>
       </div>
       <div id="ct-envoi-jauges" class="envoi-jauges u-hidden">
@@ -353,7 +341,7 @@
 </main>
 
 <footer class="site-footer" data-gabarit="pied"></footer>
-<script src="js/gabarit.js?v=07c3b9fc"></script>
+<script src="js/gabarit.js?v=8523b0dd"></script>
 
 <script src="js/vendor/supabase-js-2.110.6.js?v=82632987"></script>
 <script src="js/supabase-config.js?v=9e1844d8"></script>
@@ -371,8 +359,7 @@
 <script src="js/moyens-paiement.js?v=e15e92a3"></script>
 <script src="js/talons-commun.js?v=d635b7c1"></script>
 <script src="js/talons-creneaux.js?v=86fa3741"></script>
-<script src="js/cours-talons.js?v=c69cdd44"></script>
-<script src="/js/guide-medias.js?v=62b8734e"></script>
-<script src="/js/pages-ecrans.js?v=20d595cd"></script>
+<script src="js/cours-talons.js?v=a392420b"></script>
+<script src="js/pages-ecrans.js?v=6414142f"></script>
 </body>
 </html>
