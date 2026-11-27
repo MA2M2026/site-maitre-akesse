@@ -387,13 +387,7 @@
   color: var(--one-ivoire);
 }
 .p-couv .lignes .ligne::before { background: var(--one-sable); }
-/* Le contraste se joue sur le bord des lettres. */
-.mag .p-couv :is(.numero span, .modele) {
-  color: var(--one-ivoire);
-  paint-order: stroke fill;
-  -webkit-text-stroke: 1px var(--one-encre);
-  text-shadow: 0 1px 3px var(--one-encre);
-}
+.mag .p-couv :is(.numero span, .modele) { color: var(--one-ivoire); }
 .mag .p-couv .modele[hidden] { display: none; }
 @media (min-width: 701px) {
   .p-couv .lignes { right: 6cqmin; left: auto; width: min(50%, 36rem); }
