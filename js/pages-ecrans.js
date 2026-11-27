@@ -10,23 +10,6 @@
 (function () {
   const main = document.querySelector('main[data-ecrans]');
   if (!main) return;
-  const plein = main.dataset.ecrans === 'plein';
-  const ancreDirecte = location.hash === '#inscription' || location.hash === '#candidature' || location.hash.startsWith('#porte-');
-  if (plein && (new URLSearchParams(location.search).get('vue') === 'candidature' || ancreDirecte)) return;
-  const fin = plein && (main.dataset.ecransFin || main.querySelector('.ma2m-couverture-presentation .ma2m-action')?.href);
-  if (plein) {
-    const informations = main.querySelector('.ma2m-informations-parcours');
-    if (informations) {
-      const accueilInfos = informations.querySelector('.ma2m-introduction-parcours');
-      accueilInfos.id = informations.id;
-      const rubriques = informations.querySelector('.ma2m-rubriques');
-      if (rubriques) accueilInfos.appendChild(rubriques);
-      const sections = [...informations.querySelectorAll(':scope > section')];
-      sections.forEach((section) => { section.classList.add('ma2m-page-info'); section.hidden = false; });
-      informations.replaceWith(...sections);
-    }
-    document.body.classList.add('ma2m-ecrans-pleins');
-  }
   const EN = document.documentElement.lang === 'en';
   const T = (fr, en) => (EN ? en : fr);
   // (une adresse abîmée, ex. « #%zz » après un partage, ne doit pas bloquer la page)
@@ -56,7 +39,7 @@
       apres.after(nouvelle); apres = nouvelle;
     });
   });
-  const ecrans = [...main.children].filter((e) => e.tagName === 'SECTION' && (!plein || !e.matches('#candidature, #inscription')));
+  const ecrans = [...main.children].filter((e) => e.tagName === 'SECTION');
   if (ecrans.length < 2) return;
   // (css/pages-ecrans.css est chargé normalement dans le <head> de chaque page : un seul écran visible dès l'affichage,
   // sans style ajouté par le script, que la protection CSP des pages refuserait)
@@ -85,13 +68,7 @@
     if (k) legal.append(' · ');
     const a = document.createElement('a'); a.href = href; a.textContent = texte; legal.appendChild(a);
   });
-  if (plein) {
-    retour.className = 'ecrans-retour';
-    retour.textContent = T('← Retour', '← Back');
-    const entete = document.querySelector('.header-v2-droite');
-    (entete || main).prepend(retour);
-    barre.append(suivant, legal);
-  } else barre.append(legal, retour, compteur, suivant);
+  barre.append(legal, retour, compteur, suivant);
   document.body.appendChild(barre);
 
   const dernier = ecrans.length - 1;
@@ -117,15 +94,8 @@
   // (l'en-tête peut changer de hauteur quand les polices ou le logo arrivent : on remesure)
   window.addEventListener('load', () => mesurer());
   if ('fonts' in document) document.fonts.ready.then(() => mesurer()).catch(() => { /* rien */ });   /* (SonarCloud S6544) */
-  if (!plein) ecrans[dernier].classList.add('ecran-formulaire');
+  ecrans[ecrans.length - 1].classList.add('ecran-formulaire');
   function majBarre() {
-    if (plein) {
-      retour.hidden = courant === 0;
-      suivant.textContent = courant === dernier ? T('Commencer', 'Start') : T('Continuer', 'Continue');
-      suivant.setAttribute('aria-label', suivant.textContent);
-      mesurer();
-      return;
-    }
     const surFormulaire = courant === dernier;
     retour.hidden = courant === 0 || (surFormulaire && !formulaireAuDebut());
     suivant.hidden = surFormulaire;
@@ -153,8 +123,7 @@
     ecrans[i].querySelectorAll('.reveal:not(.visible)').forEach((r) => r.classList.add('visible'));
     progression.firstChild.style.width = Math.round(((i + 1) / ecrans.length) * 100) + '%';
     majBarre();
-    if (plein) ecrans[i].scrollTop = 0;
-    window.scrollTo({ top: 0, behavior: plein ? 'instant' : 'auto' }); mesurer();
+    window.scrollTo(0, 0); mesurer();
     if (ajouterHistorique !== false) { try { history.pushState({ ecran: i, de: avant }, '', '#ecran-' + (i + 1)); } catch (err) { /* rien */ } }
     // (lecteurs d'écran) le titre du nouvel écran prend le focus, sans faire défiler
     const titre = i > 0 && ecrans[i].querySelector('h1, h2');
@@ -169,10 +138,7 @@
     aller(cible, false);
     try { history.replaceState({ ecran: cible }, '', '#ecran-' + (cible + 1)); } catch (err) { /* rien */ }
   });
-  suivant.addEventListener('click', () => {
-    if (plein && courant === dernier && fin) location.href = fin;
-    else aller(courant + 1);
-  });
+  suivant.addEventListener('click', () => aller(courant + 1));
   window.addEventListener('popstate', (ev) => {
     const n = ev.state && Number.isInteger(ev.state.ecran) ? ev.state.ecran : ecranDeAdresse();
     aller(n, false);

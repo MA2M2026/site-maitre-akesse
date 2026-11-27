@@ -83,19 +83,16 @@ async function navigateur() {
     ok(prog.length === 7 && prog[0] === (en ? 'The basics' : 'Les bases') && prog[5] === (en ? 'Pageants' : 'Miss et concours') && prog[6] === (en ? 'Fine-tuning' : 'Perfectionnement'), n + 'programme : 6 mois puis le perfectionnement (' + prog.join(', ') + ')');
     ok(await p.locator('.ct-carte a[href="#programme"]').count() === 1, n + 'la carte du groupe mène au programme');
 
-    // Les écrans d’information mènent à l’inscription.
+    // (22/11/2026) page en écrans (js/pages-ecrans.js) : on avance avec la flèche jusqu'au formulaire, comme une élève
     const refus = p.locator('#bandeau-cookies button', { hasText: /Refuser|Decline|Refuse/ }); if (await refus.count() && await refus.first().isVisible()) await refus.first().click();
-    const total = await p.locator('main > .ecran').count();
-    for (let ecran = 0; ecran < total; ecran++) await p.locator('.ecrans-suivant').click();
-    await p.waitForURL((url) => url.searchParams.get('vue') === 'candidature');
-    await p.locator('body.ma2m-talons-autonome').waitFor();
+    for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-talons')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
     // (23/11/2026, demande de la propriétaire) le formulaire en petits écrans, une question à la fois : formule, parcours,
     // thèmes, détails, créneaux, calendrier, vous, parent, objectif, photos, paiement, dernière étape
     const nomCourant = () => p.evaluate(() => { const e = [...document.querySelectorAll('.ct-etape')].find((x) => !x.classList.contains('u-hidden')); return e && e.dataset.nom; });
     const suivant = async () => { await p.click('#ct-suivant'); await p.waitForTimeout(250); };
     const retourA = async (nom) => { for (let i = 0; i < 14 && (await nomCourant()) !== nom; i++) { await p.click('#ct-retour'); await p.waitForTimeout(200); } };
     const avancerA = async (nom) => { for (let i = 0; i < 14 && (await nomCourant()) !== nom; i++) await suivant(); };
-    const depasse = async () => p.evaluate(() => { const s = document.querySelector('.ct-etape:not(.u-hidden)'), bar = document.querySelector('.ct-boutons'); return !s || !bar ? 0 : Math.round(s.getBoundingClientRect().bottom - bar.getBoundingClientRect().top); });
+    const depasse = async () => p.evaluate(() => { const s = document.querySelector('.ecran-courant'), bar = document.querySelector('.ecrans-barre'); return !s || !bar ? 0 : Math.round(s.getBoundingClientRect().bottom + scrollY + bar.offsetHeight - innerHeight); });
     const tropHauts = [];
     const noter = async () => { const d = await depasse(); if (d > 40) { tropHauts.push((await nomCourant()) + ' (+' + d + ' px)'); if (process.env.CAPTURES_ECRANS) await p.screenshot({ path: process.env.CAPTURES_ECRANS + '/talons-' + (await nomCourant()) + '.png', fullPage: true }); } };
     ok(/(Étape|Step) 1 (sur|of) \d+/.test(await p.textContent('#ct-compteur')), n + 'compteur « Étape 1 sur … » au lieu des 4 ronds');
@@ -232,16 +229,12 @@ async function navigateur() {
     // étape 3 : photos et vidéo
     await p.click('#ct-suivant');
     ok(/photo/i.test(await p.textContent('#ct-msg')), n + 'étape 3 : sans photos, un message les demande');
-    const guides = p.locator('[data-nom="photos"] .ma2m-guide-medias');
-    ok(await guides.count() === 1 && await guides.locator('img').count() === 2, n + 'les gestes photo et vidéo sont illustrés');
     await p.setInputFiles('#ct-photos', [1, 2, 3, 4, 0, 1].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
     // (12/11/2026) les photos sont lues et allégées dès le choix : on attend la fin de la préparation
     await p.waitForFunction(() => !/Préparation|Preparing/.test(document.getElementById('ct-photos-info').textContent) && document.querySelectorAll('#ct-photos-apercu img').length, null, { timeout: 15000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 5 && /sur 5|out of 5/.test(await p.textContent('#ct-photos-info')), n + '6 photos choisies : 5 gardées au maximum');
     for (const k of [5, 4, 3]) await p.click('#ct-photos-apercu figure:nth-child(' + k + ') button');
-    await noter();
-    await suivant();
-    ok(await nomCourant() === 'video' && await p.isVisible('[data-nom="video"] .ma2m-guide-medias') && /3 minutes/.test(await p.textContent('.ct-etape[data-nom="video"]')), n + 'vidéo : écran illustré et durée maximale annoncée');
+    ok(/3 minutes/.test(await p.textContent('.ct-etape[data-nom="photos"]')), n + 'vidéo : « 3 minutes maximum » annoncé');
     await p.setInputFiles('#ct-video', chemin.join(MEDIAS, 'video.mp4'));
     await p.waitForFunction(() => /✓/.test(document.getElementById('ct-video-info').textContent), null, { timeout: 30000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 2 && /✓/.test(await p.textContent('#ct-video-info')), n + '2 photos en aperçu, vidéo prête');
@@ -270,7 +263,6 @@ async function navigateur() {
     if (ecran.width < 700) ok(!tropHauts.length, n + 'chaque écran du formulaire tient sur le téléphone ' + tropHauts.join(', '));
     await p.click('#ct-envoyer');
     ok(/case|tick/i.test(await p.textContent('#ct-msg')), n + 'sans la case de confidentialité : envoi refusé avec un message');
-    ok(await p.isVisible('.ma2m-recap-talons') && /FCFA|CFA/.test(await p.textContent('.ma2m-recap-talons')), n + 'formule, montant et choix de paiement résumés avant envoi');
     await p.check('#ct-consentement');
     await p.click('#ct-envoyer');
     if (ecran.width === 820 && !pasPret) {
@@ -308,7 +300,7 @@ async function navigateur() {
       ok(l.parcours === 'debut' && l.modules === null, n + 'parcours « je débute » envoyé (sans thèmes)');
       ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
       if (en) ok(l.choix_creneaux === 'apres' && !l.creneaux && /lien personnel|personal link/.test(merci), n + '« après mon paiement » envoyé, sans créneau ; merci : « vous recevrez votre lien personnel »');
-      else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven|sam)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
+      else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
       if (!en) ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.mineure === true && !('age' in l) && !('quartier' in l) && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');

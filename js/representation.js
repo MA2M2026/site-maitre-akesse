@@ -6,13 +6,6 @@
   'use strict';
   const boutons = document.querySelectorAll('.rp-bouton[data-choix]');
   if (!boutons.length) return;
-  if (document.body.classList.contains('ma2m-ecrans-pleins')) {
-    boutons.forEach((bouton) => {
-      bouton.removeAttribute('aria-expanded');
-      bouton.addEventListener('click', () => window.PagesEcrans.montrer(document.getElementById(bouton.dataset.choix)));
-    });
-    return;
-  }
   const VOLETS = { simple: ['simple', 'candidature'], integrer: ['integrer'] };
   function ouvrir(choix, defiler) {
     Object.values(VOLETS).flat().forEach((id) => { const v = document.getElementById(id); if (v) v.hidden = !VOLETS[choix].includes(id); });
