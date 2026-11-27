@@ -535,6 +535,9 @@ async function envoyerMedias(etat) {
     await EnvoiFiable.oublier('candidature');
     void EnvoiFiable.prevenir(T('Candidature envoyée ✓', 'Application sent ✓'), T('Merci ! Votre candidature est bien arrivée chez Maître Akesse Model Management.', 'Thank you! Your application has reached Maître Akesse Model Management.'), etat.page);
   }
+  document.getElementById('form-casting').dispatchEvent(new CustomEvent('ma2m:candidature-enregistree', {
+    detail: { mediasRecus: soucis.length === 0 }
+  }));
   return complet;
 }
 
@@ -637,7 +640,10 @@ async function soumettreCandidature() {
   }
 
   // (12/11/2026) le dossier est gardé dans le téléphone pendant l'envoi : s'il est coupé, il reprend tout seul
-  const etat = { candidature, projetNom, mineur, parcours: PARCOURS, photos: fichiersPhotos, video: videoChoisie, page: location.pathname, photosFaites: false };
+  const lienReprise = document.body.classList.contains('ma2m-vue-candidature')
+    ? location.pathname + '?vue=candidature#candidature'
+    : location.pathname;
+  const etat = { candidature, projetNom, mineur, parcours: PARCOURS, photos: fichiersPhotos, video: videoChoisie, page: lienReprise, photosFaites: false };
   await EnvoiFiable.garder('candidature', etat);
   await EnvoiFiable.seul('candidature', () => envoyerMedias(etat), true);
   document.getElementById('form-casting').reset();

@@ -229,12 +229,16 @@ async function navigateur() {
     // étape 3 : photos et vidéo
     await p.click('#ct-suivant');
     ok(/photo/i.test(await p.textContent('#ct-msg')), n + 'étape 3 : sans photos, un message les demande');
+    const guides = p.locator('[data-nom="photos"] .ma2m-guide-medias');
+    ok(await guides.count() === 1 && await guides.locator('img').count() === 2, n + 'les gestes photo et vidéo sont illustrés');
     await p.setInputFiles('#ct-photos', [1, 2, 3, 4, 0, 1].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
     // (12/11/2026) les photos sont lues et allégées dès le choix : on attend la fin de la préparation
     await p.waitForFunction(() => !/Préparation|Preparing/.test(document.getElementById('ct-photos-info').textContent) && document.querySelectorAll('#ct-photos-apercu img').length, null, { timeout: 15000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 5 && /sur 5|out of 5/.test(await p.textContent('#ct-photos-info')), n + '6 photos choisies : 5 gardées au maximum');
     for (const k of [5, 4, 3]) await p.click('#ct-photos-apercu figure:nth-child(' + k + ') button');
-    ok(/3 minutes/.test(await p.textContent('.ct-etape[data-nom="photos"]')), n + 'vidéo : « 3 minutes maximum » annoncé');
+    await noter();
+    await suivant();
+    ok(await nomCourant() === 'video' && await p.isVisible('[data-nom="video"] .ma2m-guide-medias') && /3 minutes/.test(await p.textContent('.ct-etape[data-nom="video"]')), n + 'vidéo : écran illustré et durée maximale annoncée');
     await p.setInputFiles('#ct-video', chemin.join(MEDIAS, 'video.mp4'));
     await p.waitForFunction(() => /✓/.test(document.getElementById('ct-video-info').textContent), null, { timeout: 30000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 2 && /✓/.test(await p.textContent('#ct-video-info')), n + '2 photos en aperçu, vidéo prête');
@@ -263,6 +267,7 @@ async function navigateur() {
     if (ecran.width < 700) ok(!tropHauts.length, n + 'chaque écran du formulaire tient sur le téléphone ' + tropHauts.join(', '));
     await p.click('#ct-envoyer');
     ok(/case|tick/i.test(await p.textContent('#ct-msg')), n + 'sans la case de confidentialité : envoi refusé avec un message');
+    ok(await p.isVisible('.ma2m-recap-talons') && /FCFA|CFA/.test(await p.textContent('.ma2m-recap-talons')), n + 'formule, montant et choix de paiement résumés avant envoi');
     await p.check('#ct-consentement');
     await p.click('#ct-envoyer');
     if (ecran.width === 820 && !pasPret) {
@@ -300,7 +305,7 @@ async function navigateur() {
       ok(l.parcours === 'debut' && l.modules === null, n + 'parcours « je débute » envoyé (sans thèmes)');
       ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
       if (en) ok(l.choix_creneaux === 'apres' && !l.creneaux && /lien personnel|personal link/.test(merci), n + '« après mon paiement » envoyé, sans créneau ; merci : « vous recevrez votre lien personnel »');
-      else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
+      else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven|sam)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
       if (!en) ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.mineure === true && !('age' in l) && !('quartier' in l) && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
