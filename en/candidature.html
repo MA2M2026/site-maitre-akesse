@@ -50,7 +50,6 @@
   0%, 55% { left: -60%; }
   100% { left: 130%; }
 }</style>
-<link rel="stylesheet" href="../css/pages-ecrans.css?v=99ea25cd">
 <noscript id="css-complet"><link rel="stylesheet" href="../css/polices.css?v=f8b78de5"><link rel="stylesheet" href="../css/menu.css?v=ae3392a5"><link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="../css/style.css?v=a429d16c"><link rel="stylesheet" href="../css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="../css/luxe.css?v=aa3ae02d"><link rel="stylesheet" href="../css/candidature.css?v=95bc3c5c"><link rel="stylesheet" href="../css/jetons.css?v=a7178e63"><link rel="stylesheet" href="../css/installation.css?v=f02732d5"><link rel="stylesheet" href="../css/charte-ma2m.css?v=f4263a67"><link rel="stylesheet" href="../css/bouton-ma2m.css?v=c65b8b41"></noscript>
 <script src="../js/css-differe.js?v=d938ae04" async></script>
 <link rel="manifest" href="../manifest.json">
@@ -58,7 +57,7 @@
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <script src="../js/bouton-appui.js?v=bedca56e" defer></script>
-  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=dbd587c8">
+  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
 </head>
 <body class="ma2m-candidature">
 <script async src="../js/filet-reveal.js?v=0e57f29d"></script>
@@ -69,19 +68,27 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="../js/gabarit.js?v=07c3b9fc"></script>
-<main data-ecrans>
+<main class="ma2m-parcours-public">
 
-<section class="u-pb-1 cand-haut lx-hero lx-hero--mur">
-  <div class="container">
-    <div class="eyebrow reveal">Apply for a casting</div>
-    <h1 class="reveal reveal-delay-1">Apply for a Casting<span class="oeil">.</span></h1>
-    <p class="reveal reveal-delay-2 u-maxw-60ch-texte u-mt-1-2 lx-chapeau">Has the agency launched a specific project/casting? Fill out this form with your information, your measurements, your photos and a short introduction video. Our team reviews every application.</p>
+<section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
+  <div class="ma2m-couverture-portrait" aria-hidden="true">
+    <span>CASTING</span>
   </div>
-  <div class="lx-hero-cadre" aria-hidden="true"></div>
-  <p class="lx-hero-lieu" aria-hidden="true">Abidjan · Côte d’Ivoire</p>
+  <div class="ma2m-couverture-presentation">
+    <h1 id="ma2m-titre-parcours">Apply for a Casting</h1>
+    <a class="ma2m-action" href="/en/candidature.html?vue=candidature#candidature">Apply for a casting</a>
+    <a class="ma2m-lien-infos" href="#informations-parcours">Find out more ↓</a>
+  </div>
 </section>
 
-<section class="lx-promesse">
+<div class="ma2m-informations-parcours" id="informations-parcours">
+<nav class="ma2m-rubriques" aria-label="Page sections"><a href="#deroulement-casting">How it works</a><a href="#galerie-casting">Photos</a></nav>
+<section class="ma2m-introduction-parcours" aria-label="About this path">
+  <p>Has the agency launched a specific project/casting? Fill out this form with your information, your measurements, your photos and a short introduction video. Our team reviews every application.</p>
+
+</section>
+
+<section class="lx-promesse" id="deroulement-casting">
   <div class="container">
     <p class="lx-surtitre reveal">How to apply</p>
     <h2 class="lx-grand-titre reveal">Three steps, <em>simply</em>.</h2>
@@ -94,7 +101,7 @@
   </div>
 </section>
 
-<section class="lx-galerie">
+<section class="lx-galerie" id="galerie-casting">
   <div class="container">
     <p class="lx-surtitre reveal">The world of the agency</p>
     <h2 class="lx-grand-titre reveal">Shoots, runway shows, castings: every project is a stage.</h2>
@@ -106,6 +113,8 @@
   </div>
 </section>
 
+<div class="ma2m-pied-infos"><a class="ma2m-action" href="/en/candidature.html?vue=candidature#candidature">Start</a></div>
+</div>
 <section class="u-pt-1 cand-formulaire lx-formulaire" id="candidature">
   <div class="container ca-1 ca-1-haut">
     <h2 class="lx-titre-section reveal">Your application</h2>
@@ -153,6 +162,5 @@
 <script src="../js/candidature-etapes.js?v=a03d8442"></script>
 <script src="/js/guide-medias.js?v=62b8734e"></script>
 <script src="../js/brouillon.js?v=8c0a08ff"></script>
-<script src="../js/pages-ecrans.js?v=6414142f"></script>
 </body>
 </html>

@@ -5757,3 +5757,11 @@ La charte du formulaire validée sur téléphone est intégrée en français et 
 sont espacés et l’action principale reste en bas pendant le défilement. Les inscriptions aux cours
 de talons conservent leurs étapes de calendrier et de paiement. Les cases photo s’appuient sur
 le sélecteur et les aperçus déjà utilisés, sans modification du stockage ni des validations.
+
+### Entrée des parcours depuis le menu public
+
+Les entrées Casting, MA2M Academy, Représentation et Cours de talons ouvrent chacune leur
+couverture. Le bouton principal ouvre directement le formulaire dans sa vue dédiée.
+Les vidéos, programmes, critères et tarifs de l’Atelier restent accessibles depuis les
+rubriques de la page, qui se lisent en défilant. La navigation générale par écrans reste
+réservée aux autres pages qui utilisent `data-ecrans`.

@@ -13,6 +13,8 @@
   'use strict';
   const form = document.getElementById('form-talons');
   if (!form) return;
+  const vueAutonome = new URLSearchParams(location.search).get('vue') === 'candidature';
+  if (vueAutonome) document.body.classList.add('ma2m-talons-autonome');
   const $ = (id) => document.getElementById(id);
   // Prix (décision de la propriétaire, 08/11/2026) : le groupe est un forfait de 4 dimanches par mois (prix du mois :
   // js/talons-commun.js) ; le privé se paie à la séance (à l'extérieur : 30 000 au départ, l'agence ajuste jusqu'à
@@ -272,7 +274,10 @@
     msg.className = 'form-msg'; msg.textContent = '';
     const titre = form.querySelector('.ct-etape[data-etape="' + n + '"] .ct-etape-titre');
     // (page en écrans : chaque étape tient dans l'écran, on remonte simplement en haut ; sinon on amène le titre)
-    if (defiler && document.body.classList.contains('ecrans-actif')) window.scrollTo(0, 0);
+    if (defiler && vueAutonome) {
+      ETAPES[n - 1].scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } else if (defiler && document.body.classList.contains('ecrans-actif')) window.scrollTo(0, 0);
     else if (defiler && titre && typeof titre.scrollIntoView === 'function') titre.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   function erreur(texte, champ) {

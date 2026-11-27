@@ -83,16 +83,18 @@ async function navigateur() {
     ok(prog.length === 7 && prog[0] === (en ? 'The basics' : 'Les bases') && prog[5] === (en ? 'Pageants' : 'Miss et concours') && prog[6] === (en ? 'Fine-tuning' : 'Perfectionnement'), n + 'programme : 6 mois puis le perfectionnement (' + prog.join(', ') + ')');
     ok(await p.locator('.ct-carte a[href="#programme"]').count() === 1, n + 'la carte du groupe mène au programme');
 
-    // (22/11/2026) page en écrans (js/pages-ecrans.js) : on avance avec la flèche jusqu'au formulaire, comme une élève
+    // Depuis la couverture, l’inscription s’ouvre en un appui.
     const refus = p.locator('#bandeau-cookies button', { hasText: /Refuser|Decline|Refuse/ }); if (await refus.count() && await refus.first().isVisible()) await refus.first().click();
-    for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-talons')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
+    await p.locator('.ma2m-couverture-parcours .ma2m-action').click();
+    await p.waitForURL((url) => url.searchParams.get('vue') === 'candidature');
+    await p.locator('body.ma2m-talons-autonome').waitFor();
     // (23/11/2026, demande de la propriétaire) le formulaire en petits écrans, une question à la fois : formule, parcours,
     // thèmes, détails, créneaux, calendrier, vous, parent, objectif, photos, paiement, dernière étape
     const nomCourant = () => p.evaluate(() => { const e = [...document.querySelectorAll('.ct-etape')].find((x) => !x.classList.contains('u-hidden')); return e && e.dataset.nom; });
     const suivant = async () => { await p.click('#ct-suivant'); await p.waitForTimeout(250); };
     const retourA = async (nom) => { for (let i = 0; i < 14 && (await nomCourant()) !== nom; i++) { await p.click('#ct-retour'); await p.waitForTimeout(200); } };
     const avancerA = async (nom) => { for (let i = 0; i < 14 && (await nomCourant()) !== nom; i++) await suivant(); };
-    const depasse = async () => p.evaluate(() => { const s = document.querySelector('.ecran-courant'), bar = document.querySelector('.ecrans-barre'); return !s || !bar ? 0 : Math.round(s.getBoundingClientRect().bottom + scrollY + bar.offsetHeight - innerHeight); });
+    const depasse = async () => p.evaluate(() => { const s = document.querySelector('.ct-etape:not(.u-hidden)'), bar = document.querySelector('.ct-boutons'); return !s || !bar ? 0 : Math.round(s.getBoundingClientRect().bottom - bar.getBoundingClientRect().top); });
     const tropHauts = [];
     const noter = async () => { const d = await depasse(); if (d > 40) { tropHauts.push((await nomCourant()) + ' (+' + d + ' px)'); if (process.env.CAPTURES_ECRANS) await p.screenshot({ path: process.env.CAPTURES_ECRANS + '/talons-' + (await nomCourant()) + '.png', fullPage: true }); } };
     ok(/(Étape|Step) 1 (sur|of) \d+/.test(await p.textContent('#ct-compteur')), n + 'compteur « Étape 1 sur … » au lieu des 4 ronds');

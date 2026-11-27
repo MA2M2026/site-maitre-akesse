@@ -1048,3 +1048,79 @@ body.ecrans-actif.ma2m-candidature main > #candidature.ecran.ecran-courant {
   position: sticky;
   bottom: 0;
 }
+
+/* Pages publiques des quatre parcours : couverture, informations et candidature. */
+.ma2m-parcours-public { background:#171313;color:#f8f5f3; }
+.ma2m-couverture-parcours {
+  position:relative;isolation:isolate;display:grid;align-items:end;
+  min-height:78svh;min-height:max(32rem,calc(100svh - 5.5rem));
+  background:#65121f;overflow:hidden;
+}
+.ma2m-couverture-portrait {
+  position:absolute;inset:0;z-index:-1;
+  background:url("/assets/portrait-candidature.webp") center 33% / cover no-repeat;
+}
+.ma2m-couverture-portrait span {
+  position:absolute;inset:24% .7rem auto;text-align:center;color:#f8f5f3;
+  font:900 clamp(3rem,15vw,11rem)/.87 system-ui,sans-serif;letter-spacing:-.095em;
+}
+.ma2m-couverture-portrait::before,.ma2m-couverture-portrait::after {
+  content:"";position:absolute;inset:0;
+}
+.ma2m-couverture-portrait::before {
+  background:inherit;
+  clip-path:polygon(0 58%,16% 40%,24% 31%,40% 32%,54% 26%,70% 31%,88% 24%,100% 28%,100% 100%,0 100%);
+}
+.ma2m-couverture-portrait span { z-index:1; }
+.ma2m-couverture-portrait::before { z-index:2; }
+.ma2m-couverture-portrait::after {z-index:3;background:linear-gradient(transparent 42%,#171313e8 86%,#171313);}
+.ma2m-couverture-presentation { width:min(100%,44rem);margin:auto auto 0;padding:1.25rem clamp(1rem,5vw,2rem) 1.1rem; }
+.ma2m-couverture-presentation h1 {margin:0 0 .85rem;font:650 clamp(2rem,8vw,4.6rem)/1.02 Jost,system-ui,sans-serif;color:#fff;}
+.ma2m-couverture-presentation .ma2m-action {
+  width:100%;min-height:3.45rem;justify-content:center;color:white;background:#751d2a;
+}
+.ma2m-lien-infos {display:block;width:fit-content;margin:.75rem auto 0;color:#f8f5f3;text-align:center;text-underline-offset:.22em;}
+.ma2m-informations-parcours {padding-block:1.6rem 2rem;background:#171313;color:#f8f5f3;scroll-margin-top:.75rem;}
+.ma2m-introduction-parcours {width:min(calc(100% - 2rem),44rem);margin:auto;font-size:1.13rem;line-height:1.65;padding:1.25rem 0 2rem;}
+.ma2m-informations-parcours > :is(.ia-section,.ct-formules,.lx-promesse,.lx-prog-section,.ct-faq,.lx-galerie) {
+  background:var(--bloc-parcours,#21191a);color:#f8f5f3;border-block-start:1px solid #f8f5f328;
+}
+.ma2m-informations-parcours > :nth-child(even) {--bloc-parcours:#2b181e;}
+.ma2m-informations-parcours .lx-titre-section {color:#f8f5f3;}
+.ma2m-retour-talons {display:none;}
+.ma2m-talons-autonome :is(.site-header-v2,.site-footer,.bandeau-integrer,.whatsapp-flottant),
+.ma2m-talons-autonome .ma2m-parcours-public > :not(#inscription) {display:none;}
+.ma2m-talons-autonome .ma2m-retour-talons {display:inline-flex;min-height:44px;align-items:center;color:#f8f5f3;}
+.ma2m-talons-autonome .ma2m-talons-actif .ct-etape {max-height:max(10rem,calc(100dvh - 15rem));}
+@media(min-width:48rem) {
+  .ma2m-couverture-portrait {background-size:auto 145%;background-position:center 37%;}
+  .ma2m-couverture-portrait span {inset-block-start:10%;}
+}
+body:has(.ma2m-parcours-public) .whatsapp-flottant {display:none;}
+.ma2m-parcours-talons:not(.ma2m-talons-autonome) .ma2m-talons-actif .ct-boutons {
+  position:sticky;bottom:0;
+}
+.ma2m-talons-autonome main .ct-inscription {min-height:100svh;padding-top:1.25rem;}
+.ma2m-rubriques {
+  display:flex;flex-wrap:wrap;gap:.6rem;
+  width:min(calc(100% - 2rem),44rem);margin:auto;
+}
+.ma2m-rubriques a {
+  display:inline-flex;align-items:center;min-height:44px;
+  padding:.45rem .9rem;border:1px solid #f8f5f35c;border-radius:2rem;color:#f8f5f3;
+  text-decoration:none;
+}
+.ma2m-rubriques a:hover,.ma2m-rubriques a:focus-visible {background:#751d2a;}
+.ma2m-informations-parcours section[id] {scroll-margin-top:.75rem;}
+.ma2m-pied-infos {width:min(calc(100% - 2rem),44rem);margin:1.5rem auto 0;}
+.ma2m-pied-infos .ma2m-action {width:100%;justify-content:center;color:#fff;}
+.ma2m-talons-autonome .ct-inscription .lx-titre-section {display:none;}
+.ma2m-talons-autonome .ct-inscription .ct-choix > span,
+.ma2m-talons-autonome .ct-inscription .ct-pastille > span {
+  background:#241b1d;color:#f8f5f3;border-color:#f8f5f358;
+}
+.ma2m-talons-autonome .ct-inscription .ct-choix input:checked + span,
+.ma2m-talons-autonome .ct-inscription .ct-pastille input:checked + span {
+  background:#751d2a;color:#fff;border-color:#f8f5f3;box-shadow:none;
+}
+.ma2m-talons-autonome .ct-inscription .ct-choix :is(b,strong,em) {color:inherit;}
