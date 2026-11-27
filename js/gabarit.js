@@ -29,6 +29,7 @@
     ['actualites', 'Actualités', 'News', 'Actualités', 'News'],
     ['evenements', 'Événements', 'Our Events', 'Nos événements', 'Our Events'],
     ['partenaires', 'Partenaires', 'Our Partners', 'Nos partenaires', 'Our Partners'],
+    ['candidature-ma2m', 'Choisir mon parcours', 'Choose my path', null, null],
     ['candidature', 'Postuler à un casting', 'Apply for a Casting', 'Postuler à un casting', 'Apply for a Casting'],
     // (22/11/2026, demande de la propriétaire) l'Inscription redevient une page du site (même en-tête, menu, langues) ;
     // l'application garde la sienne (app/inscription-mannequin.html)
