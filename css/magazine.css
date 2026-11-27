@@ -403,3 +403,48 @@
 @media (max-width: 420px) {
   .p-couv .lignes .une { font-size: clamp(1.65rem, 8vw, 2.2rem); }
 }
+
+/* La date reste au bord du cadre, le lettrage descend dans la photographie. */
+.p-couv .tete {
+  top: clamp(0.6rem, 5cqmin, 3rem);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: clamp(0.6rem, 4cqmin, 3.5rem);
+}
+.p-couv .numero { margin: 0; }
+.mag .p-couv .mag-logo {
+  font: 600 min(25cqw, 27cqmin)/0.86 var(--mag-texte);
+  letter-spacing: -0.095em;
+  color: var(--one-ivoire);
+  isolation: isolate;
+}
+.p-couv .mag-logo > [aria-hidden="true"] {
+  display: inline-block;
+  padding-inline: 0.08em 0.16em;
+}
+@supports (background-clip: text) {
+  .p-couv .mag-logo > [aria-hidden="true"] {
+    background: linear-gradient(180deg, var(--one-ivoire) 35%, var(--one-sable));
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+/* Masque souple au centre du lettrage. La couverture active reste visible dans la découpe,
+   y compris pendant les fondus de la galerie. Le nom accessible reste dans le titre. */
+@supports (mask-image: radial-gradient(black, transparent)) and (background-clip: text) {
+  .p-couv:has(.mag-cadre img.visible:not([src^="data:"])) .mag-logo > [aria-hidden="true"] {
+    mask-image: radial-gradient(ellipse 27% 69% at 52% 103%, transparent 58%, black 90%);
+  }
+}
+@media (forced-colors: active), print {
+  .p-couv .mag-logo > [aria-hidden="true"] {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    mask-image: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .p-couv .tete { gap: clamp(2.25rem, 16cqmin, 6rem); }
+  .p-couv .modele { top: max(56cqmin, 28%); }
+}

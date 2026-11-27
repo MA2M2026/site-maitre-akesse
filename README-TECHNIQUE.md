@@ -5764,3 +5764,5 @@ La navigation publique partagée donne accès au Book, à l’agence, aux actual
 ### Direction visuelle issue des deux références Pinterest
 
 La première référence inspire la photographie immersive et les portraits circulaires. La seconde inspire le panneau translucide et la lumière chaude. Les deux sont interprétées à partir des photographies de MA2M. Les jetons de charte définissent le charbon, le lin, le sable et le taupe. Ils se retrouvent sur l’accueil, les ouvertures publiques, le portfolio et les enveloppes des espaces mannequin et administration. Les couleurs d’état gardent leur sens métier.
+
+Le lettrage de couverture reste du texte. Sur une photo, un masque décoratif révèle le portrait au bas du mot MA2M, y compris pendant le fondu des photos. Les grands titres publics partagent un léger dégradé de lettrage. Le texte plein reste disponible à l’impression et en mode couleurs forcées.
