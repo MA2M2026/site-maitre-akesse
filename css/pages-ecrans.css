@@ -129,9 +129,6 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   /* (le bas du texte laisse la place à la bulle WhatsApp) */
   body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { padding-top: 12vh; padding-bottom: 4.6rem; }
   body.ecrans-actif .lx-hero h1 { font-size: 2.3rem; margin-bottom: 0; }
-  /* (le texte est remonté sur la photo : le voile rouge descend plus tôt, pour qu'il reste bien lisible,
-     contrôle test-lisibilite-photos.js) */
-  body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.1) 0%, rgba(90, 20, 27, 0.25) 30%, rgba(90, 20, 27, 0.85) 52%, rgba(90, 20, 27, 1) 66%, rgba(90, 20, 27, 1) 100%); }
   body.ecrans-actif .lx-hero .lx-chapeau { font-size: 0.9rem; line-height: 1.5; margin-top: 0.6rem; }
   body.ecrans-actif .lx-hero p.u-mt-1-2 { margin-top: 0.6rem; font-size: 0.88rem; }
   body.ecrans-actif .ia-etapes > li { padding: 0.8rem 1rem; }
@@ -193,7 +190,6 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   html:has(body.ecrans-actif) { font-size: 135%; }
   body.ecrans-actif main > section.ecran.ecran-courant.lx-hero { align-items: flex-end; padding-top: 30vh; padding-bottom: 6rem; }
   body.ecrans-actif .lx-hero-photo { left: 0; width: 100%; height: 100%; object-position: 50% 15%; }
-  body.ecrans-actif .lx-hero .lx-hero-voile { background: linear-gradient(180deg, rgba(90, 20, 27, 0.1) 0%, rgba(90, 20, 27, 0.25) 35%, rgba(90, 20, 27, 0.85) 58%, rgba(90, 20, 27, 1) 72%, rgba(90, 20, 27, 1) 100%); }
   body.ecrans-actif .lx-hero-texte { max-width: none; }
   body.ecrans-actif .lx-hero-lieu { display: none; }
   body.ecrans-actif .ia-etapes, body.ecrans-actif .ia-parcours { grid-template-columns: 1fr; }

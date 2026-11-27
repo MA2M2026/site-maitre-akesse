@@ -14,8 +14,6 @@
 .lx-hero { position: relative; overflow: hidden; isolation: isolate; display: flex; align-items: flex-end; padding: 58vh 0 3rem; }
 .lx-hero > .container { width: 100%; }
 .lx-hero-photo { position: absolute; top: 0; left: 0; z-index: -2; width: 100%; height: 75vh; object-fit: cover; object-position: 30% 12%; animation: lx-zoom 18s ease-out both; }
-.lx-hero-voile { position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(180deg, rgba(90, 20, 27, 0.2) 0%, rgba(90, 20, 27, 0.1) 30%, rgba(90, 20, 27, 0.75) 52%, rgba(90, 20, 27, 1) 72%, rgba(90, 20, 27, 1) 100%); }
 @keyframes lx-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
 .lx-hero-cadre { position: absolute; inset: 14px; z-index: -1; border: 1px solid rgba(255, 255, 255, 0.28); pointer-events: none; }
 .lx-hero-lieu { display: none; }
@@ -31,8 +29,6 @@
 @media (min-width: 900px) {
   .lx-hero { align-items: center; min-height: 88vh; padding: 7rem 0 4rem; }
   .lx-hero-photo { left: auto; right: 0; width: 52%; height: 100%; object-position: 30% 20%; }
-  .lx-hero-voile { background: linear-gradient(90deg, rgba(90, 20, 27, 1) 0%, rgba(90, 20, 27, 0.97) 40%, rgba(90, 20, 27, 0.55) 58%, rgba(90, 20, 27, 0.05) 80%),
-    linear-gradient(0deg, rgba(90, 20, 27, 0.7) 0%, rgba(90, 20, 27, 0) 30%); }
   .lx-hero-texte { max-width: 540px; }
   .lx-hero-cadre { inset: 22px; }
   /* (fond rouge discret : lisible sur toutes les photos, contraste vérifié par test-lisibilite-photos.js) */
@@ -225,17 +221,13 @@
 .ct-etape-titre h3, .lx-etape-titre h3 { margin: 0; font-family: var(--police-titre); font-weight: 800; font-size: 1.75rem; text-transform: none; letter-spacing: 0; color: #fff; }
 .ct-consigne, .lx-consigne { margin: -0.4rem 0 1rem; font-weight: 500; opacity: 0.9; }
 
-/* La photo se prolonge dans le fond des ouvertures des parcours. */
+/* La photo reste nette. Le fond de lecture s’arrête au bord du texte. */
 .lx-hero { background: var(--one-scene); }
-.lx-hero-voile {
-  background: linear-gradient(0deg, var(--one-encre), var(--one-voile) 35%, transparent 70%);
+.lx-hero-texte {
+  padding: clamp(0.75rem, 2.5vw, 1.65rem);
+  background: var(--one-charbon);
 }
-@media (min-width: 768px) {
-  .lx-hero-voile {
-    background: linear-gradient(90deg, var(--one-encre), var(--one-voile) 42%, transparent 84%),
-      linear-gradient(0deg, var(--one-voile), transparent 48%);
-  }
-}
+.lx-hero h1 { text-shadow: none; }
 
 /* Les parcours gardent leur photographie d’ouverture et des sections de lecture cadrées. */
 .lx-section .lx-titre-section { text-wrap: balance; }
