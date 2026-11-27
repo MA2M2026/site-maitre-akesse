@@ -5756,3 +5756,5 @@ La couverture des pages française et anglaise mène à la rubrique « Choisir v
 La direction visuelle utilise les jetons `--one-*` de `css/jetons.css`. L’orientation associe les photos déjà publiées par MA2M aux titres et actions, avec une grille asymétrique sur ordinateur et une colonne sur téléphone. Le Book et les ouvertures des parcours reprennent la même lumière et les mêmes tons.
 
 Les ouvertures des actualités, événements et services prolongent les images dans le fond. Les autres pages ajoutées à la charte utilisent la même composition sans photo, y compris le calendrier, le contact, la sélection et les informations légales. Les fiches mannequins et les en-têtes de travail des applications utilisent les filets et contrastes de la charte.
+
+Dans The Book, les portraits sont présentés en pleine lumière sur un fond ivoire. Le nom, le niveau et les informations publiques se lisent sous l’image. La carte entière ouvre toujours la fiche, tandis que le bouton de sélection reste indépendant. Le composant `js/rendu-book.js` sert les deux langues côté serveur et côté navigateur.

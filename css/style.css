@@ -3343,34 +3343,46 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 /* la couverture */
 .book-v2 #grille .medaillon-carte { display: block; text-align: left; }
 .book-v2 #grille .medaillon-carte > a { display: block; }
-.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: var(--noir); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
+.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: var(--gris-tres-clair); box-shadow: none; }
 .book-v2 #grille .medaillon-carte img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; filter: none; transform: none; }
 .book-v2 #grille .medaillon-carte:hover img, .book-v2 #grille .medaillon-carte:focus-within img { filter: none; transform: scale(1.03); }
-/* voile noir pur et laqué : du noir profond en bas, un reflet lumineux en diagonale et un fin liseré de lumière */
-.book-v2 #grille .medaillon-photo::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, var(--voile-photo-a00) 0%, var(--voile-photo-a06) 34%, var(--voile-photo-a62) 58%, var(--voile-photo-a94) 78%, var(--voile-photo-a100) 100%); }
-.book-v2 #grille .medaillon-photo::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: 2; pointer-events: none; mix-blend-mode: screen;
-  background: linear-gradient(112deg, rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0.14) 40%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0) 60%),
-              linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 2px); }
-.book-v2 #grille .book-carte-legende { z-index: 3; padding: 0 0.9rem 0.9rem; background: none; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
-.book-v2 #grille .medaillon-niveau { display: flex; align-items: center; gap: 0.45rem; font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: #FFFFFF; margin-bottom: 0.25rem; }
-.book-v2 #grille .medaillon-niveau::before { content: ''; width: 14px; height: 2px; background: #D1172F; }
-.book-v2 #grille .medaillon-nom { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(1.45rem, 6.2vw, 2.1rem); line-height: 0.92; letter-spacing: 0.005em; text-transform: uppercase; color: #FFFFFF; overflow-wrap: anywhere; }
-.book-v2 #grille .medaillon-info { display: block; margin-top: 0.4rem; font-size: 0.74rem; letter-spacing: 0.06em; text-transform: none; color: #F3DDE0; }
+.book-v2 #grille .book-carte-legende {
+  position: static;
+  padding: 0.8rem 0 0;
+  background: none;
+  text-shadow: none;
+}
+.book-v2 #grille .medaillon-niveau {
+  margin-bottom: 0.3rem;
+  color: var(--one-carmin);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+.book-v2 #grille .medaillon-nom {
+  margin: 0;
+  font: 600 clamp(1.15rem, 2.6vw, 2rem)/1.05 var(--display);
+  color: var(--one-encre);
+  overflow-wrap: anywhere;
+}
+.book-v2 #grille .medaillon-info {
+  margin-top: 0.35rem;
+  color: var(--one-carmin);
+  font-size: 0.78rem;
+}
+.book-v2 #grille .medaillon-carte > a:focus-visible { outline: 2px solid var(--one-carmin); outline-offset: 4px; }
 /* le « + » : petit rond discret (zone de toucher plus grande que le rond) ; ✓ rouge une fois choisie */
 .book-v2 #grille .medaillon-carte .btn-selection { --bouton-rayon: 50%; position: absolute; top: 0.6rem; right: 0.6rem; z-index: 4; width: 28px; height: 28px; min-height: 0; padding: 0;
   display: grid; place-items: center; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.82); color: #7C2128; -webkit-text-fill-color: #7C2128;
   font: 500 17px/1 var(--police, sans-serif); letter-spacing: 0; text-transform: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 .book-v2 #grille .medaillon-carte .btn-selection::before { content: ''; position: absolute; inset: -9px; }
 .book-v2 #grille .medaillon-carte .btn-selection.est-selectionne { background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
-.book-v2 #grille .medaillon-carte:has(.est-selectionne) .medaillon-photo { outline: 3px solid #FFFFFF; outline-offset: 3px; }
+.book-v2 #grille .medaillon-carte:has(.est-selectionne) .medaillon-photo { outline: 3px solid var(--one-carmin); outline-offset: 3px; }
 @media (max-width: 640px) {
   .book-v2 .book-ouverture { padding: 1.8rem 0 0.8rem; }
   .book-v2 .book-barre-int { gap: 0.55rem; }
   .book-v2 .book-segments { width: 100%; }
   .book-v2 .book-segments .filtre-btn { flex: 1; }
   .book-v2 .book-recherche { flex-basis: 100%; }
-  .book-v2 #grille .book-carte-legende { padding: 0 0.7rem 0.75rem; }
   .book-v2 #grille .medaillon-info { font-size: 0.7rem; }
 }
 /* la sélection : barre blanche en bas de l'écran (toutes les pages publiques ; js/selection.js) */
@@ -3380,11 +3392,9 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 .panier-widget.panier-barre span { display: inline; width: auto; height: auto; background: none; color: inherit; border-radius: 0; font-size: inherit; }
 .panier-widget.panier-barre .panier-texte { display: inline-flex; align-items: center; gap: 0.35rem; }
 .panier-widget.panier-barre .panier-go { display: inline-block; width: auto; height: auto; border-radius: 999px; background: #7C2128; color: #FFFFFF; padding: 0.7rem 1.1rem; font-size: 0.88rem; white-space: nowrap; }
-/* (12/11/2026) avec le relief (js/relief.js, css/relief.css) : les couvertures restent DROITES au défilement (pas de
-   « mur courbé », qui penchait les cartes) ; elles se tournent seulement vers la souris (ordinateur) ou suivent
-   l'inclinaison du téléphone, et gardent leur voile noir laqué (le reflet du relief ne le remplace plus) */
-html.relief .book-v2 #grille .medaillon-photo { transform: perspective(900px) rotateX(calc(var(--relief-rx) + var(--relief-ox, 0deg))) rotateY(calc(var(--relief-ry) + var(--relief-oy, 0deg))); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
-html.relief .book-v2 #grille .medaillon-photo::after { opacity: 1; background: linear-gradient(180deg, var(--voile-photo-a00) 0%, var(--voile-photo-a06) 34%, var(--voile-photo-a62) 58%, var(--voile-photo-a94) 78%, var(--voile-photo-a100) 100%); }
+/* Le mouvement du Book reste léger et laisse le portrait visible. */
+html.relief .book-v2 #grille .medaillon-photo { transform: perspective(900px) rotateX(calc(var(--relief-rx) + var(--relief-ox, 0deg))) rotateY(calc(var(--relief-ry) + var(--relief-oy, 0deg))); box-shadow: none; }
+html.relief .book-v2 #grille .medaillon-photo::after { display: none; }
 html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
 /* (12/11/2026) barre de sélection sur une seule ligne, même sur un petit téléphone */
 .panier-widget.panier-barre .panier-texte { white-space: nowrap; }
@@ -3396,7 +3406,19 @@ html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
 /* Le Book reprend la profondeur des couvertures, derrière la recherche et le portfolio. */
 .book-v2 { background: var(--one-scene); }
 .book-v2 .book-ouverture {
-  padding-block: clamp(2.75rem, 8vw, 8rem) clamp(1.5rem, 4vw, 3rem);
+  padding-block: clamp(1.7rem, 4vw, 3.25rem) clamp(1.3rem, 3vw, 2.4rem);
+}
+.book-v2 .book-liste {
+  padding-top: 0;
+  background: var(--one-ivoire);
+}
+.book-v2 :is(.book-chapitre-tete h2, .filtres-bilan) { color: var(--one-encre); }
+.book-v2 :is(.book-chapitre-nb, .book-chapitre-pres, .filtres-proches, .mannequins-vide) {
+  color: var(--one-carmin);
+}
+.book-v2 .book-chapitre + .book-chapitre {
+  margin-top: 2rem;
+  border-top: 1px solid var(--rouge-mat-a22);
 }
 .book-v2 .book-ouverture h1 { color: var(--one-ivoire); }
 .book-v2 .book-ouverture h1 em { color: var(--rouge-ma2m-texte); }
