@@ -11,7 +11,7 @@
   function T(fr, en) { return EN_F ? en : fr; }
   return [
   "",
-  T("      <p class=\"ca-7\">Merci d'indiquer un e-mail et un numéro WhatsApp valides et actifs ci-dessous : c'est par là que l'agence vous recontactera si votre candidature est retenue.</p>", "      <p class=\"ca-7\">Please enter a valid, active email address and WhatsApp number below: this is how the agency will contact you if your application is selected.</p>"),
+  T("      <p class=\"ca-7\">L’agence utilise ces coordonnées pour vous recontacter.</p>", "      <p class=\"ca-7\">The agency uses these details to contact you.</p>"),
   "",
   "      <div class=\"form-grille\">",
   "        <div class=\"form-champ\">",

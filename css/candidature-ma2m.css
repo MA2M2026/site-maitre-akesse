@@ -39,7 +39,7 @@
 
 .ma2m-candidature .lx-progression:not([hidden]) {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: .25rem;
   max-width: 46rem;
   margin-inline: auto;
@@ -83,6 +83,10 @@
 .ma2m-candidature .lx-etape-titre h3 { color: var(--candidature-ivoire); }
 .ma2m-candidature .lx-etape-titre > span { background: var(--candidature-rouge); color: white; }
 .ma2m-candidature .lx-en-etapes :is(.lx-suivant, #btn-envoyer, .lx-recommencer) {
+  --bouton-fond: var(--candidature-rouge);
+  --bouton-texte: var(--candidature-blanc);
+  --bouton-survol: #912439;
+  --bouton-ombre: none;
   background: var(--candidature-rouge);
   border-color: var(--candidature-rouge);
   color: var(--candidature-blanc);
@@ -106,4 +110,941 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ma2m-candidature .lx-etape { animation: none; }
+}
+
+.ma2m-candidature .lx-progression {
+  background: var(--candidature-noir);
+  border-radius: .75rem;
+}
+
+.ma2m-candidature .lx-progression li { font-size: clamp(.61rem, 1.5vw, .76rem); }
+.ma2m-candidature .lx-reception { padding-block: clamp(1rem, 5vw, 2.5rem); }
+.ma2m-candidature .lx-reception h3 {
+  margin: 0 0 1rem;
+  color: var(--candidature-ivoire);
+  font: 600 clamp(2rem, 6vw, 3.5rem)/1.1 "Cormorant Garamond", Georgia, serif;
+}
+.ma2m-candidature .lx-reception .form-msg.ok {
+  background: var(--candidature-ivoire);
+  border-color: var(--candidature-ivoire);
+  color: var(--candidature-noir);
+}
+.ma2m-candidature .lx-reception[data-medias-recus] #ca-envoi-jauges { display: none; }
+
+.ma2m-candidature main .lx-formulaire {
+  background: var(--candidature-noir);
+}
+
+.ma2m-candidature .lx-en-etapes :is(.lx-suivant, #btn-envoyer)::after {
+  display: none;
+}
+
+@media (max-width: 63.99rem) {
+  .ma2m-choix { min-height: 100svh; box-sizing: border-box; }
+}
+
+/* Parcours autonome ouvert depuis l’accueil de candidature. */
+.ma2m-accueil { font-family: "Work Sans", system-ui, sans-serif; }
+.ma2m-entree { min-height: 100svh; }
+.ma2m-entree h1, .ma2m-choix h2 {
+  font-family: "Work Sans", system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -.055em;
+}
+.ma2m-entree h1 { max-width: 11ch; }
+.ma2m-entree-texte { padding-block-end: clamp(2.5rem, 9vh, 6rem); }
+.ma2m-action { justify-content: center; width: min(100%, 22rem); }
+.ma2m-choix { background: var(--candidature-noir); color: var(--candidature-ivoire); }
+.ma2m-choix h2 { max-width: 12ch; }
+.ma2m-choix li a {
+  grid-template-columns: 4.15rem minmax(0, 1fr) auto;
+  gap: .8rem;
+  padding: .45rem .85rem .45rem .45rem;
+  background: none;
+  border-color: #fff4;
+}
+.ma2m-choix li img { display: block; width: 100%; height: 5.2rem; object-fit: cover; object-position: center 25%; border-radius: .65rem; }
+.ma2m-choix small { color: var(--candidature-ivoire); opacity: .82; font-size: .83rem; }
+.ma2m-choix li a:is(:hover, :focus-visible) { background: var(--candidature-rouge); color: white; border-color: #fff8; }
+
+body.ma2m-vue-candidature { background: var(--candidature-noir); color: var(--candidature-ivoire); }
+.ma2m-vue-candidature :is(.site-header-v2, .site-footer, .bandeau-integrer, .whatsapp-flottant),
+.ma2m-vue-candidature main > section:not(#candidature) { display: none !important; }
+.ma2m-vue-candidature main { padding: 0; margin: 0; }
+.ma2m-vue-candidature main #candidature:not([hidden]) {
+  min-height: 100svh;
+  padding: 0 0 2rem !important;
+  background: var(--candidature-noir);
+}
+.ma2m-vue-candidature #candidature .ca-1 { width: min(100% - 2.5rem, 32rem); margin: 0 auto; padding: 0; }
+.ma2m-vue-candidature #candidature .lx-titre-section { display: none; }
+.ma2m-entete-formulaire {
+  min-height: 8rem;
+  padding: 1rem max(1.25rem, calc((100% - 32rem) / 2));
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #171313b8, #17131324 60%, #171313), url("/assets/cours-talons/galerie-blanc.jpg") center 30% / cover;
+}
+.ma2m-entete-formulaire span { padding: .4rem .55rem; background: var(--candidature-noir); font-weight: 650; letter-spacing: .16em; }
+.ma2m-entete-formulaire a { border-radius: 2rem; background: var(--candidature-noir); padding-inline: .85rem; margin: 0; text-decoration: none; }
+.ma2m-vue-candidature #form-casting.lx-en-etapes { border: 0; border-radius: 0; padding: 1.05rem 0 0; }
+.ma2m-vue-candidature .lx-etape-titre { gap: .6rem; margin-bottom: 1.3rem; }
+.ma2m-vue-candidature :is(.lx-etape-titre h3, .lx-reception h3) {
+  font: 650 clamp(1.55rem, 5.6vw, 2.3rem)/1.12 "Work Sans", system-ui, sans-serif;
+  letter-spacing: -.035em;
+}
+.ma2m-vue-candidature .lx-etape-titre > span { display: none; }
+.ma2m-vue-candidature :is(.ca-2, .ca-24) { padding: .75rem 0; border: 0; background: none; }
+.ma2m-vue-candidature #form-casting :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea) {
+  --surface: var(--candidature-noir);
+  --encre: var(--candidature-ivoire);
+  --encre-douce: #fff9;
+  --lignes: #fff7;
+  border-radius: 1.1rem !important;
+}
+.ma2m-vue-candidature .lx-etape-boutons .lx-retour {
+  --bouton-fond: var(--candidature-noir);
+  --bouton-texte: var(--candidature-ivoire);
+  --bouton-survol: var(--candidature-rouge);
+  --bouton-ombre: inset 0 0 0 1px #fff7;
+}
+.ma2m-vue-candidature .lx-etape-boutons { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .65rem; }
+.ma2m-vue-candidature .lx-etape-boutons :is(.lx-suivant, #btn-envoyer) { width: 100%; grid-column: 2; margin: 0; }
+.ma2m-vue-candidature .lx-etape-boutons .lx-suivant:only-child { grid-column: 1 / -1; }
+.ma2m-vue-candidature .lx-resume .lx-etape-boutons #btn-envoyer { grid-column: 1 / -1; }
+.ma2m-choisir-fichier { position: relative; }
+.ma2m-choisir-fichier > span { display: none; }
+.ma2m-vue-candidature .ma2m-choisir-fichier > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  background: var(--candidature-rouge);
+  color: var(--candidature-blanc);
+  border-radius: 2rem;
+  font-weight: 650;
+}
+.ma2m-vue-candidature #form-casting .ma2m-choisir-fichier input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.ma2m-vue-candidature .ma2m-choisir-fichier:focus-within { outline: 2px solid white; outline-offset: 4px; border-radius: 2rem; }
+
+.ma2m-vue-candidature {
+  --candidature-encre: #171313;
+}
+body.ma2m-vue-candidature,
+.ma2m-vue-candidature main #candidature:not([hidden]),
+.ma2m-vue-candidature #form-casting.lx-en-etapes {
+  background: var(--candidature-ivoire);
+  color: var(--candidature-encre);
+  color-scheme: light;
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire {
+  min-height: auto;
+  margin: 0 0 .5rem;
+  background: none;
+  align-items: center;
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire span {
+  color: var(--candidature-encre);
+  background: none;
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire a {
+  color: var(--candidature-encre);
+  background: transparent;
+  border: 1px solid #17131338;
+}
+.ma2m-vue-candidature :is(.lx-etape-titre h3, .lx-reception h3) {
+  color: var(--candidature-encre);
+  font-size: clamp(2rem, 7vw, 3rem);
+}
+.ma2m-vue-candidature #form-casting {
+  --encre: #171313;
+  --texte-corps: #171313;
+  --texte-doux: #413c3c;
+}
+.ma2m-vue-candidature #form-casting :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea) {
+  --surface: var(--candidature-ivoire);
+  --encre: #171313;
+  --encre-douce: #514949;
+  --lignes: #17131355;
+}
+.ma2m-vue-candidature .ma2m-question { min-height: 8rem; }
+.ma2m-vue-candidature .ma2m-question > .form-champ { margin-block-end: .8rem; }
+.ma2m-vue-candidature .lx-recap { background: white; border: 1px solid #17131324; }
+.ma2m-vue-candidature .lx-etape-boutons .lx-retour {
+  --bouton-fond: var(--candidature-ivoire);
+  --bouton-texte: #171313;
+  --bouton-survol: #eee7e5;
+  --bouton-ombre: inset 0 0 0 1px #17131355;
+}
+.ma2m-vue-candidature .ma2m-choisir-fichier:focus-within { outline-color: var(--candidature-rouge); }
+
+.ma2m-choix { background: var(--candidature-ivoire); color: var(--candidature-encre, #171313); }
+.ma2m-choix li a {
+  min-height: 7rem;
+  background: var(--candidature-noir);
+  color: white;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.ma2m-choix li img {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  z-index: -2;
+}
+.ma2m-choix li a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, #171313e8, #17131355 66%, #17131342);
+}
+.ma2m-choix li a:is(:hover, :focus-visible) { outline-color: var(--candidature-rouge); }
+
+.ma2m-experiences { display: grid; gap: .75rem; }
+.ma2m-experience {
+  text-align: left;
+  display: flex;
+  align-items: end;
+  border: 0;
+  padding: .85rem;
+  border-radius: .95rem;
+  min-height: 6.8rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(0deg, #171313d6, #17131320), url("/assets/cours-talons/galerie-blanc.jpg") center 25% / cover;
+}
+.ma2m-experience[data-valeur="oui"] {
+  background-image: linear-gradient(0deg, #171313d6, #17131320), url("/assets/cours-talons/galerie-tailleur.jpg");
+}
+.ma2m-experience[aria-pressed="true"] { outline: 3px solid var(--candidature-rouge); outline-offset: 2px; }
+
+.ma2m-vue-candidature :is(.ca-12, .ca-13, .ca-14, .lx-consigne, .ca-video-aide) { color: #413c3c; }
+.ma2m-vue-candidature .lx-en-etapes .ma2m-experience { min-height: 6.8rem; }
+
+/* Guide photo et vidéo partagé par les candidatures et les cours. */
+.ma2m-guide-medias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: .6rem;
+  margin: .6rem 0 .8rem;
+  padding: 0;
+  list-style: none;
+}
+.ma2m-guide-medias li {
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  background: white;
+  color: var(--candidature-noir);
+  border: 1px solid #17131328;
+  border-radius: .85rem;
+  font-weight: 650;
+  font-size: .84rem;
+  padding-bottom: .4rem;
+}
+.ma2m-guide-medias img {
+  display: block;
+  width: 100%;
+  height: clamp(5rem, 23vw, 8rem);
+  margin-bottom: .35rem;
+  object-fit: cover;
+}
+.ma2m-guide-medias img.ma2m-guide-visage { object-position: 50% 20%; }
+.ma2m-guide-medias img.ma2m-guide-silhouette {
+  object-fit: contain;
+  background: var(--candidature-noir);
+}
+.ma2m-parcours-talons main {
+  --police-titre: "Work Sans", system-ui, sans-serif;
+  --display: "Work Sans", system-ui, sans-serif;
+}
+.ma2m-parcours-talons main :is(h1, h2, h3) {
+  font-family: "Work Sans", system-ui, sans-serif;
+  letter-spacing: -.035em;
+}
+.ma2m-parcours-talons main .ct-inscription {
+  background: var(--candidature-ivoire);
+  color: var(--candidature-noir);
+  color-scheme: light;
+}
+.ma2m-parcours-talons #form-talons {
+  background: var(--candidature-ivoire);
+  color: var(--candidature-noir);
+  border: 0;
+  box-shadow: none;
+  --encre: #171313;
+  --surface: #fff;
+  --lignes: #17131350;
+  --texte-doux: #403737;
+}
+.ma2m-parcours-talons .ct-inscription :is(h2, h3, .ct-compteur, .ct-aide, .ct-consigne, .ct-info, .ct-label, .ct-total) {
+  color: var(--candidature-noir);
+}
+.ma2m-parcours-talons .ct-etape-titre > span {
+  background: var(--candidature-rouge);
+  color: white;
+}
+.ma2m-parcours-talons .ct-inscription :is(.ct-choix, .ct-parcours-choix) > span {
+  color: var(--candidature-noir);
+  background: white;
+  border: 1px solid #17131333;
+  box-shadow: none;
+}
+.ma2m-parcours-talons .ct-inscription :is(.ct-choix, .ct-parcours-choix) > input:checked + span {
+  color: white;
+  background: var(--candidature-rouge);
+  border-color: var(--candidature-rouge);
+}
+.ma2m-parcours-talons .ct-inscription :is(.ct-choix, .ct-parcours-choix) > span :is(strong, em, b) { color: inherit; }
+.ma2m-parcours-talons .ct-inscription :is(#ct-suivant, #ct-envoyer) {
+  --bouton-fond: var(--candidature-rouge);
+  --bouton-texte: #fff;
+  --bouton-survol: #621522;
+}
+.ma2m-parcours-talons .ct-inscription .ma2m-choisir-fichier > span {
+  display: grid;
+  place-items: center;
+  min-height: 3rem;
+  border-radius: 2rem;
+  background: var(--candidature-rouge);
+  color: white;
+  font-weight: 650;
+}
+.ma2m-parcours-talons #form-talons .ma2m-choisir-fichier input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.ma2m-parcours-talons .ma2m-choisir-fichier:focus-within { outline: 2px solid var(--candidature-rouge); outline-offset: 3px; }
+
+.ma2m-guide-cadre {
+  display: block;
+  overflow: hidden;
+  margin-bottom: .35rem;
+}
+.ma2m-guide-cadre img { margin-bottom: 0; }
+.ma2m-guide-cadre .ma2m-guide-visage { transform: scale(1.65); transform-origin: center 26%; }
+
+.ma2m-parcours-talons .ct-inscription :is(.ct-choix, .ct-pastille, .ct-parcours-choix) input:focus-visible + span {
+  outline: 2px solid var(--candidature-rouge);
+  outline-offset: 2px;
+}
+.ma2m-parcours-talons .ct-inscription .ct-choix > span::after { border-color: #17131366; }
+.ma2m-parcours-talons .ct-inscription .ct-choix > input:checked + span::after {
+  color: var(--candidature-rouge);
+  background: white;
+  border-color: white;
+}
+.ma2m-parcours-talons .ct-inscription .ct-info.err { color: var(--candidature-rouge); }
+.ma2m-recap-talons {
+  padding: .9rem 1rem;
+  margin: 0 0 1rem;
+  border: 1px solid #17131324;
+  border-radius: .9rem;
+  background: white;
+  color: var(--candidature-noir);
+}
+.ma2m-recap-talons p { margin: .2rem 0; }
+.ma2m-recap-talons p:first-child { font-weight: 700; }
+
+.ma2m-candidature main :is(h1, h2, h3),
+.ma2m-candidature main .ct-serif {
+  font-family: "Work Sans", system-ui, sans-serif;
+  letter-spacing: -.035em;
+}
+.ma2m-parcours-talons .ct-inscription .ct-etape-titre h3 {
+  font-size: clamp(1.6rem, 5.5vw, 2.4rem);
+}
+
+.ma2m-parcours-talons .ct-inscription .ma2m-guide-medias img { height: clamp(3.25rem, 16vw, 6.25rem); }
+.ma2m-recap-talons:not([open]) { padding: .3rem .75rem; margin-bottom: .45rem; }
+.ma2m-recap-talons summary { cursor: pointer; min-height: 2rem; align-content: center; font-weight: 650; }
+
+.ma2m-parcours-talons .ct-inscription .form-consentement a { color: var(--candidature-rouge); }
+.ma2m-parcours-talons .ct-inscription .ct-merci { background: var(--candidature-rouge); }
+@media (max-width: 43.75rem) {
+  .ma2m-parcours-talons .ct-inscription .ct-boutons {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.3fr);
+    gap: .55rem;
+  }
+  .ma2m-parcours-talons .ct-inscription .ct-boutons .btn {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding-inline: .5rem;
+  }
+  .ma2m-parcours-talons .ct-inscription :is(#ct-envoyer, #ct-suivant) { grid-column: 2; }
+  .ma2m-parcours-talons .ct-inscription .ct-boutons:has(#ct-retour.u-hidden) #ct-suivant { grid-column: 1 / -1; }
+  .ma2m-parcours-talons .ct-inscription #ct-bloc-wave { padding-block: .65rem; }
+}
+
+/* Fond rouge MA2M sur les écrans du parcours, avec des surfaces claires pour la saisie. */
+.ma2m-accueil .ma2m-choix,
+body.ma2m-vue-candidature,
+.ma2m-vue-candidature main #candidature:not([hidden]),
+.ma2m-vue-candidature #form-casting.lx-en-etapes,
+.ma2m-parcours-talons main .ct-inscription,
+.ma2m-parcours-talons #form-talons {
+  background: var(--candidature-rouge);
+  color: var(--candidature-ivoire);
+}
+.ma2m-vue-candidature {
+  --candidature-encre: var(--candidature-ivoire);
+}
+.ma2m-vue-candidature #form-casting,
+.ma2m-parcours-talons #form-talons {
+  --encre: var(--candidature-ivoire);
+  --texte-corps: var(--candidature-ivoire);
+  --texte-doux: var(--candidature-ivoire);
+}
+.ma2m-vue-candidature #form-casting :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea),
+.ma2m-parcours-talons #form-talons :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea) {
+  --surface: var(--candidature-ivoire);
+  --encre: var(--candidature-noir);
+  --encre-douce: #514949;
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire a { border-color: #fff9; }
+.ma2m-vue-candidature :is(.ca-12, .ca-13, .ca-14, .lx-consigne, .ca-video-aide),
+.ma2m-parcours-talons .ct-inscription :is(h2, h3, .ct-compteur, .ct-aide, .ct-consigne, .ct-info, .ct-label, .ct-total) {
+  color: var(--candidature-ivoire);
+}
+.ma2m-vue-candidature .lx-en-etapes :is(.lx-suivant, #btn-envoyer, .lx-recommencer),
+.ma2m-parcours-talons .ct-inscription :is(#ct-suivant, #ct-envoyer) {
+  --bouton-fond: var(--candidature-ivoire);
+  --bouton-texte: var(--candidature-rouge);
+  --bouton-survol: #f0e2e5;
+}
+.ma2m-vue-candidature .lx-etape-boutons .lx-retour,
+.ma2m-parcours-talons .ct-inscription .ct-retour {
+  --bouton-fond: var(--candidature-rouge);
+  --bouton-texte: var(--candidature-ivoire);
+  --bouton-survol: #621522;
+  --bouton-ombre: inset 0 0 0 1px #fff9;
+}
+.ma2m-vue-candidature .ma2m-choisir-fichier > span,
+.ma2m-parcours-talons .ct-inscription .ma2m-choisir-fichier > span {
+  background: var(--candidature-ivoire);
+  color: var(--candidature-rouge);
+}
+.ma2m-vue-candidature :is(.ma2m-choisir-fichier:focus-within, .ma2m-experience[aria-pressed="true"]),
+.ma2m-parcours-talons .ma2m-choisir-fichier:focus-within { outline-color: white; }
+.ma2m-parcours-talons .ct-etape-titre > span { background: var(--candidature-ivoire); color: var(--candidature-rouge); }
+.ma2m-parcours-talons .ct-inscription :is(.ct-choix, .ct-parcours-choix) > input:checked + span { border-color: white; }
+.ma2m-parcours-talons .ct-inscription .ct-info.err { color: var(--candidature-ivoire); }
+.ma2m-parcours-talons .ct-inscription .form-consentement a { color: white; text-decoration: underline; }
+.ma2m-parcours-talons .ct-inscription .ct-merci { background: var(--candidature-ivoire); color: var(--candidature-noir); }
+.ma2m-parcours-talons .ct-inscription .ct-merci a { color: var(--candidature-rouge); }
+
+/* Une seule étape visible, accompagnée d’un anneau sur le fond rouge. */
+.ma2m-vue-candidature .lx-progression:not([hidden]) {
+  display: block;
+  background: transparent;
+  margin: .3rem auto .8rem;
+}
+.ma2m-vue-candidature .lx-progression li:not(.actif) { display: none; }
+.ma2m-vue-candidature .lx-progression li.actif {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: .8rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--candidature-ivoire);
+  text-align: start;
+}
+.ma2m-progression-anneau {
+  display: grid;
+  place-items: center;
+  flex: 0 0 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, var(--candidature-rouge) 85%, transparent 86%),
+    conic-gradient(var(--candidature-ivoire) var(--avance), #fff4 0);
+  font: 650 1rem/1 "Work Sans", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.ma2m-progression-description { display: grid; gap: .2rem; text-align: start; }
+.ma2m-progression-description small { font-size: .78rem; font-weight: 500; }
+.ma2m-progression-description strong { font: 650 1.08rem/1.1 "Work Sans", system-ui, sans-serif; }
+@media (forced-colors: active) {
+  .ma2m-progression-anneau { border: 1px solid currentColor; }
+}
+
+/* Composition des écrans sur le fond rouge. */
+.ma2m-vue-candidature main #candidature:not([hidden]),
+.ma2m-parcours-talons main .ct-inscription {
+  background-image: radial-gradient(ellipse at 85% 0%, #9a36482e, transparent 57%);
+}
+.ma2m-vue-candidature #form-casting.lx-en-etapes,
+.ma2m-parcours-talons #form-talons { background: transparent; }
+.ma2m-vue-candidature .ma2m-entete-formulaire {
+  width: min(100% - 2.5rem, 32rem);
+  margin: 0 auto .8rem;
+  padding: .9rem 0 .65rem;
+  border-bottom: 1px solid #fff4;
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire span { padding-inline-end: 0; }
+.ma2m-vue-candidature .ma2m-entete-formulaire a { border-color: transparent; padding-inline-start: 0; }
+.ma2m-vue-candidature .lx-etape-titre h3 { text-wrap: balance; line-height: 1.06; }
+.ma2m-vue-candidature #ca-bloc-agence-info { padding: 0; margin-block: 0 1.3rem; }
+
+.ma2m-panneau-medias {
+  margin-block: .6rem .85rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--candidature-ivoire);
+  color: var(--candidature-noir);
+}
+.ma2m-panneau-medias .ma2m-guide-medias {
+  margin: 0;
+  gap: 1px;
+  background: #dccdc8;
+}
+.ma2m-panneau-medias .ma2m-guide-medias li {
+  border: 0;
+  border-radius: 0;
+  background: var(--candidature-ivoire);
+  font-weight: 600;
+  text-align: start;
+  padding: 0 0 .45rem;
+}
+.ma2m-panneau-medias .ma2m-guide-cadre { margin-bottom: .42rem; }
+.ma2m-guide-legende { display: block; padding-inline: .65rem; }
+.ma2m-panneau-medias .ma2m-guide-medias img { height: clamp(5rem, 27vw, 9rem); }
+.ma2m-panneau-medias .ma2m-guide-medias li:only-child {
+  display: grid;
+  grid-template-columns: 44% minmax(0, 1fr);
+  align-items: center;
+  gap: .6rem;
+  padding: 0 .65rem 0 0;
+}
+.ma2m-panneau-medias .ma2m-guide-medias li:only-child .ma2m-guide-cadre { margin: 0; }
+.ma2m-panneau-medias .ma2m-choisir-fichier { border-top: 1px solid #dccdc8; }
+.ma2m-vue-candidature .ma2m-panneau-medias .ma2m-choisir-fichier > span,
+.ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias .ma2m-choisir-fichier > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-inline: .75rem;
+  border-radius: 0;
+  font-weight: 650;
+}
+.ma2m-vue-candidature .ma2m-panneau-medias .ma2m-choisir-fichier > span::after,
+.ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias .ma2m-choisir-fichier > span::after {
+  content: '↑';
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #efe1e2;
+  font-size: 1rem;
+}
+.ma2m-vue-candidature .ma2m-panneau-medias .ma2m-choisir-fichier:focus-within,
+.ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias .ma2m-choisir-fichier:focus-within {
+  outline: 2px solid var(--candidature-rouge);
+  outline-offset: -4px;
+  border-radius: 0;
+}
+.ma2m-vue-candidature .lx-etape-boutons,
+.ma2m-parcours-talons .ct-inscription .ct-boutons {
+  border-top: 1px solid #fff4;
+  margin-top: 1.15rem;
+  padding-top: .65rem;
+}
+.ma2m-vue-candidature .lx-etape-boutons :is(.lx-retour, .lx-suivant, #btn-envoyer),
+.ma2m-parcours-talons .ct-inscription .ct-boutons .btn { --bouton-rayon: .8rem; --bouton-ombre: none; }
+.ma2m-vue-candidature .lx-etape-boutons .lx-retour,
+.ma2m-parcours-talons .ct-inscription .ct-boutons .ct-retour { --bouton-ombre: inset 0 0 0 1px #fff8; }
+
+@media (max-width: 43.75rem) {
+  .ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias { margin-block: .35rem .55rem; }
+  .ma2m-parcours-talons .ct-inscription .ct-boutons { margin-top: .6rem; padding-top: .45rem; }
+}
+
+/* Le portrait et le rouge se fondent dans le noir qui porte les champs. */
+body.ma2m-vue-candidature { background: var(--candidature-noir); }
+.ma2m-vue-candidature main #candidature:not([hidden]),
+.ma2m-parcours-talons main .ct-inscription {
+  --portrait-parcours: url("/assets/cours-talons/alicia-2.jpg");
+  background:
+    linear-gradient(180deg, #751d2a58 0, #17131300 7rem, #171313 19.5rem),
+    linear-gradient(90deg, #42131e 8%, #42131edb 43%, #17131324 100%),
+    var(--portrait-parcours) calc(50% + 6.5rem) 17% / min(100%, 35rem) auto no-repeat,
+    var(--candidature-noir);
+}
+.ma2m-parcours-talons main .ct-inscription {
+  --portrait-parcours: url("/assets/cours-talons/mannequin-defile.jpg");
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire a {
+  text-shadow: 0 1px 3px #171313;
+}
+.ma2m-vue-candidature .ma2m-entete-formulaire span { text-shadow: 0 1px 3px #171313; }
+.ma2m-progression-anneau {
+  background:
+    radial-gradient(closest-side, #38171f 85%, transparent 86%),
+    conic-gradient(var(--candidature-ivoire) var(--avance), #fff4 0);
+}
+.ma2m-vue-candidature .lx-etape-titre h3,
+.ma2m-parcours-talons .ct-etape-titre h3 {
+  text-shadow: 0 2px 12px #1713139c;
+}
+.ma2m-panneau-medias {
+  background: #21191a;
+  color: var(--candidature-ivoire);
+  border: 1px solid #fff3;
+}
+.ma2m-panneau-medias .ma2m-guide-medias { background: #fff3; }
+.ma2m-panneau-medias .ma2m-guide-medias li,
+.ma2m-panneau-medias .ma2m-guide-medias li:only-child {
+  display: block;
+  position: relative;
+  isolation: isolate;
+  background: #21191a;
+  color: var(--candidature-ivoire);
+  overflow: hidden;
+  padding: 0;
+}
+.ma2m-panneau-medias .ma2m-guide-medias li .ma2m-guide-cadre { margin: 0; }
+.ma2m-panneau-medias .ma2m-guide-cadre::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #171313fa 2%, #17131357 44%, transparent 70%);
+}
+.ma2m-panneau-medias .ma2m-guide-legende {
+  position: absolute;
+  bottom: .48rem;
+  inset-inline: .65rem;
+  padding: 0;
+  color: white;
+}
+.ma2m-panneau-medias .ma2m-guide-medias li:only-child img {
+  object-position: 82% center;
+  background: linear-gradient(90deg, #3e171f, #21191a 62%, #3e171f);
+}
+.ma2m-panneau-medias .ma2m-guide-medias li:only-child .ma2m-guide-cadre::after {
+  background: linear-gradient(90deg, #21191af0 0%, #21191a9c 50%, #21191a14 75%), linear-gradient(0deg, #171313bf, transparent 45%);
+}
+.ma2m-panneau-medias .ma2m-guide-medias li:only-child .ma2m-guide-legende {
+  width: 58%;
+  bottom: .85rem;
+}
+.ma2m-panneau-medias .ma2m-choisir-fichier { border-top-color: #fff3; }
+.ma2m-vue-candidature .ma2m-panneau-medias .ma2m-choisir-fichier > span,
+.ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias .ma2m-choisir-fichier > span {
+  background: #21191a;
+  color: var(--candidature-ivoire);
+}
+.ma2m-vue-candidature .ma2m-panneau-medias .ma2m-choisir-fichier > span::after,
+.ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias .ma2m-choisir-fichier > span::after {
+  background: var(--candidature-rouge);
+}
+.ma2m-vue-candidature .ma2m-panneau-medias .ma2m-choisir-fichier:focus-within,
+.ma2m-parcours-talons .ct-inscription .ma2m-panneau-medias .ma2m-choisir-fichier:focus-within {
+  outline-color: white;
+}
+.ma2m-vue-candidature .lx-en-etapes :is(.lx-suivant, #btn-envoyer, .lx-recommencer),
+.ma2m-parcours-talons .ct-inscription :is(#ct-suivant, #ct-envoyer) {
+  --bouton-fond: var(--candidature-rouge);
+  --bouton-texte: var(--candidature-ivoire);
+  --bouton-survol: #8b2938;
+}
+.ma2m-vue-candidature .lx-etape-boutons .lx-retour,
+.ma2m-parcours-talons .ct-inscription .ct-retour {
+  --bouton-fond: var(--candidature-noir);
+  --bouton-survol: #331b21;
+}
+.ma2m-vue-candidature #form-casting :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea),
+.ma2m-parcours-talons #form-talons :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea) {
+  --surface: #21191a;
+  --encre: var(--candidature-ivoire);
+  --encre-douce: #cdbdbd;
+  --lignes: #fff7;
+  color-scheme: dark;
+}
+
+/* Jost pour les formulaires et les écrans de candidature. */
+.ma2m-accueil,
+.ma2m-candidature main,
+.ma2m-parcours-talons main {
+  --police: "Jost", system-ui, sans-serif;
+  --texte: "Jost", system-ui, sans-serif;
+  --police-titre: "Jost", system-ui, sans-serif;
+  --display: "Jost", system-ui, sans-serif;
+  font-family: "Jost", system-ui, sans-serif;
+}
+.ma2m-accueil :is(h1, h2),
+.ma2m-candidature main :is(h1, h2, h3, .ct-serif),
+.ma2m-parcours-talons main :is(h1, h2, h3) {
+  font-family: "Jost", system-ui, sans-serif;
+  letter-spacing: -.027em;
+}
+.ma2m-vue-candidature :is(.ma2m-progression-anneau, .ma2m-progression-description strong) {
+  font-family: "Jost", system-ui, sans-serif;
+}
+.ma2m-vue-candidature .ma2m-question .ca-7 { margin-block: 0 .85rem; }
+
+/* Maquette validée : titre imbriqué dans le portrait, champs aérés et action fixe. */
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) main #candidature:not([hidden]),
+.ma2m-parcours-talons main .ct-inscription {
+  background: linear-gradient(#451420, var(--candidature-noir) 34rem);
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) #candidature .ca-1,
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .ma2m-entete-formulaire,
+.ma2m-parcours-talons .ct-inscription .ct-form-boite {
+  width: min(100% - 2rem, 44rem);
+  max-width: none;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape {
+  min-width: 0;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape:not(.lx-resume) .lx-etape-titre,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape-titre {
+  --portrait-ma2m: url("/assets/portrait-candidature.webp");
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: end;
+  min-height: clamp(8rem, 28dvh, 17rem);
+  padding: 1rem 0;
+  margin-bottom: clamp(1rem, 3dvh, 2rem);
+  background: linear-gradient(0deg, #27191bf5, transparent 75%),
+    linear-gradient(90deg, #451420ad, transparent 80%),
+    var(--portrait-ma2m) center 37% / cover;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape:not(.lx-resume) .lx-etape-titre::before,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape-titre[data-mot-editorial]::before {
+  content: attr(data-mot-editorial);
+  position: absolute;
+  z-index: -2;
+  inset: 6% 0 auto;
+  font: 800 clamp(1.9rem, 11vw, 5rem)/1 Jost, sans-serif;
+  opacity: .6;
+  letter-spacing: -.065em;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape:not(.lx-resume) .lx-etape-titre::after,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape-titre::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--portrait-ma2m) center 37% / cover;
+  clip-path: polygon(45% 27%, 60% 5%, 76% 7%, 87% 23%, 100% 25%, 100% 80%, 42% 80%);
+  mask-image: linear-gradient(#000, transparent 85%);
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape-titre h3,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape-titre h3 { padding-inline: .65rem; }
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) #form-casting .form-champ,
+.ma2m-parcours-talons #form-talons .form-champ {
+  margin-block-end: clamp(.8rem, 2.8dvh, 1.6rem);
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) #form-casting :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea),
+.ma2m-parcours-talons #form-talons :is(input:not([type=checkbox], [type=radio], [type=file]), select, textarea) {
+  min-height: 3.2rem;
+  font-size: max(16px, 1rem);
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape > .lx-retour,
+.ma2m-parcours-talons .ma2m-talons-actif > .ct-retour {
+  min-height: 44px;
+  padding: .4rem .5rem;
+  color: var(--candidature-ivoire);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape-boutons,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-boutons {
+  position: fixed;
+  z-index: 45;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: .65rem 1rem max(.8rem, env(safe-area-inset-bottom));
+  background: #211719;
+}
+body.ecrans-actif.ma2m-parcours-talons .ma2m-talons-actif .ct-boutons {
+  bottom: var(--ecran-barre, 5rem);
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-etape-boutons :is(.lx-suivant, #btn-envoyer),
+.ma2m-parcours-talons .ma2m-talons-actif .ct-boutons :is(#ct-suivant, #ct-envoyer) {
+  min-height: 3.45rem;
+  width: min(100%, 44rem);
+  margin: 0;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-reception[data-medias-recus],
+.ma2m-parcours-talons .ma2m-inscription-recue {
+  position: relative;
+  isolation: isolate;
+  padding: 3rem 1rem 5rem;
+  text-align: center;
+  color: var(--candidature-ivoire);
+  background: radial-gradient(ellipse at bottom, #922c48, #501220 74%);
+  border-radius: 1rem;
+}
+.ma2m-retour-accueil { color: #fff; justify-content: center; margin-top: .8rem; }
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-reception[data-medias-recus]::before,
+.ma2m-parcours-talons .ma2m-inscription-recue::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid;
+  width: 3.4rem;
+  height: 3.4rem;
+  margin: 0 auto 1rem;
+}
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-reception[data-medias-recus]::after,
+.ma2m-parcours-talons .ma2m-inscription-recue::after {
+  content: "";
+  position: absolute;
+  inset: 2% 5%;
+  pointer-events: none;
+  background: radial-gradient(circle at 8% 18%, #f8f5f3 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 15%, #db839e 0 3px, transparent 4px),
+    radial-gradient(circle at 20% 43%, #db839e 0 3px, transparent 4px),
+    radial-gradient(circle at 84% 47%, #f8f5f3 0 2px, transparent 3px);
+  animation: ma2m-fete 1.5s ease-out both;
+}
+@keyframes ma2m-fete { from { opacity: 0; transform: scale(.3); } 30% { opacity: 1; } to { opacity: 0; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) {
+  :is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .lx-reception[data-medias-recus]::after,
+  .ma2m-parcours-talons .ma2m-inscription-recue::after { animation: none; }
+}
+.ma2m-accueil .ma2m-entree { background: #65121f; }
+.ma2m-mot-couverture {
+  position: absolute;
+  z-index: -1;
+  inset: 13% 0 auto;
+  text-align: center;
+  font: 900 clamp(4rem, 21vw, 11rem)/.9 system-ui, sans-serif;
+  letter-spacing: -.09em;
+}
+.ma2m-entree:has(.ma2m-mot-couverture)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url("/assets/portrait-candidature.webp") center 28% / cover;
+  clip-path: polygon(0 55%, 18% 40%, 24% 28%, 43% 29%, 52% 23%, 76% 29%, 100% 23%, 100% 100%, 0 100%);
+}
+.ma2m-accueil .ma2m-action, .ma2m-retour-accueil { background: var(--candidature-rouge); }
+.ma2m-candidature #candidature.ecran-courant:has(.lx-etape-boutons) .lx-etape-boutons {
+  bottom: var(--ecran-barre, 5rem);
+}
+.ma2m-candidature #form-casting .lx-etape > .lx-retour { margin-bottom: .3rem; }
+.ma2m-dossier-couverture {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: end;
+  min-height: 13rem;
+  overflow: hidden;
+  padding: 1rem;
+  margin-bottom: .8rem;
+  border-radius: .85rem;
+  background: #501220;
+  color: #fff;
+}
+.ma2m-dossier-couverture img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;z-index:-2; }
+.ma2m-dossier-couverture::after { content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(transparent 35%,#171313ed); }
+.ma2m-dossier-identite strong,.ma2m-dossier-identite small {display:block;}
+.ma2m-dossier-identite strong {font-size:1.45rem;}
+.ma2m-cases-photos {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.65rem;margin-block:.75rem;}
+.ma2m-case-photo {
+  grid-column:span 2;position:relative;isolation:isolate;overflow:hidden;text-align:start;
+  display:flex;align-items:end;min-height:clamp(6rem,15dvh,10rem);
+  padding:.55rem;border:1px solid #f8f5f380;border-radius:.75rem;
+  color:#f8f5f3;background:#21191a;font:inherit;cursor:pointer;
+}
+.ma2m-case-photo:nth-child(n+4) {grid-column:span 3;}
+.ma2m-case-photo img {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
+.ma2m-case-photo:has(img)::after {content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(transparent 25%,#171313ed);}
+.ma2m-case-photo:focus-visible {outline:2px solid #fff;outline-offset:2px;}
+.ma2m-parcours-talons .ma2m-talons-termine .ct-boutons.u-hidden { display:none; }
+/* Un ancêtre transformé déplacerait le bouton fixe avec son contenu. */
+.ma2m-candidature #form-casting.lx-en-etapes > .lx-etape {
+  animation: none;
+  transform: none;
+}
+.ma2m-candidature .lx-reception[data-medias-recus],
+.ma2m-parcours-talons .ma2m-inscription-recue {
+  min-height: min(44rem, 84dvh);
+  padding-bottom: clamp(8rem, 29dvh, 16rem);
+  background:
+    linear-gradient(180deg, #501220 15%, #501220ee 41%, transparent 70%, #501220 100%),
+    url("/assets/portrait-confirmation.webp") center 64% / cover no-repeat,
+    #501220;
+}
+.ma2m-candidature .lx-reception[data-medias-recus] .ma2m-retour-accueil,
+.ma2m-parcours-talons .ma2m-inscription-recue .ma2m-retour-accueil {
+  position: absolute;
+  inset: auto 1rem 1.1rem;
+  color: #fff;
+}
+/* Le contenu défile dans l’espace au-dessus de la barre et reste cliquable. */
+:is(.ma2m-vue-candidature, .ma2m-candidature:has(#candidature:is(.ecran-courant, :target, .rp-volet:not([hidden])))) .ma2m-contenu-etape,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: .8rem;
+  padding-bottom: .8rem;
+}
+.ma2m-vue-candidature .ma2m-contenu-etape { max-height: max(12rem,calc(100dvh - 14rem)); }
+.ma2m-candidature:has(#candidature.ecran-courant) .ma2m-contenu-etape,
+.ma2m-parcours-talons .ma2m-talons-actif .ct-etape {
+  max-height: max(10rem,calc(var(--ecran-dispo,100dvh) - 11rem));
+}
+.ma2m-candidature #form-casting .lx-etape .ma2m-contenu-etape > .lx-retour {
+  min-height:44px;padding:.4rem .5rem;margin-bottom:.3rem;
+  color:var(--candidature-ivoire);background:transparent;border:0;box-shadow:none;
+}
+body.ecrans-actif.ma2m-parcours-talons main > .ct-inscription.ecran.ecran-courant,
+body.ecrans-actif.ma2m-candidature main > #candidature.ecran.ecran-courant {
+  animation: none;
+  transform: none;
+}
+
+.ma2m-entree:has(.ma2m-mot-couverture) > img { z-index:-3; }
+.ma2m-mot-couverture { z-index:-2;inset-block-start:20%; }
+.ma2m-parcours-talons .ct-etape-titre[data-mot-editorial] > span { display:none; }
+.ma2m-vue-candidature .lx-recap,
+.ma2m-candidature #candidature.ecran-courant .lx-recap {
+  color:var(--candidature-ivoire);
+  background:#21191a;
+  border-color:#f8f5f333;
+}
+.ma2m-candidature .lx-recap .lx-recap-ligne { border-color:#f8f5f330; }
+.ma2m-candidature .lx-recap .lx-recap-ligne small { color:#e0cfd0; }
+.ma2m-candidature .lx-recap .lx-changer { color:#f5ced6; }
+
+/* La représentation ouverte dans la page garde son bouton dans le formulaire. */
+.ma2m-candidature:not(.ma2m-vue-candidature) #candidature.rp-volet .lx-etape-boutons {
+  position: sticky;
+  bottom: 0;
 }

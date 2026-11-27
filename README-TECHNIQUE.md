@@ -5748,3 +5748,12 @@ champ d'un écran du milieu = « Suivant » (plus d'envoi ni de saut d'écran) ;
 le programme (`ecransPrets`) ; la légende pour les lecteurs d'écran reprend « Étape X sur Y » ; un message d'erreur disparaît
 dès qu'on corrige un choix ; les listes longues (thèmes, séances choisies) défilent dans leur cadre au lieu d'être coupées ;
 zones à toucher d'au moins 40 px et listes en 16 px (pas de zoom de l'iPhone).
+
+### Présentation commune des candidatures et des cours de talons
+
+La charte du formulaire validée sur téléphone est intégrée en français et en anglais dans
+`css/candidature-ma2m.css`. Le portrait de la maquette est partagé par la couverture de
+`candidature-ma2m.html` et les titres d’étape. Les boutons principaux sont bordeaux, les champs
+sont espacés et l’action principale reste en bas pendant le défilement. Les inscriptions aux cours
+de talons conservent leurs étapes de calendrier et de paiement. Les cases photo s’appuient sur
+le sélecteur et les aperçus déjà utilisés, sans modification du stockage ni des validations.

@@ -45,8 +45,9 @@
 <meta name="theme-color" content="#7C2128">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+  <link rel="stylesheet" href="/css/candidature-ma2m.css?v=dbd587c8">
 </head>
-<body>
+<body class="ma2m-parcours-talons">
 <script async src="../js/filet-reveal.js?v=0e57f29d"></script>
 
 <header class="site-header-v2" data-gabarit="entete" data-page="cours-talons"></header>
@@ -288,25 +289,30 @@
       </fieldset>
       <fieldset class="ct-etape u-hidden" data-etape="10" data-nom="photos">
         <legend class="u-lecteur-ecran">Step 10: photos and video</legend>
-        <div class="ct-etape-titre"><span>10</span><h3>2 to 5 photos and a video of your walk</h3></div>
-        <p class="ct-aide">They are only used to assess your level, so we can prepare your lessons. A full-length photo and a face photo are enough; for the video, simply walk towards the camera, in heels if you have some, 3 minutes maximum.</p>
+        <div class="ct-etape-titre"><span>10</span><h3>Add your photos</h3></div>
+        <p class="ct-aide">Your photos help us prepare your class.</p>
         <div class="form-champ"><label for="ct-photos">Photos (2 to 5) *</label><input type="file" id="ct-photos" accept="image/*" multiple><div id="ct-photos-apercu" class="ct-vignettes"></div><p class="ct-info" id="ct-photos-info"></p></div>
+      </fieldset>
+      <fieldset class="ct-etape u-hidden" data-etape="11" data-nom="video">
+        <legend class="u-lecteur-ecran">Step 11: video</legend>
+        <div class="ct-etape-titre"><span>11</span><h3>Film your walk</h3></div>
+        <p class="ct-aide">Walk towards the camera. Wear heels if you have them.</p>
         <div class="form-champ"><label for="ct-video">Video of your walk (3 minutes maximum) *</label><input type="file" id="ct-video" accept="video/*"><p class="ct-info" id="ct-video-info"></p>
           <div id="ct-video-jauge" class="jauge u-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="jauge-haut"><span class="jauge-titre"></span><span class="jauge-pc">0 %</span></div><div class="jauge-barre"><span class="jauge-remplie"></span></div></div>
         </div>
       </fieldset>
 
-      <fieldset class="ct-etape u-hidden" data-etape="11" data-nom="paiement">
-        <legend class="u-lecteur-ecran">Step 11: payment</legend>
-        <div class="ct-etape-titre"><span>11</span><h3>Payment</h3></div>
+      <fieldset class="ct-etape u-hidden" data-etape="12" data-nom="paiement">
+        <legend class="u-lecteur-ecran">Step 12: payment</legend>
+        <div class="ct-etape-titre"><span>12</span><h3>Payment</h3></div>
         <p class="ct-total ct-total--grand" id="ct-total-final"></p>
         <p class="ct-consigne">👆 Tap your choice.</p>
         <label class="ct-choix"><input type="radio" name="decision" value="maintenant"><span><strong>I pay now</strong><em>Your place is booked as soon as the agency sees your payment.</em></span></label>
         <label class="ct-choix"><input type="radio" name="decision" value="plus_tard"><span><strong>I will pay later</strong><em>The agency contacts you on WhatsApp to set the date and the payment.</em></span></label>
       </fieldset>
-      <fieldset class="ct-etape u-hidden" data-etape="12" data-nom="envoi">
-        <legend class="u-lecteur-ecran">Step 12: last step</legend>
-        <div class="ct-etape-titre"><span>12</span><h3>Last step</h3></div>
+      <fieldset class="ct-etape u-hidden" data-etape="13" data-nom="envoi">
+        <legend class="u-lecteur-ecran">Step 13: last step</legend>
+        <div class="ct-etape-titre"><span>13</span><h3>Check your sign-up</h3></div>
         <div id="ct-bloc-wave" class="ct-wave u-hidden">
           <!-- (13/11/2026) moyen de paiement en tuiles et où payer (js/moyens-paiement.js) -->
           <div id="ct-moyens"></div>
@@ -320,7 +326,7 @@
 
       <div class="ct-boutons lx-boutons">
         <button type="button" class="btn ct-retour u-hidden" id="ct-retour">← Back</button>
-        <button type="button" class="btn btn--principal" id="ct-suivant">Next →</button>
+        <button type="button" class="btn btn--principal" id="ct-suivant">Continue →</button>
         <button type="submit" class="btn btn--principal u-hidden" id="ct-envoyer">Send my sign-up</button>
       </div>
       <div id="ct-envoi-jauges" class="envoi-jauges u-hidden">
@@ -355,7 +361,8 @@
 <script src="../js/moyens-paiement.js?v=e15e92a3"></script>
 <script src="../js/talons-commun.js?v=d635b7c1"></script>
 <script src="../js/talons-creneaux.js?v=86fa3741"></script>
-<script src="../js/cours-talons.js?v=a392420b"></script>
+<script src="../js/cours-talons.js?v=4e417b6a"></script>
+<script src="/js/guide-medias.js?v=62b8734e"></script>
 <script src="../js/pages-ecrans.js?v=6414142f"></script>
 </body>
 </html>
