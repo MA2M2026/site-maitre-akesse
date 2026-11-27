@@ -3,7 +3,7 @@
 const fs = require('fs'), path = require('path');
 let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m); if (!c) ko++; };
 const CSS = path.join(__dirname, '../../css');
-const PALETTE_ONE = new Set(['33,27,23', '41,36,31', '84,66,56', '245,240,233', '212,182,158', '96,71,59']);
+const PALETTE_ONE = new Set(['33,27,23', '41,36,31', '84,66,56', '245,240,233', '212,182,158', '96,71,59', '101,93,86', '166,152,137', '230,223,215']);
 const SUR_PHOTO = /var\(--(voile-photo|mag-voile)[\w-]*\)|var\(--rouge-logo\)/;
 // couleurs d'état (pastilles « en attente », « à surveiller » : orange et jaune foncé)
 const ETATS = new Set(['154,88,0', '92,68,0', '224,145,58', '255,241,204']);

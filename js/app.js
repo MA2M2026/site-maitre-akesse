@@ -1862,7 +1862,7 @@ function creerBarreEnvoi() {
   haut.append(titre, pc);
   const piste = document.createElement('div'), plein = document.createElement('div');
   Object.assign(piste.style, { height: '12px', borderRadius: '999px', background: 'rgba(124,33,40,.15)', overflow: 'hidden' });
-  Object.assign(plein.style, { height: '100%', width: '0', borderRadius: '999px', background: '#7C2128', transition: 'width .35s ease' });
+  Object.assign(plein.style, { height: '100%', width: '0', borderRadius: '999px', background: 'var(--one-taupe)', transition: 'width .35s ease' });
   plein.className = 'barre-envoi-plein';
   piste.appendChild(plein); b.append(haut, piste);
   return b;
@@ -1893,7 +1893,7 @@ function majBarreEnvoi() {
   const p = Math.max(0, Math.min(lot && suiviPhotos.finies < suiviPhotos.total ? 99 : 100, pct));
   barreEnvoi.setAttribute('aria-valuenow', String(p));
   const plein = barreEnvoi.querySelector('.barre-envoi-plein');
-  plein.style.width = p + '%'; plein.style.background = '#7C2128';
+  plein.style.width = p + '%'; plein.style.background = 'var(--one-taupe)';
   barreEnvoi.querySelector('.barre-envoi-pc').textContent = p + ' %';
   barreEnvoi.querySelector('.barre-envoi-texte').textContent = lot ? 'Photos envoyées : ' + suiviPhotos.finies + ' / ' + suiviPhotos.total : 'Envoi de la photo…';
 }

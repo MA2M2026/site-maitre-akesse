@@ -1,6 +1,6 @@
 /* « Mon programme » de l'Atelier Talons & Élégance (programme-talons.html, 14/11/2026, maquette validée par la
    propriétaire). La carte d'élève reprend css/paiements-premium.css (pp-cb, pp-gros) ; le reste est propre à la page. */
-:root { --pt-rouge: #7C2128; --pt-fonce: #4A1016; --pt-encre: #2A1416; --pt-gris: #6E4F53; --pt-doux: #A88A8E; --pt-rose: #F3DDE0; --pt-pale: #FBF4F5; --pt-ligne: #EFE4E5; }
+:root { --pt-rouge: #29241F; --pt-fonce: #211B17; --pt-encre: #211B17; --pt-gris: #544238; --pt-doux: #A69889; --pt-rose: #E6DFD7; --pt-pale: #FBF4F5; --pt-ligne: #F5F0E9; }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px/1.55 'Work Sans', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -16,7 +16,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 /* grande photo, nom */
 .pt-une { position: relative; height: 470px; overflow: hidden; background: var(--pt-fonce); color: #FFFFFF; }
 .pt-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
-.pt-une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(40,6,10,.45) 0%, rgba(40,6,10,0) 28%, rgba(40,6,10,0) 42%, rgba(58,12,18,.92) 86%, #4A1016 100%); }
+.pt-une::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(33, 27, 23,.45) 0%, rgba(33, 27, 23,0) 28%, rgba(33, 27, 23,0) 42%, rgba(33, 27, 23,.92) 86%, #211B17 100%); }
 .pt-une > * { position: relative; z-index: 1; }
 .pt-entete { display: flex; justify-content: space-between; align-items: center; padding: calc(20px + env(safe-area-inset-top)) 20px 20px; }
 .pt-entete img { height: 26px; width: auto; display: block; }
@@ -49,7 +49,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-cal .j { font: 600 9.5px 'Work Sans', sans-serif; letter-spacing: .14em; color: var(--pt-doux); padding-bottom: 6px; }
 .pt-cal .d { height: 40px; display: grid; place-items: center; font: 400 14px 'Work Sans', sans-serif; position: relative; }
 .pt-cal .d span { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; }
-.pt-cal .d.hors { color: #D6C6C8; }
+.pt-cal .d.hors { color: #D4B69E; }
 .pt-cal .d.cours span { background: var(--pt-rouge); color: #FFFFFF; font-weight: 600; }
 .pt-cal .d.cours.faite span { background: var(--pt-rose); color: var(--pt-rouge); }
 .pt-cal .d.auj span { box-shadow: inset 0 0 0 1px var(--pt-encre); }
@@ -60,7 +60,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 .pt-frise::before { content: ''; position: absolute; left: 27px; top: 30px; bottom: 30px; width: 1px; background: var(--pt-ligne); }
 .pt-seance { position: relative; display: flex; gap: 16px; align-items: center; padding: 12px 0; }
 .pt-date { flex: 0 0 56px; height: 62px; border-radius: 14px; background: #FFFFFF; border: 1px solid var(--pt-ligne); text-align: center; padding-top: 7px; }
-.pt-seance.proche .pt-date { background: var(--pt-rouge); border-color: var(--pt-rouge); color: #FFFFFF; box-shadow: 0 12px 22px -12px rgba(124,33,40,.9); }
+.pt-seance.proche .pt-date { background: var(--pt-rouge); border-color: var(--pt-rouge); color: #FFFFFF; box-shadow: 0 12px 22px -12px rgba(41, 36, 31,.9); }
 .pt-seance.faite { opacity: .55; }
 .pt-date small { display: block; font: 600 9px 'Work Sans', sans-serif; letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
 .pt-date b { display: block; font: 800 26px/1 var(--police-titre); }
@@ -101,7 +101,7 @@ body.pt { margin: 0; background: #FFFFFF; color: var(--pt-encre); font: 400 15px
 
 /* (15/11/2026, maquette validée : maquettes/creneaux-prives-v2.html) choisir ses créneaux / déplacer une séance :
    le choix lui-même vient de css/talons-creneaux.css, ici en rouge sur blanc */
-.pt-creneaux { --cr-encre: #7C2128; --cr-bord: #EADCDD; --cr-plein: #7C2128; --cr-plein-encre: #FFFFFF; --cr-survol: #FBF4F5; --cr-fond-doux: #FBF4F5; }
+.pt-creneaux { --cr-encre: #29241F; --cr-bord: #E6DFD7; --cr-plein: #29241F; --cr-plein-encre: #FFFFFF; --cr-survol: #FBF4F5; --cr-fond-doux: #FBF4F5; }
 .pt-creneaux h2 em { font-style: italic; font-weight: 400; }
 .pt-aide { color: var(--pt-gris); font-size: 14px; margin-bottom: 12px !important; }
 .pt-choisis-titre { margin: 4px 0 8px !important; }

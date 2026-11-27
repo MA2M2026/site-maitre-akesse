@@ -12,7 +12,7 @@ function fondsInterdits() {
   // presque transparent (moins de 15 % d'opacité : simple ombre ou survol)
   const permis = ([r, g, b, a]) => {
     if (a < 0.15) return true;
-    const paletteOne = [[33, 27, 23], [41, 36, 31], [84, 66, 56], [245, 240, 233], [212, 182, 158], [96, 71, 59]];
+    const paletteOne = [[33, 27, 23], [41, 36, 31], [84, 66, 56], [245, 240, 233], [212, 182, 158], [96, 71, 59], [101, 93, 86], [166, 152, 137], [230, 223, 215]];
     if (paletteOne.some(([rouge, vert, bleu]) => r === rouge && g === vert && b === bleu)) return true;
     if (r >= 220 && g >= 220 && b >= 220 && Math.max(r, g, b) - Math.min(r, g, b) <= 6) return true;   // blanc / gris très clair (filets)
     if (r >= 40 && r <= 140 && g <= 45 && b <= 55 && r - g >= 30) return true;                            // rouges mats et profonds

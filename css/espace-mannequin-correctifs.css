@@ -142,13 +142,13 @@ html { background: var(--fond); }
 /* (11/11/2026) profil déjà en ligne : l'état du profil en haut des 6 étapes, sur le fond rouge de l'accueil des étapes
    (pastille blanche lisible ; avant, il était dans l'ancien tableau de bord blanc) */
 .greet .online-banner { display: inline-flex; width: auto; max-width: 100%; margin: 0 0 14px; padding: 7px 14px; border-radius: 999px; background: #FFFFFF; color: #1B5E20; font-weight: 700; font-size: .68rem; line-height: 1.35; }
-.greet .online-banner.p20-5 { color: #7C2128; }
+.greet .online-banner.p20-5 { color: #29241F; }
 .greet .online-banner.p20-7 { color: #7A4B00; }
 
 /* (11/11/2026, captures de la propriétaire) le petit message « Enregistré » / « Envoi de la photo… » s'écrivait en blanc sur
    fond blanc (rectangle vide en haut à droite) : texte foncé */
 .toast { color: #1A1A1A; font-weight: 600; }
-.toast.err { color: #7C2128; }
+.toast.err { color: #29241F; }
 
 /* (12/11/2026) Expériences : le nombre et le bouton « Ajouter une autre expérience » en bas de la liste */
 .exp-compte { margin: 14px 0 6px; font-size: 13.5px; color: var(--encre-douce, #655D56); text-align: center; }
