@@ -5760,3 +5760,7 @@ Les ouvertures des actualités, événements et services prolongent les images d
 Dans The Book, les portraits sont présentés en pleine lumière sur un fond ivoire. Le nom, le niveau et les informations publiques se lisent sous l’image. La carte entière ouvre toujours la fiche, tandis que le bouton de sélection reste indépendant. Le composant `js/rendu-book.js` sert les deux langues côté serveur et côté navigateur.
 
 La navigation publique partagée donne accès au Book, à l’agence, aux actualités et au contact sur ordinateur. Le menu complet reste disponible dans les deux langues. Le fond ivoire du portfolio se retrouve dans l’en-tête, certains chapitres du magazine et les ouvertures des pages pratiques. Les ouvertures photographiques et les formulaires conservent leur propre composition.
+
+### Direction visuelle issue des deux références Pinterest
+
+La première référence inspire la photographie immersive et les portraits circulaires. La seconde inspire le panneau translucide et la lumière chaude. Les deux sont interprétées à partir des photographies de MA2M. Les jetons de charte définissent le charbon, le lin, le sable et le taupe. Ils se retrouvent sur l’accueil, les ouvertures publiques, le portfolio et les enveloppes des espaces mannequin et administration. Les couleurs d’état gardent leur sens métier.

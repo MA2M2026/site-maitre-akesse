@@ -85,7 +85,7 @@
 }
 .p-couv > *:not(.mag-cadre) { position: absolute; z-index: 2; }
 .p-couv .tete { top: 3cqmin; left: 5cqmin; right: 5cqmin; text-align: center; }
-.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--rouge-logo); }   /* rouge vif d'origine (choix de la propriétaire, 28/10/2026) */
+.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--one-sable); }
 .p-couv .numero {
   display: flex; justify-content: space-between; margin-top: 1.6cqmin;
   font-size: max(12px, 2.4cqmin); letter-spacing: 0.08em;
@@ -292,7 +292,7 @@
   .mag-cadre img, .p-couv .mag-cadre img { transition: none; }
 }
 
-/* Chapitre d’orientation : les titres font partie du cadrage photographique. */
+/* Chapitre d’orientation : portraits circulaires et titres sur une matière sombre. */
 .mag .p-parcours {
   display: grid;
   align-content: center;
@@ -303,100 +303,71 @@
   overflow: visible;
   scroll-margin-top: var(--entete);
   container-type: inline-size;
-  background: var(--one-ivoire);
-  color: var(--one-encre);
+  background: var(--one-scene);
+  color: var(--one-ivoire);
 }
 .p-parcours .mag-titre {
   max-width: 16ch;
-  font-size: clamp(3rem, 8.5vw, 9rem);
-  color: var(--one-carmin);
+  font-size: clamp(2.65rem, 6.8vw, 7rem);
+  font-weight: 600;
+  text-wrap: balance;
 }
-.p-parcours .mag-folio { color: var(--one-carmin); }
+.p-parcours .mag-folio { color: var(--one-sable); }
 .mag-parcours {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(0.75rem, 2vw, 1.75rem);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2vw, 2rem);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.mag-parcours li { grid-column: span 5; min-width: 0; }
-.mag-parcours li:nth-child(4n + 1),
-.mag-parcours li:nth-child(4n) { grid-column: span 7; }
+.mag-parcours li { min-width: 0; }
 .mag-parcours a {
-  position: relative;
-  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-content: end;
-  min-height: clamp(15rem, 27vw, 30rem);
-  gap: 0.6rem 1rem;
-  padding: clamp(1.1rem, 3vw, 2.75rem);
-  overflow: hidden;
-  background: var(--one-scene);
-  color: var(--one-ivoire);
+  column-gap: 0.6rem;
+  row-gap: 0.75rem;
+  height: 100%;
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--blanc-a22);
   text-decoration: none;
 }
-.mag-parcours a::after {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  content: "";
-  background: linear-gradient(180deg, transparent 12%, var(--one-voile) 58%, var(--one-encre));
-}
+.mag-parcours a:focus-visible { outline-color: var(--one-sable); }
 .mag-parcours img {
-  position: absolute;
-  z-index: -2;
-  inset: 0;
-  object-position: center 28%;
+  grid-column: 1 / -1;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-position: center 24%;
 }
-.mag-parcours li:nth-child(3) img { object-position: center top; }
 .mag-parcours strong {
-  max-width: 15ch;
-  font-family: var(--mag-titre);
-  font-size: clamp(1.95rem, 4.4vw, 4.8rem);
-  line-height: 0.94;
+  grid-column: 1;
+  font: 600 clamp(1.55rem, 2.75vw, 3.25rem)/0.98 var(--mag-titre);
+  text-wrap: balance;
 }
 .mag-parcours a:is(:hover, :focus-visible) strong {
   text-decoration: underline;
-  text-underline-offset: 0.12em;
+  text-underline-offset: 0.14em;
 }
-.mag-parcours a:focus-visible { outline-color: var(--one-carmin); }
 .mag-parcours a > span:first-of-type {
-  grid-column: 1;
-  max-width: 37ch;
+  grid-column: 1 / -1;
+  max-width: 33ch;
+  color: var(--one-ivoire);
   line-height: 1.45;
 }
 .mag-parcours-fleche {
   grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: end;
-  display: grid;
-  place-items: center;
-  width: var(--hauteur-tactile);
-  aspect-ratio: 1;
-  border: 1px solid var(--blanc-a45);
-  border-radius: 50%;
+  grid-row: 2;
+  align-self: center;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-top: 1px solid var(--one-sable);
+  border-right: 1px solid var(--one-sable);
+  transform: rotate(45deg);
 }
-.mag-parcours-fleche::before {
-  content: "";
-  grid-area: 1 / 1;
-  width: 0.65rem;
-  height: 0.65rem;
-  margin: 0 0 0.3rem 0.3rem;
-  border-top: 1px solid currentColor;
-  border-right: 1px solid currentColor;
-}
-.mag-parcours-fleche::after {
-  content: "";
-  grid-area: 1 / 1;
-  width: 1rem;
-  border-top: 1px solid currentColor;
-  transform: rotate(-45deg);
-}
-@media (max-width: 650px) {
-  .mag-parcours { grid-template-columns: minmax(0, 1fr); }
-  .mag-parcours li:nth-child(n) { grid-column: 1; }
+@media (max-width: 740px) {
+  .mag-parcours { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Les chapitres de lecture et le portfolio respirent entre les pleines pages photo. */
@@ -412,3 +383,23 @@
 .mag :is(.p-sommaire, .p-agence) li { border-top: 1px solid var(--rouge-mat-a22); }
 .mag .p-visages .grille span { font-family: var(--mag-titre); font-size: max(15px, 3cqmin); }
 .p-couv .lignes .une { font-size: max(30px, 7.1cqmin); text-wrap: balance; }
+
+
+/* La couverture garde la photo en pleine page et pose les accès sur un panneau translucide. */
+.p-couv .lignes {
+  padding: clamp(1rem, 3vw, 2.5rem);
+  border: 1px solid var(--blanc-a22);
+  background: var(--one-verre);
+}
+@supports (backdrop-filter: blur(1rem)) {
+  .p-couv .lignes { backdrop-filter: blur(1rem); }
+}
+.p-couv .lignes .ligne::before { background: var(--one-sable); }
+@media (min-width: 701px) {
+  .p-couv .lignes { right: 6cqmin; left: auto; width: min(50%, 36rem); }
+  .p-couv .lignes .une { font-size: clamp(2.3rem, 4.7vw, 5.8rem); }
+  .p-couv .modele { bottom: max(7cqmin, 6rem); left: 5cqmin; right: auto; text-align: left; }
+}
+@media (max-width: 420px) {
+  .p-couv .lignes .une { font-size: clamp(1.65rem, 8vw, 2.2rem); }
+}

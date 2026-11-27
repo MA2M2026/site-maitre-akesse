@@ -1,6 +1,5 @@
-// Gardien des couleurs (promis à la propriétaire le 27/10/2026, écrit le 28/10/2026) : le site et les deux
-// applications n'ont que des fonds ROUGES (rouge mat #7C2128, rouge profond #5A141B et leurs nuances et
-// transparences) ou BLANCS (blanc, gris très clair). Plus de beige, plus de noir, plus de rouge vif.
+// Gardien des couleurs du site et des deux applications. La palette approuvée inclut
+// les rouges historiques et les tons charbon, lin et taupe de la charte MA2M ONE.
 // Exécutée DANS la page : renvoie la liste des fonds interdits visibles.
 // Ne comptent pas : photos et vidéos (et ce qui est posé dessus pour attendre leur chargement), couleurs
 // d'état (vert, orange, bleu des pastilles « payé », « en attente »…), bouton WhatsApp et logos des
@@ -13,6 +12,8 @@ function fondsInterdits() {
   // presque transparent (moins de 15 % d'opacité : simple ombre ou survol)
   const permis = ([r, g, b, a]) => {
     if (a < 0.15) return true;
+    const paletteOne = [[33, 27, 23], [41, 36, 31], [84, 66, 56], [245, 240, 233], [212, 182, 158], [96, 71, 59]];
+    if (paletteOne.some(([rouge, vert, bleu]) => r === rouge && g === vert && b === bleu)) return true;
     if (r >= 220 && g >= 220 && b >= 220 && Math.max(r, g, b) - Math.min(r, g, b) <= 6) return true;   // blanc / gris très clair (filets)
     if (r >= 40 && r <= 140 && g <= 45 && b <= 55 && r - g >= 30) return true;                            // rouges mats et profonds
     if (r >= 160 && r - g >= 40 && r - b >= 30 && r < 200) return true;                                     // roses et rouges clairs des graphiques

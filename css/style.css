@@ -3313,7 +3313,7 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 .book-v2 .book-ouverture h1 em { font-style: italic; font-weight: 400; }
 .book-v2 .book-chapo { margin: 0; max-width: 40rem; font-size: 0.98rem; color: var(--c-rgba-255-255-255-0_78); }
 /* la barre : collée sous l'en-tête quand on défile */
-.book-v2 .book-barre { position: sticky; top: 84px; z-index: 50; background: #7C2128; border-bottom: 1px solid rgba(255, 255, 255, 0.18); padding: 0.75rem 0; }
+.book-v2 .book-barre { position: sticky; top: 84px; z-index: 50; background: var(--one-charbon); border-bottom: 1px solid rgba(255, 255, 255, 0.18); padding: 0.75rem 0; }
 .book-v2 .book-barre-int { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
 .book-v2 .book-segments { display: flex; flex-wrap: nowrap; gap: 0.35rem; margin: 0; }
 .book-v2 .book-recherche { flex: 1 1 260px; min-width: 0; display: flex; align-items: center; gap: 0.55rem; padding: 0 1rem; border-radius: 999px; background: #FFFFFF; }

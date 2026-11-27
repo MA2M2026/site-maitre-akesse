@@ -34,7 +34,7 @@
   --gris-tres-clair: #F2F2F2;
 
   /* sur le rouge (fond de page) : écriture claire */
-  --fond: var(--rouge-mat);       /* fond de page */
+  --fond: var(--one-charbon);    /* fond général ; les surfaces de travail gardent leur contexte */
   --surface: #FFFFFF;             /* cartes, formulaires, menus (blocs blancs) */
   --surface-douce: #F2F2F2;       /* creux et survols dans les blocs */
   --encre: #FFFFFF;               /* texte principal */
@@ -490,13 +490,16 @@
    « Qui sommes-nous » semblait écrit dans une autre police). */
 html { font-synthesis-style: none; }
 
-/* Charte éditoriale MA2M ONE. Les couleurs d’état restent dans les jetons métier. */
+/* Charte MA2M ONE : charbon, lin et reflets chauds. */
 :root {
-  --one-encre: #171313;
-  --one-ivoire: #F8F5F3;
-  --one-carmin: #751D2A;
+  --one-encre: #211B17;
+  --one-charbon: #29241F;
+  --one-taupe: #544238;
+  --one-ivoire: #F5F0E9;
+  --one-sable: #D4B69E;
+  --one-carmin: #60473B;
   --one-voile: color-mix(in srgb, var(--one-encre) 76%, transparent);
-  --one-lumiere: color-mix(in srgb, var(--one-carmin) 74%, transparent);
-  --one-scene: radial-gradient(ellipse at 85% 0%, var(--one-lumiere), transparent 60%),
-    linear-gradient(145deg, var(--one-carmin), var(--rouge-profond) 85%);
+  --one-verre: color-mix(in srgb, var(--one-encre) 74%, transparent);
+  --one-scene: radial-gradient(ellipse at 90% 0%, var(--one-taupe), transparent 68%),
+    linear-gradient(145deg, var(--one-charbon), var(--one-encre));
 }

@@ -21,7 +21,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     p.on('pageerror', (e) => errs.push(e.message)); p.on('dialog', (d) => d.dismiss());
     await brancher(p, donnees('principal'), []); await photosLocales(p);
     await seConnecter(p, BASE); await p.waitForSelector('.accueil-tete');
-    ok(await p.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(124, 33, 40)'), n + 'fond rouge très mat (#7C2128)');
+    ok(await p.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(41, 36, 31)'), n + 'fond charbon de la nouvelle charte (#29241F)');
     // toutes les pages des menus des trois espaces
     const pages = ['#/'];
     // (11/11/2026 : les menus ne montrent plus que le groupe de la rubrique) toutes les rubriques des espaces, et les tuiles
@@ -43,7 +43,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
       for (const x of await lirePageEntiere(p)) pales.push('menu ' + x.element + ' « ' + x.texte + ' » ' + x.contraste);
     }
     ok(pages.length > 40 && !pales.length, n + pages.length + ' pages : tous les textes lisibles' + (pales.length ? ' — trop pâles : ' + pales.slice(0, 12).join(' | ') : ''));
-    ok(!interdits.length, n + 'seulement des fonds rouges ou blancs (gardien des couleurs)' + (interdits.length ? ' — interdits : ' + interdits.slice(0, 12).join(' | ') : ''));
+    ok(!interdits.length, n + 'seulement des fonds de la palette autorisée (gardien des couleurs)' + (interdits.length ? ' — interdits : ' + interdits.slice(0, 12).join(' | ') : ''));
     // contrôle du contrôle : un bloc noir posé exprès DOIT être signalé
     await p.evaluate(() => { const d = document.createElement('div'); d.id = 'bloc-noir-expres'; d.style.cssText = 'position:fixed;left:0;top:0;width:50px;height:50px;background:#111;z-index:99'; document.body.appendChild(d); });
     ok((await p.evaluate(fondsInterdits)).some((x) => x.element === 'div#bloc-noir-expres'), n + 'le gardien voit bien un fond noir posé exprès');
