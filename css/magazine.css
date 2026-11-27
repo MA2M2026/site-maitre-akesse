@@ -292,60 +292,109 @@
   .mag-cadre img, .p-couv .mag-cadre img { transition: none; }
 }
 
-/* Orientation depuis la couverture, sur les pages françaises et anglaises. */
+/* Chapitre d’orientation : les titres font partie du cadrage photographique. */
 .mag .p-parcours {
   display: grid;
   align-content: center;
-  gap: clamp(1.5rem, 5vw, 4rem);
+  gap: clamp(1.75rem, 4vw, 4rem);
   height: auto;
   min-height: var(--H);
-  padding: clamp(2rem, 7vw, 7rem) clamp(1rem, 6vw, 7rem);
+  padding: clamp(2.5rem, 6vw, 7rem) clamp(1rem, 6vw, 7rem) clamp(4rem, 8vw, 8rem);
   overflow: visible;
   scroll-margin-top: var(--entete);
   container-type: inline-size;
+  background: var(--one-ivoire);
+  color: var(--one-encre);
 }
 .p-parcours .mag-titre {
   max-width: 16ch;
-  font-size: clamp(2.65rem, 8vw, 8rem);
+  font-size: clamp(3rem, 8.5vw, 9rem);
+  color: var(--one-carmin);
 }
+.p-parcours .mag-folio { color: var(--one-carmin); }
 .mag-parcours {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 2rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2vw, 1.75rem);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+.mag-parcours li { grid-column: span 5; min-width: 0; }
+.mag-parcours li:nth-child(4n + 1),
+.mag-parcours li:nth-child(4n) { grid-column: span 7; }
 .mag-parcours a {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.4rem 1rem;
-  align-content: center;
-  min-height: var(--hauteur-tactile);
-  padding: clamp(0.9rem, 2vw, 2rem) 0;
-  border-top: 1px solid var(--mag-gris);
+  align-content: end;
+  min-height: clamp(15rem, 27vw, 30rem);
+  gap: 0.6rem 1rem;
+  padding: clamp(1.1rem, 3vw, 2.75rem);
+  overflow: hidden;
+  background: var(--one-scene);
+  color: var(--one-ivoire);
   text-decoration: none;
 }
+.mag-parcours a::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, transparent 12%, var(--one-voile) 58%, var(--one-encre));
+}
+.mag-parcours img {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  object-position: center 28%;
+}
+.mag-parcours li:nth-child(3) img { object-position: center top; }
 .mag-parcours strong {
+  max-width: 15ch;
   font-family: var(--mag-titre);
-  font-size: clamp(1.5rem, 3.2vw, 3.25rem);
-  line-height: 1;
+  font-size: clamp(1.95rem, 4.4vw, 4.8rem);
+  line-height: 0.94;
 }
 .mag-parcours a:is(:hover, :focus-visible) strong {
   text-decoration: underline;
-  text-underline-offset: 0.2em;
+  text-underline-offset: 0.12em;
 }
+.mag-parcours a:focus-visible { outline-color: var(--one-carmin); }
 .mag-parcours a > span:first-of-type {
   grid-column: 1;
-  color: var(--mag-gris);
+  max-width: 37ch;
   line-height: 1.45;
 }
 .mag-parcours-fleche {
   grid-column: 2;
   grid-row: 1 / span 2;
-  align-self: center;
-  font-size: 1.4rem;
+  align-self: end;
+  display: grid;
+  place-items: center;
+  width: var(--hauteur-tactile);
+  aspect-ratio: 1;
+  border: 1px solid var(--blanc-a45);
+  border-radius: 50%;
+}
+.mag-parcours-fleche::before {
+  content: "";
+  grid-area: 1 / 1;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin: 0 0 0.3rem 0.3rem;
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+}
+.mag-parcours-fleche::after {
+  content: "";
+  grid-area: 1 / 1;
+  width: 1rem;
+  border-top: 1px solid currentColor;
+  transform: rotate(-45deg);
 }
 @media (max-width: 650px) {
   .mag-parcours { grid-template-columns: minmax(0, 1fr); }
+  .mag-parcours li:nth-child(n) { grid-column: 1; }
 }

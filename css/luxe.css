@@ -224,3 +224,15 @@
   background: #fff; color: var(--rouge-profond); font-size: 1.35rem; font-weight: 600; font-style: italic; }
 .ct-etape-titre h3, .lx-etape-titre h3 { margin: 0; font-family: var(--police-titre); font-weight: 800; font-size: 1.75rem; text-transform: none; letter-spacing: 0; color: #fff; }
 .ct-consigne, .lx-consigne { margin: -0.4rem 0 1rem; font-weight: 500; opacity: 0.9; }
+
+/* La photo se prolonge dans le fond des ouvertures des parcours. */
+.lx-hero { background: var(--one-scene); }
+.lx-hero-voile {
+  background: linear-gradient(0deg, var(--one-encre), var(--one-voile) 35%, transparent 70%);
+}
+@media (min-width: 768px) {
+  .lx-hero-voile {
+    background: linear-gradient(90deg, var(--one-encre), var(--one-voile) 42%, transparent 84%),
+      linear-gradient(0deg, var(--one-voile), transparent 48%);
+  }
+}

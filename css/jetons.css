@@ -488,3 +488,14 @@
    au lieu d'être penché artificiellement par le navigateur (demande de la propriétaire, 20/10/2026 :
    « Qui sommes-nous » semblait écrit dans une autre police). */
 html { font-synthesis-style: none; }
+
+/* Charte éditoriale MA2M ONE. Les couleurs d’état restent dans les jetons métier. */
+:root {
+  --one-encre: #171313;
+  --one-ivoire: #F8F5F3;
+  --one-carmin: #751D2A;
+  --one-voile: color-mix(in srgb, var(--one-encre) 76%, transparent);
+  --one-lumiere: color-mix(in srgb, var(--one-carmin) 74%, transparent);
+  --one-scene: radial-gradient(ellipse at 85% 0%, var(--one-lumiere), transparent 60%),
+    linear-gradient(145deg, var(--one-carmin), var(--rouge-profond) 85%);
+}

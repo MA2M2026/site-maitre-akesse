@@ -1684,3 +1684,6 @@ body.video-pleine { overflow: hidden; }
   background: color-mix(in srgb, var(--av-rouge) 10%, transparent); color: var(--av-rouge-texte); font-weight: 600; line-height: 1.45; }
 .bloc-parent .etat-parent .alerte-parent { flex-basis: 100%; margin: 4px 0 0; }
 #dos-parent-statut.message-a-copier { white-space: pre-wrap; user-select: all; }
+
+/* La lumière de la charte accompagne la coque, avec les surfaces de travail habituelles. */
+body { background-image: var(--one-scene); }

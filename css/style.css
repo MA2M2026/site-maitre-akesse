@@ -3392,3 +3392,11 @@ html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
   .panier-widget.panier-barre { font-size: 0.8rem; gap: 0.5rem; padding-left: 0.9rem; }
   .panier-widget.panier-barre .panier-go { padding: 0.65rem 0.85rem; font-size: 0.8rem; }
 }
+
+/* Le Book reprend la profondeur des couvertures, derrière la recherche et le portfolio. */
+.book-v2 { background: var(--one-scene); }
+.book-v2 .book-ouverture {
+  padding-block: clamp(2.75rem, 8vw, 8rem) clamp(1.5rem, 4vw, 3rem);
+}
+.book-v2 .book-ouverture h1 { color: var(--one-ivoire); }
+.book-v2 .book-ouverture h1 em { color: var(--rouge-ma2m-texte); }

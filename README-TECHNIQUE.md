@@ -5752,3 +5752,5 @@ zones à toucher d'au moins 40 px et listes en 16 px (pas de zoom de l'iPhone).
 ## MA2M ONE — Orientation depuis l’accueil
 
 La couverture des pages française et anglaise mène à la rubrique « Choisir votre parcours ». Les quatre liens ouvrent les pages de représentation, de l’Académie, de candidature et de l’Atelier Talons & Élégance dans la langue en cours. La rubrique rejoint le sommaire existant grâce à `data-sommaire`. Les liens sont présents dans le HTML et fonctionnent sans JavaScript. Les règles d’inscription, de réservation et de publication restent dans leurs modules respectifs.
+
+La direction visuelle utilise les jetons `--one-*` de `css/jetons.css`. L’orientation associe les photos déjà publiées par MA2M aux titres et actions, avec une grille asymétrique sur ordinateur et une colonne sur téléphone. Le Book et les ouvertures des parcours reprennent la même lumière et les mêmes tons.
