@@ -666,3 +666,12 @@ button.ap-lien-recus { background: none; border: 0; padding: 0; cursor: pointer;
 
 /* La même lumière derrière la connexion et les écrans de l’application. */
 body:not(.ap-page-site) { background-image: var(--one-scene); }
+
+/* Titres d’écran et accueil de l’espace mannequin. */
+.ap-ecran > h1 {
+  padding: clamp(0.7rem, 2.5vw, 1.5rem) 0;
+  border-bottom: 1px solid var(--blanc-a22);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  text-wrap: balance;
+}
+body.ap-page-profil .greet { background: var(--one-scene); border: 1px solid var(--blanc-a22); }

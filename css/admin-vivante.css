@@ -1687,3 +1687,16 @@ body.video-pleine { overflow: hidden; }
 
 /* La lumière de la charte accompagne la coque, avec les surfaces de travail habituelles. */
 body { background-image: var(--one-scene); }
+
+/* Hiérarchie des écrans métier dans les trois blocs existants. */
+.accueil-tete, .tu-tete {
+  padding: clamp(1rem, 3vw, 2rem);
+  background: var(--one-scene);
+  border: 1px solid var(--blanc-a22);
+  border-radius: var(--rayon-carte);
+}
+.tu-tete h1 { min-width: 0; overflow-wrap: anywhere; }
+.tu-ligne:focus-visible {
+  outline: 2px solid var(--one-carmin);
+  outline-offset: -4px;
+}
