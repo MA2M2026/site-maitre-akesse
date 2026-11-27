@@ -207,3 +207,52 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   body.ecrans-actif main > section.ecran.ecran-courant { animation: none; }
   .ecrans-progression span { transition: none; }
 }
+
+/* Les parcours publics occupent la fenêtre, y compris sur téléphone. */
+body.ma2m-ecrans-pleins {background:#171313;}
+.ma2m-ecrans-pleins main[data-ecrans] {position:relative;}
+.ma2m-ecrans-pleins main[data-ecrans] > :is(#candidature,#inscription) {display:none;}
+body.ma2m-ecrans-pleins main[data-ecrans] > section.ecran.ecran-courant {
+  box-sizing:border-box;height:var(--ecran-dispo);min-height:0;
+  padding-block:clamp(.8rem,2dvh,1.5rem);overflow:auto;overscroll-behavior-y:contain;
+  justify-content:safe center;
+}
+body.ma2m-ecrans-pleins main[data-ecrans] > .ma2m-page-info.ecran-courant {
+  width:100%;max-width:none;margin:0;color:#f8f5f3;background:#21191a;
+}
+.ma2m-ecrans-pleins .ma2m-introduction-parcours > * {max-width:min(calc(100% - 2rem),44rem);margin-inline:auto;}
+body.ma2m-ecrans-pleins main[data-ecrans] > .ma2m-couverture-parcours.ecran-courant {
+  display:grid;align-items:end;padding:0;overflow:hidden;
+}
+.ma2m-ecrans-pleins .ma2m-couverture-presentation {margin-bottom:0;}
+.ma2m-ecrans-pleins .ma2m-couverture-presentation .ma2m-action {display:none;}
+.ma2m-ecrans-pleins .ma2m-couverture-presentation .ma2m-lien-infos {display:none;}
+.ma2m-ecrans-pleins .ecrans-retour {
+  min-height:44px;padding:.25rem .4rem;font:inherit;font-size:.85rem;white-space:nowrap;cursor:pointer;
+  background:transparent;color:#f8f5f3;border:0;
+}
+.ma2m-ecrans-pleins .ecrans-retour[hidden] {display:none;}
+.ma2m-ecrans-pleins .ecrans-barre {
+  display:grid;justify-items:center;justify-content:stretch;gap:.25rem;
+  background:#211719;box-shadow:none;
+}
+.ma2m-ecrans-pleins .ecrans-barre .ecrans-suivant.btn {
+  width:min(100%,44rem);height:auto;min-height:3.25rem;margin:0;
+  --bouton-fond:#751d2a;--bouton-texte:#fff;--bouton-survol:#872535;
+  background:#751d2a;color:#fff;border-radius:.8rem;
+}
+.ma2m-ecrans-pleins .ecrans-barre .ecrans-legal {
+  position:static;transform:none;order:0;margin:0;font-size:.69rem;text-align:center;
+}
+.ma2m-ecrans-pleins .ecrans-progression span {background:#cf8492;}
+.ma2m-ecrans-pleins .whatsapp-flottant {display:none;}
+.ma2m-ecrans-pleins .video-pleine video {
+  height:calc(var(--ecran-dispo) - 3rem);
+}
+.ma2m-ecrans-pleins .ma2m-introduction-parcours > p {line-height:1.45;}
+.ma2m-ecrans-pleins .ma2m-introduction-parcours .ct-avertissement {margin-block:.65rem;}
+.ma2m-ecrans-pleins .ma2m-introduction-parcours .ma2m-rubriques {margin-top:.4rem;}
+.ma2m-ecrans-pleins .rp-volet :is(.ia-intro,.ia-ligne,.ia-bon) {margin-block:.6rem;}
+.ma2m-ecrans-pleins .rp-volet .ia-ligne {gap:.45rem;}
+.ma2m-ecrans-pleins .rp-volet .ia-ligne > li {padding-block:.6rem;}
+.ma2m-ecrans-pleins .lx-galerie-grille .lx-tapis .lx-galerie-photo {height:calc(var(--ecran-dispo) - 10.5rem);}
