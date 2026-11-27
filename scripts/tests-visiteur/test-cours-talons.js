@@ -83,9 +83,10 @@ async function navigateur() {
     ok(prog.length === 7 && prog[0] === (en ? 'The basics' : 'Les bases') && prog[5] === (en ? 'Pageants' : 'Miss et concours') && prog[6] === (en ? 'Fine-tuning' : 'Perfectionnement'), n + 'programme : 6 mois puis le perfectionnement (' + prog.join(', ') + ')');
     ok(await p.locator('.ct-carte a[href="#programme"]').count() === 1, n + 'la carte du groupe mène au programme');
 
-    // Depuis la couverture, l’inscription s’ouvre en un appui.
+    // Les écrans d’information mènent à l’inscription.
     const refus = p.locator('#bandeau-cookies button', { hasText: /Refuser|Decline|Refuse/ }); if (await refus.count() && await refus.first().isVisible()) await refus.first().click();
-    await p.locator('.ma2m-couverture-parcours .ma2m-action').click();
+    const total = await p.locator('main > .ecran').count();
+    for (let ecran = 0; ecran < total; ecran++) await p.locator('.ecrans-suivant').click();
     await p.waitForURL((url) => url.searchParams.get('vue') === 'candidature');
     await p.locator('body.ma2m-talons-autonome').waitFor();
     // (23/11/2026, demande de la propriétaire) le formulaire en petits écrans, une question à la fois : formule, parcours,

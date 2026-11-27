@@ -5765,3 +5765,11 @@ couverture. Le bouton principal ouvre directement le formulaire dans sa vue déd
 Les vidéos, programmes, critères et tarifs de l’Atelier restent accessibles depuis les
 rubriques de la page, qui se lisent en défilant. La navigation générale par écrans reste
 réservée aux autres pages qui utilisent `data-ecrans`.
+
+### Navigation plein écran des parcours publics
+
+Les pages Cours de talons, Casting, Intégrer l’agence, MA2M Academy et Représentation
+utilisent le mode `data-ecrans="plein"` de `js/pages-ecrans.js`. La couverture est le
+premier écran, puis le bouton bordeaux affiche chaque section à sa suite. Les rubriques
+longues peuvent être découpées avec `data-ecran-coupe`. L’action finale ouvre le formulaire
+du parcours ou, pour la page Intégrer l’agence, le choix des candidatures.

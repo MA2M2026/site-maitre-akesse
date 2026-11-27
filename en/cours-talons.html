@@ -45,6 +45,7 @@
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
   <link rel="stylesheet" href="/css/candidature-ma2m.css?v=a0f3c0e3">
+  <link rel="stylesheet" href="/css/pages-ecrans.css?v=346bf420">
 </head>
 <body class="ma2m-parcours-talons">
 <script async src="../js/filet-reveal.js?v=0e57f29d"></script>
@@ -53,7 +54,7 @@
 
 <div class="menu-overlay" id="menuOverlay" data-gabarit="menu"></div>
 <script src="../js/gabarit.js?v=07c3b9fc"></script>
-<main class="ma2m-parcours-public">
+<main class="ma2m-parcours-public" data-ecrans="plein">
 
 <section class="ma2m-couverture-parcours" aria-labelledby="ma2m-titre-parcours">
   <div class="ma2m-couverture-portrait" aria-hidden="true">
@@ -93,7 +94,7 @@
   <video class="vp-horizontale" controls playsinline preload="none" poster="../assets/cours-talons/affiche-large.jpg?v=7" width="1280" height="720"><source src="../assets/cours-talons/atelier-talons-elegance-large.mp4?v=7" type="video/mp4"></video>
 </section>
 
-<section class="ct-formules" id="formules">
+<section class="ct-formules" id="formules" data-ecran-coupe="article.ct-carte">
   <div class="container">
     <h2 class="lx-titre-section reveal">Two options</h2>
     <div class="ct-cartes">
@@ -121,7 +122,7 @@
   </div>
 </section>
 
-<section class="lx-prog-section" id="programme" aria-labelledby="ct-programme-titre">
+<section class="lx-prog-section" id="programme" data-ecran-coupe="li.lx-prog-mois:nth-child(3n+1)" aria-labelledby="ct-programme-titre">
   <div class="container">
     <p class="lx-surtitre reveal">Group lessons</p>
     <h2 class="lx-titre-section reveal" id="ct-programme-titre">The programme, month after month</h2>
@@ -161,7 +162,7 @@
 </section>
 
 <!-- (22/11/2026, pages en écrans) les questions fréquentes passent AVANT le formulaire : le formulaire est le dernier écran -->
-<section class="ct-faq" id="questions-talons">
+<section class="ct-faq" id="questions-talons" data-ecran-coupe="details:nth-of-type(2n+1)">
   <div class="container">
     <h2 class="lx-titre-section reveal">Frequently asked questions</h2>
     <details class="reveal"><summary>Do I need to already walk in heels?</summary><p>No. The classes are open to all, from beginners to the most comfortable: your video helps us adapt the work to your level.</p></details>
@@ -368,5 +369,6 @@
 <script src="../js/talons-creneaux.js?v=86fa3741"></script>
 <script src="../js/cours-talons.js?v=c69cdd44"></script>
 <script src="/js/guide-medias.js?v=62b8734e"></script>
+<script src="/js/pages-ecrans.js?v=20d595cd"></script>
 </body>
 </html>
