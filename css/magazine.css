@@ -291,3 +291,61 @@
 @media (prefers-reduced-motion: reduce) {
   .mag-cadre img, .p-couv .mag-cadre img { transition: none; }
 }
+
+/* Orientation depuis la couverture, sur les pages françaises et anglaises. */
+.mag .p-parcours {
+  display: grid;
+  align-content: center;
+  gap: clamp(1.5rem, 5vw, 4rem);
+  height: auto;
+  min-height: var(--H);
+  padding: clamp(2rem, 7vw, 7rem) clamp(1rem, 6vw, 7rem);
+  overflow: visible;
+  scroll-margin-top: var(--entete);
+  container-type: inline-size;
+}
+.p-parcours .mag-titre {
+  max-width: 16ch;
+  font-size: clamp(2.65rem, 8vw, 8rem);
+}
+.mag-parcours {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mag-parcours a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.4rem 1rem;
+  align-content: center;
+  min-height: var(--hauteur-tactile);
+  padding: clamp(0.9rem, 2vw, 2rem) 0;
+  border-top: 1px solid var(--mag-gris);
+  text-decoration: none;
+}
+.mag-parcours strong {
+  font-family: var(--mag-titre);
+  font-size: clamp(1.5rem, 3.2vw, 3.25rem);
+  line-height: 1;
+}
+.mag-parcours a:is(:hover, :focus-visible) strong {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.mag-parcours a > span:first-of-type {
+  grid-column: 1;
+  color: var(--mag-gris);
+  line-height: 1.45;
+}
+.mag-parcours-fleche {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 1.4rem;
+}
+@media (max-width: 650px) {
+  .mag-parcours { grid-template-columns: minmax(0, 1fr); }
+}

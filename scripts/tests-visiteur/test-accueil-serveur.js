@@ -139,6 +139,12 @@ async function middleware() {
         ok(vignettes.length === 4 && vignettes.every((u) => (ecran.width < 700) === /\/petites\/[^/]*-n480-w\.(webp|jpg)$/.test(u)), n + (ecran.width < 700 ? 'téléphone : visages en petite version (480 px)' : 'ordinateur : visages en miniature (800 px)') + ' — ' + vignettes[0].replace(/^.*\//, ''));
         ok((await p.$$('#grille-femmes a')).length === 3 && (await p.$$('#grille-hommes a')).length === 1 && /AWA UNE/.test(await p.textContent('#une-nom')), n + 'visages des femmes, des hommes et « À la une » remplis');
         ok(/4 (mannequins à découvrir|models to discover)/.test(await p.textContent('#couv-nombre')), n + 'nombre de mannequins sur la couverture');
+        const parcours = p.locator('#orientation .mag-parcours a');
+        const destinations = await parcours.evaluateAll((liens) => liens.map((lien) => new URL(lien.href).pathname));
+        const prefixe = chemin.startsWith('en') ? '/en/' : '/';
+        ok(destinations.join(',') === ['representation', 'academie', 'candidature', 'cours-talons'].map((route) => prefixe + route + '.html').join(','),
+          n + 'les quatre parcours mènent aux bonnes pages dans la langue choisie');
+        ok(await p.locator('#sommaire-liste a[href="#orientation"]').count() === 1, n + 'l’orientation figure au sommaire');
         ok(!errs.length, n + 'aucune erreur ' + errs.join(' | '));
         await p.unrouteAll({ behavior: 'ignoreErrors' }); await ctx.close();
       }
