@@ -13,7 +13,9 @@
 @media (min-width: 800px) { .ia-etapes { grid-template-columns: repeat(3, 1fr); } }
 .ia-etapes li { padding: 2.2rem 1.8rem 2rem; text-align: center; }
 .ia-num { display: block; font-family: var(--police-titre); font-style: normal; font-weight: 800; font-size: 2.8rem; line-height: 1; }
-.ia-etapes h3, .ia-avantage h3, .ia-parcours-tete h3 { font-family: var(--police-titre); font-weight: 800; text-transform: none; letter-spacing: 0; }
+.ia-etapes h3, .ia-avantage h3, a.ia-parcours-carte { display: block; color: inherit; text-decoration: none; }
+a.ia-parcours-carte:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.ia-parcours-tete h3 { font-family: var(--police-titre); font-weight: 800; text-transform: none; letter-spacing: 0; }
 .ia-etapes h3 { margin: 0.8rem 0 0.5rem; font-size: 1.7rem; }
 .ia-etapes p { margin: 0 auto; max-width: 30ch; line-height: 1.65; opacity: 0.9; }
 
