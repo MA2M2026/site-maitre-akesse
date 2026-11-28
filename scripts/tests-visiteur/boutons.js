@@ -17,8 +17,8 @@ function verifierBoutons() {
   const auModele = (s) => (blanc(s.backgroundColor) && rougeMat(s.color)) || (rougeMat(s.backgroundColor) && s.color === 'rgb(255, 255, 255)')
     // filtres en fine pilule (28/10/2026) : fond transparent, contour de la couleur de l'écriture, blanc ou rouge mat
     || (s.backgroundColor === 'rgba(0, 0, 0, 0)' && s.borderTopColor === s.color && (s.color === 'rgb(255, 255, 255)' || rougeMat(s.color)));
-  // .nav : entrées du menu latéral du portail (un menu, comme le menu du site, pas des boutons)
-  const exclu = (e) => e.closest('.nav, .cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
+  // Le menu latéral et le lien d’évitement font partie de la navigation.
+  const exclu = (e) => e.closest('.nav, .lien-evitement, .cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
   const visible = (e) => {
     // dans un volet replié (<details> fermé), hors de son titre : pas affiché
     const volet = e.closest('details:not([open])');
