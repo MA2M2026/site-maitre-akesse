@@ -300,7 +300,16 @@ async function navigateur() {
       ok(l.parcours === 'debut' && l.modules === null, n + 'parcours « je débute » envoyé (sans thèmes)');
       ok(l.civilite === 'mademoiselle' && l.nb_mois === 1 && l.paiement === 'tout', n + 'civilité choisie (Mademoiselle) envoyée ; privé : 1 « mois », payé en une fois');
       if (en) ok(l.choix_creneaux === 'apres' && !l.creneaux && /lien personnel|personal link/.test(merci), n + '« après mon paiement » envoyé, sans créneau ; merci : « vous recevrez votre lien personnel »');
-      else ok(l.choix_creneaux === 'maintenant' && Array.isArray(l.creneaux) && l.creneaux.length === 10 && l.creneaux.every((c, i) => !i || c > l.creneaux[i - 1]) && /^Créneaux choisis : (jeu|ven)\. /.test(l.disponibilites || ''), n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
+      else {
+        const creneaux = Array.isArray(l.creneaux) ? l.creneaux : [];
+        // La séance ajoutée à la main peut précéder les jeudis selon la date de l’essai.
+        const premierJour = new Date(creneaux[0]).getUTCDay();
+        const abreviation = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'][premierJour];
+        ok(l.choix_creneaux === 'maintenant' && creneaux.length === 10 &&
+          creneaux.every((c, i) => !i || c > creneaux[i - 1]) &&
+          (l.disponibilites || '').startsWith('Créneaux choisis : ' + abreviation + '. '),
+        n + 'ses 10 créneaux envoyés (dans l’ordre), écrits aussi pour l’agence');
+      }
       if (!en) ok(/confirme vos créneaux|confirms your slots/.test(merci), n + 'merci : « elle vous confirme vos créneaux »');
       ok(l.formule === 'prive_salle' && l.nb_seances === 10 && l.decision === 'maintenant' && l.reference_wave === 'T_ESSAI1' && (parOrange ? l.moyen === 'orange_money' : !('moyen' in l)) && l.mineure === true && !('age' in l) && !('quartier' in l) && /^\+225/.test(l.parent_telephone || '') && l.objectif === 'miss' && l.niveau === 'un_peu',
         n + 'contenu : formule, 10 séances, ' + (parOrange ? 'Orange Money' : 'Wave') + ' maintenant (référence), mineure avec le téléphone du parent, objectif, niveau');
