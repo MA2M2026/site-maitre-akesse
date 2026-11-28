@@ -101,6 +101,10 @@ async function unePage(b, page, ecran) {
   {
     const { ctx, p } = await ouvrir(b, 'en/index.html', ecrans[0], false);
     await p.click('#menuBtn'); await p.waitForTimeout(300); await finAnimations(p);
+    // Le test du détecteur utilise un aplat mesurable. Le menu réel repose sur un portrait.
+    await p.locator('#menuOverlay').evaluate(menu => {
+      menu.style.setProperty('background', '#211B17', 'important');
+    });
     const duMenu = (l) => l.filter(x => x.element.includes('menuOverlay'));
     const avant = duMenu(await p.evaluate(verifierLisibilite)).length;
     await p.evaluate(() => document.querySelectorAll('#menuOverlay .nav-links a').forEach(a => { /* rouge à peine plus clair que le menu rouge : illisible exprès */ a.style.setProperty('color', '#8a2a32', 'important'); }));

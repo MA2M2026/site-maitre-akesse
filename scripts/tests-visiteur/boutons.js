@@ -9,14 +9,12 @@
 
 // Exécutée DANS la page : renvoie la liste des boutons qui ne suivent pas le modèle.
 function verifierBoutons() {
-  // fond d'un bouton : blanc (ou gris très clair au survol) sur le rouge ; rouge mat #7C2128 (ou
-  // rouge profond #5A141B au survol) dans un bloc blanc ; et tout l'entre-deux (transition)
+  // Les deux tons charbon et leurs transitions, avec une surface claire en contraste.
   const rvb0 = (c) => { const m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(c); return m ? [+m[1], +m[2], +m[3]] : null; };
   const blanc = (c) => { const v = rvb0(c); return !!v && v.every((x) => x >= 240); };
-  const rougeMat = (c) => { const v = rvb0(c); return !!v && v[0] >= 85 && v[0] <= 128 && v[1] >= 18 && v[1] <= 36 && v[2] >= 25 && v[2] <= 42; };
-  const auModele = (s) => (blanc(s.backgroundColor) && rougeMat(s.color)) || (rougeMat(s.backgroundColor) && s.color === 'rgb(255, 255, 255)')
-    // filtres en fine pilule (28/10/2026) : fond transparent, contour de la couleur de l'écriture, blanc ou rouge mat
-    || (s.backgroundColor === 'rgba(0, 0, 0, 0)' && s.borderTopColor === s.color && (s.color === 'rgb(255, 255, 255)' || rougeMat(s.color)));
+  const charbon = (c) => { const v = rvb0(c); return !!v && v[0] >= 33 && v[0] <= 41 && v[1] >= 27 && v[1] <= 36 && v[2] >= 23 && v[2] <= 31; };
+  const auModele = (s) => (blanc(s.backgroundColor) && charbon(s.color)) || (charbon(s.backgroundColor) && s.color === 'rgb(255, 255, 255)')
+    || (s.backgroundColor === 'rgba(0, 0, 0, 0)' && s.borderTopColor === s.color && (s.color === 'rgb(255, 255, 255)' || charbon(s.color)));
   // Le menu latéral et le lien d’évitement font partie de la navigation.
   const exclu = (e) => e.closest('.nav, .lien-evitement, .cliquable, .mpg-produit, .mpg-commande, .whatsapp-flottant, [data-bouton-libre], .reseaux, .footer-social, .site-footer-reseaux');
   const visible = (e) => {

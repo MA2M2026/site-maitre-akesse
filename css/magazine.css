@@ -387,7 +387,10 @@
   color: var(--one-ivoire);
 }
 .p-couv .lignes .ligne::before { background: var(--one-sable); }
-.mag .p-couv :is(.numero span, .modele) { color: var(--one-ivoire); }
+.mag .p-couv :is(.numero span, .modele) {
+  color: var(--couv-credit-encre, var(--one-ivoire));
+  translate: 0 var(--couv-credit-decalage, 0);
+}
 .mag .p-couv .modele[hidden] { display: none; }
 @media (min-width: 701px) {
   .p-couv .lignes { right: 6cqmin; left: auto; width: min(50%, 36rem); }

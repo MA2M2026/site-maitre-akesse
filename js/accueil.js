@@ -20,6 +20,95 @@
   mag.querySelectorAll('.mag-date').forEach(el => { el.textContent = edition; });
   mag.querySelectorAll('.mag-signature-folio').forEach(el => { el.textContent = 'MA2M · ' + edition; });
 
+  // Les crédits suivent la luminosité de la photo sans modifier ses pixels.
+  const couverture = document.getElementById('couverture');
+  const cadreCouverture = couverture.querySelector('.mag-cadre');
+  const creditsCouverture = [...couverture.querySelectorAll('.numero span, .modele')];
+  const lineariser = v => v <= 10 ? v / 3294.6 : ((v / 255 + 0.055) / 1.055) ** 2.4;
+  const luminance = (r, g, b) => 0.2126 * lineariser(r) + 0.7152 * lineariser(g) + 0.0722 * lineariser(b);
+  const palier = [0, 255, 117, 33, 68, 102, 136, 170, 204, 238];
+  const encres = ['#F5F0E9', ...palier.map(v => 'rgb(' + [v, v, v].join(', ') + ')')];
+  const lumEncres = [luminance(245, 240, 233), ...palier.map(lineariser)];
+  let sourceCredits = '', imageCredits, attenteCredits = 0;
+
+  function appliquerCredits() {
+    for (const credit of creditsCouverture) {
+      credit.style.removeProperty('--couv-credit-encre');
+      credit.style.removeProperty('--couv-credit-decalage');
+    }
+    if (!imageCredits) return;
+    const img = cadreCouverture.querySelector('img.visible');
+    const photo = img.getBoundingClientRect();
+    if (!photo.width || !photo.height) return;
+    const canvas = document.createElement('canvas');
+    const facteur = Math.min(1, 1600 / Math.max(photo.width, photo.height));
+    canvas.width = Math.max(1, Math.round(photo.width * facteur));
+    canvas.height = Math.max(1, Math.round(photo.height * facteur));
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    const zoom = Math.max(canvas.width / imageCredits.naturalWidth, canvas.height / imageCredits.naturalHeight);
+    const largeur = imageCredits.naturalWidth * zoom, hauteur = imageCredits.naturalHeight * zoom;
+    const position = getComputedStyle(img).objectPosition.split(' ').map(x => parseFloat(x) / 100);
+    ctx.drawImage(imageCredits, (canvas.width - largeur) * position[0], (canvas.height - hauteur) * position[1], largeur, hauteur);
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+    for (const credit of creditsCouverture) {
+      const rect = credit.getBoundingClientRect();
+      if (!rect.width || !rect.height) continue;
+      const obstacles = [...couverture.querySelectorAll('.mag-logo, .lignes')].map(el => el.getBoundingClientRect());
+      const essais = [0, 12, -12, 24, -24, 36, -36];
+      let meilleur = { ratio: 0, encre: 0, decalage: 0 };
+      for (const decalage of essais) {
+        const haut = rect.top + decalage, bas = rect.bottom + decalage;
+        if (haut < photo.top || bas > photo.bottom) continue;
+        if (decalage && obstacles.some(r => haut < r.bottom && bas > r.top && rect.left < r.right && rect.right > r.left)) continue;
+        const samples = [];
+        const x0 = Math.max(0, Math.floor((rect.left - photo.left) * facteur));
+        const x1 = Math.min(canvas.width, Math.max(x0 + 1, Math.ceil((rect.right - photo.left) * facteur)));
+        const y0 = Math.max(0, Math.floor((haut - photo.top) * facteur));
+        const y1 = Math.min(canvas.height, Math.max(y0 + 1, Math.ceil((bas - photo.top) * facteur)));
+        for (let y = y0; y < y1; y += 2) {
+          for (let x = x0; x < x1; x++) {
+            const p = (y * canvas.width + x) * 4;
+            samples.push(luminance(pixels[p], pixels[p + 1], pixels[p + 2]));
+          }
+        }
+        if (!samples.length) continue;
+        for (const [encre, valeur] of lumEncres.entries()) {
+          const rapports = samples.map(l => (Math.max(l, valeur) + 0.05) / (Math.min(l, valeur) + 0.05)).sort((a, b) => a - b);
+          const ratio = rapports[Math.floor(rapports.length * 0.1)];
+          if (ratio > meilleur.ratio) meilleur = { ratio, encre, decalage };
+          if (ratio >= 4.5) { meilleur = { ratio, encre, decalage }; break; }
+        }
+        if (meilleur.ratio >= 4.5) break;
+      }
+      if (meilleur.encre) credit.style.setProperty('--couv-credit-encre', encres[meilleur.encre]);
+      if (meilleur.decalage) credit.style.setProperty('--couv-credit-decalage', meilleur.decalage + 'px');
+    }
+  }
+  function actualiserCredits() {
+    cancelAnimationFrame(attenteCredits);
+    attenteCredits = requestAnimationFrame(() => {
+      const src = cadreCouverture.querySelector('img.visible')?.src;
+      if (!src || src.startsWith('data:')) return;
+      if (src === sourceCredits) { appliquerCredits(); return; }
+      sourceCredits = src;
+      imageCredits = null;
+      appliquerCredits();
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.onload = () => {
+        if (sourceCredits !== src) return;
+        imageCredits = image;
+        appliquerCredits();
+      };
+      image.src = src;
+    });
+  }
+  new MutationObserver(actualiserCredits).observe(cadreCouverture, { subtree: true, attributes: true, attributeFilter: ['src', 'class'] });
+  if ('ResizeObserver' in window) new ResizeObserver(actualiserCredits).observe(cadreCouverture);
+  actualiserCredits();
+
   // --- Pages en option (agenda, film, partenaires, Instagram) : leur place est réservée dès
   // l'ouverture si elles étaient affichées à la visite précédente (sinon, en revenant en arrière
   // en bas de l'accueil, leur arrivée ferait sauter la page). Une page réservée qui n'a plus de
