@@ -235,6 +235,7 @@ body.ap-page-inscription .ap-intro { margin: 0 auto; padding: 0 18px; max-width:
 body.ap-page-inscription .inn { padding: 14px 0 0; }
 body.ap-page-inscription .inn-colonne { padding: 0 18px; }
 body.ap-page-inscription .inn-carte { background: var(--ap-carte); border: 0; border-radius: 18px; box-shadow: var(--ap-ombre); }
+body.ap-page-inscription #inn-ecran .inn-carte:has(.mp-pp) h2 { background: none; -webkit-text-fill-color: currentColor; }
 
 /* Messages de l'agence (3e voie, 26/10/2026) : la boîte de réception de l'onglet Messages */
 .ap-message-agence { background: var(--ap-carte); border-radius: 16px; box-shadow: var(--ap-ombre); padding: 0 14px; font-size: 14px; }
