@@ -9,7 +9,7 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [], journal = [];
     p.on('pageerror', e => errs.push(e.message));
     await brancher(p, { tables: { casting_projets: [{ nom: 'Défilé X', actif: true, description: 'Grand défilé', date_casting: '2030-12-05', lieu: 'Hôtel Ivoire' }] }, rpc: { casting_ouvert: true } }, journal);
-    // (14/11/2026) formulaire en 4 étapes puis résumé (js/candidature-etapes.js) : « Suivant » comme une vraie candidate
+    // (14/11/2026) formulaire en deux écrans de saisie puis résumé (js/candidature-etapes.js) : « Suivant » comme une vraie candidate
     const etape = () => p.evaluate(() => window.CandidatureEtapes && window.CandidatureEtapes.etape());
     const suivant = async () => { await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400); };
     // Google Drive simulé (photos, puis vidéo en morceaux) : rien n'est envoyé pour de vrai
@@ -36,7 +36,6 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
       const carteOk = /Défilé X/.test(carte) && /Grand défilé/.test(carte) && /Hôtel Ivoire/.test(carte) && /5 (déc|Dec)/.test(carte) && await p.inputValue('#ca-projet') === 'Défilé X' && await p.getAttribute('.lx-casting', 'aria-checked') === 'true';
       if (!sansCasting || !carteOk) { console.log('❌ ÉCHEC cartes des castings sur', page, sansCasting, carteOk, carte); process.exitCode = 1; }
     }
-    await suivant(); etapesVues.push(await etape());
     await p.fill('#ca-nom', 'Awa Koné'); await p.fill('#ca-email', 'awa@test.ci'); await p.fill('#ca-telephone-numero', '0700000001');
     await choisir(p, '#ca-ville', 'Abidjan'); await p.waitForTimeout(200);
     if (await p.isVisible('#ca-commune')) await choisir(p, '#ca-commune', 'Cocody');
@@ -49,38 +48,36 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     // sans choisir son âge : l'étape « Vous » refuse d'avancer
     await choisir(p, '#ca-genre', 'femme'); await p.waitForTimeout(200); await p.selectOption('#ca-civilite', 'Madame');
     await suivant();
-    const refus12ans = await etape() === 2 && !journal.some(j => j[0] === 'POST' && j[1] === 'casting_applications');
+    const refus12ans = await etape() === 1 && !journal.some(j => j[0] === 'POST' && j[1] === 'casting_applications');
     await p.selectOption('#ca-majorite', 'mineur'); await p.dispatchEvent('#ca-majorite', 'change'); await p.waitForTimeout(300);
     const blocParent = await p.isVisible('#ca-bloc-parent');
-    // (24/11/2026) une ado recopie SES coordonnées à la place de celles du parent : refusé, champ par champ ; message obligatoire
+    // (24/11/2026) une ado recopie SES coordonnées à la place de celles du parent : refusé, champ par champ ; message facultatif
     await p.selectOption('#ca-parent-civilite', 'Madame'); await p.fill('#ca-parent-nom', 'Koné Awa');
     await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'parent@test.ci');
     await choisir(p, '#ca-genre', 'femme'); await p.waitForTimeout(200);
     const caseCivilite = await p.isVisible('#ca-civilite'); await p.selectOption('#ca-civilite', 'Madame');
-    const msgEtape = () => p.textContent('.lx-etape:not([hidden]) .form-msg');
-    await suivant(); const refusMessage = await etape() === 2 && /Message/.test(await msgEtape());
-    await p.fill('#ca-message', 'Je veux devenir mannequin.');
-    await suivant(); const refusNom = await etape() === 2 && /(nom de votre parent|parent’s or guardian’s name)/.test(await msgEtape());
+    const msgCoordonnees = () => p.textContent('.lx-etape[data-etape="2"] .form-msg');
+    const messageFacultatif = await p.$eval('#ca-message', champ => !champ.required);
+    await suivant(); const refusNom = await etape() === 1 && /(nom de votre parent|parent’s or guardian’s name)/.test(await msgCoordonnees());
     await p.fill('#ca-parent-nom', 'Kouassi Marie'); await p.fill('#ca-parent-telephone-numero', '07 00 00 00 01');
-    await suivant(); const refusTel = await etape() === 2 && /WhatsApp/.test(await msgEtape());
+    await suivant(); const refusTel = await etape() === 1 && /WhatsApp/.test(await msgCoordonnees());
     await p.fill('#ca-parent-telephone-numero', '0700000099'); await p.fill('#ca-parent-email', 'AWA@test.ci');
-    await suivant(); const refusMail = await etape() === 2 && /(e-mail|email)/i.test(await msgEtape());
+    await suivant(); const refusMail = await etape() === 1 && /(e-mail|email)/i.test(await msgCoordonnees());
     await p.fill('#ca-parent-email', 'parent@test.ci');
     const etoilesParent = await p.evaluate(() => ['ca-parent-civilite', 'ca-parent-nom', 'ca-parent-indicatif', 'ca-parent-email'].every((id) => /\*\s*$/.test(document.querySelector('label[for="' + id + '"]').textContent)));
-    if (!refusMessage || !refusNom || !refusTel || !refusMail || !etoilesParent) { console.log('❌ ÉCHEC parent / message obligatoires sur', page, refusMessage, refusNom, refusTel, refusMail, etoilesParent); process.exitCode = 1; }
-    else console.log('✓ ' + page + ' : message obligatoire ; nom, WhatsApp et e-mail de la candidate refusés comme parent ; champs du parent avec *');
+    if (!messageFacultatif || !refusNom || !refusTel || !refusMail || !etoilesParent) { console.log('❌ ÉCHEC parent / message facultatif sur', page, messageFacultatif, refusNom, refusTel, refusMail, etoilesParent); process.exitCode = 1; }
+    else console.log('✓ ' + page + ' : message facultatif ; nom, WhatsApp et e-mail de la candidate refusés comme parent ; champs du parent avec *');
     await suivant(); etapesVues.push(await etape());
     await choisir(p, '#ca-taille', '160'); await choisir(p, '#ca-vetements', '');
     for (const sel of ['#ca-pointure', '#ca-poitrine', '#ca-tourtaille', '#ca-hanches']) if (await p.isVisible(sel)) await choisir(p, sel, '');
-    await suivant(); etapesVues.push(await etape());
-    // photos manquantes : l'étape 4 le dit
+    // Les mensurations et les pièces sont sur le même écran.
     await suivant();
-    const sansPhotos = await etape() === 4 && /photo/i.test(await p.textContent('.lx-etape:not([hidden]) .form-msg'));
-    await p.setInputFiles('#ca-photos', [0, 1, 2, 3].map(i => __dirname + '/medias/photo' + i + '.jpg')); await p.waitForTimeout(1500);
+    const sansPhotos = await etape() === 3 && /photo/i.test(await p.textContent('.lx-etape[data-etape="4"] .form-msg'));
+    await p.setInputFiles('#ca-photos', [0, 1, 2, 3, 4].map(i => __dirname + '/medias/photo' + i + '.jpg')); await p.waitForTimeout(1500);
     await p.setInputFiles('#ca-video', __dirname + '/medias/video.mp4'); await p.waitForTimeout(4000);
     // (24/11/2026) consignes de la vidéo + engagement obligatoire
     await p.check('#ca-consentement').catch(async () => { await p.evaluate(() => { const c = document.getElementById('ca-consentement'); c.disabled = false; c.checked = true; }); });
-    await suivant(); const refusConsignes = await etape() === 4 && /(consignes|instructions)/i.test(await p.textContent('.lx-etape:not([hidden]) .form-msg'));
+    await suivant(); const refusConsignes = await etape() === 3 && /(consignes|instructions)/i.test(await p.textContent('.lx-etape[data-etape="4"] .form-msg'));
     const consignes = await p.textContent('.ca-video-aide');
     if (!refusConsignes || !/TikTok/.test(consignes) || !/(quelques pas|few steps)/.test(consignes)) { console.log('❌ ÉCHEC consignes vidéo sur', page, refusConsignes, consignes.slice(0, 120)); process.exitCode = 1; }
     else console.log('✓ ' + page + ' : consignes de la vidéo (pas de TikTok, quelques pas) et case « Ma vidéo respecte ces consignes » obligatoire');
@@ -89,32 +86,32 @@ const choisir = async (p, sel, pref) => { const v = await p.$eval(sel, (s, pref)
     await suivant(); etapesVues.push(await etape());
     // le résumé « Votre candidature » : chaque ligne, avec « Changer »
     const resume = await p.textContent('.lx-recap');
-    const resumeOk = /(Madame|Mrs) Awa Koné/.test(resume) && /Abidjan/.test(resume) && /1,60 m|1\.60 m/.test(resume) && /4 photos/.test(resume) && await p.locator('.lx-recap .lx-changer').count() === 4
-      && (page.includes('candidature') ? /Défilé X/.test(resume) : true) && await p.locator('.lx-recap .lx-vignettes i').count() === 4;
+    const resumeOk = /(Madame|Mrs) Awa Koné/.test(resume) && /Abidjan/.test(resume) && /1,60 m|1\.60 m/.test(resume) && /5 photos/.test(resume) && await p.locator('.lx-recap .lx-changer').count() === 4
+      && (page.includes('candidature') ? /Défilé X/.test(resume) : true) && await p.locator('.lx-recap .lx-vignettes i').count() === 5;
     await p.click('.lx-recap .lx-recap-ligne:nth-child(2) .lx-changer'); await p.waitForTimeout(300);
     const changerOk = await etape() === 2;
-    await suivant(); await suivant(); await suivant();
+    await suivant(); await suivant();
     const deborde = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1 ? document.documentElement.scrollWidth + ' > ' + innerWidth + ' : ' + Array.from(document.querySelectorAll('#form-casting *')).filter((e) => e.getBoundingClientRect().right > innerWidth + 1).slice(0, 3).map((e) => e.tagName + '.' + e.className).join(', ') : false);
     await p.screenshot({ path: __dirname + '/medias/capture-' + Date.now() + '.png' });
-    if (JSON.stringify(etapesVues) !== '[1,2,3,4,5]' || !sansPhotos || !resumeOk || !changerOk || deborde) { console.log('❌ ÉCHEC étapes sur', page, etapesVues, sansPhotos, resumeOk, changerOk, deborde, resume); process.exitCode = 1; }
+    if (JSON.stringify(etapesVues) !== '[1,3,5]' || !sansPhotos || !resumeOk || !changerOk || deborde) { console.log('❌ ÉCHEC étapes sur', page, etapesVues, sansPhotos, resumeOk, changerOk, deborde, resume); process.exitCode = 1; }
     await p.click('#btn-envoyer');
     await p.waitForTimeout(12000);
-    // une jauge par photo (4) et une pour la vidéo, toutes vertes à l'arrivée (10/11/2026)
+    // une jauge par photo (5) et une pour la vidéo, toutes vertes à l'arrivée (10/11/2026)
     const jaugesVertes = await p.locator('#ca-jauges-photos .jauge.terminee').count(), videoVerte = await p.locator('#ca-jauge-video.terminee').count();
     const aideVideo = await p.textContent('.ca-video-aide');
     const inserts = journal.filter(j => j[0] === 'POST' && j[1] === 'casting_applications').map(j => JSON.parse(j[3]));
     const c = inserts[0] || {};
     console.log(`\n===== ${page} (${vp.width}px) =====`);
-    console.log('Étapes 1 → 5 (résumé) :', etapesVues.join(' → '), '| photos manquantes signalées :', sansPhotos);
+    console.log('Écrans de saisie et résumé :', etapesVues.join(' → '), '| photos manquantes signalées :', sansPhotos);
     console.log('Sans choisir son âge : étape bloquée :', refus12ans);
     console.log('Bloc parent visible pour « moins de 18 ans » :', blocParent, '| case Civilité visible pour une femme :', caseCivilite);
     console.log('Candidature enregistrée :', inserts.length ? 'OUI' : 'NON', '| parent_nom :', c.parent_nom, '| parent_telephone :', c.parent_telephone, '| parent_email :', c.parent_email, '| email :', c.email, '| civilité :', c.civilite);
     console.log('Parcours :', c.type_candidature, '| projet :', c.projet_nom, '| expérience :', c.experience_mannequin, '| e-mail agence :', journal.filter(j => j[0] === 'EMAIL').map(j => String(JSON.parse(j[1]).template_params.message).split('\n').slice(0, 2).join(' / ')));
     console.log('Message affiché :', (await p.textContent('#ca-msg').catch(() => '')).trim().slice(0, 160));
     console.log('Erreurs :', errs);
-    console.log('Jauges vertes : photos', jaugesVertes, '/ 4, vidéo', videoVerte, '| « 3 minutes maximum » annoncé :', /3 minutes/.test(aideVideo));
+    console.log('Jauges vertes : photos', jaugesVertes, '/ 5, vidéo', videoVerte, '| « 3 minutes maximum » annoncé :', /3 minutes/.test(aideVideo));
     // Échec bloquant (relecture du 11/10/2026) : la candidature doit être enregistrée avec le bon parcours.
-    if (jaugesVertes !== 4 || videoVerte !== 1 || !/3 minutes/.test(aideVideo)) { console.log('❌ ÉCHEC jauges ou durée sur', page); process.exitCode = 1; }
+    if (jaugesVertes !== 5 || videoVerte !== 1 || !/3 minutes/.test(aideVideo)) { console.log('❌ ÉCHEC jauges ou durée sur', page); process.exitCode = 1; }
     if (!inserts.length || 'situation_scolaire' in c || 'niveau_etudes' in c || 'quartier' in c || 'date_naissance' in c || c.weight_kg !== null || c.mineur !== true) { console.log('❌ ÉCHEC données envoyées sur', page, JSON.stringify(c).slice(0, 300)); process.exitCode = 1; }
     else console.log('✓ ' + page + ' : candidature envoyée avec « mineur », sans date de naissance, quartier, scolarité, niveau d’études ni poids');
     if (!refus12ans || !inserts.length || c.type_candidature !== (page.includes('candidature') ? 'projet' : 'agence') || errs.length) { console.log('❌ ÉCHEC sur', page); process.exitCode = 1; }
