@@ -3453,6 +3453,15 @@ main .one-ouverture--editorial {
 .one-ouverture--actualites { --one-image: url("../assets/cours-talons/galerie-drapeau.jpg"); }
 .one-ouverture--evenements { --one-image: url("../assets/cours-talons/mannequin-defile.jpg"); }
 .one-ouverture--services { --one-image: url("../assets/cours-talons/galerie-tailleur.jpg"); }
+@media (max-width: 47.99rem) {
+  .one-ouverture--editorial :is(.fil-ariane, .eyebrow) {
+    display: table;
+    padding: 0.25rem 0.5rem;
+    background: var(--one-encre);
+    color: var(--one-ivoire);
+  }
+  .one-ouverture--editorial .fil-ariane :is(a, span) { color: inherit; }
+}
 @media (min-width: 48rem) {
   main .one-ouverture--editorial {
     align-items: center;
