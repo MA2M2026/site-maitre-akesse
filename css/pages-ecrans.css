@@ -203,3 +203,12 @@ body.ecrans-actif .lx-formulaire .lx-etape-boutons { margin-top: 1rem; }
   body.ecrans-actif main > section.ecran.ecran-courant { animation: none; }
   .ecrans-progression span { transition: none; }
 }
+
+
+/* Les champs et pièces de la candidature défilent dans l'écran qui leur est réservé. */
+body.ecrans-actif main > section.ecran-formulaire.lx-formulaire.ecran-courant {
+  box-sizing: border-box;
+  height: var(--ecran-dispo, calc(100dvh - 185px));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}

@@ -116,7 +116,11 @@
     Array.from(barre.children).forEach((li, i) => { li.className = i < page ? 'fait' : i === page ? 'actif' : ''; });
     msgs.forEach((m) => { m.className = 'form-msg'; m.textContent = ''; });
     if (n === 5) dessinerResume();
-    if (defiler !== false && typeof barre.scrollIntoView === 'function') barre.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (defiler !== false) {
+      const ecran = form.closest('.ecran-formulaire');
+      if (ecran && document.body.classList.contains('ecrans-actif')) ecran.scrollTop = 0;
+      else barre.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
   }
   function erreur(i, texte, champ) {
     if (typeof afficherMsg === 'function') afficherMsg(msgs[i - 1], texte, 'err'); else msgs[i - 1].textContent = texte;
