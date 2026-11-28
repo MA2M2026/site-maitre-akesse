@@ -134,10 +134,7 @@ function majParcours() {
     champ.required = !debutant;
     if (debutant) champ.value = '';
   });
-  document.getElementById('ca-photos-label').textContent = debutant
-    ? T('Photos (3 minimum : un portrait, une photo en pied, une autre au choix) *', 'Photos (3 minimum: a portrait, a full-body photo, another of your choice) *')
-    : T('Photos (4 minimum : portrait, plein pied, sans maquillage, autre...) *', 'Photos (4 minimum: portrait, full body, no makeup, other...) *');
-  if (photosSelectionnees.length) rafraichirApercuPhotos();
+  rafraichirApercuPhotos();
 }
 if (PARCOURS === 'agence') document.getElementById('ca-experience').addEventListener('change', majParcours);
 
@@ -222,59 +219,93 @@ document.getElementById('ca-video').addEventListener('change', async (e) => {
   })();
 });
 
-// --- Photos : 3 ou 4 minimum selon le parcours, avec aperçu, compteur en direct,
-// et gestion individuelle (ajouter/supprimer/remplacer une seule photo sans
-// reprendre toute la sélection depuis le début — cahier des charges, étape 5). ---
-let photosSelectionnees = [];
-let indexPhotoARemplacer = null;
+// Les emplacements gardent leur position quand une autre photo est retirée.
+const emplacementsPhotos = [
+  T('Portrait', 'Portrait'),
+  T('Plein pied', 'Full body'),
+  T('Photo complémentaire 1', 'Additional photo 1'),
+  T('Photo complémentaire 2', 'Additional photo 2'),
+  T('Photo complémentaire 3', 'Additional photo 3')
+];
+const photosParEmplacement = Array(emplacementsPhotos.length).fill(null);
+const photosSelectionnees = () => photosParEmplacement.filter(Boolean);
+let indexPhotoAChoisir = null;
 
 const adressesApercu = new WeakMap();
-const adresseApercu = (f) => { if (!adressesApercu.has(f)) adressesApercu.set(f, URL.createObjectURL(f)); return adressesApercu.get(f); };
+function adresseApercu(fichier) {
+  if (!adressesApercu.has(fichier)) adressesApercu.set(fichier, URL.createObjectURL(fichier));
+  return adressesApercu.get(fichier);
+}
+function rangerPhoto(rang, fichier) {
+  const ancienne = photosParEmplacement[rang];
+  if (ancienne && adressesApercu.has(ancienne)) {
+    URL.revokeObjectURL(adressesApercu.get(ancienne));
+    adressesApercu.delete(ancienne);
+  }
+  photosParEmplacement[rang] = fichier;
+}
 function rafraichirApercuPhotos() {
   const compteur = document.getElementById('ca-photos-compteur');
   const apercu = document.getElementById('ca-photos-apercu');
-  const n = photosSelectionnees.length;
+  const focus = apercu.contains(document.activeElement) ? document.activeElement.dataset.index : null;
+  const n = photosSelectionnees().length;
   const min = photosMin();
-  const pl = n > 1 ? 's' : '';
-  compteur.textContent = n >= min
-    ? T(`${n} photo${pl} sélectionnée${pl}.`, `${n} photo${pl} selected.`)
-    : T(`${n} photo${pl} sélectionnée${pl} · ${min} minimum requises.`, `${n} photo${pl} selected · ${min} minimum required.`);
-  compteur.style.color = n >= min ? 'var(--gris)' : 'var(--rouge)';
-
-  apercu.innerHTML = photosSelectionnees.map((f, i) => `
-    <div class="ca-photo-vignette ca-20">
-      <img src="${adresseApercu(f)}" class="ca-21" alt="Photo ${i + 1}">
-      <button type="button" class="ca-photo-remplacer ca-22" data-index="${i}" title="${T('Remplacer cette photo', 'Replace this photo')}">⇄</button>
-      <button type="button" class="ca-photo-suppr ca-23" data-index="${i}" title="${T('Supprimer cette photo', 'Remove this photo')}">✕</button>
-    </div>
-  `).join('');
-
+  compteur.textContent = T(
+    `${n}/${emplacementsPhotos.length} photos · ${min} minimum`,
+    `${n}/${emplacementsPhotos.length} photos · ${min} minimum`
+  );
+  compteur.classList.toggle('ca-photos-incompletes', n < min);
+  apercu.innerHTML = emplacementsPhotos.map((nom, i) => {
+    const photo = photosParEmplacement[i];
+    const action = photo ? T('Remplacer', 'Replace') : T('Ajouter', 'Add');
+    return `<li class="ca-photo-emplacement">
+      <strong>${echapperHtml(nom)}</strong>
+      ${photo ? `<button type="button" class="ca-photo-vignette" data-bouton-libre data-index="${i}" data-photo-action="voir"
+        aria-label="${echapperHtml(T('Agrandir', 'Enlarge') + ' · ' + nom)}"><img src="${adresseApercu(photo)}" alt=""></button>` : ''}
+      <div class="ca-photo-actions">
+        <button type="button" data-bouton-libre data-index="${i}" data-photo-action="choisir"
+          aria-label="${echapperHtml(action + ' · ' + nom)}">${action}</button>
+        ${photo ? `<button type="button" data-bouton-libre data-index="${i}" data-photo-action="retirer"
+          aria-label="${echapperHtml(T('Retirer', 'Remove') + ' · ' + nom)}">${T('Retirer', 'Remove')}</button>` : ''}
+      </div>
+    </li>`;
+  }).join('');
   document.getElementById('ca-photos-consigne').classList.toggle('u-hidden', n === 0);
-  apercu.querySelectorAll('.ca-photo-vignette img').forEach(img => {
-    img.addEventListener('click', () => ouvrirVisionneuse(img.src));
-  });
-  apercu.querySelectorAll('.ca-photo-suppr').forEach(btn => {
-    btn.addEventListener('click', () => {
-      photosSelectionnees.splice(Number(btn.dataset.index), 1);
-      rafraichirApercuPhotos();
-    });
-  });
-  apercu.querySelectorAll('.ca-photo-remplacer').forEach(btn => {
-    btn.addEventListener('click', () => {
-      indexPhotoARemplacer = Number(btn.dataset.index);
-      document.getElementById('ca-photo-remplacement').click();
-    });
-  });
+  if (focus != null) apercu.querySelector(`[data-index="${focus}"][data-photo-action="choisir"]`)?.focus();
 }
 
+document.getElementById('ca-photos-apercu').addEventListener('click', (e) => {
+  const bouton = e.target.closest('button[data-photo-action]');
+  if (!bouton) return;
+  const rang = Number(bouton.dataset.index);
+  if (bouton.dataset.photoAction === 'voir') {
+    ouvrirVisionneuse(adresseApercu(photosParEmplacement[rang]), bouton);
+  } else if (bouton.dataset.photoAction === 'retirer') {
+    rangerPhoto(rang, null);
+    rafraichirApercuPhotos();
+  } else {
+    indexPhotoAChoisir = rang;
+    document.getElementById('ca-photo-remplacement').click();
+  }
+});
+
 // Photo en grand, pour vérifier que ce sont bien les bonnes avant d'envoyer.
-function ouvrirVisionneuse(adresse) {
+let retourVisionneuse = null;
+function ouvrirVisionneuse(adresse, bouton) {
+  retourVisionneuse = bouton;
   const v = document.getElementById('ca-visionneuse');
   v.querySelector('img').src = adresse;
   v.classList.remove('u-hidden');
   v.querySelector('.visionneuse-fermer').focus();
 }
-function fermerVisionneuse() { document.getElementById('ca-visionneuse').classList.add('u-hidden'); }
+function fermerVisionneuse() {
+  const v = document.getElementById('ca-visionneuse');
+  if (v.classList.contains('u-hidden')) return;
+  v.classList.add('u-hidden');
+  v.querySelector('img').removeAttribute('src');
+  retourVisionneuse?.focus();
+  retourVisionneuse = null;
+}
 // La visionneuse est créée ici (12/10/2026 : avant, recopiée dans les 4 pages de candidature).
 (function creerVisionneuse() {
   const v = document.createElement('div');
@@ -289,29 +320,46 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerVisi
 // (12/11/2026) chaque photo est lue et allégée DÈS QU'ELLE EST CHOISIE (preparerPhotosEnvoi, js/app.js) : à l'envoi,
 // plus rien à relire sur le téléphone. photosEnPreparation : l'envoi attend la fin de la préparation.
 let photosEnPreparation = Promise.resolve();
-function preparerPuis(fichiers, ranger) {
+function preparerPuis(fichiers, rang = null) {
   const compteur = document.getElementById('ca-photos-compteur');
   compteur.textContent = T('Préparation des photos…', 'Preparing the photos…');
-  const travail = photosEnPreparation.then(() => preparerPhotosEnvoi(fichiers)).then(({ pretes, illisibles, pasPhotos }) => {
-    ranger(pretes);
+  photosEnPreparation = photosEnPreparation.then(async () => {
+    const places = rang === null
+      ? photosParEmplacement.flatMap((photo, i) => photo ? [] : [i])
+      : [rang];
+    const { pretes, illisibles, pasPhotos } = places.length ? await preparerPhotosEnvoi(fichiers.slice(0, places.length)) : { pretes: [], illisibles: [], pasPhotos: [] };
+    pretes.slice(0, places.length).forEach((photo, i) => rangerPhoto(places[i], photo));
     rafraichirApercuPhotos();
-    if (illisibles.length || pasPhotos.length) { compteur.textContent += ' ' + textePhotosIllisibles(illisibles, pasPhotos); compteur.style.color = 'var(--rouge)'; }
+    if (illisibles.length || pasPhotos.length) {
+      compteur.textContent += ' ' + textePhotosIllisibles(illisibles, pasPhotos);
+      compteur.classList.add('ca-photos-incompletes');
+    }
+    if (!places.length) {
+      compteur.textContent += T(' Remplacez ou retirez une photo pour en ajouter une autre.', ' Replace or remove a photo to add another.');
+    } else if (fichiers.length > places.length) {
+      compteur.textContent += T(
+        ` Fichiers pris en compte pour cette sélection : ${places.length} au maximum.`,
+        ` Files processed for this selection: up to ${places.length}.`
+      );
+    }
+  }).catch(() => {
+    rafraichirApercuPhotos();
+    compteur.textContent += T(' Réessayez de choisir vos photos.', ' Please try selecting your photos again.');
   });
-  photosEnPreparation = travail.catch(() => {});
 }
 document.getElementById('ca-photos').addEventListener('change', (e) => {
   const fichiers = Array.from(e.target.files || []);
   e.target.value = '';
-  preparerPuis(fichiers, (pretes) => { photosSelectionnees.push(...pretes); });
+  if (fichiers.length) preparerPuis(fichiers);
 });
 
 document.getElementById('ca-photo-remplacement').addEventListener('change', (e) => {
-  const fichier = e.target.files[0], rang = indexPhotoARemplacer;
+  const fichier = e.target.files[0], rang = indexPhotoAChoisir;
   e.target.value = '';
-  indexPhotoARemplacer = null;
-  if (!fichier || rang === null) return;
-  preparerPuis([fichier], (pretes) => { if (pretes[0]) photosSelectionnees[rang] = pretes[0]; });
+  indexPhotoAChoisir = null;
+  if (fichier && rang !== null) preparerPuis([fichier], rang);
 });
+rafraichirApercuPhotos();
 
 // Liste « Taille » selon le genre (taille minimale, mineurs exemptés) : js/app.js.
 function remplirTailleSelonGenre() {
@@ -574,7 +622,7 @@ async function soumettreCandidature() {
   }
 
   await photosEnPreparation;  // (photos encore en préparation : on attend, quelques secondes)
-  const fichiersPhotos = photosSelectionnees;
+  const fichiersPhotos = photosSelectionnees();
   const minPhotos = photosMin();
   if (fichiersPhotos.length < minPhotos) {
     afficherMsg(msg, T(`Merci d'ajouter au moins ${minPhotos} photos (${fichiersPhotos.length} sélectionnée${fichiersPhotos.length > 1 ? 's' : ''} pour l'instant).`, `Please add at least ${minPhotos} photos (${fichiersPhotos.length} selected so far).`), 'err');
@@ -590,11 +638,6 @@ async function soumettreCandidature() {
     afficherMsg(msg, T('Merci d\'ajouter votre vidéo de présentation (3 minutes maximum).', 'Please add your introduction video (3 minutes maximum).'), 'err');
     return;
   }
-  if (fichiersPhotos.length > 12) {
-    afficherMsg(msg, T(`12 photos maximum par candidature (${fichiersPhotos.length} sélectionnées). Retirez-en quelques-unes.`, `12 photos maximum per application (${fichiersPhotos.length} selected). Please remove a few.`), 'err');
-    return;
-  }
-
   const btn = document.getElementById('btn-envoyer');
   btn.disabled = true;
   afficherMsg(msg, T('Envoi en cours…', 'Sending…'), 'ok');
@@ -648,12 +691,9 @@ async function soumettreCandidature() {
   document.getElementById('ca-video-info').textContent = '';
   cacherJauge('ca-video-jauge');
   montrerApercuVideo(null, '');
-  photosSelectionnees = [];
+  photosParEmplacement.forEach((_, i) => rangerPhoto(i, null));
   rafraichirApercuPhotos();
   majParcours();
-  document.getElementById('ca-photos-compteur').textContent = '';
-  document.getElementById('ca-photos-apercu').innerHTML = '';
-  document.getElementById('ca-photos-consigne').classList.add('u-hidden');
   document.getElementById('ca-consentement').disabled = false;
   majConsentement();
   btn.disabled = false;

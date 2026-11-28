@@ -27,13 +27,13 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
   // 1. un PDF : écarté, avec « n'est pas une photo »
   await p.setInputFiles('#ca-photos', { name: 'cv.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 essai') });
   await p.waitForFunction(() => !/Préparation/.test(document.getElementById('ca-photos-compteur').textContent), null, { timeout: 15000 }).catch(() => {});
-  const n1 = await p.evaluate(() => photosSelectionnees.length), c1 = await compteur();
+  const n1 = await p.evaluate(() => photosSelectionnees().length), c1 = await compteur();
   ok(n1 === 0 && /n’est pas une photo/.test(c1), 'un PDF n’est pas compté comme photo, et c’est dit : « ' + c1 + ' »');
 
   // 2. un faux .jpg (contenu qui ne s'affiche pas) : signalé comme illisible, pas gardé
   await p.setInputFiles('#ca-photos', { name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('ceci n’est pas une image') });
   await p.waitForFunction(() => !/Préparation/.test(document.getElementById('ca-photos-compteur').textContent), null, { timeout: 15000 }).catch(() => {});
-  const n2 = await p.evaluate(() => photosSelectionnees.length), c2 = await compteur();
+  const n2 = await p.evaluate(() => photosSelectionnees().length), c2 = await compteur();
   ok(n2 === 0 && /n’a pas pu être lue/.test(c2), 'un faux fichier .jpg est signalé et écarté : « ' + c2 + ' »');
 
   // 2 bis. une vraie photo de la galerie Android sans type ni extension : acceptée

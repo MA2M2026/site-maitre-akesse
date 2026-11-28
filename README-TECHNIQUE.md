@@ -5768,3 +5768,7 @@ La première référence inspire la photographie immersive et les portraits circ
 Le lettrage de couverture reste du texte. Sur une photo, une découpe nette dans les lettres révèle le portrait au bas du mot MA2M. La photo de couverture et celles des parcours restent sans voile. Les textes voisins ont leur propre fond de lecture. Les grands titres publics partagent un léger dégradé de lettrage. Le texte plein reste disponible à l’impression et en mode couleurs forcées.
 
 La palette charbon s’applique aux feuilles de style publiques, à la peau des applications et aux couleurs système de leurs manifestes. Les anciens noms des variables de couleur sont conservés pour leurs usages existants. Les photos, les marques de services tiers et les couleurs d’erreur gardent leur rendu propre.
+
+### Photos des candidatures
+
+Le formulaire partagé du casting, de la représentation et de MA2M Academy propose cinq emplacements nommés. La sélection groupée remplit les places libres dans l’ordre. On peut agrandir, remplacer ou retirer une photo sans déplacer les autres. Les minimums existants restent de trois ou quatre photos selon le parcours. L’envoi utilise une liste ordonnée comme auparavant et peut reprendre les dossiers déjà en file, y compris ceux de plus de cinq photos. L’Atelier Talons & Élégance garde son propre formulaire.

@@ -104,9 +104,8 @@
     if (i === 1 && projet && !$('ca-projet').value) return erreur(1, T('Choisissez un casting (ou « Mon casting n’est pas dans la liste »).', 'Choose a casting (or “My casting is not in the list”).'));
     // (d'abord ce qui compte le plus : l'âge minimum, les photos et la vidéo)
     if (i === 4) {
-      const n = typeof photosSelectionnees !== 'undefined' ? photosSelectionnees.length : 0, min = typeof photosMin === 'function' ? photosMin() : 4;
+      const n = typeof photosSelectionnees === 'function' ? photosSelectionnees().length : 0, min = typeof photosMin === 'function' ? photosMin() : 4;
       if (n < min) return erreur(4, T(`Ajoutez au moins ${min} photos (${n} pour l’instant).`, `Please add at least ${min} photos (${n} so far).`), $('ca-photos'));
-      if (n > 12) return erreur(4, T('12 photos au plus : retirez-en quelques-unes.', '12 photos at most: please remove a few.'), $('ca-photos'));
       if (!(typeof videoChoisie !== 'undefined' && videoChoisie) && !(typeof videoEnPreparation !== 'undefined' && videoEnPreparation)) return erreur(4, T('Ajoutez votre vidéo de présentation (3 minutes au plus).', 'Please add your introduction video (3 minutes at most).'), $('ca-video'));
     }
     for (const c of f.querySelectorAll('input, select, textarea')) {
@@ -157,7 +156,7 @@
       [val('ca-poids') ? val('ca-poids') + ' kg' : '', val('ca-vetements') ? T('Taille ', 'Size ') + val('ca-vetements') : '', val('ca-pointure') ? T('Pointure ', 'Shoe ') + val('ca-pointure') : ''].filter(Boolean).join(' · '), 3);
     const vign = el('span', 'lx-vignettes');
     document.querySelectorAll('#ca-photos-apercu img').forEach((img, k) => { if (k < 5) { const i = el('i'); i.style.backgroundImage = 'url("' + img.src + '")'; vign.appendChild(i); } });
-    const n = typeof photosSelectionnees !== 'undefined' ? photosSelectionnees.length : 0;
+    const n = typeof photosSelectionnees === 'function' ? photosSelectionnees().length : 0;
     ligne('📷', '', (n + ' photo' + (n > 1 ? 's' : '')) + ' · ' + (typeof videoChoisie !== 'undefined' && videoChoisie ? T('vidéo ajoutée', 'video added') : T('vidéo en préparation', 'video being prepared')), 4, vign);
   }
 
