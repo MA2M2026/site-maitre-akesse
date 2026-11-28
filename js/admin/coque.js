@@ -773,10 +773,6 @@
           .concat((mannequins || []).map((m) => '<a href="#/site/b2-mannequins-publies/' + P.esc(encodeURIComponent(m.id)) + '"><em aria-hidden="true">👩🏾</em>' + P.esc(m.full_name) + '</a>'));
         zone.innerHTML = lignes.length ? lignes.join('') : '<p>Rien trouvé pour « ' + P.esc(q) + ' ».</p>';
         zone.hidden = false;
-        const navigation = document.querySelector('.onglets-bas');
-        const limite = navigation && navigation.offsetHeight ? navigation.getBoundingClientRect().top : window.innerHeight;
-        const hauteur = Math.max(0, limite - zone.getBoundingClientRect().top - 8);
-        zone.style.setProperty('--av-resultats-disponible', hauteur + 'px');
       };
       dessiner(null);
       if (!P.moi.espaces.site) return;

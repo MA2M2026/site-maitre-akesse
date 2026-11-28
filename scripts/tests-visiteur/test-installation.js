@@ -29,13 +29,6 @@ const UA = {
   whatsapp: 'Mozilla/5.0 (Linux; Android 13; SM-A135F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36',
   facebook: 'Mozilla/5.0 (Linux; Android 14; SM-A546B Build/UP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/480.0.0.0;]'
 };
-// Chromium de bureau annonce les protocoles externes avant la requête réseau.
-async function ecouterIntent(page, demandes) {
-  const session = await page.context().newCDPSession(page);
-  await session.send('Page.enable');
-  session.on('Page.frameRequestedNavigation', ({ url }) => { if (url.startsWith('intent:')) demandes.push(url); });
-  page.on('request', (r) => { if (r.url().startsWith('intent:')) demandes.push(r.url()); });
-}
 // proposition d'installation du navigateur, simulée (celle de Chrome ne vient pas dans un essai)
 const proposer = (p) => p.evaluate(() => {
   const e = new Event('beforeinstallprompt', { cancelable: true });
@@ -53,10 +46,7 @@ const proposer = (p) => p.evaluate(() => {
     const p = await ctx.newPage(); const errs = [], demandes = [];
     p.on('pageerror', (e) => errs.push(e.message));
     p.on('console', (m) => { if (/Content Security Policy/.test(m.text())) errs.push('CSP : ' + m.text().slice(0, 160)); });
-    await ecouterIntent(p, demandes);
-    await p.addInitScript(() => window.addEventListener('beforeinstallprompt', (e) => {
-      if (e.isTrusted) { e.preventDefault(); e.stopImmediatePropagation(); }
-    }, true));
+    p.on('request', (r) => { if (r.url().startsWith('intent:')) demandes.push(r.url()); });
     await brancher(p, { tables, rpc }, []);
     await p.route(/127\.0\.0\.1:\d+\/(app|admin)\/([a-z-]+\.html)?(\?.*)?$/, async (r) => { const rep = await r.fetch(); r.fulfill({ response: rep, headers: Object.assign({}, rep.headers(), { 'content-security-policy': REGLE_ADMIN }) }); });
     if (avant) await p.addInitScript(avant);
@@ -87,17 +77,15 @@ const proposer = (p) => p.evaluate(() => {
     ok(await p.$eval('.ma2m-installer-texte b', (x) => x.scrollWidth <= x.clientWidth + 1), nom + ' : « Télécharger l’application » écrit en entier');
     // la « barre rouge » de la vidéo d'installation, partout (sur le site, la règle des boutons blancs la rendait blanche, 28/10/2026)
     const fondBande = await p.$eval('.ma2m-installer-ouvrir', (x) => getComputedStyle(x).backgroundColor);
-    ok(fondBande === 'rgb(33, 27, 23)', nom + ' : bande charbon (' + fondBande + ')');
+    ok(/^rgb\(90, 20, 27\)$/.test(fondBande), nom + ' : bande rouge foncé, comme dans la vidéo (' + fondBande + ')');
     if (process.env.CAPTURES) await p.screenshot({ path: require('path').join(process.env.CAPTURES, 'bande-' + chemin.replace(/\W+/g, '_') + '.png') });
     const pales = (await lirePageEntiere(p)).filter((x) => /ma2m-installer/.test(x.element)).map((x) => x.texte);
     ok(!pales.length, nom + ' : bande lisible ' + pales.join(' | '));
     if (chemin === '/qui-sommes-nous.html') {
       // lien ouvert dans WhatsApp : la page est rouverte dans Chrome, d'un appui
       await p.click('.ma2m-installer-ouvrir'); await p.waitForTimeout(600);
-      ok(demandes.some((u) => /^intent:\/\/127\.0\.0\.1:\d+\/qui-sommes-nous\.html\?installer=1(?:#Intent;scheme=https;package=com\.android\.chrome;.*;end)?$/.test(u)),
-        nom + ', Android sans proposition : un appui demande l’ouverture dans Chrome ' + demandes.join(' '));
-      await ctx.close();
-      ({ ctx, p, errs, demandes } = await ouvrir(chemin, 'android'));
+      ok(demandes.some((u) => /^intent:\/\/127\.0\.0\.1:\d+\/qui-sommes-nous\.html\?installer=1$/.test(u)),
+        nom + ', Android sans proposition : un appui rouvre la page dans Chrome ' + demandes.join(' '));
     }
     // proposition du navigateur : un appui ouvre la fenêtre « Installer »
     await proposer(p); await p.click('.ma2m-installer-ouvrir'); await p.waitForTimeout(400);
@@ -181,13 +169,13 @@ const proposer = (p) => p.evaluate(() => {
   for (const nom of ['samsung', 'opera', 'xiaomi', 'firefox', 'whatsapp', 'facebook']) {
     const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block', userAgent: UA[nom] });
     const q = await c.newPage(); const intents = [];
-    await ecouterIntent(q, intents);
+    q.on('request', (r) => { if (r.url().startsWith('intent:')) intents.push(r.url()); });
     await brancher(q, { tables, rpc }, []);
     await q.goto(BASE + '/app/'); await q.waitForSelector('#ma2m-installer', { timeout: 6000 }).catch(() => {});
     await proposer(q);
     await q.click('.ma2m-installer-ouvrir'); await q.waitForTimeout(600);
     // (la demande enregistrée s'arrête avant « #Intent;…package=com.android.chrome », comme plus haut)
-    ok(!(await q.evaluate(() => window.__installationDemandee === true)) && intents.some((u) => /^intent:\/\/127\.0\.0\.1:\d+\/app\/\?installer=1(?:#Intent;scheme=https;package=com\.android\.chrome;.*;end)?$/.test(u)),
+    ok(!(await q.evaluate(() => window.__installationDemandee === true)) && intents.some((u) => /^intent:\/\/127\.0\.0\.1:\d+\/app\/\?installer=1$/.test(u)),
       'Android, ' + nom + ' : pas d’installation par ce navigateur, un appui rouvre la page dans Chrome');
     await c.close();
   }

@@ -44,7 +44,7 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     fiche: (document.getElementById('ca-fiche-inscription') || {}).href || '' }));
   const courriels = journal.filter((j) => j[0] === 'EMAIL').length;
   ok(drive.includes('video_debut') && !drive.includes('photos'), 'reprise : la vidéo repart toute seule, les photos ne sont pas renvoyées (' + drive.join(', ') + ')');
-  ok(fin.msg.includes('Félicitations ! Vos informations ont été envoyées.') && fin.garde === null && !fin.bandeau, 'reprise : message de fin, dossier oublié du téléphone, pas de bandeau sur le formulaire');
+  ok(/Merci/.test(fin.msg) && fin.garde === null && !fin.bandeau, 'reprise : message de fin, dossier oublié du téléphone, pas de bandeau sur le formulaire');
   ok(/\/assets\/documents\/MA2M-Academy-Frais-de-formation\.pdf$/.test(fin.fiche), 'MA2M Academy : après l’envoi, bouton « Consulter la fiche d’inscription » (les tarifs ne sont pas sur le site)');
   // (25/11/2026) e-mail à l'agence : le département en clair, plus « candidature casting » ni « Agency Roster »
   const corps = decodeURIComponent(String((journal.find((j) => j[0] === 'EMAIL') || [])[1] || '')).replace(/\\n/g, '\n');

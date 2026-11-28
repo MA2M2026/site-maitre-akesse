@@ -77,9 +77,15 @@
 .p-couv .mag-cadre img { position: absolute; inset: 0; object-position: 50% 25%; opacity: 0; transition: opacity 1.4s ease; }
 /* défilement des photos de couverture (js/accueil.js) : deux images qui se relaient en fondu */
 .p-couv .mag-cadre img.visible { opacity: 1; }
+.p-couv::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  /* voile sombre sous les textes (en haut : date ; en bas : titres de couverture) — lisibles même
+     sur une photo très claire (test-lisibilite-photos.js) */
+  background: linear-gradient(to bottom, var(--mag-voile-fort) 0%, var(--mag-voile-fort) 26%, var(--mag-voile-texte) 33%, var(--mag-voile-nul) 42%, var(--mag-voile-nul) 46%, var(--mag-voile-texte) 60%, var(--mag-voile-fort) 76%, var(--mag-voile-plein) 100%);
+}
 .p-couv > *:not(.mag-cadre) { position: absolute; z-index: 2; }
 .p-couv .tete { top: 3cqmin; left: 5cqmin; right: 5cqmin; text-align: center; }
-.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--one-sable); }
+.p-couv .mag-logo { font-size: 31cqmin; line-height: 0.82; font-weight: 800; color: var(--rouge-logo); }   /* rouge vif d'origine (choix de la propriétaire, 28/10/2026) */
 .p-couv .numero {
   display: flex; justify-content: space-between; margin-top: 1.6cqmin;
   font-size: max(12px, 2.4cqmin); letter-spacing: 0.08em;
@@ -284,161 +290,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mag-cadre img, .p-couv .mag-cadre img { transition: none; }
-}
-
-/* Chapitre d’orientation : portraits circulaires et titres sur une matière sombre. */
-.mag .p-parcours {
-  display: grid;
-  align-content: center;
-  gap: clamp(1.75rem, 4vw, 4rem);
-  height: auto;
-  min-height: var(--H);
-  padding: clamp(2.5rem, 6vw, 7rem) clamp(1rem, 6vw, 7rem) clamp(4rem, 8vw, 8rem);
-  overflow: visible;
-  scroll-margin-top: var(--entete);
-  container-type: inline-size;
-  background: var(--one-scene);
-  color: var(--one-ivoire);
-}
-.p-parcours .mag-titre {
-  max-width: 16ch;
-  font-size: clamp(2.65rem, 6.8vw, 7rem);
-  font-weight: 600;
-  text-wrap: balance;
-}
-.p-parcours .mag-folio { color: var(--one-sable); }
-.mag-parcours {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.75rem, 2vw, 2rem);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.mag-parcours li { min-width: 0; }
-.mag-parcours a {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 0.6rem;
-  row-gap: 0.75rem;
-  height: 100%;
-  padding: 0 0 1rem;
-  border-bottom: 1px solid var(--blanc-a22);
-  text-decoration: none;
-}
-.mag-parcours a:focus-visible { outline-color: var(--one-sable); }
-.mag-parcours img {
-  grid-column: 1 / -1;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  object-position: center 24%;
-}
-.mag-parcours strong {
-  grid-column: 1;
-  font: 600 clamp(1.55rem, 2.75vw, 3.25rem)/0.98 var(--mag-titre);
-  text-wrap: balance;
-}
-.mag-parcours a:is(:hover, :focus-visible) strong {
-  text-decoration: underline;
-  text-underline-offset: 0.14em;
-}
-.mag-parcours a > span:first-of-type {
-  grid-column: 1 / -1;
-  max-width: 33ch;
-  color: var(--one-ivoire);
-  line-height: 1.45;
-}
-.mag-parcours-fleche {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: center;
-  width: 0.7rem;
-  height: 0.7rem;
-  border-top: 1px solid var(--one-sable);
-  border-right: 1px solid var(--one-sable);
-  transform: rotate(45deg);
-}
-@media (max-width: 740px) {
-  .mag-parcours { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-/* Les chapitres de lecture et le portfolio respirent entre les pleines pages photo. */
-.mag :is(.p-sommaire, .p-visages, .p-agence, .p-partenaires) {
-  background: var(--one-ivoire);
-  border-bottom: 1px solid var(--rouge-mat-a15);
-}
-.mag .p-sommaire .vignette {
-  transform: none;
-  box-shadow: none;
-  border: 1px solid var(--rouge-mat-a15);
-}
-.mag :is(.p-sommaire, .p-agence) li { border-top: 1px solid var(--rouge-mat-a22); }
-.mag .p-visages .grille span { font-family: var(--mag-titre); font-size: max(15px, 3cqmin); }
-.p-couv .lignes .une { font-size: max(30px, 7.1cqmin); text-wrap: balance; }
-
-
-/* Le panneau de lecture est indépendant de la photo. */
-.p-couv .lignes {
-  padding: clamp(1rem, 3vw, 2.5rem);
-  border: 1px solid var(--blanc-a22);
-  background: color-mix(in srgb, var(--one-encre) 88%, transparent);
-  color: var(--one-ivoire);
-}
-.p-couv .lignes .ligne::before { background: var(--one-sable); }
-.mag .p-couv :is(.numero span, .modele) {
-  color: var(--couv-credit-encre, var(--one-ivoire));
-  translate: 0 var(--couv-credit-decalage, 0);
-}
-.mag .p-couv .modele[hidden] { display: none; }
-@media (min-width: 701px) {
-  .p-couv .lignes { right: 6cqmin; left: auto; width: min(50%, 36rem); }
-  .p-couv .lignes .une { font-size: clamp(2.3rem, 4.7vw, 5.8rem); }
-  .p-couv .modele { bottom: max(7cqmin, 6rem); left: 5cqmin; right: auto; text-align: left; }
-}
-@media (max-width: 420px) {
-  .p-couv .lignes .une { font-size: clamp(1.65rem, 8vw, 2.2rem); }
-}
-
-/* La date reste au bord du cadre, le lettrage descend dans la photographie. */
-.p-couv .tete {
-  top: clamp(0.6rem, 5cqmin, 3rem);
-  display: flex;
-  flex-direction: column-reverse;
-  gap: clamp(0.6rem, 4cqmin, 3.5rem);
-}
-.p-couv .numero { margin: 0; }
-.mag .p-couv .mag-logo {
-  font: 600 min(25cqw, 27cqmin)/0.86 var(--mag-texte);
-  letter-spacing: -0.095em;
-  color: var(--one-ivoire);
-  isolation: isolate;
-}
-.p-couv .mag-logo > [aria-hidden="true"] {
-  display: inline-block;
-  padding-inline: 0.08em 0.16em;
-}
-/* Le bord découpe les lettres sans transformer les pixels de la photo. */
-@supports (clip-path: polygon(0 0, 100% 0, 100% 100%)) {
-  .p-couv:has(.mag-cadre img.visible:not([src^="data:"])) .mag-logo > [aria-hidden="true"] {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 72% 100%, 68% 85%, 64% 72%,
-      59% 63%, 54% 60%, 49% 62%, 45% 67%, 41% 77%, 37% 89%, 34% 100%, 0 100%);
-  }
-}
-@media (forced-colors: active), print {
-  .p-couv:has(.mag-cadre img.visible:not([src^="data:"])) .mag-logo > [aria-hidden="true"] {
-    clip-path: none;
-  }
-}
-
-@media (max-width: 700px) {
-  .p-couv .tete { gap: clamp(2.25rem, 16cqmin, 6rem); }
-  .p-couv .modele { top: max(56cqmin, 28%); }
-}
-@media (min-width: 701px) {
-  .p-couv .tete {
-    top: clamp(0.75rem, 2cqmin, 1.5rem);
-    gap: clamp(0.35rem, 1cqmin, 0.8rem);
-  }
 }

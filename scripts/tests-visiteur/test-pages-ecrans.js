@@ -115,8 +115,7 @@ const FORMULAIRE = { academie: ['#candidature', '#form-casting'], candidature: [
       await p.click('.ecrans-suivant'); await p.waitForTimeout(400);
       // le formulaire passe à son étape 2 : la barre s'efface ; retour à l'étape 1 : elle revient
       await p.click('label.ct-choix:has(input[value="groupe"])');
-      await p.click('label.ct-parcours-choix:has(input[value="debut"])');
-      await p.click('#ct-suivant'); await p.waitForTimeout(400);
+      await p.click('#ct-suivant'); await p.waitForTimeout(400);   // (→ « Où en êtes-vous ? », 2e écran du formulaire)
       const etape2 = await etat(p);
       await p.click('#ct-retour'); await p.waitForTimeout(400);
       const etape1 = await etat(p);
@@ -140,21 +139,12 @@ const FORMULAIRE = { academie: ['#candidature', '#form-casting'], candidature: [
     }
     // le formulaire passe à son étape 2 : la barre des écrans s'efface (les boutons du formulaire prennent le relais)
     if (ia) {
-      await p.selectOption('#ca-porte', 'academie');
-      ok(await p.inputValue('#ca-experience') === 'non', n + 'le parcours Académie présélectionne le niveau débutant');
-      await p.fill('#ca-nom', 'Awa Test');
-      await p.fill('#ca-email', 'awa@example.org');
-      await p.fill('#ca-telephone-numero', '0701020304');
-      await p.selectOption('#ca-ville', 'Bouaké');
-      await p.selectOption('#ca-majorite', 'majeur');
-      await p.selectOption('#ca-genre', 'homme');
-      await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400);
-      e = await etat(p);
-      ok(!e.barre && await p.isVisible('.lx-etape:not([hidden]) .lx-retour'), n + 'formulaire à l’étape 2 : la barre du bas s’efface, le Retour du formulaire reste');
-      await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);
-      e = await etat(p);
-      ok(e.barre && e.retour, n + 'retour à l’étape 1 : flèche ← revient en bas');
-      ok(await p.inputValue('#ca-nom') === 'Awa Test', n + 'les coordonnées sont conservées au retour');
+    await p.selectOption('#ca-porte', 'academie'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400);   // (3 portes depuis le 25/11/2026)
+    e = await etat(p);
+    ok(!e.barre && await p.isVisible('.lx-etape:not([hidden]) .lx-retour'), n + 'formulaire à l’étape 2 : la barre du bas s’efface, le Retour du formulaire reste');
+    await p.click('.lx-etape:not([hidden]) .lx-retour'); await p.waitForTimeout(400);
+    e = await etat(p);
+    ok(e.barre && e.retour, n + 'retour à l’étape 1 : flèche ← revient en bas');
     }
     // (relecture du 23/11/2026) la place calculée pour un écran ne dépend pas du défilement : on descend dans le formulaire,
     // puis on revient à l'écran d'avant, la hauteur disponible est la même

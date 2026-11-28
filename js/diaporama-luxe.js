@@ -75,7 +75,7 @@
         cache.style.transition = transition; cache.style.opacity = '1';
         cache.removeAttribute('aria-hidden'); visible.setAttribute('aria-hidden', 'true');
         z.visible = cache; z.cache = visible; z.nom = nom; z.reserve = null;
-        // L’ancienne photo reste derrière jusqu’au prochain fondu : aucun délai de rendu ne peut découvrir le fond.
+        setTimeout(() => { visible.style.transition = 'none'; visible.style.opacity = '0'; void visible.offsetWidth; visible.style.transition = transition; }, FONDU + 50);
         planifier(z, pas);
       });
     };

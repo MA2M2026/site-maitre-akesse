@@ -214,26 +214,17 @@
   const utile = (n) => { const si = ETAPES[n - 1] && ETAPES[n - 1].dataset.si; return !si || (CONDITIONS[si] ? CONDITIONS[si]() : true); };
   const utiles = () => ETAPES.map((f, i) => i + 1).filter(utile);
   ecransPrets = true;
-  const pages = [
-    ['formule', 'parcours', 'themes', 'details', 'creneaux', 'calendrier'],
-    ['vous', 'parent', 'objectif', 'photos'],
-    ['paiement', 'envoi']
-  ].map((noms) => noms.map(numeroDe));
-  const pageDe = (n) => pages.findIndex((page) => page.includes(n));
+  // le compteur, le numéro du titre et les boutons suivent les choix (un choix peut ajouter ou retirer des écrans :
+  // « Je paie maintenant » ajoute l'écran pour payer, « Moins de 18 ans » celui du parent…) ; « Envoyer » est sur le
+  // dernier écran qui la concerne (« Dernière étape » : le paiement Wave s'il est choisi, la case de confidentialité et
+  // « Envoyer », toujours ensemble)
   function rafraichir() {
-    const page = pageDe(etape);
-    const fin = page === pages.length - 1;
-    $('ct-compteur').textContent = T('Étape ', 'Step ') + (page + 1) + T(' sur ', ' of ') + pages.length;
-    ETAPES.forEach((bloc, i) => {
-      const numero = i + 1;
-      bloc.classList.toggle('u-hidden', !pages[page].includes(numero) || !utile(numero));
-      const titre = bloc.querySelector('.ct-etape-titre');
-      const rond = titre.querySelector('span');
-      if (rond) rond.hidden = true;
-      const legende = bloc.querySelector('legend');
-      if (legende) legende.textContent = titre.querySelector('h3').textContent;
-    });
-    $('ct-retour').classList.toggle('u-hidden', page === 0);
+    const n = etape, liste = utiles(), rang = liste.indexOf(n) + 1, fin = n === liste[liste.length - 1];
+    $('ct-compteur').textContent = T('Étape ', 'Step ') + rang + T(' sur ', ' of ') + liste.length;
+    const rond = ETAPES[n - 1].querySelector('.ct-etape-titre span'); if (rond) rond.textContent = String(rang);
+    const legende = ETAPES[n - 1].querySelector('legend');
+    if (legende) legende.textContent = T('Étape ', 'Step ') + rang + T(' sur ', ' of ') + liste.length + T(' : ', ': ') + ((ETAPES[n - 1].querySelector('.ct-etape-titre h3') || {}).textContent || '');
+    $('ct-retour').classList.toggle('u-hidden', n === 1);
     $('ct-envoi-jauges').classList.toggle('u-hidden', !fin || !envoiEnCours);
     $('ct-suivant').classList.toggle('u-hidden', fin);
     $('ct-envoyer').classList.toggle('u-hidden', !fin);
@@ -245,6 +236,7 @@
   });
   function montrer(n, defiler = true) {
     etape = n;
+    form.querySelectorAll('.ct-etape').forEach((f) => f.classList.toggle('u-hidden', Number(f.dataset.etape) !== n));
     rafraichir();
     msg.className = 'form-msg'; msg.textContent = '';
     const titre = form.querySelector('.ct-etape[data-etape="' + n + '"] .ct-etape-titre');
@@ -297,10 +289,10 @@
     return true;
   }
   $('ct-suivant').addEventListener('click', () => {
-    const page = pageDe(etape);
-    if (pages[page].filter(utile).every(etapeValide) && pages[page + 1]) montrer(pages[page + 1][0]);
+    if (!etapeValide(etape)) return;
+    const suite = utiles().find((k) => k > etape); if (suite) montrer(suite);
   });
-  $('ct-retour').addEventListener('click', () => { const avant = pages[pageDe(etape) - 1]; if (avant) montrer(avant[0]); });
+  $('ct-retour').addEventListener('click', () => { const avant = utiles().filter((k) => k < etape).pop(); montrer(avant || 1); });
 
   // ---------- photos (2 à 5)
   function rafraichirPhotos() {
@@ -495,7 +487,7 @@
       envoiEnCours = false;
       await selecteur.relire();
       majCreneaux();
-      montrer(numeroDe('calendrier'));   // revient au calendrier dans les choix de séances
+      montrer(numeroDe('calendrier'));   // (le calendrier des créneaux : un écran à lui seul)
       erreur(T('Un de vos créneaux n’est plus disponible (réservé entre-temps). Choisissez-en un autre, puis renvoyez votre inscription (vos photos et votre vidéo sont gardées).', 'One of your slots is no longer available (booked in the meantime). Please choose another one, then send your sign-up again (your photos and video are kept).'), $('ct-heures'));
       return;
     }
@@ -517,11 +509,6 @@
     const merci = $('ct-merci');
     merci.classList.remove('u-hidden');
     merci.textContent = '';
-    if (!error && envoi.liens.length === (etat.photos || []).length && lienVideo) {
-      const confirmation = document.createElement('p');
-      confirmation.textContent = T('Félicitations ! Vos informations ont été envoyées. Notre équipe vous recontactera.', 'Congratulations! Your information has been sent. Our team will contact you.');
-      merci.appendChild(confirmation);
-    }
     const p1 = document.createElement('p');
     p1.textContent = error
       ? T('Merci ! Les inscriptions en ligne ouvrent très bientôt : touchez le bouton ci-dessous pour envoyer votre inscription à l’agence sur WhatsApp.', 'Thank you! Online sign-ups open very soon: tap the button below to send your sign-up to the agency on WhatsApp.')
@@ -557,7 +544,8 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     // (« Entrée » ou « OK » du clavier dans un champ d'un écran du milieu : on passe à l'écran suivant, comme « Suivant »)
-    if (pageDe(etape) !== pages.length - 1) { $('ct-suivant').click(); return; }
+    const listeUtile = utiles();
+    if (etape !== listeUtile[listeUtile.length - 1]) { $('ct-suivant').click(); return; }
     for (const n of utiles().filter((k) => k < numeroDe('envoi'))) if (!etapeValide(n)) { montrer(n); etapeValide(n); return; }
     if (!$('ct-consentement').checked) return erreur(T('Cochez la case pour accepter la politique de confidentialité.', 'Please tick the box to accept the privacy policy.'), $('ct-consentement'));
     EnvoiFiable.demanderNotifications();  // (12/11/2026 : « Inscription envoyée ✓ » si elle passe sur une autre application)

@@ -1,5 +1,5 @@
 /* ===== Nouvelle charte graphique Maître Akesse (refonte 2026) =====
-   Fond clair, rouge #29241F, noir, police Montserrat, cartes blanches.
+   Fond clair, rouge #C8102E, noir, police Montserrat, cartes blanches.
    Chargé APRÈS style.css : il redéfinit les couleurs de base (variables) pour que
    tout le site bascule d'un coup, puis corrige les endroits aux couleurs écrites en dur.
    Les couleurs elles-mêmes vivent dans css/jetons.css (chargé juste avant) : ne jamais les
@@ -266,18 +266,10 @@ h1 { text-transform: uppercase; line-height: 0.98; }
 h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
 .eyebrow { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0.12em; color: var(--rouge-ma2m-texte); }
 .carte, .card { border-radius: var(--rayon-carte); }
-/* En-tête ivoire et pied de page rouge de la charte publique. */
-.site-header-v2 { background: var(--one-ivoire) !important; border-bottom: 1px solid var(--rouge-mat-a15); }
-.site-header-v2 :is(.lang-switch, .menu-trigger) {
-  background: transparent !important;
-  border: 1px solid var(--rouge-mat-a22) !important;
-  box-shadow: none !important;
-}
-.site-header-v2 :is(.lang-switch, .menu-trigger)::before { display: none !important; }
-.site-header-v2 :is(.lang-switch, .menu-trigger):focus-visible {
-  outline-color: var(--one-carmin) !important;
-}
-.site-footer { background: var(--one-scene); border-top: 0; }
+/* en-tête sur le rouge (comme les applications), pied de page en rouge profond (28/10/2026) */
+.site-header-v2 { background: var(--rouge-mat-a96) !important; border-bottom: 1px solid var(--lignes); }
+.site-header-v2 .logo-img-header { filter: brightness(0) invert(1); }   /* logo blanc sur le rouge (posé sur le lien : l'animation d'apparition du logo remet le filtre de l'image à zéro) */
+.site-footer { background: var(--sombre); border-top: 0; }
 .site-footer .footer-grille h3 { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; font-size: 1.15rem; letter-spacing: 0.02em; }
 .menu-overlay .nav-links a { font-family: var(--mag-titre); font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em; }
 
@@ -298,26 +290,4 @@ h3 { font-family: var(--mag-texte); font-weight: 600; letter-spacing: 0; }
 /* (11/11/2026, la propriétaire : « plus de voile blanc ») : photos pleines, sans transparence (à 42 %, elles se délavaient
    en rose sur le rouge) ; c'est le dégradé rouge mat posé dessus qui garde les titres lisibles */
 .mur-titre img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
-.mur-titre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(41, 36, 31, 0.72), rgba(41, 36, 31, 0.9) 60%, var(--rouge-mat)); }
-
-/* Grands titres du site : même lumière sur le papier et sur les photos. */
-:is(.lx-hero, .qsn-ouverture, .profil-hero-contenu, .one-ouverture--editorial, .p-couv) {
-  --one-titre-encre: 65%;
-}
-@supports (background-clip: text) {
-  :is(main:not(.mp) h1, main:not(.mp) h2, .profil-hero-contenu h1, .mag .lignes .une, .mag .mag-titre):not(.mag-logo) {
-    background-image: linear-gradient(180deg, currentColor 26%,
-      color-mix(in srgb, currentColor var(--one-titre-encre), var(--one-sable)) 66%, currentColor 100%);
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
-@media (forced-colors: active), print {
-  :is(main h1, main h2, .profil-hero-contenu h1, .mag .lignes .une, .mag .mag-titre) {
-    background: none;
-    -webkit-text-fill-color: currentColor;
-  }
-}
-
-/* Le signe de l’Agence suit le traitement monochrome de l’en-tête public. */
-.site-header-v2 .logo-img-header { filter: grayscale(1); }
+.mur-titre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(124, 33, 40, 0.72), rgba(124, 33, 40, 0.9) 60%, var(--rouge-mat)); }

@@ -46,7 +46,7 @@ function donnees() {
         await p.emulateMedia({ reducedMotion: 'reduce' });
         await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) { /* stockage bloqué */ } });
         await brancher(p, donnees(), []);
-        await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: image }));
+        await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: image }));
         // (chargement lent passager : un second essai avant de conclure)
         await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' })
           .catch(() => p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded', timeout: 60000 }));
@@ -77,7 +77,7 @@ function donnees() {
             const lum = (r, gg, bb) => 0.2126 * lin(r) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
             const lt = lum(rgb[0], rgb[1], rgb[2]);
             const rapports = [];
-            for (let i = 0; i < d.length; i += 4) { const lb = lum(d[i], d[i + 1], d[i + 2]); rapports.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
+            for (let i = 0; i < d.length; i += 16) { const lb = lum(d[i], d[i + 1], d[i + 2]); rapports.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
             rapports.sort((a, bb) => a - bb);
             return rapports[Math.floor(rapports.length * 0.1)];
           }, { b64: capture.toString('base64'), rgb: info.rgb });
@@ -101,7 +101,7 @@ function donnees() {
     await p.emulateMedia({ reducedMotion: 'reduce' });
     await p.addInitScript(() => { try { sessionStorage.setItem('ma2m_porte_ouverte', '1'); sessionStorage.setItem('ma2m_intro_vue', '1'); localStorage.setItem('ma2m_cookies', 'non'); } catch (e) { /* stockage bloqué */ } });
     await brancher(p, { tables: JSON.parse(JSON.stringify(Object.assign({}, tables, donnees().tables, { model_profiles: tables.model_profiles }))), rpc }, []);
-    await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: rayures }));
+    await p.route(/^https:\/\/x\//, (r) => r.fulfill({ status: 200, contentType: 'image/jpeg', body: rayures }));
     await p.goto('http://127.0.0.1:' + PORT + '/' + page, { waitUntil: 'domcontentloaded' }).catch(() => {});
     await p.waitForTimeout(1800);
     // boutons flottants (WhatsApp, retour en haut, installer l'app…) masqués pendant les mesures : ils
@@ -127,7 +127,7 @@ function donnees() {
           }
           return false; };
         document.querySelectorAll('body *').forEach((el) => {
-          if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant, .lang-switch, .mag-logo')) return;
+          if (res.length > 40 || el.closest('button, .btn, [role=button], .whatsapp-flottant, .lang-switch')) return;
           const propre = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
           if (!propre) return;
           const r = el.getBoundingClientRect(), s = getComputedStyle(el);
@@ -140,25 +140,13 @@ function donnees() {
           res.push({ i: res.length, texte: el.textContent.trim().slice(0, 30) + (el.className && typeof el.className === 'string' ? ' (' + el.className.split(' ')[0] + ')' : ''), rgb: s.color.match(/[\d.]+/g).map(Number).slice(0, 3), grand: fs >= 24 || (fs >= 18.66 && gras),
             x: Math.max(0, r.left), y: Math.max(0, r.top), w: Math.min(r.right, innerWidth) - Math.max(0, r.left), h: Math.min(r.bottom, innerHeight) - Math.max(0, r.top) });
         });
-        document.querySelectorAll('[data-essai-lisible]').forEach((el) => {
-          el.style.setProperty('color', 'transparent', 'important');
-          el.style.setProperty('text-shadow', 'none', 'important');
-          for (let parent = el; parent; parent = parent.parentElement) {
-            if (getComputedStyle(parent).backgroundClip !== 'text' || parent.hasAttribute('data-essai-degrade')) continue;
-            parent.dataset.essaiDegrade = parent.style.backgroundImage;
-            parent.style.setProperty('background-image', 'none', 'important');
-          }
-        });
+        document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.setProperty('color', 'transparent', 'important'); el.style.setProperty('text-shadow', 'none', 'important'); });
         return res;
       });
       if (!cibles.length) continue;
       const capture = (await p.screenshot()).toString('base64');
       const resultats = await p.evaluate(async ({ b64, cibles }) => {
         document.querySelectorAll('[data-essai-lisible]').forEach((el) => { el.style.removeProperty('color'); el.style.removeProperty('text-shadow'); delete el.dataset.essaiLisible; });
-        document.querySelectorAll('[data-essai-degrade]').forEach(el => {
-          el.style.backgroundImage = el.dataset.essaiDegrade;
-          delete el.dataset.essaiDegrade;
-        });
         const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
         const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
         const k = img.width / innerWidth;
@@ -168,7 +156,7 @@ function donnees() {
           if (t.w < 2 || t.h < 2) return null;
           const d = g.getImageData(Math.round(t.x * k), Math.round(t.y * k), Math.max(1, Math.round(t.w * k)), Math.max(1, Math.round(t.h * k))).data;
           const lt = lum(t.rgb[0], t.rgb[1], t.rgb[2]); const rap = [];
-          for (let i = 0; i < d.length; i += 4) { const lb = lum(d[i], d[i + 1], d[i + 2]); rap.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
+          for (let i = 0; i < d.length; i += 16) { const lb = lum(d[i], d[i + 1], d[i + 2]); rap.push((Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05)); }
           rap.sort((a, bb) => a - bb);
           const contraste = rap[Math.floor(rap.length * 0.1)], seuil = t.grand ? 3 : 4.5;
           // capture de la zone fautive (dossier captures/), pour voir le défaut comme un visiteur

@@ -51,10 +51,10 @@ function moisSimule(corps) {
     ok(/Liste de présence/.test(await p.textContent('.lateral, nav, body')), n + 'la rubrique est dans le menu « Mannequins »');
     ok((await p.$$('.pr-grille thead .pr-jour')).length === C.dimanchesDuMois(ceMois).length && (await p.$$('.pr-grille tbody tr')).length === 3, n + 'ce mois-ci : ses ' + C.dimanchesDuMois(ceMois).length + ' dimanches et les 3 mannequins');
     // (01/11/2026, capture de la propriétaire : les cases vides ne se voyaient qu'au survol) chaque case vide ou à venir
-    // a un contour charbon bien visible, sans passer la souris dessus
+    // a un contour rouge bien visible, sans passer la souris dessus
     await p.mouse.move(0, 0);
     const contours = await p.$$eval('.pr-grille tbody .pr-case:not(.e-present):not(.e-excuse):not(.e-absent):not(.e-annulee):not(.e-vacances):not(.e-avant_entree)', (l) => l.map((b) => { const c = getComputedStyle(b); return [c.borderTopColor, c.borderTopStyle, c.opacity]; }));
-    ok(contours.length > 0 && contours.every(([couleur, , opacite]) => /rgba?\(41, 36, 31/.test(couleur) && opacite === '1'), n + 'cases vides et à venir : contour charbon bien visible sans survol (' + contours.length + ' cases)');
+    ok(contours.length > 0 && contours.every(([couleur, , opacite]) => /rgba?\(124, 33, 40/.test(couleur) && opacite === '1'), n + 'cases vides et à venir : contour rouge bien visible sans survol (' + contours.length + ' cases)');
     // (01/11/2026, choix A de la propriétaire) « Ne vient plus » : mise en pause d'un toucher, motif demandé, décidée aussitôt
     ok((await p.$$('.pr-grille tbody [data-action="presences-pause"]')).length === 3, n + 'chaque mannequin active a son bouton « Ne vient plus »');
     await p.click('.pr-grille tbody [data-action="presences-pause"][data-mannequin="r3"]'); await p.waitForTimeout(900);

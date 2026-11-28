@@ -6,18 +6,11 @@
 function verifierLisibilite(options) {
   const seuilNormal = (options && options.seuil) || 4.5;
   const lire = (c) => {
-    const srgb = /^color\(srgb ([^)]+)\)$/.exec(c || '');
-    if (srgb) {
-      const [r, g, b, a = 1] = srgb[1].split(/[\s/]+/).filter(Boolean).map(Number);
-      return { r: r * 255, g: g * 255, b: b * 255, a };
-    }
     const m = /rgba?\(([^)]+)\)/.exec(c || '');
     if (!m) return null;
     const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number);
     return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
   };
-  const couleursDegrade = (image) => (image.match(/(?:rgba?|color)\([^)]+\)/g) || []).map(lire).filter(Boolean);
-  const degradeTexte = (s) => s.backgroundClip === 'text' && s.backgroundImage.includes('gradient(');
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
   const poser = (dessus, dessous) => ({ r: dessus.r * dessus.a + dessous.r * (1 - dessus.a), g: dessus.g * dessus.a + dessous.g * (1 - dessus.a), b: dessus.b * dessus.a + dessous.b * (1 - dessus.a), a: 1 });
   const opaciteTotale = (el) => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity); return o; };
@@ -79,19 +72,18 @@ function verifierLisibilite(options) {
     for (const e of pile.slice(0, i)) {
       if (el.contains(e)) continue;
       const s = getComputedStyle(e), c = lire(s.backgroundColor);
-      if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/i.test(e.tagName) || (s.backgroundImage && s.backgroundImage !== 'none' && !degradeTexte(s) && !/(^|\s)0(%|px)/.test(s.backgroundSize)) || (c && c.a >= 0.99)) return { cache: true };
+      if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME)$/i.test(e.tagName) || (s.backgroundImage && s.backgroundImage !== 'none' && !/(^|\s)0(%|px)/.test(s.backgroundSize)) || (c && c.a >= 0.99)) return { cache: true };
     }
     const couches = []; // de la plus haute à la plus basse ; chaque couche = liste de couleurs possibles
     for (const e of pile.slice(i)) {
       if (/^(IMG|VIDEO|CANVAS|PICTURE|IFRAME|SVG)$/i.test(e.tagName)) return { image: true };
       const s = getComputedStyle(e);
-      if (degradeTexte(s)) continue;  // le dégradé colore les glyphes, pas la surface derrière eux
       const img = s.backgroundImage;
       // un dégradé de taille nulle (effet de survol pas encore déclenché) n'est pas peint
       if (img && img !== 'none' && !/(^|\s)0(%|px)/.test(s.backgroundSize)) {
         if (/url\(/.test(img)) return { image: true };
         const ici = couleurDegrade(img, e.getBoundingClientRect(), x, y);
-        const arrets = ici ? [ici] : couleursDegrade(img);
+        const arrets = ici ? [ici] : (img.match(/rgba?\([^)]+\)/g) || []).map(lire).filter(Boolean);
         if (arrets.length) couches.push(arrets);
       }
       const c = lire(s.backgroundColor);
@@ -128,23 +120,12 @@ function verifierLisibilite(options) {
     const f = fondSous(el, x, y);
     if (!f.couleurs) continue;
     vus.add(el); // un élément n'est jugé qu'une fois (sur son premier texte visible)
-    const remplissage = lire(s.webkitTextFillColor);
-    let couleursTexte = [remplissage || lire(s.color)].filter(Boolean);
-    if (remplissage && remplissage.a === 0) {
-      for (let parent = el; parent; parent = parent.parentElement) {
-        const style = getComputedStyle(parent);
-        if (!degradeTexte(style)) continue;
-        couleursTexte = couleursDegrade(style.backgroundImage);
-        break;
-      }
-    }
-    if (!couleursTexte.length) continue;
+    const c = lire(s.color); if (!c) continue;
+    c.a *= op;
     let ratio = Infinity;
-    for (const couleur of couleursTexte) {
-      for (const fond of f.couleurs) {
-        const l1 = lum(poser({ ...couleur, a: couleur.a * op }, fond)), l2 = lum(fond);
-        ratio = Math.min(ratio, (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05));
-      }
+    for (const fond of f.couleurs) {
+      const l1 = lum(poser(c, fond)), l2 = lum(fond);
+      ratio = Math.min(ratio, (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05));
     }
     const taille = parseFloat(s.fontSize), gras = parseInt(s.fontWeight, 10) >= 700;
     const grand = taille >= 24 || (gras && taille >= 18.66);

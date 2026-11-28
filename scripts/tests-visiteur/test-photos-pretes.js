@@ -25,8 +25,8 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
 
   // 1. quatre vraies photos : préparées, copiées en mémoire
   await p.setInputFiles('#ca-photos', [0, 1, 2, 3].map((i) => path.join(__dirname, 'medias', 'photo' + i + '.jpg')));
-  await p.waitForFunction(() => photosSelectionnees().length === 4, null, { timeout: 15000 }).catch(() => {});
-  const r1 = await p.evaluate(() => ({ n: photosSelectionnees().length, fichiers: photosSelectionnees().every((f) => f instanceof File && f.size > 0),
+  await p.waitForFunction(() => photosSelectionnees.length === 4, null, { timeout: 15000 }).catch(() => {});
+  const r1 = await p.evaluate(() => ({ n: photosSelectionnees.length, fichiers: photosSelectionnees.every((f) => f instanceof File && f.size > 0),
     apercus: document.querySelectorAll('#ca-photos-apercu img').length, compteur: document.getElementById('ca-photos-compteur').textContent }));
   ok(r1.n === 4 && r1.fichiers && r1.apercus === 4 && !/Préparation/.test(r1.compteur), 'les 4 photos sont prêtes dès le choix, avec leur aperçu (' + r1.compteur + ')');
 
@@ -35,56 +35,22 @@ let ko = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '❌ ÉCHEC ') + m)
     const casse = new File(['x'], 'IMG_2026.jpg', { type: 'image/jpeg' });
     const refus = () => Promise.reject(new DOMException('The requested file could not be read', 'NotReadableError'));
     casse.arrayBuffer = refus; casse.slice = () => { throw new DOMException('illisible', 'NotReadableError'); };
-    preparerPuis([casse]);
+    preparerPuis([casse], (pretes) => { photosSelectionnees.push(...pretes); });
   });
   await p.waitForTimeout(1500);
-  const r2 = await p.evaluate(() => ({ n: photosSelectionnees().length, compteur: document.getElementById('ca-photos-compteur').textContent }));
+  const r2 = await p.evaluate(() => ({ n: photosSelectionnees.length, compteur: document.getElementById('ca-photos-compteur').textContent }));
   ok(r2.n === 4 && /n’a pas pu être lue/.test(r2.compteur) && /choisissez-la à nouveau/.test(r2.compteur), 'une photo illisible est signalée tout de suite, sans être gardée : « ' + r2.compteur + ' »');
 
   // 3. à l'envoi : les photos préparées partent, sans relire le téléphone (lecture des originaux rendue impossible)
   const r3 = await p.evaluate(async () => {
-    const lire = FileReader.prototype.readAsDataURL, pretes = new Set(photosSelectionnees());
+    const lire = FileReader.prototype.readAsDataURL, pretes = new Set(photosSelectionnees);
     FileReader.prototype.readAsDataURL = function (f) { if (!pretes.has(f)) throw new DOMException('original illisible', 'NotReadableError'); return lire.call(this, f); };
     const b64 = [];
-    for (const f of photosSelectionnees()) b64.push(await fichierEnBase64(f));
+    for (const f of photosSelectionnees) b64.push(await fichierEnBase64(f));
     FileReader.prototype.readAsDataURL = lire;
     return b64.filter((x) => /^data:image\//.test(x)).length;
   });
   ok(r3 === 4, 'à l’envoi, les 4 photos préparées se lisent depuis la mémoire (originaux devenus illisibles) : ' + r3 + ' / 4');
-  await p.evaluate(() => {
-    window.PagesEcrans?.montrer(document.getElementById('form-casting'));
-    window.CandidatureEtapes?.montrer(4, false);
-  });
-  const emplacements = p.locator('.ca-photo-emplacement');
-  ok(await emplacements.count() === 5 && await emplacements.first().locator('strong').textContent() === 'Portrait' &&
-    await emplacements.nth(1).locator('strong').textContent() === 'Plein pied', 'cinq emplacements nommés, dès la sélection');
-
-  const cinq = p.locator('[data-index="4"][data-photo-action="choisir"]');
-  const fichier = (i) => path.join(__dirname, 'medias', 'photo' + i + '.jpg');
-  const choisir = async (bouton, fichierChoisi) => {
-    const [choix] = await Promise.all([p.waitForEvent('filechooser'), bouton.click()]);
-    await choix.setFiles(fichierChoisi);
-    await p.evaluate(() => photosEnPreparation);
-  };
-  await choisir(cinq, fichier(4));
-  ok(await p.locator('#ca-photos-apercu img').count() === 5, 'le cinquième emplacement accepte sa propre photo');
-  const voir = p.locator('[data-index="4"][data-photo-action="voir"]');
-  await voir.click();
-  ok(await p.isVisible('#ca-visionneuse'), 'la photo peut être agrandie au clavier ou au toucher');
-  await p.keyboard.press('Escape');
-  ok(await voir.evaluate((el) => document.activeElement === el), 'Échap referme et rend le focus au bouton d’origine');
-  const avant = await voir.locator('img').getAttribute('src');
-  await choisir(cinq, fichier(1));
-  ok(await voir.locator('img').getAttribute('src') !== avant, 'le remplacement change l’aperçu de cet emplacement');
-  const pleinPied = emplacements.nth(1).locator('img');
-  const avantRetrait = await pleinPied.getAttribute('src');
-  await p.locator('[data-index="0"][data-photo-action="retirer"]').click();
-  ok(await emplacements.first().locator('img').count() === 0 && await pleinPied.getAttribute('src') === avantRetrait,
-    'retirer le portrait ne décale pas les autres photos');
-  await p.setInputFiles('#ca-photos', [fichier(0), fichier(2)]);
-  await p.evaluate(() => photosEnPreparation);
-  ok(await p.locator('#ca-photos-apercu img').count() === 5 && /1 au maximum/.test(await p.textContent('#ca-photos-compteur')),
-    'une sélection groupée n’excède jamais les cinq places et annonce les fichiers écartés');
   ok(!errs.length, 'aucune erreur de page ' + errs.join(' | '));
   await b.close();
   console.log(ko ? '\n❌ ' + ko + ' échec(s)' : '\n✅ Photos prêtes dès le choix : tout passe');

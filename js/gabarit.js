@@ -65,15 +65,8 @@
   }
   function entete(page, en, autreLangue) {
     var autre = autreLangue || ((en ? '../' : 'en/') + page + '.html');
-    var actif = page === 'mannequin' ? 'mannequins' : page;
-    var principaux = ['mannequins', 'qui-sommes-nous', 'actualites', 'contact'];
-    var liens = principaux.map(function (id) {
-      var p = PAGES.find(function (entree) { return entree[0] === id; });
-      return '<a href="' + lienPage(p) + '"' + (id === actif ? ' aria-current="page"' : '') + '>' + (en ? p[2] : p[1]) + '</a>';
-    }).join('');
     return '\n  <div class="container header-v2-inner">\n' +
       '    <a href="index.html" class="logo-img-header"><img src="' + (en ? '../' : '') + 'assets/logo-header-clair.png" alt="Maître Akesse Model Management" width="600" height="182"></a>\n' +
-      '    <nav class="navigation-principale" aria-label="' + (en ? 'Main navigation' : 'Navigation principale') + '">' + liens + '</nav>\n' +
       '    <div class="header-v2-droite">\n' +
       '      <a href="' + autre + '" class="lang-switch" data-bouton-libre aria-label="' + (en ? 'FR, version française">FR' : 'EN, English version">EN') + '</a>\n' +
       '      <button class="menu-trigger" id="menuBtn" data-bouton-libre>\n        <span>Menu</span>\n        <span class="dots"><span></span><span></span><span></span></span>\n      </button>\n' +

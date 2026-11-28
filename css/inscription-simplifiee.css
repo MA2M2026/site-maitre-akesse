@@ -34,46 +34,46 @@
    (.lx-progression, css/luxe.css), accueil avec photo, « Bonjour …, félicitations ! », carte « Future mannequin MA2M »,
    informations en relevé, merci avec la suite et les premiers mois du programme. Rouge et blanc seulement. */
 .inn-progression { margin: 0 0 0.4rem; }
-.inn-une { position: relative; height: 260px; border-radius: 22px; overflow: hidden; background: #29241F url(/assets/cours-talons/mannequin-podium.jpg?v=2) 50% 15% / cover; }
-.inn-une::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(41, 36, 31, 0.05) 30%, rgba(41, 36, 31, 0.96) 100%); }
+.inn-une { position: relative; height: 260px; border-radius: 22px; overflow: hidden; background: #5A141B url(/assets/cours-talons/mannequin-podium.jpg?v=2) 50% 15% / cover; }
+.inn-une::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(90, 20, 27, 0.05) 30%, rgba(90, 20, 27, 0.96) 100%); }
 .inn-une > div { position: absolute; z-index: 1; left: 20px; right: 20px; bottom: 18px; color: #FFFFFF; }
 .inn-une small { font: 600 10px 'Work Sans', sans-serif; letter-spacing: 0.3em; text-transform: uppercase; }
 .inn-une h1 { margin: 6px 0 0; font: 800 38px/1 var(--police-titre); color: #FFFFFF; }
 .inn-une h1 em { font-weight: 400; }
-.inn-carte--sous-une { margin-top: -32px; position: relative; z-index: 2; border-radius: 22px; box-shadow: 0 30px 60px -30px rgba(33, 27, 23, 0.8); }
+.inn-carte--sous-une { margin-top: -32px; position: relative; z-index: 2; border-radius: 22px; box-shadow: 0 30px 60px -30px rgba(30, 4, 8, 0.8); }
 #inn-code { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.3em; text-align: center; text-transform: uppercase; }
 .inn-bravo { text-align: center; color: #FFFFFF; }
 .inn-bravo h2 { margin: 0.4rem 0 0.3rem; font: 800 38px/1.05 var(--police-titre); color: #FFFFFF; }
 .inn-bravo h2 em { font-weight: 400; }
 .inn-bravo p { margin: 0; font-size: 0.95rem; }
 .inn-cb { position: relative; overflow: hidden; border-radius: 20px; padding: 18px 20px; color: #FFFFFF;
-  background: linear-gradient(135deg, #29241F 0%, #29241F 55%, #29241F 100%); box-shadow: 0 22px 40px -18px rgba(41, 36, 31, 0.9); }
+  background: linear-gradient(135deg, #5A141B 0%, #8A2530 55%, #5A141B 100%); box-shadow: 0 22px 40px -18px rgba(90, 20, 27, 0.9); }
 .inn-cb::before { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, 0.07); }
 .inn-cb > * { position: relative; }
 .inn-cb-tete { display: flex; justify-content: space-between; font: 600 9px 'Work Sans', sans-serif; letter-spacing: 0.3em; }
 .inn-cb-nom { margin: 24px 0 4px; font: 800 24px/1.1 var(--police-titre); letter-spacing: 0.05em; overflow-wrap: anywhere; }
 .inn-cb-bas { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 12.5px; }
-.inn-cb-bas b { display: block; font-size: 9px; letter-spacing: 0.2em; color: #E6DFD7; }
-.inn-releve { border-radius: 18px; overflow: hidden; background: #FFFFFF; color: #211B17; }
-.inn-releve > div { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid #F5F0E9; font-size: 0.92rem; overflow-wrap: anywhere; }
+.inn-cb-bas b { display: block; font-size: 9px; letter-spacing: 0.2em; color: #F3DDE0; }
+.inn-releve { border-radius: 18px; overflow: hidden; background: #FFFFFF; color: #2a1416; }
+.inn-releve > div { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid #F2E7E8; font-size: 0.92rem; overflow-wrap: anywhere; }
 .inn-releve > div:first-child { border-top: 0; }
-.inn-releve em { flex: 0 0 32px; height: 32px; border-radius: 50%; background: #E6DFD7; display: grid; place-items: center; font-style: normal; }
-.inn-releve small { display: block; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #544238; }
+.inn-releve em { flex: 0 0 32px; height: 32px; border-radius: 50%; background: #F3DDE0; display: grid; place-items: center; font-style: normal; }
+.inn-releve small { display: block; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #6E4F53; }
 body.ap-page-inscription .inn .inn-carte--nue { background: transparent; border: 0; padding: 0; box-shadow: none; }
 body.ap-page-inscription .inn .inn-carte--nue .inn-doux { color: #FFFFFF; text-align: center; }
 .inn-carte--nue .inn-question { color: #FFFFFF; text-align: center; }
 .inn-carte--nue .inn-note { margin: 0; }
-body.ap-page-inscription .inn .inn-btn-blanc { background: #FFFFFF !important; color: #29241F !important; -webkit-text-fill-color: #29241F !important; border-color: #FFFFFF !important; }
+body.ap-page-inscription .inn .inn-btn-blanc { background: #FFFFFF !important; color: #7C2128 !important; -webkit-text-fill-color: #7C2128 !important; border-color: #FFFFFF !important; }
 body.ap-page-inscription .inn .inn-btn-contour { background: transparent !important; color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.7) !important; }
 .inn-suite { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .inn-suite li { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.35); color: #FFFFFF; }
 .inn-suite li span { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.7); font: 800 17px var(--police-titre); }
-.inn-suite li.ok span { background: #FFFFFF; color: #29241F; font: 700 13px 'Work Sans', sans-serif; }
+.inn-suite li.ok span { background: #FFFFFF; color: #7C2128; font: 700 13px 'Work Sans', sans-serif; }
 .inn-suite b { display: block; }
 .inn-suite small { display: block; font-size: 0.85rem; }
 .inn-titre-sec { margin: 0.6rem 0 0; font: 700 11px 'Work Sans', sans-serif; letter-spacing: 0.2em; text-transform: uppercase; color: #FFFFFF; }
 .inn-mois { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.inn-mois > div { background: #FFFFFF; color: #211B17; border-radius: 14px; padding: 10px; }
-.inn-mois small { display: block; font: 700 9px 'Work Sans', sans-serif; letter-spacing: 0.14em; color: #544238; text-transform: uppercase; }
+.inn-mois > div { background: #FFFFFF; color: #2a1416; border-radius: 14px; padding: 10px; }
+.inn-mois small { display: block; font: 700 9px 'Work Sans', sans-serif; letter-spacing: 0.14em; color: #6E4F53; text-transform: uppercase; }
 .inn-mois b { display: block; margin-top: 4px; font: 800 14px/1.15 var(--police-titre); overflow-wrap: anywhere; }
 body.ap-page-inscription .inn :is(.inn-btn-blanc, .inn-btn-contour) { min-height: 52px; border-radius: 16px; text-transform: none; letter-spacing: 0; font: 700 15px 'Work Sans', sans-serif; }

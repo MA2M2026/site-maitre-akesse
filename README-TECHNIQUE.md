@@ -5748,33 +5748,3 @@ champ d'un écran du milieu = « Suivant » (plus d'envoi ni de saut d'écran) ;
 le programme (`ecransPrets`) ; la légende pour les lecteurs d'écran reprend « Étape X sur Y » ; un message d'erreur disparaît
 dès qu'on corrige un choix ; les listes longues (thèmes, séances choisies) défilent dans leur cadre au lieu d'être coupées ;
 zones à toucher d'au moins 40 px et listes en 16 px (pas de zoom de l'iPhone).
-
-## MA2M ONE — Orientation depuis l’accueil
-
-La couverture des pages française et anglaise mène à la rubrique « Choisir votre parcours ». Les quatre liens ouvrent les pages de représentation, de l’Académie, de candidature et de l’Atelier Talons & Élégance dans la langue en cours. La rubrique rejoint le sommaire existant grâce à `data-sommaire`. Les liens sont présents dans le HTML et fonctionnent sans JavaScript. Les règles d’inscription, de réservation et de publication restent dans leurs modules respectifs.
-
-La direction visuelle utilise les jetons `--one-*` de `css/jetons.css`. L’orientation associe les photos déjà publiées par MA2M aux titres et actions, avec une grille asymétrique sur ordinateur et une colonne sur téléphone. Le Book et les ouvertures des parcours reprennent la même lumière et les mêmes tons.
-
-Les ouvertures des actualités, événements et services prolongent les images dans le fond. Les autres pages ajoutées à la charte utilisent la même composition sans photo, y compris le calendrier, le contact, la sélection et les informations légales. Les fiches mannequins et les en-têtes de travail des applications utilisent les filets et contrastes de la charte.
-
-Dans The Book, les portraits sont présentés en pleine lumière sur un fond ivoire. Le nom, le niveau et les informations publiques se lisent sous l’image. La carte entière ouvre toujours la fiche, tandis que le bouton de sélection reste indépendant. Le composant `js/rendu-book.js` sert les deux langues côté serveur et côté navigateur.
-
-La navigation publique partagée donne accès au Book, à l’agence, aux actualités et au contact sur ordinateur. Le menu complet reste disponible dans les deux langues. Le fond ivoire du portfolio se retrouve dans l’en-tête, certains chapitres du magazine et les ouvertures des pages pratiques. Les ouvertures photographiques et les formulaires conservent leur propre composition.
-
-### Direction visuelle issue des deux références Pinterest
-
-La première référence inspire la photographie immersive et les portraits circulaires. La seconde inspire le panneau translucide et la lumière chaude. Les deux sont interprétées à partir des photographies de MA2M. Les jetons de charte définissent le charbon, le lin, le sable et le taupe. Ils se retrouvent sur l’accueil, les ouvertures publiques, le portfolio et les enveloppes des espaces mannequin et administration. Les couleurs d’état gardent leur sens métier.
-
-Le lettrage de couverture reste du texte. Sur une photo, une découpe nette dans les lettres révèle le portrait au bas du mot MA2M. La photo de couverture et celles des parcours restent sans voile. Les textes voisins ont leur propre fond de lecture. Les grands titres publics partagent un léger dégradé de lettrage. Le texte plein reste disponible à l’impression et en mode couleurs forcées.
-
-La palette charbon s’applique aux feuilles de style publiques, à la peau des applications et aux couleurs système de leurs manifestes. Les anciens noms des variables de couleur sont conservés pour leurs usages existants. Les photos, les marques de services tiers et les couleurs d’erreur gardent leur rendu propre.
-
-### Photos des candidatures
-
-Le formulaire partagé du casting, de la représentation et de MA2M Academy propose cinq emplacements nommés. La sélection groupée remplit les places libres dans l’ordre. On peut agrandir, remplacer ou retirer une photo sans déplacer les autres. Les minimums existants restent de trois ou quatre photos selon le parcours. L’envoi utilise une liste ordonnée comme auparavant et peut reprendre les dossiers déjà en file, y compris ceux de plus de cinq photos. L’Atelier Talons & Élégance garde son propre formulaire.
-
-Le formulaire des cours de talons regroupe désormais ces sections en trois étapes en français et en anglais. La première contient la formule, le programme et les créneaux. La deuxième contient les coordonnées, les informations du parent si nécessaire et les médias. La troisième contient le paiement et la confirmation. Les mêmes sections continuent à porter leurs validations et leurs conditions d'affichage.
-
-### Trois formulaires de candidature simplifiés
-
-Le casting, la représentation et MA2M Academy présentent chacun trois écrans. Ils demandent les mensurations, cinq photos dans des cases individuelles et une vidéo. Les barres indiquent la progression de chaque envoi. La représentation demande également de confirmer deux ans d’expérience. La page « Intégrer l’agence » oriente vers ces candidatures. Le cours de talons conserve deux à cinq photos et une vidéo de marche.

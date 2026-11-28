@@ -38,6 +38,14 @@ html body .menu-overlay .nav-links {
    À la fermeture, tout repart d'un coup (pas de délai). */
 html body .menu-overlay .nav-links li { position: relative; border: 0 !important; margin: 0 !important; opacity: 0; filter: blur(10px); transform: translate(-46px, 30px) skewX(-8deg) !important; transform-origin: left bottom; transition: opacity 0.5s ease, transform 0.25s ease, filter 0.25s ease !important; }
 html body .menu-overlay.active .nav-links li { opacity: 1; filter: none; transform: none !important; transition: opacity 0.7s ease, transform 1s cubic-bezier(.16,1,.3,1), filter 0.8s ease !important; transition-delay: calc(0.3s + 0.06s * var(--rang, 1)) !important; }
+/* grand filigrane « MA2M » qui traverse lentement le fond à l'ouverture (12/10/2026) */
+html body .menu-overlay::after {
+  content: 'MA2M'; position: fixed; right: -4vw; bottom: -3vw; z-index: 0; pointer-events: none;
+  font: 400 clamp(8rem, 38vw, 26rem)/0.8 var(--display); letter-spacing: -0.02em;
+  color: transparent; -webkit-text-stroke: 1px var(--c-rgba-213-84-104-0_16);
+  opacity: 0; transform: translateX(18%); transition: opacity 0.3s ease, transform 0.3s ease;
+}
+html body .menu-overlay.active::after { opacity: 1; transform: none; transition: opacity 1.4s ease 0.25s, transform 2.6s cubic-bezier(.16,1,.3,1) 0.25s; }
 html body .menu-overlay .nav-links, html body .menu-overlay .menu-contact { position: relative; z-index: 1; }
 html body .menu-overlay .nav-links li:not(.menu-sous):not(.menu-rejoindre):not(.item-marketplace)::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
@@ -136,106 +144,3 @@ html body .menu-overlay .nav-links li a .menu-etiquette { display: inline-block;
 /* (25/11/2026) les deux départements, sous le grand bouton « Intégrer l'agence » (js/menu.js) */
 html body .menu-overlay .nav-links li.menu-sous-rejoindre { order: 91; }
 html body .menu-overlay .nav-links li.menu-rejoindre + li.menu-sous-rejoindre { margin-top: 0.6rem; }
-
-/* Chaque rubrique se lit directement, avec le menu complet sur téléphone et ordinateur. */
-html body .menu-overlay .nav-links li:not(.menu-sous):not(.menu-rejoindre):not(.item-marketplace) a::before {
-  content: none !important;
-}
-html body .menu-overlay .nav-links li a {
-  letter-spacing: 0.08em !important;
-}
-@media (hover: hover) {
-  html body .menu-overlay .nav-links li:not(.menu-rejoindre) a:hover {
-    letter-spacing: 0.08em !important;
-  }
-}
-
-
-/* Une moitié de verre dépoli et un portrait cadré dans la moitié droite. */
-html body #menuOverlay.menu-overlay {
-  --menu-marge: clamp(10px, 3vw, 48px);
-  --menu-portrait: url("../assets/cours-talons/galerie-tailleur.jpg");
-  isolation: isolate;
-  background: var(--one-encre) var(--menu-portrait) center / cover no-repeat !important;
-  padding: clamp(7rem, 19vh, 13rem) calc(50% + var(--menu-marge)) 2rem var(--menu-marge) !important;
-}
-html body #menuOverlay.menu-overlay::after {
-  content: "";
-  position: fixed;
-  inset: 0 50% 0 0;
-  z-index: 0;
-  pointer-events: none;
-  background: rgba(33, 27, 23, 0.67);
-  border-inline-end: 1px solid rgba(255, 255, 255, 0.16);
-}
-@supports (backdrop-filter: blur(1px)) {
-  html body #menuOverlay.menu-overlay::after {
-    background: rgba(33, 27, 23, 0.24);
-    backdrop-filter: blur(17px);
-  }
-}
-html body #menuOverlay.menu-overlay::before {
-  z-index: 2;
-  top: clamp(3.75rem, 9vh, 6rem) !important;
-  left: 25% !important;
-  width: clamp(96px, 21vw, 180px);
-  height: 2.2rem;
-  transform: translateX(-50%);
-  background-position: center;
-}
-html body #menuOverlay.menu-overlay .nav-links {
-  columns: auto;
-  display: flex !important;
-  max-width: 26rem;
-  text-align: center;
-  border-block: 1px solid rgba(255, 255, 255, 0.32);
-  padding-block: 0.65rem;
-}
-html body #menuOverlay.menu-overlay .nav-links li::after { content: none; }
-html body #menuOverlay.menu-overlay .nav-links li a {
-  justify-content: center !important;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  min-height: 44px;
-  padding: 0.45rem 0.3rem !important;
-  font-family: Arial, Helvetica, sans-serif !important;
-  font-size: clamp(0.73rem, 1.15vw, 0.88rem) !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.01em !important;
-  border: 1px solid transparent !important;
-  border-radius: 999px !important;
-}
-html body #menuOverlay.menu-overlay .nav-links li:not(.menu-rejoindre) a {
-  color: var(--blanc-pur) !important;
-  text-shadow: 0 1px 4px var(--one-encre);
-}
-html body #menuOverlay.menu-overlay .nav-links li a:is(.actif, :hover, :focus-visible) {
-  border-color: rgba(255, 255, 255, 0.63) !important;
-}
-html body #menuOverlay.menu-overlay .nav-links li a.actif { font-weight: 600 !important; }
-html body #menuOverlay.menu-overlay .nav-links li.menu-rejoindre { margin-top: 0.65rem !important; }
-html body #menuOverlay.menu-overlay .menu-contact {
-  max-width: 26rem;
-  text-align: center !important;
-}
-html body #menuOverlay.menu-overlay .menu-contact,
-html body #menuOverlay.menu-overlay .menu-contact a.menu-tel { color: var(--blanc-pur); }
-html body #menuOverlay.menu-overlay .menu-reseaux { justify-content: center !important; }
-html body #menuOverlay.menu-overlay .close-menu {
-  background: var(--one-encre) !important;
-  border-radius: 50% !important;
-}
-html body #menuOverlay.menu-overlay .close-menu::after { color: var(--blanc-pur); }
-@media (min-aspect-ratio: 4/5) {
-  html body #menuOverlay.menu-overlay {
-    background-position: right center !important;
-    background-size: max(68vw, 80vh) auto !important;
-  }
-}
-@media (max-aspect-ratio: 4/5) {
-  html body #menuOverlay.menu-overlay {
-    background-size: auto 100% !important;
-    background-position: calc(75vw - 40vh) center !important;
-  }
-}

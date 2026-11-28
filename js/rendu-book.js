@@ -17,7 +17,9 @@
   const lienFiche = (m, en) => (m.slug && /^[a-z0-9-]{1,80}$/.test(m.slug) ? (en ? '/en' : '') + '/book/' + m.slug : 'mannequin.html?id=' + encodeURIComponent(m.id));
   // Niveau public d'un profil (« Professionnel » = Main Board, sinon New Face) : js/partage.js, partagé avec le serveur
   const niveauDe = (p) => { const N = racine.Partage; return N ? N.niveauNormalise(p.niveau_mannequin, p.years_experience) : (p.niveau_mannequin === 'Professionnel' ? 'Professionnel' : 'New Face'); };
-  // Portrait et légende sont réunis dans le lien vers la fiche. Le bouton de sélection garde son propre accès.
+  // (12/11/2026, maquette validée par la propriétaire) chaque mannequin en COUVERTURE : grande photo, voile noir laqué
+  // qui monte du bas, niveau, nom en grandes lettres, taille · ville ; petit « + » discret pour la sélection (✓ une fois
+  // choisie). o : { en, photo, selectionne, libelle } (libelle : texte du bouton « + »)
   function carte(profil, rang, o) {
     const nom = profil.full_name || (o.en ? 'Model' : 'Mannequin');
     const niveau = niveauDe(profil) === 'Professionnel' ? 'Main Board' : 'New Face';
@@ -25,10 +27,10 @@
       '<button class="btn-selection' + (o.selectionne ? ' est-selectionne' : '') + '" data-bouton-libre data-id="' + echapper(profil.id) + '" title="' + echapper(o.libelle) + '" aria-label="' + echapper(o.libelle) + '">' + (o.selectionne ? '✓' : '+') + '</button>' +
       '<a href="' + echapper(lienFiche(profil, o.en)) + '" class="u-flex-col-centre"><div class="medaillon-photo">' +
       // (08/11/2026 : alt vide, le nom est écrit juste dessous dans le même lien — lu une seule fois)
-      '<img src="' + echapper(o.photo) + '" alt=""' + (rang < 5 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"') + '></div>' +
+      '<img src="' + echapper(o.photo) + '" alt=""' + (rang < 5 ? (rang === 0 ? ' fetchpriority="high"' : '') : ' loading="lazy"') + '>' +
       '<div class="book-carte-legende"><div class="medaillon-niveau">' + niveau + '</div><div class="medaillon-nom">' + echapper(nom) + '</div>' +
       '<div class="medaillon-info">' + echapper([racine.Partage.enMetres(profil.height_cm, o.en), profil.city || ''].filter(Boolean).join(' · ')) + '</div></div>' +
-      '</a></div>';
+      '</div></a></div>';
   }
   // Deux chapitres (12/11/2026, choix de la propriétaire) : Main Board, puis New Faces ; dans chacun, l'ordre reçu
   const repartir = (liste) => ({ main: liste.filter((p) => niveauDe(p) === 'Professionnel'), nouveaux: liste.filter((p) => niveauDe(p) !== 'Professionnel') });

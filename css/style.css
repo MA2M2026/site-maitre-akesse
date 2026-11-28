@@ -27,7 +27,7 @@
   --bordeaux-vif: var(--c-9c1c2c);   /* état de survol */
   --bordeaux-clair: var(--c-d55468); /* bordeaux lumineux — texte/labels sur fond noir (contraste AA vérifié : 5.1:1 sur --noir, WCAG demande 4.5:1 pour du texte normal) */
 
-  --or: #A69889;                     /* touche discrète : rose (01/11/2026 : plus de doré, choix de la propriétaire) */
+  --or: #C7848B;                     /* touche discrète : rose (01/11/2026 : plus de doré, choix de la propriétaire) */
   --rouge: var(--bordeaux-clair); /* alias conservé pour compatibilité (.oeil, anciens usages) */
 
   --gris: var(--c-8a837d);
@@ -3159,7 +3159,7 @@ body.zone-admin > .site-footer { margin-top: auto; }
 .filtres-a-part { align-self: center; margin-left: 0.8rem; padding-left: 0.8rem; border-left: 1px solid var(--gris-clair, var(--c-ccc)); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texte-doux, var(--c-5e5b57)); }
 
 /* Bandeau « Mannequin du mois » en haut du Book (chantier 14, 01/11/2026) — rouge profond, texte blanc */
-.mannequin-du-mois { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 18px; padding: 14px 18px; border-radius: 14px; background: #29241F; color: #FFFFFF; text-decoration: none; }
+.mannequin-du-mois { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 18px; padding: 14px 18px; border-radius: 14px; background: #5A141B; color: #FFFFFF; text-decoration: none; }
 .mannequin-du-mois .mdm-titre { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
 .mannequin-du-mois b { font-size: 20px; }
 .mannequin-du-mois .mdm-lien { margin-left: auto; text-decoration: underline; }
@@ -3196,7 +3196,7 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
   font: 700 0.72rem/1.2 'Work Sans', sans-serif; letter-spacing: 0.06em; padding: 7px 13px; border-radius: 999px; }
 .fiche-dispo::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2E7D32; }
 /* panneau rouge : mensurations essentielles et boutons (sur ordinateur aussi le nom, à droite de la photo) */
-.fiche-panneau { background: #29241F; color: #FFFFFF; width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: 22px 20px 20px; box-sizing: border-box; }
+.fiche-panneau { background: #7C2128; color: #FFFFFF; width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: 22px 20px 20px; box-sizing: border-box; }
 .fiche-panneau-tete { display: none; }
 /* photo de profil (12/11/2026, demande de la propriétaire) : toujours visible, en rond ; sur téléphone à cheval sur la
    grande photo et le panneau rouge, sur ordinateur au-dessus du nom */
@@ -3217,58 +3217,58 @@ body:has(.fiche-v2) #fiche-book { padding-top: 12px; }
    collait au bord droit de l'écran (journal : « fiche-telecharger dépasse de 12 px ») */
 .fiche-v2 .fiche-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 0; }
 .fiche-v2 .fiche-actions .btn, .fiche-v2 .fiche-actions .btn--principal { width: 100%; justify-content: center; min-height: 50px; border-radius: 12px;
-  background: #FFFFFF; color: #29241F; border: 1.5px solid #FFFFFF; font-weight: 700; letter-spacing: 0.02em; text-transform: none; font-size: 0.9rem; }
-.fiche-v2 .fiche-actions #btn-select-fiche { background: #FFFFFF; color: #29241F; border-color: #FFFFFF; }
+  background: #FFFFFF; color: #7C2128; border: 1.5px solid #FFFFFF; font-weight: 700; letter-spacing: 0.02em; text-transform: none; font-size: 0.9rem; }
+.fiche-v2 .fiche-actions #btn-select-fiche { background: #FFFFFF; color: #7C2128; border-color: #FFFFFF; }
 .fiche-v2 .fiche-actions #btn-compcard { background: transparent; color: #FFFFFF; border-color: #FFFFFF; }
 .fiche-v2 .fiche-telecharger { width: 100%; }
 /* (12/11/2026, capture de la propriétaire) menu « Compcard » : PDF / JPEG lisibles (blanc sur blanc avant) et au-dessus
    de la rangée des chapitres (qui passait par-dessus) */
-.fiche-v2 .fiche-telecharger-menu { z-index: 40; background: #FFFFFF; border: 1.5px solid #29241F; padding: 6px; gap: 4px; box-shadow: 0 18px 40px rgba(41, 36, 31, 0.35); }
-.fiche-v2 .fiche-telecharger-menu button { background: #FFFFFF; color: #29241F; -webkit-text-fill-color: #29241F; border: 1.5px solid #29241F; border-radius: 10px;
+.fiche-v2 .fiche-telecharger-menu { z-index: 40; background: #FFFFFF; border: 1.5px solid #7C2128; padding: 6px; gap: 4px; box-shadow: 0 18px 40px rgba(94, 18, 25, 0.35); }
+.fiche-v2 .fiche-telecharger-menu button { background: #FFFFFF; color: #7C2128; -webkit-text-fill-color: #7C2128; border: 1.5px solid #7C2128; border-radius: 10px;
   min-height: 46px; font: 700 0.9rem 'Work Sans', sans-serif; letter-spacing: 0.08em; text-align: center; }
-.fiche-v2 .fiche-telecharger-menu button:hover, .fiche-v2 .fiche-telecharger-menu button:focus-visible { background: #29241F; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
+.fiche-v2 .fiche-telecharger-menu button:hover, .fiche-v2 .fiche-telecharger-menu button:focus-visible { background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
 /* chapitres : collés en haut quand on descend */
-.fiche-v2 .fiche-onglets { position: sticky; top: 0; z-index: 20; background: #FFFFFF; gap: 8px; margin: 0 -20px 6px; padding: 10px 20px; border-top: 0; border-bottom: 1px solid rgba(41, 36, 31, 0.14); }
-.fiche-v2 .fiche-onglets a { padding: 8px 15px; border: 1px solid #29241F; border-radius: 999px; color: #29241F; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: none; font-weight: 600; }
+.fiche-v2 .fiche-onglets { position: sticky; top: 0; z-index: 20; background: #FFFFFF; gap: 8px; margin: 0 -20px 6px; padding: 10px 20px; border-top: 0; border-bottom: 1px solid rgba(124, 33, 40, 0.14); }
+.fiche-v2 .fiche-onglets a { padding: 8px 15px; border: 1px solid #7C2128; border-radius: 999px; color: #7C2128; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: none; font-weight: 600; }
 .fiche-v2 .fiche-onglets a::after { display: none; }
-.fiche-v2 .fiche-onglets a:first-child { background: #29241F; color: #FFFFFF; border-color: #29241F; }
+.fiche-v2 .fiche-onglets a:first-child { background: #7C2128; color: #FFFFFF; border-color: #7C2128; }
 .fiche-v2 .fiche-onglets a:first-child span { color: #FFFFFF; }
-.fiche-v2 .fiche-onglets a span { color: #29241F; }
+.fiche-v2 .fiche-onglets a span { color: #7C2128; }
 /* chapitres sur fond blanc */
 .fiche-v2 .fiche-carte, .fiche-selection { background: transparent; border: 0; box-shadow: none; padding: 26px 0 6px; }
-.fiche-v2 .fiche-carte-titre, #fiche-book h2 { display: block; font: 800 clamp(2rem, 7vw, 2.8rem)/1 var(--police-titre); letter-spacing: 0; text-transform: none; color: #29241F; margin: 0 0 4px; }
+.fiche-v2 .fiche-carte-titre, #fiche-book h2 { display: block; font: 800 clamp(2rem, 7vw, 2.8rem)/1 var(--police-titre); letter-spacing: 0; text-transform: none; color: #7C2128; margin: 0 0 4px; }
 .fiche-sous-titre { margin: 0 0 16px; color: #5E5456; font-size: 0.86rem; }
 .fiche-edito { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .fiche-edito-photo { display: block; padding: 0; border: 0; background: #FFFFFF; cursor: zoom-in; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 4px; }
 .fiche-edito-photo.grande { grid-column: 1 / -1; }
 .fiche-edito-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s ease; }
 .fiche-edito-photo:hover img { transform: scale(1.03); }
-.fiche-v2 .fiche-bio { font: 500 1.45rem/1.3 var(--police); color: #1A1A1A; padding-left: 16px; border-left: 2px solid #29241F; margin: 8px 0 16px; }
+.fiche-v2 .fiche-bio { font: 500 1.45rem/1.3 var(--police); color: #1A1A1A; padding-left: 16px; border-left: 2px solid #7C2128; margin: 8px 0 16px; }
 .fiche-v2 .fiche-infos li { color: #1A1A1A; }
-.fiche-v2 .fiche-infos .fiche-ico { color: #29241F; }
-.fiche-v2 .fiche-type { background: #FFFFFF; color: #29241F; border: 1px solid rgba(41, 36, 31, 0.3); }
-.fiche-v2 .fiche-projet { display: grid; grid-template-columns: 64px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(41, 36, 31, 0.14); }
+.fiche-v2 .fiche-infos .fiche-ico { color: #7C2128; }
+.fiche-v2 .fiche-type { background: #FFFFFF; color: #7C2128; border: 1px solid rgba(124, 33, 40, 0.3); }
+.fiche-v2 .fiche-projet { display: grid; grid-template-columns: 64px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(124, 33, 40, 0.14); }
 .fiche-v2 .fiche-projet::before { display: none; }
 .fiche-v2 .fiche-projets { padding: 0; margin: 0; border: 0; }
 .fiche-v2 .fiche-projets::before { display: none; }
-.fiche-projet-annee { font: 800 1.65rem/1 var(--display); color: #29241F; }
+.fiche-projet-annee { font: 800 1.65rem/1 var(--display); color: #7C2128; }
 .fiche-projet-corps { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.fiche-v2 .fiche-projet-type { color: #29241F; font-weight: 700; }
+.fiche-v2 .fiche-projet-type { color: #7C2128; font-weight: 700; }
 .fiche-v2 .fiche-projet-titre { color: #1A1A1A; font-weight: 600; }
 .fiche-v2 .fiche-projet-meta { color: #5E5456; }
-.fiche-v2 .fiche-lien-plus { color: #29241F; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; background: none; border: 0; padding: 14px 0 0; }
+.fiche-v2 .fiche-lien-plus { color: #7C2128; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; background: none; border: 0; padding: 14px 0 0; }
 /* Book : grille régulière, 12 photos puis « Voir les N photos » */
 body:has(.fiche-v2) #fiche-book .book-grille-ig { column-count: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 body:has(.fiche-v2) #fiche-book .book-photo-carte { aspect-ratio: 3 / 4; overflow: hidden; margin: 0; border-radius: 3px; }
 body:has(.fiche-v2) #fiche-book .book-photo-carte img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #fiche-book .book-reduit .book-photo-carte:nth-child(n+13) { display: none; }
-.fiche-voir-book { display: block; width: 100%; max-width: 380px; margin: 18px auto 0; min-height: 50px; border-radius: 12px; border: 1.5px solid #29241F; background: #FFFFFF; color: #29241F; font: 700 0.95rem 'Work Sans', sans-serif; cursor: pointer; }
+.fiche-voir-book { display: block; width: 100%; max-width: 380px; margin: 18px auto 0; min-height: 50px; border-radius: 12px; border: 1.5px solid #7C2128; background: #FFFFFF; color: #7C2128; font: 700 0.95rem 'Work Sans', sans-serif; cursor: pointer; }
 /* téléphone : « Réserver » et « Compcard » toujours visibles en bas */
 .fiche-barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: #FFFFFF; box-shadow: 0 -6px 24px rgba(41, 36, 31, 0.18); }
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: #FFFFFF; box-shadow: 0 -6px 24px rgba(124, 33, 40, 0.18); }
 .fiche-barre a, .fiche-barre button { display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; font: 700 0.92rem 'Work Sans', sans-serif; text-decoration: none; cursor: pointer; }
-.fiche-barre-reserver { background: #29241F; color: #FFFFFF; border: 1.5px solid #29241F; }
-.fiche-barre-compcard { background: #FFFFFF; color: #29241F; border: 1.5px solid #29241F; }
+.fiche-barre-reserver { background: #7C2128; color: #FFFFFF; border: 1.5px solid #7C2128; }
+.fiche-barre-compcard { background: #FFFFFF; color: #7C2128; border: 1.5px solid #7C2128; }
 body:has(.fiche-barre) { padding-bottom: 76px; }
 html:has(.fiche-barre) { scroll-padding-bottom: 96px; scroll-padding-top: 70px; }
 body:has(.fiche-barre) .whatsapp-flottant { bottom: 88px; }
@@ -3298,8 +3298,8 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 
 /* Envoi pas terminé (12/11/2026, EnvoiFiable, js/app.js) : bandeau en bas des pages du site */
 .envoi-a-finir { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9000; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 16px; border-radius: 14px; background: #FFFFFF; color: #29241F; border: 1.5px solid #29241F; box-shadow: 0 10px 30px rgba(41, 36, 31, .25); font-weight: 600; font-size: 14px; }
-.envoi-a-finir a { flex: none; padding: 8px 14px; border-radius: 999px; background: #29241F; color: #FFFFFF; text-decoration: none; }
+  padding: 12px 16px; border-radius: 14px; background: #FFFFFF; color: #7C2128; border: 1.5px solid #7C2128; box-shadow: 0 10px 30px rgba(124, 33, 40, .25); font-weight: 600; font-size: 14px; }
+.envoi-a-finir a { flex: none; padding: 8px 14px; border-radius: 999px; background: #7C2128; color: #FFFFFF; text-decoration: none; }
 .lien-annuler-envoi { display: inline-block; margin-left: 10px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
 
 /* ==========================================================================================================
@@ -3313,15 +3313,15 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 .book-v2 .book-ouverture h1 em { font-style: italic; font-weight: 400; }
 .book-v2 .book-chapo { margin: 0; max-width: 40rem; font-size: 0.98rem; color: var(--c-rgba-255-255-255-0_78); }
 /* la barre : collée sous l'en-tête quand on défile */
-.book-v2 .book-barre { position: sticky; top: 84px; z-index: 50; background: var(--one-charbon); border-bottom: 1px solid rgba(255, 255, 255, 0.18); padding: 0.75rem 0; }
+.book-v2 .book-barre { position: sticky; top: 84px; z-index: 50; background: #7C2128; border-bottom: 1px solid rgba(255, 255, 255, 0.18); padding: 0.75rem 0; }
 .book-v2 .book-barre-int { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
 .book-v2 .book-segments { display: flex; flex-wrap: nowrap; gap: 0.35rem; margin: 0; }
 .book-v2 .book-recherche { flex: 1 1 260px; min-width: 0; display: flex; align-items: center; gap: 0.55rem; padding: 0 1rem; border-radius: 999px; background: #FFFFFF; }
-.book-v2 .book-loupe { width: 15px; height: 15px; flex: none; border: 2px solid #29241F; border-radius: 50%; position: relative; }
-.book-v2 .book-loupe::after { content: ''; position: absolute; width: 2px; height: 7px; background: #29241F; right: -4px; bottom: -6px; transform: rotate(-45deg); }
+.book-v2 .book-loupe { width: 15px; height: 15px; flex: none; border: 2px solid #7C2128; border-radius: 50%; position: relative; }
+.book-v2 .book-loupe::after { content: ''; position: absolute; width: 2px; height: 7px; background: #7C2128; right: -4px; bottom: -6px; transform: rotate(-45deg); }
 /* (les champs du site ont un cadre imposé avec !important : retiré ici, la pilule blanche sert de cadre) */
-.book-v2 .book-recherche input { flex: 1; min-width: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; outline: 0; background: transparent !important; padding: 0.8rem 0; font: 500 1rem var(--police, sans-serif); color: #29241F; -webkit-text-fill-color: #29241F; }
-.book-v2 .book-recherche input::placeholder { color: #655D56; -webkit-text-fill-color: #655D56; opacity: 1; }
+.book-v2 .book-recherche input { flex: 1; min-width: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; outline: 0; background: transparent !important; padding: 0.8rem 0; font: 500 1rem var(--police, sans-serif); color: #7C2128; -webkit-text-fill-color: #7C2128; }
+.book-v2 .book-recherche input::placeholder { color: #8a6b6e; -webkit-text-fill-color: #8a6b6e; opacity: 1; }
 .book-v2 .book-recherche input::-webkit-search-cancel-button { filter: grayscale(1); }
 .book-v2 .book-recherche:focus-within { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35); }
 .book-v2 .book-suggestions { padding-top: 0.8rem; }
@@ -3343,58 +3343,48 @@ body:has(.fiche-barre) { --ma2m-installer-bas: 74px; }  /* le bandeau « Appli M
 /* la couverture */
 .book-v2 #grille .medaillon-carte { display: block; text-align: left; }
 .book-v2 #grille .medaillon-carte > a { display: block; }
-.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: var(--gris-tres-clair); box-shadow: none; }
+.book-v2 #grille .medaillon-photo { position: relative; aspect-ratio: 3 / 4.3; border-radius: 0; animation: none; background: var(--noir); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
 .book-v2 #grille .medaillon-carte img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; filter: none; transform: none; }
 .book-v2 #grille .medaillon-carte:hover img, .book-v2 #grille .medaillon-carte:focus-within img { filter: none; transform: scale(1.03); }
-.book-v2 #grille .book-carte-legende {
-  position: static;
-  padding: 0.8rem 0 0;
-  background: none;
-  text-shadow: none;
-}
-.book-v2 #grille .medaillon-niveau {
-  margin-bottom: 0.3rem;
-  color: var(--one-carmin);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-}
-.book-v2 #grille .medaillon-nom {
-  margin: 0;
-  font: 600 clamp(1.15rem, 2.6vw, 2rem)/1.05 var(--display);
-  color: var(--one-encre);
-  overflow-wrap: anywhere;
-}
-.book-v2 #grille .medaillon-info {
-  margin-top: 0.35rem;
-  color: var(--one-carmin);
-  font-size: 0.78rem;
-}
-.book-v2 #grille .medaillon-carte > a:focus-visible { outline: 2px solid var(--one-carmin); outline-offset: 4px; }
+/* voile noir pur et laqué : du noir profond en bas, un reflet lumineux en diagonale et un fin liseré de lumière */
+.book-v2 #grille .medaillon-photo::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, var(--voile-photo-a00) 0%, var(--voile-photo-a06) 34%, var(--voile-photo-a62) 58%, var(--voile-photo-a94) 78%, var(--voile-photo-a100) 100%); }
+.book-v2 #grille .medaillon-photo::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: 2; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(112deg, rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0.14) 40%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0) 60%),
+              linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 2px); }
+.book-v2 #grille .book-carte-legende { z-index: 3; padding: 0 0.9rem 0.9rem; background: none; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
+.book-v2 #grille .medaillon-niveau { display: flex; align-items: center; gap: 0.45rem; font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: #FFFFFF; margin-bottom: 0.25rem; }
+.book-v2 #grille .medaillon-niveau::before { content: ''; width: 14px; height: 2px; background: #D1172F; }
+.book-v2 #grille .medaillon-nom { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(1.45rem, 6.2vw, 2.1rem); line-height: 0.92; letter-spacing: 0.005em; text-transform: uppercase; color: #FFFFFF; overflow-wrap: anywhere; }
+.book-v2 #grille .medaillon-info { display: block; margin-top: 0.4rem; font-size: 0.74rem; letter-spacing: 0.06em; text-transform: none; color: #F3DDE0; }
 /* le « + » : petit rond discret (zone de toucher plus grande que le rond) ; ✓ rouge une fois choisie */
 .book-v2 #grille .medaillon-carte .btn-selection { --bouton-rayon: 50%; position: absolute; top: 0.6rem; right: 0.6rem; z-index: 4; width: 28px; height: 28px; min-height: 0; padding: 0;
-  display: grid; place-items: center; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.82); color: #29241F; -webkit-text-fill-color: #29241F;
+  display: grid; place-items: center; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.82); color: #7C2128; -webkit-text-fill-color: #7C2128;
   font: 500 17px/1 var(--police, sans-serif); letter-spacing: 0; text-transform: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 .book-v2 #grille .medaillon-carte .btn-selection::before { content: ''; position: absolute; inset: -9px; }
-.book-v2 #grille .medaillon-carte .btn-selection.est-selectionne { background: #29241F; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
-.book-v2 #grille .medaillon-carte:has(.est-selectionne) .medaillon-photo { outline: 3px solid var(--one-carmin); outline-offset: 3px; }
+.book-v2 #grille .medaillon-carte .btn-selection.est-selectionne { background: #7C2128; color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; }
+.book-v2 #grille .medaillon-carte:has(.est-selectionne) .medaillon-photo { outline: 3px solid #FFFFFF; outline-offset: 3px; }
 @media (max-width: 640px) {
   .book-v2 .book-ouverture { padding: 1.8rem 0 0.8rem; }
   .book-v2 .book-barre-int { gap: 0.55rem; }
   .book-v2 .book-segments { width: 100%; }
   .book-v2 .book-segments .filtre-btn { flex: 1; }
   .book-v2 .book-recherche { flex-basis: 100%; }
+  .book-v2 #grille .book-carte-legende { padding: 0 0.7rem 0.75rem; }
   .book-v2 #grille .medaillon-info { font-size: 0.7rem; }
 }
 /* la sélection : barre blanche en bas de l'écran (toutes les pages publiques ; js/selection.js) */
 .panier-widget.panier-barre { left: 50%; right: auto; transform: translateX(-50%); bottom: 14px; width: min(640px, calc(100% - 24px)); justify-content: space-between; gap: 0.8rem;
-  padding: 0.55rem 0.55rem 0.55rem 1.1rem; border-radius: 999px; background: #FFFFFF; color: #29241F; box-shadow: 0 14px 40px rgba(33, 27, 23, 0.45); font-size: 0.92rem; font-weight: 700; letter-spacing: 0; text-decoration: none; }
+  padding: 0.55rem 0.55rem 0.55rem 1.1rem; border-radius: 999px; background: #FFFFFF; color: #7C2128; box-shadow: 0 14px 40px rgba(40, 6, 10, 0.45); font-size: 0.92rem; font-weight: 700; letter-spacing: 0; text-decoration: none; }
 /* (les anciennes pastilles rondes « .panier-widget span » ne s'appliquent pas aux textes de la barre) */
 .panier-widget.panier-barre span { display: inline; width: auto; height: auto; background: none; color: inherit; border-radius: 0; font-size: inherit; }
 .panier-widget.panier-barre .panier-texte { display: inline-flex; align-items: center; gap: 0.35rem; }
-.panier-widget.panier-barre .panier-go { display: inline-block; width: auto; height: auto; border-radius: 999px; background: #29241F; color: #FFFFFF; padding: 0.7rem 1.1rem; font-size: 0.88rem; white-space: nowrap; }
-/* Le mouvement du Book reste léger et laisse le portrait visible. */
-html.relief .book-v2 #grille .medaillon-photo { transform: perspective(900px) rotateX(calc(var(--relief-rx) + var(--relief-ox, 0deg))) rotateY(calc(var(--relief-ry) + var(--relief-oy, 0deg))); box-shadow: none; }
-html.relief .book-v2 #grille .medaillon-photo::after { display: none; }
+.panier-widget.panier-barre .panier-go { display: inline-block; width: auto; height: auto; border-radius: 999px; background: #7C2128; color: #FFFFFF; padding: 0.7rem 1.1rem; font-size: 0.88rem; white-space: nowrap; }
+/* (12/11/2026) avec le relief (js/relief.js, css/relief.css) : les couvertures restent DROITES au défilement (pas de
+   « mur courbé », qui penchait les cartes) ; elles se tournent seulement vers la souris (ordinateur) ou suivent
+   l'inclinaison du téléphone, et gardent leur voile noir laqué (le reflet du relief ne le remplace plus) */
+html.relief .book-v2 #grille .medaillon-photo { transform: perspective(900px) rotateX(calc(var(--relief-rx) + var(--relief-ox, 0deg))) rotateY(calc(var(--relief-ry) + var(--relief-oy, 0deg))); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55); }
+html.relief .book-v2 #grille .medaillon-photo::after { opacity: 1; background: linear-gradient(180deg, var(--voile-photo-a00) 0%, var(--voile-photo-a06) 34%, var(--voile-photo-a62) 58%, var(--voile-photo-a94) 78%, var(--voile-photo-a100) 100%); }
 html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
 /* (12/11/2026) barre de sélection sur une seule ligne, même sur un petit téléphone */
 .panier-widget.panier-barre .panier-texte { white-space: nowrap; }
@@ -3402,115 +3392,3 @@ html.relief .book-v2 #grille .book-carte-legende { z-index: 3; }
   .panier-widget.panier-barre { font-size: 0.8rem; gap: 0.5rem; padding-left: 0.9rem; }
   .panier-widget.panier-barre .panier-go { padding: 0.65rem 0.85rem; font-size: 0.8rem; }
 }
-
-/* Le Book reprend la profondeur des couvertures, derrière la recherche et le portfolio. */
-.book-v2 { background: var(--one-scene); }
-.book-v2 .book-ouverture {
-  padding-block: clamp(1.7rem, 4vw, 3.25rem) clamp(1.3rem, 3vw, 2.4rem);
-}
-.book-v2 .book-liste {
-  padding-top: 0;
-  background: var(--one-ivoire);
-}
-.book-v2 :is(.book-chapitre-tete h2, .filtres-bilan) { color: var(--one-encre); }
-.book-v2 :is(.book-chapitre-nb, .book-chapitre-pres, .filtres-proches, .mannequins-vide) {
-  color: var(--one-carmin);
-}
-.book-v2 .book-chapitre + .book-chapitre {
-  margin-top: 2rem;
-  border-top: 1px solid var(--rouge-mat-a22);
-}
-.book-v2 .book-ouverture h1 { color: var(--one-ivoire); }
-.book-v2 .book-ouverture h1 em { color: var(--rouge-ma2m-texte); }
-
-/* Ouvertures MA2M ONE, françaises et anglaises. */
-main .one-ouverture {
-  padding-block: clamp(2.25rem, 7vw, 6.5rem) clamp(2rem, 5vw, 4.5rem);
-  background: var(--one-scene);
-  border-bottom: 1px solid var(--blanc-a22);
-}
-main .one-ouverture--sobre {
-  padding-block: clamp(2rem, 4vw, 4rem) clamp(1.5rem, 3vw, 3rem);
-}
-.one-ouverture h1 {
-  max-width: 20ch;
-  font-size: clamp(2.35rem, 6vw, 5.75rem);
-  line-height: 1;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
-.one-ouverture p { max-width: 57ch; }
-.one-ouverture .eyebrow { color: var(--rouge-ma2m-texte); }
-
-main .one-ouverture--editorial {
-  display: grid;
-  align-items: end;
-  min-height: clamp(23rem, 56vw, 36rem);
-  background-image: linear-gradient(0deg, var(--one-encre), var(--one-voile) 40%, transparent 85%), var(--one-image), var(--one-scene);
-  background-size: cover, cover, cover;
-  background-position: center, center 24%, center;
-}
-.one-ouverture--actualites { --one-image: url("../assets/cours-talons/galerie-drapeau.jpg"); }
-.one-ouverture--evenements { --one-image: url("../assets/cours-talons/mannequin-defile.jpg"); }
-.one-ouverture--services { --one-image: url("../assets/cours-talons/galerie-tailleur.jpg"); }
-@media (max-width: 47.99rem) {
-  .one-ouverture--editorial :is(.fil-ariane, .eyebrow) {
-    display: table;
-    padding: 0.25rem 0.5rem;
-    background: var(--one-encre);
-    color: var(--one-ivoire);
-  }
-  .one-ouverture--editorial .fil-ariane :is(a, span) { color: inherit; }
-}
-@media (min-width: 48rem) {
-  main .one-ouverture--editorial {
-    align-items: center;
-    position: relative;
-    isolation: isolate;
-    background: var(--one-scene);
-  }
-  .one-ouverture--editorial::before {
-    position: absolute;
-    z-index: -1;
-    inset: 0 0 0 37%;
-    content: "";
-    background: linear-gradient(90deg, var(--one-voile), transparent 64%), var(--one-image) center 24% / cover;
-    mask-image: linear-gradient(90deg, transparent, var(--one-encre) 35%);
-  }
-  .one-ouverture--editorial .container > :is(h1, p) { max-width: min(57ch, 58%); }
-}
-
-.fiche-carte {
-  background: linear-gradient(145deg, var(--rouge-profond-a55), transparent 75%);
-  border-color: var(--blanc-a22);
-}
-.fiche-carte-titre { padding-bottom: 0.75rem; border-bottom: 1px solid var(--blanc-a22); }
-
-/* La navigation et les pages pratiques partagent le papier du portfolio. */
-.site-header-v2 .logo-img-header img { filter: none; }
-.site-header-v2 .logo-img-header::after { display: none; }
-.site-header-v2 .header-v2-inner { gap: 1rem; }
-.site-header-v2 .header-v2-droite { gap: clamp(0.5rem, 2vw, 1.4rem); }
-.site-header-v2 :is(.menu-trigger, .lang-switch) { color: var(--one-carmin); }
-.navigation-principale { display: none; }
-@media (min-width: 60rem) {
-  .navigation-principale { display: flex; gap: clamp(1.3rem, 3vw, 3rem); }
-  .navigation-principale a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--hauteur-tactile);
-    font: 600 0.82rem var(--texte);
-    color: var(--one-encre);
-    text-decoration: none;
-  }
-  .navigation-principale a:is(:hover, :focus-visible, [aria-current="page"]) {
-    color: var(--one-carmin);
-    text-decoration: underline;
-    text-underline-offset: 0.42em;
-  }
-}
-main .one-ouverture:not(.one-ouverture--editorial) {
-  background: var(--one-ivoire);
-  border-bottom-color: var(--rouge-mat-a15);
-}
-.one-ouverture:not(.one-ouverture--editorial) h1 { color: var(--one-encre); }

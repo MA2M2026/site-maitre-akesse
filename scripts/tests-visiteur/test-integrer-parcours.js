@@ -42,11 +42,9 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
       n('representation.html') + '« Intégrer l’agence » : passage par l’Académie expliqué, bouton « Rejoindre l’Académie », pas de formulaire');
     await p.click('.rp-bouton[data-choix="simple"]'); await p.waitForTimeout(700);
     ok(await p.isVisible('#simple') && await p.isHidden('#integrer') && await p.isVisible('#form-casting'), n('representation.html') + '« Simple représentation » : son parcours et le formulaire');
-    ok(await p.inputValue('#ca-porte') === 'reseau' && await p.inputValue('#ca-experience') === '' && await p.isHidden('#ca-porte') && await p.isHidden('#ca-lien-bloc'),
-      n('representation.html') + 'Talent Network présélectionné, les deux ans d’expérience restent à confirmer');
-    await p.selectOption('#ca-experience', 'oui');
-    ok(await p.isVisible('#ca-lien-bloc'), n('representation.html') + 'le lien du book est proposé après confirmation de l’expérience');
-    await p.fill('#ca-lien-travail', 'https://www.instagram.com/awa'); await p.fill('#ca-message', 'Bonjour');
+    ok(await p.inputValue('#ca-porte') === 'reseau' && await p.inputValue('#ca-experience') === 'oui' && await p.isHidden('#ca-porte') && await p.isVisible('#ca-lien-bloc'),
+      n('representation.html') + 'formulaire réglé d’avance : Talent Network, déjà mannequin, lien vers son travail proposé');
+    await p.fill('#ca-lien-travail', 'https://www.instagram.com/awa'); await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400); await p.fill('#ca-message', 'Bonjour');
     ok(await p.evaluate(() => messageAvecLien()) === 'Parcours choisi : Talent Network\n\n' + (en ? 'Link to my work: ' : 'Lien vers mon travail : ') + 'https://www.instagram.com/awa\n\nBonjour',
       n('representation.html') + 'la porte puis le lien passent en tête du message lu par l’agence');
     ok(await deborde(p) <= 1 && !errs.length, n('representation.html') + 'aucun débordement, aucune erreur ' + errs.join(' | '));
@@ -61,7 +59,7 @@ const PORT = String(9930 + Math.floor(Math.random() * 30));
     await p.selectOption('#ca-porte', 'academie');
     ok(await p.inputValue('#ca-experience') === 'non' && await p.isHidden('#ca-experience') && await p.isHidden('#ca-lien-bloc'),
       n('academie.html') + '« Me former » : débutant·e, sans lien');
-    await p.fill('#ca-message', 'Bonjour');
+    await p.click('.lx-etape:not([hidden]) .lx-suivant'); await p.waitForTimeout(400); await p.fill('#ca-message', 'Bonjour');
     ok(await p.evaluate(() => messageAvecLien()) === 'Parcours choisi : MA2M Academy\n\nBonjour', n('academie.html') + 'la porte passe en tête du message');
     ok(await deborde(p) <= 1 && !errs.length, n('academie.html') + 'aucun débordement, aucune erreur ' + errs.join(' | '));
     await p.context().close();
