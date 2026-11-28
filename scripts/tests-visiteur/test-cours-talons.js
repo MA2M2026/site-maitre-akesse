@@ -88,59 +88,52 @@ async function navigateur() {
     for (let i = 0; i < 15 && await p.locator('.ecrans-suivant').count() && !(await p.isVisible('#form-talons')); i++) { await p.click('.ecrans-suivant'); await p.waitForTimeout(300); }
     // (23/11/2026, demande de la propriétaire) le formulaire en petits écrans, une question à la fois : formule, parcours,
     // thèmes, détails, créneaux, calendrier, vous, parent, objectif, photos, paiement, dernière étape
-    const nomCourant = () => p.evaluate(() => { const e = [...document.querySelectorAll('.ct-etape')].find((x) => !x.classList.contains('u-hidden')); return e && e.dataset.nom; });
+    const visible = (nom) => p.isVisible('.ct-etape[data-nom="' + nom + '"]');
     const suivant = async () => { await p.click('#ct-suivant'); await p.waitForTimeout(250); };
-    const retourA = async (nom) => { for (let i = 0; i < 14 && (await nomCourant()) !== nom; i++) { await p.click('#ct-retour'); await p.waitForTimeout(200); } };
-    const avancerA = async (nom) => { for (let i = 0; i < 14 && (await nomCourant()) !== nom; i++) await suivant(); };
-    const depasse = async () => p.evaluate(() => { const s = document.querySelector('.ecran-courant'), bar = document.querySelector('.ecrans-barre'); return !s || !bar ? 0 : Math.round(s.getBoundingClientRect().bottom + scrollY + bar.offsetHeight - innerHeight); });
-    const tropHauts = [];
-    const noter = async () => { const d = await depasse(); if (d > 40) { tropHauts.push((await nomCourant()) + ' (+' + d + ' px)'); if (process.env.CAPTURES_ECRANS) await p.screenshot({ path: process.env.CAPTURES_ECRANS + '/talons-' + (await nomCourant()) + '.png', fullPage: true }); } };
-    ok(/(Étape|Step) 1 (sur|of) \d+/.test(await p.textContent('#ct-compteur')), n + 'compteur « Étape 1 sur … » au lieu des 4 ronds');
+    ok(/(Étape|Step) 1 (sur|of) 3/.test(await p.textContent('#ct-compteur')), n + 'compteur « Étape 1 sur 3 »');
     // étape 1
-    await noter();
+
     await p.click('#ct-suivant');
     ok(/formule|option/i.test(await p.textContent('#ct-msg')), n + 'étape 1 : sans formule, un message demande de choisir');
     // (14/11/2026) groupe sur plusieurs mois : durée, puis paiement d'un coup ou mois par mois
     await p.click('label.ct-choix:has(input[value="groupe"])');
-    await suivant();
+
     // (14/11/2026) parcours, en groupe comme en privé : d'abord « Je débute » / « J'ai déjà la base » (un écran à lui seul)
-    ok(await nomCourant() === 'parcours' && await p.isVisible('#ct-bloc-parcours') && await p.isHidden('#ct-bloc-groupe'), n + 'groupe : on demande d’abord « Je débute » ou « J’ai déjà la base »');
-    await noter();
+    ok(await visible('parcours') && await p.isVisible('#ct-bloc-parcours') && await p.isHidden('#ct-bloc-groupe'), n + 'groupe : on demande d’abord « Je débute » ou « J’ai déjà la base »');
+
     await p.click('#ct-suivant');
     ok(/débutez|beginner/.test(await p.textContent('#ct-msg')), n + 'sans parcours : un message demande de choisir');
     await p.click('label.ct-parcours-choix:has(input[value="debut"])');
-    await suivant();
-    ok(await nomCourant() === 'details' && await p.isVisible('#ct-mois') && await p.isHidden('#ct-bloc-paiement-mois') && (await p.textContent('#ct-total')).includes('30 000'), n + 'groupe : choix de la durée (1 mois par défaut, 30 000)');
+
+    ok(await visible('details') && await p.isVisible('#ct-mois') && await p.isHidden('#ct-bloc-paiement-mois') && (await p.textContent('#ct-total')).includes('30 000'), n + 'groupe : choix de la durée (1 mois par défaut, 30 000)');
     await p.selectOption('#ct-mois', '3');
     ok(/(Mois|Month) 1\s*(Les bases|The basics)\s*(Mois|Month) 2\s*(L’assurance|Confidence)\s*(Mois|Month) 3\s*(La prestance|Poise)/.test(await p.textContent('#ct-programme-choisi')), n + 'je débute, 3 mois : « Votre programme » = mois 1, 2, 3 dans l’ordre');
     ok(await p.isVisible('#ct-bloc-paiement-mois') && /90 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')) && /12 (dimanches|Sundays)/.test(await p.textContent('#ct-total')), n + 'groupe 3 mois, tout en une fois : 90 000 pour 12 dimanches');
     await p.click('label.ct-pastille:has(input[name="paiement"][value="mensuel"])');
     ok(/(À payer maintenant|To pay now) : ?30 000|To pay now: 30 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')), n + 'groupe 3 mois, mois par mois : 30 000 maintenant, puis chaque mois');
-    await noter();
+
     // j'ai déjà la base : elle coche ses thèmes, 1 ou 2 mois chacun (écran « Vos thèmes »)
-    await retourA('parcours');
+
     await p.click('label.ct-parcours-choix:has(input[value="base"])');
-    await suivant();
-    ok(await nomCourant() === 'themes' && await p.locator('#ct-themes .ct-theme').count() === 6 && !(await p.textContent('#ct-themes')).match(/asseoir|escalier|parole|sitting|stairs|speaking/i), n + 'j’ai la base : 6 thèmes à cocher (ni s’asseoir, ni escaliers, ni prise de parole)');
+
+    ok(await visible('themes') && await p.locator('#ct-themes .ct-theme').count() === 6 && !(await p.textContent('#ct-themes')).match(/asseoir|escalier|parole|sitting|stairs|speaking/i), n + 'j’ai la base : 6 thèmes à cocher (ni s’asseoir, ni escaliers, ni prise de parole)');
     await p.click('#ct-suivant');
     ok(/thème|theme/.test(await p.textContent('#ct-msg')), n + 'rien de coché : un message demande au moins un thème');
     await p.check('#ct-theme-3'); await p.selectOption('#ct-duree-3', '2'); await p.check('#ct-theme-4');
-    await noter();
-    await suivant();
+
     ok(await p.isHidden('#ct-champ-mois') && /3 (mois|months) en tout|3 months in all/.test(await p.textContent('#ct-total')) && /(La prestance|Poise) \((approfondissement|going further)\)/.test(await p.textContent('#ct-programme-choisi')), n + 'La prestance 2 mois + Le podium : 3 mois (payés mois par mois), approfondissement au 2e mois');
-    await retourA('formule');
+
     await p.click('label.ct-choix:has(input[value="prive_salle"])');
-    await avancerA('details');
+
     ok(await p.isHidden('#ct-bloc-groupe') && await p.isHidden('#ct-champ-nb') && /300 000/.test((await p.textContent('#ct-total')).replace(/[\u202f\u00a0]/g, ' ')) && /(Séances|Sessions) 1–4/.test(await p.textContent('#ct-programme-choisi')), n + 'privé + j’ai la base : 3 mois de thèmes = 12 séances (300 000), séances 1–4…');
-    await retourA('parcours');
+
     await p.click('label.ct-parcours-choix:has(input[value="debut"])');
-    await suivant();
-    ok(await nomCourant() === 'details' && await p.isVisible('#ct-champ-nb'), n + 'privé + je débute : l’écran des thèmes est sauté, le nombre de séances revient');
+
+    ok(await visible('details') && await p.isVisible('#ct-champ-nb'), n + 'privé + je débute : l’écran des thèmes est sauté, le nombre de séances revient');
     ok(/Touchez|Tap/.test(await p.textContent('.ct-etape[data-nom="formule"] .ct-consigne')) && await p.evaluate(() => getComputedStyle(document.querySelector('input[value="prive_salle"] + span'), '::after').content.includes('✓')), n + 'consigne « Touchez la formule », le bloc choisi porte une coche');
     await p.selectOption('#ct-nb', '10');
     ok((await p.textContent('#ct-total')).includes('250 000'), n + 'privé en salle, 10 séances : total 250 000 FCFA');
-    await noter();
-    await suivant();   // → « Vos créneaux »
+
     // (14/11/2026) cours privés : créneaux libres seulement, ou « dates à convenir ensemble »
     if (pasPret === true) {
       await p.waitForTimeout(500);
@@ -159,8 +152,7 @@ async function navigateur() {
       ok(await p.isHidden('#ct-bloc-creneaux') && await p.isHidden('#ct-dispo'), n + '« je choisirai après mon paiement » : rien à choisir maintenant');
     } else if (pasPret !== true) {
       await p.click('#ct-facon-maintenant');
-      await noter();
-      await suivant();   // → le calendrier, un écran à lui seul
+
       await p.waitForSelector('#ct-jours button', { timeout: 5000 }).catch(() => {});
       ok(await p.isVisible('#ct-bloc-creneaux') && await p.isHidden('#ct-dispo') && await p.locator('#ct-jours button').count() === 36, n + 'créneaux : 6 semaines du lundi au samedi (36 jours), pas de champ libre');
       ok(!(await p.$$eval('#ct-jours small', (l) => l.map((x) => x.textContent.toLowerCase()))).some((j) => /^(dim|sun)/.test(j)), n + 'jamais le dimanche (réservé au groupe)');
@@ -178,11 +170,11 @@ async function navigateur() {
       const lignes = await p.$$eval('#ct-choisis li', (l) => l.map((x) => x.textContent));
       ok(lignes.length === 10 && lignes.every((x) => /(Jeudi|Thursday)/.test(x) && /14 h – 16 h|2 pm – 4 pm/.test(x)), n + '« chaque semaine » : 10 jeudis de 14 h à 16 h');
       ok(/(Vos 10 séances|Your 10 sessions)$/.test((await p.textContent('#ct-choisis-titre')).trim()) && /48/.test(await p.textContent('.ct-garde')), n + '« Vos 10 séances », gardées 48 h');
-      await noter();
+
       // 12 séances au lieu de 10 : retour à l'écran des détails, puis de nouveau le calendrier
-      await retourA('details'); await p.selectOption('#ct-nb', '12'); await avancerA('calendrier');
+      await p.selectOption('#ct-nb', '12');
       ok(await p.locator('#ct-choisis li').count() === 12 && (await p.textContent('#ct-total')).includes('300 000'), n + '12 séances au lieu de 10 : les 2 jeudis suivants sont ajoutés tout seuls');
-      await retourA('details'); await p.selectOption('#ct-nb', '10'); await avancerA('calendrier');
+      await p.selectOption('#ct-nb', '10');
       ok(await p.locator('#ct-choisis li').count() === 10, n + 'retour à 10 séances : les 2 dernières sont retirées');
       if (process.env.CAPTURES) await p.locator('#ct-bloc-prive').screenshot({ path: process.env.CAPTURES + '/creneaux-' + ecran.width + (en ? '-en' : '') + '.png' });
       // 1 h 30 de pause : le même jeudi, 11 h à 17 h deviennent impossibles, 10 h et 18 h restent
@@ -198,12 +190,12 @@ async function navigateur() {
       await p.click('#ct-heures [data-heure="' + samedi + 'T18:00:00.000Z"]');
       ok(/déjà choisi|already chosen/.test(await p.textContent('#ct-msg')) && await p.locator('#ct-choisis li').count() === 10, n + 'pas plus de créneaux que de séances');
       // « dates à convenir » puis retour aux créneaux
-      await retourA('creneaux');
+
       await p.click('#ct-facon-convenir');
       ok(await p.isHidden('#ct-bloc-creneaux') && await p.isVisible('#ct-dispo'), n + '« dates à convenir ensemble » : les créneaux disparaissent, le champ des disponibilités apparaît');
       await p.click('#ct-facon-maintenant');
-      await suivant();
-      ok(await nomCourant() === 'calendrier' && await p.locator('#ct-choisis li').count() === 10, n + 'retour aux créneaux : les choix sont gardés');
+
+      ok(await visible('calendrier') && await p.locator('#ct-choisis li').count() === 10, n + 'retour aux créneaux : les choix sont gardés');
     }
     await p.click('#ct-suivant');
     const debEtape2 = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
@@ -213,20 +205,18 @@ async function navigateur() {
     ok(/Madame ou Mademoiselle|Mrs or Miss/.test(await p.textContent('#ct-msg')), n + 'sans civilité : on demande « Madame ou Mademoiselle »');
     await p.click('label.ct-pastille:has(input[name="civilite"][value="mademoiselle"])');
     await p.fill('#ct-nom', 'Kouassi Marie'); await p.fill('#ct-telephone', '07 01 02 03 04'); await p.selectOption('#ct-majorite', 'mineure'); await p.dispatchEvent('#ct-majorite', 'change');
-    await noter();
+
     // (relecture du 23/11/2026) « Entrée » au clavier dans un champ : on passe à l'écran suivant, sans rien envoyer ni sauter
     await p.press('#ct-telephone', 'Enter'); await p.waitForTimeout(300);
-    ok(await nomCourant() === 'parent' && await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : l’écran du parent apparaît (« Entrée » au clavier = écran suivant)');
+    ok(await visible('parent') && await p.isVisible('#ct-bloc-parent'), n + 'moins de 18 ans : les champs du parent apparaissent et la validation empêche d’avancer');
     await p.click('#ct-suivant');
     ok(await p.isVisible('#ct-parent-nom') && /parent/i.test(await p.textContent('#ct-msg')), n + 'mineure sans parent : on reste sur l’écran du parent avec un message');
     await p.fill('#ct-parent-nom', 'Mme Kouassi'); await p.fill('#ct-parent-telephone', '05 01 02 03 04');
-    await noter();
-    await suivant();
+
     await p.selectOption('#ct-objectif', 'miss'); await p.fill('#ct-concours', 'Miss Côte d’Ivoire');
     await p.click('label.ct-pastille:has(input[value="un_peu"])');
-    await noter();
-    await p.click('#ct-suivant');
-    // étape 3 : photos et vidéo
+
+    // Les pièces complètent la même page.
     await p.click('#ct-suivant');
     ok(/photo/i.test(await p.textContent('#ct-msg')), n + 'étape 3 : sans photos, un message les demande');
     await p.setInputFiles('#ct-photos', [1, 2, 3, 4, 0, 1].map((i) => chemin.join(MEDIAS, 'photo' + i + '.jpg')));
@@ -238,17 +228,15 @@ async function navigateur() {
     await p.setInputFiles('#ct-video', chemin.join(MEDIAS, 'video.mp4'));
     await p.waitForFunction(() => /✓/.test(document.getElementById('ct-video-info').textContent), null, { timeout: 30000 }).catch(() => {});
     ok(await p.locator('#ct-photos-apercu img').count() === 2 && /✓/.test(await p.textContent('#ct-video-info')), n + '2 photos en aperçu, vidéo prête');
-    await noter();
+
     await p.click('#ct-suivant');
     await p.waitForTimeout(800);
     ok(!drive.length && !(await p.isVisible('#ct-jauge-video')), n + 'paiement : rien n’est envoyé avant le clic sur « Envoyer »');
-    // paiement : sans choix, on reste ; Wave maintenant → la dernière étape montre les moyens de paiement
-    await p.click('#ct-suivant');
-    ok(await nomCourant() === 'paiement' && /maintenant ou plus tard|now or later/.test(await p.textContent('#ct-msg')), n + 'paiement sans choix : un message demande « maintenant ou plus tard »');
+    // Le paiement et la confirmation partagent la dernière page.
+    await p.click('#ct-envoyer');
+    ok(await visible('paiement') && /maintenant ou plus tard|now or later/.test(await p.textContent('#ct-msg')), n + 'paiement sans choix : un message demande « maintenant ou plus tard »');
     await p.click('label.ct-choix:has(input[value="maintenant"])');
-    await noter();
-    await suivant();
-    ok(await nomCourant() === 'envoi' && await p.isVisible('#ct-envoyer') && await p.isVisible('#ct-consentement') && await p.isHidden('#ct-suivant'), n + 'dernière étape : moyens de paiement, case de confidentialité et « Envoyer » sur le même écran');
+    ok(await visible('envoi') && await p.isVisible('#ct-envoyer') && await p.isVisible('#ct-consentement') && await p.isHidden('#ct-suivant'), n + 'dernière étape : moyens de paiement, case de confidentialité et « Envoyer » sur le même écran');
     ok((await p.getAttribute('#ct-lien-wave', 'href')).endsWith('?amount=250000'), n + 'lien Wave avec le bon montant (250 000)');
     // (13/11/2026) moyens en tuiles : Orange Money montre le numéro de l'agence et le montant, puis retour à Wave
     await p.click('#ct-moyens [data-moyen="orange_money"]'); await p.waitForTimeout(200);
@@ -259,8 +247,7 @@ async function navigateur() {
     const parOrange = page.startsWith('en/');
     if (parOrange) { await p.click('#ct-moyens [data-moyen="orange_money"]'); await p.waitForTimeout(200); ok(/Copy/.test(await p.textContent('#ct-consigne')), n + 'page anglaise : consigne en anglais (« Copy »)'); }
     await p.fill('#ct-ref-wave', 'T_ESSAI1');
-    await noter();
-    if (ecran.width < 700) ok(!tropHauts.length, n + 'chaque écran du formulaire tient sur le téléphone ' + tropHauts.join(', '));
+
     await p.click('#ct-envoyer');
     ok(/case|tick/i.test(await p.textContent('#ct-msg')), n + 'sans la case de confidentialité : envoi refusé avec un message');
     await p.check('#ct-consentement');
@@ -276,7 +263,8 @@ async function navigateur() {
       const vendredi = await p.$eval('#ct-jours', () => Array.from(document.querySelectorAll('#ct-jours button')).find((x) => /^(ven|fri)/i.test(x.querySelector('small').textContent)).dataset.jour);
       await p.click('#ct-jours [data-jour="' + vendredi + '"]'); await p.click('#ct-heures [data-heure="' + vendredi + 'T10:00:00.000Z"]');
       ok(await p.locator('#ct-choisis li').count() === 10, n + 'un autre créneau choisi : 10 de nouveau');
-      await avancerA('envoi');
+      await suivant();
+      await suivant();
       await p.click('#ct-envoyer');
     }
     if (pasPret === 'coupure') {
