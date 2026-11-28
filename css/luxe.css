@@ -236,3 +236,15 @@
   border-radius: var(--rayon-carte);
   box-shadow: none;
 }
+
+.lx-progression.lx-progression-trois { grid-template-columns: repeat(3, 1fr); }
+.lx-en-etapes .lx-etape:not([hidden]) + .lx-etape:not([hidden]) { margin-top: 1.25rem; }
+
+input.depot-video[type="file"] {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px dashed currentColor;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}

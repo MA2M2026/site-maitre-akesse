@@ -5772,3 +5772,9 @@ La palette charbon s’applique aux feuilles de style publiques, à la peau des 
 ### Photos des candidatures
 
 Le formulaire partagé du casting, de la représentation et de MA2M Academy propose cinq emplacements nommés. La sélection groupée remplit les places libres dans l’ordre. On peut agrandir, remplacer ou retirer une photo sans déplacer les autres. Les minimums existants restent de trois ou quatre photos selon le parcours. L’envoi utilise une liste ordonnée comme auparavant et peut reprendre les dossiers déjà en file, y compris ceux de plus de cinq photos. L’Atelier Talons & Élégance garde son propre formulaire.
+
+Le formulaire des cours de talons regroupe désormais ces sections en trois étapes en français et en anglais. La première contient la formule, le programme et les créneaux. La deuxième contient les coordonnées, les informations du parent si nécessaire et les médias. La troisième contient le paiement et la confirmation. Les mêmes sections continuent à porter leurs validations et leurs conditions d'affichage.
+
+### Trois formulaires de candidature simplifiés
+
+Le casting, la représentation et MA2M Academy présentent chacun trois écrans. Ils demandent les mensurations, cinq photos dans des cases individuelles et une vidéo. Les barres indiquent la progression de chaque envoi. La représentation demande également de confirmer deux ans d’expérience. La page « Intégrer l’agence » oriente vers ces candidatures. Le cours de talons conserve deux à cinq photos et une vidéo de marche.

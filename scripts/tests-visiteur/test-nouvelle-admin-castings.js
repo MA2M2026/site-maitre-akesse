@@ -89,8 +89,8 @@ const ecrits = (journal, m, table) => journal.filter((j) => j[0] === m && j[1] =
     ok(fiche.videoLarge >= Math.min(320, ecran.width - 80), n + 'fiche : vidéo en grand (' + fiche.videoLarge + ' px de large)');
     // (24/11/2026) vidéo sur toute la largeur de sa carte, sur fond noir (plus de bandes blanches) ; ville « Abidjan · Cocody »
     const videoPleine = await p.evaluate(() => { const f = document.querySelector('.fiche-video iframe.lecteur-video'), c = document.querySelector('.fiche-video'); const cs = getComputedStyle(c);
-      return f.getBoundingClientRect().width >= c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2 && getComputedStyle(f).backgroundColor === 'rgb(90, 20, 27)'; });
-    ok(videoPleine && /Abidjan · Cocody/.test(fiche.champs), n + 'fiche : vidéo sur toute la largeur de sa carte, fond rouge profond ; ville « Abidjan · Cocody »');
+      return f.getBoundingClientRect().width >= c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2 && getComputedStyle(f).backgroundColor === 'rgb(33, 27, 23)'; });
+    ok(videoPleine && /Abidjan · Cocody/.test(fiche.champs), n + 'fiche : vidéo sur toute la largeur de sa carte, fond charbon ; ville « Abidjan · Cocody »');
     // (24/11/2026) bloc « Parent ou tuteur » : état, coordonnées du parent, lien de confirmation prêt à partir sur WhatsApp
     const parent = await p.evaluate(() => { const b = document.querySelector('.bloc-parent'); if (!b) return null;
       const wa = b.querySelector('a.btn[href^="https://wa.me/"]');

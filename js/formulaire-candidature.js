@@ -42,11 +42,12 @@ async function chargerProjetsActifs() {
   // il s'affichait puis disparaissait d'un coup au profit du message « Aucun casting… »,
   // faisant sauter la page (journal du 04/10). Le bloc garde une hauteur minimale.
   const finChargement = () => { const c = document.getElementById('ca-chargement'); if (c) c.remove(); };
-  if (!sb) { finChargement(); document.getElementById('form-casting').classList.remove('u-hidden'); return; }
+  if (!sb) throw new Error('Liste des castings indisponible');
   // (liste posée par le serveur dans la page : middleware.js, page-donnees, 01/11/2026 ; sinon lue ici)
   const serveur = typeof donneesServeur === 'function' ? donneesServeur('page-donnees') : null;
-  const { data: projets } = serveur && Array.isArray(serveur.projets) ? { data: serveur.projets }
+  const { data: projets, error } = serveur && Array.isArray(serveur.projets) ? { data: serveur.projets }
     : await sb.from('casting_projets').select('id, nom, description, date_casting, lieu').eq('actif', true).order('ordre_affichage', { ascending: true }).order('nom');
+  if (error) throw error;
   const liste = projets || [];
   DESCRIPTIONS_PROJETS = {};
   liste.forEach(p => { if (p.description) DESCRIPTIONS_PROJETS[p.nom] = p.description; });
@@ -57,8 +58,7 @@ async function chargerProjetsActifs() {
     window.CASTINGS_INFOS[p.nom] = { description: p.description || '', date: d ? T('Casting le ', 'Casting on ') + d : '', lieu: p.lieu || '' };
   });
   selectProjet.innerHTML = `<option value="">${T('Sélectionner', 'Select')}</option>`
-    + liste.map(p => `<option value="${echapperHtml(p.nom)}">${echapperHtml(p.nom)}</option>`).join('')
-    + `<option value="__autre__">${T('Autre (précisez)', 'Other (specify)')}</option>`;
+    + liste.map(p => `<option value="${echapperHtml(p.nom)}">${echapperHtml(p.nom)}</option>`).join('');
 
   const aucunCasting = liste.length === 0;
   document.getElementById('ca-aucun-casting').classList.toggle('u-hidden', !aucunCasting);
@@ -67,10 +67,9 @@ async function chargerProjetsActifs() {
   document.dispatchEvent(new Event('ma2m:castings'));
 }
 if (PARCOURS === 'projet') {
-  // En cas de panne réseau, le formulaire s'affiche quand même (il ne doit jamais rester caché).
   chargerProjetsActifs().catch(() => {
-    const c = document.getElementById('ca-chargement'); if (c) c.remove();
-    document.getElementById('form-casting').classList.remove('u-hidden');
+    const c = document.getElementById('ca-chargement');
+    if (c) c.textContent = T('Les castings sont momentanément indisponibles. Réessayez en actualisant la page.', 'Castings are temporarily unavailable. Refresh the page to try again.');
   });
   document.getElementById('ca-projet').addEventListener('change', (e) => {
     const estAutre = e.target.value === '__autre__';
@@ -85,14 +84,6 @@ if (PARCOURS === 'projet') {
 }
 
 // --- Parcours (validé par la propriétaire le 30/09) ---------------------------
-// Candidature casting : formulaire complet, tout obligatoire, 4 photos minimum.
-// Intégrer l'agence : jamais mannequin = DÉBUTANT·E, formulaire allégé (pas de
-// pointure/poitrine/tour de taille/hanches, 3 photos minimum) ; déjà mannequin =
-// formulaire COMPLET, 4 photos. Pour tous : résidence complète, niveau d'études,
-// poids, taille de vêtements, vidéo.
-function estDebutant() {
-  return PARCOURS === 'agence' && document.getElementById('ca-experience').value === 'non';
-}
 // le lien facultatif vers son travail (déjà mannequin) passe en tête du message lu par l'agence
 function messageAvecLien() {
   const texte = document.getElementById('ca-message').value.trim();
@@ -121,18 +112,13 @@ function titreEmailCandidature(candidature) {
   const libelle = libelleEmailPorte(candidature);
   return 'Nouvelle candidature — ' + (libelle ? libelle + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin') : "Intégrer l'agence");
 }
-function photosMin() { return estDebutant() ? 3 : 4; }
+function photosMin() { return emplacementsPhotos.length; }
 function majParcours() {
   if (PARCOURS !== 'agence') return;
-  const debutant = estDebutant();
-  // lien facultatif vers son travail, pour « déjà mannequin » (page Intégrer l'agence, 08/11/2026)
   const lienBloc = document.getElementById('ca-lien-bloc');
   if (lienBloc) lienBloc.classList.toggle('u-hidden', document.getElementById('ca-experience').value !== 'oui');
-  document.querySelectorAll('.ca-mensuration-complete').forEach(bloc => {
-    bloc.style.display = debutant ? 'none' : '';
-    const champ = bloc.querySelector('select, input');
-    champ.required = !debutant;
-    if (debutant) champ.value = '';
+  document.querySelectorAll('.ca-mensuration-complete select, .ca-mensuration-complete input').forEach((champ) => {
+    champ.required = true;
   });
   rafraichirApercuPhotos();
 }
@@ -249,16 +235,12 @@ function rafraichirApercuPhotos() {
   const apercu = document.getElementById('ca-photos-apercu');
   const focus = apercu.contains(document.activeElement) ? document.activeElement.dataset.index : null;
   const n = photosSelectionnees().length;
-  const min = photosMin();
-  compteur.textContent = T(
-    `${n}/${emplacementsPhotos.length} photos · ${min} minimum`,
-    `${n}/${emplacementsPhotos.length} photos · ${min} minimum`
-  );
-  compteur.classList.toggle('ca-photos-incompletes', n < min);
+  compteur.textContent = `${n}/${emplacementsPhotos.length} photos`;
+  compteur.classList.toggle('ca-photos-incompletes', n < photosMin());
   apercu.innerHTML = emplacementsPhotos.map((nom, i) => {
     const photo = photosParEmplacement[i];
     const action = photo ? T('Remplacer', 'Replace') : T('Ajouter', 'Add');
-    return `<li class="ca-photo-emplacement">
+    return `<li class="ca-photo-emplacement${photo ? '' : ' ca-photo-emplacement-vide'}">
       <strong>${echapperHtml(nom)}</strong>
       ${photo ? `<button type="button" class="ca-photo-vignette" data-bouton-libre data-index="${i}" data-photo-action="voir"
         aria-label="${echapperHtml(T('Agrandir', 'Enlarge') + ' · ' + nom)}"><img src="${adresseApercu(photo)}" alt=""></button>` : ''}
@@ -434,7 +416,7 @@ remplirIndicatifs(document.getElementById('ca-parent-indicatif'));
 //         videoFaite, lienVideo, agencePrevenue } gardé dans le téléphone (EnvoiFiable, js/app.js) à chaque étape franchie.
 async function envoyerMedias(etat) {
   const { candidature, projetNom, mineur } = etat, fichiersPhotos = etat.photos || [], videoChoisie = etat.video, PARCOURS = etat.parcours, msg = document.getElementById('ca-msg');
-  document.getElementById('ca-envoi-jauges').classList.remove('u-hidden');
+  document.getElementById('ca-envoi-jauges').classList.toggle('u-hidden', !fichiersPhotos.length && !videoChoisie);
   let nbPhotosEchouees = 0;
   let dossierDrive = null;
   if (etat.photosFaites) { dossierDrive = etat.dossier || null; nbPhotosEchouees = etat.nbPhotosEchouees || 0; }
@@ -448,7 +430,7 @@ async function envoyerMedias(etat) {
     const idsPhotos = fichiersPhotos.map((f, i) => { boiteJauges.appendChild(creerJauge('ca-jauge-photo-' + (i + 1))); return 'ca-jauge-photo-' + (i + 1); });
     const nomPhoto = (i) => 'Photo ' + (i + 1);
     idsPhotos.forEach((id, i) => majJauge(id, 0, nomPhoto(i) + T(' : en attente…', ': waiting…')));
-    majJauge('ca-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
+    if (videoChoisie) majJauge('ca-jauge-video', 0, T('Vidéo : en attente des photos…', 'Video: waiting for the photos…'));
     // (16/11/2026, L-17) d'abord Cloudflare R2 (affichage fiable dans l'Administration) ; ensuite la copie Drive
     // (archive), comme avant. Les jauges des photos arrivées chez Cloudflare restent vertes : la copie Drive de ces
     // photos se fait sans jauge ; une photo qui n'est pas arrivée chez Cloudflare garde sa jauge pour Drive.
@@ -551,7 +533,7 @@ async function envoyerMedias(etat) {
       telephone: candidature.phone,
       email: candidature.email,
       // (25/11/2026) en clair : « Nouvelle candidature — MA2M Academy : se former et intégrer l'agence · Débutant(e) »
-      message: `${titreEmailCandidature(candidature)}${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : (libelleEmailPorte(candidature) || "Intégrer l'agence") + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || 'non reçue'}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
+      message: `${titreEmailCandidature(candidature)}${EN ? ' (site en anglais)' : ''}.\nPostule pour : ${PARCOURS === 'projet' ? 'Projet/casting : ' + projetNom : (libelleEmailPorte(candidature) || "Intégrer l'agence") + (candidature.experience_mannequin === 'non' ? ' · Débutant(e)' : ' · Déjà mannequin')}\nVille : ${candidature.city || '-'}${candidature.quartier ? ' · ' + candidature.quartier : ''}\nTaille de vêtements : ${candidature.clothing_size || '-'}\nVidéo : ${lienVideo || (etat.sansVideo ? 'non demandée' : 'non reçue')}\nTaille : ${candidature.height_cm || '-'} cm\nMessage : ${candidature.message || '-'}${mineur ? `\n⚠️ MINEUR. Parent ou tuteur : ${candidature.parent_nom || '-'} — ${candidature.parent_telephone || '-'}` : ''}`
     });
     etat.agencePrevenue = true; etat.agenceComplete = !!(etat.photosFaites && etat.videoFaite); await EnvoiFiable.garder('candidature', etat);
   }
@@ -559,7 +541,7 @@ async function envoyerMedias(etat) {
   if (window.jouerSon) window.jouerSon('envoi');
   const soucis = [];
   if (nbPhotosEchouees) soucis.push(T(`${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's n\'ont' : ' n\'a'} pas pu être envoyée${nbPhotosEchouees > 1 ? 's' : ''}`, `${nbPhotosEchouees} photo${nbPhotosEchouees > 1 ? 's' : ''} could not be sent`));
-  if (!lienVideo) soucis.push(T('votre vidéo n\'a pas pu être envoyée, envoyez-la sur WhatsApp au +225 05 45 65 66 87 en indiquant votre nom', 'your video could not be sent, please send it on WhatsApp to +225 05 45 65 66 87 with your name'));
+  if (!etat.sansVideo && !lienVideo) soucis.push(T('votre vidéo n\'a pas pu être envoyée, envoyez-la sur WhatsApp au +225 05 45 65 66 87 en indiquant votre nom', 'your video could not be sent, please send it on WhatsApp to +225 05 45 65 66 87 with your name'));
   const complet = etat.photosFaites && etat.videoFaite;
   etat.essais = (etat.essais || 0) + 1;
   const reprendra = !complet && etat.essais < 3 && etat.fichiersGardes;
@@ -567,7 +549,7 @@ async function envoyerMedias(etat) {
   else if (!complet) await EnvoiFiable.oublier('candidature');  // (3 essais : on n'insiste plus, la consigne WhatsApp reste affichée)
   afficherMsg(msg, soucis.length
     ? T(`Candidature envoyée, mais ${soucis.join(' ; ')} (connexion instable ?). Le reste du dossier est bien enregistré.`, `Application sent, but ${soucis.join('; ')} (unstable connection?). The rest of your application has been saved.`)
-    : T('Merci ! Votre candidature a bien été envoyée. Notre équipe vous recontactera si votre profil est retenu.', 'Thank you! Your application has been sent. Our team will contact you if your profile is selected.'), 'ok');
+    : T('Félicitations ! Vos informations ont été envoyées. Notre équipe vous recontactera.', 'Congratulations! Your information has been sent. Our team will contact you.'), 'ok');
   // (25/11/2026, décision de la propriétaire) MA2M Academy : les tarifs ne sont pas sur le site ; une fois le dossier
   // envoyé, la candidate peut consulter la fiche d'inscription (droits d'inscription et frais de formation, en PDF)
   const porteEnvoyee = window.Partage.porteDuMessage(candidature.message);
@@ -609,7 +591,7 @@ async function soumettreCandidature() {
   if (PARCOURS === 'projet') {
     const projetSelect = document.getElementById('ca-projet').value;
     projetNom = projetSelect === '__autre__' ? document.getElementById('ca-projet-autre').value.trim() : projetSelect;
-    if (!projetNom) {
+    if (!projetNom || !Object.hasOwn(window.CASTINGS_INFOS || {}, projetNom)) {
       afficherMsg(msg, T('Merci de préciser le projet ou casting concerné.', 'Please specify the project or casting concerned.'), 'err');
       return;
     }
@@ -625,7 +607,7 @@ async function soumettreCandidature() {
   const fichiersPhotos = photosSelectionnees();
   const minPhotos = photosMin();
   if (fichiersPhotos.length < minPhotos) {
-    afficherMsg(msg, T(`Merci d'ajouter au moins ${minPhotos} photos (${fichiersPhotos.length} sélectionnée${fichiersPhotos.length > 1 ? 's' : ''} pour l'instant).`, `Please add at least ${minPhotos} photos (${fichiersPhotos.length} selected so far).`), 'err');
+    afficherMsg(msg, T(`Complétez les ${minPhotos} cases photo (${fichiersPhotos.length} remplies).`, `Fill all ${minPhotos} photo slots (${fichiersPhotos.length} filled).`), 'err');
     return;
   }
   if (videoEnPreparation) {
@@ -650,7 +632,7 @@ async function soumettreCandidature() {
     mineur: estMineur(),
     genre: genre,
     civilite: genre === 'homme' ? 'Monsieur' : (document.getElementById('ca-civilite').value || null),
-    height_cm: taille,
+    height_cm: taille || null,
     shoe_size: document.getElementById('ca-pointure').value.trim(),
     weight_kg: parseInt(document.getElementById('ca-poids').value) || null,
     chest_cm: parseInt(document.getElementById('ca-poitrine').value) || null,

@@ -141,7 +141,7 @@
   T("        <label for=\"ca-video\">Vidéo de présentation *</label>", "        <label for=\"ca-video\">Introduction video *</label>"),
   // (24/11/2026, demande de la propriétaire) consignes précises : pas de vidéo TikTok, de danse, de chant ni avec des amis
   T("        <div class=\"" + (AG ? 'ca-14' : 'ca-6') + " ca-video-aide\"><p>3 minutes au plus. Filmez-vous <strong>seule ou seul, face à la caméra</strong>, dans un endroit calme et bien éclairé :</p><ol><li>dites votre nom et prénom, votre âge, votre taille et votre commune ;</li><li>puis faites quelques pas vers la caméra et retournez-vous.</li></ol><p><strong>Refusées :</strong> vidéos TikTok ou WhatsApp déjà publiées, danse, chant, musique, filtres, vidéos avec des amis.</p></div>", "        <div class=\"" + (AG ? 'ca-14' : 'ca-6') + " ca-video-aide\"><p>3 minutes at most. Film yourself <strong>alone, facing the camera</strong>, somewhere quiet and well lit:</p><ol><li>say your full name, age, height and district;</li><li>then walk a few steps towards the camera and turn around.</li></ol><p><strong>Not accepted:</strong> TikTok or WhatsApp videos already posted, dancing, singing, music, filters, videos with friends.</p></div>"),
-  "        <input type=\"file\" id=\"ca-video\" accept=\"video/*\">",
+  "        <input type=\"file\" id=\"ca-video\" class=\"depot-video\" accept=\"video/*\">",
   "        <span id=\"ca-video-info\" class=\"ca-14\"></span>",
   "        <div class=\"form-consentement ca-video-engagement\">",
   "          <input type=\"checkbox\" id=\"ca-video-consignes\" required class=\"ca-17\">",

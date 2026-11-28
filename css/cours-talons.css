@@ -231,3 +231,6 @@ body.ecrans-actif .ct-wave .pp-moyen i { flex-basis: 24px; width: 24px; height: 
 body.ecrans-actif .ct-wave .pp-consigne { font-size: 0.8rem; margin: 0.4rem 0; }
 body.ecrans-actif .ct-wave .pp-gros { min-height: 44px; padding-top: 0.5rem; padding-bottom: 0.5rem; }
 body.ecrans-actif .ct-inscription .form-consentement label { font-size: 0.8rem; line-height: 1.4; }
+
+.ct-etape:not(.u-hidden) ~ .ct-etape:not(.u-hidden) { margin-top: 1.4rem; }
+.ct-etape-titre span[hidden] { display: none; }

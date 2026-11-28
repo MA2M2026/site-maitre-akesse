@@ -48,7 +48,7 @@
   100% { transform: scale(1); }
 }.navigation-principale { display: none; }</style>
 <link rel="stylesheet" href="../css/pages-ecrans.css?v=e4cdb007">
-<noscript id="css-complet"><link rel="stylesheet" href="../css/polices.css?v=f8b78de5"><link rel="stylesheet" href="../css/menu.css?v=1bcf4a12"><link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="../css/style.css?v=e0b15820"><link rel="stylesheet" href="../css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="../css/luxe.css?v=f892ad38"><link rel="stylesheet" href="../css/integrer-agence.css?v=241aad5f"><link rel="stylesheet" href="../css/candidature.css?v=3b83918b"><link rel="stylesheet" href="../css/jetons.css?v=d445b8eb"><link rel="stylesheet" href="../css/installation.css?v=f02732d5"><link rel="stylesheet" href="../css/charte-ma2m.css?v=2cae3f8f"><link rel="stylesheet" href="../css/bouton-ma2m.css?v=c65b8b41"></noscript>
+<noscript id="css-complet"><link rel="stylesheet" href="../css/polices.css?v=f8b78de5"><link rel="stylesheet" href="../css/menu.css?v=2b09d00f"><link rel="stylesheet" href="../css/champs-telephone.css?v=11f5f49f"><link rel="stylesheet" href="../css/style.css?v=e0b15820"><link rel="stylesheet" href="../css/jauges-envoi.css?v=cd50e5b8"><link rel="stylesheet" href="../css/luxe.css?v=b0feb536"><link rel="stylesheet" href="../css/integrer-agence.css?v=241aad5f"><link rel="stylesheet" href="../css/candidature.css?v=6ab9f80a"><link rel="stylesheet" href="../css/jetons.css?v=d445b8eb"><link rel="stylesheet" href="../css/installation.css?v=f02732d5"><link rel="stylesheet" href="../css/charte-ma2m.css?v=2cae3f8f"><link rel="stylesheet" href="../css/bouton-ma2m.css?v=c65b8b41"></noscript>
 <script src="../js/css-differe.js?v=d938ae04" async></script>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#29241F">
@@ -121,7 +121,7 @@
 <section class="u-pt-1 ia-formulaire lx-formulaire rp-volet" id="candidature" hidden>
   <div class="container ca-1">
     <h2 class="lx-titre-section reveal">Your application</h2>
-    <form id="form-casting" data-parcours="agence">
+    <form id="form-casting" data-formulaire="representation" data-parcours="agence">
       <div id="ca-bloc-agence-info" class="ca-2">
         <p class="ca-3">📤 Your application for <strong>representation</strong> is free: simply fill in the form below.</p>
         <p class="ca-5">📩 We reply by WhatsApp or e-mail. Submitting your profile guarantees neither selection, nor publication, nor jobs. 😎</p>
@@ -134,18 +134,17 @@
         </select>
       </div>
       <div class="form-champ">
-        <label for="ca-experience">Have you ever worked as a model? *</label>
+        <label for="ca-experience">Confirm your modelling experience *</label>
         <select id="ca-experience" required>
           <option value="">Select</option>
-          <option value="non">No, this would be my first experience</option>
-          <option value="oui" selected>Yes, I have already worked as a model</option>
+          <option value="oui">I have at least two years of experience</option>
         </select>
       </div>
       <div class="form-champ u-hidden" id="ca-lien-bloc">
-        <label for="ca-lien-travail">Link to your work (optional): Instagram, book, previous agency…</label>
-        <input type="text" inputmode="url" id="ca-lien-travail" maxlength="300" placeholder="https://www.instagram.com/…">
+        <label for="ca-lien-travail">Portfolio link (optional)</label>
+        <input type="url" inputmode="url" pattern="https?://.+" id="ca-lien-travail" maxlength="300" placeholder="https://www.instagram.com/…">
       </div>
-      <script src="../js/formulaire-candidature-champs.js?v=52ec5fd7"></script>
+      <script src="../js/formulaire-candidature-champs.js?v=0bc141a1"></script>
     </form>
   </div>
 </section>
@@ -167,10 +166,10 @@
 <script src="../js/video-allegee.js?v=c3f34d58"></script>
 <script src="../js/confort.js?v=cad83e86"></script>
 <script src="../js/menu.js?v=8382bd5a"></script>
-<script src="../js/diaporama-luxe.js?v=56c3c955"></script>
-<script src="../js/integrer-agence.js?v=a872f7de"></script>
-<script src="../js/formulaire-candidature.js?v=d238a1ab"></script>
-<script src="../js/candidature-etapes.js?v=976b5a56"></script>
+<script src="../js/diaporama-luxe.js?v=9ea0a950"></script>
+<script src="../js/integrer-agence.js?v=eb3449a1"></script>
+<script src="../js/formulaire-candidature.js?v=27bcb775"></script>
+<script src="../js/candidature-etapes.js?v=1357dedd"></script>
 <script src="../js/brouillon.js?v=8c0a08ff"></script>
 <script src="../js/representation.js?v=14a2d1ce"></script>
 <script src="../js/pages-ecrans.js?v=6414142f"></script>

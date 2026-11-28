@@ -22,10 +22,18 @@
   const TITRES = [projet ? T('Choisissez le casting', 'Choose the casting') : T('Votre parcours', 'Your path'), T('Parlez-nous de vous', 'Tell us about yourself'),
     T('Vos mensurations', 'Your measurements'), T('Vos photos et votre vidéo', 'Your photos and video')];
 
+  const simplifie = !!form.dataset.formulaire;
+  const pages = simplifie ? [[1, 2], [3, 4], [5]] : [[1], [2], [3], [4], [5]];
+  const pageDe = (n) => pages.findIndex((page) => page.includes(n));
+  const progression = simplifie
+    ? [projet ? T('Casting et coordonnées', 'Casting and contact details') : T('Parcours et coordonnées', 'Path and contact details'),
+      T('Mensurations et pièces', 'Measurements and files'), T('Envoi', 'Send')] : NOMS;
+
   // ---------- construction : barre, 4 étapes, résumé
   const el = (tag, cls, texte) => { const e = document.createElement(tag); if (cls) e.className = cls; if (texte) e.textContent = texte; return e; };
   const barre = el('ol', 'lx-progression'); barre.setAttribute('aria-label', T('Étapes', 'Steps'));
-  NOMS.forEach((n) => barre.appendChild(el('li', '', n)));
+  if (simplifie) barre.classList.add('lx-progression-trois');
+  progression.forEach((n) => barre.appendChild(el('li', '', n)));
   form.parentNode.insertBefore(barre, form);
   // (« Aucun casting n'est ouvert » : le formulaire est caché par la page, la barre des étapes aussi)
   const majBarre = () => { barre.hidden = form.classList.contains('u-hidden'); };
@@ -54,6 +62,12 @@
   if (grilleMesures) etapes[2].appendChild(grilleMesures);
   // 4 : photos, vidéo, accord
   [champDe('ca-photos'), champDe('ca-video'), $('ca-consentement') && $('ca-consentement').closest('.form-champ')].filter(Boolean).forEach((e) => etapes[3].appendChild(e));
+  if (simplifie) {
+    etapes.forEach((f) => f.querySelector('.lx-etape-titre > span').classList.add('u-hidden'));
+    const message = etapes[1].querySelector('#ca-message');
+    message.required = false;
+    etapes[1].querySelector('label[for=ca-message]').textContent = T('Message (facultatif)', 'Message (optional)');
+  }
   // résumé + envoi
   const resume = el('fieldset', 'lx-etape lx-resume'); resume.dataset.etape = '5';
   resume.appendChild(el('legend', 'u-lecteur-ecran', T('Votre candidature', 'Your application')));
@@ -70,11 +84,22 @@
   // boutons de chaque étape et leur message
   const msgs = etapes.map((f, i) => {
     const nav = el('div', 'lx-boutons lx-etape-boutons');
-    if (i > 0) { const r = el('button', 'btn lx-retour', T('← Retour', '← Back')); r.type = 'button'; r.addEventListener('click', () => montrer(i)); nav.appendChild(r); }
-    const s = el('button', 'btn btn--principal lx-suivant', T('Suivant →', 'Next →')); s.type = 'button';
-    s.addEventListener('click', () => { if (valide(i + 1)) montrer(i + 2); });
-    nav.appendChild(s); f.appendChild(nav);
+    const page = pageDe(i + 1);
+    const groupe = pages[page];
+    if (groupe[groupe.length - 1] === i + 1) {
+      if (page > 0) {
+        const retour = el('button', 'btn lx-retour', T('← Retour', '← Back'));
+        retour.type = 'button';
+        retour.addEventListener('click', () => montrer(pages[page - 1][0]));
+        nav.appendChild(retour);
+      }
+      const suivant = el('button', 'btn btn--principal lx-suivant', T('Suivant →', 'Next →'));
+      suivant.type = 'button';
+      suivant.addEventListener('click', () => { if (groupe.every(valide)) montrer(pages[page + 1][0]); });
+      nav.appendChild(suivant);
+    }
     const m = el('div', 'form-msg'); m.setAttribute('role', 'alert'); f.appendChild(m);
+    if (nav.children.length) f.appendChild(nav);
     return m;
   });
   etapes.forEach((f) => form.insertBefore(f, form.firstChild && form.querySelector(':scope > script')));
@@ -86,8 +111,9 @@
   let courante = 1;
   function montrer(n, defiler) {
     courante = n;
-    etapes.concat([resume]).forEach((f, i) => { f.hidden = i + 1 !== n; });
-    Array.from(barre.children).forEach((li, i) => { li.className = i + 1 < n ? 'fait' : i + 1 === n ? 'actif' : ''; });
+    const page = pageDe(n);
+    etapes.concat([resume]).forEach((f, i) => { f.hidden = !pages[page].includes(i + 1); });
+    Array.from(barre.children).forEach((li, i) => { li.className = i < page ? 'fait' : i === page ? 'actif' : ''; });
     msgs.forEach((m) => { m.className = 'form-msg'; m.textContent = ''; });
     if (n === 5) dessinerResume();
     if (defiler !== false && typeof barre.scrollIntoView === 'function') barre.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -101,11 +127,11 @@
   const cache = (c) => !!c.closest('.u-hidden, [hidden]:not(.lx-etape)') || [...function* () { for (let x = c; x && x !== form; x = x.parentElement) yield x; }()].some((x) => x.style && x.style.display === 'none');
   function valide(i) {
     const f = etapes[i - 1];
-    if (i === 1 && projet && !$('ca-projet').value) return erreur(1, T('Choisissez un casting (ou « Mon casting n’est pas dans la liste »).', 'Choose a casting (or “My casting is not in the list”).'));
+    if (i === 1 && projet && !$('ca-projet').value) return erreur(1, T('Choisissez un casting ouvert.', 'Choose an open casting.'));
     // (d'abord ce qui compte le plus : l'âge minimum, les photos et la vidéo)
     if (i === 4) {
       const n = typeof photosSelectionnees === 'function' ? photosSelectionnees().length : 0, min = typeof photosMin === 'function' ? photosMin() : 4;
-      if (n < min) return erreur(4, T(`Ajoutez au moins ${min} photos (${n} pour l’instant).`, `Please add at least ${min} photos (${n} so far).`), $('ca-photos'));
+      if (n < min) return erreur(4, T(`Complétez les ${min} cases photo (${n} remplies).`, `Fill all ${min} photo slots (${n} filled).`), $('ca-photos'));
       if (!(typeof videoChoisie !== 'undefined' && videoChoisie) && !(typeof videoEnPreparation !== 'undefined' && videoEnPreparation)) return erreur(4, T('Ajoutez votre vidéo de présentation (3 minutes au plus).', 'Please add your introduction video (3 minutes at most).'), $('ca-video'));
     }
     for (const c of f.querySelectorAll('input, select, textarea')) {
@@ -157,7 +183,7 @@
     const vign = el('span', 'lx-vignettes');
     document.querySelectorAll('#ca-photos-apercu img').forEach((img, k) => { if (k < 5) { const i = el('i'); i.style.backgroundImage = 'url("' + img.src + '")'; vign.appendChild(i); } });
     const n = typeof photosSelectionnees === 'function' ? photosSelectionnees().length : 0;
-    ligne('📷', '', (n + ' photo' + (n > 1 ? 's' : '')) + ' · ' + (typeof videoChoisie !== 'undefined' && videoChoisie ? T('vidéo ajoutée', 'video added') : T('vidéo en préparation', 'video being prepared')), 4, vign);
+    ligne('📷', '', (n + ' photo' + (n > 1 ? 's' : '')) + (' · ' + (typeof videoChoisie !== 'undefined' && videoChoisie ? T('vidéo ajoutée', 'video added') : T('vidéo en préparation', 'video being prepared'))), 4, vign);
   }
 
   // ---------- castings en cartes (« Postuler à un casting »)
@@ -170,9 +196,7 @@
     if (!boite) {
       boite = el('div', 'lx-castings'); boite.id = 'lx-castings'; boite.setAttribute('role', 'radiogroup'); boite.setAttribute('aria-label', T('Castings ouverts', 'Open castings'));
       const champ = select.closest('.form-champ'); champ.classList.add('lx-champ-discret'); champ.parentNode.insertBefore(boite, champ);
-      const lien = el('button', 'lx-casting-autre', T('Mon casting n’est pas dans la liste', 'My casting is not in the list')); lien.type = 'button'; lien.dataset.boutonLibre = ''; lien.id = 'lx-casting-autre';
-      lien.addEventListener('click', () => { select.value = '__autre__'; select.dispatchEvent(new Event('change', { bubbles: true })); majCartes(); const a = $('ca-projet-autre'); if (a) a.focus(); });
-      boite.after(lien);
+
     }
     boite.textContent = '';
     const infos = window.CASTINGS_INFOS || {};
@@ -197,7 +221,6 @@
   function majCartes() {
     const v = $('ca-projet') ? $('ca-projet').value : '';
     document.querySelectorAll('#lx-castings .lx-casting').forEach((c) => { const on = c.dataset.valeur === v; c.classList.toggle('choisi', on); c.setAttribute('aria-checked', on ? 'true' : 'false'); });
-    const a = $('lx-casting-autre'); if (a) a.classList.toggle('choisi', v === '__autre__');
   }
   if (projet) {
     // (les cartes montrent déjà la description de chaque casting : pas de doublon sous la liste)

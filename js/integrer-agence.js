@@ -16,22 +16,14 @@
       c.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(c.dataset.porte === valeur)));
     });
   }
-  // passer à « débutant·e » vide les mensurations complètes (js/formulaire-candidature.js) : on prévient d'abord
-  function mensurationsRemplies() {
-    return [...document.querySelectorAll('.ca-mensuration-complete select, .ca-mensuration-complete input')].some((c) => c.value);
-  }
   function reglerExperience(valeur) {
-    if (!valeur || valeur === experience.value) return true;
-    if (valeur === 'non' && mensurationsRemplies() && !confirm(document.documentElement.lang === 'en'
-      ? 'Switch to the beginner path? Your shoe size, bust, waist and hip measurements will be cleared.'
-      : 'Passer au parcours débutant·e ? Votre pointure, poitrine, tour de taille et tour de hanches seront effacés.')) return false;
+    if (!valeur || valeur === experience.value) return;
     experience.value = valeur;
     experience.dispatchEvent(new Event('change', { bubbles: true }));
-    return true;
   }
   function choisir(valeur, versFormulaire) {
-    if (!reglerExperience(EXPERIENCE_DE[valeur])) return;
-    porte.value = valeur; porteAvant = valeur;
+    reglerExperience(EXPERIENCE_DE[valeur]);
+    porte.value = valeur;
     marquer(valeur); majExperience();
     if (versFormulaire) allerAuFormulaire();
   }
@@ -51,21 +43,20 @@
   });
   // « Avez-vous déjà été mannequin ? » n'est demandé que pour l'équipe de l'agence (les deux autres portes le disent déjà)
   function majExperience() { const champ = experience.closest('.form-champ'); if (champ) champ.classList.toggle('u-hidden', porte.value !== 'equipe'); }
-  // la liste du formulaire garde les cartes à jour (si on choisit directement dans le formulaire) ; si la visiteuse
-  // annule l'avertissement (mensurations effacées), la porte d'avant revient
-  let porteAvant = porte.value;
+  // La liste du formulaire et les cartes suivent le même choix.
   porte.addEventListener('change', () => {
-    if (!reglerExperience(EXPERIENCE_DE[porte.value])) porte.value = porteAvant;
-    porteAvant = porte.value; marquer(porte.value); majExperience();
+    reglerExperience(EXPERIENCE_DE[porte.value]);
+    marquer(porte.value); majExperience();
   });
   // formulaire remis à zéro après un envoi (js/formulaire-candidature.js) : les cartes et la liste suivent
   const formulaire = document.getElementById('form-casting');
-  if (formulaire) formulaire.addEventListener('reset', () => setTimeout(() => { porteAvant = porte.value; marquer(porte.value); majExperience(); }, 0));
+  if (formulaire) formulaire.addEventListener('reset', () => setTimeout(() => { marquer(porte.value); majExperience(); }, 0));
   // arrivée depuis un autre lien (#academie, #reseau, #equipe), par ex. le bouton « Postuler » de la page MA2M Academy
   const voulu = (location.hash || '').replace('#porte-', '');
   if (EXPERIENCE_DE[voulu] !== undefined || voulu === 'equipe') {
-    if (reglerExperience(EXPERIENCE_DE[voulu])) porte.value = voulu;
+    reglerExperience(EXPERIENCE_DE[voulu]);
+    porte.value = voulu;
     setTimeout(allerAuFormulaire, 600);
   }
-  porteAvant = porte.value; marquer(porte.value); majExperience();
+  marquer(porte.value); majExperience();
 })();

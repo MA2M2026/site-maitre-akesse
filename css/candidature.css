@@ -33,6 +33,13 @@
   gap: 0.5rem;
 }
 .ca-photo-emplacement strong { font-size: 0.86rem; }
+.ca-photo-emplacement-vide { position: relative; }
+.ca-photo-emplacement-vide [data-photo-action="choisir"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
 .ca-photo-actions { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .ca-photo-actions button {
   min-height: var(--hauteur-tactile);
